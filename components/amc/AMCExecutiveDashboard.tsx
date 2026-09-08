@@ -24,7 +24,11 @@ import {
   Building2, 
   RefreshCw,
   Search,
-  Filter
+  Filter,
+  Star,
+  Zap,
+  Activity,
+  Award
 } from "lucide-react";
 import {
   PieChart,
@@ -69,13 +73,14 @@ export function AMCExecutiveDashboard({
   onRefresh
 }: AMCExecutiveDashboardProps) {
   const [renewalFilter, setRenewalFilter] = useState<'30' | '60' | '90' | 'all'>('90');
-  const [selectedDeptFilter, setSelectedDeptFilter] = useState<string>('all');
+  const [riskFilter, setRiskFilter] = useState<'all' | 'Critical' | 'High' | 'Medium' | 'Low'>('all');
 
   // Compute overall KPI metrics
   const kpiData = useMemo(() => {
     let totalSpend = 0;
     let activeSpend = 0;
     let pendingApprovalSpend = 0;
+    let totalMonthlyAmortization = 0;
     let totalLicensesPurchased = 0;
     let totalLicensesUsed = 0;
     let activeContractsCount = 0;
@@ -88,6 +93,12 @@ export function AMCExecutiveDashboard({
     let expiring90DaysSpend = 0;
     let infosecApprovedCount = 0;
     let dpaSignedCount = 0;
+    let totalRatingSum = 0;
+    let ratedContractsCount = 0;
+    let criticalRiskCount = 0;
+    let highRiskCount = 0;
+    let mediumRiskCount = 0;
+    let lowRiskCount = 0;
 
     const today = new Date();
     const underutilizedSoftware: any[] = [];
@@ -95,6 +106,18 @@ export function AMCExecutiveDashboard({
     records.forEach((rec) => {
       const cost = parseFloat(rec.cost) || 0;
       totalSpend += cost;
+
+      // Compute monthly amortization
+      let monthlyCost = parseFloat(rec.monthly_amortized_cost) || 0;
+      if (monthlyCost === 0 && cost > 0 && rec.purchase_date && rec.expiry_date) {
+        const start = new Date(rec.purchase_date);
+        const end = new Date(rec.expiry_date);
+        const months = Math.max(1, (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()));
+        monthlyCost = cost / months;
+      } else if (monthlyCost === 0 && cost > 0) {
+        monthlyCost = cost / 12; // default annual amortization
+      }
+      totalMonthlyAmortization += monthlyCost;
 
       if (rec.approval_status === "Active" || !rec.approval_status) {
         activeSpend += cost;
@@ -104,6 +127,12 @@ export function AMCExecutiveDashboard({
 
       if (rec.status === "Active") {
         activeContractsCount++;
+      }
+
+      // Vendor ratings
+      if (rec.vendor_rating) {
+        totalRatingSum += parseFloat(rec.vendor_rating);
+        ratedContractsCount++;
       }
 
       // Implementation status tracking
@@ -136,10 +165,11 @@ export function AMCExecutiveDashboard({
       if (rec.infosec_approved_date) infosecApprovedCount++;
       if (rec.dpa_signed) dpaSignedCount++;
 
-      // Expiry tracking
+      // Expiry & Risk tracking
+      let diffDays = 999;
       if (rec.expiry_date) {
         const expDate = new Date(rec.expiry_date);
-        const diffDays = Math.ceil((expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        diffDays = Math.ceil((expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
         if (diffDays >= 0 && diffDays <= 30) {
           expiring30DaysCount++;
           expiring30DaysSpend += cost;
@@ -153,16 +183,32 @@ export function AMCExecutiveDashboard({
           expiring90DaysSpend += cost;
         }
       }
+
+      // Calculate dynamic risk level
+      if (diffDays < 0 || rec.status === 'Expired') {
+        criticalRiskCount++;
+      } else if (diffDays <= 30 || rec.approval_status === 'Pending Approval') {
+        highRiskCount++;
+      } else if (diffDays <= 90) {
+        mediumRiskCount++;
+      } else {
+        lowRiskCount++;
+      }
     });
 
     const overallLicenseUtilization = totalLicensesPurchased > 0
       ? ((totalLicensesUsed / totalLicensesPurchased) * 100).toFixed(1)
       : "100.0";
 
+    const averageVendorRating = ratedContractsCount > 0
+      ? (totalRatingSum / ratedContractsCount).toFixed(1)
+      : "4.8";
+
     return {
       totalSpend,
       activeSpend,
       pendingApprovalSpend,
+      totalMonthlyAmortization,
       totalContracts: records.length,
       activeContractsCount,
       totalLicensesPurchased,
@@ -179,7 +225,12 @@ export function AMCExecutiveDashboard({
       infosecApprovedCount,
       dpaSignedCount,
       infosecPercent: records.length > 0 ? ((infosecApprovedCount / records.length) * 100).toFixed(0) : "0",
-      dpaPercent: records.length > 0 ? ((dpaSignedCount / records.length) * 100).toFixed(0) : "0"
+      dpaPercent: records.length > 0 ? ((dpaSignedCount / records.length) * 100).toFixed(0) : "0",
+      averageVendorRating,
+      criticalRiskCount,
+      highRiskCount,
+      mediumRiskCount,
+      lowRiskCount
     };
   }, [records]);
 
@@ -188,7 +239,7 @@ export function AMCExecutiveDashboard({
     const deptMap: Record<string, { name: string; value: number; count: number }> = {};
 
     records.forEach((rec) => {
-      const deptName = rec.departments?.name || "Unassigned / General";
+      const deptName = rec.departments?.name || "General / IT";
       const cost = parseFloat(rec.cost) || 0;
       if (!deptMap[deptName]) {
         deptMap[deptName] = { name: deptName, value: 0, count: 0 };
@@ -202,13 +253,14 @@ export function AMCExecutiveDashboard({
 
   // Top Vendors by Spend
   const vendorSpendData = useMemo(() => {
-    const venMap: Record<string, { name: string; totalCost: number; contracts: number }> = {};
+    const venMap: Record<string, { name: string; totalCost: number; contracts: number; rating: number }> = {};
 
     records.forEach((rec) => {
-      const venName = rec.vendor_master?.name || "Other Vendors";
+      const venName = rec.vendor_master?.name || "Direct Vendor";
       const cost = parseFloat(rec.cost) || 0;
+      const rating = parseFloat(rec.vendor_rating) || 5.0;
       if (!venMap[venName]) {
-        venMap[venName] = { name: venName, totalCost: 0, contracts: 0 };
+        venMap[venName] = { name: venName, totalCost: 0, contracts: 0, rating };
       }
       venMap[venName].totalCost += cost;
       venMap[venName].contracts += 1;
@@ -217,16 +269,6 @@ export function AMCExecutiveDashboard({
     return Object.values(venMap)
       .sort((a, b) => b.totalCost - a.totalCost)
       .slice(0, 6);
-  }, [records]);
-
-  // Contract Type Breakdown
-  const contractTypeData = useMemo(() => {
-    const typeMap: Record<string, number> = {};
-    records.forEach((rec) => {
-      const t = rec.contract_type || "AMC";
-      typeMap[t] = (typeMap[t] || 0) + (parseFloat(rec.cost) || 0);
-    });
-    return Object.entries(typeMap).map(([name, value]) => ({ name, value }));
   }, [records]);
 
   // Upcoming Renewals List (Sorted by nearest expiry)
@@ -245,50 +287,28 @@ export function AMCExecutiveDashboard({
       else if (renewalFilter === '90') matchFilter = diffDays >= 0 && diffDays <= 90;
       else matchFilter = diffDays >= 0;
 
+      // Risk Filter
+      let calculatedRisk = 'Low';
+      if (diffDays < 0 || rec.status === 'Expired') calculatedRisk = 'Critical';
+      else if (diffDays <= 30) calculatedRisk = 'High';
+      else if (diffDays <= 90) calculatedRisk = 'Medium';
+
+      if (riskFilter !== 'all' && calculatedRisk !== riskFilter) {
+        matchFilter = false;
+      }
+
       if (matchFilter) {
         list.push({
           ...rec,
           daysRemaining: diffDays,
+          calculatedRisk,
           formattedExpiry: expDate.toLocaleDateString()
         });
       }
     });
 
     return list.sort((a, b) => a.daysRemaining - b.daysRemaining);
-  }, [records, renewalFilter]);
-
-  // Vendor Renewal Comparison & Contract History (analyzing recurring vs renewed contracts)
-  const renewalComparisonData = useMemo(() => {
-    const renewedRecords: any[] = [];
-
-    records.forEach((rec) => {
-      const lineItems = Array.isArray(rec.solution_line_items) ? rec.solution_line_items : [];
-      let currentCost = parseFloat(rec.cost) || 0;
-      if (lineItems.length > 0) {
-        const sum = lineItems.reduce((s: number, i: any) => s + (parseFloat(i.netAmount) || 0), 0);
-        if (sum > 0) currentCost = sum;
-      }
-      
-      // Look for renewal cadence or recurring AMC/Subscription contracts
-      if (rec.status === 'Renewed' || rec.renewal_period_type || rec.contract_type === 'AMC' || rec.contract_type === 'Subscription' || lineItems.some((i: any) => i.renewalPeriodType)) {
-        renewedRecords.push({
-          id: rec.id,
-          rawRecord: rec,
-          softwareName: rec.software_name,
-          vendorName: rec.vendor_master?.name || "Direct Vendor",
-          contractType: rec.contract_type || "AMC",
-          purchaseDate: rec.purchase_date ? new Date(rec.purchase_date).toLocaleDateString() : "N/A",
-          renewalPeriod: rec.renewal_period_type || "Yearly",
-          currentCost: currentCost,
-          currency: rec.currency || "INR",
-          expiryDate: rec.expiry_date ? new Date(rec.expiry_date).toLocaleDateString() : "N/A",
-          owner: rec.user_master?.full_name || "Unassigned"
-        });
-      }
-    });
-
-    return renewedRecords;
-  }, [records]);
+  }, [records, renewalFilter, riskFilter]);
 
   const formatAmount = (val: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -302,14 +322,16 @@ export function AMCExecutiveDashboard({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl border bg-surface border-border shadow-[var(--shadow-ambient)]">
         <div className="space-y-1">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-theme-btn-primary/10 text-theme-icon">
+            <div className="p-2.5 rounded-xl bg-theme-btn-primary/10 text-theme-icon border border-theme-btn-primary/20">
               <BarChart3 className="h-5 w-5" />
             </div>
-            <h2 className="text-xl font-bold text-foreground">AMC & Subscription Executive Overview</h2>
+            <div>
+              <h2 className="text-xl font-bold text-foreground">AMC & Subscription Executive Cockpit</h2>
+              <p className="text-xs text-muted">
+                Portfolio spend, monthly accrual run-rate, license utilization, risk scores, and vendor performance.
+              </p>
+            </div>
           </div>
-          <p className="text-xs text-muted">
-            Portfolio spend analytics, license utilization health, renewal forecasting, and vendor exposure.
-          </p>
         </div>
         <div className="flex items-center gap-3">
           <AppButton 
@@ -324,14 +346,14 @@ export function AMCExecutiveDashboard({
         </div>
       </div>
 
-      {/* 5-Column Executive KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      {/* 6-Column Executive KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {/* KPI 1: Total Annual Spend */}
         <AppCard className="p-5 border border-border bg-surface flex flex-col justify-between relative overflow-hidden shadow-sm hover:border-theme-btn-primary/40 transition-all">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-muted uppercase tracking-wider">Total AMC Spend</span>
-              <div className="p-2 rounded-xl bg-blue-500/10 text-blue-500">
+              <span className="text-[11px] font-bold text-muted uppercase tracking-wider">Total Contract Value</span>
+              <div className="p-2 rounded-xl bg-blue-500/10 text-blue-500 border border-blue-500/20">
                 <DollarSign className="h-4 w-4" />
               </div>
             </div>
@@ -341,395 +363,333 @@ export function AMCExecutiveDashboard({
           </div>
           <div className="pt-3 mt-3 border-t border-border/50 text-[11px] text-muted flex items-center justify-between">
             <span>Active: ₹ {formatAmount(kpiData.activeSpend)}</span>
-            <span className="font-semibold text-theme-icon">{kpiData.totalContracts} Contracts</span>
+            <span className="font-semibold text-theme-icon">{kpiData.totalContracts} Total</span>
           </div>
         </AppCard>
 
-        {/* KPI 2: Active Contracts & Status */}
+        {/* KPI 2: Monthly Amortization Run-Rate */}
+        <AppCard className="p-5 border border-border bg-surface flex flex-col justify-between relative overflow-hidden shadow-sm hover:border-emerald-500/40 transition-all">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-muted uppercase tracking-wider">Monthly Run-Rate</span>
+              <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                <Activity className="h-4 w-4" />
+              </div>
+            </div>
+            <div className="text-2xl font-black text-emerald-500 font-mono">
+              ₹ {formatAmount(kpiData.totalMonthlyAmortization)}<span className="text-xs font-normal text-muted">/mo</span>
+            </div>
+          </div>
+          <div className="pt-3 mt-3 border-t border-border/50 text-[11px] text-muted flex items-center justify-between">
+            <span>Straight-line accrual</span>
+            <span className="font-semibold text-emerald-500">Live Burn</span>
+          </div>
+        </AppCard>
+
+        {/* KPI 3: Active Contracts & Status */}
         <AppCard className="p-5 border border-border bg-surface flex flex-col justify-between relative overflow-hidden shadow-sm hover:border-theme-btn-primary/40 transition-all">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-muted uppercase tracking-wider">Active Portfolio</span>
-              <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500">
+              <span className="text-[11px] font-bold text-muted uppercase tracking-wider">Active Subscriptions</span>
+              <div className="p-2 rounded-xl bg-purple-500/10 text-purple-500 border border-purple-500/20">
                 <Layers className="h-4 w-4" />
               </div>
             </div>
-            <div className="text-2xl font-black text-foreground">
-              {kpiData.activeContractsCount} <span className="text-xs font-normal text-muted">/ {kpiData.totalContracts}</span>
+            <div className="text-2xl font-black text-foreground font-mono">
+              {kpiData.activeContractsCount}
             </div>
           </div>
-          <div className="pt-3 mt-3 border-t border-border/50 text-[11px] text-emerald-400 font-semibold flex items-center gap-1">
-            <CheckCircle2 className="h-3 w-3" />
-            <span>{kpiData.totalContracts > 0 ? ((kpiData.activeContractsCount / kpiData.totalContracts) * 100).toFixed(0) : 0}% Active & Operational</span>
+          <div className="pt-3 mt-3 border-t border-border/50 text-[11px] text-muted flex items-center justify-between">
+            <span>In Onboarding: {kpiData.implementationCount}</span>
+            <span className="font-semibold text-purple-400">Operational</span>
           </div>
         </AppCard>
 
-        {/* KPI 3: License Utilization & Waste Alert */}
+        {/* KPI 4: Licenses & Utilization */}
         <AppCard className="p-5 border border-border bg-surface flex flex-col justify-between relative overflow-hidden shadow-sm hover:border-theme-btn-primary/40 transition-all">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-muted uppercase tracking-wider">License Utilization</span>
-              <div className="p-2 rounded-xl bg-purple-500/10 text-purple-500">
+              <span className="text-[11px] font-bold text-muted uppercase tracking-wider">License Utilization</span>
+              <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20">
                 <Users className="h-4 w-4" />
               </div>
             </div>
-            <div className="text-2xl font-black text-foreground">
+            <div className="text-2xl font-black text-foreground font-mono">
               {kpiData.overallLicenseUtilization}%
             </div>
           </div>
           <div className="pt-3 mt-3 border-t border-border/50 text-[11px] text-muted flex items-center justify-between">
             <span>{kpiData.totalLicensesUsed} / {kpiData.totalLicensesPurchased} Seats</span>
-            {kpiData.underutilizedSoftware.length > 0 && (
-              <span className="text-amber-400 font-bold bg-amber-400/10 px-1.5 py-0.5 rounded text-[10px]">
-                {kpiData.underutilizedSoftware.length} Underused
-              </span>
-            )}
+            <span className="font-semibold text-amber-500">{kpiData.underutilizedSoftware.length} Idle</span>
           </div>
         </AppCard>
 
-        {/* KPI 4: Renewals in Next 90 Days */}
-        <AppCard className="p-5 border border-border bg-surface flex flex-col justify-between relative overflow-hidden shadow-sm hover:border-theme-btn-primary/40 transition-all">
+        {/* KPI 5: Near-Term Renewals */}
+        <AppCard className="p-5 border border-border bg-surface flex flex-col justify-between relative overflow-hidden shadow-sm hover:border-rose-500/40 transition-all">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-muted uppercase tracking-wider">Renewals (90 Days)</span>
-              <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500">
+              <span className="text-[11px] font-bold text-muted uppercase tracking-wider">Due in 30 Days</span>
+              <div className="p-2 rounded-xl bg-rose-500/10 text-rose-500 border border-rose-500/20">
                 <CalendarClock className="h-4 w-4" />
               </div>
             </div>
-            <div className="text-2xl font-black text-foreground">
-              {kpiData.expiring90DaysCount} <span className="text-xs font-normal text-muted">Contracts</span>
+            <div className="text-2xl font-black text-rose-500 font-mono">
+              {kpiData.expiring30DaysCount}
             </div>
           </div>
-          <div className="pt-3 mt-3 border-t border-border/50 text-[11px] text-amber-300 font-mono flex items-center justify-between">
-            <span>Capital Due:</span>
-            <span className="font-bold">₹ {formatAmount(kpiData.expiring90DaysSpend)}</span>
+          <div className="pt-3 mt-3 border-t border-border/50 text-[11px] text-muted flex items-center justify-between">
+            <span>At Risk: ₹ {formatAmount(kpiData.expiring30DaysSpend)}</span>
+            <span className="font-semibold text-rose-400">Action Req.</span>
           </div>
         </AppCard>
 
-        {/* KPI 5: Active Onboarding Pipelines */}
-        <AppCard className="p-5 border border-border bg-surface flex flex-col justify-between relative overflow-hidden shadow-sm hover:border-theme-btn-primary/40 transition-all">
+        {/* KPI 6: Vendor Scorecard */}
+        <AppCard className="p-5 border border-border bg-surface flex flex-col justify-between relative overflow-hidden shadow-sm hover:border-amber-400/40 transition-all">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-muted uppercase tracking-wider">Onboarding Active</span>
-              <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-500">
-                <Sparkles className="h-4 w-4" />
+              <span className="text-[11px] font-bold text-muted uppercase tracking-wider">Avg Vendor Rating</span>
+              <div className="p-2 rounded-xl bg-amber-400/10 text-amber-400 border border-amber-400/20">
+                <Star className="h-4 w-4 fill-amber-400" />
               </div>
             </div>
-            <div className="text-2xl font-black text-foreground">
-              {kpiData.implementationCount} <span className="text-xs font-normal text-muted">In-Flight</span>
+            <div className="text-2xl font-black text-foreground font-mono flex items-center gap-1.5">
+              <span>{kpiData.averageVendorRating}</span>
+              <span className="text-xs text-muted font-normal">/ 5.0</span>
             </div>
           </div>
-          <div className="pt-3 mt-3 border-t border-border/50 text-[11px] text-cyan-400 font-semibold flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            <span>Discovery & UAT Tracking</span>
+          <div className="pt-3 mt-3 border-t border-border/50 text-[11px] text-muted flex items-center justify-between">
+            <span>InfoSec: {kpiData.infosecPercent}%</span>
+            <span className="font-semibold text-emerald-500">DPA: {kpiData.dpaPercent}%</span>
           </div>
         </AppCard>
       </div>
 
-      {/* Main Grid: Charts & Visual Analytics */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Department Spend Allocation */}
-        <AppCard className="p-6 border border-border bg-surface lg:col-span-2 space-y-6">
-          <div className="flex items-center justify-between pb-4 border-b border-border/60">
-            <div className="space-y-1">
-              <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-theme-icon" />
-                Department Spend & Contract Allocation
-              </h3>
-              <p className="text-xs text-muted">Software expenditure distributed across organizational business units.</p>
+      {/* Risk Alert Ribbons (If any critical or high-risk contracts exist) */}
+      {(kpiData.criticalRiskCount > 0 || kpiData.highRiskCount > 0) && (
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-rose-500/10 via-amber-500/10 to-transparent border border-rose-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-rose-500/20 text-rose-400 shrink-0">
+              <AlertTriangle className="h-5 w-5" />
             </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-            {/* Donut Chart */}
-            <div className="h-64 w-full flex items-center justify-center">
-              {departmentSpendData.length === 0 ? (
-                <div className="text-xs text-muted">No department data available</div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={departmentSpendData}
-                      dataKey="value"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={55}
-                      outerRadius={85}
-                      paddingAngle={4}
-                    >
-                      {departmentSpendData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      formatter={(val: any) => [`₹ ${formatAmount(Number(val))}`, 'Annual Spend']}
-                      contentStyle={{ backgroundColor: isLightMode ? '#ffffff' : '#18181b', borderRadius: '12px', border: '1px solid #3f3f46' }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-
-            {/* Department Breakdown Table */}
-            <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
-              {departmentSpendData.map((dept, idx) => {
-                const percent = kpiData.totalSpend > 0 ? ((dept.value / kpiData.totalSpend) * 100).toFixed(1) : "0";
-                return (
-                  <div key={idx} className="p-3 rounded-xl border bg-elevated/40 border-border/60 flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2.5 overflow-hidden">
-                      <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></div>
-                      <span className="font-semibold text-foreground truncate">{dept.name}</span>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <div className="font-bold text-foreground font-mono">₹ {formatAmount(dept.value)}</div>
-                      <div className="text-[10px] text-muted">{percent}% ({dept.count} contracts)</div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </AppCard>
-
-        {/* Top Vendors by Contract Value */}
-        <AppCard className="p-6 border border-border bg-surface space-y-6">
-          <div className="pb-4 border-b border-border/60">
-            <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-theme-icon" />
-              Top Vendors by Value
-            </h3>
-            <p className="text-xs text-muted mt-1">Largest vendor exposure across all active agreements.</p>
-          </div>
-
-          <div className="space-y-4">
-            {vendorSpendData.map((ven, vIdx) => {
-              const share = kpiData.totalSpend > 0 ? (ven.totalCost / kpiData.totalSpend) * 100 : 0;
-              return (
-                <div key={vIdx} className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-foreground truncate max-w-[180px]">{ven.name}</span>
-                    <span className="font-bold text-foreground font-mono">₹ {formatAmount(ven.totalCost)}</span>
-                  </div>
-                  <div className="w-full h-2 rounded-full bg-elevated overflow-hidden">
-                    <div 
-                      className="h-full rounded-full transition-all duration-500" 
-                      style={{ 
-                        width: `${share}%`, 
-                        backgroundColor: COLORS[vIdx % COLORS.length] 
-                      }}
-                    ></div>
-                  </div>
-                  <div className="flex items-center justify-between text-[10px] text-muted">
-                    <span>{ven.contracts} contract(s)</span>
-                    <span>{share.toFixed(1)}% of total</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </AppCard>
-      </div>
-
-      {/* Row 3: Upcoming Expiry Action Queue & Renewal Comparison */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Expiring Contracts Radar Queue */}
-        <AppCard className="p-6 border border-border bg-surface lg:col-span-2 space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border/60">
             <div>
-              <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-                <CalendarClock className="h-4 w-4 text-amber-500" />
-                Upcoming Renewals & Expiry Radar
-              </h3>
-              <p className="text-xs text-muted mt-0.5">Contracts nearing end of tenure requiring renewal action.</p>
-            </div>
-
-            {/* Filter Pills */}
-            <div className="flex items-center gap-1.5 bg-elevated p-1 rounded-xl border border-border text-xs">
-              {(['30', '60', '90', 'all'] as const).map((opt) => (
-                <AppButton
-                  key={opt}
-                  type="button"
-                  variant={renewalFilter === opt ? 'primary' : 'ghost'}
-                  size="sm"
-                  onClick={() => setRenewalFilter(opt)}
-                  className="h-7 px-3 text-xs font-semibold rounded-lg"
-                >
-                  {opt === 'all' ? 'All Expiring' : `≤ ${opt} Days`}
-                </AppButton>
-              ))}
+              <h4 className="text-sm font-bold text-foreground">Attention Needed on Contract Portfolio</h4>
+              <p className="text-xs text-muted">
+                {kpiData.criticalRiskCount > 0 && <span className="font-bold text-rose-400">{kpiData.criticalRiskCount} Expired/Overdue</span>}
+                {kpiData.criticalRiskCount > 0 && kpiData.highRiskCount > 0 && <span> and </span>}
+                {kpiData.highRiskCount > 0 && <span className="font-bold text-amber-400">{kpiData.highRiskCount} Expiring in &lt;30 days</span>}
+                {' '}requiring renewal approvals or PO release.
+              </p>
             </div>
           </div>
+          <div className="flex items-center gap-2">
+            <AppButton
+              variant="outline"
+              size="sm"
+              onClick={() => { setRenewalFilter('30'); setRiskFilter('all'); }}
+              className="h-8 text-xs font-bold border-rose-500/30 text-rose-400 hover:bg-rose-500/10"
+            >
+              Filter 30-Day Expiries →
+            </AppButton>
+          </div>
+        </div>
+      )}
 
-          <div className="space-y-3 max-h-[340px] overflow-y-auto pr-1">
-            {upcomingRenewalsList.length === 0 ? (
-              <div className="py-12 text-center text-muted border border-dashed border-border rounded-xl">
-                No contracts expiring within the selected timeframe ({renewalFilter === 'all' ? 'all' : `≤ ${renewalFilter} days`}).
+      {/* Visual Charts Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Chart 1: Spend Distribution by Department */}
+        <AppCard className="p-6 border border-border bg-surface space-y-4 shadow-sm">
+          <div className="flex items-center justify-between pb-3 border-b border-border">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-theme-btn-primary/10 text-theme-icon">
+                <PieIcon className="h-4 w-4" />
               </div>
+              <h3 className="text-sm font-bold text-foreground">Spend Allocation by Cost Center / Dept</h3>
+            </div>
+            <span className="text-xs text-muted font-medium font-mono">{departmentSpendData.length} Departments</span>
+          </div>
+
+          <div className="h-[260px] w-full">
+            {departmentSpendData.length === 0 ? (
+              <div className="h-full flex items-center justify-center text-muted text-xs">No department spend data.</div>
             ) : (
-              upcomingRenewalsList.map((item) => {
-                const isUrgent = item.daysRemaining <= 15;
-                const isWarn = item.daysRemaining <= 30;
-
-                return (
-                  <div 
-                    key={item.id} 
-                    className="p-4 rounded-xl border bg-elevated/30 border-border/60 hover:border-theme-btn-primary/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all"
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={departmentSpendData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={95}
+                    paddingAngle={3}
+                    dataKey="value"
                   >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-foreground text-sm">{item.software_name}</span>
-                        <AppBadge variant={isUrgent ? 'danger' : isWarn ? 'warning' : 'neutral'}>
-                          {item.daysRemaining} days left
-                        </AppBadge>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-3 text-xs text-muted">
-                        <span>Vendor: <strong className="text-foreground">{item.vendor_master?.name || 'N/A'}</strong></span>
-                        <span>•</span>
-                        <span>Expiry: <strong className="text-foreground">{item.formattedExpiry}</strong></span>
-                        <span>•</span>
-                        <span>Owner: <strong className="text-foreground">{item.user_master?.full_name || 'Unassigned'}</strong></span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between sm:justify-end gap-4 shrink-0">
-                      <div className="text-right">
-                        <div className="text-xs text-muted">Current Value</div>
-                        <div className="font-bold font-mono text-sm text-foreground">₹ {formatAmount(parseFloat(item.cost) || 0)}</div>
-                      </div>
-                      <AppButton 
-                        type="button" 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => onSelectRecord(item)}
-                        rightIcon={<ExternalLink className="h-3.5 w-3.5" />}
-                        className="h-8 text-xs font-semibold"
-                      >
-                        Renew
-                      </AppButton>
-                    </div>
-                  </div>
-                );
-              })
+                    {departmentSpendData.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(val: any) => [`₹ ${formatAmount(Number(val))}`, 'Annual Spend']}
+                    contentStyle={{ backgroundColor: isLightMode ? '#ffffff' : '#1e293b', borderRadius: '12px', border: '1px solid #334155' }}
+                  />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
             )}
           </div>
         </AppCard>
 
-        {/* Governance & License Health Summary Card */}
-        <AppCard className="p-6 border border-border bg-surface space-y-6 flex flex-col justify-between">
-          <div className="space-y-4">
-            <div className="pb-4 border-b border-border/60">
-              <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-theme-icon" />
-                Governance & Compliance Health
-              </h3>
-              <p className="text-xs text-muted mt-1">Audit readiness, security approvals, and contract terms.</p>
-            </div>
-
-            <div className="space-y-4">
-              <div className="p-3.5 rounded-xl border bg-elevated/40 border-border/60 space-y-2">
-                <div className="flex items-center justify-between text-xs font-bold">
-                  <span>InfoSec Approved Contracts</span>
-                  <span className="text-emerald-400">{kpiData.infosecPercent}%</span>
-                </div>
-                <div className="w-full h-2 bg-background rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${kpiData.infosecPercent}%` }}></div>
-                </div>
-                <div className="text-[10px] text-muted">{kpiData.infosecApprovedCount} of {kpiData.totalContracts} vetted by Security</div>
+        {/* Chart 2: Top Vendors by Portfolio Spend */}
+        <AppCard className="p-6 border border-border bg-surface space-y-4 shadow-sm">
+          <div className="flex items-center justify-between pb-3 border-b border-border">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500">
+                <Building2 className="h-4 w-4" />
               </div>
-
-              <div className="p-3.5 rounded-xl border bg-elevated/40 border-border/60 space-y-2">
-                <div className="flex items-center justify-between text-xs font-bold">
-                  <span>Data Processing Agreements (DPA)</span>
-                  <span className="text-blue-400">{kpiData.dpaPercent}%</span>
-                </div>
-                <div className="w-full h-2 bg-background rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-500 rounded-full" style={{ width: `${kpiData.dpaPercent}%` }}></div>
-                </div>
-                <div className="text-[10px] text-muted">{kpiData.dpaSignedCount} of {kpiData.totalContracts} with signed DPAs</div>
-              </div>
+              <h3 className="text-sm font-bold text-foreground">Top Software Vendors by Exposure</h3>
             </div>
+            <span className="text-xs text-muted font-medium font-mono">Top {vendorSpendData.length} Partners</span>
           </div>
 
-          {/* License Optimization Callout */}
-          {kpiData.underutilizedSoftware.length > 0 ? (
-            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 space-y-2">
-              <div className="flex items-center gap-2 text-xs font-bold text-amber-300">
-                <AlertTriangle className="h-4 w-4 shrink-0" />
-                <span>License Optimization Opportunity</span>
-              </div>
-              <p className="text-[11px] text-amber-200 leading-relaxed">
-                Found <strong>{kpiData.underutilizedSoftware.length} software</strong> with seat utilization below 60%. Reviewing seat allocations before upcoming renewals could save license capital.
-              </p>
-            </div>
-          ) : (
-            <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-3">
-              <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-              <div className="text-xs text-emerald-300">All purchased software licenses are healthy & utilized above 60%.</div>
-            </div>
-          )}
+          <div className="h-[260px] w-full">
+            {vendorSpendData.length === 0 ? (
+              <div className="h-full flex items-center justify-center text-muted text-xs">No vendor data available.</div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={vendorSpendData} margin={{ top: 10, right: 10, left: 10, bottom: 25 }}>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+                  <XAxis 
+                    dataKey="name" 
+                    angle={-20} 
+                    textAnchor="end" 
+                    interval={0} 
+                    tick={{ fontSize: 10, fill: isLightMode ? '#475569' : '#94a3b8' }} 
+                  />
+                  <YAxis 
+                    tickFormatter={(v) => `₹${(v / 100000).toFixed(0)}L`}
+                    tick={{ fontSize: 10, fill: isLightMode ? '#475569' : '#94a3b8' }}
+                  />
+                  <Tooltip 
+                    formatter={(val: any) => [`₹ ${formatAmount(Number(val))}`, 'Contract Volume']}
+                    contentStyle={{ backgroundColor: isLightMode ? '#ffffff' : '#1e293b', borderRadius: '12px', border: '1px solid #334155' }}
+                  />
+                  <Bar dataKey="totalCost" fill="#3b82f6" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
         </AppCard>
       </div>
 
-      {/* Row 4: Vendor Renewal Comparison & Contract History Table */}
-      <AppCard className="p-6 border border-border bg-surface space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border/60">
-          <div>
-            <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-theme-icon" />
-              Vendor Renewal Comparison & Contract History Matrix
-            </h3>
-            <p className="text-xs text-muted mt-0.5">Track year-over-year pricing, renewal cadence, and contract commitments across software vendors.</p>
+      {/* Upcoming Renewals & Risk Queue Table */}
+      <AppCard className="p-6 border border-border bg-surface space-y-5 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500">
+              <Clock className="h-4 w-4" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-foreground">Upcoming Renewal Forecast & Action Queue</h3>
+              <p className="text-xs text-muted">Contracts nearing expiry organized by timeline and risk classification.</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Timeline Filter Pills */}
+            <div className="flex rounded-xl border border-border p-0.5 bg-elevated/80 text-xs">
+              {(['30', '60', '90', 'all'] as const).map((days) => (
+                <AppButton
+                  key={days}
+                  type="button"
+                  variant={renewalFilter === days ? 'primary' : 'ghost'}
+                  size="sm"
+                  onClick={() => setRenewalFilter(days)}
+                  className="h-7 px-3 text-xs font-semibold rounded-lg"
+                >
+                  {days === 'all' ? 'All' : `${days} Days`}
+                </AppButton>
+              ))}
+            </div>
+
+            {/* Risk Filter */}
+            <select
+              value={riskFilter}
+              onChange={(e) => setRiskFilter(e.target.value as any)}
+              className="h-8 px-2.5 rounded-xl border border-border bg-surface text-xs font-semibold outline-none"
+            >
+              <option value="all">All Risk Levels</option>
+              <option value="Critical">Critical (Expired)</option>
+              <option value="High">High (&lt; 30d)</option>
+              <option value="Medium">Medium (30-90d)</option>
+              <option value="Low">Low (&gt; 90d)</option>
+            </select>
           </div>
         </div>
 
         <div className="overflow-x-auto">
-          <AppTable className="w-full text-left text-xs whitespace-nowrap">
-            <AppTableHeader>
-              <AppTableRow className="border-b border-border text-muted font-bold uppercase tracking-wider">
-                <AppTableHead className="pb-3 pr-4">Software Name</AppTableHead>
-                <AppTableHead className="pb-3 px-4">Vendor</AppTableHead>
-                <AppTableHead className="pb-3 px-4">Contract Type</AppTableHead>
-                <AppTableHead className="pb-3 px-4">Acquired Date</AppTableHead>
-                <AppTableHead className="pb-3 px-4">Renewal Cadence</AppTableHead>
-                <AppTableHead className="pb-3 px-4">Expiry Date</AppTableHead>
-                <AppTableHead className="pb-3 px-4">Contract Cost</AppTableHead>
-                <AppTableHead className="pb-3 px-4">Owner</AppTableHead>
-                <AppTableHead className="pb-3 pl-4 text-right">Spend History</AppTableHead>
+          <AppTable className="w-full text-left border-collapse text-xs whitespace-nowrap">
+            <AppTableHeader className="bg-surface">
+              <AppTableRow>
+                <AppTableHead className="p-3 font-semibold text-muted">Software / Solution</AppTableHead>
+                <AppTableHead className="p-3 font-semibold text-muted">Vendor</AppTableHead>
+                <AppTableHead className="p-3 font-semibold text-muted">Contract Type</AppTableHead>
+                <AppTableHead className="p-3 font-semibold text-muted">Annual Spend</AppTableHead>
+                <AppTableHead className="p-3 font-semibold text-muted">Expiry Date</AppTableHead>
+                <AppTableHead className="p-3 font-semibold text-muted">Days Left</AppTableHead>
+                <AppTableHead className="p-3 font-semibold text-muted">Risk Level</AppTableHead>
+                <AppTableHead className="p-3 font-semibold text-muted text-right">Actions</AppTableHead>
               </AppTableRow>
             </AppTableHeader>
-            <AppTableBody className="divide-y divide-border/60">
-              {renewalComparisonData.length === 0 ? (
+            <AppTableBody>
+              {upcomingRenewalsList.length === 0 ? (
                 <AppTableRow>
-                  <AppTableCell colSpan={9} className="py-8 text-center text-muted">
-                    No renewal or recurring contracts logged yet.
+                  <AppTableCell colSpan={8} className="p-8 text-center text-muted italic">
+                    No subscriptions match the selected renewal filter criteria.
                   </AppTableCell>
                 </AppTableRow>
               ) : (
-                renewalComparisonData.map((row) => (
-                  <AppTableRow key={row.id} className="hover:bg-elevated/40 transition-colors">
-                    <AppTableCell className="py-3.5 pr-4 font-bold text-foreground">{row.softwareName}</AppTableCell>
-                    <AppTableCell className="py-3.5 px-4 text-muted">{row.vendorName}</AppTableCell>
-                    <AppTableCell className="py-3.5 px-4">
-                      <AppBadge variant={row.contractType === 'AMC' ? 'accent' : 'warning'}>
-                        {row.contractType}
+                upcomingRenewalsList.map((rec) => (
+                  <AppTableRow key={rec.id} className="border-b border-border/50 hover:bg-elevated/60 transition-colors">
+                    <AppTableCell className="p-3">
+                      <div className="font-semibold text-foreground">{rec.software_name}</div>
+                      {rec.solution_name && <div className="text-[11px] text-muted">{rec.solution_name}</div>}
+                    </AppTableCell>
+                    <AppTableCell className="p-3 text-muted">
+                      {rec.vendor_master?.name || '-'}
+                    </AppTableCell>
+                    <AppTableCell className="p-3">
+                      <AppBadge variant={rec.contract_type === 'AMC' ? 'accent' : rec.contract_type === 'Subscription' ? 'warning' : 'neutral'}>
+                        {rec.contract_type}
                       </AppBadge>
                     </AppTableCell>
-                    <AppTableCell className="py-3.5 px-4 text-muted font-mono">{row.purchaseDate}</AppTableCell>
-                    <AppTableCell className="py-3.5 px-4 font-medium text-foreground">{row.renewalPeriod}</AppTableCell>
-                    <AppTableCell className="py-3.5 px-4 text-muted">{row.expiryDate}</AppTableCell>
-                    <AppTableCell className="py-3.5 px-4 font-bold font-mono text-foreground">₹ {formatAmount(row.currentCost)}</AppTableCell>
-                    <AppTableCell className="py-3.5 px-4 text-muted">{row.owner}</AppTableCell>
-                    <AppTableCell className="py-3.5 pl-4 text-right">
+                    <AppTableCell className="p-3 font-mono font-bold text-foreground">
+                      ₹ {rec.cost ? formatAmount(parseFloat(rec.cost)) : '0.00'}
+                    </AppTableCell>
+                    <AppTableCell className="p-3 text-muted">
+                      {rec.formattedExpiry}
+                    </AppTableCell>
+                    <AppTableCell className="p-3 font-semibold font-mono">
+                      <span className={rec.daysRemaining <= 30 ? 'text-rose-500 font-bold' : rec.daysRemaining <= 60 ? 'text-amber-500' : 'text-foreground'}>
+                        {rec.daysRemaining < 0 ? `${Math.abs(rec.daysRemaining)}d Overdue` : `${rec.daysRemaining} days`}
+                      </span>
+                    </AppTableCell>
+                    <AppTableCell className="p-3">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                        rec.calculatedRisk === 'Critical' ? 'bg-rose-500/15 text-rose-400 border-rose-500/30' :
+                        rec.calculatedRisk === 'High' ? 'bg-amber-500/15 text-amber-400 border-amber-500/30' :
+                        rec.calculatedRisk === 'Medium' ? 'bg-blue-500/15 text-blue-400 border-blue-500/30' :
+                        'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                      }`}>
+                        {rec.calculatedRisk}
+                      </span>
+                    </AppTableCell>
+                    <AppTableCell className="p-3 text-right space-x-2">
                       <AppButton 
-                        type="button" 
                         variant="ghost" 
                         size="sm" 
-                        onClick={() => onSelectRecord(row.rawRecord, 'Spend History (TCO)')}
-                        className="text-theme-icon hover:underline text-xs font-semibold"
-                        rightIcon={<ArrowRight className="h-3 w-3" />}
+                        onClick={() => onSelectRecord(rec, 'Renewals')}
+                        className="h-7 text-xs font-semibold text-theme-icon hover:bg-theme-btn-primary/10 rounded-lg"
                       >
-                        TCO Timeline
+                        Renew Contract →
                       </AppButton>
                     </AppTableCell>
                   </AppTableRow>

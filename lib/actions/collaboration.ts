@@ -72,12 +72,39 @@ export async function addTicketRemark(ticketId: string, content: string) {
       
       // Also queue emails with personalized direct activity links
       const { createDirectActivityUrl } = await import('@/lib/auth/direct-access');
+      const { buildEmailCardHtml } = await import('@/lib/email/email-renderer');
+
+      // Fetch ticket info for rich details
+      const { data: ticketInfo } = await supabaseAdmin
+        .from('tickets')
+        .select('code, title')
+        .eq('id', ticketId)
+        .maybeSingle();
+
+      const senderName = (user.user_metadata as any)?.full_name || user.email || 'A team member';
+
       const emails = users.map(u => {
         const directLink = createDirectActivityUrl(u.id, u.email, `/tickets/${ticketId}`);
+        const htmlCard = buildEmailCardHtml({
+          title: `Mentioned in Ticket ${ticketInfo?.code || ''}`,
+          description: `You were mentioned in a ticket discussion by ${senderName}:`,
+          details: {
+            'Ticket': ticketInfo?.title || ticketInfo?.code || 'Ticket Discussion',
+            'Mentioned By': senderName,
+            'Remark': content
+          },
+          actionUrl: directLink,
+          actionText: 'View Ticket'
+        });
+
         return {
           recipient_email: u.email,
-          subject: `Mentioned in Ticket`,
-          body_template: `You were mentioned in a ticket remark:\n\n"${content}"\n\nLink: ${directLink}`,
+          recipient_user_id: u.id,
+          module: 'Ticket',
+          event: 'Mentioned',
+          subject: `Mentioned in Ticket: ${ticketInfo?.code || ticketId}`,
+          body_template: htmlCard,
+          html_body: htmlCard,
           is_sent: false
         };
       });

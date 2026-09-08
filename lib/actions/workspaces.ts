@@ -285,7 +285,15 @@ export async function createWorkspace(formData: any) {
           assigneeId,
           title,
           message,
-          `/workspaces`
+          `/workspaces`,
+          'WORKSPACE',
+          'ASSIGNED',
+          {
+            workspace_name: data.workspace_name,
+            workspace_code: data.workspace_code,
+            type: isSub ? 'Sub-Workspace' : 'Workspace',
+            _disableEmail: true
+          }
         );
         
         await queueBusinessEvent("Workspace", "Assigned", {
@@ -294,6 +302,7 @@ export async function createWorkspace(formData: any) {
           assigned_to: assigneeId,
           workspace_name: data.workspace_name,
           workspace_code: data.workspace_code,
+          type: isSub ? 'Sub-Workspace' : 'Workspace',
           link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/workspaces`
         });
       } catch (e) {
@@ -1197,7 +1206,14 @@ export async function updateWorkspace(id: string, formData: any) {
         assigneeId,
         title,
         message,
-        `/workspaces`
+        `/workspaces`,
+        'WORKSPACE',
+        'UPDATED',
+        {
+          workspace_name: data.workspace_name,
+          workspace_code: data.workspace_code,
+          type: isSub ? 'Sub-Workspace' : 'Workspace'
+        }
       );
     }
   }

@@ -203,9 +203,22 @@ async function dispatchEmail(item: any, provider: any) {
     const transporter = nodemailer.createTransport(transportConfig);
     const senderEmail = provider.config.username || provider.config.smtp_username || "no-reply@chandakgroup.com";
     
-    const hasHtml = item.html_body || (item.body_template && (item.body_template.includes('<p>') || item.body_template.includes('<div') || item.body_template.includes('<html')));
-    const textContent = hasHtml && !item.html_body ? "Please view this email in an HTML-compatible client." : (item.body_template || "You have a new notification.");
-    const htmlContent = item.html_body || (hasHtml ? item.body_template : undefined);
+    const hasHtml = item.html_body || (item.body_template && (item.body_template.includes('<p') || item.body_template.includes('<div') || item.body_template.includes('<html') || item.body_template.includes('<table') || item.body_template.includes('<body')));
+    
+    let htmlContent = item.html_body || (hasHtml ? item.body_template : undefined);
+
+    // If no HTML is present (e.g. legacy plain text), automatically wrap it into the standard branded HTML card
+    if (!htmlContent) {
+      const { convertPlainTextToHtmlCard } = await import('@/lib/email/email-renderer');
+      htmlContent = convertPlainTextToHtmlCard({
+        title: item.subject || "System Notification",
+        text: item.body_template || ""
+      });
+    }
+
+    const textContent = item.body_template && !hasHtml 
+      ? item.body_template 
+      : (item.subject || "System Notification");
 
     await transporter.sendMail({
       from: `"Chandak Workspace" <${senderEmail}>`,

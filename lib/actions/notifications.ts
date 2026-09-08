@@ -187,8 +187,9 @@ export async function dispatchNotification(
 
     // Insert into corporate email_queue table
     try {
+      const { buildEmailCardHtml, inferActionText } = await import('@/lib/email/email-renderer');
       let finalSubject = title;
-      let finalBody = `${message}\n\nLink: ${directLink || 'N/A'}`;
+      let finalBody = '';
 
       if (moduleCode && eventCode) {
         const { data: template } = await supabaseAdmin
@@ -220,13 +221,32 @@ export async function dispatchNotification(
         }
       }
 
+      // If no custom template or template has no html_body, dynamically build rich HTML card
+      if (!finalBody) {
+        const cardDetails = { ...(customPayload || {}) };
+        delete cardDetails._disableEmail;
+        delete cardDetails._disableInApp;
+
+        finalBody = buildEmailCardHtml({
+          title,
+          description: message,
+          details: Object.keys(cardDetails).length > 0 ? cardDetails : undefined,
+          actionUrl: directLink || undefined,
+          actionText: inferActionText(title, directLink)
+        });
+      }
+
       // Transform any remaining site links to direct access links for this recipient
       finalBody = transformEmailContentLinks(finalBody, userId, user.email, baseUrl);
 
       await supabaseAdmin.from('email_queue').insert([{
         recipient_email: user.email,
+        recipient_user_id: userId,
+        module: moduleCode || null,
+        event: eventCode || null,
         subject: finalSubject,
         body_template: finalBody,
+        html_body: finalBody,
         is_sent: false
       }]);
       
@@ -316,7 +336,12 @@ export async function handleMentions(
       notifMessage,
       link,
       entityType === 'ticket' ? 'TICKETS' : 'TASKS',
-      'MENTION'
+      'MENTION',
+      {
+        [entityType === 'ticket' ? 'ticket_title' : 'task_name']: entityLabel,
+        'Mentioned By': senderName,
+        'Type': isAll ? 'Announcement (@All)' : 'Direct Mention'
+      }
     );
   }
 }

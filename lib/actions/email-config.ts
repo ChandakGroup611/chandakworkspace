@@ -110,16 +110,19 @@ export async function deleteEmailProvider(id: string) {
 
 export async function previewEmailTemplate(moduleName: string, htmlBody: string) {
   let sampleData: any = {
-    ticket_no: "TKT-SAMPLE",
-    ticket_title: "Sample Ticket",
-    task_name: "Sample Task",
-    workspace_name: "Sample Workspace",
-    assigned_user: "Sample User",
-    creator_name: "Admin User",
+    ticket_no: "TKT-2026-09/0042",
+    ticket_title: "Network Connectivity in Operations Wing",
+    task_name: "Implement Biometric Vendor Integration",
+    workspace_name: "AI Adoption & Development",
+    workspace_code: "SWS-2026-27/09/0004",
+    req_code: "REQ-2026-0012",
+    req_name: "Automated Vendor Invoicing Pipeline",
+    assigned_user: "Anand Mohta",
+    creator_name: "Adil Kazi",
     status: "In Progress",
     priority: "High",
     due_date: new Date().toLocaleDateString(),
-    link: "#"
+    link: "https://chandakgroup.tech/workspaces"
   };
 
   try {
@@ -129,11 +132,11 @@ export async function previewEmailTemplate(moduleName: string, htmlBody: string)
         const d = data as any;
         sampleData = {
           ...sampleData,
-          task_name: d.title,
-          status: d.status_master?.name || (Array.isArray(d.status_master) && d.status_master[0]?.name) || "Open",
-          priority: d.priority_master?.name || (Array.isArray(d.priority_master) && d.priority_master[0]?.name) || "Normal",
-          creator_name: d.creator?.full_name || (Array.isArray(d.creator) && d.creator[0]?.full_name) || "Unknown",
-          due_date: d.end_date || "N/A",
+          task_name: d.title || sampleData.task_name,
+          status: d.status_master?.name || (Array.isArray(d.status_master) && d.status_master[0]?.name) || "In Progress",
+          priority: d.priority_master?.name || (Array.isArray(d.priority_master) && d.priority_master[0]?.name) || "High",
+          creator_name: d.creator?.full_name || (Array.isArray(d.creator) && d.creator[0]?.full_name) || "Adil Kazi",
+          due_date: d.end_date || sampleData.due_date,
           link: `/tasks/${d.id}`
         };
       }
@@ -143,24 +146,35 @@ export async function previewEmailTemplate(moduleName: string, htmlBody: string)
         const d = data as any;
         sampleData = {
           ...sampleData,
-          ticket_no: d.ticket_number,
-          ticket_title: d.title,
+          ticket_no: d.ticket_number || sampleData.ticket_no,
+          ticket_title: d.title || sampleData.ticket_title,
           status: d.status_master?.name || (Array.isArray(d.status_master) && d.status_master[0]?.name) || "Open",
           priority: d.priority_master?.name || (Array.isArray(d.priority_master) && d.priority_master[0]?.name) || "Normal",
-          creator_name: d.creator?.full_name || (Array.isArray(d.creator) && d.creator[0]?.full_name) || "Unknown",
+          creator_name: d.creator?.full_name || (Array.isArray(d.creator) && d.creator[0]?.full_name) || "Adil Kazi",
           link: `/tickets/${d.id}`
         };
       }
     } else if (moduleName === "Requirement") {
-      const { data } = await supabaseAdmin.from("requirements").select("id, title, approval_status, creator:user_master!requirements_creator_id_fkey(full_name)").limit(1).single();
+      const { data } = await supabaseAdmin.from("requirements").select("id, title, code, approval_status, creator:user_master!requirements_creator_id_fkey(full_name)").limit(1).single();
       if (data) {
         const d = data as any;
         sampleData = {
           ...sampleData,
-          req_name: d.title,
-          status: d.approval_status || "Pending",
-          creator_name: d.creator?.full_name || (Array.isArray(d.creator) && d.creator[0]?.full_name) || "Unknown",
+          req_code: d.code || sampleData.req_code,
+          req_name: d.title || sampleData.req_name,
+          status: d.approval_status || "Pending Approval",
+          creator_name: d.creator?.full_name || (Array.isArray(d.creator) && d.creator[0]?.full_name) || "Adil Kazi",
           link: `/requirements/${d.id}`
+        };
+      }
+    } else if (moduleName === "Workspace") {
+      const { data } = await supabaseAdmin.from("workspaces").select("id, workspace_name, workspace_code").limit(1).single();
+      if (data) {
+        sampleData = {
+          ...sampleData,
+          workspace_name: data.workspace_name || sampleData.workspace_name,
+          workspace_code: data.workspace_code || sampleData.workspace_code,
+          link: `/workspaces`
         };
       }
     }
@@ -168,7 +182,7 @@ export async function previewEmailTemplate(moduleName: string, htmlBody: string)
     console.error("Preview sample fetch failed", e);
   }
 
-  let hydrated = htmlBody;
+  let hydrated = htmlBody || "";
   const matches = hydrated.match(/{{(.*?)}}/g);
   if (matches) {
     matches.forEach(match => {
@@ -177,6 +191,16 @@ export async function previewEmailTemplate(moduleName: string, htmlBody: string)
       hydrated = hydrated.replace(match, String(value));
     });
   }
+
+  // If the template content doesn't contain HTML, format it using standard card renderer
+  if (!hydrated.includes('<div') && !hydrated.includes('<p') && !hydrated.includes('<table')) {
+    const { convertPlainTextToHtmlCard } = await import('@/lib/email/email-renderer');
+    hydrated = convertPlainTextToHtmlCard({
+      title: `${moduleName} Notification Preview`,
+      text: hydrated
+    });
+  }
+
   return hydrated;
 }
 

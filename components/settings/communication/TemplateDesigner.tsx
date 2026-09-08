@@ -88,7 +88,23 @@ const EVENTS = [
   "Course Completed",
   "Article Published"
 ];
-const MERGE_TAGS = ["{{ticket_no}}", "{{ticket_title}}", "{{task_name}}", "{{workspace_name}}", "{{assigned_user}}", "{{creator_name}}", "{{status}}", "{{priority}}", "{{due_date}}", "{{link}}"];
+const MERGE_TAGS = [
+  "{{ticket_no}}",
+  "{{ticket_title}}",
+  "{{task_name}}",
+  "{{workspace_name}}",
+  "{{workspace_code}}",
+  "{{req_code}}",
+  "{{req_name}}",
+  "{{assigned_user}}",
+  "{{creator_name}}",
+  "{{status}}",
+  "{{priority}}",
+  "{{due_date}}",
+  "{{role}}",
+  "{{remarks}}",
+  "{{link}}"
+];
 
 export default function TemplateDesigner() {
   const [templates, setTemplates] = useState<any[]>([]);
@@ -127,17 +143,29 @@ export default function TemplateDesigner() {
 
   const handleAddTemplate = () => {
     const newId = "temp_" + Date.now();
+    const standardStarter = `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background-color: #ffffff;">
+  <h2 style="color: #1e293b; margin-top: 0; margin-bottom: 16px; font-size: 20px; font-weight: 700;">Task Updated</h2>
+  <div style="background-color: #f8fafc; border-left: 4px solid #2563eb; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
+    <p style="margin: 6px 0; font-size: 14px; color: #334155;"><strong style="color: #0f172a;">Task:</strong> {{task_name}}</p>
+    <p style="margin: 6px 0; font-size: 14px; color: #334155;"><strong style="color: #0f172a;">Status:</strong> {{status}}</p>
+    <p style="margin: 6px 0; font-size: 14px; color: #334155;"><strong style="color: #0f172a;">Updated By:</strong> {{creator_name}}</p>
+  </div>
+  <div style="margin-top: 24px;">
+    <a href="{{link}}" style="display: inline-block; background-color: #2563eb; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 14px;">View Task</a>
+  </div>
+</div>`;
+
     setTemplates(prev => [
       {
         id: newId,
         module: "Task",
-        event: "Assigned",
-        template_name: "Default Task Assignment",
-        subject: "New Task Assigned: {{task_name}}",
-        html_body: `<div style="font-family: sans-serif; padding: 20px;">\n  <h2>You have a new task</h2>\n  <p><strong>Task:</strong> {{task_name}}</p>\n  <p><strong>Status:</strong> {{status}}</p>\n  <p><strong>Assigned By:</strong> {{creator_name}}</p>\n  <br/>\n  <a href="{{link}}" style="background: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Task</a>\n</div>`,
+        event: "Updated",
+        template_name: "Task Updated",
+        subject: "Task Updated: {{task_name}}",
+        html_body: standardStarter,
         is_active: true,
         is_new: true,
-        recipient_types: []
+        recipient_types: ["Assigned User", "Creator"]
       },
       ...prev
     ]);

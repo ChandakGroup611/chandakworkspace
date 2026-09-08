@@ -37,22 +37,17 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
 
     if (matchedRules.length === 0) return;
 
-    // 2. Fetch the active template for this event
+    // 2. Fetch the active template for this event (or fallback to dynamic engine)
     const { data: templates } = await supabaseAdmin
       .from("email_templates")
       .select("*")
-      .eq("module", moduleName)
-      .eq("event", eventName)
+      .ilike("module", moduleName)
+      .ilike("event", eventName)
       .eq("is_active", true)
       .order("created_at", { ascending: false })
       .limit(1);
 
-    if (!templates || templates.length === 0) {
-      console.warn(`[NotificationEngine] No active template found for ${moduleName} - ${eventName}`);
-      return;
-    }
-    
-    const template = templates[0];
+    const template = templates && templates.length > 0 ? templates[0] : null;
 
     // 3. Resolve all recipients across all matched rules
     const recipientUserIds = new Set<string>();
@@ -91,9 +86,10 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
 
     // 5. Hydrate Templates and Queue per Recipient with Secure Direct Activity Links
     const { createDirectActivityUrl, transformEmailContentLinks } = await import('@/lib/auth/direct-access');
+    const { buildEmailCardHtml, inferActionText } = await import('@/lib/email/email-renderer');
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://chandakgroup.tech";
 
-    let autoHydratedPayload = await autoHydratePayload(payload);
+    let autoHydratedPayload = await autoHydratePayload(payload, moduleName);
 
     const validUsers = users.filter(u => u.email && u.email.trim());
     if (validUsers.length === 0) return;
@@ -113,17 +109,42 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
         creator_name: finalCreatorName
       };
 
-      const subject = template.subject ? hydrateTemplate(template.subject, userHydratedPayload) : "System Notification";
-      let htmlBody = template.html_body ? hydrateTemplate(template.html_body, userHydratedPayload) : null;
-      let bodyTemplate = template.body_template ? hydrateTemplate(template.body_template, userHydratedPayload) : null;
+      let subject = `${moduleName} ${eventName}`;
+      if (template?.subject) {
+        subject = hydrateTemplate(template.subject, userHydratedPayload);
+      } else {
+        const itemLabel = userHydratedPayload.task_name || 
+                          userHydratedPayload.ticket_title || 
+                          userHydratedPayload.workspace_name || 
+                          userHydratedPayload.req_name || 
+                          userHydratedPayload.ticket_no || 
+                          moduleName;
+        subject = `${moduleName} ${eventName}: ${itemLabel}`;
+      }
 
-      let finalBody = htmlBody || bodyTemplate || `Notification: ${moduleName} - ${eventName}\n\nLink: ${userDirectLink}`;
-      finalBody = transformEmailContentLinks(finalBody, user.id, user.email, baseUrl);
+      let finalHtmlBody: string;
+      if (template?.html_body && template.html_body.trim()) {
+        finalHtmlBody = hydrateTemplate(template.html_body, userHydratedPayload);
+      } else {
+        // Dynamically build professional HTML card with all available payload fields
+        const cardTitle = `${moduleName} ${eventName}`;
+        const actionText = inferActionText(cardTitle, userDirectLink);
+        
+        finalHtmlBody = buildEmailCardHtml({
+          title: cardTitle,
+          details: userHydratedPayload,
+          actionUrl: userDirectLink,
+          actionText
+        });
+      }
+
+      finalHtmlBody = transformEmailContentLinks(finalHtmlBody, user.id, user.email, baseUrl);
 
       return {
         recipient_email: user.email,
         subject: subject,
-        body_template: finalBody,
+        body_template: finalHtmlBody,
+        html_body: finalHtmlBody,
         is_sent: false
       };
     });
@@ -157,12 +178,12 @@ function triggerBackgroundProcessor() {
 // ---------------------------------------------------------------------------
 // HYDRATION ENGINE
 // ---------------------------------------------------------------------------
-async function autoHydratePayload(payload: any) {
+async function autoHydratePayload(payload: any, moduleName?: string) {
   const hydrated = { ...payload };
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
   // Task-specific auto-enrichment
-  if (payload.entity_id && (!hydrated.task_name || !hydrated.ticket_no)) {
+  if (moduleName === 'Task' && payload.entity_id && (!hydrated.task_name || !hydrated.ticket_no)) {
     try {
       const { data: task } = await supabaseAdmin
         .from('tasks')
@@ -201,6 +222,67 @@ async function autoHydratePayload(payload: any) {
       }
     } catch (e) {
       console.error('[NotificationEngine] Task auto-enrichment failed', e);
+    }
+  }
+
+  // Workspace-specific auto-enrichment
+  if (moduleName === 'Workspace' && payload.entity_id && (!hydrated.workspace_name || !hydrated.workspace_code)) {
+    try {
+      const { data: ws } = await supabaseAdmin
+        .from('workspaces')
+        .select('workspace_name, workspace_code, owner_id')
+        .eq('id', payload.entity_id)
+        .maybeSingle();
+      if (ws) {
+        if (!hydrated.workspace_name) hydrated.workspace_name = ws.workspace_name;
+        if (!hydrated.workspace_code) hydrated.workspace_code = ws.workspace_code;
+        if (!hydrated.owner_id) hydrated.owner_id = ws.owner_id;
+      }
+    } catch (e) {
+      console.error('[NotificationEngine] Workspace auto-enrichment failed', e);
+    }
+  }
+
+  // Ticket-specific auto-enrichment
+  if (moduleName === 'Ticket' && payload.entity_id && (!hydrated.ticket_no || !hydrated.ticket_title)) {
+    try {
+      const { data: ticket } = await supabaseAdmin
+        .from('tickets')
+        .select('code, title, priority_id, status_id, category_id, assignee_id, requester_id')
+        .eq('id', payload.entity_id)
+        .maybeSingle();
+      if (ticket) {
+        if (!hydrated.ticket_no) hydrated.ticket_no = ticket.code;
+        if (!hydrated.ticket_title) hydrated.ticket_title = ticket.title;
+        if (!hydrated.priority) hydrated.priority = ticket.priority_id;
+        if (!hydrated.status) hydrated.status = ticket.status_id;
+        if (!hydrated.category) hydrated.category = ticket.category_id;
+        if (!hydrated.assigned_to && ticket.assignee_id) hydrated.assigned_to = ticket.assignee_id;
+        if (!hydrated.requester_id && ticket.requester_id) hydrated.requester_id = ticket.requester_id;
+      }
+    } catch (e) {
+      console.error('[NotificationEngine] Ticket auto-enrichment failed', e);
+    }
+  }
+
+  // Requirement-specific auto-enrichment
+  if (moduleName === 'Requirement' && payload.entity_id && (!hydrated.req_code || !hydrated.req_name)) {
+    try {
+      const { data: req } = await supabaseAdmin
+        .from('requirements')
+        .select('code, title, approval_status, owner_id, requester_id, target_release_date')
+        .eq('id', payload.entity_id)
+        .maybeSingle();
+      if (req) {
+        if (!hydrated.req_code) hydrated.req_code = req.code;
+        if (!hydrated.req_name) hydrated.req_name = req.title;
+        if (!hydrated.approval_status) hydrated.approval_status = req.approval_status;
+        if (!hydrated.assigned_to && req.owner_id) hydrated.assigned_to = req.owner_id;
+        if (!hydrated.requester_id && req.requester_id) hydrated.requester_id = req.requester_id;
+        if (!hydrated.due_date && req.target_release_date) hydrated.due_date = req.target_release_date;
+      }
+    } catch (e) {
+      console.error('[NotificationEngine] Requirement auto-enrichment failed', e);
     }
   }
 

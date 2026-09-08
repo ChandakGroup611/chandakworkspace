@@ -61,7 +61,8 @@ import {
   ClipboardCheck,
   FileCheck,
   Sparkles,
-  TrendingUp
+  TrendingUp,
+  Star
 } from "lucide-react";
 import { AppTable, AppTableHeader, AppTableBody, AppTableRow, AppTableHead, AppTableCell } from "@/components/ui/AppTable";
 
@@ -160,6 +161,14 @@ export default function AMCPage() {
   const [formInfosecApprovedDate, setFormInfosecApprovedDate] = useState("");
   const [formDpaSigned, setFormDpaSigned] = useState(false);
   const [formDpaSignedDate, setFormDpaSignedDate] = useState("");
+
+  // Enterprise Amortization, Risk & Vendor Evaluation States
+  const [formVendorRating, setFormVendorRating] = useState("5.0");
+  const [formVendorEvaluationNotes, setFormVendorEvaluationNotes] = useState("");
+  const [formRiskLevel, setFormRiskLevel] = useState("Low");
+  const [formSlaAdherencePercent, setFormSlaAdherencePercent] = useState("100.0");
+  const [tableRiskFilter, setTableRiskFilter] = useState<'all' | 'active' | 'expiring30' | 'expiring60' | 'critical_high' | 'pending'>('all');
+
 
   const [revealedLicenseKeys, setRevealedLicenseKeys] = useState<Record<string, boolean>>({});
   const [revealLicenseModal, setRevealLicenseModal] = useState<{ show: boolean, lineItemId: string, amcId: string } | null>(null);
@@ -721,6 +730,10 @@ export default function AMCPage() {
     
     setFormMsmeNumber("");
     setFormSpecifications("");
+    setFormVendorRating("5.0");
+    setFormVendorEvaluationNotes("");
+    setFormRiskLevel("Low");
+    setFormSlaAdherencePercent("100.0");
     
     setAttachments([]);
     setExistingAttachments([]);
@@ -847,6 +860,10 @@ export default function AMCPage() {
     
     setFormMsmeNumber(rec.msme_number || "");
     setFormSpecifications(rec.specifications || "");
+    setFormVendorRating(rec.vendor_rating ? rec.vendor_rating.toString() : "5.0");
+    setFormVendorEvaluationNotes(rec.vendor_evaluation_notes || "");
+    setFormRiskLevel(rec.risk_level || "Low");
+    setFormSlaAdherencePercent(rec.sla_adherence_percent ? rec.sla_adherence_percent.toString() : "100.0");
     setFormAdditionalApi(rec.additional_api || "");
     setFormAdditionalApiAmount(rec.additional_api_amount?.toString() || "");
     setLineItemAttachments({});
@@ -1139,6 +1156,17 @@ export default function AMCPage() {
       dpa_signed: formDpaSigned,
       dpa_signed_date: formDpaSignedDate || null,
       
+      // Enterprise additions
+      vendor_rating: parseFloat(formVendorRating) || 5.0,
+      vendor_evaluation_notes: formVendorEvaluationNotes || null,
+      monthly_amortized_cost: (finalCostValue && finalCostValue > 0)
+        ? (formPurchaseDate && formExpiryDate
+            ? parseFloat((finalCostValue / Math.max(1, (new Date(formExpiryDate).getFullYear() - new Date(formPurchaseDate).getFullYear()) * 12 + (new Date(formExpiryDate).getMonth() - new Date(formPurchaseDate).getMonth()))).toFixed(2))
+            : parseFloat((finalCostValue / 12).toFixed(2)))
+        : null,
+      sla_adherence_percent: parseFloat(formSlaAdherencePercent) || 100.0,
+      risk_level: formRiskLevel || 'Low',
+      
       // JSON fields
       solution_line_items: finalLineItems,
       vendor_contact_json: {
@@ -1393,11 +1421,35 @@ export default function AMCPage() {
     }, 350);
   };
 
-  const filteredDataset = records.filter(r => 
-    r.software_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    r.vendor_master?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    r.solution_name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredDataset = records.filter(r => {
+    const query = searchQuery.toLowerCase();
+    const matchesSearch = 
+      !query ||
+      r.software_name?.toLowerCase().includes(query) ||
+      r.vendor_master?.name?.toLowerCase().includes(query) ||
+      r.solution_name?.toLowerCase().includes(query);
+    
+    if (!matchesSearch) return false;
+
+    if (tableRiskFilter === 'all') return true;
+    if (tableRiskFilter === 'active') return r.status === 'Active' && r.approval_status !== 'Pending Approval';
+    if (tableRiskFilter === 'pending') return r.approval_status === 'Pending Approval';
+
+    const today = new Date();
+    let diffDays = 999;
+    if (r.expiry_date) {
+      const exp = new Date(r.expiry_date);
+      diffDays = Math.ceil((exp.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    }
+
+    if (tableRiskFilter === 'expiring30') return diffDays >= 0 && diffDays <= 30;
+    if (tableRiskFilter === 'expiring60') return diffDays >= 0 && diffDays <= 60;
+    if (tableRiskFilter === 'critical_high') {
+      return diffDays <= 30 || r.status === 'Expired' || r.risk_level === 'Critical' || r.risk_level === 'High';
+    }
+
+    return true;
+  });
 
   if (!mounted || permsLoading) {
     return (
@@ -1499,116 +1551,186 @@ export default function AMCPage() {
         </div>
       ) : (
         <AppCard className="flex-1 flex flex-col min-h-0 overflow-hidden">
-          <div className="p-4 border-b border-border flex items-center justify-between">
-            <div className="flex items-center gap-2">
+          <div className="p-4 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-surface">
+            <div className="flex items-center gap-3 flex-wrap">
               <AppInput 
                 placeholder="Search software, provider, solution..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-80"
+                className="w-72 sm:w-80 h-9 text-xs"
               />
+              
+              {/* Quick Filter Pills */}
+              <div className="flex rounded-xl border border-border p-0.5 bg-elevated/70 text-xs flex-wrap">
+                {[
+                  { key: 'all', label: 'All Contracts' },
+                  { key: 'active', label: 'Active' },
+                  { key: 'expiring30', label: '< 30d Expiry' },
+                  { key: 'expiring60', label: '< 60d Expiry' },
+                  { key: 'critical_high', label: 'High / Critical Risk' },
+                  { key: 'pending', label: 'Pending Approval' }
+                ].map(item => (
+                  <AppButton
+                    key={item.key}
+                    type="button"
+                    variant={tableRiskFilter === item.key ? 'primary' : 'ghost'}
+                    size="sm"
+                    onClick={() => setTableRiskFilter(item.key as any)}
+                    className="h-7 px-2.5 text-[11px] font-semibold rounded-lg"
+                  >
+                    {item.label}
+                  </AppButton>
+                ))}
+              </div>
             </div>
-            <div className="text-xs text-muted">
-              {filteredDataset.length} records found
+
+            <div className="text-xs text-muted font-medium">
+              <span className="font-bold text-foreground">{filteredDataset.length}</span> of {records.length} subscriptions
             </div>
           </div>
           
           <div className="flex-1 overflow-auto">
-            <AppTable className="w-full text-left border-collapse text-sm whitespace-nowrap">
+            <AppTable className="w-full text-left border-collapse text-xs whitespace-nowrap">
               <AppTableHeader className={`sticky top-0 z-10 bg-surface`}>
                 <AppTableRow>
-                  <AppTableHead className="p-3 font-medium text-muted border-b border-border">Software Name</AppTableHead>
-                  <AppTableHead className="p-3 font-medium text-muted border-b border-border">Solution Name</AppTableHead>
-                  <AppTableHead className="p-3 font-medium text-muted border-b border-border">Vendor</AppTableHead>
-                  <AppTableHead className="p-3 font-medium text-muted border-b border-border">Type</AppTableHead>
-                  <AppTableHead className="p-3 font-medium text-muted border-b border-border">Cost / Spend</AppTableHead>
-                  <AppTableHead className="p-3 font-medium text-muted border-b border-border">Owner</AppTableHead>
-                  <AppTableHead className="p-3 font-medium text-muted border-b border-border">Expiry Date</AppTableHead>
-                  <AppTableHead className="p-3 font-medium text-muted border-b border-border">Approval</AppTableHead>
-                  <AppTableHead className="p-3 font-medium text-muted border-b border-border">Status</AppTableHead>
-                  <AppTableHead className="p-3 font-medium text-muted border-b border-border text-right">Actions</AppTableHead>
+                  <AppTableHead className="p-3 font-semibold text-muted border-b border-border">Software Name & Risk</AppTableHead>
+                  <AppTableHead className="p-3 font-semibold text-muted border-b border-border">Solution Breakdown</AppTableHead>
+                  <AppTableHead className="p-3 font-semibold text-muted border-b border-border">Vendor & Rating</AppTableHead>
+                  <AppTableHead className="p-3 font-semibold text-muted border-b border-border">Type</AppTableHead>
+                  <AppTableHead className="p-3 font-semibold text-muted border-b border-border">Contract Value</AppTableHead>
+                  <AppTableHead className="p-3 font-semibold text-muted border-b border-border">Monthly Burn</AppTableHead>
+                  <AppTableHead className="p-3 font-semibold text-muted border-b border-border">Owner</AppTableHead>
+                  <AppTableHead className="p-3 font-semibold text-muted border-b border-border">Expiry Date</AppTableHead>
+                  <AppTableHead className="p-3 font-semibold text-muted border-b border-border">Approval</AppTableHead>
+                  <AppTableHead className="p-3 font-semibold text-muted border-b border-border">Status</AppTableHead>
+                  <AppTableHead className="p-3 font-semibold text-muted border-b border-border text-right">Actions</AppTableHead>
                 </AppTableRow>
               </AppTableHeader>
               <AppTableBody>
                 {filteredDataset.length === 0 ? (
                   <AppTableRow>
-                    <AppTableCell colSpan={8} className="p-8 text-center text-muted">
-                      No subscriptions found.
+                    <AppTableCell colSpan={11} className="p-10 text-center text-muted italic">
+                      No subscriptions found matching filter criteria.
                     </AppTableCell>
                   </AppTableRow>
                 ) : (
-                  filteredDataset.map((rec) => (
-                    <AppTableRow key={rec.id} className={`border-b border-border transition-colors hover:bg-elevated`}>
-                      <AppTableCell className="p-3 font-medium">
-                        <div className="space-y-1">
-                          <div className="font-semibold text-foreground">{rec.software_name}</div>
-                          {rec.implementation_status && (
-                            <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-theme-btn-primary/10 text-theme-icon border border-theme-btn-primary/20">
-                              <Sparkles className="h-2.5 w-2.5" />
-                              <span>{rec.implementation_status}</span>
+                  filteredDataset.map((rec) => {
+                    const today = new Date();
+                    let diffDays = 999;
+                    if (rec.expiry_date) {
+                      const exp = new Date(rec.expiry_date);
+                      diffDays = Math.ceil((exp.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                    }
+                    let dynamicRisk = rec.risk_level || 'Low';
+                    if (diffDays < 0 || rec.status === 'Expired') dynamicRisk = 'Critical';
+                    else if (diffDays <= 30) dynamicRisk = 'High';
+                    else if (diffDays <= 90) dynamicRisk = 'Medium';
+
+                    const costVal = parseFloat(rec.cost) || 0;
+                    const monthlyBurn = rec.monthly_amortized_cost ? parseFloat(rec.monthly_amortized_cost) : (costVal > 0 ? (costVal / 12) : 0);
+
+                    return (
+                      <AppTableRow key={rec.id} className="border-b border-border/60 transition-colors hover:bg-elevated/70">
+                        <AppTableCell className="p-3 font-medium">
+                          <div className="space-y-1">
+                            <div className="font-bold text-foreground flex items-center gap-1.5">
+                              <span>{rec.software_name}</span>
+                              <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-bold border ${
+                                dynamicRisk === 'Critical' ? 'bg-rose-500/15 text-rose-400 border-rose-500/30' :
+                                dynamicRisk === 'High' ? 'bg-amber-500/15 text-amber-400 border-amber-500/30' :
+                                dynamicRisk === 'Medium' ? 'bg-blue-500/15 text-blue-400 border-blue-500/30' :
+                                'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                              }`}>
+                                {dynamicRisk}
+                              </span>
                             </div>
-                          )}
-                        </div>
-                      </AppTableCell>
-                      <AppTableCell className="p-3">{rec.solution_name || '-'}</AppTableCell>
-                      <AppTableCell className="p-3">{rec.vendor_master?.name || '-'}</AppTableCell>
-                      <AppTableCell className="p-3">
-                        <AppBadge variant={rec.contract_type === 'AMC' ? 'accent' : rec.contract_type === 'Subscription' ? 'warning' : 'neutral'}>
-                          {rec.contract_type}
-                        </AppBadge>
-                      </AppTableCell>
-                      <AppTableCell className="p-3">
-                        <div className="font-mono font-bold text-foreground">
-                          ₹ {rec.cost ? Number(rec.cost).toLocaleString('en-IN', { maximumFractionDigits: 2 }) : '0.00'}
-                        </div>
-                      </AppTableCell>
-                      <AppTableCell className="p-3">
-                        <div className="flex items-center gap-2">
-                          <User className="h-3 w-3 text-muted" />
-                          <span>{rec.user_master?.full_name || 'Unassigned'}</span>
-                        </div>
-                      </AppTableCell>
-                      <AppTableCell className="p-3">
-                        {rec.expiry_date ? (
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-3 w-3 text-muted" />
-                            <span>{new Date(rec.expiry_date).toLocaleDateString()}</span>
+                            {rec.implementation_status && (
+                              <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-theme-btn-primary/10 text-theme-icon border border-theme-btn-primary/20">
+                                <Sparkles className="h-2.5 w-2.5" />
+                                <span>{rec.implementation_status}</span>
+                              </div>
+                            )}
                           </div>
-                        ) : '-'}
-                      </AppTableCell>
-                      <AppTableCell className="p-3">
-                        <AppBadge variant={rec.approval_status === 'Active' ? 'success' : rec.approval_status === 'Pending Approval' ? 'warning' : 'neutral'}>{rec.approval_status || 'Pending Approval'}</AppBadge>
-                      </AppTableCell>
-                      <AppTableCell className="p-3">
-                        <AppBadge variant={rec.status === 'Active' ? 'success' : 'danger'}>{rec.status}</AppBadge>
-                      </AppTableCell>
-                      <AppTableCell className="p-3 text-right space-x-2">
-                        {rec.approval_status === 'Pending Approval' && hasPermission("SUPER_ADMIN") && (
-                          <>
-                            <AppButton variant="ghost" size="sm" onClick={() => handleApprove(rec.id, 'Active')} className="text-success hover:text-success hover:bg-success/10">
-                              Approve
-                            </AppButton>
-                            <AppButton variant="ghost" size="sm" onClick={() => handleApprove(rec.id, 'Rejected')} className="text-danger hover:text-danger hover:bg-danger/10">
-                              Reject
-                            </AppButton>
-                          </>
-                        )}
-                        <AppButton variant="ghost" size="sm" onClick={() => setSelectedHistoryId(rec.id)} title="View Audit History">
-                          <Clock className="h-3.5 w-3.5 text-theme-icon" />
-                        </AppButton>
-                        {hasPermission("AMC_EDIT") && (
-                          <AppButton variant="ghost" size="sm" onClick={() => openEditModal(rec)} title="Edit Record & Log Transactions">
-                            <Edit className="h-3.5 w-3.5" />
+                        </AppTableCell>
+                        <AppTableCell className="p-3 text-muted">{rec.solution_name || '-'}</AppTableCell>
+                        <AppTableCell className="p-3">
+                          <div className="space-y-0.5">
+                            <div className="font-semibold text-foreground">{rec.vendor_master?.name || '-'}</div>
+                            <div className="flex items-center gap-1 text-[10px] text-amber-400 font-semibold">
+                              <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                              <span>{rec.vendor_rating || "5.0"}</span>
+                            </div>
+                          </div>
+                        </AppTableCell>
+                        <AppTableCell className="p-3">
+                          <AppBadge variant={rec.contract_type === 'AMC' ? 'accent' : rec.contract_type === 'Subscription' ? 'warning' : 'neutral'}>
+                            {rec.contract_type}
+                          </AppBadge>
+                        </AppTableCell>
+                        <AppTableCell className="p-3">
+                          <div className="font-mono font-bold text-foreground">
+                            ₹ {rec.cost ? Number(rec.cost).toLocaleString('en-IN', { maximumFractionDigits: 2 }) : '0.00'}
+                          </div>
+                        </AppTableCell>
+                        <AppTableCell className="p-3">
+                          <div className="font-mono font-semibold text-emerald-500">
+                            ₹ {monthlyBurn.toLocaleString('en-IN', { maximumFractionDigits: 0 })}<span className="text-[10px] text-muted font-normal">/mo</span>
+                          </div>
+                        </AppTableCell>
+                        <AppTableCell className="p-3">
+                          <div className="flex items-center gap-1.5 text-muted">
+                            <User className="h-3 w-3" />
+                            <span>{rec.user_master?.full_name || 'Unassigned'}</span>
+                          </div>
+                        </AppTableCell>
+                        <AppTableCell className="p-3">
+                          {rec.expiry_date ? (
+                            <div className="flex items-center gap-1.5">
+                              <Calendar className="h-3 w-3 text-muted" />
+                              <span className={diffDays <= 30 ? 'text-rose-400 font-bold' : 'text-muted'}>
+                                {new Date(rec.expiry_date).toLocaleDateString()}
+                              </span>
+                            </div>
+                          ) : '-'}
+                        </AppTableCell>
+                        <AppTableCell className="p-3">
+                          <AppBadge variant={rec.approval_status === 'Active' ? 'success' : rec.approval_status === 'Pending Approval' ? 'warning' : 'neutral'}>
+                            {rec.approval_status || 'Pending Approval'}
+                          </AppBadge>
+                        </AppTableCell>
+                        <AppTableCell className="p-3">
+                          <AppBadge variant={rec.status === 'Active' ? 'success' : 'danger'}>
+                            {rec.status}
+                          </AppBadge>
+                        </AppTableCell>
+                        <AppTableCell className="p-3 text-right space-x-1.5">
+                          {rec.approval_status === 'Pending Approval' && hasPermission("SUPER_ADMIN") && (
+                            <>
+                              <AppButton variant="ghost" size="sm" onClick={() => handleApprove(rec.id, 'Active')} className="text-success hover:text-success hover:bg-success/10 h-7 text-xs">
+                                Approve
+                              </AppButton>
+                              <AppButton variant="ghost" size="sm" onClick={() => handleApprove(rec.id, 'Rejected')} className="text-danger hover:text-danger hover:bg-danger/10 h-7 text-xs">
+                                Reject
+                              </AppButton>
+                            </>
+                          )}
+                          <AppButton variant="ghost" size="sm" onClick={() => setSelectedHistoryId(rec.id)} title="View Audit History" className="h-7 w-7 p-0">
+                            <Clock className="h-3.5 w-3.5 text-theme-icon" />
                           </AppButton>
-                        )}
-                        {hasPermission("AMC_DELETE") && (
-                          <AppButton variant="ghost" size="sm" onClick={() => handleDelete(rec.id)} className="text-danger hover:text-danger hover:bg-danger/10">
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </AppButton>
-                        )}
-                      </AppTableCell>
-                    </AppTableRow>
-                  ))
+                          {hasPermission("AMC_EDIT") && (
+                            <AppButton variant="ghost" size="sm" onClick={() => openEditModal(rec)} title="Edit Record & Dossier" className="h-7 w-7 p-0">
+                              <Edit className="h-3.5 w-3.5" />
+                            </AppButton>
+                          )}
+                          {hasPermission("AMC_DELETE") && (
+                            <AppButton variant="ghost" size="sm" onClick={() => handleDelete(rec.id)} className="text-danger hover:text-danger hover:bg-danger/10 h-7 w-7 p-0" title="Delete">
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </AppButton>
+                          )}
+                        </AppTableCell>
+                      </AppTableRow>
+                    );
+                  })
                 )}
               </AppTableBody>
             </AppTable>
@@ -2162,6 +2284,77 @@ export default function AMCPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Vendor Performance & SLA Evaluation Scorecard */}
+                <div className="p-6 rounded-2xl border bg-surface border-border shadow-[var(--shadow-ambient)] space-y-4">
+                  <h4 className="text-base font-bold pb-4 border-b border-border flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="bg-theme-btn-primary text-white h-5 w-5 rounded flex items-center justify-center text-xs">3</span>
+                      <span>Vendor Performance & Evaluation Scorecard</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                      <Star className="h-3.5 w-3.5 fill-amber-400" />
+                      <span>{formVendorRating} / 5.0 Rating</span>
+                    </div>
+                  </h4>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="space-y-2">
+                      <label className="theme-label">Vendor Rating Score</label>
+                      <select 
+                        value={formVendorRating} 
+                        onChange={(e) => setFormVendorRating(e.target.value)}
+                        className="w-full h-11 px-4 rounded-xl text-sm transition-all outline-none bg-elevated text-foreground border border-border font-bold"
+                      >
+                        <option value="5.0">⭐⭐⭐⭐⭐ 5.0 - Exceptional Performance</option>
+                        <option value="4.5">⭐⭐⭐⭐½ 4.5 - Exceeds Expectations</option>
+                        <option value="4.0">⭐⭐⭐⭐ 4.0 - Meets SLA Criteria</option>
+                        <option value="3.5">⭐⭐⭐½ 3.5 - Satisfactory</option>
+                        <option value="3.0">⭐⭐⭐ 3.0 - Requires Monitoring</option>
+                        <option value="2.0">⭐⭐ 2.0 - Substandard Delivery</option>
+                        <option value="1.0">⭐ 1.0 - Critical Breaches / Escalate</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="theme-label">Contract Risk Assessment</label>
+                      <select
+                        value={formRiskLevel}
+                        onChange={(e) => setFormRiskLevel(e.target.value)}
+                        className="w-full h-11 px-4 rounded-xl text-sm transition-all outline-none bg-elevated text-foreground border border-border font-bold"
+                      >
+                        <option value="Low">🟢 Low Risk (Stable Operations)</option>
+                        <option value="Medium">🟡 Medium Risk (Monitoring Needed)</option>
+                        <option value="High">🟠 High Risk (Near Expiry / SLA Issues)</option>
+                        <option value="Critical">🔴 Critical (Immediate Action Required)</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="theme-label">SLA Delivery Adherence (%)</label>
+                      <AppInput 
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="100"
+                        value={formSlaAdherencePercent}
+                        onChange={(e) => setFormSlaAdherencePercent(e.target.value)}
+                        placeholder="100.0"
+                        className="h-11 font-mono font-bold text-emerald-500"
+                      />
+                    </div>
+
+                    <div className="space-y-2 lg:col-span-3">
+                      <label className="theme-label">Procurement & Performance Assessment Notes</label>
+                      <AppInput 
+                        value={formVendorEvaluationNotes} 
+                        onChange={(e) => setFormVendorEvaluationNotes(e.target.value)} 
+                        placeholder="e.g., Annual support responsiveness has been strong. Recommended for automatic renewal next cycle."
+                        className="h-11"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -2364,6 +2557,10 @@ export default function AMCPage() {
                     <div className="space-y-2">
                       <label className="theme-label">Resolution TAT (Turnaround Time)</label>
                       <AppInput value={formSlaTat} onChange={(e) => setFormSlaTat(e.target.value)} placeholder="e.g., 4 Hours for P1, 24 Hours for P2" className="h-11" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="theme-label">SLA Adherence Target (%)</label>
+                      <AppInput type="number" step="0.1" min="0" max="100" value={formSlaAdherencePercent} onChange={(e) => setFormSlaAdherencePercent(e.target.value)} placeholder="e.g., 99.5" className="h-11 font-mono font-bold" />
                     </div>
                   </div>
                 </div>
