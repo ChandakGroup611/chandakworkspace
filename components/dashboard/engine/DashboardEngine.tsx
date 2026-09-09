@@ -216,73 +216,13 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
 
   return (
     <div id="dashboard-export-area" className="w-full relative animate-in fade-in duration-700 bg-background/50 p-1 sm:p-2 rounded-xl">
-      {/* Top Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6">
-        <div>
-          <h1 className="text-base sm:text-2xl font-black tracking-tight text-foreground">Workspace Overview</h1>
-          <p className="hidden sm:block text-xs text-muted-foreground mt-0.5">Live operational command center with department hierarchy & SLA governance</p>
-        </div>
-
-        <div className="flex items-center gap-2 justify-between sm:justify-end w-full sm:w-auto">
-          {/* Preset Selector Dropdown */}
-          <div className="relative flex-1 sm:flex-initial" ref={presetRef}>
-            <AppButton
-              variant="outline"
-              size="sm"
-              leftIcon={<Layers className="h-3.5 w-3.5" />}
-              rightIcon={<ChevronDown className="h-3 w-3 opacity-60" />}
-              onClick={() => setPresetDropdownOpen(!presetDropdownOpen)}
-              className="text-xs theme-card-structural w-full sm:w-auto justify-between"
-            >
-              Preset: <strong className="ml-1 text-foreground truncate">{DASHBOARD_PRESETS[activePreset]?.name || "Custom"}</strong>
-            </AppButton>
-
-            {presetDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-72 rounded-xl shadow-2xl theme-card-structural border border-border/80 z-50 p-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-3 py-1.5 border-b border-border/40">
-                  Switch Dashboard Layout Preset
-                </div>
-                <div className="py-1 space-y-0.5">
-                  {Object.entries(DASHBOARD_PRESETS).map(([key, preset]) => (
-                    <button
-                      key={key}
-                      type="button"
-                      onClick={() => {
-                        applyPreset(key);
-                        setPresetDropdownOpen(false);
-                      }}
-                      className={cn(
-                        "w-full text-left px-3 py-2 rounded-lg text-xs transition-colors flex flex-col",
-                        activePreset === key ? "bg-primary/15 text-primary font-bold" : "hover:bg-surface text-foreground"
-                      )}
-                    >
-                      <span className="font-semibold">{preset.name}</span>
-                      <span className="text-[10px] text-muted-foreground font-normal line-clamp-1">{preset.description}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Customize Button */}
-          <AppButton 
-            variant="outline" 
-            size="sm" 
-            leftIcon={<Settings2 className="h-4 w-4" />}
-            onClick={() => setIsCustomizeOpen(true)}
-            className="theme-card-structural hover:bg-background/80 whitespace-nowrap text-xs shrink-0"
-          >
-            Customize
-          </AppButton>
-        </div>
-      </div>
-
-      {/* Top Section KPI Quick Navigation & Accordion Pill Strip */}
-      <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-2 mb-4 flex-nowrap">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mr-1 shrink-0">
-          KPI Sections:
-        </span>
+      {/* KPI Sections Toolbar & Controls (Unwanted duplicate Workspace Overview title removed) */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-1 mb-4">
+        {/* Top Section KPI Quick Navigation & Accordion Pill Strip */}
+        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none flex-nowrap shrink-0 py-0.5">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mr-1 shrink-0">
+            KPI Sections:
+          </span>
 
         {SECTIONS.map(s => {
           const isCollapsed = !!collapsedSections[s.id];
@@ -325,13 +265,67 @@ export function DashboardEngine({ metrics, kpis }: DashboardEngineProps) {
             </button>
           );
         })}
+        </div>
 
-        <div className="ml-auto shrink-0 flex items-center gap-1.5 pl-2">
+        <div className="ml-auto shrink-0 flex items-center gap-2 pl-2 flex-wrap">
+          {/* Preset Selector Dropdown */}
+          <div className="relative shrink-0" ref={presetRef}>
+            <AppButton
+              variant="outline"
+              size="sm"
+              leftIcon={<Layers className="h-3.5 w-3.5" />}
+              rightIcon={<ChevronDown className="h-3 w-3 opacity-60" />}
+              onClick={() => setPresetDropdownOpen(!presetDropdownOpen)}
+              className="text-xs theme-card-structural whitespace-nowrap h-7.5 px-2.5"
+            >
+              Preset: <strong className="ml-1 text-foreground truncate">{DASHBOARD_PRESETS[activePreset]?.name || "Custom"}</strong>
+            </AppButton>
+
+            {presetDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-72 rounded-xl shadow-2xl theme-card-structural border border-border/80 z-50 p-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-3 py-1.5 border-b border-border/40">
+                  Switch Dashboard Layout Preset
+                </div>
+                <div className="py-1 space-y-0.5">
+                  {Object.entries(DASHBOARD_PRESETS).map(([key, preset]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => {
+                        applyPreset(key);
+                        setPresetDropdownOpen(false);
+                      }}
+                      className={cn(
+                        "w-full text-left px-3 py-2 rounded-lg text-xs transition-colors flex flex-col",
+                        activePreset === key ? "bg-primary/15 text-primary font-bold" : "hover:bg-surface text-foreground"
+                      )}
+                    >
+                      <span className="font-semibold">{preset.name}</span>
+                      <span className="text-[10px] text-muted-foreground font-normal line-clamp-1">{preset.description}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Customize Button */}
+          <AppButton 
+            variant="outline" 
+            size="sm" 
+            leftIcon={<Settings2 className="h-3.5 w-3.5" />}
+            onClick={() => setIsCustomizeOpen(true)}
+            className="theme-card-structural hover:bg-background/80 whitespace-nowrap text-xs shrink-0 h-7.5 px-2.5"
+          >
+            Customize
+          </AppButton>
+
+          {/* Expand/Minimize All Sections */}
           <AppButton
             variant="ghost"
             size="sm"
             onClick={allAreCollapsed ? expandAllSections : collapseAllSections}
-            className="text-xs text-muted-foreground hover:text-foreground h-7 px-2.5 rounded-lg border border-border/40"
+            className="text-xs text-muted-foreground hover:text-foreground h-7.5 px-2.5 rounded-lg border border-border/40 whitespace-nowrap shrink-0"
           >
             {allAreCollapsed ? "Expand All Sections" : "Minimize All Sections"}
           </AppButton>

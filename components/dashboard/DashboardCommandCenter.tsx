@@ -324,18 +324,16 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
         
         {/* TOPBAR */}
         <div className="topbar">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 w-full lg:w-auto">
-            <div>
-              <div className="topbar-title text-base sm:text-lg">
-                {activeView === "portfolio" ? "My Portfolio & User Analytics" : "Enterprise Command Center"}
-              </div>
-              <div className="topbar-sub text-[11px] sm:text-xs">
-                {activeView === "portfolio" ? "User Comparison & Timeline Tracking" : "Live Operational Intelligence & SLA Governance"}
-              </div>
-            </div>
+          {/* TITLE */}
+          <div className="flex items-center gap-3 shrink-0">
+            <h1 className="topbar-title text-base sm:text-lg font-bold text-foreground tracking-tight whitespace-nowrap">
+              {activeView === "portfolio" ? "My Portfolio" : "Enterprise Command Center"}
+            </h1>
+          </div>
 
-            {/* MAIN DASHBOARD VIEW SWITCHER */}
-            <div className="flex items-center gap-1 p-1 bg-surface/80 rounded-xl border border-border/60 shadow-xs w-full sm:w-auto">
+          {/* MAIN DASHBOARD VIEW SWITCHER + NEW ITEM + LIVE BADGE (All in one unified flex group) */}
+          <div className="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap">
+            <div className="flex items-center gap-1 p-1 bg-surface/90 dark:bg-surface/50 rounded-xl border border-border/70 shadow-xs shrink-0">
               <button
                 type="button"
                 onClick={() => {
@@ -343,14 +341,14 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
                   router.replace("/?view=overview");
                 }}
                 className={cn(
-                  "flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
+                  "flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap shrink-0",
                   activeView === "overview"
                     ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs"
                     : "text-muted hover:text-foreground hover:bg-surface"
                 )}
               >
-                <LayoutDashboard className="h-3.5 w-3.5" />
-                Enterprise Overview
+                <LayoutDashboard className="h-3.5 w-3.5 shrink-0" />
+                <span className="whitespace-nowrap">Enterprise Overview</span>
               </button>
 
               <button
@@ -360,93 +358,92 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
                   router.replace("/?view=portfolio");
                 }}
                 className={cn(
-                  "flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
+                  "flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap shrink-0",
                   activeView === "portfolio"
                     ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs"
                     : "text-muted hover:text-foreground hover:bg-surface"
                 )}
               >
-                <Briefcase className="h-3.5 w-3.5" />
-                My Portfolio
+                <Briefcase className="h-3.5 w-3.5 shrink-0" />
+                <span className="whitespace-nowrap">My Portfolio</span>
                 <span className={cn(
-                  "px-1.5 py-0.2 rounded-full text-[9px] font-extrabold uppercase",
+                  "px-1.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase shrink-0",
                   activeView === "portfolio" ? "bg-white/20 text-white" : "bg-theme-btn-primary/15 text-theme-icon"
                 )}>
                   Live
                 </span>
               </button>
             </div>
-          </div>
 
-          <div className="flex items-center justify-between sm:justify-start lg:justify-end gap-2 w-full lg:w-auto flex-wrap">
-            {activeView === "overview" && (
-              <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none max-w-full pb-0.5">
-                <MultiSelectFilter
-                  options={SCOPE_OPTIONS}
-                  selectedValues={globalScopes}
-                  onChange={setGlobalScopes}
-                  placeholder="Scopes"
-                />
-
-                <MultiSelectFilter
-                  options={STATUS_OPTIONS}
-                  selectedValues={globalStatuses}
-                  onChange={setGlobalStatuses}
-                  placeholder="Statuses"
-                />
-
-                <MultiSelectFilter
-                  options={userOptions}
-                  selectedValues={globalUsers}
-                  onChange={setGlobalUsers}
-                  placeholder="Users"
-                />
-
-                <AppButton
-                  variant="outline"
-                  size="sm"
-                  onClick={handlePrintSnapshot}
-                  leftIcon={<Printer className="h-3.5 w-3.5" />}
-                  className="theme-card-structural hidden lg:inline-flex text-xs"
-                  title="Print Executive Snapshot"
-                >
-                  Snapshot
-                </AppButton>
-              </div>
-            )}
-
-            <div className="flex items-center gap-2 shrink-0 ml-auto sm:ml-0">
-              <div className="relative" ref={newMetricRef}>
-                <AppButton 
-                  variant="primary" 
-                  size="sm" 
-                  leftIcon={<Plus className="h-3.5 w-3.5" />} 
-                  onClick={() => setNewMetricOpen(!newMetricOpen)}
-                  className="text-xs font-bold shadow-xs whitespace-nowrap"
-                >
-                  New Item
-                </AppButton>
-                {newMetricOpen && (
-                  <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg theme-card-structural ring-1 ring-black ring-opacity-5 z-50">
-                    <div className="py-1" role="menu" aria-orientation="vertical">
-                      <a href="/workspaces?create=true" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">New Workspace</a>
-                      <a href="/workspaces/tasks?create=true" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">New Task</a>
-                      <a href="/tickets?create=true" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">New Ticket</a>
-                      <a href="/requirements?create=true" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">New Requirement</a>
-                      <div className="border-t border-border my-1"></div>
-                      <a href="/masters?create=true" className="block px-4 py-2 text-sm text-foreground hover:bg-theme-btn-primary/10" role="menuitem">Master Configuration</a>
-                    </div>
+            {/* + New Item Button */}
+            <div className="relative shrink-0" ref={newMetricRef}>
+              <AppButton 
+                variant="primary" 
+                size="sm" 
+                leftIcon={<Plus className="h-3.5 w-3.5 shrink-0" />} 
+                onClick={() => setNewMetricOpen(!newMetricOpen)}
+                className="text-xs font-bold shadow-xs whitespace-nowrap shrink-0"
+              >
+                New Item
+              </AppButton>
+              {newMetricOpen && (
+                <div className="absolute left-0 sm:right-0 sm:left-auto mt-2 w-48 rounded-xl shadow-xl theme-card-structural border border-border/80 z-50 py-1 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="py-1" role="menu" aria-orientation="vertical">
+                    <a href="/workspaces?create=true" className="block px-4 py-2 text-xs font-semibold text-foreground hover:bg-theme-btn-primary/10 transition-colors" role="menuitem">New Workspace</a>
+                    <a href="/workspaces/tasks?create=true" className="block px-4 py-2 text-xs font-semibold text-foreground hover:bg-theme-btn-primary/10 transition-colors" role="menuitem">New Task</a>
+                    <a href="/tickets?create=true" className="block px-4 py-2 text-xs font-semibold text-foreground hover:bg-theme-btn-primary/10 transition-colors" role="menuitem">New Ticket</a>
+                    <a href="/requirements?create=true" className="block px-4 py-2 text-xs font-semibold text-foreground hover:bg-theme-btn-primary/10 transition-colors" role="menuitem">New Requirement</a>
+                    <div className="border-t border-border/60 my-1"></div>
+                    <a href="/masters?create=true" className="block px-4 py-2 text-xs font-semibold text-foreground hover:bg-theme-btn-primary/10 transition-colors" role="menuitem">Master Configuration</a>
                   </div>
-                )}
-              </div>
-              
-              {refreshComponent && (
-                <div className="pl-1.5 border-l border-[var(--border)] shrink-0">
-                  {refreshComponent}
                 </div>
               )}
             </div>
+
+            {/* Live Indicator */}
+            {refreshComponent && (
+              <div className="shrink-0">
+                {refreshComponent}
+              </div>
+            )}
           </div>
+
+          {/* FILTERS & SNAPSHOT (Right side) */}
+          {activeView === "overview" && (
+            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-0.5 shrink-0 ml-auto flex-nowrap">
+              <MultiSelectFilter
+                options={SCOPE_OPTIONS}
+                selectedValues={globalScopes}
+                onChange={setGlobalScopes}
+                placeholder="Scopes"
+              />
+
+              <MultiSelectFilter
+                options={STATUS_OPTIONS}
+                selectedValues={globalStatuses}
+                onChange={setGlobalStatuses}
+                placeholder="Statuses"
+              />
+
+              <MultiSelectFilter
+                options={userOptions}
+                selectedValues={globalUsers}
+                onChange={setGlobalUsers}
+                placeholder="Users"
+              />
+
+              <AppButton
+                variant="outline"
+                size="sm"
+                onClick={handlePrintSnapshot}
+                leftIcon={<Printer className="h-3.5 w-3.5 shrink-0" />}
+                className="theme-card-structural hidden lg:inline-flex text-xs shrink-0"
+                title="Print Executive Snapshot"
+              >
+                Snapshot
+              </AppButton>
+            </div>
+          )}
         </div>
 
         {/* HIERARCHY SCOPE BAR (Overview Mode) */}
