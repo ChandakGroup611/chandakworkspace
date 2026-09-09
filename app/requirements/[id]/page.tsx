@@ -709,14 +709,15 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
   }
 
   const isViewMode = searchParams.get('mode') === 'view';
-  const isEditable = !isViewMode && 
-    (
-      !requirement.approval_status || 
-      requirement.approval_status === 'Draft' || 
-      requirement.approval_status === 'On Hold' || 
-      requirement.approval_status === 'Clarification' ||
-      requirement.approval_status === 'Rejected'
-    );
+  const canManageRequirements = isSuperAdmin || isAdmin || hasPermission("REQUIREMENTS_UPDATE") || hasPermission("REQUIREMENTS_MANAGE") || hasPermission("REQUIREMENTS_EDIT");
+  const isDraftOrReviewStatus = (
+    !requirement.approval_status || 
+    requirement.approval_status === 'Draft' || 
+    requirement.approval_status === 'On Hold' || 
+    requirement.approval_status === 'Clarification' ||
+    requirement.approval_status === 'Rejected'
+  );
+  const isEditable = !isViewMode && (canManageRequirements || isDraftOrReviewStatus);
   const snap = requirement.intake_snapshot || {};
 
   return (

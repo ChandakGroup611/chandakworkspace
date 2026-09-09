@@ -41,7 +41,7 @@ async function getUserContext(userId: string): Promise<{ perms: Set<string>, rol
 
   const rawPerms = permRes.data?.map(r => r.permission_code) || [];
   
-  // Expand permissions: UPDATE implies VIEW, DELETE implies VIEW, CREATE implies VIEW
+  // Expand permissions: UPDATE implies VIEW & EDIT, EDIT implies VIEW & UPDATE, DELETE implies VIEW, CREATE implies VIEW
   // NOTE: UPDATE does NOT imply CREATE, DELETE does NOT imply CREATE.
   const expanded = new Set<string>(rawPerms);
   for (const p of rawPerms) {
@@ -50,10 +50,33 @@ async function getUserContext(userId: string): Promise<{ perms: Set<string>, rol
       expanded.add(`${base}_VIEW`);
       expanded.add(`${base}_CREATE`);
       expanded.add(`${base}_UPDATE`);
+      expanded.add(`${base}_EDIT`);
       expanded.add(`${base}_DELETE`);
-    } else if (p.endsWith("_CREATE") || p.endsWith("_UPDATE") || p.endsWith("_DELETE")) {
+      if (base === "SYSTEM_MASTERS") {
+        expanded.add("MASTERS_VIEW");
+        expanded.add("MASTERS_CREATE");
+        expanded.add("MASTERS_UPDATE");
+        expanded.add("MASTERS_EDIT");
+        expanded.add("MASTERS_DELETE");
+        expanded.add("MASTERS_MANAGE");
+      }
+      if (base === "MASTERS") {
+        expanded.add("SYSTEM_MASTERS_VIEW");
+        expanded.add("SYSTEM_MASTERS_CREATE");
+        expanded.add("SYSTEM_MASTERS_UPDATE");
+        expanded.add("SYSTEM_MASTERS_EDIT");
+        expanded.add("SYSTEM_MASTERS_DELETE");
+        expanded.add("SYSTEM_MASTERS_MANAGE");
+      }
+    } else if (p.endsWith("_CREATE") || p.endsWith("_UPDATE") || p.endsWith("_EDIT") || p.endsWith("_DELETE")) {
       const base = p.slice(0, p.lastIndexOf("_"));
       expanded.add(`${base}_VIEW`);
+      if (p.endsWith("_UPDATE")) {
+        expanded.add(`${base}_EDIT`);
+      }
+      if (p.endsWith("_EDIT")) {
+        expanded.add(`${base}_UPDATE`);
+      }
     }
   }
 

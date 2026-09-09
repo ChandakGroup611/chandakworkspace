@@ -20,9 +20,31 @@ function expandPermissions(perms: string[]): string[] {
       expanded.add(`${base}_UPDATE`);
       expanded.add(`${base}_EDIT`);
       expanded.add(`${base}_DELETE`);
+      if (base === "SYSTEM_MASTERS") {
+        expanded.add("MASTERS_VIEW");
+        expanded.add("MASTERS_CREATE");
+        expanded.add("MASTERS_UPDATE");
+        expanded.add("MASTERS_EDIT");
+        expanded.add("MASTERS_DELETE");
+        expanded.add("MASTERS_MANAGE");
+      }
+      if (base === "MASTERS") {
+        expanded.add("SYSTEM_MASTERS_VIEW");
+        expanded.add("SYSTEM_MASTERS_CREATE");
+        expanded.add("SYSTEM_MASTERS_UPDATE");
+        expanded.add("SYSTEM_MASTERS_EDIT");
+        expanded.add("SYSTEM_MASTERS_DELETE");
+        expanded.add("SYSTEM_MASTERS_MANAGE");
+      }
     } else if (p.endsWith("_CREATE") || p.endsWith("_UPDATE") || p.endsWith("_EDIT") || p.endsWith("_DELETE")) {
       const base = p.slice(0, p.lastIndexOf("_"));
       expanded.add(`${base}_VIEW`);
+      if (p.endsWith("_UPDATE")) {
+        expanded.add(`${base}_EDIT`);
+      }
+      if (p.endsWith("_EDIT")) {
+        expanded.add(`${base}_UPDATE`);
+      }
     }
   }
   return Array.from(expanded);

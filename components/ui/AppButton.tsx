@@ -63,7 +63,7 @@ export const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(
               const text = (e.currentTarget.textContent || "").toLowerCase();
               if (text.includes('delete') || text.includes('remove')) {
                 toast.success('Record Deleted Successfully');
-              } else if (text.includes('update') || text.includes('save') || text.includes('edit')) {
+              } else if (text.includes('update') || text.includes('save')) {
                 toast.success('Record Saved Successfully');
               } else if (text.includes('create') || text.includes('add') || text.includes('new')) {
                 toast.success('Record Created Successfully');

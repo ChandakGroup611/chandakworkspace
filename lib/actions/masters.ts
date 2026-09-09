@@ -148,7 +148,10 @@ export async function fetchDependentMasters(masterKey: string, parentId: string)
  * Generic Master Action
  */
 export async function saveMasterEntity(tableName: string, payload: any, editId?: string) {
-  const isAuthorized = await checkServerPermission("SUPER_ADMIN");
+  const isAuthorized = await checkServerPermission("SUPER_ADMIN") || 
+                       await checkServerPermission("MASTERS_MANAGE") || 
+                       await checkServerPermission("SYSTEM_MASTERS_MANAGE") ||
+                       (editId ? (await checkServerPermission("MASTERS_UPDATE") || await checkServerPermission("MASTERS_EDIT")) : await checkServerPermission("MASTERS_CREATE"));
   if (!isAuthorized) return { success: false, error: "Unauthorized." };
 
   const cookieStore = await cookies();
@@ -166,7 +169,10 @@ export async function saveMasterEntity(tableName: string, payload: any, editId?:
 }
 
 export async function deleteMasterEntity(tableName: string, id: string, hardDelete = false) {
-  const isAuthorized = await checkServerPermission("SUPER_ADMIN");
+  const isAuthorized = await checkServerPermission("SUPER_ADMIN") || 
+                       await checkServerPermission("MASTERS_MANAGE") || 
+                       await checkServerPermission("SYSTEM_MASTERS_MANAGE") ||
+                       await checkServerPermission("MASTERS_DELETE");
   if (!isAuthorized) return { success: false, error: "Unauthorized." };
 
   const cookieStore = await cookies();
@@ -187,7 +193,12 @@ export async function deleteMasterEntity(tableName: string, id: string, hardDele
  * Handles Dynamic Masters (with audit & notifications)
  */
 export async function executeMasterMutation(table: string, payload: any, action: "CREATE" | "UPDATE" | "ACTIVATE" | "DEACTIVATE" | "DELETE", editId?: string, originalRecord?: any) {
-  const isAuthorized = await checkServerPermission("SUPER_ADMIN");
+  const isAuthorized = await checkServerPermission("SUPER_ADMIN") || 
+                       await checkServerPermission("MASTERS_MANAGE") || 
+                       await checkServerPermission("SYSTEM_MASTERS_MANAGE") ||
+                       (action === "CREATE" ? await checkServerPermission("MASTERS_CREATE") : 
+                        action === "DELETE" ? await checkServerPermission("MASTERS_DELETE") : 
+                        (await checkServerPermission("MASTERS_UPDATE") || await checkServerPermission("MASTERS_EDIT")));
   if (!isAuthorized) return { success: false, error: "Unauthorized." };
 
   const cookieStore = await cookies();
@@ -206,8 +217,11 @@ export async function executeMasterMutation(table: string, payload: any, action:
       if (error) throw error;
       if (!data || data.length === 0) throw new Error("Deletion failed. It may have already been deleted, or you don't have permission.");
     } else {
-      const { error } = await supabase.from(table).update({ ...payload, updated_at: new Date().toISOString() }).eq('id', editId!);
-      if (error) throw error;
+      let updateRes = await supabase.from(table).update({ ...payload, updated_at: new Date().toISOString() }).eq('id', editId!);
+      if (updateRes.error && updateRes.error.message?.includes('updated_at')) {
+        updateRes = await supabase.from(table).update(payload).eq('id', editId!);
+      }
+      if (updateRes.error) throw updateRes.error;
     }
 
     // 2. Audit Log

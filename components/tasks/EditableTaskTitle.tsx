@@ -71,19 +71,21 @@ export function EditableTaskTitle({ task, asHeading = false }: { task: any, asHe
 
   const TitleWrapper = asHeading ? 'h1' : 'span';
   const titleClasses = asHeading 
-    ? "text-2xl font-bold texttext-2xl font-bold text-foreground break-words whitespace-normal flex-1" 
-    : "truncate texttext-2xl font-bold text-foreground flex-1";
+    ? "text-2xl font-bold text-foreground break-words whitespace-normal flex-1" 
+    : "truncate text-xl font-bold text-foreground flex-1";
 
   return (
     <div className="group flex items-start gap-2 relative w-full">
       <TitleWrapper className={titleClasses}>{title}</TitleWrapper>
       <AppButton 
+        variant="ghost"
+        size="icon-sm"
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
           setIsEditing(true);
         }}
-        className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 hover:bg-surface/50 rounded-lg text-muted hover:text-foreground shrink-0 cursor-pointer"
+        className="opacity-70 md:opacity-0 md:group-hover:opacity-100 transition-opacity p-1.5 hover:bg-surface/50 rounded-lg text-muted hover:text-foreground shrink-0 cursor-pointer"
         title="Edit Task Title"
       >
         <Edit2 className="h-4 w-4" />

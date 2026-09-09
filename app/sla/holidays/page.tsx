@@ -7,7 +7,9 @@ import { AppInput } from "@/components/ui/AppInput";
 import { AppBadge } from "@/components/ui/AppBadge";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { Calendar, Plus, Save, Trash2, MapPin, Clock } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Calendar, Plus, Save, Trash2, MapPin, Clock, Edit2 } from "lucide-react";
+import { toast } from "react-toastify";
 
 // Mock data for UI demonstration since DB tables might not exist locally
 const initialHolidays = [
@@ -27,15 +29,60 @@ export default function HolidayCalendar() {
   const [activeTab, setActiveTab] = useState<"holidays" | "working_hours">("holidays");
 
   const [newHoliday, setNewHoliday] = useState({ name: "", date: "", region: "Global" });
+  
+  // Working Hours Modal State
+  const [editingWorkingHours, setEditingWorkingHours] = useState<any | null>(null);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [scheduleForm, setScheduleForm] = useState({ name: "", timezone: "UTC", schedule: "" });
 
   const handleAddHoliday = () => {
-    if (!newHoliday.name || !newHoliday.date) return;
+    if (!newHoliday.name || !newHoliday.date) {
+      toast.warning("Please enter holiday name and date.");
+      return;
+    }
     setHolidays([...holidays, { ...newHoliday, id: Date.now().toString() }]);
     setNewHoliday({ name: "", date: "", region: "Global" });
+    toast.success("Holiday added to calendar.");
   };
 
   const handleDeleteHoliday = (id: string) => {
     setHolidays(holidays.filter(h => h.id !== id));
+    toast.success("Holiday removed.");
+  };
+
+  const handleOpenEditSchedule = (wh: any) => {
+    setEditingWorkingHours(wh);
+    setScheduleForm({ name: wh.name, timezone: wh.timezone, schedule: wh.schedule });
+    setShowScheduleModal(true);
+  };
+
+  const handleOpenCreateSchedule = () => {
+    setEditingWorkingHours(null);
+    setScheduleForm({ name: "", timezone: "UTC", schedule: "Mon-Fri: 09:00 - 18:00" });
+    setShowScheduleModal(true);
+  };
+
+  const handleSaveSchedule = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!scheduleForm.name.trim() || !scheduleForm.schedule.trim()) {
+      toast.warning("Please fill in the profile name and schedule.");
+      return;
+    }
+
+    if (editingWorkingHours) {
+      setWorkingHours(workingHours.map(wh => wh.id === editingWorkingHours.id ? { ...wh, ...scheduleForm } : wh));
+      toast.success("Working hours profile updated.");
+    } else {
+      const newId = `wh-${Date.now()}`;
+      setWorkingHours([...workingHours, { ...scheduleForm, id: newId }]);
+      toast.success("Working hours profile created.");
+    }
+    setShowScheduleModal(false);
+  };
+
+  const handleDeleteWorkingHours = (id: string) => {
+    setWorkingHours(workingHours.filter(wh => wh.id !== id));
+    toast.success("Working hours profile deleted.");
   };
 
   return (
@@ -163,13 +210,20 @@ export default function HolidayCalendar() {
                     </div>
                   </div>
                   <div className="mt-4 flex gap-2">
-                    <AppButton variant="outline" size="sm">Edit Schedule</AppButton>
-                    <AppButton variant="outline" size="sm" className="text-danger hover:bg-red-50">Delete</AppButton>
+                    <AppButton variant="outline" size="sm" onClick={() => handleOpenEditSchedule(wh)} leftIcon={<Edit2 className="w-3.5 h-3.5" />}>
+                      Edit Schedule
+                    </AppButton>
+                    <AppButton variant="outline" size="sm" className="text-danger hover:bg-red-50" onClick={() => handleDeleteWorkingHours(wh.id)}>
+                      Delete
+                    </AppButton>
                   </div>
                 </div>
               </AppCard>
             ))}
-            <AppCard className="border-dashed border-2 flex items-center justify-center min-h-[200px] cursor-pointer hover:bg-surface dark:hover:bg-surface/[0.02] transition-colors">
+            <AppCard 
+              onClick={handleOpenCreateSchedule}
+              className="border-dashed border-2 flex items-center justify-center min-h-[200px] cursor-pointer hover:bg-surface dark:hover:bg-surface/[0.02] transition-colors"
+            >
               <div className="text-center">
                 <Plus className="w-8 h-8 text-muted mx-auto mb-2" />
                 <span className="font-bold text-muted">Create Working Hours Profile</span>
@@ -178,6 +232,56 @@ export default function HolidayCalendar() {
           </div>
         )}
       </div>
+
+      {/* Schedule Edit / Create Dialog */}
+      <Dialog open={showScheduleModal} onOpenChange={setShowScheduleModal}>
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden">
+          <DialogHeader className="px-6 py-4 border-b border-border/50">
+            <DialogTitle>{editingWorkingHours ? "Edit Working Hours Schedule" : "Create Working Hours Profile"}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSaveSchedule}>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="text-xs font-bold text-muted uppercase block mb-1">Profile Name <span className="text-danger">*</span></label>
+                <AppInput 
+                  value={scheduleForm.name} 
+                  onChange={e => setScheduleForm({ ...scheduleForm, name: e.target.value })} 
+                  placeholder="e.g. Standard Business Hours"
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-muted uppercase block mb-1">Timezone</label>
+                <select 
+                  className="w-full p-2.5 bg-surface border border-border rounded-lg text-sm text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                  value={scheduleForm.timezone} 
+                  onChange={e => setScheduleForm({ ...scheduleForm, timezone: e.target.value })}
+                >
+                  <option value="UTC">UTC (Universal Time)</option>
+                  <option value="America/New_York">America/New_York (EST/EDT)</option>
+                  <option value="America/Los_Angeles">America/Los_Angeles (PST/PDT)</option>
+                  <option value="Europe/London">Europe/London (GMT/BST)</option>
+                  <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
+                  <option value="Asia/Tokyo">Asia/Tokyo (JST)</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-muted uppercase block mb-1">Schedule String <span className="text-danger">*</span></label>
+                <AppInput 
+                  value={scheduleForm.schedule} 
+                  onChange={e => setScheduleForm({ ...scheduleForm, schedule: e.target.value })} 
+                  placeholder="e.g. Mon-Fri: 09:00 - 18:00"
+                  required
+                />
+              </div>
+            </div>
+            <DialogFooter className="px-6 py-4 bg-surface border-t border-border/50">
+              <AppButton variant="outline" type="button" onClick={() => setShowScheduleModal(false)}>Cancel</AppButton>
+              <AppButton variant="primary" type="submit" leftIcon={<Save className="w-4 h-4" />}>Save Schedule</AppButton>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </PageContainer>
   );
 }

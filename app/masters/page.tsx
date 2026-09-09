@@ -352,8 +352,8 @@ function MastersPageContent() {
 
   const openEditModal = (rec: any) => {
     setEditRecordId(rec.id);
-    setFormCode(rec.code || "");
-    setFormName(rec.name || "");
+    setFormCode(rec.code || rec.status_code || rec.priority_code || "");
+    setFormName(rec.name || rec.status_name || rec.priority_name || "");
     setFormDesc(rec.description || "");
     if (currentConfig.parentKey && rec[currentConfig.parentKey]) {
       setFormParentId(rec[currentConfig.parentKey]);

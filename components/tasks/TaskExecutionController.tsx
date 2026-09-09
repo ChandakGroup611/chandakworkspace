@@ -871,19 +871,20 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const isExecutor = task.task_assignees?.some((a: any) => a.id === task.currentUserId) || false;
   const isWatcherOrReviewer = task.task_watchers?.some((w: any) => w.id === task.currentUserId) || false;
   const isCreatorOnly = task.created_by === task.currentUserId && !isTaskAssignee && !isExecutor && !isSuperAdmin;
+  const hasTaskUpdatePerm = hasPermission("TASKS_UPDATE") || hasPermission("TASKS_MANAGE") || hasPermission("TASKS_EDIT") || hasPermission("WORKSPACES_MANAGE");
 
-  // Reopen/Bypass freeze is strictly for Super Admin and the Task Assignee (Task Owner)
-  const canBypassFreeze = isSuperAdmin || isTaskAssignee;
+  // Reopen/Bypass freeze is for Super Admin, Task Assignee (Task Owner), or users with TASKS_UPDATE / WORKSPACES_MANAGE
+  const canBypassFreeze = isSuperAdmin || isTaskAssignee || hasTaskUpdatePerm;
   const effectivelyFrozenForUser = isEffectivelyFrozen && !canBypassFreeze;
-  const canEditDates = !readOnly && !effectivelyFrozenForUser && (isSuperAdmin || isTaskAssignee);
+  const canEditDates = !readOnly && !effectivelyFrozenForUser && (isSuperAdmin || isTaskAssignee || hasTaskUpdatePerm);
   
-  // Roles: Owner is Assignee / SuperAdmin
+  // Roles: Owner is Assignee / SuperAdmin / Workspace Manager / TASKS_UPDATE
   const isOwner = task.currentUserCanAct || canBypassFreeze || isTaskAssignee;
   
-  // Owners and Assigned Executives (Executors) can edit core properties, provided they have TASKS_UPDATE permission
-  const canEditCore = !readOnly && (isOwner || isExecutor) && !effectivelyFrozenForUser && (hasPermission("TASKS_UPDATE") || isTaskAssignee || isSuperAdmin || isExecutor);
+  // Anyone with TASKS_UPDATE / WORKSPACES_MANAGE, or Assignee, or Executor, or SuperAdmin can edit core properties
+  const canEditCore = !readOnly && !effectivelyFrozenForUser && (hasTaskUpdatePerm || isOwner || isExecutor || isSuperAdmin);
   const canEditAux = canEditCore;
-  const canDeleteTask = !readOnly && (isSuperAdmin || isTaskAssignee) && canDelete;
+  const canDeleteTask = !readOnly && (isSuperAdmin || isTaskAssignee || hasPermission("TASKS_DELETE") || hasPermission("TASKS_MANAGE")) && canDelete;
   
   // Reviewers, Watchers, Executives, Assignee, and Creator (tracking progress) can add remarks
   const canAddRemark = !readOnly && ((canEditAux || isWatcherOrReviewer || isOwner || isExecutor || isCreatorOnly) && !effectivelyFrozenForUser);
@@ -1147,7 +1148,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   <span className="text-[11px] font-bold uppercase tracking-wider text-muted flex items-center gap-1.5">
                     <ShieldCheck className="w-3.5 h-3.5 text-theme-icon" /> <span className="text-theme-icon font-bold">Primary Assignee</span>
                   </span>
-                  { !readOnly && (task.assigned_to === task.currentUserId || task.currentUserIsSuperAdmin || isOwner) && !effectivelyFrozenForUser && (
+                  { !readOnly && canEditCore && !effectivelyFrozenForUser && (
                     <AppButton 
                       variant="secondary" 
                       onClick={() => openAssigneeModal('primary')}
@@ -1200,7 +1201,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                       {pendingAssignees ? pendingAssignees.length : explicitExecutors.length}
                     </span>
                   </span>
-                  { !readOnly && (task.assigned_to === task.currentUserId || task.currentUserIsSuperAdmin || isOwner) && !effectivelyFrozenForUser && (
+                  { !readOnly && canEditCore && !effectivelyFrozenForUser && (
                     <AppButton 
                       variant="secondary" 
                       onClick={() => openAssigneeModal('executors')}
@@ -1234,7 +1235,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                       {pendingWatchers ? pendingWatchers.length : explicitWatchers.length}
                     </span>
                   </span>
-                  { !readOnly && (task.assigned_to === task.currentUserId || task.currentUserIsSuperAdmin || isOwner) && !effectivelyFrozenForUser && (
+                  { !readOnly && canEditCore && !effectivelyFrozenForUser && (
                     <AppButton 
                       variant="secondary" 
                       onClick={() => openAssigneeModal('watchers')}
@@ -1285,7 +1286,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             <label className="text-xs font-bold uppercase tracking-wider text-muted">Status Field</label>
             <select
               value={pendingStatus || currentStatusCode}
-              disabled={readOnly || (!canEditCore && !(isOwner || isExecutor))}
+              disabled={readOnly || !canEditCore}
               onChange={(e) => {
                 const newCode = e.target.value;
                 if (newCode === currentStatusCode) {
@@ -1294,7 +1295,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   setPendingStatus(newCode);
                 }
               }}
-              className={`w-full h-10 px-3 rounded-xl text-sm font-semibold border border-border bg-white dark:bg-[#111827] text-foreground focus:outline-none focus:ring-2 focus:ring-theme-btn-primary focus:border-theme-btn-primary transition-all ${(readOnly || (!canEditCore && !(isOwner || isExecutor))) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`w-full h-10 px-3 rounded-xl text-sm font-semibold border border-border bg-white dark:bg-[#111827] text-foreground focus:outline-none focus:ring-2 focus:ring-theme-btn-primary focus:border-theme-btn-primary transition-all ${(readOnly || !canEditCore) ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {statuses.map(st => (
                 <option key={st.id} value={st.code || st.status_code}>{st.name || st.status_name}</option>
@@ -1306,7 +1307,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
             <label className="text-xs font-bold uppercase tracking-wider text-muted">Department Field</label>
             <select
               value={pendingDepartment !== null ? pendingDepartment : (task.department_id || "")}
-              disabled={readOnly || (!canEditCore && !(isOwner || isExecutor))}
+              disabled={readOnly || !canEditCore}
               onChange={(e) => {
                 const newDept = e.target.value;
                 if (newDept === (task.department_id || "")) {
@@ -1315,7 +1316,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   setPendingDepartment(newDept);
                 }
               }}
-              className={`w-full h-10 px-3 rounded-xl text-sm font-semibold border border-border bg-white dark:bg-[#111827] text-foreground focus:outline-none focus:ring-2 focus:ring-theme-btn-primary focus:border-theme-btn-primary transition-all ${(readOnly || (!canEditCore && !(isOwner || isExecutor))) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`w-full h-10 px-3 rounded-xl text-sm font-semibold border border-border bg-white dark:bg-[#111827] text-foreground focus:outline-none focus:ring-2 focus:ring-theme-btn-primary focus:border-theme-btn-primary transition-all ${(readOnly || !canEditCore) ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               <option value="">-- No Department --</option>
               {departments.map(dept => (
