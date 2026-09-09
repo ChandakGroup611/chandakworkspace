@@ -7,11 +7,11 @@ import { TicketWorkspaceConsole } from "@/components/tickets/TicketWorkspaceCons
 import { TicketRightPanel } from "@/components/tickets/TicketRightPanel";
 import { fetchTicketDashboardData, fetchSingleTicketDetails } from "@/lib/actions/tickets";
 import { usePermissions } from "@/hooks/usePermissions";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { AppButton } from "@/components/ui/AppButton";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 import DOMPurify from 'dompurify';
-
 
 export default function TicketDetailsPage({ params }: { params: Promise<{ ticketId: string }> }) {
   const router = useRouter();
@@ -98,10 +98,11 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
   if (loading || permissionsLoading) {
     return (
       <div className="h-screen flex flex-col items-center justify-center bg-background text-foreground">
-        <Loader2 className="h-10 w-10 animate-spin text-theme-icon mb-4" />
-        <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground animate-pulse">
-          Loading Ticket Data...
-        </span>
+        <ChandakLoader
+          size="lg"
+          title="Retrieving Enterprise Ticket Profile..."
+          subtitle="Loading conversation timeline and attachments"
+        />
       </div>
     );
   }

@@ -21,6 +21,7 @@ import SafeHtml from "@/components/ui/SafeHtml";
 import { sanitizeErrorMessage } from "@/lib/utils";
 import { LazyQuill } from "@/components/ui/LazyQuill";
 import { EnterpriseUploader } from "@/components/ui/EnterpriseUploader";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 
 const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: string }> }) => {
   const [reqId, setReqId] = useState<string>("");
@@ -688,8 +689,12 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-surface dark:bg-[#050505]">
-        <div className="animate-spin h-10 w-10 border-2 border-theme-btn-primary border-t-transparent rounded-full"></div>
+      <div className="h-screen flex flex-col items-center justify-center bg-surface dark:bg-[#050505]">
+        <ChandakLoader
+          size="lg"
+          title="Loading Requirement Architecture..."
+          subtitle="Fetching business specification and approvals"
+        />
       </div>
     );
   }
@@ -2332,7 +2337,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
 export default function RequirementAnalyzePage({ params }: { params: Promise<{ id: string }> }) {
   return (
-    <React.Suspense fallback={<div className="flex h-[calc(100vh-100px)] items-center justify-center"><RefreshCw className="h-8 w-8 animate-spin text-theme-btn-primary" /></div>}>
+    <React.Suspense fallback={<div className="flex h-[calc(100vh-100px)] items-center justify-center"><ChandakLoader size="lg" title="Loading Requirement..." /></div>}>
       <RequirementAnalyzePageContent params={params} />
     </React.Suspense>
   );

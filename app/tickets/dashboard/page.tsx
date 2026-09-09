@@ -9,6 +9,7 @@ import { ArrowLeft, Database, RefreshCw, BarChart2 } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { fetchTicketMetrics } from "@/lib/actions/tickets";
 import { TicketsDashboard } from "@/components/tickets/TicketsDashboard";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 
 export default function TicketDashboardPage() {
   const router = useRouter();
@@ -37,8 +38,12 @@ export default function TicketDashboardPage() {
 
   if (permissionsLoading) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center space-y-4 bg-surface text-foreground">
-        <div className="animate-spin h-10 w-10 border-2 border-theme-btn-primary border-t-transparent rounded-full" />
+      <div className="h-screen flex flex-col items-center justify-center bg-surface text-foreground">
+        <ChandakLoader
+          size="lg"
+          title="Verifying Permissions..."
+          subtitle="Securing ticket metrics gateway"
+        />
       </div>
     );
   }
@@ -76,7 +81,7 @@ export default function TicketDashboardPage() {
       <div className="flex-1 overflow-y-auto p-6">
         {loading && !metrics ? (
           <div className="flex items-center justify-center h-64">
-            <div className="animate-spin h-8 w-8 border-2 border-theme-btn-primary border-t-transparent rounded-full" />
+            <ChandakLoader size="md" title="Aggregating metrics..." />
           </div>
         ) : (
           <TicketsDashboard metrics={metrics} />

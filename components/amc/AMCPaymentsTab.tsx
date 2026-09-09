@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { saveAMCEntity, deleteAMCEntity } from "@/lib/actions/amc-client";
 import { createClient } from "@/utils/supabase/client";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 
 interface AMCPaymentsTabProps {
   amcId: string;
@@ -265,7 +266,7 @@ export function AMCPaymentsTab({ amcId, isLightMode, currency = 'INR' }: AMCPaym
       {/* Invoice Ledger */}
       <div className="space-y-3">
         {loading ? (
-          <div className="flex justify-center p-12"><Loader2 className="h-8 w-8 animate-spin text-theme-icon" /></div>
+          <div className="flex justify-center p-8"><ChandakLoader size="sm" title="Loading invoices..." /></div>
         ) : invoices.length === 0 ? (
           <div className="p-10 text-center text-muted italic rounded-2xl border bg-elevated/40 border-border space-y-2">
             <Receipt className="h-8 w-8 text-muted mx-auto opacity-50" />

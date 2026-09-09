@@ -7,6 +7,7 @@ import { AppButton } from "@/components/ui/AppButton";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { createClient } from "@/utils/supabase/client";
 import { saveUserAction, fetchUsersDashboardData } from "@/lib/actions/users";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 import { 
   ArrowLeft, 
   Camera, 
@@ -228,10 +229,11 @@ export default function UserFormPage() {
   if (loading) {
     return (
       <div className="p-8 flex items-center justify-center min-h-[50vh]">
-        <div className="flex flex-col items-center gap-3">
-          <RefreshCw className="h-8 w-8 animate-spin text-theme-icon" />
-          <span className="text-sm font-medium text-muted">Loading Configuration Master...</span>
-        </div>
+        <ChandakLoader
+          size="md"
+          title="Loading Configuration Master..."
+          subtitle="Fetching user profile & system permissions"
+        />
       </div>
     );
   }

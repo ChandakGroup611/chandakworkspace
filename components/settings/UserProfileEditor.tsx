@@ -9,6 +9,7 @@ import { AppInput } from "@/components/ui/AppInput";
 import { AppButton } from "@/components/ui/AppButton";
 import { Camera, Check, Briefcase, Mail, User, Shield, Key, ChevronRight, Lock, Loader2, AlertCircle, Building, Users, ChevronDown, BadgeCheck, Building2 } from "lucide-react";
 import { updateMyProfile } from "@/lib/actions/settings";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 
 interface UserProfile {
   id: string;
@@ -250,9 +251,8 @@ export default function UserProfileEditor() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 space-y-4">
-        <Loader2 className="h-8 w-8 animate-spin text-theme-icon" />
-        <p className="text-sm text-muted">Loading profile data...</p>
+      <div className="flex flex-col items-center justify-center py-20">
+        <ChandakLoader size="md" title="Loading Profile Data..." subtitle="Fetching user identity and credentials" />
       </div>
     );
   }

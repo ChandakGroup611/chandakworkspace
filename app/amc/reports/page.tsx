@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { AppTable, AppTableHeader, AppTableBody, AppTableRow, AppTableHead, AppTableCell } from "@/components/ui/AppTable";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Lock } from "lucide-react";
 
@@ -218,7 +219,7 @@ export default function AMCReportsPage() {
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-2 border-theme-btn-primary border-t-transparent rounded-full" />
+        <ChandakLoader size="lg" title="Loading Financial & Amortization Reports..." subtitle="Fetching expense accruals and cashflow data" />
       </div>
     );
   }

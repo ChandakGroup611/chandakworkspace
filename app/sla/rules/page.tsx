@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { fetchSLARules, saveSLARule, deleteSLARule } from "@/lib/actions/sla";
 import { toast } from "react-toastify";
 import { Loader2, Plus, Save, Trash2, ShieldAlert, Clock, Play } from "lucide-react";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 
 export default function SLARuleBuilder() {
   const [rules, setRules] = useState<any[]>([]);
@@ -99,7 +100,11 @@ export default function SLARuleBuilder() {
   };
 
   if (loading) {
-    return <div className="h-[80vh] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-theme-icon" /></div>;
+    return (
+      <div className="h-[80vh] flex items-center justify-center">
+        <ChandakLoader size="lg" title="Loading SLA Policies..." subtitle="Fetching governance rules" />
+      </div>
+    );
   }
 
   return (

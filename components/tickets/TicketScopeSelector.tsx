@@ -6,6 +6,7 @@ import { AppCard, AppCardContent } from "@/components/ui/AppCard";
 import { Server, Monitor, Layers, ChevronRight, Loader2 } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { fetchScopes } from "@/lib/actions/masters";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 
 interface TicketScopeSelectorProps {
   onSelect: (scope: any) => void;
@@ -45,9 +46,8 @@ export function TicketScopeSelector({ onSelect, onDiscard }: TicketScopeSelector
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 space-y-4 animate-pulse">
-        <div className="h-12 w-12 rounded-full border-4 border-theme-btn-primary/20 border-t-indigo-500 animate-spin" />
-        <p className="text-xs text-muted font-bold tracking-[0.2em] uppercase">Syncing Governance Matrix...</p>
+      <div className="flex flex-col items-center justify-center py-20">
+        <ChandakLoader size="md" title="Syncing Governance Matrix..." subtitle="Loading operational scopes" />
       </div>
     );
   }

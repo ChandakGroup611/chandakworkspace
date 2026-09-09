@@ -9,6 +9,7 @@ import { TicketCreationWizard } from "@/components/tickets/TicketCreationWizard"
 import { AppTable, AppTableBody, AppTableCell, AppTableContainer, AppTableHead, AppTableHeader, AppTableRow } from "@/components/ui/AppTable";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 
 export function SelfServicePortal() {
   const router = useRouter();
@@ -98,7 +99,7 @@ export function SelfServicePortal() {
           <div className="flex-1 overflow-y-auto">
             {loading && tickets.length === 0 ? (
               <div className="flex items-center justify-center h-48">
-                <Loader2 className="h-8 w-8 animate-spin text-theme-icon" />
+                <ChandakLoader size="sm" title="Loading requests..." />
               </div>
             ) : tickets.length > 0 ? (
               <AppTableContainer>

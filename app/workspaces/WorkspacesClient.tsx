@@ -38,6 +38,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { WorkspaceMasterTable } from "@/components/workspaces/WorkspaceMasterTable";
 import { SprintBoard } from "@/components/workspaces/sprints/SprintBoard";
 import { PageContainer } from "@/components/layout/PageContainer";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 import { PageHeader } from "@/components/layout/PageHeader";
 export default function WorkspacesClient({ initialData, initialTaskId }: { initialData: any; initialTaskId?: string | null }) {
   const router = useRouter();
@@ -923,11 +924,14 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
   if (!mounted || permsLoading || loading) {
     return (
-      <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
+      <div className={`h-screen flex flex-col items-center justify-center transition-colors duration-300 ${
         "bg-surface text-foreground"
       }`}>
-        <Loader2 className="h-10 w-10 animate-spin text-theme-icon" />
-        <p className="text-xs text-muted font-bold tracking-[0.2em] uppercase">Hydrating Enterprise Workspaces...</p>
+        <ChandakLoader
+          size="lg"
+          title="Hydrating Enterprise Workspaces..."
+          subtitle="Synchronizing workspaces and operational streams"
+        />
       </div>
     );
   }

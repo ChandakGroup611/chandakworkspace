@@ -155,11 +155,12 @@ function TicketsPageContent() {
 
   if (!mounted || permissionsLoading) {
     return (
-      <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 bg-surface text-foreground`}>
-        <div className="animate-spin h-10 w-10 border-2 border-theme-btn-primary border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
-        <span className="text-xs font-bold uppercase tracking-widest animate-pulse text-muted">
-          Verifying Capabilities...
-        </span>
+      <div className={`h-screen flex flex-col items-center justify-center transition-colors duration-300 bg-surface text-foreground`}>
+        <ChandakLoader
+          size="lg"
+          title="Verifying Capabilities..."
+          subtitle="Loading enterprise ticketing system"
+        />
       </div>
     );
   }

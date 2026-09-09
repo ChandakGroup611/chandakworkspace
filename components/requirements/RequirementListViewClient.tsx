@@ -18,6 +18,7 @@ import {
 import { Loader2, Eye, Search, LayoutList, Layers, CheckCircle2, Download, Upload, Shield } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { ExperienceProvider } from "@/components/theme/ExperienceProvider";
@@ -383,7 +384,11 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
   });
 
   if (permsLoading) {
-    return <div className="animate-spin h-8 w-8 border-2 border-theme-btn-primary border-t-transparent rounded-full mx-auto my-12" />;
+    return (
+      <div className="py-12 flex justify-center">
+        <ChandakLoader size="md" title="Verifying Permissions..." subtitle="Loading requirements matrix" />
+      </div>
+    );
   }
 
   if (!hasPermission("REQUIREMENTS_REPORTS_VIEW")) {

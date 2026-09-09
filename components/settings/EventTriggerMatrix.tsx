@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { updateEventTriggerConfig } from "@/lib/actions/email-config";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Shield } from "lucide-react";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 
 export default function EventTriggerMatrix({ configList }: { configList: any[] }) {
   const [configs, setConfigs] = useState(configList);
@@ -25,7 +26,11 @@ export default function EventTriggerMatrix({ configList }: { configList: any[] }
   const modules = Array.from(new Set(configs.map(c => c.module_code)));
 
   if (permsLoading) {
-    return <div className="animate-spin h-8 w-8 border-2 border-theme-btn-primary border-t-transparent rounded-full mx-auto my-12" />;
+    return (
+      <div className="py-12 flex justify-center">
+        <ChandakLoader size="md" title="Loading Notification Matrix..." />
+      </div>
+    );
   }
 
   if (!hasPermission("SETTINGS_NOTIFICATIONS_VIEW")) {

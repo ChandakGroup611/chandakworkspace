@@ -21,6 +21,7 @@ import { createClient } from "@/utils/supabase/client";
 import { usePermissions } from "@/hooks/usePermissions";
 import { usePresence } from "@/hooks/use-presence";
 import { saveUserAction, fetchUsersDashboardData, deleteUserAction, inviteUserAction } from "@/lib/actions/users";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 import { 
   Users, 
   UserPlus, 
@@ -593,13 +594,14 @@ export default function UserMasterPage() {
 
   if (!mounted || permsLoading || loading) {
     return (
-      <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
+      <div className={`h-screen flex flex-col items-center justify-center transition-colors duration-300 ${
         "bg-surface text-foreground"
       }`}>
-        <div className="animate-spin h-10 w-10 border-2 border-theme-btn-primary border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
-        <span className="text-xs font-bold uppercase tracking-widest animate-pulse text-muted">
-          Verifying Credentials...
-        </span>
+        <ChandakLoader
+          size="lg"
+          title="Verifying Credentials..."
+          subtitle="Loading enterprise user directory"
+        />
       </div>
     );
   }

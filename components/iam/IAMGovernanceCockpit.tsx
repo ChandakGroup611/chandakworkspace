@@ -26,6 +26,7 @@ import {
   Check
 } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 import { 
   fetchRoles, 
   fetchPermissions, 
@@ -382,11 +383,12 @@ export default function IAMGovernanceCockpit({
 
   if (!mounted || permsLoading) {
     return (
-      <div className="h-96 flex flex-col items-center justify-center space-y-4">
-        <div className="animate-spin h-10 w-10 border-2 border-theme-btn-primary border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
-        <span className={cn("text-xs font-bold uppercase tracking-widest animate-pulse", "text-muted")}>
-          Verifying Credentials...
-        </span>
+      <div className="h-96 flex flex-col items-center justify-center">
+        <ChandakLoader
+          size="lg"
+          title="Verifying Credentials..."
+          subtitle="Securing IAM governance gateway"
+        />
       </div>
     );
   }
@@ -405,11 +407,12 @@ export default function IAMGovernanceCockpit({
 
   if (isLoading && rolesList.length === 0) {
     return (
-      <div className="h-96 flex flex-col items-center justify-center space-y-4">
-        <div className="animate-spin h-10 w-10 border-2 border-theme-btn-primary border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
-        <span className={cn("text-xs font-bold uppercase tracking-widest animate-pulse", "text-muted")}>
-          Synchronizing Security Engine...
-        </span>
+      <div className="h-96 flex flex-col items-center justify-center">
+        <ChandakLoader
+          size="lg"
+          title="Synchronizing Security Engine..."
+          subtitle="Loading enterprise roles and permission matrix"
+        />
       </div>
     );
   }

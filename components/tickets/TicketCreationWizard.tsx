@@ -10,6 +10,7 @@ import { TicketFormOthers } from "./TicketFormOthers";
 import { X, ChevronLeft, Loader2 } from "lucide-react";
 import { EnterpriseWizardShell } from "@/components/ui/enterprise/EnterpriseWizardShell";
 import { AppButton } from "@/components/ui/AppButton";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 import { useTheme } from "../theme/ThemeProvider";
 
 
@@ -229,9 +230,8 @@ export function TicketCreationWizard({ onClose, onSuccess }: TicketCreationWizar
         ) : (
           <div className="relative">
             {isSubmitting && (
-              <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-background/50 backdrop-blur-sm rounded-xl">
-                <Loader2 className="h-8 w-8 animate-spin text-theme-icon mb-2" />
-                <p className="text-sm font-semibold text-foreground">Processing Request...</p>
+              <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-background/70 backdrop-blur-sm rounded-xl">
+                <ChandakLoader size="sm" title="Processing Request..." subtitle="Dispatching ticket workflow" />
               </div>
             )}
             {scope?.code === "INFRA" && <TicketFormInfra scope={scope} onCancel={handleBack} onDiscard={onClose} onSubmit={handleFormSubmit} />}

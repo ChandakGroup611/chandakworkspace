@@ -240,8 +240,12 @@ function RequirementsPageContent() {
 
   if (!mounted || permsLoading) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 bg-background dark:bg-[#070913]">
-        <div className="animate-spin h-10 w-10 border-2 border-theme-btn-primary border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
+      <div className="h-screen flex flex-col items-center justify-center transition-colors duration-300 bg-background dark:bg-[#070913]">
+        <ChandakLoader
+          size="lg"
+          title="Verifying Permissions..."
+          subtitle="Loading requirements pipeline"
+        />
       </div>
     );
   }

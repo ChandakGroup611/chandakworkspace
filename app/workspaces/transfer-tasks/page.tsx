@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
 import { getVisibleWorkspaces } from "@/lib/repositories/workspaces";
 import TransferTasksClient from "./Client"; 
-import { Loader2 } from "lucide-react";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 
 export const dynamic = 'force-dynamic';
 
@@ -75,7 +75,7 @@ export default async function TransferTasksPage() {
         </p>
       </div>
 
-      <Suspense fallback={<div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-theme-icon" /></div>}>
+      <Suspense fallback={<div className="flex h-64 items-center justify-center"><ChandakLoader size="md" title="Loading transfer console..." /></div>}>
         <TransferTasksClient 
           initialTasks={tasks || []} 
           workspaces={workspaces || []} 

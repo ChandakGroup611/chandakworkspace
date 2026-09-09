@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { saveAMCEntity, deleteAMCEntity } from "@/lib/actions/amc-client";
 import { createClient } from "@/utils/supabase/client";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 
 interface AMCRenewalsTabProps {
   amcId: string;
@@ -283,7 +284,7 @@ export function AMCRenewalsTab({
       <div className="space-y-4">
         <h3 className="text-lg font-bold">Renewal History</h3>
         {loading ? (
-          <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-theme-icon" /></div>
+          <div className="flex justify-center p-8"><ChandakLoader size="sm" title="Loading renewals..." /></div>
         ) : renewals.length === 0 ? (
           <div className={`p-8 text-center text-muted italic rounded-xl border bg-elevated border-border`}>
             No renewals logged for this subscription yet.

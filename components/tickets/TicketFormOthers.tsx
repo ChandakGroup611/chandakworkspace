@@ -6,6 +6,7 @@ import { AppInput } from "@/components/ui/AppInput";
 import { Layers, Clock, Send, Paperclip, X, Loader2 } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { fetchMastersByScope, fetchDependentMasters } from "@/lib/actions/masters";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 
 interface TicketFormOthersProps {
   scope: any;
@@ -106,9 +107,8 @@ export function TicketFormOthers({ scope, onCancel, onDiscard, onSubmit }: Ticke
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 space-y-4">
-        <Loader2 className="h-8 w-8 animate-spin text-success" />
-        <p className="text-sm text-muted font-medium tracking-widest uppercase">Initializing Operational Matrix...</p>
+      <div className="flex flex-col items-center justify-center py-16">
+        <ChandakLoader size="md" title="Initializing Operational Matrix..." subtitle="Loading general request categories" />
       </div>
     );
   }

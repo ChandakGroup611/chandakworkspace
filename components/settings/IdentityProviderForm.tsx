@@ -6,6 +6,7 @@ import { CheckCircle, Shield, Key, Link2, Users, Save, Loader2, AlertCircle } fr
 import { saveSettingsEntity } from "@/lib/actions/settings";
 import { createClient } from "@/utils/supabase/client";
 import { usePermissions } from "@/hooks/usePermissions";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 
 export default function IdentityProviderForm() {
   const [loading, setLoading] = useState(false);
@@ -80,7 +81,7 @@ export default function IdentityProviderForm() {
   if (fetching || permsLoading) {
     return (
       <div className="flex justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-theme-icon" />
+        <ChandakLoader size="md" title="Loading Identity Provider..." />
       </div>
     );
   }

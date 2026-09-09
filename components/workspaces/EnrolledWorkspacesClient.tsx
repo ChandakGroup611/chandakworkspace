@@ -10,6 +10,7 @@ import { AppTable, AppTableContainer, AppTableHeader, AppTableBody, AppTableRow,
 import { AppInput } from "@/components/ui/AppInput";
 import { useRouter } from "next/navigation";
 import { usePermissions } from "@/hooks/usePermissions";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 
 export function EnrolledWorkspacesClient({ initialWorkspaces, initialSubWorkspaces }: { initialWorkspaces: any[], initialSubWorkspaces: any[] }) {
   const router = useRouter();
@@ -41,7 +42,11 @@ export function EnrolledWorkspacesClient({ initialWorkspaces, initialSubWorkspac
   };
 
   if (permsLoading) {
-    return <div className="animate-spin h-8 w-8 border-2 border-theme-btn-primary border-t-transparent rounded-full mx-auto my-12" />;
+    return (
+      <div className="py-12 flex justify-center">
+        <ChandakLoader size="md" title="Loading Enrolled Workspaces..." />
+      </div>
+    );
   }
 
   if (!hasPermission("ENROLLED_WORKSPACES_VIEW")) {

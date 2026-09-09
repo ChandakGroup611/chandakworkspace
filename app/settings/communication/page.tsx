@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { Server, LayoutTemplate, Workflow, Activity, Shield } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 
 const MODULES = [
   {
@@ -50,7 +51,7 @@ export default function CommunicationCenterHub() {
   if (permsLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        <div className="animate-spin h-10 w-10 border-2 border-theme-btn-primary border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
+        <ChandakLoader size="lg" title="Loading Communication Settings..." subtitle="Fetching provider and template configurations" />
       </div>
     );
   }

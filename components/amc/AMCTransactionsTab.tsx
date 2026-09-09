@@ -25,6 +25,7 @@ import {
   X
 } from "lucide-react";
 import { saveAMCEntity, deleteAMCEntity } from "@/lib/actions/amc-client";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 import { createClient } from "@/utils/supabase/client";
 
 interface AMCTransactionsTabProps {
@@ -469,8 +470,8 @@ export function AMCTransactionsTab({
         </div>
 
         {loading ? (
-          <div className="flex justify-center p-12">
-            <Loader2 className="h-6 w-6 animate-spin text-theme-icon" />
+          <div className="flex justify-center p-8">
+            <ChandakLoader size="sm" title="Loading transactions..." />
           </div>
         ) : transactions.length === 0 ? (
           <div className="p-8 text-center text-muted italic rounded-xl border bg-elevated/40 border-border">

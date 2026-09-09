@@ -23,6 +23,7 @@ import { useTheme } from "@/components/theme/ThemeProvider";
 import { usePermissions } from "@/hooks/usePermissions";
 import { createClient } from "@/utils/supabase/client";
 import { sanitizeErrorMessage } from "@/lib/utils";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 import { 
   Database, 
   Search, 
@@ -105,7 +106,7 @@ function UsersIcon(props: any) {
 
 export default function MastersPage() {
   return (
-    <Suspense fallback={<div className="h-screen flex items-center justify-center"><div className="animate-spin h-10 w-10 border-2 border-theme-btn-primary border-t-transparent rounded-full" /></div>}>
+    <Suspense fallback={<div className="h-screen flex items-center justify-center"><ChandakLoader size="lg" title="Loading Masters Directory..." /></div>}>
       <MastersPageContent />
     </Suspense>
   );
@@ -528,13 +529,14 @@ function MastersPageContent() {
 
   if (!mounted || permsLoading) {
     return (
-      <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
+      <div className={`h-screen flex flex-col items-center justify-center transition-colors duration-300 ${
         "bg-surface text-foreground"
       }`}>
-        <div className="animate-spin h-10 w-10 border-2 border-theme-btn-primary border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
-        <span className="text-xs font-bold uppercase tracking-widest animate-pulse text-muted">
-          Verifying Credentials...
-        </span>
+        <ChandakLoader
+          size="lg"
+          title="Verifying Credentials..."
+          subtitle="Securing master directory access"
+        />
       </div>
     );
   }

@@ -28,6 +28,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 
 import dynamic from 'next/dynamic';
 import SafeHtml from "@/components/ui/SafeHtml";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 import { sanitizeErrorMessage, isReloadRequiredError } from "@/lib/utils";
 
 const getSafeExternalUrl = (url: string | undefined | null) => {
@@ -647,9 +648,8 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
   if (loading) {
     return (
-      <AppCard className="p-8 flex flex-col items-center justify-center space-y-4">
-        <Loader2 className="h-8 w-8 animate-spin text-theme-icon" />
-        <p className="text-xs text-muted font-bold uppercase tracking-wider">Hydrating Task details...</p>
+      <AppCard className="p-12 flex flex-col items-center justify-center">
+        <ChandakLoader size="md" title="Hydrating Task details..." subtitle="Synchronizing timeline and execution parameters" />
       </AppCard>
     );
   }

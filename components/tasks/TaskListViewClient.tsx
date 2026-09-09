@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/AppTable";
 import { Loader2, Eye, Filter, Search, Users, Calendar, ArrowLeft, Download, FileText, FileSpreadsheet, Edit2, Trash2, Paperclip, Shield, Globe, Building2, UserCheck, MoreVertical } from "lucide-react";
 import Link from "next/link";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 import { deleteTask, getTaskStatuses, updateTaskStatusInline, getDepartments, executeTaskBatchOperation, createTask } from "@/lib/actions/tasks";
 import { fetchTasksByWorkspace, fetchAllTasks, fetchWorkspaces, fetchPriorities } from "@/lib/actions/workspaces";
 import { createClient } from "@/utils/supabase/client";
@@ -1019,7 +1020,11 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
   });
 
   if (permsLoading) {
-    return <div className="animate-spin h-8 w-8 border-2 border-theme-btn-primary border-t-transparent rounded-full mx-auto my-12" />;
+    return (
+      <div className="py-12 flex justify-center">
+        <ChandakLoader size="md" title="Verifying Permissions..." subtitle="Loading enterprise task matrix" />
+      </div>
+    );
   }
 
   if (!hasPermission("TASKS_VIEW")) {

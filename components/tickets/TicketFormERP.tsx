@@ -6,6 +6,7 @@ import { AppInput } from "@/components/ui/AppInput";
 import { Monitor, Clock, Send, Paperclip, X, Loader2 } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { fetchMastersByScope, fetchDependentMasters } from "@/lib/actions/masters";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 
 interface TicketFormERPProps {
   scope: any;
@@ -116,9 +117,8 @@ export function TicketFormERP({ scope, onCancel, onDiscard, onSubmit }: TicketFo
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 space-y-4">
-        <Loader2 className="h-8 w-8 animate-spin text-theme-icon" />
-        <p className="text-sm text-muted font-medium tracking-widest uppercase">Fetching Software Matrix...</p>
+      <div className="flex flex-col items-center justify-center py-16">
+        <ChandakLoader size="md" title="Fetching Software Matrix..." subtitle="Loading ERP modules and categories" />
       </div>
     );
   }

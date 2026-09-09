@@ -13,6 +13,7 @@ import { fetchRequirements } from "@/lib/actions/requirements";
 import { DndContext, DragOverlay, closestCorners, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import ChandakLoader from "@/components/ui/ChandakLoader";
 
 export default function RequirementsGroomingBoard() {
   const router = useRouter();
@@ -104,8 +105,8 @@ export default function RequirementsGroomingBoard() {
 
       <div className="mt-4 flex-1 overflow-hidden flex flex-col min-h-[500px]">
         {loading ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-theme-btn-primary"></div>
+          <div className="flex items-center justify-center h-full min-h-[400px]">
+            <ChandakLoader size="md" title="Loading Grooming Board..." />
           </div>
         ) : (
           <div className="flex h-full overflow-x-auto pb-4 space-x-6">

@@ -8,6 +8,7 @@ import { AppInput } from "@/components/ui/AppInput";
 import { AppBadge } from "@/components/ui/AppBadge";
 import { createClient } from "@/utils/supabase/client";
 import { saveAMCEntity, deleteAMCEntity } from "@/lib/actions/amc-client";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 import { 
   CheckCircle2, 
   Clock, 
@@ -406,9 +407,8 @@ export function AMCImplementationTab({
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center p-12 space-y-3">
-        <Loader2 className="h-8 w-8 animate-spin text-theme-icon" />
-        <p className="text-xs text-muted">Loading software implementation lifecycle...</p>
+      <div className="flex flex-col items-center justify-center p-12">
+        <ChandakLoader size="md" title="Loading Implementation Lifecycle..." subtitle="Fetching software milestones and tracking" />
       </div>
     );
   }
