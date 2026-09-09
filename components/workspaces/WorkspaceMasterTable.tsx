@@ -147,7 +147,7 @@ export function WorkspaceMasterTable({
     return user ? user.full_name : "System";
   };
 
-  const gridCols = 'minmax(320px, 4fr) minmax(95px, 1fr) minmax(70px, 0.8fr) minmax(70px, 0.8fr) minmax(70px, 0.8fr) minmax(70px, 0.8fr) minmax(145px, 1.2fr) 85px';
+  const gridCols = 'minmax(360px, 4.5fr) minmax(95px, 1fr) minmax(70px, 0.8fr) minmax(70px, 0.8fr) minmax(70px, 0.8fr) minmax(70px, 0.8fr) minmax(145px, 1.2fr) 85px';
 
   const renderAvatarGroup = (members: any[], title: string, fallbackText: string = "None") => {
     if (!members || members.length === 0) {
@@ -278,12 +278,16 @@ export function WorkspaceMasterTable({
           })}
 
           {/* Column 1: Tree Hierarchy + Entity Name */}
-          <div className="py-2 px-4 flex items-center min-w-0 pr-2 relative z-10" style={{ paddingLeft: `${Math.max(16, depth * 24 + 16)}px` }}>
-            <div className="flex items-center gap-2 min-w-0 flex-1">
+          <div 
+            className="py-2.5 px-4 flex items-start min-w-0 pr-2 relative z-10" 
+            style={{ paddingLeft: `${Math.max(16, depth * 24 + 16)}px` }}
+            title={node.subject || node.name || 'Untitled Entity'}
+          >
+            <div className="flex items-start gap-2 min-w-0 flex-1">
               {/* Expand Toggle */}
               <div 
                 onClick={(e) => toggleNode(node, e)}
-                className={`h-5 w-5 rounded flex items-center justify-center shrink-0 transition-colors cursor-pointer ${
+                className={`h-5 w-5 rounded flex items-center justify-center shrink-0 transition-colors cursor-pointer mt-0.5 ${
                   hasChildren || (isWorkspaceType && subWsCount > 0)
                     ? 'hover:bg-surface-hover text-muted hover:text-foreground' 
                     : 'opacity-0 pointer-events-none'
@@ -299,7 +303,7 @@ export function WorkspaceMasterTable({
               </div>
 
               {/* Entity Icon */}
-              <div className={`h-6 w-6 rounded-md flex items-center justify-center shrink-0 shadow-xs ${
+              <div className={`h-6 w-6 rounded-md flex items-center justify-center shrink-0 shadow-xs mt-0.5 ${
                 node.type === 'WORKSPACE' ? 'bg-theme-btn-primary/10 text-theme-icon' :
                 node.type === 'SUB_WORKSPACE' ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400' :
                 node.type === 'TASK' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' :
@@ -309,32 +313,37 @@ export function WorkspaceMasterTable({
               </div>
 
               {/* Text Info */}
-              <div className="flex flex-col min-w-0 flex-1 overflow-hidden">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-xs text-foreground truncate group-hover:text-theme-icon transition-colors">
+              <div className="flex flex-col min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span 
+                    className="font-semibold text-xs text-foreground break-words whitespace-normal leading-snug group-hover:text-theme-icon transition-colors"
+                    title={node.subject || node.name || 'Untitled Entity'}
+                  >
                     {node.subject || node.name || 'Untitled Entity'}
                   </span>
                   
                   {isTask && (
                     <div className="flex items-center gap-1.5 shrink-0">
                       <span 
-                        className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded border"
+                        className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border leading-none shrink-0"
                         style={{
                           borderColor: `${statusColor}40`,
                           backgroundColor: `${statusColor}15`,
                           color: statusColor
                         }}
+                        title={`Status: ${statusName}`}
                       >
                         {statusName}
                       </span>
                       {priority && (
                         <span 
-                          className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded border"
+                          className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border leading-none shrink-0"
                           style={{
                             borderColor: `${priority.color}40`,
                             backgroundColor: `${priority.color}15`,
                             color: priority.color
                           }}
+                          title={`Priority: ${priority.name}`}
                         >
                           {priority.name}
                         </span>
@@ -343,14 +352,14 @@ export function WorkspaceMasterTable({
                   )}
 
                   {node.attachmentCount > 0 && (
-                    <div className="flex items-center justify-center p-0.5 px-1 rounded-md ml-1 bg-theme-btn-primary/10 text-theme-icon" title={`${node.attachmentCount} Attachment(s)`}>
+                    <div className="flex items-center justify-center p-0.5 px-1 rounded-md bg-theme-btn-primary/10 text-theme-icon shrink-0" title={`${node.attachmentCount} Attachment(s)`}>
                       <Paperclip className="h-3 w-3" />
                     </div>
                   )}
                 </div>
 
                 {isWorkspaceType && (
-                  <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                  <div className="flex flex-wrap items-center gap-1.5 mt-1">
                     <span 
                       onClick={(e) => {
                         e.stopPropagation();
@@ -364,7 +373,7 @@ export function WorkspaceMasterTable({
                   </div>
                 )}
                 {!isWorkspaceType && childTaskCount > 0 && (
-                  <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                  <div className="flex flex-wrap items-center gap-1.5 mt-1">
                     <span 
                       onClick={(e) => {
                         e.stopPropagation();
@@ -634,7 +643,10 @@ export function WorkspaceMasterTable({
                 else router.push(`/tasks/${node.id}`);
               }}
             >
-              <h4 className="text-[13px] font-bold text-foreground truncate hover:text-theme-icon">
+              <h4 
+                className="text-[13px] font-bold text-foreground break-words whitespace-normal leading-snug hover:text-theme-icon"
+                title={node.subject || node.name || 'Untitled Entity'}
+              >
                 {node.subject || node.name || 'Untitled Entity'}
               </h4>
               <div className="flex items-center gap-1.5 mt-1 flex-wrap">
@@ -818,7 +830,7 @@ export function WorkspaceMasterTable({
       </div>
 
       <div className="hidden lg:block w-full overflow-x-auto pb-10">
-        <div className="w-full flex flex-col min-w-[960px]">
+        <div className="w-full flex flex-col min-w-[1040px]">
           <div 
             className="sticky top-0 z-30 grid items-center text-[11px] tracking-wider font-bold uppercase text-muted border-b border-border bg-surface/95 dark:bg-[#0B0F19]/95 backdrop-blur-md pb-2.5 pt-2.5 mb-1 shadow-xs" 
             style={{ gridTemplateColumns: gridCols }}

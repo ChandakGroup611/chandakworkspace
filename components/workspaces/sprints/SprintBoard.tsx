@@ -1,15 +1,12 @@
 "use client";
 import { toast } from 'react-toastify';
-
 import React, { useState, useEffect } from "react";
 import { fetchSprints, fetchTasksByWorkspace, updateTaskProgress } from "@/lib/actions/workspaces";
 import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
-import { Plus, GripVertical, Calendar, Edit2, Check, X } from "lucide-react";
+import { Plus, GripVertical, Calendar, Edit2, Check, X, Filter } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { createClient } from "@/utils/supabase/client";
-
-import { Filter } from "lucide-react";
 
 export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspaceId: string, currentUser?: any, onNewSprint?: () => void }) {
   const { theme } = useTheme();
@@ -132,7 +129,7 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
           <select 
             value={taskFilter} 
             onChange={(e) => setTaskFilter(e.target.value as any)}
-            className={`text-xs p-1.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-theme-btn-primary ${"theme-card-structural "}`}
+            className={`text-xs p-1.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-theme-btn-primary theme-card-structural`}
           >
             <option value="ALL">All Tasks</option>
             <option value="ASSIGNED">Assigned To Me</option>
@@ -150,15 +147,15 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
         <form onSubmit={handleCreateSprint} className={`p-4 rounded-xl border flex gap-4 items-end bg-theme-btn-primary/10/50 border-indigo-100`}>
           <div className="space-y-1.5 flex-1">
             <label className="text-sm font-bold text-muted uppercase tracking-wider">Sprint Name</label>
-            <input required type="text" value={newSprintName} onChange={e => setNewSprintName(e.target.value)} placeholder="e.g. Sprint 1 - Platform Core" className={`w-full p-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-btn-primary ${"theme-card-structural "}`} />
+            <input required type="text" value={newSprintName} onChange={e => setNewSprintName(e.target.value)} placeholder="e.g. Sprint 1 - Platform Core" className={`w-full p-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-btn-primary theme-card-structural`} />
           </div>
           <div className="space-y-1.5 w-40">
             <label className="text-sm font-bold text-muted uppercase tracking-wider">Start Date</label>
-            <input type="date" value={newSprintStart} onChange={e => setNewSprintStart(e.target.value)} className={`w-full p-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-btn-primary ${"theme-card-structural "}`} />
+            <input type="date" value={newSprintStart} onChange={e => setNewSprintStart(e.target.value)} className={`w-full p-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-btn-primary theme-card-structural`} />
           </div>
           <div className="space-y-1.5 w-40">
             <label className="text-sm font-bold text-muted uppercase tracking-wider">End Date</label>
-            <input type="date" value={newSprintEnd} onChange={e => setNewSprintEnd(e.target.value)} className={`w-full p-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-btn-primary ${"theme-card-structural "}`} />
+            <input type="date" value={newSprintEnd} onChange={e => setNewSprintEnd(e.target.value)} className={`w-full p-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-btn-primary theme-card-structural`} />
           </div>
           <div className="flex gap-2 h-9">
             <AppButton type="button" variant="ghost" onClick={() => setIsCreatingSprint(false)}>Cancel</AppButton>
@@ -185,8 +182,8 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
                 className={`p-3 rounded-lg border-smooth cursor-grab active:cursor-grabbing flex gap-2 theme-card-structural shadow-sm`}
               >
                 <GripVertical className="h-4 w-4 text-muted mt-0.5 shrink-0" />
-                <div>
-                  <div className="text-xs font-bold">{t.title || t.subject}</div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs font-bold break-words whitespace-normal leading-snug" title={t.title || t.subject}>{t.title || t.subject}</div>
                   <div 
                     className="text-[10px] font-bold mt-1 px-1.5 py-0.5 rounded inline-block"
                     style={t.priority?.priority_color ? { 
@@ -275,8 +272,8 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
                   className={`p-3 rounded-lg border-smooth cursor-grab active:cursor-grabbing flex gap-2 theme-card-structural shadow-sm`}
                 >
                   <GripVertical className="h-4 w-4 text-muted mt-0.5 shrink-0" />
-                  <div>
-                    <div className="text-xs font-bold">{t.title || t.subject}</div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-bold break-words whitespace-normal leading-snug" title={t.title || t.subject}>{t.title || t.subject}</div>
                     <div 
                       className="text-[10px] font-bold mt-1 px-1.5 py-0.5 rounded inline-block"
                       style={t.priority?.priority_color ? { 
@@ -301,4 +298,3 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
     </div>
   );
 }
-
