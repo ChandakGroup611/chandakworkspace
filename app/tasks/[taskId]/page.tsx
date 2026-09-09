@@ -62,10 +62,10 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
             />
             <span className="hidden sm:inline text-muted/50 dark:text-subtle/50">|</span>
             <Link
-              href={`/workspaces${(task.sub_workspace_id || task.workspace_id) ? `?workspace=${task.sub_workspace_id || task.workspace_id}` : ''}`}
+              href={`/workspaces${(task.sub_workspace_id || task.workspace_id) ? `?workspace=${task.sub_workspace_id || task.workspace_id}&restoreHierarchy=true` : '?restoreHierarchy=true'}`}
               className="inline-flex items-center gap-2 text-sm font-semibold text-muted hover:text-foreground transition-colors"
             >
-              Back to Workspace List
+              Back to Execution Hierarchy
             </Link>
           </div>
         </div>

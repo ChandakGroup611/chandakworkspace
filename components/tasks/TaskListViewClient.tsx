@@ -1043,10 +1043,24 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
     <ExperienceProvider mode="operational">
       <div className="space-y-6">
         <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-2">
-          <div className="flex flex-col gap-1.5 shrink-0">
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground bg-clip-text">
-              Workspace Tasks
-            </h1>
+          <div className="flex flex-col gap-2 shrink-0">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  const wsTarget = selectedWorkspaceId ? `?workspace=${selectedWorkspaceId}&restoreHierarchy=true` : '?restoreHierarchy=true';
+                  router.push(`/workspaces${wsTarget}`);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-theme-icon bg-theme-btn-primary/10 hover:bg-theme-btn-primary/20 border border-theme-btn-primary/30 transition-all active:scale-95 shadow-xs shrink-0 cursor-pointer"
+                title="Return to Execution Hierarchy at the current level"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                <span>Back to Hierarchy</span>
+              </button>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground bg-clip-text">
+                Workspace Tasks
+              </h1>
+            </div>
             <p className="text-xs sm:text-[13px] font-medium text-muted flex items-center gap-2 flex-wrap">
               <span className="inline-flex items-center gap-1.5 theme-card-structural dark:/10 px-2 py-0.5 rounded-md shadow-sm">
                 <Layers className="h-3 w-3" />

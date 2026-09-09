@@ -80,6 +80,15 @@ export function WorkspaceMasterTable({
     return map;
   }, [allUsers]);
 
+  const saveHierarchySessionState = (targetNodeId: string, customExpanded?: Record<string, boolean>) => {
+    if (typeof window !== 'undefined') {
+      try {
+        sessionStorage.setItem('chandak_hierarchy_expanded_nodes', JSON.stringify(customExpanded || expandedNodes));
+        sessionStorage.setItem('chandak_hierarchy_last_active_id', targetNodeId);
+      } catch (err) {}
+    }
+  };
+
   const toggleNode = async (node: any, e: React.MouseEvent) => {
     e.stopPropagation();
     const id = node.id;
@@ -115,13 +124,18 @@ export function WorkspaceMasterTable({
             if (s.id !== id) next[s.id] = false;
           });
           next[id] = true;
+          saveHierarchySessionState(id, next);
           return next;
         });
         return;
       }
     }
     
-    setExpandedNodes(prev => ({ ...prev, [id]: !prev[id] }));
+    setExpandedNodes(prev => {
+      const next = { ...prev, [id]: !prev[id] };
+      saveHierarchySessionState(id, next);
+      return next;
+    });
   };
 
   const getStatusColor = (node: any) => {
@@ -242,6 +256,7 @@ export function WorkspaceMasterTable({
           const isInteractive = target.closest('button, a, input, select, [role="button"], [data-dropdown-menu="true"]');
           
           if (!isInteractive) {
+            saveHierarchySessionState(node.id);
             if (isWorkspaceType) {
               router.push(`/workspaces/tasks?workspaceId=${node.id}`);
             } else {
@@ -363,6 +378,7 @@ export function WorkspaceMasterTable({
                     <span 
                       onClick={(e) => {
                         e.stopPropagation();
+                        saveHierarchySessionState(node.id);
                         router.push(`/workspaces/tasks?workspaceId=${node.id}`);
                       }}
                       className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded cursor-pointer bg-theme-btn-primary/10 text-theme-icon hover:bg-theme-btn-primary/20 border border-theme-icon/20" 
@@ -377,6 +393,7 @@ export function WorkspaceMasterTable({
                     <span 
                       onClick={(e) => {
                         e.stopPropagation();
+                        saveHierarchySessionState(node.id);
                         router.push(`/tasks/${node.id}`);
                       }}
                       className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded cursor-pointer bg-theme-btn-secondary/10 text-theme-btn-secondary-text hover:bg-theme-btn-secondary/20 border border-theme-btn-secondary-text/20"
@@ -638,6 +655,7 @@ export function WorkspaceMasterTable({
             <div 
               className="flex-1 min-w-0 cursor-pointer"
               onClick={() => {
+                saveHierarchySessionState(node.id);
                 if (isWorkspaceType) router.push(`/workspaces/tasks?workspaceId=${node.id}`);
                 else if (onOpenTask) onOpenTask(node);
                 else router.push(`/tasks/${node.id}`);

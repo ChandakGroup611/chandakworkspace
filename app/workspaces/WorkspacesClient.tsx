@@ -327,13 +327,29 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     }
   }, [initialData?.prefetchWorkspaceId, initialData?.workspaces]);
 
-  // Auto-expand hierarchy path to prefetched workspace
+  // Auto-expand hierarchy path to prefetched workspace or restored hierarchy state
   const autoExpandedPathsRef = useRef<Set<string>>(new Set());
   const workspaceParam = searchParams?.get('workspace');
+  const restoreHierarchyParam = searchParams?.get('restoreHierarchy');
 
   useEffect(() => {
-    if (workspaceParam && workspaces.length > 0) {
-      const targetId = workspaceParam;
+    let targetId = workspaceParam;
+    let savedExpanded: Record<string, boolean> | null = null;
+    let savedLastActive: string | null = null;
+
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = sessionStorage.getItem('chandak_hierarchy_expanded_nodes');
+        if (raw) savedExpanded = JSON.parse(raw);
+        savedLastActive = sessionStorage.getItem('chandak_hierarchy_last_active_id');
+      } catch (e) {}
+    }
+
+    if (!targetId && (restoreHierarchyParam || savedLastActive)) {
+      targetId = savedLastActive || null;
+    }
+
+    if (targetId && workspaces.length > 0) {
       if (autoExpandedPathsRef.current.has(targetId)) return;
       autoExpandedPathsRef.current.add(targetId);
 
@@ -350,18 +366,18 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         }
       }
       
-      // Expand all nodes in the path and collapse sibling hierarchies if autoCollapse is active
+      // Expand all nodes in the path and merge any saved expanded nodes
       setExpandedNodes(prev => {
-        const next = { ...prev };
+        const next = { ...prev, ...(savedExpanded || {}) };
         if (autoCollapse) {
           path.forEach(nodeId => {
             const current = workspaces.find(w => w.id === nodeId);
             if (current) {
               const parentId = current.parent_workspace_id;
-              // Collapse all sibling workspaces at the same level
+              // Collapse all sibling workspaces at the same level except those in path
               const siblings = workspaces.filter(w => w.parent_workspace_id === parentId);
               siblings.forEach(s => {
-                if (s.id !== nodeId) {
+                if (s.id !== nodeId && !path.includes(s.id)) {
                   next[s.id] = false;
                 }
               });
@@ -408,12 +424,12 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       };
       
       loadTreePath();
-    } else if (!workspaceParam && mounted) {
-      // Clear expansion state to match default collapsed view on client navigation
+    } else if (!workspaceParam && !restoreHierarchyParam && !savedLastActive && mounted) {
+      // Clear expansion state only if no target or restoration state is requested
       setExpandedNodes({});
       autoExpandedPathsRef.current.clear();
     }
-  }, [workspaceParam, workspaces, autoCollapse, mounted]);
+  }, [workspaceParam, restoreHierarchyParam, workspaces, autoCollapse, mounted]);
 
   // Real-time presence tracking via server-side heartbeat
   const allUserIds = useMemo(
@@ -477,7 +493,15 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const [assigneeDropdownOpen, setAssigneeDropdownOpen] = useState(false);
   const [activeView, setActiveView] = useState<'HIERARCHY' | 'SPRINTS'>('HIERARCHY');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
+  const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = sessionStorage.getItem('chandak_hierarchy_expanded_nodes');
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return {};
+  });
   
   // Dependency Checks
   const [checkingDependencyId, setCheckingDependencyId] = useState<string | null>(null);
