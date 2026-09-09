@@ -2088,17 +2088,21 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                                     setCheckingDependencyId(null);
                                   }
                                 }
-                                setSelectedPrimaryAssignee("");
-                              } else {
-                                setSelectedPrimaryAssignee(s.id);
-                                if (!selectedExecutors.includes(s.id)) {
-                                  setSelectedExecutors(prev => [...prev, s.id]);
+                                  setSelectedPrimaryAssignee("");
+                                  const remaining = stakeholders.filter(st => !selectedExecutors.includes(st.id)).map(st => st.id);
+                                  setSelectedWatchers(remaining);
+                                } else {
+                                  setSelectedPrimaryAssignee(s.id);
+                                  let newExecs = selectedExecutors;
+                                  if (!newExecs.includes(s.id)) {
+                                    newExecs = [...newExecs, s.id];
+                                    setSelectedExecutors(newExecs);
+                                  }
+                                  // Auto-populate remaining workspace members into watchers
+                                  const remaining = stakeholders.filter(st => !newExecs.includes(st.id)).map(st => st.id);
+                                  setSelectedWatchers(remaining);
                                 }
-                                if (selectedWatchers.includes(s.id)) {
-                                  setSelectedWatchers(prev => prev.filter(id => id !== s.id));
-                                }
-                              }
-                            }}
+                              }}
                             className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${ isSelected ? 'border-theme-btn-primary bg-theme-btn-primary/10 dark:bg-theme-btn-primary/15' : 'border-border/60 hover:border-theme-btn-primary/40 hover:bg-surface-hover' } ${checkingDependencyId === s.id ? 'opacity-50 pointer-events-none' : ''}`}
                           >
                             <div className="flex items-center gap-3 min-w-0">
@@ -2149,7 +2153,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                             onClick={() => {
                               const allIds = stakeholders.map(s => s.id);
                               setSelectedExecutors(allIds);
-                              setSelectedWatchers(prev => prev.filter(id => !allIds.includes(id)));
+                              setSelectedWatchers([]);
                             }}
                             className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold hover:underline"
                           >
@@ -2160,7 +2164,12 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                             type="button"
                             variant="ghost"
                             size="sm"
-                            onClick={() => setSelectedExecutors(selectedPrimaryAssignee ? [selectedPrimaryAssignee] : [])}
+                            onClick={() => {
+                              const newExecs = selectedPrimaryAssignee ? [selectedPrimaryAssignee] : [];
+                              setSelectedExecutors(newExecs);
+                              const remaining = stakeholders.filter(s => !newExecs.includes(s.id)).map(s => s.id);
+                              setSelectedWatchers(remaining);
+                            }}
                             className="text-[10px] text-muted hover:text-foreground font-bold hover:underline"
                           >
                             Clear All
@@ -2174,6 +2183,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                             key={s.id}
                             onClick={async () => {
                               if (checkingDependencyId) return;
+                              let newExecs: string[];
                               if (isSelected) {
                                 if (task?.id) {
                                   setCheckingDependencyId(s.id);
@@ -2194,11 +2204,13 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                                 if (s.id === selectedPrimaryAssignee) {
                                   setSelectedPrimaryAssignee("");
                                 }
-                                setSelectedExecutors(selectedExecutors.filter(id => id !== s.id));
+                                newExecs = selectedExecutors.filter(id => id !== s.id);
                               } else {
-                                setSelectedExecutors([...selectedExecutors, s.id]);
-                                setSelectedWatchers(selectedWatchers.filter(id => id !== s.id));
+                                newExecs = [...selectedExecutors, s.id];
                               }
+                              setSelectedExecutors(newExecs);
+                              const remaining = stakeholders.filter(st => !newExecs.includes(st.id)).map(st => st.id);
+                              setSelectedWatchers(remaining);
                             }}
                             className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${ isSelected ? 'border-emerald-500 bg-emerald-500/10 dark:bg-emerald-500/15' : 'border-border/60 hover:border-emerald-400/40 hover:bg-surface-hover' } ${checkingDependencyId === s.id ? 'opacity-50 pointer-events-none' : ''}`}
                           >

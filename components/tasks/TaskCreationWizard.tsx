@@ -458,11 +458,15 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 onChange={e => {
                   const val = e.target.value;
                   setPrimaryAssignee(val);
-                  if (val && !executors.includes(val)) {
-                    setExecutors(prev => [...prev, val]);
+                  let newExecs = [...executors];
+                  if (val && !newExecs.includes(val)) {
+                    newExecs.push(val);
                   }
-                  if (val && watchers.includes(val)) {
-                    setWatchers(prev => prev.filter(id => id !== val));
+                  setExecutors(newExecs);
+                  // Automatically populate all remaining workspace members into Watchers
+                  if (val || newExecs.length > 0) {
+                    const remainingWatchers = stakeholders.filter(s => !newExecs.includes(s.id)).map(s => s.id);
+                    setWatchers(remainingWatchers);
                   }
                 }}
               >
@@ -496,12 +500,15 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 </div>
                 <AppButton variant="secondary" type="button" onClick={() => {
                   if (executors.length === stakeholders.length && stakeholders.length > 0) {
-                    setExecutors(primaryAssignee ? [primaryAssignee] : []);
+                    const newExecs = primaryAssignee ? [primaryAssignee] : [];
+                    setExecutors(newExecs);
+                    const remainingWatchers = stakeholders.filter(s => !newExecs.includes(s.id)).map(s => s.id);
+                    setWatchers(remainingWatchers);
                   } else {
                     const allIds = stakeholders.map(s => s.id);
                     setExecutors(allIds);
-                    // Remove from watchers if all selected as executors
-                    setWatchers(prev => prev.filter(id => !allIds.includes(id)));
+                    // If all are executors, no watchers remain
+                    setWatchers([]);
                   }
                 }} className="text-[10px] font-bold text-success hover:text-emerald-700 uppercase tracking-wider">
                   {executors.length === stakeholders.length && stakeholders.length > 0 ? "Clear All" : "Select All"}
@@ -516,16 +523,20 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                         className="accent-emerald-500 h-4 w-4" 
                         checked={executors.includes(s.id)} 
                         onChange={e => {
+                          let newExecs: string[];
                           if (e.target.checked) {
-                            setExecutors([...executors, s.id]);
-                            setWatchers(watchers.filter(id => id !== s.id));
+                            newExecs = [...executors, s.id];
                           } else {
                             if (s.id === primaryAssignee) {
                               // If primary assignee is unselected from executors, clear primary assignee
                               setPrimaryAssignee("");
                             }
-                            setExecutors(executors.filter(id => id !== s.id));
+                            newExecs = executors.filter(id => id !== s.id);
                           }
+                          setExecutors(newExecs);
+                          // Automatically update remaining workspace members into Watchers
+                          const remainingWatchers = stakeholders.filter(st => !newExecs.includes(st.id)).map(st => st.id);
+                          setWatchers(remainingWatchers);
                         }} 
                       />
                       <span className="truncate font-medium">{s.full_name}</span>
