@@ -1,9 +1,8 @@
 "use client";
 import { toast } from 'react-toastify';
-
 import React, { useState, useEffect } from "react";
 import { 
-  Clock, Users, Save, Paperclip, CheckCircle2, Video, MessageSquare, ChevronDown, ChevronUp, Loader2, Network
+  Clock, Users, Save, Paperclip, CheckCircle2, Video, MessageSquare, ChevronDown, ChevronUp, Loader2, Network, AlertTriangle
 } from "lucide-react";
 import DOMPurify from 'dompurify';
 import { usePermissions } from "@/hooks/usePermissions";
@@ -646,9 +645,18 @@ export function TicketWorkspaceConsole({
         {/* RIGHT: TICKET REMARKS */}
         <div className="space-y-3">
         {(Object.keys(pendingChanges).length > 0) && (
-          <div className="p-3 bg-warning/10 border border-amber-500/20 text-warning text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1 mb-4">
-            <span>Ticket updates are pending. Write a mandatory remark below and click <strong>"Commit Updates & Save Remark"</strong> to save.</span>
-            <AppButton onClick={cancelChanges} className="text-xs text-warning/60 hover:text-warning font-bold px-2 underline hover:no-underline">Cancel Change</AppButton>
+          <div className="p-3.5 bg-red-500/15 dark:bg-red-950/40 border-l-4 border-l-red-600 border border-red-500/40 text-red-700 dark:text-red-300 text-xs rounded-xl flex items-center justify-between gap-3 animate-in slide-in-from-top-1 mb-4 shadow-sm shadow-red-500/10">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400 shrink-0" />
+              <span>Ticket updates are pending. Write a mandatory remark below and click <strong className="font-extrabold text-red-900 dark:text-red-100 underline">"Commit Updates & Save Remark"</strong> to save.</span>
+            </div>
+            <button 
+              type="button" 
+              onClick={cancelChanges} 
+              className="text-xs text-red-700 dark:text-red-300 hover:text-red-950 dark:hover:text-red-100 font-bold px-2.5 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 transition-colors shrink-0 whitespace-nowrap"
+            >
+              Cancel Change
+            </button>
           </div>
         )}
 
@@ -697,7 +705,14 @@ export function TicketWorkspaceConsole({
         <div className="flex items-center justify-between gap-3">
           <span className="text-xs text-muted">Last updated: {ticket.updated_at ? new Date(ticket.updated_at).toLocaleString() : "Not yet"}</span>
           {canEditFields && (
-            <AppButton type="button" variant="primary" size="sm" onClick={commitChanges} disabled={isSaving || (Object.keys(pendingChanges).length > 0 && !updateRemark.trim())}>
+            <AppButton 
+              type="button" 
+              variant="primary" 
+              size="sm" 
+              onClick={commitChanges} 
+              disabled={isSaving || (Object.keys(pendingChanges).length > 0 && !updateRemark.trim())}
+              className={(Object.keys(pendingChanges).length > 0) ? "bg-red-600 hover:bg-red-700 text-white font-bold shadow-md shadow-red-500/25" : ""}
+            >
               {isSaving ? "Saving..." : (Object.keys(pendingChanges).length > 0) ? "Commit Updates & Save Remark" : "Save Remarks"}
             </AppButton>
           )}

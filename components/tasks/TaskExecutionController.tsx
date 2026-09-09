@@ -1541,30 +1541,74 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
         </div>
 
         {pendingStatus && (
-          <div className="p-3 bg-warning/10 border border-amber-500/20 text-warning text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1">
-            <span>Status change to <strong>{statuses.find(s => (s.code || s.status_code || s.id) === pendingStatus)?.name || statuses.find(s => (s.code || s.status_code || s.id) === pendingStatus)?.status_name || pendingStatus}</strong> is pending. Write a mandatory remark below and click <strong>"Commit Updates & Save Remark"</strong> to save both.</span>
-            <AppButton variant="secondary" onClick={() => setPendingStatus(null)} className="text-xs text-warning/60 hover:text-warning font-bold px-2 underline hover:no-underline">Cancel Change</AppButton>
+          <div className="p-3.5 bg-red-500/15 dark:bg-red-950/40 border-l-4 border-l-red-600 border border-red-500/40 text-red-700 dark:text-red-300 text-xs rounded-xl flex items-center justify-between gap-3 animate-in slide-in-from-top-1 shadow-sm shadow-red-500/10">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400 shrink-0" />
+              <span>
+                Status change to <strong className="font-extrabold text-red-900 dark:text-red-100 bg-red-500/20 px-1.5 py-0.5 rounded border border-red-500/30">{statuses.find(s => (s.code || s.status_code || s.id) === pendingStatus)?.name || statuses.find(s => (s.code || s.status_code || s.id) === pendingStatus)?.status_name || pendingStatus}</strong> is pending. Write a mandatory remark below and click <strong className="font-extrabold text-red-900 dark:text-red-100 underline">"Commit Updates & Save Remark"</strong> to save both.
+              </span>
+            </div>
+            <button 
+              type="button" 
+              onClick={() => setPendingStatus(null)} 
+              className="text-xs text-red-700 dark:text-red-300 hover:text-red-950 dark:hover:text-red-100 font-bold px-2.5 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 transition-colors shrink-0 whitespace-nowrap"
+            >
+              Cancel Change
+            </button>
           </div>
         )}
 
         {pendingDepartment && (
-          <div className="p-3 bg-theme-btn-primary/10 border border-theme-btn-primary/20 text-theme-icon text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1 mt-3">
-            <span>Department change to <strong>{departments.find(d => d.id === pendingDepartment)?.name || pendingDepartment}</strong> is pending. Write a mandatory remark below and click <strong>"Commit Updates & Save Remark"</strong> to save both.</span>
-            <AppButton variant="secondary" onClick={() => setPendingDepartment(null)} className="text-xs text-theme-icon/60 hover:text-theme-icon font-bold px-2 underline hover:no-underline">Cancel Change</AppButton>
+          <div className="p-3.5 bg-red-500/15 dark:bg-red-950/40 border-l-4 border-l-red-600 border border-red-500/40 text-red-700 dark:text-red-300 text-xs rounded-xl flex items-center justify-between gap-3 animate-in slide-in-from-top-1 mt-3 shadow-sm shadow-red-500/10">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400 shrink-0" />
+              <span>
+                Department change to <strong className="font-extrabold text-red-900 dark:text-red-100 bg-red-500/20 px-1.5 py-0.5 rounded border border-red-500/30">{departments.find(d => d.id === pendingDepartment)?.name || pendingDepartment}</strong> is pending. Write a mandatory remark below and click <strong className="font-extrabold text-red-900 dark:text-red-100 underline">"Commit Updates & Save Remark"</strong> to save both.
+              </span>
+            </div>
+            <button 
+              type="button" 
+              onClick={() => setPendingDepartment(null)} 
+              className="text-xs text-red-700 dark:text-red-300 hover:text-red-950 dark:hover:text-red-100 font-bold px-2.5 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 transition-colors shrink-0 whitespace-nowrap"
+            >
+              Cancel Change
+            </button>
           </div>
         )}
 
         {pendingAssignees && (
-          <div className="p-3 bg-success/10 border border-emerald-500/20 text-theme-icon text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1 mt-3">
-            <span>Executors change is pending. Write a mandatory remark below and click <strong>"Commit Updates & Save Remark"</strong> to save.</span>
-            <AppButton variant="secondary" onClick={() => setPendingAssignees(null)} className="text-xs text-theme-icon/60 hover:text-theme-icon font-bold px-2 underline hover:no-underline">Cancel Change</AppButton>
+          <div className="p-3.5 bg-red-500/15 dark:bg-red-950/40 border-l-4 border-l-red-600 border border-red-500/40 text-red-700 dark:text-red-300 text-xs rounded-xl flex items-center justify-between gap-3 animate-in slide-in-from-top-1 mt-3 shadow-sm shadow-red-500/10">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400 shrink-0" />
+              <span>
+                Executors change is pending. Write a mandatory remark below and click <strong className="font-extrabold text-red-900 dark:text-red-100 underline">"Commit Updates & Save Remark"</strong> to save.
+              </span>
+            </div>
+            <button 
+              type="button" 
+              onClick={() => setPendingAssignees(null)} 
+              className="text-xs text-red-700 dark:text-red-300 hover:text-red-950 dark:hover:text-red-100 font-bold px-2.5 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 transition-colors shrink-0 whitespace-nowrap"
+            >
+              Cancel Change
+            </button>
           </div>
         )}
 
         {pendingPrimaryAssignee && (
-          <div className="p-3 bg-theme-btn-primary/10 border border-theme-btn-primary/20 text-theme-icon text-xs rounded-xl flex items-center justify-between animate-in slide-in-from-top-1 mt-3">
-            <span>Primary Assignee change is pending. Write a mandatory remark below and click <strong>"Commit Updates & Save Remark"</strong> to save.</span>
-            <AppButton variant="secondary" onClick={() => setPendingPrimaryAssignee(null)} className="text-xs text-theme-icon/60 hover:text-theme-icon font-bold px-2 underline hover:no-underline">Cancel Change</AppButton>
+          <div className="p-3.5 bg-red-500/15 dark:bg-red-950/40 border-l-4 border-l-red-600 border border-red-500/40 text-red-700 dark:text-red-300 text-xs rounded-xl flex items-center justify-between gap-3 animate-in slide-in-from-top-1 mt-3 shadow-sm shadow-red-500/10">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400 shrink-0" />
+              <span>
+                Primary Assignee change is pending. Write a mandatory remark below and click <strong className="font-extrabold text-red-900 dark:text-red-100 underline">"Commit Updates & Save Remark"</strong> to save.
+              </span>
+            </div>
+            <button 
+              type="button" 
+              onClick={() => setPendingPrimaryAssignee(null)} 
+              className="text-xs text-red-700 dark:text-red-300 hover:text-red-950 dark:hover:text-red-100 font-bold px-2.5 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 transition-colors shrink-0 whitespace-nowrap"
+            >
+              Cancel Change
+            </button>
           </div>
         )}
  
@@ -1586,7 +1630,14 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
           <div className="flex items-center justify-between gap-3">
             <span className="text-xs text-muted">Last updated: {task.updated_at ? new Date(task.updated_at).toLocaleString() : "Not yet"}</span>
             {canAddRemark && (
-              <AppButton type="button" variant="primary" size="sm" onClick={handleBatchSave} disabled={saveRemarksLoading}>
+              <AppButton 
+                type="button" 
+                variant="primary" 
+                size="sm" 
+                onClick={handleBatchSave} 
+                disabled={saveRemarksLoading}
+                className={(pendingStatus || pendingDepartment || pendingAssignees || pendingPrimaryAssignee) ? "bg-red-600 hover:bg-red-700 text-white font-bold shadow-md shadow-red-500/25" : ""}
+              >
                 {saveRemarksLoading ? "Saving..." : (pendingStatus || pendingDepartment || pendingAssignees || pendingPrimaryAssignee) ? "Commit Updates & Save Remark" : "Save Remarks"}
               </AppButton>
             )}
