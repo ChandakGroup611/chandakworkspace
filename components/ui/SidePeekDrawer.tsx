@@ -56,21 +56,21 @@ export function SidePeekDrawer({
     <div className="fixed inset-0 z-[100] flex justify-end">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-background/50 transition-opacity animate-in fade-in duration-200"
+        className="absolute inset-0 bg-background/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-300"
         onClick={onClose}
       />
       
       {/* Drawer Panel */}
       <div 
         className={cn(
-          "relative flex flex-col bg-background border-l border-border  h-full transform transition-transform animate-in slide-in-from-right duration-300",
+          "relative flex flex-col bg-background border-l border-border h-full shadow-2xl shadow-black/40 transform transition-transform animate-in slide-in-from-right duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
           widthMap[width],
           className
         )}
       >
         {/* Header */}
         {(title || !hideCloseButton) && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-border/40 shrink-0">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-border/40 shrink-0 theme-card-structural">
             <div className="text-lg font-semibold tracking-tight text-foreground flex-1 min-w-0 pr-4 truncate">
               {title}
             </div>
@@ -79,7 +79,7 @@ export function SidePeekDrawer({
                 variant="ghost" 
                 size="icon-sm" 
                 onClick={onClose}
-                className="shrink-0 text-muted hover:text-foreground hover:bg-surface-hover rounded-md"
+                className="shrink-0 text-muted hover:text-foreground hover:bg-surface-hover rounded-lg active:scale-95 transition-all"
               >
                 <X className="h-4 w-4" />
               </AppButton>
@@ -88,7 +88,7 @@ export function SidePeekDrawer({
         )}
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto min-h-0 relative">
+        <div className="flex-1 overflow-y-auto min-h-0 relative custom-scrollbar">
           {children}
         </div>
       </div>

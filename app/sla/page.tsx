@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { usePermissions } from "@/hooks/usePermissions";
+import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
 
 interface SLATracker {
   id: string;
@@ -165,32 +166,38 @@ export default function SLAPage() {
       {/* Interactive SLA Governance Heatmap Metrics */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <AppCard 
-          className={`cursor-pointer transition-all ${filter === 'ALL' ? 'ring-2 ring-theme-btn-primary' : 'hover:bg-surface/50 dark:hover:bg-surface/5'} bg-surface`}
+          className={`cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-md ${filter === 'ALL' ? 'ring-2 ring-theme-btn-primary' : 'hover:bg-surface/50 dark:hover:bg-surface/5'} bg-surface`}
           onClick={() => setFilter('ALL')}
         >
           <AppCardContent className="p-4 flex flex-col items-center justify-center">
             <span className="text-sm font-bold text-muted uppercase tracking-wider mb-1">Total Records</span>
-            <span className="text-3xl font-bold text-theme-icon dark:text-theme-icon">{loading ? '-' : totalRecords}</span>
+            <span className="text-3xl font-bold text-theme-icon dark:text-theme-icon">
+              {loading ? '-' : <AnimatedCounter value={totalRecords} />}
+            </span>
           </AppCardContent>
         </AppCard>
 
         <AppCard 
-          className={`cursor-pointer transition-all ${filter === 'UPCOMING' ? 'ring-2 ring-amber-500' : 'hover:bg-amber-50/50 dark:hover:bg-warning/10'} bg-surface`}
+          className={`cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-md ${filter === 'UPCOMING' ? 'ring-2 ring-amber-500' : 'hover:bg-amber-50/50 dark:hover:bg-warning/10'} bg-surface`}
           onClick={() => setFilter('UPCOMING')}
         >
           <AppCardContent className="p-4 flex flex-col items-center justify-center">
             <span className="text-sm font-bold text-muted uppercase tracking-wider mb-1 flex items-center gap-1.5"><Clock className="h-4 w-4" /> Upcoming</span>
-            <span className="text-3xl font-bold text-warning">{loading ? '-' : upcomingRecords}</span>
+            <span className="text-3xl font-bold text-warning">
+              {loading ? '-' : <AnimatedCounter value={upcomingRecords} />}
+            </span>
           </AppCardContent>
         </AppCard>
 
         <AppCard 
-          className={`cursor-pointer transition-all ${filter === 'ESCALATED' ? 'ring-2 ring-rose-500' : 'hover:bg-rose-50/50 dark:hover:bg-danger/10'} bg-surface`}
+          className={`cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-md ${filter === 'ESCALATED' ? 'ring-2 ring-rose-500' : 'hover:bg-rose-50/50 dark:hover:bg-danger/10'} bg-surface`}
           onClick={() => setFilter('ESCALATED')}
         >
           <AppCardContent className="p-4 flex flex-col items-center justify-center">
             <span className="text-sm font-bold text-muted uppercase tracking-wider mb-1 flex items-center gap-1.5"><Flame className="h-4 w-4" /> Escalated</span>
-            <span className="text-3xl font-bold text-danger dark:text-danger">{loading ? '-' : escalatedRecords}</span>
+            <span className="text-3xl font-bold text-danger dark:text-danger">
+              {loading ? '-' : <AnimatedCounter value={escalatedRecords} />}
+            </span>
           </AppCardContent>
         </AppCard>
       </div>
@@ -207,9 +214,10 @@ export default function SLAPage() {
                 </AppCardTitle>
                 <p className="text-[0.8rem] text-muted">Reactive task timers updating background worker task queue parameters.</p>
               </div>
-              <span className={`text-xs px-2 py-0.5 rounded font-mono font-bold uppercase border ${
-                "bg-rose-50 text-rose-700 border-rose-200"
+              <span className={`text-xs px-2.5 py-0.5 rounded-full font-mono font-bold uppercase border inline-flex items-center gap-1.5 ${
+                "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800/40"
               }`}>
+                <span className="w-1.5 h-1.5 rounded-full bg-danger animate-ping" />
                 Breach Count: {escalatedRecords}
               </span>
             </AppCardHeader>
@@ -226,66 +234,72 @@ export default function SLAPage() {
                     </tr>
                   </AppTableHeader>
                   <AppTableBody>
-                    {filteredSlas.map((item) => (
-                      <AppTableRow key={item.id} className="hover:bg-elevated">
-                        <AppTableCell>
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <span className={`font-mono text-xs font-bold text-theme-icon`}>{item.displayId || item.id}</span>
-                              <AppBadge variant="neutral" className="text-[0.65rem] py-0">{item.module}</AppBadge>
+                    {filteredSlas.map((item, index) => {
+                      const staggerClass = index < 8 ? `delay-${index + 1}` : "";
+                      return (
+                        <AppTableRow key={item.id} className={`hover:bg-elevated transition-colors animate-stagger-in ${staggerClass}`}>
+                          <AppTableCell>
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <span className={`font-mono text-xs font-bold text-theme-icon`}>{item.displayId || item.id}</span>
+                                <AppBadge variant="neutral" className="text-[0.65rem] py-0">{item.module}</AppBadge>
+                              </div>
+                              <span className="text-[0.8rem] text-muted block truncate max-w-[150px]">{item.targetEntity}</span>
+                              <span className={`text-xs font-semibold text-theme-icon`}>{item.type}</span>
                             </div>
-                            <span className="text-[0.8rem] text-muted block truncate max-w-[150px]">{item.targetEntity}</span>
-                            <span className={`text-xs font-semibold text-theme-icon`}>{item.type}</span>
-                          </div>
-                        </AppTableCell>
-                        <AppTableCell>
-                          <div className="space-y-0.5 text-xs">
-                            <span className={`${"text-foreground"} font-medium block`}>{item.allocatedWindow}</span>
-                            <span className={`text-[0.8rem] font-mono block text-warning`}>{item.elapsedTime}</span>
-                          </div>
-                        </AppTableCell>
-                        <AppTableCell>
-                          <div className="space-y-1">
-                            <AppBadge variant={item.status === "Healthy" ? "success" : item.status === "Warning" ? "warning" : "danger"}>
-                              {item.status}
-                            </AppBadge>
-                            <span className="text-xs text-muted block font-bold tracking-wider uppercase">{item.escalationTier}</span>
-                          </div>
-                        </AppTableCell>
-                        <AppTableCell className="text-right">
-                          <div className="space-y-1 flex flex-col items-end">
-                            <span className="text-xs text-muted italic block truncate max-w-[120px]">{item.actionRecipient}</span>
-                            <div className="flex items-center gap-1 mt-1 justify-end">
-                              <AppButton 
-                                variant="ghost" 
-                                size="sm" 
-                                className="h-6 w-6 p-0 text-theme-icon hover:bg-theme-btn-primary/10" 
-                                title="View Record"
-                                onClick={() => {
-                                  let url = "";
-                                  if (item.module === "TICKET") url = `/tickets/${item.entityId}`;
-                                  else if (item.module === "TASK") url = `/tasks/${item.entityId}`;
-                                  else if (item.module === "REQUIREMENT") url = `/requirements/${item.entityId}`;
-                                  if (url) window.location.href = url;
-                                }}
+                          </AppTableCell>
+                          <AppTableCell>
+                            <div className="space-y-0.5 text-xs">
+                              <span className={`${"text-foreground"} font-medium block`}>{item.allocatedWindow}</span>
+                              <span className={`text-[0.8rem] font-mono block text-warning font-semibold`}>{item.elapsedTime}</span>
+                            </div>
+                          </AppTableCell>
+                          <AppTableCell>
+                            <div className="space-y-1">
+                              <AppBadge 
+                                variant={item.status === "Healthy" ? "success" : item.status === "Warning" ? "warning" : "danger"}
+                                withPulse={item.status === "Breached" || item.status === "Warning"}
                               >
-                                <Eye className="h-3.5 w-3.5" />
-                              </AppButton>
-                              {(roleCode === "SUPER_ADMIN" || hasPermission("SLA_UPDATE")) && (
-                                <AppButton variant="ghost" size="sm" onClick={() => { window.location.href = '/sla/rules'; }} className="h-6 w-6 p-0 text-warning hover:bg-warning/10" title="Update Thresholds / Configure SLA Rules">
-                                  <Edit2 className="h-3.5 w-3.5" />
-                                </AppButton>
-                              )}
-                              {(roleCode === "SUPER_ADMIN" || hasPermission("SLA_DELETE")) && (
-                                <AppButton variant="ghost" size="sm" onClick={() => overrideBreach(item.id)} className="h-6 w-6 p-0 text-danger hover:bg-danger/10" title="Delete / Override Alert">
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </AppButton>
-                              )}
+                                {item.status}
+                              </AppBadge>
+                              <span className="text-xs text-muted block font-bold tracking-wider uppercase">{item.escalationTier}</span>
                             </div>
-                          </div>
-                        </AppTableCell>
-                      </AppTableRow>
-                    ))}
+                          </AppTableCell>
+                          <AppTableCell className="text-right">
+                            <div className="space-y-1 flex flex-col items-end">
+                              <span className="text-xs text-muted italic block truncate max-w-[120px]">{item.actionRecipient}</span>
+                              <div className="flex items-center gap-1 mt-1 justify-end">
+                                <AppButton 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="h-6 w-6 p-0 text-theme-icon hover:bg-theme-btn-primary/10 rounded-lg active:scale-95 transition-all" 
+                                  title="View Record"
+                                  onClick={() => {
+                                    let url = "";
+                                    if (item.module === "TICKET") url = `/tickets/${item.entityId}`;
+                                    else if (item.module === "TASK") url = `/tasks/${item.entityId}`;
+                                    else if (item.module === "REQUIREMENT") url = `/requirements/${item.entityId}`;
+                                    if (url) window.location.href = url;
+                                  }}
+                                >
+                                  <Eye className="h-3.5 w-3.5" />
+                                </AppButton>
+                                {(roleCode === "SUPER_ADMIN" || hasPermission("SLA_UPDATE")) && (
+                                  <AppButton variant="ghost" size="sm" onClick={() => { window.location.href = '/sla/rules'; }} className="h-6 w-6 p-0 text-warning hover:bg-warning/10 rounded-lg active:scale-95 transition-all" title="Update Thresholds / Configure SLA Rules">
+                                    <Edit2 className="h-3.5 w-3.5" />
+                                  </AppButton>
+                                )}
+                                {(roleCode === "SUPER_ADMIN" || hasPermission("SLA_DELETE")) && (
+                                  <AppButton variant="ghost" size="sm" onClick={() => overrideBreach(item.id)} className="h-6 w-6 p-0 text-danger hover:bg-danger/10 rounded-lg active:scale-95 transition-all" title="Delete / Override Alert">
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </AppButton>
+                                )}
+                              </div>
+                            </div>
+                          </AppTableCell>
+                        </AppTableRow>
+                      );
+                    })}
                   </AppTableBody>
                 </AppTable>
               </AppTableContainer>

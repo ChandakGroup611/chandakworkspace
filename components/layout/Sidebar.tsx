@@ -275,24 +275,24 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
                       <Link
                         href={item.href}
                         onClick={() => onCloseMobile?.()}
-                        className={`group relative flex items-center transition-all duration-200 select-none cursor-pointer ${
+                        className={`group relative flex items-center transition-all duration-200 select-none cursor-pointer active:scale-[0.98] ${
                           isCompact && !isOpenMobile
-                            ? "w-10 h-10 mx-auto justify-center rounded-xl" 
+                            ? "w-10 h-10 mx-auto justify-center rounded-xl hover:bg-surface/80" 
                             : "flex-1 gap-3 rounded-r-xl py-2 px-3 text-sm overflow-hidden whitespace-nowrap"
                         } ${modTheme.activeBg} ${modTheme.text}`}
                       >
                         {/* Content Wrapper */}
                         <div className={`flex items-center ${isCompact && !isOpenMobile ? "justify-center w-full h-full" : "gap-3 w-full overflow-hidden"}`}>
-                          <IconComponent className={`shrink-0 transition-transform duration-200 ${
+                          <IconComponent className={`shrink-0 transition-all duration-200 group-hover:scale-110 group-hover:-rotate-3 ${
                             isCompact && !isOpenMobile ? "h-5 w-5" : "h-4 w-4"
                           } ${modTheme.iconColor}`} />
                           
                           {(!isCompact || isOpenMobile) && (
-                            <span className="flex-1 truncate transition-colors duration-150 text-inherit group-hover:font-bold">{item.label}</span>
+                            <span className="flex-1 truncate transition-colors duration-150 text-inherit group-hover:font-bold group-hover:translate-x-0.5 transform">{item.label}</span>
                           )}
                           
                           {(!isCompact || isOpenMobile) && item.badge && (
-                            <span className={`ml-auto text-[0.625rem] font-medium px-2 py-0.5 rounded-full ${item.badgeColor || 'bg-[var(--muted)] text-[var(--muted-foreground)] border border-[var(--border)]'}`}>
+                            <span className={`ml-auto text-[0.625rem] font-medium px-2 py-0.5 rounded-full transition-transform group-hover:scale-105 ${item.badgeColor || 'bg-[var(--muted)] text-[var(--muted-foreground)] border border-[var(--border)]'}`}>
                               {item.badge}
                             </span>
                           )}
@@ -305,26 +305,22 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
                           variant="ghost"
                           size="icon-sm"
                           onClick={(e) => toggleTree(item.href, e)}
-                          className="absolute right-2 !h-6 !w-6"
+                          className="absolute right-2 !h-6 !w-6 active:scale-90 transition-transform"
                         >
-                          {isTreeExpanded ? (
-                            <ChevronDown className="h-3.5 w-3.5" />
-                          ) : (
-                            <ChevronRightIcon className="h-3.5 w-3.5" />
-                          )}
+                          <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-300 ${isTreeExpanded ? "rotate-0" : "-rotate-90"}`} />
                         </AppButton>
                       )}
 
                       {/* Premium Interactive Module Popover Tooltip when minimized */}
                       {isCompact && !isOpenMobile && (
-                        <div className={`absolute left-full ml-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-200 z-50 flex items-center gap-2 rounded-md px-2.5 py-1.5 shadow-md shrink-0 ${ "theme-card-structural text-foreground" }`}>
+                        <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-0 group-hover:opacity-100 group-hover:translate-x-0 -translate-x-1 transition-all duration-200 z-50 flex items-center gap-2 rounded-md px-2.5 py-1.5 shadow-lg border border-border bg-surface text-foreground shrink-0 animate-in fade-in zoom-in-95">
                           <span className="font-medium whitespace-nowrap text-xs">{item.label}</span>
                         </div>
                       )}
                     </div>
 
                     {(!isCompact || isOpenMobile) && item.subItems && isTreeExpanded && (
-                      <div className={`pl-9 pr-1 py-1 space-y-1 relative animate-in slide-in-from-top-2 fade-in duration-200`}>
+                      <div className="pl-9 pr-1 py-1 space-y-1 relative animate-in slide-in-from-top-2 fade-in duration-200">
                         {/* The vertical chain line */}
                         <div className="absolute left-[1.125rem] top-0 bottom-3 w-[1px] bg-gradient-to-b from-border/80 via-border/40 to-transparent" />
                         
@@ -348,14 +344,14 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
                                 setClientQuery(`?scope=${sub.scopeParam}`);
                                 onCloseMobile?.();
                               }}
-                              className={`group relative flex items-center gap-2.5 px-3 py-1.5 rounded-r-lg text-xs transition-all duration-300 select-none cursor-pointer overflow-hidden ${
+                              className={`group relative flex items-center gap-2.5 px-3 py-1.5 rounded-r-lg text-xs transition-all duration-200 select-none cursor-pointer overflow-hidden active:scale-[0.98] ${
                                 isSubActive 
                                   ? `font-bold text-accent bg-accent/5 border-l-[3px] border-accent` 
                                   : `text-muted hover:bg-surface/50 hover:text-foreground border-l-[3px] border-transparent`
                               }`}
                             >
-                              <div className={`absolute -left-[14px] top-1/2 w-3 h-[1px] transition-colors duration-300 ${isSubActive ? 'bg-accent' : 'bg-border/60 group-hover:bg-border'}`} />
-                              <span className="truncate flex-1 text-inherit transform group-hover:translate-x-1 transition-transform duration-200">{sub.label}</span>
+                              <div className={`absolute -left-[14px] top-1/2 w-3 h-[1px] transition-colors duration-200 ${isSubActive ? 'bg-accent' : 'bg-border/60 group-hover:bg-border'}`} />
+                              <span className="truncate flex-1 text-inherit transform group-hover:translate-x-1.5 transition-transform duration-200">{sub.label}</span>
                             </Link>
                           );
                         })}

@@ -76,37 +76,37 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
 
         {/* Bento Metadata Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className={`p-4 border rounded-2xl space-y-2 bg-elevated border-border`}>
+          <div className="p-4 border rounded-2xl space-y-2 bg-elevated border-border interactive-card">
             <div className="flex items-center gap-2 text-xs font-bold text-muted uppercase tracking-widest">
               <ShieldCheck className="h-3 w-3" /> Priority
             </div>
             <div className="flex items-center gap-2">
               <div className={`h-2 w-2 rounded-full ${
-                priority?.code === "PRIO_CRIT_P1" ? "bg-danger" : ("bg-theme-btn-primary")
+                priority?.code === "PRIO_CRIT_P1" ? "bg-danger animate-ping" : "bg-theme-btn-primary"
               }`} />
-              <span className={`text-sm font-semibold ${"text-foreground"}`}>{priority?.name || "Medium"}</span>
+              <span className="text-sm font-semibold text-foreground">{priority?.name || "Medium"}</span>
             </div>
           </div>
 
-          <div className={`p-4 border rounded-2xl space-y-2 bg-elevated border-border`}>
+          <div className="p-4 border rounded-2xl space-y-2 bg-elevated border-border interactive-card">
             <div className="flex items-center gap-2 text-xs font-bold text-muted uppercase tracking-widest">
               <Building className="h-3 w-3" /> Department
             </div>
-            <span className={`text-sm font-semibold truncate block ${"text-foreground"}`}>{dept?.name || "General"}</span>
+            <span className="text-sm font-semibold truncate block text-foreground">{dept?.name || "General"}</span>
           </div>
 
-          <div className={`p-4 border rounded-2xl space-y-2 bg-elevated border-border`}>
+          <div className="p-4 border rounded-2xl space-y-2 bg-elevated border-border interactive-card">
             <div className="flex items-center gap-2 text-xs font-bold text-muted uppercase tracking-widest">
               <User className="h-3 w-3" /> Assignee
             </div>
-            <span className={`text-sm font-semibold truncate block ${"text-foreground"}`}>{ticket.assignedTo || "Unassigned"}</span>
+            <span className="text-sm font-semibold truncate block text-foreground">{ticket.assignedTo || "Unassigned"}</span>
           </div>
 
-          <div className={`p-4 border rounded-2xl space-y-2 bg-elevated border-border`}>
+          <div className="p-4 border rounded-2xl space-y-2 bg-elevated border-border interactive-card">
             <div className="flex items-center gap-2 text-xs font-bold text-muted uppercase tracking-widest">
               <Clock className="h-3 w-3" /> Created
             </div>
-            <span className={`text-sm font-semibold ${"text-foreground"}`}>
+            <span className="text-sm font-semibold text-foreground">
               {new Date(ticket.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
             </span>
           </div>

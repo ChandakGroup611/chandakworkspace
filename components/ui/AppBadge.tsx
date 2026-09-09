@@ -6,10 +6,11 @@ export interface AppBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   variant?: "success" | "warning" | "danger" | "info" | "neutral" | "accent" | "custom";
   customColor?: string | null;
   isOutline?: boolean;
+  withPulse?: boolean;
 }
 
 export const AppBadge = React.forwardRef<HTMLSpanElement, AppBadgeProps>(
-  ({ className, variant = "neutral", customColor, isOutline = false, children, style, ...props }, ref) => {
+  ({ className, variant = "neutral", customColor, isOutline = false, withPulse = false, children, style, ...props }, ref) => {
     let theme = "glass-intelligence";
     try {
       const themeCtx = useTheme();
@@ -39,6 +40,16 @@ export const AppBadge = React.forwardRef<HTMLSpanElement, AppBadgeProps>(
       custom: "" // Handled dynamically via style prop
     };
 
+    const pulseColors = {
+      success: "bg-success",
+      warning: "bg-warning",
+      danger: "bg-danger",
+      info: "bg-theme-btn-primary",
+      accent: "bg-theme-btn-primary",
+      neutral: "bg-muted",
+      custom: "bg-current"
+    };
+
     const dynamicStyle = customColor ? {
       color: customColor,
       borderColor: customColor,
@@ -49,13 +60,19 @@ export const AppBadge = React.forwardRef<HTMLSpanElement, AppBadgeProps>(
       <span
         ref={ref}
         className={cn(
-          "inline-flex items-center justify-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold border tracking-wider uppercase select-none transition-colors whitespace-nowrap",
+          "inline-flex items-center justify-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold border tracking-wider uppercase select-none transition-all duration-200 whitespace-nowrap",
           customColor ? "bg-transparent" : variants[variant],
           className
         )}
         style={{ ...dynamicStyle, ...style }}
         {...props}
       >
+        {withPulse && (
+          <span className="relative flex h-2 w-2 mr-0.5">
+            <span className={cn("animate-ping absolute inline-flex h-full w-full rounded-full opacity-75", pulseColors[variant])} />
+            <span className={cn("relative inline-flex rounded-full h-2 w-2", pulseColors[variant])} />
+          </span>
+        )}
         {children}
       </span>
     );

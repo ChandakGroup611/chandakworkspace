@@ -13,6 +13,7 @@ import { fetchTicketDashboardData } from "@/lib/actions/tickets";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppTable, AppTableBody, AppTableCell, AppTableContainer, AppTableHead, AppTableHeader, AppTableRow } from "@/components/ui/AppTable";
+import { AppBadge } from "@/components/ui/AppBadge";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import ChandakLoader from "@/components/ui/ChandakLoader";
 
@@ -323,81 +324,91 @@ function TicketsPageContent() {
               {/* Mobile Card List (<1024px) */}
               <div className="block lg:hidden space-y-3">
                 {filteredTickets.length === 0 ? (
-                  <div className="text-center py-12 text-muted text-sm border border-dashed border-border rounded-xl bg-surface/50">
+                  <div className="text-center py-12 text-muted text-sm border border-dashed border-border rounded-xl bg-surface/50 animate-in fade-in duration-300">
                     No tickets found matching your criteria.
                   </div>
                 ) : (
-                  filteredTickets.map((ticket) => (
-                    <div 
-                      key={ticket.dbId}
-                      onClick={() => handleTicketClick(ticket)}
-                      className="rounded-2xl border border-border/70 bg-surface/90 p-4 shadow-xs hover:border-theme-btn-primary/40 transition-all cursor-pointer space-y-3 relative active:scale-[0.99]"
-                    >
-                      {/* Top Row: Code, Priority, Status */}
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-mono text-xs font-bold text-theme-icon bg-theme-btn-primary/10 px-2 py-0.5 rounded-md shrink-0">
-                          {ticket.id}
-                        </span>
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wider ${getPriorityColor(ticket.priorityObj?.code)}`}>
-                            {ticket.priorityObj?.name || "STANDARD"}
-                          </span>
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold border border-border bg-surface text-foreground whitespace-nowrap">
-                            {ticket.statusObj?.name || "Unknown"}
-                          </span>
-                        </div>
-                      </div>
+                  filteredTickets.map((ticket, index) => {
+                    const isCritical = ticket.priorityObj?.code?.includes("CRITICAL") || ticket.priorityObj?.code === "PRIO_CRIT_P1" || ticket.priorityObj?.code === "P1";
+                    const isUrgent = isCritical || ticket.priorityObj?.code?.includes("HIGH") || ticket.priorityObj?.code === "P2";
+                    const staggerClass = index < 8 ? `delay-${index + 1}` : "";
 
-                      {/* Title */}
-                      <div>
-                        <h3 className="text-sm font-bold text-foreground line-clamp-2">
-                          {ticket.title}
-                        </h3>
-                      </div>
-
-                      {/* Department & Assignee */}
-                      <div className="flex items-center justify-between gap-2 text-xs text-muted flex-wrap">
-                        <div className="flex items-center gap-1.5 truncate">
-                          {ticket.departmentObj?.name && (
-                            <span className="bg-elevated px-2 py-0.5 rounded-md text-[10px] font-bold text-foreground/80 truncate max-w-[140px]">
-                              {ticket.departmentObj.name}
+                    return (
+                      <div 
+                        key={ticket.dbId}
+                        onClick={() => handleTicketClick(ticket)}
+                        className={`rounded-2xl border border-border/70 bg-surface/90 p-4 shadow-xs hover:border-theme-btn-primary/40 hover:shadow-md transition-all duration-200 cursor-pointer space-y-3 relative active:scale-[0.99] animate-stagger-in ${staggerClass}`}
+                      >
+                        {/* Top Row: Code, Priority, Status */}
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-mono text-xs font-bold text-theme-icon bg-theme-btn-primary/10 px-2 py-0.5 rounded-md shrink-0">
+                            {ticket.id}
+                          </span>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <AppBadge 
+                              variant={isCritical ? "danger" : isUrgent ? "warning" : "neutral"}
+                              withPulse={isCritical}
+                              className="text-[10px] font-bold tracking-wider"
+                            >
+                              {ticket.priorityObj?.name || "STANDARD"}
+                            </AppBadge>
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold border border-border bg-surface text-foreground whitespace-nowrap">
+                              {ticket.statusObj?.name || "Unknown"}
                             </span>
-                          )}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1 text-[11px] font-medium text-foreground truncate max-w-[160px]">
-                          <span className="text-muted">Assignee:</span>
-                          <span className="font-semibold truncate">{ticket.assignedTo}</span>
-                        </div>
-                      </div>
 
-                      {/* Bottom Row: Created Date & Quick Action Buttons */}
-                      <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/40 text-xs">
-                        <span className="text-[11px] text-muted">
-                          {new Date(ticket.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
-                        </span>
-                        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                          <AppButton 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-7 px-2.5 text-xs text-theme-icon hover:bg-theme-btn-primary/10 rounded-lg flex items-center gap-1"
-                            onClick={() => handleTicketClick(ticket)}
-                          >
-                            <Search className="h-3.5 w-3.5" /> View
-                          </AppButton>
-                          {ticket.statusObj?.code !== "ST_RESOLVED" && ticket.statusObj?.name !== "Resolved" && (
+                        {/* Title */}
+                        <div>
+                          <h3 className="text-sm font-bold text-foreground line-clamp-2 hover:text-theme-btn-primary transition-colors">
+                            {ticket.title}
+                          </h3>
+                        </div>
+
+                        {/* Department & Assignee */}
+                        <div className="flex items-center justify-between gap-2 text-xs text-muted flex-wrap">
+                          <div className="flex items-center gap-1.5 truncate">
+                            {ticket.departmentObj?.name && (
+                              <span className="bg-elevated px-2 py-0.5 rounded-md text-[10px] font-bold text-foreground/80 truncate max-w-[140px]">
+                                {ticket.departmentObj.name}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1 text-[11px] font-medium text-foreground truncate max-w-[160px]">
+                            <span className="text-muted">Assignee:</span>
+                            <span className="font-semibold truncate">{ticket.assignedTo}</span>
+                          </div>
+                        </div>
+
+                        {/* Bottom Row: Created Date & Quick Action Buttons */}
+                        <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/40 text-xs">
+                          <span className="text-[11px] text-muted">
+                            {new Date(ticket.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </span>
+                          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                             <AppButton 
                               variant="ghost" 
                               size="sm" 
-                              className="h-7 px-2.5 text-xs text-success hover:bg-success/10 rounded-lg flex items-center gap-1"
+                              className="h-7 px-2.5 text-xs text-theme-icon hover:bg-theme-btn-primary/10 rounded-lg flex items-center gap-1 active:scale-95 transition-all"
                               onClick={() => handleTicketClick(ticket)}
                             >
-                              <CheckCircle2 className="h-3.5 w-3.5" /> Resolve
+                              <Search className="h-3.5 w-3.5" /> View
                             </AppButton>
-                          )}
+                            {ticket.statusObj?.code !== "ST_RESOLVED" && ticket.statusObj?.name !== "Resolved" && (
+                              <AppButton 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-7 px-2.5 text-xs text-success hover:bg-success/10 rounded-lg flex items-center gap-1 active:scale-95 transition-all"
+                                onClick={() => handleTicketClick(ticket)}
+                              >
+                                <CheckCircle2 className="h-3.5 w-3.5" /> Resolve
+                              </AppButton>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
 
@@ -419,72 +430,82 @@ function TicketsPageContent() {
                     </AppTableHeader>
                     <AppTableBody>
                       {filteredTickets.length > 0 ? (
-                        filteredTickets.map(ticket => (
-                          <AppTableRow 
-                            key={ticket.dbId} 
-                            onClick={() => handleTicketClick(ticket)}
-                            className="cursor-pointer"
-                          >
-                            <AppTableCell className="font-mono text-xs font-bold text-theme-icon dark:text-theme-icon">
-                              {ticket.id}
-                            </AppTableCell>
-                            <AppTableCell className="font-semibold max-w-xs truncate">
-                              {ticket.title}
-                            </AppTableCell>
-                            <AppTableCell>
-                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wider ${getPriorityColor(ticket.priorityObj?.code)}`}>
-                                {ticket.priorityObj?.name || "STANDARD"}
-                              </span>
-                            </AppTableCell>
-                            <AppTableCell>
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold border border-border bg-surface text-foreground whitespace-nowrap">
-                                {ticket.statusObj?.name || "Unknown"}
-                              </span>
-                            </AppTableCell>
-                            <AppTableCell className="text-xs text-muted-foreground">
-                              {ticket.departmentObj?.name || "-"}
-                            </AppTableCell>
-                            <AppTableCell className="text-xs">
-                              {ticket.assignedTo}
-                            </AppTableCell>
-                            <AppTableCell className="text-xs text-muted-foreground">
-                              {new Date(ticket.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
-                            </AppTableCell>
-                            <AppTableCell className="text-right">
-                              <div className="flex justify-end gap-2">
-                                <AppButton 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  className="h-8 px-2 text-theme-icon hover:bg-theme-btn-primary/10 dark:hover:bg-theme-btn-primary/10 transition-colors"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleTicketClick(ticket);
-                                  }}
-                                  title="View Details"
+                        filteredTickets.map((ticket, index) => {
+                          const isCritical = ticket.priorityObj?.code?.includes("CRITICAL") || ticket.priorityObj?.code === "PRIO_CRIT_P1" || ticket.priorityObj?.code === "P1";
+                          const isUrgent = isCritical || ticket.priorityObj?.code?.includes("HIGH") || ticket.priorityObj?.code === "P2";
+                          const staggerClass = index < 10 ? `delay-${index + 1}` : "";
+
+                          return (
+                            <AppTableRow 
+                              key={ticket.dbId} 
+                              onClick={() => handleTicketClick(ticket)}
+                              className={`cursor-pointer hover:bg-surface-hover/80 transition-colors animate-stagger-in ${staggerClass}`}
+                            >
+                              <AppTableCell className="font-mono text-xs font-bold text-theme-icon dark:text-theme-icon">
+                                {ticket.id}
+                              </AppTableCell>
+                              <AppTableCell className="font-semibold max-w-xs truncate group-hover:text-theme-btn-primary transition-colors">
+                                {ticket.title}
+                              </AppTableCell>
+                              <AppTableCell>
+                                <AppBadge 
+                                  variant={isCritical ? "danger" : isUrgent ? "warning" : "neutral"}
+                                  withPulse={isCritical}
+                                  className="text-[10px] font-bold tracking-wider"
                                 >
-                                  <Search className="h-4 w-4" />
-                                </AppButton>
-                                {ticket.statusObj?.code !== "ST_RESOLVED" && ticket.statusObj?.name !== "Resolved" && (
+                                  {ticket.priorityObj?.name || "STANDARD"}
+                                </AppBadge>
+                              </AppTableCell>
+                              <AppTableCell>
+                                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold border border-border bg-surface text-foreground whitespace-nowrap shadow-2xs">
+                                  {ticket.statusObj?.name || "Unknown"}
+                                </span>
+                              </AppTableCell>
+                              <AppTableCell className="text-xs text-muted-foreground">
+                                {ticket.departmentObj?.name || "-"}
+                              </AppTableCell>
+                              <AppTableCell className="text-xs font-medium">
+                                {ticket.assignedTo}
+                              </AppTableCell>
+                              <AppTableCell className="text-xs text-muted-foreground">
+                                {new Date(ticket.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                              </AppTableCell>
+                              <AppTableCell className="text-right">
+                                <div className="flex justify-end gap-2">
                                   <AppButton 
                                     variant="ghost" 
                                     size="sm" 
-                                    className="h-8 px-2 text-success hover:bg-green-50 dark:hover:bg-success/10 transition-colors"
+                                    className="h-8 px-2.5 text-theme-icon hover:bg-theme-btn-primary/10 transition-all active:scale-95"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handleTicketClick(ticket);
                                     }}
-                                    title="Resolve Ticket"
+                                    title="View Details"
                                   >
-                                    <CheckCircle2 className="h-4 w-4" />
+                                    <Search className="h-4 w-4" />
                                   </AppButton>
-                                )}
-                              </div>
-                            </AppTableCell>
-                          </AppTableRow>
-                        ))
+                                  {ticket.statusObj?.code !== "ST_RESOLVED" && ticket.statusObj?.name !== "Resolved" && (
+                                    <AppButton 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="h-8 px-2.5 text-success hover:bg-success/10 transition-all active:scale-95"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleTicketClick(ticket);
+                                      }}
+                                      title="Resolve Ticket"
+                                    >
+                                      <CheckCircle2 className="h-4 w-4" />
+                                    </AppButton>
+                                  )}
+                                </div>
+                              </AppTableCell>
+                            </AppTableRow>
+                          );
+                        })
                       ) : (
                         <AppTableRow>
-                          <AppTableCell colSpan={8} className="h-32 text-center text-muted-foreground">
+                          <AppTableCell colSpan={8} className="h-32 text-center text-muted-foreground animate-in fade-in duration-300">
                             No tickets found matching your criteria.
                           </AppTableCell>
                         </AppTableRow>

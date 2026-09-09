@@ -3,20 +3,24 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 
-export const AppCard = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "theme-card-structural",
-      "rounded-2xl overflow-hidden relative transition-all duration-300",
-      className
-    )}
-    {...props}
-  />
-));
+export interface AppCardProps extends React.HTMLAttributes<HTMLDivElement> {
+  interactive?: boolean;
+}
+
+export const AppCard = React.forwardRef<HTMLDivElement, AppCardProps>(
+  ({ className, interactive = false, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cn(
+        "theme-card-structural",
+        "rounded-2xl overflow-hidden relative transition-all duration-300",
+        interactive && "hover:-translate-y-1 hover:shadow-lg cursor-pointer",
+        className
+      )}
+      {...props}
+    />
+  )
+);
 AppCard.displayName = "AppCard";
 
 export const AppCardHeader = React.forwardRef<
@@ -41,7 +45,7 @@ export const AppCardTitle = React.forwardRef<
   <h3
     ref={ref}
     className={cn(
-      "font-semibold text-sm leading-none tracking-tight texttext-2xl font-bold text-foreground",
+      "font-semibold text-sm leading-none tracking-tight text-foreground",
       className
     )}
     {...props}
@@ -82,6 +86,5 @@ export const AppCardFooter = React.forwardRef<
     {...props}
   />
 ));
-AppCardFooter.displayName = "AppCardFooter";
 AppCardFooter.displayName = "AppCardFooter";
 
