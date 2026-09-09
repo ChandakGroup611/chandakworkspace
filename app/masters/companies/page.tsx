@@ -15,7 +15,7 @@ import { saveMasterEntity, deleteMasterEntity } from "@/lib/actions/masters";
 export default function CompanyMasterPage() {
   const supabase = createClient();
   const { theme } = useTheme();
-  const { hasPermission, loading: permsLoading } = usePermissions();
+  const { hasPermission, roleCode, loading: permsLoading } = usePermissions();
   const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
 
   const [companies, setCompanies] = useState<any[]>([]);
@@ -172,7 +172,7 @@ export default function CompanyMasterPage() {
     );
   }
 
-  if (!hasPermission("COMPANIES_VIEW")) {
+  if (!hasPermission("COMPANIES_VIEW") && !hasPermission("MASTERS_VIEW") && !hasPermission("SYSTEM_MASTERS_VIEW") && !hasPermission("MASTERS_MANAGE") && roleCode !== "SUPER_ADMIN") {
     return (
       <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
         "bg-surface"

@@ -47,7 +47,7 @@ export function WorkspaceMasterTable({
   forceExpandAll?: boolean;
   searchQuery?: string;
 }) {
-  const { hasPermission, roleCode } = usePermissions();
+  const { hasPermission, roleCode, userId } = usePermissions();
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const router = useRouter();
 
@@ -208,6 +208,15 @@ export function WorkspaceMasterTable({
     const priority = isTask ? getPriorityInfo(node) : null;
     const statusName = getStatusName(node);
     const statusColor = getStatusColor(node);
+
+    const isWorkspaceOwner = node.owner_id === userId || node.created_by === userId || node.workspace_owner_id === userId;
+    const isTaskOwner = node.created_by === userId || node.owner_user_id === userId || node.assigned_to === userId || node.assignee_id === userId;
+
+    const canCreateWs = roleCode === 'SUPER_ADMIN' || hasPermission('WORKSPACES_CREATE') || hasPermission('WORKSPACES_MANAGE') || isWorkspaceOwner;
+    const canCreateTsk = roleCode === 'SUPER_ADMIN' || hasPermission('TASKS_CREATE') || hasPermission('TASKS_MANAGE') || isWorkspaceOwner || isTaskOwner;
+    const canEditNode = roleCode === 'SUPER_ADMIN' || (isWorkspaceType ? (hasPermission('WORKSPACES_UPDATE') || hasPermission('WORKSPACES_MANAGE') || isWorkspaceOwner) : (hasPermission('TASKS_UPDATE') || hasPermission('TASKS_MANAGE') || hasPermission('TASKS_EDIT') || isTaskOwner));
+    const canShare = isWorkspaceType && (roleCode === 'SUPER_ADMIN' || hasPermission('WORKSPACES_UPDATE') || hasPermission('WORKSPACES_MANAGE') || isWorkspaceOwner);
+    const canDelete = roleCode === 'SUPER_ADMIN' || (isWorkspaceType ? (hasPermission('WORKSPACES_DELETE') || hasPermission('WORKSPACES_MANAGE') || isWorkspaceOwner) : (hasPermission('TASKS_DELETE') || hasPermission('TASKS_MANAGE') || isTaskOwner));
 
     return (
       <div 
@@ -397,7 +406,7 @@ export function WorkspaceMasterTable({
           {/* Create Sub-Items */}
           <div className="py-2 px-2">
             <div className="flex items-center justify-center gap-1 whitespace-nowrap">
-              {isWorkspaceType && onCreateSubWorkspace && (roleCode === 'SUPER_ADMIN' || hasPermission('WORKSPACES_CREATE')) && (
+              {isWorkspaceType && onCreateSubWorkspace && canCreateWs && (
                 <AppButton
                   variant="outline"
                   size="sm"
@@ -407,7 +416,7 @@ export function WorkspaceMasterTable({
                   + Sub WS
                 </AppButton>
               )}
-              {onCreateTask && (roleCode === 'SUPER_ADMIN' || hasPermission('TASKS_CREATE')) && (
+              {onCreateTask && canCreateTsk && (
                 <AppButton
                   variant="outline"
                   size="sm"
@@ -472,7 +481,7 @@ export function WorkspaceMasterTable({
                   className="absolute right-0 top-full mt-1 w-48 rounded-xl shadow-2xl border border-border bg-surface dark:bg-[#111827] p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  {(roleCode === 'SUPER_ADMIN' || (isWorkspaceType ? hasPermission('WORKSPACES_UPDATE') : hasPermission('TASKS_UPDATE'))) && (
+                  {canEditNode && (
                     <button
                       type="button"
                       onClick={() => {
@@ -488,7 +497,7 @@ export function WorkspaceMasterTable({
                     </button>
                   )}
 
-                  {onShareNode && isWorkspaceType && (roleCode === 'SUPER_ADMIN' || hasPermission('WORKSPACES_UPDATE')) && (
+                  {onShareNode && canShare && (
                     <button
                       type="button"
                       onClick={() => {
@@ -502,7 +511,7 @@ export function WorkspaceMasterTable({
                     </button>
                   )}
 
-                  {onDeleteNode && (roleCode === 'SUPER_ADMIN' || (isWorkspaceType ? hasPermission('WORKSPACES_DELETE') : hasPermission('TASKS_DELETE'))) && (
+                  {onDeleteNode && canDelete && (
                     <button
                       type="button"
                       onClick={() => {
@@ -653,7 +662,7 @@ export function WorkspaceMasterTable({
                   <Eye className="h-4 w-4 text-theme-icon" />
                   <span>Open Item</span>
                 </button>
-                {isWorkspaceType && onOpenWorkspace && (roleCode === 'SUPER_ADMIN' || hasPermission('WORKSPACES_UPDATE')) && (
+                {isWorkspaceType && onOpenWorkspace && (roleCode === 'SUPER_ADMIN' || hasPermission('WORKSPACES_UPDATE') || hasPermission('WORKSPACES_MANAGE') || node.owner_id === userId || node.created_by === userId) && (
                   <button
                     type="button"
                     onClick={() => {
@@ -666,7 +675,7 @@ export function WorkspaceMasterTable({
                     <span>Edit Workspace</span>
                   </button>
                 )}
-                {onShareNode && isWorkspaceType && (roleCode === 'SUPER_ADMIN' || hasPermission('WORKSPACES_UPDATE')) && (
+                {onShareNode && isWorkspaceType && (roleCode === 'SUPER_ADMIN' || hasPermission('WORKSPACES_UPDATE') || hasPermission('WORKSPACES_MANAGE') || node.owner_id === userId || node.created_by === userId) && (
                   <button
                     type="button"
                     onClick={() => {
@@ -679,7 +688,7 @@ export function WorkspaceMasterTable({
                     <span>Transfer Workspace</span>
                   </button>
                 )}
-                {onDeleteNode && (roleCode === 'SUPER_ADMIN' || (isWorkspaceType ? hasPermission('WORKSPACES_DELETE') : hasPermission('TASKS_DELETE'))) && (
+                {onDeleteNode && (roleCode === 'SUPER_ADMIN' || (isWorkspaceType ? (hasPermission('WORKSPACES_DELETE') || hasPermission('WORKSPACES_MANAGE') || node.owner_id === userId || node.created_by === userId) : (hasPermission('TASKS_DELETE') || hasPermission('TASKS_MANAGE') || node.created_by === userId || node.owner_user_id === userId || node.assigned_to === userId || node.assignee_id === userId))) && (
                   <button
                     type="button"
                     onClick={() => {

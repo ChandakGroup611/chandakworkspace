@@ -272,7 +272,7 @@ export default function SLAPage() {
                                 <Eye className="h-3.5 w-3.5" />
                               </AppButton>
                               {(roleCode === "SUPER_ADMIN" || hasPermission("SLA_UPDATE")) && (
-                                <AppButton variant="ghost" size="sm" className="h-6 w-6 p-0 text-warning hover:bg-warning/10" title="Update Thresholds">
+                                <AppButton variant="ghost" size="sm" onClick={() => { window.location.href = '/sla/rules'; }} className="h-6 w-6 p-0 text-warning hover:bg-warning/10" title="Update Thresholds / Configure SLA Rules">
                                   <Edit2 className="h-3.5 w-3.5" />
                                 </AppButton>
                               )}

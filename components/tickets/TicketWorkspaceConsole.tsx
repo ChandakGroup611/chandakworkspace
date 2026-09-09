@@ -8,7 +8,7 @@ import {
 import DOMPurify from 'dompurify';
 import { usePermissions } from "@/hooks/usePermissions";
 import { fetchAssignees } from "@/lib/actions/users";
-import { updateTicketDetails, fetchTicketRelations, linkTicket, searchTickets, fetchTicketComments } from "@/lib/actions/tickets";
+import { updateTicketDetails, fetchTicketRelations, linkTicket, searchTickets, fetchTicketComments, addTicketRemark } from "@/lib/actions/tickets";
 import { EnterpriseUploader } from "@/components/ui/EnterpriseUploader";
 import { AppButton } from "@/components/ui/AppButton";
 
@@ -67,8 +67,10 @@ export function TicketWorkspaceConsole({
   const [newTimeLog, setNewTimeLog] = useState("");
   const [isLoggingTime, setIsLoggingTime] = useState(false);
 
-  const canEditFields = roleCode === "SUPER_ADMIN" || hasPermission("TICKETS_UPDATE") || !ticket?.assignee_id;
-  const isClassificationLocked = !!ticket?.assignee_id && roleCode !== "SUPER_ADMIN" && !hasPermission("TICKETS_UPDATE");
+  const isAssignee = !!currentUserId && (currentUserId === ticket?.assignee_id || currentUserId === ticket?.assignee?.id || currentUserId === ticket?.assigned_to);
+  const isCreator = !!currentUserId && (currentUserId === ticket?.creator_id || currentUserId === ticket?.created_by);
+  const canEditFields = roleCode === "SUPER_ADMIN" || hasPermission("TICKETS_UPDATE") || hasPermission("TICKETS_MANAGE") || hasPermission("TICKETS_EDIT") || isAssignee || isCreator || !ticket?.assignee_id;
+  const isClassificationLocked = !canEditFields;
 
   const defaultDeptId = ticket?.department_id || ticket?.custom_fields?.department_id || "";
   const defaultIssueTypeId = ticket?.issue_type_id || ticket?.custom_fields?.issue_type_id || "";
@@ -180,18 +182,24 @@ export function TicketWorkspaceConsole({
   };
 
   const commitChanges = async () => {
-    if (Object.keys(pendingChanges).length === 0) return;
-    if (!updateRemark.trim()) {
+    const hasFieldChanges = Object.keys(pendingChanges).length > 0;
+    if (!hasFieldChanges && !updateRemark.trim()) return;
+    if (hasFieldChanges && !updateRemark.trim()) {
       toast.warning("A remark is mandatory when updating ticket details.");
       return;
     }
     setIsSaving(true);
     try {
-      const updateData = { ...pendingChanges, remark: updateRemark };
-      await updateTicketDetails(ticket.dbId, updateData);
+      if (hasFieldChanges) {
+        const updateData = { ...pendingChanges, remark: updateRemark.trim() };
+        await updateTicketDetails(ticket.dbId, updateData);
+      } else if (updateRemark.trim()) {
+        await addTicketRemark(ticket.dbId, updateRemark.trim());
+      }
       setPendingChanges({});
       setUpdateRemark("");
       onUpdate();
+      toast.success("Ticket updated successfully.");
     } catch (err: any) {
       toast.error(`Commit failed: ${err.message}`);
     } finally {
@@ -513,7 +521,7 @@ export function TicketWorkspaceConsole({
                <div>
                 <label className="text-[10px] uppercase font-bold text-muted-foreground block mb-1.5">Workflow Status</label>
                 <select 
-                  value={ticket.status_id}
+                  value={pendingChanges.status_id !== undefined ? pendingChanges.status_id : ticket.status_id}
                   onChange={(e) => handleFieldUpdate({ status_id: e.target.value })}
                   disabled={!canEditFields}
                   className="w-full border rounded-lg p-3 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary theme-input-structural text-foreground"

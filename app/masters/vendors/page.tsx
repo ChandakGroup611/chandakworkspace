@@ -416,7 +416,7 @@ export default function VendorMasterPage() {
                         </AppTableCell>
                         <AppTableCell>{v.city || '-'}</AppTableCell>
                         <AppTableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex items-center justify-end gap-2 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                             <AppButton variant="secondary" onClick={() => handleOpenEdit(v)} className="p-1.5 rounded bg-blue-50 text-accent hover:bg-blue-100 transition-colors">
                               <Edit className="h-4 w-4" />
                             </AppButton>

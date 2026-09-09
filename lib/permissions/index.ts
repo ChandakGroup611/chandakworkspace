@@ -35,8 +35,11 @@ async function getUserContext(userId: string): Promise<{ perms: Set<string>, rol
     ? (roleRes.data?.role[0] as any)?.code 
     : (roleRes.data?.role as any)?.code;
 
-  if (dbRoleCode && dbRoleCode.toUpperCase() === 'SUPER_ADMIN') {
-    dbRoleCode = 'SUPER_ADMIN';
+  if (dbRoleCode) {
+    const upper = dbRoleCode.toUpperCase();
+    if (upper === 'SUPER_ADMIN' || upper === 'ROLE_ADMIN' || upper === 'ADMIN' || upper === 'SUPERADMIN' || upper === 'ROLE_SUPER_ADMIN' || upper === 'SUPER_ADMINISTRATOR') {
+      dbRoleCode = 'SUPER_ADMIN';
+    }
   }
 
   const rawPerms = permRes.data?.map(r => r.permission_code) || [];
@@ -107,7 +110,7 @@ export async function hasPermission(userId: string, permissionCode: string): Pro
 
   const ctx = await getUserContext(userId);
   
-  if (ctx.role === "SUPER_ADMIN" || ctx.role === "ROLE_ADMIN" || ctx.role === "admin-role-id") {
+  if (ctx.role === "SUPER_ADMIN" || ctx.role === "ROLE_ADMIN" || ctx.role === "ADMIN" || ctx.role === "SUPERADMIN" || ctx.role === "admin-role-id") {
     return true;
   }
 

@@ -210,7 +210,7 @@ export default function DesignationsMasterPage() {
                           </AppBadge>
                         </AppTableCell>
                         <AppTableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex items-center justify-end gap-2 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                             <AppButton variant="ghost" size="icon-sm" onClick={() => handleOpenEdit(d)} className="text-accent">
                               <Edit className="h-4 w-4" />
                             </AppButton>

@@ -481,15 +481,15 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
   };
 
   const handleAction = async (action: 'ACCEPT' | 'HOLD' | 'CANCEL' | 'SAVE') => {
-      const currentRemarks = approvalRemarks?.trim() || formData.analysis_remarks?.trim();
-      if (!currentRemarks) {
-        toast.warning("Remarks are mandatory before saving or submitting.");
+      const currentRemarks = approvalRemarks?.trim() || formData.analysis_remarks?.trim() || (action === 'SAVE' ? 'Draft saved.' : '');
+      if (!currentRemarks && action !== 'SAVE') {
+        toast.warning("Remarks are mandatory before submitting.");
         return;
       }
       
       const payload = { ...formData, analysis_remarks: currentRemarks };
 
-      if (action === 'ACCEPT' || action === 'SAVE') {
+      if (action === 'ACCEPT') {
         const missingFields = [];
         if (!payload.requirement_type_id) missingFields.push("Business Classification");
         if (!payload.business_criticality_id) missingFields.push("Business Criticality");
@@ -2255,7 +2255,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
       <div className="shrink-0 bg-background/95 dark:bg-background/90 border-t border-border/80 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] z-[100] empty:hidden px-6 md:px-8">
         {activeTab === 'analysis' && (
           <div className="p-4 flex items-center justify-end gap-3">
-            {((isSuperAdmin && !isViewMode) || showApprovalControls) && (
+            {((!isViewMode && (isEditable || canManageRequirements || isSuperAdmin)) || showApprovalControls) && (
               <>
                 {showApprovalControls ? (
                   <>

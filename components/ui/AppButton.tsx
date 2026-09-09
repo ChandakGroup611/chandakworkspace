@@ -55,12 +55,12 @@ export const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(
 
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
       if (onClick) {
+        const text = (e.currentTarget?.textContent || "").toLowerCase();
         const result = onClick(e) as any;
         if (result instanceof Promise) {
           setInternalLoading(true);
           result
             .then(() => {
-              const text = (e.currentTarget.textContent || "").toLowerCase();
               if (text.includes('delete') || text.includes('remove')) {
                 toast.success('Record Deleted Successfully');
               } else if (text.includes('update') || text.includes('save')) {
@@ -75,8 +75,8 @@ export const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(
                 toast.success('Signed Off Successfully');
               }
             })
-            .catch(() => {
-              // Errors are expected to be handled by the specific action or global fetch wrapper
+            .catch((err) => {
+              console.error("[AppButton] Async action error:", err);
             })
             .finally(() => {
               setInternalLoading(false);

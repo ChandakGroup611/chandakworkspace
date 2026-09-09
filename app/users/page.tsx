@@ -914,7 +914,7 @@ export default function UserMasterPage() {
                             </AppTableCell>
 
                             <AppTableCell className="text-right w-24 shrink-0 pr-4" onClick={(e) => e.stopPropagation()}>
-                              <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                              <div className="flex items-center justify-end gap-1 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
                                 {(hasPermission("USERS_UPDATE") || isSuperAdmin) && (
                                   <AppButton variant="secondary"
                                     type="button"

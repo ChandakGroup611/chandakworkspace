@@ -139,7 +139,14 @@ interface UnifiedAuthData {
       let baseRoleCode = null;
       if (profileData) {
         const dbRoleCode = Array.isArray(primaryRole) ? (primaryRole[0] as any)?.code : (primaryRole as any)?.code;
-        if (dbRoleCode && dbRoleCode.toUpperCase() === "SUPER_ADMIN") baseRoleCode = "SUPER_ADMIN";
+        if (dbRoleCode) {
+          const upper = dbRoleCode.toUpperCase();
+          if (upper === "SUPER_ADMIN" || upper === "ROLE_ADMIN" || upper === "ADMIN" || upper === "SUPERADMIN") {
+            baseRoleCode = "SUPER_ADMIN";
+          } else {
+            baseRoleCode = dbRoleCode;
+          }
+        }
       }
 
       const profile: ProfileData = { 
