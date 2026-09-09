@@ -51,6 +51,23 @@ export function WorkspaceMasterTable({
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const router = useRouter();
 
+  // Close active dropdown menu when clicking outside
+  useEffect(() => {
+    if (!activeMenu) return;
+    const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('[data-dropdown-menu="true"]')) {
+        setActiveMenu(null);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("touchstart", handleOutsideClick);
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("touchstart", handleOutsideClick);
+    };
+  }, [activeMenu]);
+
   const [loadingNodes, setLoadingNodes] = useState<Record<string, boolean>>({});
 
   const usersMap = React.useMemo(() => {
@@ -133,51 +150,44 @@ export function WorkspaceMasterTable({
   const gridCols = 'minmax(320px, 4fr) minmax(95px, 1fr) minmax(70px, 0.8fr) minmax(70px, 0.8fr) minmax(70px, 0.8fr) minmax(70px, 0.8fr) minmax(145px, 1.2fr) 85px';
 
   const renderAvatarGroup = (members: any[], title: string, fallbackText: string = "None") => {
-    if (!members || members.length === 0) return <span className="text-muted text-[10px]">{fallbackText}</span>;
+    if (!members || members.length === 0) {
+      return (
+        <span className="text-[11px] text-muted opacity-40 select-none">
+          {fallbackText}
+        </span>
+      );
+    }
 
-    const displayMembers = members.slice(0, 3);
-    const extraCount = members.length - 3;
+    const firstMember = members[0];
+    const uId = firstMember.user_id || firstMember.id;
+    const uObj = usersMap.get(uId);
+    const name = uObj?.full_name || firstMember.name || "User";
+    const initials = name.split(" ").map((n: string) => n[0]).join("").toUpperCase().substring(0, 2);
+    const count = members.length;
+    const isOnline = onlineUsers.has(uId);
 
     return (
-      <div className="relative group/avatar inline-flex items-center cursor-pointer">
-        <div className="flex -space-x-2">
-          {displayMembers.map((m: any, idx: number) => {
-            const uid = m.user_id || m.id;
-            const uInfo = usersMap.get(uid);
-            const isOnline = onlineUsers.has(uid);
-            return (
-              <div key={idx} className="relative">
-                <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[9px] font-bold text-[#ffffff] border-2 border-white dark:border-background`} style={{ backgroundColor: uInfo?.profile_photo ? 'transparent' : 'var(--accent-primary, #4f46e5)' }}>
-                  {uInfo?.profile_photo ? <img src={uInfo.profile_photo} className="h-full w-full rounded-full object-cover" alt="" /> : (uInfo?.full_name?.substring(0,2).toUpperCase() || "U")}
-                </div>
-                <div className={`absolute bottom-0 right-0 h-2 w-2 rounded-full border-2 border-white dark:border-background ${isOnline ? 'bg-success' : 'bg-danger'}`}></div>
-              </div>
-            );
-          })}
-          {extraCount > 0 && (
-            <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[9px] font-bold text-[#ffffff] border-2 border-white dark:border-background`} style={{ backgroundColor: 'var(--accent-primary, #4f46e5)' }}>
-              +{extraCount}
-            </div>
+      <div className="flex items-center gap-1.5" title={`${title}: ${members.map((m: any) => {
+        const id = m.user_id || m.id;
+        return usersMap.get(id)?.full_name || m.name || id;
+      }).join(", ")}`}>
+        <div className="relative">
+          <div className="h-6 w-6 rounded-full bg-theme-btn-primary/10 border border-border flex items-center justify-center text-[9px] font-bold text-theme-icon overflow-hidden">
+            {uObj?.avatar_url ? (
+              <img src={uObj.avatar_url} alt={name} className="h-full w-full object-cover" />
+            ) : (
+              <span>{initials}</span>
+            )}
+          </div>
+          {isOnline && (
+            <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-500 ring-1 ring-surface" />
           )}
         </div>
-
-        {/* Hover Tooltip */}
-        <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 rounded-lg opacity-0 invisible group-hover/avatar:opacity-100 group-hover/avatar:visible transition-all z-[9999] theme-card-structural shadow-lg border border-border`}>
-          <div className="text-[10px] font-bold uppercase text-muted mb-2 px-1 border-b pb-1 border-border">{title} ({members.length})</div>
-          <div className="max-h-32 overflow-y-auto space-y-1">
-            {members.map((m: any, idx: number) => {
-              const uid = m.user_id || m.id;
-              const uInfo = usersMap.get(uid);
-              const isOnline = onlineUsers.has(uid);
-              return (
-                <div key={idx} className="flex items-center gap-2 p-1 rounded hover:bg-surface/50">
-                  <div className={`h-1.5 w-1.5 rounded-full ${isOnline ? 'bg-success shadow-[0_0_4px_#22c55e]' : 'bg-danger shadow-[0_0_4px_#ef4444]'}`} />
-                  <span className={`text-[11px] truncate ${isOnline ? "text-foreground font-medium" : "text-muted"}`}>{uInfo?.full_name || 'Unknown User'}</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        {count > 1 && (
+          <span className="text-[10px] font-semibold text-muted bg-surface-hover px-1.5 py-0.5 rounded-full border border-border/50">
+            +{count - 1}
+          </span>
+        )}
       </div>
     );
   };
@@ -186,17 +196,21 @@ export function WorkspaceMasterTable({
     const hasChildren = node.children && node.children.length > 0;
     const isWorkspaceType = node.type === 'WORKSPACE' || node.type === 'SUB_WORKSPACE';
     const isTask = node.type === 'TASK' || node.type === 'SUB_TASK';
-    
+
     let TypeIcon = Folder;
     if (node.type === 'WORKSPACE') TypeIcon = Folder;
     else if (node.type === 'SUB_WORKSPACE') TypeIcon = FolderTree;
     else if (node.type === 'TASK') TypeIcon = CheckSquare;
     else if (node.type === 'SUB_TASK') TypeIcon = CheckCircle2;
-    
-    let subWsCount = node.subworkspace_count || 0;
-    let directTaskCount = node.direct_task_count || 0;
-    let childTaskCount = node.child_task_count || 0;
+
     let totalTaskCount = node.total_hierarchy_task_count || 0;
+    let directTaskCount = node.direct_task_count || 0;
+    let childTaskCount = 0;
+    let subWsCount = 0;
+
+    if (node.children && node.children.length > 0) {
+      childTaskCount = node.children.filter((c: any) => c.type === 'TASK' || c.type === 'SUB_TASK').length;
+    }
 
     if (isWorkspaceType && hasChildren && node.childrenFetched) {
       subWsCount = node.children.filter((c: any) => c.type === 'SUB_WORKSPACE' || c.type === 'WORKSPACE').length;
@@ -218,12 +232,14 @@ export function WorkspaceMasterTable({
     const canShare = isWorkspaceType && (roleCode === 'SUPER_ADMIN' || hasPermission('WORKSPACES_UPDATE') || hasPermission('WORKSPACES_MANAGE') || isWorkspaceOwner);
     const canDelete = roleCode === 'SUPER_ADMIN' || (isWorkspaceType ? (hasPermission('WORKSPACES_DELETE') || hasPermission('WORKSPACES_MANAGE') || isWorkspaceOwner) : (hasPermission('TASKS_DELETE') || hasPermission('TASKS_MANAGE') || isTaskOwner));
 
+    const isMenuOpen = activeMenu === node.id;
+
     return (
       <div 
         onClick={(e) => {
           e.stopPropagation();
           const target = e.target as HTMLElement;
-          const isInteractive = target.closest('button, a, input, select, [role="button"]');
+          const isInteractive = target.closest('button, a, input, select, [role="button"], [data-dropdown-menu="true"]');
           
           if (!isInteractive) {
             if (isWorkspaceType) {
@@ -236,7 +252,9 @@ export function WorkspaceMasterTable({
         onMouseEnter={() => {
           if (onPrefetchNode) onPrefetchNode(node);
         }}
-        className={`theme-table-row grid items-center border-b border-border/40 transition-colors group min-h-[48px] cursor-pointer select-none relative hover:bg-surface/50 ${ node.isMatched ? 'bg-theme-btn-primary/5 ring-1 ring-inset ring-theme-btn-primary/30' : '' }`} 
+        className={`theme-table-row grid items-center border-b border-border/40 transition-colors group min-h-[48px] cursor-pointer select-none relative hover:bg-surface/50 ${
+          isMenuOpen ? 'z-40' : 'z-0'
+        } ${ node.isMatched ? 'bg-theme-btn-primary/5 ring-1 ring-inset ring-theme-btn-primary/30' : '' }`} 
         style={{ gridTemplateColumns: gridCols }}
       >
           {/* VS Code Style Guide Lines for Nested Items */}
@@ -298,10 +316,10 @@ export function WorkspaceMasterTable({
                   </span>
                   
                   {isTask && (
-                    <div className="flex items-center gap-1 shrink-0">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       <span 
                         className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded border"
-                        style={{ 
+                        style={{
                           borderColor: `${statusColor}40`,
                           backgroundColor: `${statusColor}15`,
                           color: statusColor
@@ -309,11 +327,10 @@ export function WorkspaceMasterTable({
                       >
                         {statusName}
                       </span>
-
                       {priority && (
                         <span 
                           className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded border"
-                          style={{ 
+                          style={{
                             borderColor: `${priority.color}40`,
                             backgroundColor: `${priority.color}15`,
                             color: priority.color
@@ -430,7 +447,9 @@ export function WorkspaceMasterTable({
           </div>
 
           {/* Sticky Actions Column - Pinned on Right so it never scrolls off */}
-          <div className="sticky right-0 bg-surface/95 dark:bg-[#0B0F19]/95 shadow-[-6px_0_12px_rgba(0,0,0,0.06)] py-1 px-2 flex items-center justify-center gap-1 whitespace-nowrap z-20">
+          <div className={`sticky right-0 bg-surface/95 dark:bg-[#0B0F19]/95 shadow-[-6px_0_12px_rgba(0,0,0,0.06)] py-1 px-2 flex items-center justify-center gap-1 whitespace-nowrap ${
+            isMenuOpen ? 'z-40' : 'z-20'
+          }`}>
             {isTask && onOpenTask && (
               <AppButton 
                 variant="ghost"
@@ -462,7 +481,7 @@ export function WorkspaceMasterTable({
             )}
 
             {/* Context Menu for Edit / Share / Delete */}
-            <div className="relative">
+            <div className="relative" data-dropdown-menu="true">
               <AppButton
                 variant="ghost"
                 size="sm"
@@ -470,41 +489,47 @@ export function WorkspaceMasterTable({
                   e.stopPropagation();
                   setActiveMenu(prev => prev === node.id ? null : node.id);
                 }}
-                className={`h-7 w-7 p-0 transition-colors ${activeMenu === node.id ? 'bg-surface-hover text-foreground' : 'text-muted hover:text-foreground hover:bg-surface-hover'}`}
+                className={`h-7 w-7 p-0 transition-colors ${isMenuOpen ? 'bg-surface-hover text-foreground' : 'text-muted hover:text-foreground hover:bg-surface-hover'}`}
                 title="More Actions"
               >
                 <MoreVertical className="h-3.5 w-3.5" />
               </AppButton>
 
-              {activeMenu === node.id && (
+              {isMenuOpen && (
                 <div 
+                  data-dropdown-menu="true"
                   className="absolute right-0 top-full mt-1 w-48 rounded-xl shadow-2xl border border-border bg-surface dark:bg-[#111827] p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150"
+                  onMouseDown={(e) => e.stopPropagation()}
                   onClick={(e) => e.stopPropagation()}
                 >
                   {canEditNode && (
                     <button
                       type="button"
-                      onClick={() => {
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setActiveMenu(null);
                         if (isWorkspaceType) onOpenWorkspace(node);
                         else if (onOpenTask) onOpenTask(node);
                         else router.push(`/tasks/${node.id}`);
                       }}
-                      className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-semibold text-foreground hover:bg-surface-hover transition-colors"
+                      className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-semibold text-foreground hover:bg-surface-hover transition-colors text-left"
                     >
                       <Edit2 className="h-3.5 w-3.5 text-theme-icon" />
-                      <span>Edit Details</span>
+                      <span>{isWorkspaceType ? 'Edit Workspace' : 'Edit Task'}</span>
                     </button>
                   )}
 
                   {onShareNode && canShare && (
                     <button
                       type="button"
-                      onClick={() => {
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setActiveMenu(null);
                         onShareNode(node);
                       }}
-                      className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-semibold text-foreground hover:bg-surface-hover transition-colors"
+                      className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-semibold text-foreground hover:bg-surface-hover transition-colors text-left"
                     >
                       <Share2 className="h-3.5 w-3.5 text-success" />
                       <span>Transfer Workspace</span>
@@ -514,11 +539,13 @@ export function WorkspaceMasterTable({
                   {onDeleteNode && canDelete && (
                     <button
                       type="button"
-                      onClick={() => {
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setActiveMenu(null);
                         onDeleteNode(node);
                       }}
-                      className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-semibold text-danger hover:bg-danger/10 transition-colors"
+                      className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-semibold text-danger hover:bg-danger/10 transition-colors text-left"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                       <span>Delete</span>
@@ -552,11 +579,20 @@ export function WorkspaceMasterTable({
     const menuKey = `mobile-${node.id}`;
     const isMenuOpen = activeMenu === menuKey;
 
+    const isWorkspaceOwner = node.owner_id === userId || node.created_by === userId || node.workspace_owner_id === userId;
+    const isTaskOwner = node.created_by === userId || node.owner_user_id === userId || node.assigned_to === userId || node.assignee_id === userId;
+
+    const canCreateWs = roleCode === 'SUPER_ADMIN' || hasPermission('WORKSPACES_CREATE') || hasPermission('WORKSPACES_MANAGE') || isWorkspaceOwner;
+    const canCreateTsk = roleCode === 'SUPER_ADMIN' || hasPermission('TASKS_CREATE') || hasPermission('TASKS_MANAGE') || isWorkspaceOwner || isTaskOwner;
+    const canEditNode = roleCode === 'SUPER_ADMIN' || (isWorkspaceType ? (hasPermission('WORKSPACES_UPDATE') || hasPermission('WORKSPACES_MANAGE') || isWorkspaceOwner) : (hasPermission('TASKS_UPDATE') || hasPermission('TASKS_MANAGE') || hasPermission('TASKS_EDIT') || isTaskOwner));
+    const canShare = isWorkspaceType && (roleCode === 'SUPER_ADMIN' || hasPermission('WORKSPACES_UPDATE') || hasPermission('WORKSPACES_MANAGE') || isWorkspaceOwner);
+    const canDelete = roleCode === 'SUPER_ADMIN' || (isWorkspaceType ? (hasPermission('WORKSPACES_DELETE') || hasPermission('WORKSPACES_MANAGE') || isWorkspaceOwner) : (hasPermission('TASKS_DELETE') || hasPermission('TASKS_MANAGE') || isTaskOwner));
+
     return (
       <div 
         key={node.id}
         className={`mb-2.5 rounded-xl border border-border/60 bg-surface/90 dark:bg-[#111827]/90 p-3 shadow-xs hover:border-theme-btn-primary/40 transition-all select-none ${
-          isMenuOpen ? 'relative z-50' : 'relative z-10'
+          isMenuOpen ? 'relative z-40' : 'relative z-10'
         }`}
         style={{ marginLeft: `${Math.min(depth * 14, 42)}px` }}
       >
@@ -629,7 +665,7 @@ export function WorkspaceMasterTable({
             </div>
           </div>
 
-          <div className="relative shrink-0">
+          <div className="relative shrink-0" data-dropdown-menu="true">
             <button
               type="button"
               onClick={(e) => {
@@ -646,56 +682,68 @@ export function WorkspaceMasterTable({
 
             {isMenuOpen && (
               <div 
+                data-dropdown-menu="true"
                 className="absolute right-0 top-full mt-1.5 w-48 rounded-xl shadow-2xl border border-border bg-surface dark:bg-[#111827] p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150"
+                onMouseDown={(e) => e.stopPropagation()}
                 onClick={(e) => e.stopPropagation()}
               >
                 <button
                   type="button"
-                  onClick={() => {
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setActiveMenu(null);
                     if (isWorkspaceType) router.push(`/workspaces/tasks?workspaceId=${node.id}`);
                     else if (onOpenTask) onOpenTask(node);
                     else router.push(`/tasks/${node.id}`);
                   }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-foreground hover:bg-surface-hover transition-colors"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-foreground hover:bg-surface-hover transition-colors text-left"
                 >
                   <Eye className="h-4 w-4 text-theme-icon" />
                   <span>Open Item</span>
                 </button>
-                {isWorkspaceType && onOpenWorkspace && (roleCode === 'SUPER_ADMIN' || hasPermission('WORKSPACES_UPDATE') || hasPermission('WORKSPACES_MANAGE') || node.owner_id === userId || node.created_by === userId) && (
+                {canEditNode && (
                   <button
                     type="button"
-                    onClick={() => {
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setActiveMenu(null);
-                      onOpenWorkspace(node);
+                      if (isWorkspaceType) onOpenWorkspace(node);
+                      else if (onOpenTask) onOpenTask(node);
+                      else router.push(`/tasks/${node.id}`);
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-foreground hover:bg-surface-hover transition-colors"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-foreground hover:bg-surface-hover transition-colors text-left"
                   >
                     <Edit2 className="h-4 w-4 text-purple-500" />
-                    <span>Edit Workspace</span>
+                    <span>{isWorkspaceType ? 'Edit Workspace' : 'Edit Task'}</span>
                   </button>
                 )}
-                {onShareNode && isWorkspaceType && (roleCode === 'SUPER_ADMIN' || hasPermission('WORKSPACES_UPDATE') || hasPermission('WORKSPACES_MANAGE') || node.owner_id === userId || node.created_by === userId) && (
+                {onShareNode && canShare && (
                   <button
                     type="button"
-                    onClick={() => {
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setActiveMenu(null);
                       onShareNode(node);
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-success hover:bg-success/10 transition-colors"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-success hover:bg-success/10 transition-colors text-left"
                   >
                     <Share2 className="h-4 w-4" />
                     <span>Transfer Workspace</span>
                   </button>
                 )}
-                {onDeleteNode && (roleCode === 'SUPER_ADMIN' || (isWorkspaceType ? (hasPermission('WORKSPACES_DELETE') || hasPermission('WORKSPACES_MANAGE') || node.owner_id === userId || node.created_by === userId) : (hasPermission('TASKS_DELETE') || hasPermission('TASKS_MANAGE') || node.created_by === userId || node.owner_user_id === userId || node.assigned_to === userId || node.assignee_id === userId))) && (
+                {onDeleteNode && canDelete && (
                   <button
                     type="button"
-                    onClick={() => {
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setActiveMenu(null);
                       onDeleteNode(node);
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-danger hover:bg-danger/10 transition-colors"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-danger hover:bg-danger/10 transition-colors text-left"
                   >
                     <Trash2 className="h-4 w-4" />
                     <span>Delete</span>
@@ -709,7 +757,7 @@ export function WorkspaceMasterTable({
         <div className="flex items-center justify-between gap-2 mt-2.5 pt-2 border-t border-border/40">
           <span className="text-[10px] text-muted">Created: {shortDate}</span>
           <div className="flex items-center gap-1.5">
-            {isWorkspaceType && onCreateSubWorkspace && (roleCode === 'SUPER_ADMIN' || hasPermission('WORKSPACES_CREATE')) && (
+            {isWorkspaceType && onCreateSubWorkspace && canCreateWs && (
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onCreateSubWorkspace(node); }}
@@ -718,7 +766,7 @@ export function WorkspaceMasterTable({
                 + Sub WS
               </button>
             )}
-            {onCreateTask && (roleCode === 'SUPER_ADMIN' || hasPermission('TASKS_CREATE')) && (
+            {onCreateTask && canCreateTsk && (
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onCreateTask(node); }}
@@ -759,21 +807,6 @@ export function WorkspaceMasterTable({
 
   return (
     <div className="w-full font-sans relative">
-      {/* Global Transparent Backdrop for Dismissing Open Dropdowns */}
-      {activeMenu && (
-        <div 
-          className="fixed inset-0 z-40 bg-black/5 dark:bg-black/20 backdrop-blur-[0.5px]"
-          onClick={(e) => {
-            e.stopPropagation();
-            setActiveMenu(null);
-          }}
-          onTouchEnd={(e) => {
-            e.stopPropagation();
-            setActiveMenu(null);
-          }}
-        />
-      )}
-
       <div className="block lg:hidden w-full pb-8">
         {hierarchy.length > 0 ? (
           renderMobileTree(hierarchy)
