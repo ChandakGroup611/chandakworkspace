@@ -26,8 +26,8 @@ export function ReportKPIBar({ kpis, className, variant = "default" }: { kpis: R
             key={idx} 
             onClick={kpi.onClick}
             className={cn(
-              "flex items-center bg-surface border border-border shadow-xs transition-all select-none min-w-0",
-              kpi.onClick && "cursor-pointer hover:shadow-md hover:border-theme-btn-primary/50",
+              "flex items-center bg-surface border border-border shadow-xs transition-all duration-200 ease-out select-none min-w-0 group",
+              kpi.onClick && "cursor-pointer hover:shadow-lg hover:-translate-y-1 hover:border-theme-btn-primary/50 active:scale-[0.97]",
               kpi.isActive && "ring-2 ring-theme-btn-primary border-theme-btn-primary bg-theme-btn-primary/5",
               variant === "default" 
                 ? "gap-3 px-3.5 py-2.5 rounded-xl min-w-[140px] sm:min-w-[170px] shrink-0" 
@@ -36,12 +36,12 @@ export function ReportKPIBar({ kpis, className, variant = "default" }: { kpis: R
             role={kpi.onClick ? "button" : undefined}
           >
             {kpi.icon && (
-              <div className={cn("flex items-center justify-center rounded-lg shrink-0", variant === "default" ? "p-2 rounded-xl" : "p-1.5", kpi.iconBgClass || "bg-theme-btn-primary/10", kpi.iconColorClass || "text-theme-icon")}>
+              <div className={cn("flex items-center justify-center rounded-lg shrink-0 transition-transform duration-200 group-hover:scale-110", variant === "default" ? "p-2 rounded-xl" : "p-1.5", kpi.iconBgClass || "bg-theme-btn-primary/10", kpi.iconColorClass || "text-theme-icon")}>
                 <div className={variant === "compact" ? "scale-75" : ""}>{kpi.icon}</div>
               </div>
             )}
             <div className="flex flex-col min-w-0">
-              <span className={cn("font-bold text-muted uppercase tracking-wider truncate", variant === "default" ? "text-[10px] gap-1" : "text-[9px] sm:text-[8px] leading-tight")}>{kpi.label}</span>
+              <span className={cn("font-bold text-muted uppercase tracking-wider truncate transition-colors group-hover:text-foreground", variant === "default" ? "text-[10px] gap-1" : "text-[9px] sm:text-[8px] leading-tight")}>{kpi.label}</span>
               <span className={cn("font-extrabold text-foreground leading-none truncate", variant === "default" ? "text-xl sm:text-2xl" : "text-[14px] sm:text-[13px]")}>{kpi.value}</span>
             </div>
           </div>

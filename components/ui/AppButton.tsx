@@ -33,14 +33,14 @@ export const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(
     const [internalLoading, setInternalLoading] = React.useState(false);
 
     const baseStyles = 
-      "inline-flex items-center justify-center font-medium rounded-md transition-all duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-btn-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.96] cursor-pointer disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100 select-none";
+      "inline-flex items-center justify-center font-medium rounded-md transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-btn-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.96] cursor-pointer disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100 disabled:hover:translate-y-0 select-none";
 
     const variants = {
-      primary: "bg-theme-btn-primary text-theme-btn-primary-text hover:brightness-110 hover:shadow-md active:shadow-xs shadow-xs",
-      secondary: "bg-surface text-foreground hover:bg-surface-hover hover:border-border-active border border-border shadow-2xs",
-      ghost: "bg-transparent text-muted hover:bg-surface-hover hover:text-foreground",
-      destructive: "bg-danger text-white hover:bg-danger/90 hover:shadow-md shadow-xs",
-      outline: "bg-transparent border border-border text-foreground hover:bg-surface-hover hover:border-border-active shadow-2xs",
+      primary: "bg-theme-btn-primary text-theme-btn-primary-text hover:brightness-110 hover:shadow-md hover:shadow-theme-btn-primary/20 active:shadow-xs shadow-xs",
+      secondary: "bg-surface text-foreground hover:bg-surface-hover hover:border-border-active hover:shadow-sm border border-border shadow-2xs",
+      ghost: "bg-transparent text-muted hover:bg-surface-hover hover:text-foreground hover:translate-y-0",
+      destructive: "bg-danger text-white hover:bg-danger/90 hover:shadow-md hover:shadow-danger/20 shadow-xs",
+      outline: "bg-transparent border border-border text-foreground hover:bg-surface-hover hover:border-border-active hover:shadow-sm shadow-2xs",
     };
 
     const sizes = {

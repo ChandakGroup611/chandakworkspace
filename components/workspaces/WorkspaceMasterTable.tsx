@@ -302,7 +302,7 @@ export function WorkspaceMasterTable({
               {/* Expand Toggle */}
               <div 
                 onClick={(e) => toggleNode(node, e)}
-                className={`h-5 w-5 rounded flex items-center justify-center shrink-0 transition-colors cursor-pointer mt-0.5 ${
+                className={`h-5 w-5 rounded flex items-center justify-center shrink-0 transition-all duration-200 cursor-pointer mt-0.5 hover:scale-110 active:scale-90 ${
                   hasChildren || (isWorkspaceType && subWsCount > 0)
                     ? 'hover:bg-surface-hover text-muted hover:text-foreground' 
                     : 'opacity-0 pointer-events-none'
@@ -310,10 +310,10 @@ export function WorkspaceMasterTable({
               >
                 {loadingNodes[node.id] ? (
                   <CircleDashed className="h-3.5 w-3.5 animate-spin text-theme-icon" />
-                ) : isExpanded ? (
-                  <ChevronDown className="h-3.5 w-3.5" />
                 ) : (
-                  <ChevronRight className="h-3.5 w-3.5" />
+                  <ChevronRight className={`h-3.5 w-3.5 transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] transform ${
+                    isExpanded ? 'rotate-90 text-theme-icon font-bold' : 'rotate-0 text-muted'
+                  }`} />
                 )}
               </div>
 
@@ -454,7 +454,7 @@ export function WorkspaceMasterTable({
                   variant="outline"
                   size="sm"
                   onClick={(e) => { e.stopPropagation(); onCreateSubWorkspace(node); }}
-                  className="h-6 px-2 text-[9px] font-bold uppercase border-theme-icon/30 text-theme-icon hover:bg-theme-btn-primary/10"
+                  className="h-6 px-2 text-[9px] font-bold uppercase border-theme-icon/30 text-theme-icon hover:bg-theme-btn-primary/10 active:scale-90 hover:scale-105 transition-all"
                 >
                   + Sub WS
                 </AppButton>
@@ -464,7 +464,7 @@ export function WorkspaceMasterTable({
                   variant="outline"
                   size="sm"
                   onClick={(e) => { e.stopPropagation(); onCreateTask(node); }}
-                  className="h-6 px-2 text-[9px] font-bold uppercase border-theme-icon/30 text-theme-icon hover:bg-theme-btn-primary/10"
+                  className="h-6 px-2 text-[9px] font-bold uppercase border-theme-icon/30 text-theme-icon hover:bg-theme-btn-primary/10 active:scale-90 hover:scale-105 transition-all"
                 >
                   {isWorkspaceType ? '+ Task' : '+ Sub'}
                 </AppButton>
@@ -628,15 +628,15 @@ export function WorkspaceMasterTable({
               <button 
                 type="button"
                 onClick={(e) => toggleNode(node, e)}
-                className="h-7 w-7 rounded-lg flex items-center justify-center text-muted hover:text-foreground shrink-0 mt-0.5 bg-surface-hover/60 active:scale-95 transition-transform"
+                className="h-7 w-7 rounded-lg flex items-center justify-center text-muted hover:text-foreground shrink-0 mt-0.5 bg-surface-hover/60 active:scale-90 hover:scale-105 transition-all"
                 aria-label={isExpanded ? "Collapse" : "Expand"}
               >
                 {loadingNodes[node.id] ? (
                   <CircleDashed className="h-4 w-4 animate-spin text-theme-icon" />
-                ) : isExpanded ? (
-                  <ChevronDown className="h-4 w-4" />
                 ) : (
-                  <ChevronRight className="h-4 w-4" />
+                  <ChevronRight className={`h-4 w-4 transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] transform ${
+                    isExpanded ? 'rotate-90 text-theme-icon font-bold' : 'rotate-0 text-muted'
+                  }`} />
                 )}
               </button>
             ) : (
@@ -817,7 +817,11 @@ export function WorkspaceMasterTable({
       return (
         <React.Fragment key={node.id}>
           {renderHierarchyRow(node, parentNode, depth, isActuallyExpanded)}
-          {isActuallyExpanded && node.children && renderTree(node.children, depth + 1, node)}
+          {isActuallyExpanded && node.children && (
+            <div className="flex flex-col animate-accordion-down">
+              {renderTree(node.children, depth + 1, node)}
+            </div>
+          )}
         </React.Fragment>
       );
     });
@@ -829,7 +833,11 @@ export function WorkspaceMasterTable({
       return (
         <React.Fragment key={node.id}>
           {renderMobileRow(node, parentNode, depth, isActuallyExpanded)}
-          {isActuallyExpanded && node.children && renderMobileTree(node.children, depth + 1, node)}
+          {isActuallyExpanded && node.children && (
+            <div className="flex flex-col animate-accordion-down">
+              {renderMobileTree(node.children, depth + 1, node)}
+            </div>
+          )}
         </React.Fragment>
       );
     });

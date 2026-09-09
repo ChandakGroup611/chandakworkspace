@@ -1458,7 +1458,7 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
                     key={task.id}
                     data-state={isSelected ? "selected" : undefined}
                     className={cn(
-                      "rounded-2xl border border-border/70 bg-surface/90 p-4 shadow-xs hover:border-theme-btn-primary/40 transition-all select-none space-y-3 relative",
+                      "rounded-2xl border border-border/70 bg-surface/90 p-4 shadow-xs hover:border-theme-btn-primary/40 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.99] transition-all duration-200 select-none space-y-3 relative cursor-pointer",
                       isSelected && "ring-2 ring-theme-btn-primary bg-theme-btn-primary/5"
                     )}
                     onClick={() => router.push(`/tasks/${task.id}`)}
@@ -1662,7 +1662,7 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
                         key={task.id} 
                         data-state={selectedTaskIds.has(task.id) ? "selected" : undefined}
                         onClick={() => router.push(`/tasks/${task.id}`)}
-                        className="cursor-pointer hover:bg-surface dark:hover:bg-surface/50"
+                        className="cursor-pointer transition-all duration-200 ease-out hover:bg-surface/80 hover:translate-x-0.5 hover:shadow-2xs"
                       >
                         <AppTableCell className="p-0 text-center w-[40px] min-w-[40px] max-w-[40px] sticky left-0 z-20 bg-surface group-hover:bg-surface transition-colors" onClick={(e) => e.stopPropagation()}>
                           <input 

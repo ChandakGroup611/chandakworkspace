@@ -336,6 +336,7 @@ h1, h2, h3, h4, h5, h6 {
 :root {
   --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* Radar Pulse for Live Status Indicators */
@@ -390,7 +391,22 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .animate-stagger-in {
-  animation: slideUpFade 0.4s var(--ease-spring) backwards;
+  animation: slideUpFade 0.35s var(--ease-spring) backwards;
+}
+
+@keyframes accordionSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-accordion-down {
+  animation: accordionSlideDown 0.25s var(--ease-spring) forwards;
 }
 
 /* Stagger delay utilities */
@@ -402,6 +418,31 @@ h1, h2, h3, h4, h5, h6 {
 .delay-6 { animation-delay: 240ms; }
 .delay-7 { animation-delay: 280ms; }
 .delay-8 { animation-delay: 320ms; }
+
+/* Interactive Tactile Touch & Spring Hover Elevation */
+.tactile-press {
+  transition: transform 0.2s var(--ease-bounce), box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+.tactile-press:hover {
+  transform: translateY(-1.5px);
+}
+.tactile-press:active {
+  transform: scale(0.96) translateY(0);
+}
+
+/* Universal Table Row Animation Touch */
+.theme-table-row {
+  transition: background-color 0.2s ease, transform 0.2s var(--ease-spring), box-shadow 0.2s ease;
+  position: relative;
+}
+.theme-table-row:hover {
+  transform: translateX(2px);
+}
+
+/* Universal Chevron Smooth Spring Rotation */
+.chevron-spring {
+  transition: transform 0.3s var(--ease-bounce), color 0.2s ease;
+}
 
 /* Interactive Hover Card Lift with Ambient Glow */
 .interactive-card {

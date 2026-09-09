@@ -13,8 +13,8 @@ export const AppCard = React.forwardRef<HTMLDivElement, AppCardProps>(
       ref={ref}
       className={cn(
         "theme-card-structural",
-        "rounded-2xl overflow-hidden relative transition-all duration-300",
-        interactive && "hover:-translate-y-1 hover:shadow-lg cursor-pointer",
+        "rounded-2xl overflow-hidden relative transition-all duration-300 ease-out",
+        interactive && "hover:-translate-y-1 hover:shadow-xl hover:border-theme-btn-primary/40 active:scale-[0.99] cursor-pointer",
         className
       )}
       {...props}
