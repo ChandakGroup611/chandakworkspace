@@ -789,7 +789,7 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
     e.stopPropagation();
     e.preventDefault();
     setInlineTask(task);
-    setInlineNewStatus(task.status_id || "");
+    setInlineNewStatus("");
     setInlineRemark("");
     setStatusModalOpen(true);
   };
@@ -809,6 +809,10 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
 
   const handleStatusSave = async () => {
     if (!inlineTask) return;
+    if (canChangeFields && !inlineNewStatus) {
+      toast.warning("Status selection is mandatory. Please select a status.");
+      return;
+    }
     if (!inlineRemark || inlineRemark.trim().length === 0) {
       toast.warning("A remark is required.");
       return;
@@ -2289,7 +2293,9 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
             
             {canChangeFields ? (
               <div className="grid gap-2">
-                <label className="text-sm font-bold text-muted uppercase tracking-wider">New Status</label>
+                <label className="text-sm font-bold text-muted uppercase tracking-wider">
+                  New Status <span className="text-danger">*</span>
+                </label>
                 <select
                   value={inlineNewStatus}
                   onChange={(e) => setInlineNewStatus(e.target.value)}
@@ -2322,10 +2328,10 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
             <AppButton 
               variant="primary" 
               onClick={handleStatusSave}
-              disabled={inlineLoading || !inlineRemark.trim()}
+              disabled={inlineLoading || !inlineRemark.trim() || (canChangeFields && !inlineNewStatus)}
             >
               {inlineLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              {canChangeFields && inlineNewStatus !== inlineTask?.status_id ? "Change Status" : "Add Remark"}
+              {canChangeFields ? "Change Status" : "Add Remark"}
             </AppButton>
           </DialogFooter>
         </DialogContent>

@@ -228,6 +228,11 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
       return;
     }
 
+    if (!statusId) {
+      toast.warning("Task Status is mandatory. Please select a status.");
+      return;
+    }
+
     const finalPrimary = primaryAssignee || executors[0] || null;
     const finalExecutors = Array.from(new Set([
       ...(finalPrimary ? [finalPrimary] : []),
@@ -421,13 +426,16 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-bold text-muted uppercase tracking-wider">Task Status</label>
+                <label className="text-sm font-bold text-muted uppercase tracking-wider">
+                  Task Status <span className="text-danger">*</span>
+                </label>
                 <select
                   className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors cursor-pointer ${ "theme-input-structural text-foreground" }`}
                   value={statusId}
                   onChange={e => setStatusId(e.target.value)}
+                  required
                 >
-                  <option value="">-- Default Status --</option>
+                  <option value="" disabled>-- Select Status --</option>
                   {statuses.map(s => (
                     <option key={s.id} value={s.id}>{s.name}</option>
                   ))}

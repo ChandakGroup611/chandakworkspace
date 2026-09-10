@@ -518,13 +518,16 @@ export function TicketWorkspaceConsole({
                </div>
                
                <div>
-                <label className="text-[10px] uppercase font-bold text-muted-foreground block mb-1.5">Workflow Status</label>
+                <label className="text-[10px] uppercase font-bold text-muted-foreground block mb-1.5">
+                  Workflow Status <span className="text-danger">*</span>
+                </label>
                 <select 
-                  value={pendingChanges.status_id !== undefined ? pendingChanges.status_id : ticket.status_id}
+                  value={pendingChanges.status_id !== undefined ? pendingChanges.status_id : (ticket.status_id || "")}
                   onChange={(e) => handleFieldUpdate({ status_id: e.target.value })}
                   disabled={!canEditFields}
                   className="w-full border rounded-lg p-3 text-xs font-medium outline-none disabled:opacity-60 transition-colors focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary theme-input-structural text-foreground"
                 >
+                  <option value="" disabled>Select Status</option>
                   {states.map((s: any) => (
                     <option key={s.id} value={s.id}>{s.name}</option>
                   ))}

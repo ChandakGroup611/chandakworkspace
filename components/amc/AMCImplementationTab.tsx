@@ -553,10 +553,11 @@ export function AMCImplementationTab({
                   {/* Right: Quick Status Changer & Actions */}
                   <div className="flex items-center gap-2 shrink-0">
                     <select
-                      value={stage.status}
+                      value={stage.status || ""}
                       onChange={(e) => handleUpdateStageField(stage.id!, "status", e.target.value)}
                       className="h-9 px-3 rounded-lg text-xs font-semibold border bg-elevated border-border text-foreground outline-none focus:ring-2 focus:ring-theme-btn-primary/20 cursor-pointer"
                     >
+                      <option value="" disabled>Select Status</option>
                       <option value="Pending">Pending</option>
                       <option value="In Progress">In Progress</option>
                       <option value="Completed">Completed</option>

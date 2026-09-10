@@ -49,6 +49,7 @@ export function AMCPaymentsTab({ amcId, isLightMode, currency = 'INR' }: AMCPaym
   const [formDueDate, setFormDueDate] = useState("");
   const [formPaymentType, setFormPaymentType] = useState("Milestone");
   const [formPaymentMethod, setFormPaymentMethod] = useState("NEFT / RTGS");
+  const [formStatus, setFormStatus] = useState("");
 
   useEffect(() => {
     fetchInvoices();
@@ -84,6 +85,10 @@ export function AMCPaymentsTab({ amcId, isLightMode, currency = 'INR' }: AMCPaym
       toast.error("Please select a due date.");
       return;
     }
+    if (!formStatus) {
+      toast.error("Status is mandatory. Please select a status.");
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -96,7 +101,7 @@ export function AMCPaymentsTab({ amcId, isLightMode, currency = 'INR' }: AMCPaym
         due_date: formDueDate,
         payment_type: formPaymentType,
         payment_method: formPaymentMethod,
-        status: 'Pending',
+        status: formStatus,
         created_by: user?.id || null
       });
 
@@ -107,6 +112,7 @@ export function AMCPaymentsTab({ amcId, isLightMode, currency = 'INR' }: AMCPaym
       setFormInvoiceNumber("");
       setFormAmount("");
       setFormDueDate("");
+      setFormStatus("");
       await fetchInvoices();
     } catch (err: any) {
       toast.error(err.message || "Failed to create payment schedule.");
@@ -412,11 +418,30 @@ export function AMCPaymentsTab({ amcId, isLightMode, currency = 'INR' }: AMCPaym
                 </div>
               </div>
 
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-muted uppercase tracking-wider">
+                  Status <span className="text-danger">*</span>
+                </label>
+                <select
+                  value={formStatus}
+                  onChange={(e) => setFormStatus(e.target.value)}
+                  className="w-full h-10 px-3 rounded-xl border border-border bg-surface text-xs font-medium outline-none"
+                  required
+                >
+                  <option value="" disabled>Select Status</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Paid">Paid</option>
+                  <option value="Partially Paid">Partially Paid</option>
+                  <option value="On Hold">On Hold</option>
+                  <option value="Cancelled">Cancelled</option>
+                </select>
+              </div>
+
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
                 <AppButton type="button" variant="outline" size="sm" onClick={() => setShowAddModal(false)}>
                   Cancel
                 </AppButton>
-                <AppButton type="submit" variant="primary" size="sm" disabled={isSubmitting} leftIcon={<CheckCircle2 className="h-4 w-4" />}>
+                <AppButton type="submit" variant="primary" size="sm" disabled={isSubmitting || !formStatus} leftIcon={<CheckCircle2 className="h-4 w-4" />}>
                   {isSubmitting ? "Scheduling..." : "Schedule Payment"}
                 </AppButton>
               </div>

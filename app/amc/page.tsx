@@ -140,7 +140,7 @@ export default function AMCPage() {
   const [formCost, setFormCost] = useState("");
   const [formAssignedTo, setFormAssignedTo] = useState("");
   const [formDepartmentId, setFormDepartmentId] = useState("");
-  const [formStatus, setFormStatus] = useState("Active");
+  const [formStatus, setFormStatus] = useState("");
   const [formNotes, setFormNotes] = useState("");
 
   const [formCurrency, setFormCurrency] = useState("INR");
@@ -334,7 +334,7 @@ export default function AMCPage() {
       percentage: 0,
       amount: 0,
       amountReleased: 0,
-      status: 'Pending',
+      status: '',
       targetDate: '',
       releaseDate: '',
       remark: ''
@@ -400,7 +400,7 @@ export default function AMCPage() {
           percentage: 0,
           amount: 0,
           amountReleased: 0,
-          status: 'Pending',
+          status: '',
           targetDate: '',
           releaseDate: '',
           remark: ''
@@ -676,7 +676,7 @@ export default function AMCPage() {
     setFormCost("");
     setFormAssignedTo("");
     setFormDepartmentId("");
-    setFormStatus("Active");
+    setFormStatus("");
     setFormNotes("");
     
     setFormCurrency("INR");
@@ -790,7 +790,7 @@ export default function AMCPage() {
     setFormCost(rec.cost?.toString() || "");
     setFormAssignedTo(rec.assigned_to || "");
     setFormDepartmentId(rec.department_id || "");
-    setFormStatus(rec.status || "Active");
+    setFormStatus(rec.status || "");
     setFormNotes(rec.notes || "");
 
     setFormCurrency(rec.currency || "INR");
@@ -2251,6 +2251,7 @@ export default function AMCPage() {
                     <div className="space-y-2">
                       <label className="theme-label">Status <span className="text-danger">*</span></label>
                       <select value={formStatus} onChange={(e) => setFormStatus(e.target.value)} className={`w-full h-11 px-4 rounded-xl text-sm transition-all outline-none bg-elevated text-foreground border border-border`}>
+                        <option value="" disabled>-- Select Status --</option>
                         <option value="Active">Active</option>
                         <option value="Expired">Expired</option>
                         <option value="Renewed">Renewed</option>

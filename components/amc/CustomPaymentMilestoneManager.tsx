@@ -27,7 +27,7 @@ export interface PaymentMilestone {
   percentage?: number;
   amount?: number;
   amountReleased?: number;
-  status: 'Pending' | 'Amount Released' | 'Partially Released' | 'On Hold' | 'Completed';
+  status: 'Pending' | 'Amount Released' | 'Partially Released' | 'On Hold' | 'Completed' | '';
   targetDate?: string;
   releaseDate?: string;
   remark?: string;
@@ -287,10 +287,11 @@ export function CustomPaymentMilestoneManager({
                   )}
 
                   <select
-                    value={m.status || 'Pending'}
+                    value={m.status || ''}
                     onChange={(e) => onUpdateMilestone(m.id, 'status', e.target.value)}
                     className={`h-8 px-3 rounded-lg text-xs font-semibold border outline-none cursor-pointer ${getStatusBadgeClass(m.status)}`}
                   >
+                    <option value="" disabled>Select Status</option>
                     <option value="Pending">Pending</option>
                     <option value="Amount Released">Amount Released</option>
                     <option value="Partially Released">Partially Released</option>

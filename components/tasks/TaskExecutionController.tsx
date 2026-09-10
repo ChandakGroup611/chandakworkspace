@@ -1285,11 +1285,11 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
           <div className="space-y-1.5">
             <label className="text-xs font-bold uppercase tracking-wider text-muted">Status Field</label>
             <select
-              value={pendingStatus || currentStatusCode}
+              value={pendingStatus || currentStatusCode || ""}
               disabled={readOnly || !canEditCore}
               onChange={(e) => {
                 const newCode = e.target.value;
-                if (newCode === currentStatusCode) {
+                if (!newCode || newCode === currentStatusCode) {
                   setPendingStatus(null);
                 } else {
                   setPendingStatus(newCode);
@@ -1297,6 +1297,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               }}
               className={`w-full h-10 px-3 rounded-xl text-sm font-semibold border border-border bg-white dark:bg-[#111827] text-foreground focus:outline-none focus:ring-2 focus:ring-theme-btn-primary focus:border-theme-btn-primary transition-all ${(readOnly || !canEditCore) ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
+              <option value="" disabled>Select Status</option>
               {statuses.map(st => (
                 <option key={st.id} value={st.code || st.status_code}>{st.name || st.status_name}</option>
               ))}
