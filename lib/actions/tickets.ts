@@ -169,7 +169,13 @@ export async function updateTicketDetails(ticketId: string, payload: {
   if (payload.category_id !== undefined) updateData.category_id = cleanField(payload.category_id);
   if (payload.sub_category_id !== undefined) updateData.sub_category_id = cleanField(payload.sub_category_id);
   if (payload.issue_type_id !== undefined) updateData.issue_type_id = cleanField(payload.issue_type_id);
-  if (payload.priority_id !== undefined) updateData.priority_id = cleanField(payload.priority_id);
+  if (payload.priority_id !== undefined) {
+    const cleanedPrio = cleanField(payload.priority_id);
+    if (!cleanedPrio) {
+      throw new Error("Operational Priority cannot be cleared. Priority selection is mandatory.");
+    }
+    updateData.priority_id = cleanedPrio;
+  }
   if (payload.due_date !== undefined) updateData.due_date = payload.due_date ? new Date(payload.due_date).toISOString() : null;
   if (payload.custom_fields !== undefined) updateData.custom_fields = payload.custom_fields;
 
@@ -416,6 +422,10 @@ export async function createEnterpriseTicket(payload: any) {
   const assignee_id = cleanField(payload.assignee_id);
   const department_id = cleanField(payload.department_id);
   const due_date = cleanField(payload.due_date);
+
+  if (!priority_id) {
+    throw new Error("Operational Priority is mandatory. Please select a priority.");
+  }
 
   // Fetch Category
   let isRequirement = false;

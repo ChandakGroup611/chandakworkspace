@@ -82,6 +82,10 @@ export async function createTask(payload: {
       finalStatusId = statusMaster.id;
     }
 
+    if (!payload.priority_id || !payload.priority_id.trim()) {
+      return { error: "Task Priority is mandatory. Please select a priority." };
+    }
+
     // Create Task
     const cleanUUID = (val: any) => (val && typeof val === 'string' && val.trim() !== '') ? val.trim() : null;
     const finalWorkspaceId = cleanUUID(payload.sub_workspace_id) || cleanUUID(payload.workspace_id);
@@ -876,7 +880,11 @@ export async function updateTask(taskId: string, payload: any) {
     updatePayload.end_date = cleanField(updatePayload.end_date);
   }
   if (updatePayload.priority_id !== undefined) {
-    updatePayload.priority_id = cleanField(updatePayload.priority_id);
+    const cleanedPrio = cleanField(updatePayload.priority_id);
+    if (!cleanedPrio) {
+      return { error: "Task Priority cannot be cleared. Priority selection is mandatory." };
+    }
+    updatePayload.priority_id = cleanedPrio;
   }
   if (updatePayload.status_id !== undefined) {
     updatePayload.status_id = cleanField(updatePayload.status_id);

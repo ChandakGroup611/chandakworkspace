@@ -364,6 +364,22 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
           </div>
         );
       })}
+
+      {permsLoading && !roleCode && (
+        <div className="space-y-4 px-3 pt-2 animate-pulse" aria-hidden="true">
+          <div className="h-2.5 w-24 bg-muted/20 rounded mb-2"></div>
+          <div className="space-y-1.5">
+            <div className="h-9 w-full bg-muted/10 rounded-lg"></div>
+            <div className="h-9 w-full bg-muted/10 rounded-lg"></div>
+            <div className="h-9 w-full bg-muted/10 rounded-lg"></div>
+          </div>
+          <div className="h-2.5 w-28 bg-muted/20 rounded mb-2 mt-4"></div>
+          <div className="space-y-1.5">
+            <div className="h-9 w-full bg-muted/10 rounded-lg"></div>
+            <div className="h-9 w-full bg-muted/10 rounded-lg"></div>
+          </div>
+        </div>
+      )}
       </div>
     </>
   );

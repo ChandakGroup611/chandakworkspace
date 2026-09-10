@@ -281,6 +281,7 @@ export async function createRequirement(payload: {
 
   if (!payload.title || !payload.title.trim()) return { error: "Validation Error: Requirement title is required." };
   if (!payload.objective || !payload.objective.trim()) return { error: "Validation Error: Requirement objective is required." };
+  if (!payload.priority_id || !payload.priority_id.trim()) return { error: "Validation Error: Requirement priority is mandatory." };
 
   let statusId = payload.status_id;
   if (!statusId) {
@@ -594,6 +595,9 @@ export async function deleteRequirement(reqId: string, performedBy: string) {
 export async function updateRequirementIntake(reqId: string, payload: any, performedBy: string) {
   const isAuthorized = await canModifyRequirement(reqId, performedBy);
   if (!isAuthorized) return { error: 'Unauthorized to update this requirement.' };
+  if (payload.priority_id !== undefined && (!payload.priority_id || (typeof payload.priority_id === 'string' && !payload.priority_id.trim()))) {
+    return { error: 'Validation Error: Requirement priority cannot be cleared. Priority is mandatory.' };
+  }
   const updatePayload: any = { 
     title: payload.title, 
     scope: payload.scope, 

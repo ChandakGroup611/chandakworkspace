@@ -91,6 +91,10 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
       setError("Title is required");
       return;
     }
+    if (!formData.priority_id) {
+      setError("Priority is mandatory. Please select a priority.");
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -170,13 +174,16 @@ export function EditRequirementModal({ reqId, onClose, onSuccess }: EditRequirem
                       </select>
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-subtle ">Priority</label>
+                      <label className="text-sm font-medium text-subtle ">
+                        Priority <span className="text-danger">*</span>
+                      </label>
                       <select
                         value={formData.priority_id}
                         onChange={(e) => setFormData({ ...formData, priority_id: e.target.value })}
+                        required
                         className="w-full px-3 py-2 theme-card-structural dark:bg-[#151822] border-border dark:border-white/10 rounded-lg focus:ring-2 focus:ring-theme-btn-primary focus:border-theme-btn-primary text-sm"
                       >
-                        <option value="">Select Priority</option>
+                        <option value="" disabled>Select Priority</option>
                         {masters.priorities.map((p: any) => (
                           <option key={p.id} value={p.id}>{p.priority_name}</option>
                         ))}

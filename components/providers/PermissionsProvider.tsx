@@ -81,9 +81,15 @@ interface UnifiedAuthData {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    // 1. Listen for Auth State Changes (Login, Logout, Token Refresh)
+    // 1. Listen for Auth State Changes (Login, Logout, Token Refresh, Initial Session)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
+      if (
+        event === "SIGNED_IN" || 
+        event === "SIGNED_OUT" || 
+        event === "INITIAL_SESSION" || 
+        event === "TOKEN_REFRESHED" || 
+        event === "USER_UPDATED"
+      ) {
         queryClient.invalidateQueries({ queryKey: ["global_auth_context"] });
       }
     });
@@ -119,13 +125,21 @@ interface UnifiedAuthData {
     queryKey: ['global_auth_context'],
     queryFn: async (): Promise<UnifiedAuthData> => {
       console.count('[PROFILER] loadAuthContext_executed');
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user;
-      if (!user) return { profile: null, permissions: [], roleCode: null };
-
+      
       // PHASE 5: REAL-TIME PERMISSIONS RESOLUTION
-      // We directly query the roles and role_permissions tables via Server Action to bypass RLS staleness.
+      // We directly query the roles and role_permissions tables via Server Action to bypass client cookie/hydration staleness.
       const { profileData, secondaryRoles } = await fetchServerPermissions();
+
+      let clientUser = null;
+      if (!profileData) {
+        // Fallback: check client session if server action did not find profile (e.g. edge cookie latency)
+        const { data: sessionData } = await supabase.auth.getSession();
+        clientUser = sessionData.session?.user || null;
+      }
+
+      if (!profileData && !clientUser) {
+        return { profile: null, permissions: [], roleCode: null };
+      }
 
       // Safety net: if they somehow bypassed the server layout and are deleted
       if (profileData?.is_deleted) {
@@ -150,9 +164,9 @@ interface UnifiedAuthData {
       }
 
       const profile: ProfileData = { 
-        id: user.id, 
-        email: user.email, 
-        full_name: profileData?.full_name || user.user_metadata?.full_name || "Unknown User",
+        id: profileData?.id || clientUser?.id || "", 
+        email: profileData?.email || clientUser?.email, 
+        full_name: profileData?.full_name || clientUser?.user_metadata?.full_name || "Unknown User",
         profile_photo: profileData?.profile_photo || null,
         roleCode: baseRoleCode,
         created_at: profileData?.created_at

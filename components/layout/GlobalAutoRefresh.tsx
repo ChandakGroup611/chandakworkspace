@@ -32,25 +32,21 @@ export default function GlobalAutoRefresh() {
           method = args[0].method.toUpperCase();
         }
         
-        // Detect Next.js Server Actions (they use POST with a Next-Action header)
-        let isServerAction = false;
-        if (opts.headers) {
-          // Headers can be a Headers object or a plain record
-          if (opts.headers instanceof Headers) {
-            isServerAction = opts.headers.has('Next-Action') || opts.headers.has('next-action');
-          } else {
-            isServerAction = 'Next-Action' in opts.headers || 'next-action' in opts.headers;
-          }
-        }
-        if (!isServerAction && args[0] instanceof Request) {
-          isServerAction = args[0].headers.has('Next-Action') || args[0].headers.has('next-action');
-        }
-          
-        // Detect Supabase direct REST mutations (POST, PATCH, DELETE)
-        const isSupabaseMutation = url.includes('.supabase.co/rest/v1/') && ['POST', 'PATCH', 'DELETE'].includes(method);
+        // NOTE: Next.js Server Actions (POST with Next-Action) MUST NOT trigger router.refresh().
+        // In Next.js App Router, ALL Server Actions (including pure read queries like fetchLiveDashboardMetrics,
+        // fetchServerPermissions, and registerUserSession) are sent as POST with the Next-Action header.
+        // Intercepting them caused an infinite server-action refresh loop and continuous server CPU/query churn.
+        // Components performing business mutations already invoke router.refresh() or state invalidation explicitly.
+
+        // Detect direct Supabase REST mutations (POST, PATCH, DELETE) on business resource tables
+        const isSupabaseMutation = 
+          url.includes('.supabase.co/rest/v1/') && 
+          ['POST', 'PATCH', 'DELETE'].includes(method) &&
+          !url.includes('active_sessions') &&
+          !url.includes('auth_session_logs');
         
-        // Trigger auto-refresh if it's a successful mutation
-        if ((isServerAction || isSupabaseMutation) && response.ok) {
+        // Trigger auto-refresh only for explicit Supabase REST data mutations
+        if (isSupabaseMutation && response.ok) {
            setTimeout(() => {
              router.refresh();
            }, 100);

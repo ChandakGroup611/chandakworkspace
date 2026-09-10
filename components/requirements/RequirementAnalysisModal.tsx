@@ -236,7 +236,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
                 <div>
                   <label className={labelClass}>Business Criticality <span className="text-red-500">*</span></label>
                   <select className={inputClass} value={formData.business_criticality_id} onChange={e => setFormData({...formData, business_criticality_id: e.target.value})} required>
-                    <option value="">Select Criticality</option>
+                    <option value="" disabled>Select Criticality</option>
                     {(masters?.priority_master || []).map((p: any) => (
                       <option key={p.id} value={p.id}>{p.name}</option>
                     ))}

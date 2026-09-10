@@ -67,35 +67,56 @@ export async function fetchLiveDashboardMetrics() {
       const createdPromise = supabaseAdmin.from("tasks").select(`id, task_code, created_at, updated_at, created_by, assigned_to, subject, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), end_date, parent_task_id, workspace_id`).in('created_by', userIdsForScope).eq("is_deleted", false);
       const assignedPromise = supabaseAdmin.from("tasks").select(`id, task_code, created_at, updated_at, created_by, assigned_to, subject, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), end_date, parent_task_id, workspace_id`).in('assigned_to', userIdsForScope).eq("is_deleted", false);
       
-      let wsTasksData: any[] = [];
-      let wsTasksError = null;
+      const wsTaskChunks: any[] = [];
       if (workspaceIds.length > 0) {
         const CHUNK_SIZE = 100;
         for (let i = 0; i < workspaceIds.length; i += CHUNK_SIZE) {
           const chunk = workspaceIds.slice(i, i + CHUNK_SIZE);
-          const { data, error } = await supabaseAdmin.from("tasks").select(`id, task_code, created_at, updated_at, created_by, assigned_to, subject, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), end_date, parent_task_id, workspace_id`).in('workspace_id', chunk).eq("is_deleted", false);
-          if (error) wsTasksError = error;
-          if (data) wsTasksData.push(...data);
+          wsTaskChunks.push(
+            supabaseAdmin.from("tasks")
+              .select(`id, task_code, created_at, updated_at, created_by, assigned_to, subject, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), end_date, parent_task_id, workspace_id`)
+              .in('workspace_id', chunk)
+              .eq("is_deleted", false)
+              .then(res => res)
+          );
         }
       }
 
-      let partTasksData: any[] = [];
-      let partTasksError = null;
+      const partTaskChunks: any[] = [];
       if (participantTaskIds.length > 0) {
         const CHUNK_SIZE = 150;
         for (let i = 0; i < participantTaskIds.length; i += CHUNK_SIZE) {
           const chunk = participantTaskIds.slice(i, i + CHUNK_SIZE);
-          const { data, error } = await supabaseAdmin.from("tasks").select(`id, task_code, created_at, updated_at, created_by, assigned_to, subject, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), end_date, parent_task_id, workspace_id`).in('id', chunk).eq("is_deleted", false);
-          if (error) partTasksError = error;
-          if (data) partTasksData.push(...data);
+          partTaskChunks.push(
+            supabaseAdmin.from("tasks")
+              .select(`id, task_code, created_at, updated_at, created_by, assigned_to, subject, status_id, status_master(status_name), priority_id, priority:priority_master(priority_name), end_date, parent_task_id, workspace_id`)
+              .in('id', chunk)
+              .eq("is_deleted", false)
+              .then(res => res)
+          );
         }
       }
 
-      tasksPromise = Promise.all([createdPromise, assignedPromise]).then(([cRes, aRes]) => {
+      tasksPromise = Promise.all([
+        createdPromise, 
+        assignedPromise,
+        Promise.all(wsTaskChunks),
+        Promise.all(partTaskChunks)
+      ]).then(([cRes, aRes, wsResList, partResList]) => {
         if (cRes.error) return { data: null, error: cRes.error };
         if (aRes.error) return { data: null, error: aRes.error };
-        if (wsTasksError) return { data: null, error: wsTasksError };
-        if (partTasksError) return { data: null, error: partTasksError };
+        
+        const wsTasksData: any[] = [];
+        for (const r of wsResList) {
+          if (r.error) return { data: null, error: r.error };
+          if (r.data) wsTasksData.push(...r.data);
+        }
+
+        const partTasksData: any[] = [];
+        for (const r of partResList) {
+          if (r.error) return { data: null, error: r.error };
+          if (r.data) partTasksData.push(...r.data);
+        }
         
         const merged = [...(cRes.data || []), ...(aRes.data || []), ...wsTasksData, ...partTasksData];
         const unique = Array.from(new Map(merged.map(item => [item.id, item])).values());

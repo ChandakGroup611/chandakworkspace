@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { toast } from "react-toastify";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
 import { Paperclip, Send, X, Loader2 } from "lucide-react";
@@ -84,13 +85,6 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
         const data = await fetchMastersByScope(scope.id);
         console.log("[InfraForm] Fetched masters:", data);
         setMasters(data);
-        
-        // Auto-select default priority if available
-        const prios = data.master_priority || [];
-        const defaultPrio = prios.find((p: any) => p.code === "PRIO_MED_P3") || prios[0];
-        if (defaultPrio) {
-          setFormData(prev => ({ ...prev, priorityId: defaultPrio.id }));
-        }
       } catch (error) {
         console.error("Failed to load infra masters:", error);
       } finally {
@@ -126,6 +120,15 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
     setFormData(prev => ({ ...prev, priorityId: id }));
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.priorityId) {
+      toast.warning("Operational Priority is mandatory. Please select a priority.");
+      return;
+    }
+    onSubmit({ ...formData, isReqCategory });
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-16">
@@ -137,7 +140,7 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
   return (
     <div className="animate-in slide-in-from-right-4 duration-500">
         <form 
-          onSubmit={(e) => { e.preventDefault(); onSubmit({ ...formData, isReqCategory }); }}
+          onSubmit={handleSubmit}
           className="space-y-4"
         >
           {/* Main Grid */}
@@ -223,13 +226,16 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
             </div>
 
             <div className="space-y-2">
-              <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>Operational Priority</label>
+              <label className={`text-sm font-bold uppercase tracking-wider text-muted`}>
+                Operational Priority <span className="text-danger">*</span>
+              </label>
               <select 
                 className={`w-full h-11 px-4 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 ${ "theme-input-structural text-foreground" }`}
                 value={formData.priorityId}
                 onChange={(e) => handlePriorityChange(e.target.value)}
                 required
               >
+                <option value="" disabled>Select Priority</option>
                 {(masters.master_priority || []).map((p: any) => (
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}

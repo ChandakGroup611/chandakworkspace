@@ -166,11 +166,6 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
       ]);
       setCustomFields(fields);
       setPriorities(priorityList);
-      if (priorityList.length > 0) {
-        // Find default priority from master (if configured) or fallback to the first available
-        const defaultPrio = priorityList.find((p: any) => p.is_default === true) || priorityList[0];
-        setPriorityId(defaultPrio.id);
-      }
       setWorkspaceTasks(existingTasks);
       setStatuses(statusList);
       setDepartments(deptList || []);
@@ -400,13 +395,16 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <div className="space-y-1.5">
-                <label className="text-sm font-bold text-muted uppercase tracking-wider">Task Priority</label>
+                <label className="text-sm font-bold text-muted uppercase tracking-wider">
+                  Task Priority <span className="text-danger">*</span>
+                </label>
                 <select
                   className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors cursor-pointer ${ "theme-input-structural text-foreground" }`}
                   value={priorityId}
                   onChange={e => setPriorityId(e.target.value)}
+                  required
                 >
-                  <option value="">-- Select Priority --</option>
+                  <option value="" disabled>-- Select Priority --</option>
                   {priorities.map(p => (
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}

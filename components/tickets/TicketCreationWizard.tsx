@@ -37,6 +37,10 @@ export function TicketCreationWizard({ onClose, onSuccess }: TicketCreationWizar
   };
 
   const handleFormSubmit = async (data: any) => {
+    if (!data.priorityId) {
+      toast.warning("Operational Priority is mandatory. Please select a priority.");
+      return;
+    }
     setIsSubmitting(true);
     try {
       const { createEnterpriseTicket } = await import("@/lib/actions/tickets");
