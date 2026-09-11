@@ -17,9 +17,13 @@ import {
   X,
   Save,
   Clock,
-  ExternalLink,
-  ShieldCheck,
-  Fuel
+  Trash2,
+  Edit2,
+  Play,
+  Check,
+  Phone,
+  ArrowRight,
+  Zap
 } from "lucide-react";
 import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
@@ -41,8 +45,17 @@ import {
   fetchTripsList,
   fetchMaintenanceList,
   createVehicleAction,
+  updateVehicleAction,
+  deleteVehicleAction,
+  createDriverAction,
+  updateDriverAction,
+  deleteDriverAction,
   createTripPlanAction,
+  updateTripStatusAction,
+  deleteTripAction,
   createServiceRecordAction,
+  deleteServiceRecordAction,
+  fetchVehiclePortalDetailsAction,
   VehicleDashboardStats,
   VehicleRecord,
   DriverRecord,
@@ -89,35 +102,113 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
   // Modal Dialog States
   const [isAddVehicleOpen, setIsAddVehicleOpen] = useState(false);
+  const [isEditVehicleOpen, setIsEditVehicleOpen] = useState(false);
+  const [selectedVehicleForEdit, setSelectedVehicleForEdit] = useState<VehicleRecord | null>(null);
+
+  const [isAddDriverOpen, setIsAddDriverOpen] = useState(false);
+  const [isEditDriverOpen, setIsEditDriverOpen] = useState(false);
+  const [selectedDriverForEdit, setSelectedDriverForEdit] = useState<DriverRecord | null>(null);
+
   const [isDispatchTripOpen, setIsDispatchTripOpen] = useState(false);
   const [isAddMaintenanceOpen, setIsAddMaintenanceOpen] = useState(false);
+
+  // Generic Delete Confirmation Dialog State
+  const [deleteTarget, setDeleteTarget] = useState<{
+    type: "vehicle" | "driver" | "trip" | "maintenance";
+    id: string;
+    label: string;
+  } | null>(null);
+
   const [modalSubmitting, setModalSubmitting] = useState(false);
 
+  // ----------------------------------------------------------------------------
   // Form States — Add Vehicle
+  // ----------------------------------------------------------------------------
   const [newVehiclePlate, setNewVehiclePlate] = useState("");
   const [newVehicleMake, setNewVehicleMake] = useState("");
   const [newVehicleModel, setNewVehicleModel] = useState("");
   const [newVehicleVariant, setNewVehicleVariant] = useState("Standard");
   const [newVehicleCategory, setNewVehicleCategory] = useState("CAR");
+  const [newVehicleStatus, setNewVehicleStatus] = useState("IN_STOCK");
   const [newVehicleOdometer, setNewVehicleOdometer] = useState<number>(0);
   const [newVehicleDriverId, setNewVehicleDriverId] = useState("");
+  const [newVehicleNickname, setNewVehicleNickname] = useState("");
+  const [newVehicleColor, setNewVehicleColor] = useState("#1e293b");
 
+  // Portal auto-lookup state
+  const [fetchingPortal, setFetchingPortal] = useState(false);
+  const [portalLookupMsg, setPortalLookupMsg] = useState<{
+    type: "success" | "error" | "info";
+    message: string;
+    rtoOffice?: string;
+    source?: string;
+  } | null>(null);
+
+  // Form States — Edit Vehicle
+  const [editVehiclePlate, setEditVehiclePlate] = useState("");
+  const [editVehicleMake, setEditVehicleMake] = useState("");
+  const [editVehicleModel, setEditVehicleModel] = useState("");
+  const [editVehicleVariant, setEditVehicleVariant] = useState("");
+  const [editVehicleCategory, setEditVehicleCategory] = useState("CAR");
+  const [editVehicleStatus, setEditVehicleStatus] = useState("IN_STOCK");
+  const [editVehicleOdometer, setEditVehicleOdometer] = useState<number>(0);
+  const [editVehicleDriverId, setEditVehicleDriverId] = useState("");
+  const [editVehicleNickname, setEditVehicleNickname] = useState("");
+  const [editVehicleColor, setEditVehicleColor] = useState("#1e293b");
+
+  // Edit Vehicle Portal lookup state
+  const [fetchingEditPortal, setFetchingEditPortal] = useState(false);
+  const [editPortalLookupMsg, setEditPortalLookupMsg] = useState<{
+    type: "success" | "error" | "info";
+    message: string;
+    rtoOffice?: string;
+    source?: string;
+  } | null>(null);
+
+  // ----------------------------------------------------------------------------
+  // Form States — Add Driver
+  // ----------------------------------------------------------------------------
+  const [newDriverName, setNewDriverName] = useState("");
+  const [newDriverPhone, setNewDriverPhone] = useState("");
+  const [newDriverLicense, setNewDriverLicense] = useState("");
+  const [newDriverLicenseExpiry, setNewDriverLicenseExpiry] = useState("");
+  const [newDriverExperience, setNewDriverExperience] = useState<number>(3);
+  const [newDriverEmergency, setNewDriverEmergency] = useState("");
+  const [newDriverVehicleId, setNewDriverVehicleId] = useState("");
+
+  // Form States — Edit Driver
+  const [editDriverName, setEditDriverName] = useState("");
+  const [editDriverPhone, setEditDriverPhone] = useState("");
+  const [editDriverLicense, setEditDriverLicense] = useState("");
+  const [editDriverLicenseExpiry, setEditDriverLicenseExpiry] = useState("");
+  const [editDriverExperience, setEditDriverExperience] = useState<number>(0);
+  const [editDriverEmergency, setEditDriverEmergency] = useState("");
+  const [editDriverVehicleId, setEditDriverVehicleId] = useState("");
+  const [editDriverActive, setEditDriverActive] = useState(true);
+
+  // ----------------------------------------------------------------------------
   // Form States — Dispatch Trip
+  // ----------------------------------------------------------------------------
   const [newTripVehicleId, setNewTripVehicleId] = useState("");
   const [newTripDriverId, setNewTripDriverId] = useState("");
   const [newTripTraveler, setNewTripTraveler] = useState("");
   const [newTripPurpose, setNewTripPurpose] = useState("");
-  const [newTripOrigin, setNewTripOrigin] = useState("Chandak Headquarters");
+  const [newTripOrigin, setNewTripOrigin] = useState("");
   const [newTripDestination, setNewTripDestination] = useState("");
+  const [newTripDate, setNewTripDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [newTripStartTime, setNewTripStartTime] = useState("09:30");
   const [newTripEndTime, setNewTripEndTime] = useState("18:00");
 
+  // ----------------------------------------------------------------------------
   // Form States — Log Maintenance
+  // ----------------------------------------------------------------------------
   const [newMaintVehicleId, setNewMaintVehicleId] = useState("");
   const [newMaintServiceType, setNewMaintServiceType] = useState("");
   const [newMaintVendor, setNewMaintVendor] = useState("");
   const [newMaintCost, setNewMaintCost] = useState<number>(0);
   const [newMaintOdometer, setNewMaintOdometer] = useState<number>(0);
+  const [newMaintDate, setNewMaintDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [newMaintNextDue, setNewMaintNextDue] = useState("");
 
   // ----------------------------------------------------------------------------
   // Data Loaders (Module-local operations)
@@ -130,7 +221,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
       const [statsRes, vehiclesRes, driversRes, tripsRes, maintRes] = await Promise.all([
         fetchVehicleDashboardStats(),
-        fetchVehiclesList({ pageSize: 50 }),
+        fetchVehiclesList({ pageSize: 100 }),
         fetchDriversList(),
         fetchTripsList(),
         fetchMaintenanceList()
@@ -158,7 +249,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     loadAllData();
   }, [loadAllData]);
 
-  // Temporary toast banner triggers
+  // Toast banner triggers
   const triggerToast = (msg: string, isError = false) => {
     if (isError) {
       setErrorBanner(msg);
@@ -170,16 +261,64 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     setTimeout(() => {
       setErrorBanner(null);
       setSuccessBanner(null);
-    }, 5000);
+    }, 4500);
   };
 
   // ----------------------------------------------------------------------------
-  // Form Submission Handlers
+  // CRUD Handlers: VEHICLES
   // ----------------------------------------------------------------------------
+
+  const handlePortalAutoFetch = async () => {
+    const rawPlate = newVehiclePlate.trim();
+    if (!rawPlate) {
+      setPortalLookupMsg({
+        type: "error",
+        message: "Please enter a vehicle registration number first (e.g. MH02FE4281 or HR26CQ9999)."
+      });
+      return;
+    }
+
+    setFetchingPortal(true);
+    setPortalLookupMsg(null);
+
+    try {
+      const res = await fetchVehiclePortalDetailsAction(rawPlate);
+      if (res.success && res.data) {
+        const d = res.data;
+        if (d.registration_number) setNewVehiclePlate(d.registration_number);
+        if (d.make) setNewVehicleMake(d.make);
+        if (d.model) setNewVehicleModel(d.model);
+        if (d.variant) setNewVehicleVariant(d.variant);
+        if (d.category) setNewVehicleCategory(d.category);
+        if (d.nickname && !newVehicleNickname) setNewVehicleNickname(d.nickname);
+        if (d.paint_color) setNewVehicleColor(d.paint_color);
+
+        const rtoLocation = d.rto_office ? d.rto_office : (d.state ? `${d.state} RTO` : "Verified Portal");
+        setPortalLookupMsg({
+          type: "success",
+          message: `Verified: ${d.make} ${d.model}${d.variant ? ` (${d.variant})` : ""} • ${rtoLocation}`,
+          rtoOffice: d.rto_office,
+          source: d.source === "live_api" ? "VAHAN Live API" : d.source === "enterprise_registry" ? "Govt. Portal Registry" : "RTO Format Registry"
+        });
+      } else {
+        setPortalLookupMsg({
+          type: "error",
+          message: res.error || "Could not fetch vehicle specifications from portal. You can manually enter details."
+        });
+      }
+    } catch (err: any) {
+      setPortalLookupMsg({
+        type: "error",
+        message: err.message || "Failed to connect to vehicle portal service."
+      });
+    } finally {
+      setFetchingPortal(false);
+    }
+  };
 
   const handleCreateVehicle = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newVehiclePlate || !newVehicleMake || !newVehicleModel) {
+    if (!newVehiclePlate.trim() || !newVehicleMake.trim() || !newVehicleModel.trim()) {
       triggerToast("Registration plate, make, and model are required.", true);
       return;
     }
@@ -187,26 +326,33 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     setModalSubmitting(true);
     try {
       const res = await createVehicleAction({
-        registration_number: newVehiclePlate,
-        make: newVehicleMake,
-        model: newVehicleModel,
-        variant: newVehicleVariant,
+        registration_number: newVehiclePlate.trim(),
+        make: newVehicleMake.trim(),
+        model: newVehicleModel.trim(),
+        variant: newVehicleVariant.trim(),
         category: newVehicleCategory,
+        status: newVehicleStatus,
         odometer_km: Number(newVehicleOdometer) || 0,
         assigned_driver_id: newVehicleDriverId || undefined,
-        status: "IN_STOCK"
+        nickname: newVehicleNickname.trim() || undefined,
+        paint_color: newVehicleColor || undefined
       });
 
       if (res.success) {
-        triggerToast(`Vehicle ${newVehiclePlate.toUpperCase()} added successfully!`);
+        triggerToast(`Vehicle ${newVehiclePlate.toUpperCase()} registered successfully!`);
         setIsAddVehicleOpen(false);
         // Reset form
         setNewVehiclePlate("");
         setNewVehicleMake("");
         setNewVehicleModel("");
         setNewVehicleVariant("Standard");
+        setNewVehicleCategory("CAR");
+        setNewVehicleStatus("IN_STOCK");
         setNewVehicleOdometer(0);
         setNewVehicleDriverId("");
+        setNewVehicleNickname("");
+        setNewVehicleColor("#1e293b");
+        setPortalLookupMsg(null);
         // Reload local data
         loadAllData(true);
       } else {
@@ -219,10 +365,201 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     }
   };
 
+  const openEditVehicleModal = (veh: VehicleRecord) => {
+    setSelectedVehicleForEdit(veh);
+    setEditPortalLookupMsg(null);
+    setEditVehiclePlate(veh.registration_number);
+    setEditVehicleMake(veh.make);
+    setEditVehicleModel(veh.model);
+    setEditVehicleVariant(veh.variant || "");
+    setEditVehicleCategory(veh.category || "CAR");
+    setEditVehicleStatus(veh.status || "IN_STOCK");
+    setEditVehicleOdometer(veh.odometer_km || 0);
+    setEditVehicleDriverId(veh.assignedDriver?.id || "");
+    setEditVehicleNickname(veh.nickname || "");
+    setEditVehicleColor(veh.paint_color || "#1e293b");
+    setIsEditVehicleOpen(true);
+  };
+
+  const handleEditPortalAutoFetch = async () => {
+    const rawPlate = editVehiclePlate.trim();
+    if (!rawPlate) {
+      setEditPortalLookupMsg({
+        type: "error",
+        message: "Please enter a vehicle registration number first."
+      });
+      return;
+    }
+
+    setFetchingEditPortal(true);
+    setEditPortalLookupMsg(null);
+
+    try {
+      const res = await fetchVehiclePortalDetailsAction(rawPlate);
+      if (res.success && res.data) {
+        const d = res.data;
+        if (d.registration_number) setEditVehiclePlate(d.registration_number);
+        if (d.make) setEditVehicleMake(d.make);
+        if (d.model) setEditVehicleModel(d.model);
+        if (d.variant) setEditVehicleVariant(d.variant);
+        if (d.category) setEditVehicleCategory(d.category);
+        if (d.nickname && !editVehicleNickname) setEditVehicleNickname(d.nickname);
+        if (d.paint_color) setEditVehicleColor(d.paint_color);
+
+        const rtoLocation = d.rto_office ? d.rto_office : (d.state ? `${d.state} RTO` : "Verified Portal");
+        setEditPortalLookupMsg({
+          type: "success",
+          message: `Verified: ${d.make} ${d.model}${d.variant ? ` (${d.variant})` : ""} • ${rtoLocation}`,
+          rtoOffice: d.rto_office,
+          source: d.source === "live_api" ? "VAHAN Live API" : d.source === "enterprise_registry" ? "Govt. Portal Registry" : "RTO Format Registry"
+        });
+      } else {
+        setEditPortalLookupMsg({
+          type: "error",
+          message: res.error || "Could not fetch vehicle specifications from portal."
+        });
+      }
+    } catch (err: any) {
+      setEditPortalLookupMsg({
+        type: "error",
+        message: err.message || "Failed to connect to vehicle portal service."
+      });
+    } finally {
+      setFetchingEditPortal(false);
+    }
+  };
+
+  const handleUpdateVehicle = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedVehicleForEdit) return;
+
+    setModalSubmitting(true);
+    try {
+      const res = await updateVehicleAction(selectedVehicleForEdit.id, {
+        registration_number: editVehiclePlate.trim(),
+        make: editVehicleMake.trim(),
+        model: editVehicleModel.trim(),
+        variant: editVehicleVariant.trim(),
+        category: editVehicleCategory,
+        status: editVehicleStatus,
+        odometer_km: Number(editVehicleOdometer) || 0,
+        assigned_driver_id: editVehicleDriverId || null,
+        nickname: editVehicleNickname.trim(),
+        paint_color: editVehicleColor
+      });
+
+      if (res.success) {
+        triggerToast(`Vehicle ${editVehiclePlate.toUpperCase()} updated successfully!`);
+        setIsEditVehicleOpen(false);
+        setSelectedVehicleForEdit(null);
+        loadAllData(true);
+      } else {
+        triggerToast(res.error || "Failed to update vehicle", true);
+      }
+    } catch (err: any) {
+      triggerToast(err.message || "Failed to update vehicle", true);
+    } finally {
+      setModalSubmitting(false);
+    }
+  };
+
+  // ----------------------------------------------------------------------------
+  // CRUD Handlers: DRIVERS
+  // ----------------------------------------------------------------------------
+
+  const handleCreateDriver = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newDriverName.trim() || !newDriverPhone.trim() || !newDriverLicense.trim()) {
+      triggerToast("Driver name, phone, and license number are required.", true);
+      return;
+    }
+
+    setModalSubmitting(true);
+    try {
+      const res = await createDriverAction({
+        full_name: newDriverName.trim(),
+        phone: newDriverPhone.trim(),
+        license_number: newDriverLicense.trim(),
+        license_expiry_date: newDriverLicenseExpiry || undefined,
+        experience_years: Number(newDriverExperience) || 1,
+        emergency_contact: newDriverEmergency.trim() || undefined,
+        assigned_vehicle_id: newDriverVehicleId || undefined
+      });
+
+      if (res.success) {
+        triggerToast(`Driver ${newDriverName} added successfully!`);
+        setIsAddDriverOpen(false);
+        setNewDriverName("");
+        setNewDriverPhone("");
+        setNewDriverLicense("");
+        setNewDriverLicenseExpiry("");
+        setNewDriverExperience(3);
+        setNewDriverEmergency("");
+        setNewDriverVehicleId("");
+        loadAllData(true);
+      } else {
+        triggerToast(res.error || "Failed to add driver", true);
+      }
+    } catch (err: any) {
+      triggerToast(err.message || "Failed to add driver", true);
+    } finally {
+      setModalSubmitting(false);
+    }
+  };
+
+  const openEditDriverModal = (drv: DriverRecord) => {
+    setSelectedDriverForEdit(drv);
+    setEditDriverName(drv.full_name);
+    setEditDriverPhone(drv.phone);
+    setEditDriverLicense(drv.license_number);
+    setEditDriverLicenseExpiry(drv.license_expiry_date || "");
+    setEditDriverExperience(drv.experience_years || 0);
+    setEditDriverEmergency(drv.emergency_contact || "");
+    setEditDriverVehicleId(drv.assigned_vehicle_id || "");
+    setEditDriverActive(drv.is_active);
+    setIsEditDriverOpen(true);
+  };
+
+  const handleUpdateDriver = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedDriverForEdit) return;
+
+    setModalSubmitting(true);
+    try {
+      const res = await updateDriverAction(selectedDriverForEdit.id, {
+        full_name: editDriverName.trim(),
+        phone: editDriverPhone.trim(),
+        license_number: editDriverLicense.trim(),
+        license_expiry_date: editDriverLicenseExpiry || undefined,
+        experience_years: Number(editDriverExperience) || 0,
+        emergency_contact: editDriverEmergency.trim() || undefined,
+        assigned_vehicle_id: editDriverVehicleId || null,
+        is_active: editDriverActive
+      });
+
+      if (res.success) {
+        triggerToast(`Driver ${editDriverName} updated successfully!`);
+        setIsEditDriverOpen(false);
+        setSelectedDriverForEdit(null);
+        loadAllData(true);
+      } else {
+        triggerToast(res.error || "Failed to update driver", true);
+      }
+    } catch (err: any) {
+      triggerToast(err.message || "Failed to update driver", true);
+    } finally {
+      setModalSubmitting(false);
+    }
+  };
+
+  // ----------------------------------------------------------------------------
+  // CRUD Handlers: TRIPS & DISPATCH
+  // ----------------------------------------------------------------------------
+
   const handleDispatchTrip = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTripVehicleId || !newTripDriverId || !newTripTraveler || !newTripPurpose) {
-      triggerToast("Please select a vehicle, driver, traveler name, and purpose.", true);
+    if (!newTripVehicleId || !newTripDriverId || !newTripTraveler.trim() || !newTripPurpose.trim() || !newTripOrigin.trim() || !newTripDestination.trim()) {
+      triggerToast("Please fill in vehicle, driver, traveler name, purpose, origin and destination.", true);
       return;
     }
 
@@ -231,10 +568,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       const res = await createTripPlanAction({
         vehicle_id: newTripVehicleId,
         driver_id: newTripDriverId,
-        traveler_name: newTripTraveler,
-        purpose: newTripPurpose,
-        origin: newTripOrigin,
-        destination: newTripDestination,
+        traveler_name: newTripTraveler.trim(),
+        purpose: newTripPurpose.trim(),
+        origin: newTripOrigin.trim(),
+        destination: newTripDestination.trim(),
+        plan_date: newTripDate || undefined,
         planned_start_time: newTripStartTime,
         planned_end_time: newTripEndTime
       });
@@ -244,7 +582,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         setIsDispatchTripOpen(false);
         setNewTripTraveler("");
         setNewTripPurpose("");
+        setNewTripOrigin("");
         setNewTripDestination("");
+        setNewTripVehicleId("");
+        setNewTripDriverId("");
         loadAllData(true);
       } else {
         triggerToast(res.error || "Failed to dispatch trip", true);
@@ -256,10 +597,31 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     }
   };
 
+  const handleUpdateTripStatus = async (
+    tripId: string, 
+    newStatus: "PLANNED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED"
+  ) => {
+    try {
+      const res = await updateTripStatusAction(tripId, newStatus);
+      if (res.success) {
+        triggerToast(`Trip status marked as ${newStatus}!`);
+        loadAllData(true);
+      } else {
+        triggerToast(res.error || "Failed to update trip status", true);
+      }
+    } catch (err: any) {
+      triggerToast(err.message || "Failed to update trip status", true);
+    }
+  };
+
+  // ----------------------------------------------------------------------------
+  // CRUD Handlers: MAINTENANCE
+  // ----------------------------------------------------------------------------
+
   const handleLogMaintenance = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMaintVehicleId || !newMaintServiceType || !newMaintVendor) {
-      triggerToast("Vehicle, service type, and vendor are required.", true);
+    if (!newMaintVehicleId || !newMaintServiceType.trim() || !newMaintVendor.trim()) {
+      triggerToast("Vehicle, service type, and workshop are required.", true);
       return;
     }
 
@@ -267,19 +629,23 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     try {
       const res = await createServiceRecordAction({
         vehicle_id: newMaintVehicleId,
-        service_type: newMaintServiceType,
-        service_center: newMaintVendor,
+        service_type: newMaintServiceType.trim(),
+        service_center: newMaintVendor.trim(),
+        service_date: newMaintDate || undefined,
         cost: Number(newMaintCost) || 0,
-        odometer_km: Number(newMaintOdometer) || 0
+        odometer_km: Number(newMaintOdometer) || 0,
+        next_service_due_date: newMaintNextDue || undefined
       });
 
       if (res.success) {
         triggerToast("Maintenance record logged successfully!");
         setIsAddMaintenanceOpen(false);
+        setNewMaintVehicleId("");
         setNewMaintServiceType("");
         setNewMaintVendor("");
         setNewMaintCost(0);
         setNewMaintOdometer(0);
+        setNewMaintNextDue("");
         loadAllData(true);
       } else {
         triggerToast(res.error || "Failed to log maintenance", true);
@@ -292,27 +658,102 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   };
 
   // ----------------------------------------------------------------------------
+  // Generic Delete Action Handler
+  // ----------------------------------------------------------------------------
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+
+    setModalSubmitting(true);
+    try {
+      let res: { success: boolean; error?: string };
+      if (deleteTarget.type === "vehicle") {
+        res = await deleteVehicleAction(deleteTarget.id);
+      } else if (deleteTarget.type === "driver") {
+        res = await deleteDriverAction(deleteTarget.id);
+      } else if (deleteTarget.type === "trip") {
+        res = await deleteTripAction(deleteTarget.id);
+      } else {
+        res = await deleteServiceRecordAction(deleteTarget.id);
+      }
+
+      if (res.success) {
+        triggerToast(`${deleteTarget.label} deleted successfully!`);
+        setDeleteTarget(null);
+        loadAllData(true);
+      } else {
+        triggerToast(res.error || `Failed to delete ${deleteTarget.label}`, true);
+      }
+    } catch (err: any) {
+      triggerToast(err.message || `Failed to delete ${deleteTarget.label}`, true);
+    } finally {
+      setModalSubmitting(false);
+    }
+  };
+
+  // ----------------------------------------------------------------------------
   // Filtered Lists for Display
   // ----------------------------------------------------------------------------
 
   const filteredVehicles = useMemo(() => {
     return vehicles.filter(v => {
-      const matchesSearch = 
-        v.registration_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        v.make.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        v.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (v.assignedDriver?.full_name && v.assignedDriver.full_name.toLowerCase().includes(searchQuery.toLowerCase()));
+      const q = searchQuery.toLowerCase().trim();
+      const matchesSearch = !q ||
+        v.registration_number.toLowerCase().includes(q) ||
+        v.make.toLowerCase().includes(q) ||
+        v.model.toLowerCase().includes(q) ||
+        (v.nickname && v.nickname.toLowerCase().includes(q)) ||
+        (v.assignedDriver?.full_name && v.assignedDriver.full_name.toLowerCase().includes(q));
       const matchesStatus = selectedStatus === "ALL" || v.status === selectedStatus;
       return matchesSearch && matchesStatus;
     });
   }, [vehicles, searchQuery, selectedStatus]);
+
+  const filteredDrivers = useMemo(() => {
+    return drivers.filter(d => {
+      const q = searchQuery.toLowerCase().trim();
+      return !q ||
+        d.full_name.toLowerCase().includes(q) ||
+        d.phone.toLowerCase().includes(q) ||
+        d.license_number.toLowerCase().includes(q);
+    });
+  }, [drivers, searchQuery]);
+
+  const filteredTrips = useMemo(() => {
+    return trips.filter(t => {
+      const q = searchQuery.toLowerCase().trim();
+      return !q ||
+        (t.vehicle_reg && t.vehicle_reg.toLowerCase().includes(q)) ||
+        (t.driver_name && t.driver_name.toLowerCase().includes(q)) ||
+        t.traveler_name.toLowerCase().includes(q) ||
+        t.destination.toLowerCase().includes(q) ||
+        t.purpose.toLowerCase().includes(q);
+    });
+  }, [trips, searchQuery]);
+
+  const filteredMaintenance = useMemo(() => {
+    return maintenance.filter(m => {
+      const q = searchQuery.toLowerCase().trim();
+      return !q ||
+        (m.vehicle_reg && m.vehicle_reg.toLowerCase().includes(q)) ||
+        m.service_type.toLowerCase().includes(q) ||
+        m.service_center.toLowerCase().includes(q);
+    });
+  }, [maintenance, searchQuery]);
+
+  // Map of vehicleId to Vehicle for quick lookups
+  const vehicleMap = useMemo(() => {
+    const map = new Map<string, VehicleRecord>();
+    vehicles.forEach(v => map.set(v.id, v));
+    return map;
+  }, [vehicles]);
 
   if (loading) {
     return (
       <div className="w-full min-h-[60vh] flex flex-col items-center justify-center p-8 space-y-4">
         <ChandakLoader size="lg" />
         <p className="text-xs font-semibold uppercase tracking-widest text-muted animate-pulse">
-          Loading Vehicle Fleet Records...
+          Connecting to Vehicle Backend & Records...
         </p>
       </div>
     );
@@ -386,6 +827,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             <LayoutDashboard className="h-4 w-4 mr-1.5" />
             Overview
           </AppButton>
+
           <AppButton
             variant="outline"
             size="sm"
@@ -395,6 +837,17 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             <Car className="h-4 w-4 mr-1.5" />
             Fleet ({stats.totalVehicles})
           </AppButton>
+
+          <AppButton
+            variant="outline"
+            size="sm"
+            onClick={() => router.push("/vehicle/drivers")}
+            className={`text-xs h-9 ${activeTab === "drivers" ? "bg-muted font-bold border-theme-btn-primary/40" : ""}`}
+          >
+            <Users className="h-4 w-4 mr-1.5" />
+            Drivers ({stats.activeDrivers})
+          </AppButton>
+
           <AppButton
             variant="outline"
             size="sm"
@@ -404,6 +857,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             <Calendar className="h-4 w-4 mr-1.5" />
             Trips ({stats.activeTrips})
           </AppButton>
+
           <AppButton
             variant="outline"
             size="sm"
@@ -415,7 +869,17 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           </AppButton>
 
           {/* Action trigger button tailored to active tab */}
-          {activeTab === "trips" ? (
+          {activeTab === "drivers" ? (
+            <AppButton
+              variant="primary"
+              size="sm"
+              onClick={() => setIsAddDriverOpen(true)}
+              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add Driver</span>
+            </AppButton>
+          ) : activeTab === "trips" ? (
             <AppButton
               variant="primary"
               size="sm"
@@ -456,7 +920,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             <div>
               <p className="text-xs font-semibold text-muted">Total Fleet Master</p>
               <h3 className="text-2xl font-bold mt-1 text-foreground">{stats.totalVehicles}</h3>
-              <span className="text-[10px] text-muted">Active in enterprise</span>
+              <span className="text-[10px] text-muted">Registered company vehicles</span>
             </div>
             <div className="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center border border-blue-500/20">
               <Car className="h-5 w-5" />
@@ -469,7 +933,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             <div>
               <p className="text-xs font-semibold text-muted">On Active Route</p>
               <h3 className="text-2xl font-bold mt-1 text-emerald-600 dark:text-emerald-400">{stats.onRouteVehicles}</h3>
-              <span className="text-[10px] text-muted">Dispatched / in transit</span>
+              <span className="text-[10px] text-muted">In transit / active trip</span>
             </div>
             <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center border border-emerald-500/20">
               <MapPin className="h-5 w-5" />
@@ -482,7 +946,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             <div>
               <p className="text-xs font-semibold text-muted">Available at Depot</p>
               <h3 className="text-2xl font-bold mt-1 text-foreground">{stats.availableVehicles}</h3>
-              <span className="text-[10px] text-muted">Ready for allocation</span>
+              <span className="text-[10px] text-muted">Ready for dispatch</span>
             </div>
             <div className="h-10 w-10 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center border border-indigo-500/20">
               <CheckCircle2 className="h-5 w-5" />
@@ -493,9 +957,9 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         <AppCard className="border-border shadow-xs">
           <AppCardContent className="p-4 flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-muted">Under Maintenance</p>
+              <p className="text-xs font-semibold text-muted">In Workshop / Service</p>
               <h3 className="text-2xl font-bold mt-1 text-amber-600 dark:text-amber-400">{stats.inMaintenanceVehicles}</h3>
-              <span className="text-[10px] text-muted">Active job cards</span>
+              <span className="text-[10px] text-muted">Under maintenance</span>
             </div>
             <div className="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center border border-amber-500/20">
               <Wrench className="h-5 w-5" />
@@ -504,157 +968,235 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         </AppCard>
       </div>
 
-      {/* Main Content Area */}
-      <AppCard className="border-border shadow-xs overflow-hidden">
-        <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <AppCardTitle className="text-lg">
-              {activeTab === "trips" ? "Daily Trip Dispatch Sheets" : activeTab === "maintenance" ? "Workshop Maintenance & Job Cards" : "Fleet Master Inventory"}
-            </AppCardTitle>
-            <p className="text-xs text-muted mt-0.5">
-              {activeTab === "trips" 
-                ? "Movement logs across Chandak corporate offices, development sites, and vendor locations" 
-                : activeTab === "maintenance" 
-                ? "Scheduled periodic services, repairs, and job card tracking" 
-                : "Real-time records of all company-owned and executive fleet vehicles"}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2.5 w-full sm:w-auto">
-            <div className="relative flex-1 sm:w-64">
-              <Search className="h-4 w-4 absolute left-3 top-2.5 text-muted pointer-events-none" />
-              <input
-                type="text"
-                placeholder="Search plate, make, model..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:border-theme-btn-primary shadow-2xs"
-              />
-            </div>
-
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="text-xs py-1.5 px-2.5 rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:border-theme-btn-primary shadow-2xs"
-            >
-              <option value="ALL">All Status</option>
-              <option value="IN_STOCK">Available (In Stock)</option>
-              <option value="IN_SERVICE">On Route / In Service</option>
-              <option value="RESERVED">Reserved</option>
-            </select>
-          </div>
-        </AppCardHeader>
-
-        <AppCardContent className="p-0 overflow-x-auto">
-          {activeTab === "trips" ? (
-            /* TRIPS TABLE */
-            <AppTableContainer className="rounded-none border-none">
-              <AppTable className="w-full text-left text-xs">
-                <AppTableHeader className="bg-muted/30 border-b border-border text-muted font-semibold">
-                  <AppTableRow>
-                    <AppTableHead className="p-3.5">Plan Date</AppTableHead>
-                    <AppTableHead className="p-3.5">Vehicle</AppTableHead>
-                    <AppTableHead className="p-3.5">Assigned Driver</AppTableHead>
-                    <AppTableHead className="p-3.5">Traveler / Passenger</AppTableHead>
-                    <AppTableHead className="p-3.5">Route (Origin ➔ Destination)</AppTableHead>
-                    <AppTableHead className="p-3.5">Schedule</AppTableHead>
-                    <AppTableHead className="p-3.5 text-center">Status</AppTableHead>
-                  </AppTableRow>
-                </AppTableHeader>
-                <AppTableBody className="divide-y divide-border/60">
-                  {trips.length === 0 ? (
-                    <AppTableRow>
-                      <AppTableCell colSpan={7} className="text-center py-12 text-muted">
-                        No trips recorded yet. Click <strong>Dispatch Trip</strong> to schedule a trip sheet.
-                      </AppTableCell>
-                    </AppTableRow>
-                  ) : (
-                    trips.map((trp) => (
-                      <AppTableRow key={trp.id} className="hover:bg-muted/10 transition-colors">
-                        <AppTableCell className="p-3.5 font-mono text-muted">{trp.plan_date}</AppTableCell>
-                        <AppTableCell className="p-3.5 font-bold text-foreground">{trp.vehicle_reg}</AppTableCell>
-                        <AppTableCell className="p-3.5 text-muted">{trp.driver_name}</AppTableCell>
-                        <AppTableCell className="p-3.5 font-semibold text-foreground">{trp.traveler_name}</AppTableCell>
-                        <AppTableCell className="p-3.5 text-muted">
-                          {trp.origin} ➔ {trp.destination}
-                        </AppTableCell>
-                        <AppTableCell className="p-3.5 text-muted">{trp.planned_start_time} - {trp.planned_end_time}</AppTableCell>
-                        <AppTableCell className="p-3.5 text-center">
+      {/* ---------------------------------------------------------------------- */}
+      {/* OVERVIEW TAB CONTENT */}
+      {/* ---------------------------------------------------------------------- */}
+      {activeTab === "dashboard" && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            {/* Left: Active Dispatches & Trips */}
+            <AppCard className="border-border shadow-xs">
+              <AppCardHeader className="bg-surface/50 pb-3 border-b border-border/50 flex items-center justify-between">
+                <div>
+                  <AppCardTitle className="text-sm font-bold flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-theme-btn-primary" />
+                    <span>Recent Trip Movement</span>
+                  </AppCardTitle>
+                  <p className="text-[11px] text-muted">Active and recent vehicle assignments</p>
+                </div>
+                <AppButton
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => router.push("/vehicle/trips")}
+                  className="text-xs text-theme-btn-primary hover:underline h-7"
+                >
+                  View All ({trips.length})
+                </AppButton>
+              </AppCardHeader>
+              <AppCardContent className="p-0">
+                {trips.length === 0 ? (
+                  <div className="p-8 text-center text-xs text-muted">
+                    No trip movements logged yet. Click{" "}
+                    <button onClick={() => setIsDispatchTripOpen(true)} className="text-theme-btn-primary font-bold hover:underline">
+                      Dispatch Trip
+                    </button>{" "}
+                    to schedule a movement.
+                  </div>
+                ) : (
+                  <div className="divide-y divide-border/60">
+                    {trips.slice(0, 5).map(trp => (
+                      <div key={trp.id} className="p-3.5 flex items-center justify-between hover:bg-muted/10 transition-colors text-xs">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-foreground bg-muted/60 px-1.5 py-0.5 rounded border border-border">
+                              {trp.vehicle_reg}
+                            </span>
+                            <span className="text-foreground font-semibold">{trp.traveler_name}</span>
+                          </div>
+                          <div className="text-muted text-[11px] flex items-center gap-1">
+                            <span>{trp.origin}</span>
+                            <ArrowRight className="h-3 w-3 inline" />
+                            <span className="font-medium text-foreground">{trp.destination}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
                           <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
                             trp.status === "IN_PROGRESS"
                               ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
                               : trp.status === "COMPLETED"
                               ? "bg-blue-500/10 text-blue-600 border border-blue-500/20"
+                              : trp.status === "CANCELLED"
+                              ? "bg-rose-500/10 text-rose-600 border border-rose-500/20"
                               : "bg-muted text-muted"
                           }`}>
                             {trp.status}
                           </span>
-                        </AppTableCell>
-                      </AppTableRow>
-                    ))
-                  )}
-                </AppTableBody>
-              </AppTable>
-            </AppTableContainer>
-          ) : activeTab === "maintenance" ? (
-            /* MAINTENANCE TABLE */
-            <AppTableContainer className="rounded-none border-none">
-              <AppTable className="w-full text-left text-xs">
-                <AppTableHeader className="bg-muted/30 border-b border-border text-muted font-semibold">
-                  <AppTableRow>
-                    <AppTableHead className="p-3.5">Service Date</AppTableHead>
-                    <AppTableHead className="p-3.5">Vehicle</AppTableHead>
-                    <AppTableHead className="p-3.5">Service Details</AppTableHead>
-                    <AppTableHead className="p-3.5">Authorized Vendor / Workshop</AppTableHead>
-                    <AppTableHead className="p-3.5">Odometer</AppTableHead>
-                    <AppTableHead className="p-3.5">Cost</AppTableHead>
-                    <AppTableHead className="p-3.5 text-center">Next Due</AppTableHead>
-                  </AppTableRow>
-                </AppTableHeader>
-                <AppTableBody className="divide-y divide-border/60">
-                  {maintenance.length === 0 ? (
-                    <AppTableRow>
-                      <AppTableCell colSpan={7} className="text-center py-12 text-muted">
-                        No maintenance records yet. Click <strong>Log Maintenance</strong> to record service work.
-                      </AppTableCell>
-                    </AppTableRow>
-                  ) : (
-                    maintenance.map((m) => (
-                      <AppTableRow key={m.id} className="hover:bg-muted/10 transition-colors">
-                        <AppTableCell className="p-3.5 font-mono text-muted">{m.service_date}</AppTableCell>
-                        <AppTableCell className="p-3.5 font-bold text-foreground">{m.vehicle_reg}</AppTableCell>
-                        <AppTableCell className="p-3.5 text-foreground max-w-xs">{m.service_type}</AppTableCell>
-                        <AppTableCell className="p-3.5 text-muted">{m.service_center}</AppTableCell>
-                        <AppTableCell className="p-3.5 font-mono text-muted">{m.odometer_km.toLocaleString()} km</AppTableCell>
-                        <AppTableCell className="p-3.5 font-semibold text-foreground">₹{Number(m.cost).toLocaleString("en-IN")}</AppTableCell>
-                        <AppTableCell className="p-3.5 text-center font-mono text-xs text-muted">
-                          {m.next_service_due_date || "—"}
-                        </AppTableCell>
-                      </AppTableRow>
-                    ))
-                  )}
-                </AppTableBody>
-              </AppTable>
-            </AppTableContainer>
-          ) : (
-            /* INVENTORY TABLE */
+                          {trp.status === "PLANNED" && (
+                            <AppButton
+                              variant="outline"
+                              size="icon-sm"
+                              title="Start Route"
+                              onClick={() => handleUpdateTripStatus(trp.id, "IN_PROGRESS")}
+                              className="h-7 w-7 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+                            >
+                              <Play className="h-3.5 w-3.5" />
+                            </AppButton>
+                          )}
+                          {trp.status === "IN_PROGRESS" && (
+                            <AppButton
+                              variant="outline"
+                              size="icon-sm"
+                              title="Complete Trip"
+                              onClick={() => handleUpdateTripStatus(trp.id, "COMPLETED")}
+                              className="h-7 w-7 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40"
+                            >
+                              <Check className="h-3.5 w-3.5" />
+                            </AppButton>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </AppCardContent>
+            </AppCard>
+
+            {/* Right: Fleet Depot Snapshot */}
+            <AppCard className="border-border shadow-xs">
+              <AppCardHeader className="bg-surface/50 pb-3 border-b border-border/50 flex items-center justify-between">
+                <div>
+                  <AppCardTitle className="text-sm font-bold flex items-center gap-2">
+                    <Car className="h-4 w-4 text-theme-btn-primary" />
+                    <span>Fleet Depot Availability</span>
+                  </AppCardTitle>
+                  <p className="text-[11px] text-muted">Ready vehicles for allocation</p>
+                </div>
+                <AppButton
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => router.push("/vehicle/inventory")}
+                  className="text-xs text-theme-btn-primary hover:underline h-7"
+                >
+                  Manage Fleet ({vehicles.length})
+                </AppButton>
+              </AppCardHeader>
+              <AppCardContent className="p-0">
+                {vehicles.length === 0 ? (
+                  <div className="p-8 text-center text-xs text-muted">
+                    No vehicles enrolled in fleet master. Click{" "}
+                    <button onClick={() => setIsAddVehicleOpen(true)} className="text-theme-btn-primary font-bold hover:underline">
+                      Add Vehicle
+                    </button>{" "}
+                    to register a vehicle.
+                  </div>
+                ) : (
+                  <div className="divide-y divide-border/60">
+                    {vehicles.slice(0, 5).map(veh => (
+                      <div key={veh.id} className="p-3.5 flex items-center justify-between hover:bg-muted/10 transition-colors text-xs">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-foreground bg-muted/60 px-1.5 py-0.5 rounded border border-border">
+                              {veh.registration_number}
+                            </span>
+                            <span className="font-semibold text-foreground">{veh.make} {veh.model}</span>
+                            {veh.variant && veh.variant !== "Standard" && (
+                              <span className="text-[10px] text-muted">({veh.variant})</span>
+                            )}
+                          </div>
+                          <div className="text-[11px] text-muted mt-0.5">
+                            {veh.assignedDriver ? `Driver: ${veh.assignedDriver.full_name}` : "Driver: Unassigned"} • {veh.odometer_km.toLocaleString()} km
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                            veh.status === "IN_STOCK"
+                              ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
+                              : veh.status === "IN_SERVICE"
+                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                              : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                          }`}>
+                            {veh.status === "IN_STOCK" ? "Available" : veh.status === "IN_SERVICE" ? "On Route" : veh.status}
+                          </span>
+                          <AppButton
+                            variant="ghost"
+                            size="icon-sm"
+                            title="Edit Vehicle"
+                            onClick={() => openEditVehicleModal(veh)}
+                            className="h-7 w-7"
+                          >
+                            <Edit2 className="h-3.5 w-3.5 text-muted hover:text-foreground" />
+                          </AppButton>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </AppCardContent>
+            </AppCard>
+
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------------------------- */}
+      {/* INVENTORY / FLEET MASTER TAB */}
+      {/* ---------------------------------------------------------------------- */}
+      {activeTab === "inventory" && (
+        <AppCard className="border-border shadow-xs overflow-hidden">
+          <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <AppCardTitle className="text-lg">Fleet Master Inventory</AppCardTitle>
+              <p className="text-xs text-muted mt-0.5">
+                Complete database of company-owned and executive fleet vehicles
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2.5 w-full sm:w-auto">
+              <div className="relative flex-1 sm:w-64">
+                <Search className="h-4 w-4 absolute left-3 top-2.5 text-muted pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Search plate, make, model..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:border-theme-btn-primary shadow-2xs"
+                />
+              </div>
+
+              <select
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                className="text-xs py-1.5 px-2.5 rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:border-theme-btn-primary shadow-2xs"
+              >
+                <option value="ALL">All Status</option>
+                <option value="IN_STOCK">Available (In Stock)</option>
+                <option value="IN_SERVICE">On Route / In Service</option>
+                <option value="MAINTENANCE">In Workshop / Maintenance</option>
+                <option value="RESERVED">Reserved</option>
+              </select>
+            </div>
+          </AppCardHeader>
+
+          <AppCardContent className="p-0 overflow-x-auto">
             <AppTableContainer className="rounded-none border-none">
               <AppTable className="w-full text-left text-xs">
                 <AppTableHeader className="bg-muted/30 border-b border-border text-muted font-semibold">
                   <AppTableRow>
                     <AppTableHead className="p-3.5">Registration Plate</AppTableHead>
-                    <AppTableHead className="p-3.5">Make & Model</AppTableHead>
+                    <AppTableHead className="p-3.5">Vehicle Make & Model</AppTableHead>
                     <AppTableHead className="p-3.5">Category</AppTableHead>
                     <AppTableHead className="p-3.5">Assigned Driver</AppTableHead>
                     <AppTableHead className="p-3.5">Odometer Reading</AppTableHead>
                     <AppTableHead className="p-3.5 text-center">Status</AppTableHead>
+                    <AppTableHead className="p-3.5 text-right">Actions</AppTableHead>
                   </AppTableRow>
                 </AppTableHeader>
                 <AppTableBody className="divide-y divide-border/60">
                   {filteredVehicles.length === 0 ? (
                     <AppTableRow>
-                      <AppTableCell colSpan={6} className="text-center py-12 text-muted">
-                        No vehicles found matching filter criteria. Click <strong>Add Vehicle</strong> to enroll a new vehicle.
+                      <AppTableCell colSpan={7} className="text-center py-12 text-muted">
+                        No vehicles found matching criteria. Click <strong>Add Vehicle</strong> to enroll a new vehicle.
                       </AppTableCell>
                     </AppTableRow>
                   ) : (
@@ -665,8 +1207,13 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             {veh.registration_number}
                           </span>
                         </AppTableCell>
-                        <AppTableCell className="p-3.5 font-semibold text-foreground">
-                          {veh.make} {veh.model} {veh.variant !== "Standard" ? `(${veh.variant})` : ""}
+                        <AppTableCell className="p-3.5">
+                          <div className="font-semibold text-foreground">
+                            {veh.make} {veh.model} {veh.variant && veh.variant !== "Standard" ? `(${veh.variant})` : ""}
+                          </div>
+                          {veh.nickname && (
+                            <div className="text-[10px] text-muted font-medium">{veh.nickname}</div>
+                          )}
                         </AppTableCell>
                         <AppTableCell className="p-3.5 text-muted">{veh.category}</AppTableCell>
                         <AppTableCell className="p-3.5">
@@ -690,8 +1237,34 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                               ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
                               : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
                           }`}>
-                            {veh.status === "IN_STOCK" ? "Available" : veh.status === "IN_SERVICE" ? "On Route" : veh.status}
+                            {veh.status === "IN_STOCK" ? "Available" : veh.status === "IN_SERVICE" ? "On Route" : veh.status === "MAINTENANCE" ? "In Workshop" : veh.status}
                           </span>
+                        </AppTableCell>
+                        <AppTableCell className="p-3.5 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <AppButton
+                              variant="outline"
+                              size="icon-sm"
+                              title="Edit Vehicle"
+                              onClick={() => openEditVehicleModal(veh)}
+                              className="h-7 w-7"
+                            >
+                              <Edit2 className="h-3.5 w-3.5 text-muted hover:text-foreground" />
+                            </AppButton>
+                            <AppButton
+                              variant="outline"
+                              size="icon-sm"
+                              title="Delete Vehicle"
+                              onClick={() => setDeleteTarget({
+                                type: "vehicle",
+                                id: veh.id,
+                                label: `Vehicle ${veh.registration_number}`
+                              })}
+                              className="h-7 w-7 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </AppButton>
+                          </div>
                         </AppTableCell>
                       </AppTableRow>
                     ))
@@ -699,9 +1272,365 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 </AppTableBody>
               </AppTable>
             </AppTableContainer>
-          )}
-        </AppCardContent>
-      </AppCard>
+          </AppCardContent>
+        </AppCard>
+      )}
+
+      {/* ---------------------------------------------------------------------- */}
+      {/* DRIVERS DIRECTORY TAB */}
+      {/* ---------------------------------------------------------------------- */}
+      {activeTab === "drivers" && (
+        <AppCard className="border-border shadow-xs overflow-hidden">
+          <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <AppCardTitle className="text-lg">Drivers Directory & Roster</AppCardTitle>
+              <p className="text-xs text-muted mt-0.5">
+                Roster of authorized enterprise drivers, license validity & vehicle assignments
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2.5 w-full sm:w-auto">
+              <div className="relative flex-1 sm:w-64">
+                <Search className="h-4 w-4 absolute left-3 top-2.5 text-muted pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Search driver name, phone, license..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:border-theme-btn-primary shadow-2xs"
+                />
+              </div>
+            </div>
+          </AppCardHeader>
+
+          <AppCardContent className="p-0 overflow-x-auto">
+            <AppTableContainer className="rounded-none border-none">
+              <AppTable className="w-full text-left text-xs">
+                <AppTableHeader className="bg-muted/30 border-b border-border text-muted font-semibold">
+                  <AppTableRow>
+                    <AppTableHead className="p-3.5">Driver Name</AppTableHead>
+                    <AppTableHead className="p-3.5">Contact Phone</AppTableHead>
+                    <AppTableHead className="p-3.5">License Number</AppTableHead>
+                    <AppTableHead className="p-3.5">License Expiry</AppTableHead>
+                    <AppTableHead className="p-3.5">Experience</AppTableHead>
+                    <AppTableHead className="p-3.5">Assigned Vehicle</AppTableHead>
+                    <AppTableHead className="p-3.5 text-center">Status</AppTableHead>
+                    <AppTableHead className="p-3.5 text-right">Actions</AppTableHead>
+                  </AppTableRow>
+                </AppTableHeader>
+                <AppTableBody className="divide-y divide-border/60">
+                  {filteredDrivers.length === 0 ? (
+                    <AppTableRow>
+                      <AppTableCell colSpan={8} className="text-center py-12 text-muted">
+                        No drivers recorded. Click <strong>Add Driver</strong> to register a new driver.
+                      </AppTableCell>
+                    </AppTableRow>
+                  ) : (
+                    filteredDrivers.map((drv) => {
+                      const assignedVeh = drv.assigned_vehicle_id ? vehicleMap.get(drv.assigned_vehicle_id) : null;
+                      return (
+                        <AppTableRow key={drv.id} className="hover:bg-muted/10 transition-colors">
+                          <AppTableCell className="p-3.5 font-semibold text-foreground">
+                            {drv.full_name}
+                          </AppTableCell>
+                          <AppTableCell className="p-3.5 text-muted font-mono">
+                            <span className="flex items-center gap-1.5">
+                              <Phone className="h-3 w-3 text-muted shrink-0" />
+                              {drv.phone}
+                            </span>
+                          </AppTableCell>
+                          <AppTableCell className="p-3.5 font-mono text-muted">
+                            {drv.license_number}
+                          </AppTableCell>
+                          <AppTableCell className="p-3.5 font-mono text-muted">
+                            {drv.license_expiry_date || "—"}
+                          </AppTableCell>
+                          <AppTableCell className="p-3.5 text-muted">
+                            {drv.experience_years ? `${drv.experience_years} years` : "—"}
+                          </AppTableCell>
+                          <AppTableCell className="p-3.5">
+                            {assignedVeh ? (
+                              <span className="font-mono font-bold text-foreground bg-muted/60 px-2 py-0.5 rounded border border-border">
+                                {assignedVeh.registration_number} ({assignedVeh.make})
+                              </span>
+                            ) : (
+                              <span className="text-muted italic">Pool / Unassigned</span>
+                            )}
+                          </AppTableCell>
+                          <AppTableCell className="p-3.5 text-center">
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase inline-block ${
+                              drv.is_active
+                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                                : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                            }`}>
+                              {drv.is_active ? "Active" : "Inactive"}
+                            </span>
+                          </AppTableCell>
+                          <AppTableCell className="p-3.5 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <AppButton
+                                variant="outline"
+                                size="icon-sm"
+                                title="Edit Driver"
+                                onClick={() => openEditDriverModal(drv)}
+                                className="h-7 w-7"
+                              >
+                                <Edit2 className="h-3.5 w-3.5 text-muted hover:text-foreground" />
+                              </AppButton>
+                              <AppButton
+                                variant="outline"
+                                size="icon-sm"
+                                title="Delete Driver"
+                                onClick={() => setDeleteTarget({
+                                  type: "driver",
+                                  id: drv.id,
+                                  label: `Driver ${drv.full_name}`
+                                })}
+                                className="h-7 w-7 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </AppButton>
+                            </div>
+                          </AppTableCell>
+                        </AppTableRow>
+                      );
+                    })
+                  )}
+                </AppTableBody>
+              </AppTable>
+            </AppTableContainer>
+          </AppCardContent>
+        </AppCard>
+      )}
+
+      {/* ---------------------------------------------------------------------- */}
+      {/* TRIPS / DISPATCH TAB */}
+      {/* ---------------------------------------------------------------------- */}
+      {activeTab === "trips" && (
+        <AppCard className="border-border shadow-xs overflow-hidden">
+          <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <AppCardTitle className="text-lg">Daily Trip Dispatch Sheets</AppCardTitle>
+              <p className="text-xs text-muted mt-0.5">
+                Movement logs across Chandak corporate offices, development sites, and vendor locations
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2.5 w-full sm:w-auto">
+              <div className="relative flex-1 sm:w-64">
+                <Search className="h-4 w-4 absolute left-3 top-2.5 text-muted pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Search traveler, purpose, destination..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:border-theme-btn-primary shadow-2xs"
+                />
+              </div>
+            </div>
+          </AppCardHeader>
+
+          <AppCardContent className="p-0 overflow-x-auto">
+            <AppTableContainer className="rounded-none border-none">
+              <AppTable className="w-full text-left text-xs">
+                <AppTableHeader className="bg-muted/30 border-b border-border text-muted font-semibold">
+                  <AppTableRow>
+                    <AppTableHead className="p-3.5">Plan Date</AppTableHead>
+                    <AppTableHead className="p-3.5">Vehicle</AppTableHead>
+                    <AppTableHead className="p-3.5">Assigned Driver</AppTableHead>
+                    <AppTableHead className="p-3.5">Traveler / Purpose</AppTableHead>
+                    <AppTableHead className="p-3.5">Route (Origin ➔ Destination)</AppTableHead>
+                    <AppTableHead className="p-3.5">Schedule</AppTableHead>
+                    <AppTableHead className="p-3.5 text-center">Status</AppTableHead>
+                    <AppTableHead className="p-3.5 text-right">Actions</AppTableHead>
+                  </AppTableRow>
+                </AppTableHeader>
+                <AppTableBody className="divide-y divide-border/60">
+                  {filteredTrips.length === 0 ? (
+                    <AppTableRow>
+                      <AppTableCell colSpan={8} className="text-center py-12 text-muted">
+                        No trips recorded yet. Click <strong>Dispatch Trip</strong> to schedule a trip sheet.
+                      </AppTableCell>
+                    </AppTableRow>
+                  ) : (
+                    filteredTrips.map((trp) => (
+                      <AppTableRow key={trp.id} className="hover:bg-muted/10 transition-colors">
+                        <AppTableCell className="p-3.5 font-mono text-muted">{trp.plan_date}</AppTableCell>
+                        <AppTableCell className="p-3.5 font-bold text-foreground">
+                          <span className="px-2 py-0.5 rounded bg-muted/60 border border-border font-mono">
+                            {trp.vehicle_reg}
+                          </span>
+                        </AppTableCell>
+                        <AppTableCell className="p-3.5 text-muted">{trp.driver_name}</AppTableCell>
+                        <AppTableCell className="p-3.5">
+                          <div className="font-semibold text-foreground">{trp.traveler_name}</div>
+                          <div className="text-[10px] text-muted">{trp.purpose}</div>
+                        </AppTableCell>
+                        <AppTableCell className="p-3.5 text-muted">
+                          {trp.origin} ➔ <span className="text-foreground font-medium">{trp.destination}</span>
+                        </AppTableCell>
+                        <AppTableCell className="p-3.5 text-muted font-mono">{trp.planned_start_time} - {trp.planned_end_time}</AppTableCell>
+                        <AppTableCell className="p-3.5 text-center">
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase inline-block ${
+                            trp.status === "IN_PROGRESS"
+                              ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
+                              : trp.status === "COMPLETED"
+                              ? "bg-blue-500/10 text-blue-600 border border-blue-500/20"
+                              : trp.status === "CANCELLED"
+                              ? "bg-rose-500/10 text-rose-600 border border-rose-500/20"
+                              : "bg-muted text-muted"
+                          }`}>
+                            {trp.status}
+                          </span>
+                        </AppTableCell>
+                        <AppTableCell className="p-3.5 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {trp.status === "PLANNED" && (
+                              <>
+                                <AppButton
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleUpdateTripStatus(trp.id, "IN_PROGRESS")}
+                                  className="h-7 text-xs px-2 text-emerald-600 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+                                >
+                                  <Play className="h-3 w-3 mr-1" />
+                                  Start
+                                </AppButton>
+                                <AppButton
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleUpdateTripStatus(trp.id, "CANCELLED")}
+                                  className="h-7 text-xs px-2 text-muted hover:text-rose-600"
+                                >
+                                  Cancel
+                                </AppButton>
+                              </>
+                            )}
+                            {trp.status === "IN_PROGRESS" && (
+                              <AppButton
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleUpdateTripStatus(trp.id, "COMPLETED")}
+                                className="h-7 text-xs px-2 text-blue-600 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/40"
+                              >
+                                <Check className="h-3 w-3 mr-1" />
+                                Complete
+                              </AppButton>
+                            )}
+                            <AppButton
+                              variant="outline"
+                              size="icon-sm"
+                              title="Delete Trip"
+                              onClick={() => setDeleteTarget({
+                                type: "trip",
+                                id: trp.id,
+                                label: `Trip for ${trp.traveler_name}`
+                              })}
+                              className="h-7 w-7 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </AppButton>
+                          </div>
+                        </AppTableCell>
+                      </AppTableRow>
+                    ))
+                  )}
+                </AppTableBody>
+              </AppTable>
+            </AppTableContainer>
+          </AppCardContent>
+        </AppCard>
+      )}
+
+      {/* ---------------------------------------------------------------------- */}
+      {/* MAINTENANCE TAB */}
+      {/* ---------------------------------------------------------------------- */}
+      {activeTab === "maintenance" && (
+        <AppCard className="border-border shadow-xs overflow-hidden">
+          <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <AppCardTitle className="text-lg">Workshop Maintenance & Service Records</AppCardTitle>
+              <p className="text-xs text-muted mt-0.5">
+                Scheduled periodic services, repairs, and vendor job card tracking
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2.5 w-full sm:w-auto">
+              <div className="relative flex-1 sm:w-64">
+                <Search className="h-4 w-4 absolute left-3 top-2.5 text-muted pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Search service work, vendor..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:border-theme-btn-primary shadow-2xs"
+                />
+              </div>
+            </div>
+          </AppCardHeader>
+
+          <AppCardContent className="p-0 overflow-x-auto">
+            <AppTableContainer className="rounded-none border-none">
+              <AppTable className="w-full text-left text-xs">
+                <AppTableHeader className="bg-muted/30 border-b border-border text-muted font-semibold">
+                  <AppTableRow>
+                    <AppTableHead className="p-3.5">Service Date</AppTableHead>
+                    <AppTableHead className="p-3.5">Vehicle</AppTableHead>
+                    <AppTableHead className="p-3.5">Service Details</AppTableHead>
+                    <AppTableHead className="p-3.5">Authorized Vendor / Workshop</AppTableHead>
+                    <AppTableHead className="p-3.5">Odometer</AppTableHead>
+                    <AppTableHead className="p-3.5">Cost</AppTableHead>
+                    <AppTableHead className="p-3.5 text-center">Next Due</AppTableHead>
+                    <AppTableHead className="p-3.5 text-right">Actions</AppTableHead>
+                  </AppTableRow>
+                </AppTableHeader>
+                <AppTableBody className="divide-y divide-border/60">
+                  {filteredMaintenance.length === 0 ? (
+                    <AppTableRow>
+                      <AppTableCell colSpan={8} className="text-center py-12 text-muted">
+                        No maintenance records yet. Click <strong>Log Maintenance</strong> to record service work.
+                      </AppTableCell>
+                    </AppTableRow>
+                  ) : (
+                    filteredMaintenance.map((m) => (
+                      <AppTableRow key={m.id} className="hover:bg-muted/10 transition-colors">
+                        <AppTableCell className="p-3.5 font-mono text-muted">{m.service_date}</AppTableCell>
+                        <AppTableCell className="p-3.5 font-bold text-foreground">
+                          <span className="px-2 py-0.5 rounded bg-muted/60 border border-border font-mono">
+                            {m.vehicle_reg}
+                          </span>
+                        </AppTableCell>
+                        <AppTableCell className="p-3.5 text-foreground max-w-xs">{m.service_type}</AppTableCell>
+                        <AppTableCell className="p-3.5 text-muted">{m.service_center}</AppTableCell>
+                        <AppTableCell className="p-3.5 font-mono text-muted">{m.odometer_km.toLocaleString()} km</AppTableCell>
+                        <AppTableCell className="p-3.5 font-semibold text-foreground">₹{Number(m.cost).toLocaleString("en-IN")}</AppTableCell>
+                        <AppTableCell className="p-3.5 text-center font-mono text-xs text-muted">
+                          {m.next_service_due_date || "—"}
+                        </AppTableCell>
+                        <AppTableCell className="p-3.5 text-right">
+                          <AppButton
+                            variant="outline"
+                            size="icon-sm"
+                            title="Delete Record"
+                            onClick={() => setDeleteTarget({
+                              type: "maintenance",
+                              id: m.id,
+                              label: `Service record for ${m.vehicle_reg}`
+                            })}
+                            className="h-7 w-7 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </AppButton>
+                        </AppTableCell>
+                      </AppTableRow>
+                    ))
+                  )}
+                </AppTableBody>
+              </AppTable>
+            </AppTableContainer>
+          </AppCardContent>
+        </AppCard>
+      )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* ADD VEHICLE MODAL */}
@@ -725,14 +1654,90 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             </div>
 
             <form onSubmit={handleCreateVehicle} className="p-5 space-y-4 overflow-y-auto flex-1 text-xs">
-              <div>
-                <label className="font-semibold block mb-1">Registration Plate *</label>
-                <AppInput 
-                  placeholder="e.g. MH-02-FE-4281" 
-                  value={newVehiclePlate} 
-                  onChange={(e) => setNewVehiclePlate(e.target.value)} 
-                  required
-                />
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="font-semibold text-foreground flex items-center gap-1">
+                    <span>Registration Plate *</span>
+                    <span className="text-[10px] font-normal text-muted">(e.g. MH-02-FE-4281)</span>
+                  </label>
+                  <span className="text-[10px] text-theme-btn-primary font-medium flex items-center gap-1">
+                    <Zap className="h-3 w-3 text-amber-500 fill-amber-500" />
+                    Auto-fetch available
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <AppInput 
+                    placeholder="e.g. MH-02-FE-4281" 
+                    value={newVehiclePlate} 
+                    onChange={(e) => {
+                      setNewVehiclePlate(e.target.value.toUpperCase());
+                      if (portalLookupMsg) setPortalLookupMsg(null);
+                    }} 
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handlePortalAutoFetch();
+                      }
+                    }}
+                    required
+                    className="font-mono font-semibold uppercase tracking-wider text-xs flex-1"
+                  />
+                  <AppButton
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    disabled={fetchingPortal || !newVehiclePlate.trim()}
+                    onClick={handlePortalAutoFetch}
+                    className="shrink-0 h-9 px-3 gap-1.5 text-xs font-semibold border border-border hover:border-theme-btn-primary/40 text-foreground"
+                    title="Fetch vehicle specifications from RTO Government portal"
+                  >
+                    {fetchingPortal ? (
+                      <>
+                        <RefreshCw className="h-3.5 w-3.5 animate-spin text-theme-btn-primary" />
+                        <span>Fetching...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
+                        <span>Fetch Portal</span>
+                      </>
+                    )}
+                  </AppButton>
+                </div>
+
+                {/* Portal Lookup Feedback Banner */}
+                {portalLookupMsg && (
+                  <div className={`p-2.5 rounded-lg border text-[11px] leading-relaxed flex items-start gap-2 animate-in fade-in duration-150 ${
+                    portalLookupMsg.type === "success"
+                      ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-700 dark:text-emerald-300"
+                      : "bg-rose-500/10 border-rose-500/25 text-rose-700 dark:text-rose-300"
+                  }`}>
+                    {portalLookupMsg.type === "success" ? (
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400 mt-0.5" />
+                    ) : (
+                      <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold flex items-center justify-between gap-2 flex-wrap">
+                        <span>{portalLookupMsg.message}</span>
+                        {portalLookupMsg.source && (
+                          <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase rounded bg-emerald-500/20 text-emerald-800 dark:text-emerald-200">
+                            {portalLookupMsg.source}
+                          </span>
+                        )}
+                      </div>
+                      {portalLookupMsg.type === "success" ? (
+                        <p className="text-[10px] opacity-80 mt-0.5">
+                          Make, Model, Category, and Specs populated from portal. You can modify any field below.
+                        </p>
+                      ) : (
+                        <p className="text-[10px] opacity-80 mt-0.5">
+                          You can still manually enter the vehicle details below.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -775,11 +1780,25 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <option value="CAR">Car / SUV / Sedan</option>
                     <option value="BIKE">Motorbike / Scooter</option>
                     <option value="COMMERCIAL">Commercial Van / Shuttle</option>
+                    <option value="BUS">Staff Bus / Coach</option>
                   </select>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-semibold block mb-1">Status</label>
+                  <select 
+                    value={newVehicleStatus}
+                    onChange={(e) => setNewVehicleStatus(e.target.value)}
+                    className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs"
+                  >
+                    <option value="IN_STOCK">Available (In Stock)</option>
+                    <option value="IN_SERVICE">On Route / In Service</option>
+                    <option value="MAINTENANCE">In Workshop / Maintenance</option>
+                    <option value="RESERVED">Reserved</option>
+                  </select>
+                </div>
                 <div>
                   <label className="font-semibold block mb-1">Initial Odometer (km)</label>
                   <AppInput 
@@ -789,8 +1808,19 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     onChange={(e) => setNewVehicleOdometer(Number(e.target.value))} 
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-semibold block mb-1">Assign Driver (Optional)</label>
+                  <label className="font-semibold block mb-1">Fleet Nickname / Tag</label>
+                  <AppInput 
+                    placeholder="e.g. Stella Site VIP Car" 
+                    value={newVehicleNickname} 
+                    onChange={(e) => setNewVehicleNickname(e.target.value)} 
+                  />
+                </div>
+                <div>
+                  <label className="font-semibold block mb-1">Assign Driver</label>
                   <select 
                     value={newVehicleDriverId}
                     onChange={(e) => setNewVehicleDriverId(e.target.value)}
@@ -815,6 +1845,448 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 >
                   {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                   <span>Save Vehicle</span>
+                </AppButton>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------------------------- */}
+      {/* EDIT VEHICLE MODAL */}
+      {/* ---------------------------------------------------------------------- */}
+      {isEditVehicleOpen && selectedVehicleForEdit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-surface border border-border w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-5 border-b border-border bg-surface/50 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-500/25">
+                  <Edit2 className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-foreground">Edit Fleet Vehicle</h3>
+                  <p className="text-xs text-muted">Update vehicle status, driver assignment or odometer</p>
+                </div>
+              </div>
+              <AppButton variant="ghost" size="icon-sm" onClick={() => setIsEditVehicleOpen(false)}>
+                <X className="h-4 w-4" />
+              </AppButton>
+            </div>
+
+            <form onSubmit={handleUpdateVehicle} className="p-5 space-y-4 overflow-y-auto flex-1 text-xs">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="font-semibold text-foreground flex items-center gap-1">
+                    <span>Registration Plate *</span>
+                  </label>
+                  <span className="text-[10px] text-theme-btn-primary font-medium flex items-center gap-1">
+                    <Zap className="h-3 w-3 text-amber-500 fill-amber-500" />
+                    Auto-fetch available
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <AppInput 
+                    value={editVehiclePlate} 
+                    onChange={(e) => {
+                      setEditVehiclePlate(e.target.value.toUpperCase());
+                      if (editPortalLookupMsg) setEditPortalLookupMsg(null);
+                    }} 
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleEditPortalAutoFetch();
+                      }
+                    }}
+                    required
+                    className="font-mono font-semibold uppercase tracking-wider text-xs flex-1"
+                  />
+                  <AppButton
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    disabled={fetchingEditPortal || !editVehiclePlate.trim()}
+                    onClick={handleEditPortalAutoFetch}
+                    className="shrink-0 h-9 px-3 gap-1.5 text-xs font-semibold border border-border hover:border-theme-btn-primary/40 text-foreground"
+                    title="Re-fetch vehicle specifications from RTO Government portal"
+                  >
+                    {fetchingEditPortal ? (
+                      <>
+                        <RefreshCw className="h-3.5 w-3.5 animate-spin text-theme-btn-primary" />
+                        <span>Fetching...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
+                        <span>Re-fetch</span>
+                      </>
+                    )}
+                  </AppButton>
+                </div>
+
+                {/* Edit Portal Lookup Feedback Banner */}
+                {editPortalLookupMsg && (
+                  <div className={`p-2.5 rounded-lg border text-[11px] leading-relaxed flex items-start gap-2 animate-in fade-in duration-150 ${
+                    editPortalLookupMsg.type === "success"
+                      ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-700 dark:text-emerald-300"
+                      : "bg-rose-500/10 border-rose-500/25 text-rose-700 dark:text-rose-300"
+                  }`}>
+                    {editPortalLookupMsg.type === "success" ? (
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400 mt-0.5" />
+                    ) : (
+                      <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold flex items-center justify-between gap-2 flex-wrap">
+                        <span>{editPortalLookupMsg.message}</span>
+                        {editPortalLookupMsg.source && (
+                          <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase rounded bg-emerald-500/20 text-emerald-800 dark:text-emerald-200">
+                            {editPortalLookupMsg.source}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-semibold block mb-1">Make *</label>
+                  <AppInput 
+                    value={editVehicleMake} 
+                    onChange={(e) => setEditVehicleMake(e.target.value)} 
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="font-semibold block mb-1">Model *</label>
+                  <AppInput 
+                    value={editVehicleModel} 
+                    onChange={(e) => setEditVehicleModel(e.target.value)} 
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-semibold block mb-1">Variant</label>
+                  <AppInput 
+                    value={editVehicleVariant} 
+                    onChange={(e) => setEditVehicleVariant(e.target.value)} 
+                  />
+                </div>
+                <div>
+                  <label className="font-semibold block mb-1">Category</label>
+                  <select 
+                    value={editVehicleCategory}
+                    onChange={(e) => setEditVehicleCategory(e.target.value)}
+                    className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs"
+                  >
+                    <option value="CAR">Car / SUV / Sedan</option>
+                    <option value="BIKE">Motorbike / Scooter</option>
+                    <option value="COMMERCIAL">Commercial Van / Shuttle</option>
+                    <option value="BUS">Staff Bus / Coach</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-semibold block mb-1">Status</label>
+                  <select 
+                    value={editVehicleStatus}
+                    onChange={(e) => setEditVehicleStatus(e.target.value)}
+                    className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs font-semibold"
+                  >
+                    <option value="IN_STOCK">Available (In Stock)</option>
+                    <option value="IN_SERVICE">On Route / In Service</option>
+                    <option value="MAINTENANCE">In Workshop / Maintenance</option>
+                    <option value="RESERVED">Reserved</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="font-semibold block mb-1">Current Odometer (km)</label>
+                  <AppInput 
+                    type="number" 
+                    value={editVehicleOdometer} 
+                    onChange={(e) => setEditVehicleOdometer(Number(e.target.value))} 
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-semibold block mb-1">Fleet Nickname / Tag</label>
+                  <AppInput 
+                    value={editVehicleNickname} 
+                    onChange={(e) => setEditVehicleNickname(e.target.value)} 
+                  />
+                </div>
+                <div>
+                  <label className="font-semibold block mb-1">Assigned Driver</label>
+                  <select 
+                    value={editVehicleDriverId}
+                    onChange={(e) => setEditVehicleDriverId(e.target.value)}
+                    className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs"
+                  >
+                    <option value="">-- No Driver Assigned --</option>
+                    {drivers.map(d => (
+                      <option key={d.id} value={d.id}>{d.full_name} ({d.phone})</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-border flex items-center justify-end gap-2">
+                <AppButton type="button" variant="ghost" onClick={() => setIsEditVehicleOpen(false)}>
+                  Cancel
+                </AppButton>
+                <AppButton 
+                  type="submit" 
+                  disabled={modalSubmitting}
+                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white font-semibold gap-1.5"
+                >
+                  {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                  <span>Update Vehicle</span>
+                </AppButton>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------------------------- */}
+      {/* ADD DRIVER MODAL */}
+      {/* ---------------------------------------------------------------------- */}
+      {isAddDriverOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-surface border border-border w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-5 border-b border-border bg-surface/50 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center border border-purple-500/25">
+                  <Users className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-foreground">Add Driver</h3>
+                  <p className="text-xs text-muted">Enroll a driver into the company fleet roster</p>
+                </div>
+              </div>
+              <AppButton variant="ghost" size="icon-sm" onClick={() => setIsAddDriverOpen(false)}>
+                <X className="h-4 w-4" />
+              </AppButton>
+            </div>
+
+            <form onSubmit={handleCreateDriver} className="p-5 space-y-4 overflow-y-auto flex-1 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-semibold block mb-1">Full Name *</label>
+                  <AppInput 
+                    placeholder="e.g. Ramesh Kumar" 
+                    value={newDriverName} 
+                    onChange={(e) => setNewDriverName(e.target.value)} 
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="font-semibold block mb-1">Phone Number *</label>
+                  <AppInput 
+                    placeholder="e.g. +91 98200 12345" 
+                    value={newDriverPhone} 
+                    onChange={(e) => setNewDriverPhone(e.target.value)} 
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-semibold block mb-1">Driving License Number *</label>
+                  <AppInput 
+                    placeholder="e.g. MH02 20190012345" 
+                    value={newDriverLicense} 
+                    onChange={(e) => setNewDriverLicense(e.target.value)} 
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="font-semibold block mb-1">License Expiry Date</label>
+                  <AppInput 
+                    type="date"
+                    value={newDriverLicenseExpiry} 
+                    onChange={(e) => setNewDriverLicenseExpiry(e.target.value)} 
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-semibold block mb-1">Driving Experience (Years)</label>
+                  <AppInput 
+                    type="number"
+                    placeholder="3" 
+                    value={newDriverExperience} 
+                    onChange={(e) => setNewDriverExperience(Number(e.target.value))} 
+                  />
+                </div>
+                <div>
+                  <label className="font-semibold block mb-1">Emergency Contact</label>
+                  <AppInput 
+                    placeholder="e.g. Wife: 98111 22222" 
+                    value={newDriverEmergency} 
+                    onChange={(e) => setNewDriverEmergency(e.target.value)} 
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-semibold block mb-1">Assign Primary Vehicle (Optional)</label>
+                <select 
+                  value={newDriverVehicleId}
+                  onChange={(e) => setNewDriverVehicleId(e.target.value)}
+                  className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs"
+                >
+                  <option value="">-- No Assigned Vehicle (Pool Driver) --</option>
+                  {vehicles.map(v => (
+                    <option key={v.id} value={v.id}>{v.registration_number} - {v.make} {v.model}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="pt-4 border-t border-border flex items-center justify-end gap-2">
+                <AppButton type="button" variant="ghost" onClick={() => setIsAddDriverOpen(false)}>
+                  Cancel
+                </AppButton>
+                <AppButton 
+                  type="submit" 
+                  disabled={modalSubmitting}
+                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white font-semibold gap-1.5"
+                >
+                  {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                  <span>Save Driver</span>
+                </AppButton>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------------------------- */}
+      {/* EDIT DRIVER MODAL */}
+      {/* ---------------------------------------------------------------------- */}
+      {isEditDriverOpen && selectedDriverForEdit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-surface border border-border w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-5 border-b border-border bg-surface/50 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center border border-purple-500/25">
+                  <Edit2 className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-foreground">Edit Driver</h3>
+                  <p className="text-xs text-muted">Update driver contact, license details or vehicle link</p>
+                </div>
+              </div>
+              <AppButton variant="ghost" size="icon-sm" onClick={() => setIsEditDriverOpen(false)}>
+                <X className="h-4 w-4" />
+              </AppButton>
+            </div>
+
+            <form onSubmit={handleUpdateDriver} className="p-5 space-y-4 overflow-y-auto flex-1 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-semibold block mb-1">Full Name *</label>
+                  <AppInput 
+                    value={editDriverName} 
+                    onChange={(e) => setEditDriverName(e.target.value)} 
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="font-semibold block mb-1">Phone Number *</label>
+                  <AppInput 
+                    value={editDriverPhone} 
+                    onChange={(e) => setEditDriverPhone(e.target.value)} 
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-semibold block mb-1">Driving License Number *</label>
+                  <AppInput 
+                    value={editDriverLicense} 
+                    onChange={(e) => setEditDriverLicense(e.target.value)} 
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="font-semibold block mb-1">License Expiry Date</label>
+                  <AppInput 
+                    type="date"
+                    value={editDriverLicenseExpiry} 
+                    onChange={(e) => setEditDriverLicenseExpiry(e.target.value)} 
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-semibold block mb-1">Experience (Years)</label>
+                  <AppInput 
+                    type="number"
+                    value={editDriverExperience} 
+                    onChange={(e) => setEditDriverExperience(Number(e.target.value))} 
+                  />
+                </div>
+                <div>
+                  <label className="font-semibold block mb-1">Emergency Contact</label>
+                  <AppInput 
+                    value={editDriverEmergency} 
+                    onChange={(e) => setEditDriverEmergency(e.target.value)} 
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-semibold block mb-1">Assigned Vehicle</label>
+                  <select 
+                    value={editDriverVehicleId}
+                    onChange={(e) => setEditDriverVehicleId(e.target.value)}
+                    className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs"
+                  >
+                    <option value="">-- No Vehicle Assigned --</option>
+                    {vehicles.map(v => (
+                      <option key={v.id} value={v.id}>{v.registration_number} - {v.make} {v.model}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="font-semibold block mb-1">Active Status</label>
+                  <select 
+                    value={editDriverActive ? "ACTIVE" : "INACTIVE"}
+                    onChange={(e) => setEditDriverActive(e.target.value === "ACTIVE")}
+                    className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs font-semibold"
+                  >
+                    <option value="ACTIVE">Active</option>
+                    <option value="INACTIVE">Inactive / On Leave</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-border flex items-center justify-end gap-2">
+                <AppButton type="button" variant="ghost" onClick={() => setIsEditDriverOpen(false)}>
+                  Cancel
+                </AppButton>
+                <AppButton 
+                  type="submit" 
+                  disabled={modalSubmitting}
+                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white font-semibold gap-1.5"
+                >
+                  {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                  <span>Update Driver</span>
                 </AppButton>
               </div>
             </form>
@@ -855,7 +2327,9 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   >
                     <option value="">-- Choose Vehicle --</option>
                     {vehicles.map(v => (
-                      <option key={v.id} value={v.id}>{v.registration_number} - {v.make} {v.model}</option>
+                      <option key={v.id} value={v.id}>
+                        {v.registration_number} - {v.make} {v.model} ({v.status})
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -869,7 +2343,9 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   >
                     <option value="">-- Choose Driver --</option>
                     {drivers.map(d => (
-                      <option key={d.id} value={d.id}>{d.full_name}</option>
+                      <option key={d.id} value={d.id}>
+                        {d.full_name} ({d.phone})
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -899,6 +2375,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div>
                   <label className="font-semibold block mb-1">Origin *</label>
                   <AppInput 
+                    placeholder="e.g. Head Office, Andheri"
                     value={newTripOrigin} 
                     onChange={(e) => setNewTripOrigin(e.target.value)} 
                     required
@@ -915,7 +2392,15 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="font-semibold block mb-1">Date</label>
+                  <AppInput 
+                    type="date" 
+                    value={newTripDate} 
+                    onChange={(e) => setNewTripDate(e.target.value)} 
+                  />
+                </div>
                 <div>
                   <label className="font-semibold block mb-1">Start Time</label>
                   <AppInput 
@@ -925,7 +2410,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   />
                 </div>
                 <div>
-                  <label className="font-semibold block mb-1">Estimated Return Time</label>
+                  <label className="font-semibold block mb-1">Est. Return</label>
                   <AppInput 
                     type="time" 
                     value={newTripEndTime} 
@@ -978,7 +2463,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <label className="font-semibold block mb-1">Select Vehicle *</label>
                 <select 
                   value={newMaintVehicleId}
-                  onChange={(e) => setNewMaintVehicleId(e.target.value)}
+                  onChange={(e) => {
+                    setNewMaintVehicleId(e.target.value);
+                    const sel = vehicles.find(v => v.id === e.target.value);
+                    if (sel) setNewMaintOdometer(sel.odometer_km);
+                  }}
                   required
                   className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs"
                 >
@@ -1011,6 +2500,25 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
+                  <label className="font-semibold block mb-1">Service Date</label>
+                  <AppInput 
+                    type="date"
+                    value={newMaintDate} 
+                    onChange={(e) => setNewMaintDate(e.target.value)} 
+                  />
+                </div>
+                <div>
+                  <label className="font-semibold block mb-1">Next Service Due Date (Optional)</label>
+                  <AppInput 
+                    type="date"
+                    value={newMaintNextDue} 
+                    onChange={(e) => setNewMaintNextDue(e.target.value)} 
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
                   <label className="font-semibold block mb-1">Cost (₹)</label>
                   <AppInput 
                     type="number" 
@@ -1020,7 +2528,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   />
                 </div>
                 <div>
-                  <label className="font-semibold block mb-1">Current Odometer (km)</label>
+                  <label className="font-semibold block mb-1">Odometer at Service (km)</label>
                   <AppInput 
                     type="number" 
                     placeholder="0"
@@ -1044,6 +2552,50 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 </AppButton>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------------------------- */}
+      {/* CONFIRM DELETE DIALOG */}
+      {/* ---------------------------------------------------------------------- */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-surface border border-border w-full max-w-md rounded-2xl shadow-2xl p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center justify-center border border-rose-500/25 shrink-0">
+                <Trash2 className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-foreground">Confirm Deletion</h3>
+                <p className="text-xs text-muted mt-0.5">This action cannot be undone.</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-muted">
+              Are you sure you want to permanently delete <strong className="text-foreground">{deleteTarget.label}</strong>?
+            </p>
+
+            <div className="pt-4 border-t border-border flex items-center justify-end gap-2">
+              <AppButton 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setDeleteTarget(null)}
+                disabled={modalSubmitting}
+              >
+                Cancel
+              </AppButton>
+              <AppButton 
+                variant="primary" 
+                size="sm" 
+                onClick={handleConfirmDelete}
+                disabled={modalSubmitting}
+                className="bg-rose-600 hover:bg-rose-700 text-white font-semibold"
+              >
+                {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5 mr-1" />}
+                <span>Delete Permanently</span>
+              </AppButton>
+            </div>
           </div>
         </div>
       )}
