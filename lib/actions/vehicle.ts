@@ -304,19 +304,201 @@ export interface VehiclePortalLookupResult {
   source: string;
 }
 
-// Built-in verified RTO portal registry cache for enterprise vehicles
+// Built-in verified RTO portal registry cache for enterprise vehicles (from Chandak Fleet Master)
 const RTO_PORTAL_REGISTRY: Record<string, Partial<VehiclePortalLookupResult>> = {
-  "MH02FE4040": {
+  // Chandak Corporate Fleet (PUC & Insurance Master)
+  "MH02DS1934": {
     make: "Toyota",
-    model: "Innova Hycross",
-    variant: "ZX (O) Hybrid",
+    model: "Corolla Altis",
+    variant: "1.8G Executive",
+    category: "CAR",
+    paint_color: "#475569",
+    nickname: "Saroj Sales — Toyota Altis",
+    rto_office: "MH-02 (Mumbai West / Andheri RTO)",
+    fuel_type: "Petrol",
+    vin_chassis_number: "MBJ53REH206502093",
+    engine_number: "2ZR Y099631"
+  },
+  "MH02DZ7162": {
+    make: "Honda",
+    model: "City",
+    variant: "i-VTEC V",
+    category: "CAR",
+    paint_color: "#64748b",
+    nickname: "Saroj Sales — Honda City Grey",
+    rto_office: "MH-02 (Mumbai West / Andheri RTO)",
+    fuel_type: "Petrol",
+    vin_chassis_number: "MAKGM66DJF4108140",
+    engine_number: "L15212237314"
+  },
+  "MH02EE8522": {
+    make: "Volvo",
+    model: "XC90",
+    variant: "D5 Inscription AWD",
+    category: "CAR",
+    paint_color: "#0f172a",
+    nickname: "Saroj Sales — Volvo XC90 SUV",
+    rto_office: "MH-02 (Mumbai West / Andheri RTO)",
+    fuel_type: "Diesel",
+    vin_chassis_number: "YV1LFA4ACG1067642",
+    engine_number: "D4204T11 1513849"
+  },
+  "MH02FU8522": {
+    make: "Skoda",
+    model: "Slavia",
+    variant: "1.5 TSI Style",
     category: "CAR",
     paint_color: "#1e293b",
-    nickname: "Toyota Innova Hycross ZX(O)",
+    nickname: "Saroj Landmark — Skoda Slavia",
+    rto_office: "MH-02 (Mumbai West / Andheri RTO)",
+    fuel_type: "Petrol",
+    vin_chassis_number: "MEXBPFPB8NG010960",
+    engine_number: "DTB065392"
+  },
+  "MH02FY9251": {
+    make: "Toyota",
+    model: "Innova Hycross",
+    variant: "ZX Strong Hybrid",
+    category: "CAR",
+    paint_color: "#f8fafc",
+    nickname: "Saroj Landmark — Innova Hycross",
     rto_office: "MH-02 (Mumbai West / Andheri RTO)",
     fuel_type: "Petrol Hybrid",
-    vin_chassis_number: "MBJ11B81001234567",
-    engine_number: "M20A-FXS-987654"
+    vin_chassis_number: "MBJABBAA301411560-0723",
+    engine_number: "M20ANB03986"
+  },
+  "MH02EZ0890": {
+    make: "Toyota",
+    model: "Innova Crysta",
+    variant: "2.4 ZX 7S",
+    category: "CAR",
+    paint_color: "#94a3b8",
+    nickname: "Abhay S. Chandak — Innova Crysta",
+    rto_office: "MH-02 (Mumbai West / Andheri RTO)",
+    fuel_type: "Diesel",
+    vin_chassis_number: "MBJJA8EM600515167-0718",
+    engine_number: "1GD-A212774"
+  },
+  "MH02EZ4695": {
+    make: "Maruti Suzuki",
+    model: "Dzire",
+    variant: "VXi / ZXi",
+    category: "CAR",
+    paint_color: "#cbd5e1",
+    nickname: "Saroj Landmark — Maruti Dzire",
+    rto_office: "MH-02 (Mumbai West / Andheri RTO)",
+    fuel_type: "Petrol",
+    vin_chassis_number: "MA3CZF63SJG383704",
+    engine_number: "K12MN2232629"
+  },
+  "MH02FG7883": {
+    make: "Audi",
+    model: "A3",
+    variant: "35 TDI Premium Plus",
+    category: "CAR",
+    paint_color: "#0f172a",
+    nickname: "Shreeraj Developer — Audi A3",
+    rto_office: "MH-02 (Mumbai West / Andheri RTO)",
+    fuel_type: "Diesel",
+    vin_chassis_number: "WAUZBK8VXKY700638",
+    engine_number: "CRF009186"
+  },
+  "MH02FJ7883": {
+    make: "Audi",
+    model: "Q7",
+    variant: "45 TDI Quattro Technology",
+    category: "CAR",
+    paint_color: "#1f2937",
+    nickname: "Shreeraj Developer — Audi Q7",
+    rto_office: "MH-02 (Mumbai West / Andheri RTO)",
+    fuel_type: "Diesel",
+    vin_chassis_number: "WAUZCK4M1KY000369",
+    engine_number: "CVM028984"
+  },
+  "MH02FR8522": {
+    make: "Mercedes-Benz",
+    model: "GLS",
+    variant: "450d 4MATIC",
+    category: "CAR",
+    paint_color: "#4b5563",
+    nickname: "Saroj Landmark — Mercedes GLS 450",
+    rto_office: "MH-02 (Mumbai West / Andheri RTO)",
+    fuel_type: "Diesel",
+    vin_chassis_number: "WIN1679236M006252",
+    engine_number: "65692980177181"
+  },
+  "MH02GD7883": {
+    make: "Toyota",
+    model: "Innova Hycross",
+    variant: "ZX (O) Strong Hybrid",
+    category: "CAR",
+    paint_color: "#000000",
+    nickname: "Chandak Realtors — Innova Hycross",
+    rto_office: "MH-02 (Mumbai West / Andheri RTO)",
+    fuel_type: "Petrol Hybrid",
+    vin_chassis_number: "MBJABBAA501438453-0224",
+    engine_number: "M20ANB93702"
+  },
+  "MH02FX8512": {
+    make: "Tata",
+    model: "Winger",
+    variant: "15S Luxury Coach",
+    category: "COMMERCIAL",
+    paint_color: "#f9fafb",
+    nickname: "Chandak Realtors — Tata Winger",
+    rto_office: "MH-02 (Mumbai West / Andheri RTO)",
+    fuel_type: "Diesel",
+    vin_chassis_number: "MAT557049RUD01729",
+    engine_number: "VARICOR11DVXJ05461"
+  },
+  "MH01ER8522": {
+    make: "Toyota",
+    model: "Vellfire",
+    variant: "Executive Lounge VIP",
+    category: "CAR",
+    paint_color: "#111827",
+    nickname: "Bright Star — Toyota Vellfire",
+    rto_office: "MH-01 (Mumbai Central / Tardeo RTO)",
+    fuel_type: "Petrol Hybrid",
+    vin_chassis_number: "JTNADAAH008003710-0524",
+    engine_number: "A2546125149"
+  },
+  "MH02GP9917": {
+    make: "Toyota",
+    model: "Urban Cruiser Hyryder",
+    variant: "V Hybrid",
+    category: "CAR",
+    paint_color: "#3b82f6",
+    nickname: "Chandak Realtors — Toyota Hyryder",
+    rto_office: "MH-02 (Mumbai West / Andheri RTO)",
+    fuel_type: "Petrol Hybrid",
+    vin_chassis_number: "MBJUYMM1SSK192545",
+    engine_number: "M15DNE93508"
+  },
+  "MH02FK6978": {
+    make: "Bajaj",
+    model: "CT-100",
+    variant: "ES Alloy 100cc",
+    category: "BIKE",
+    paint_color: "#ef4444",
+    nickname: "Shreeraj Developer — Bajaj CT-100",
+    rto_office: "MH-02 (Mumbai West / Andheri RTO)",
+    fuel_type: "Petrol",
+    vin_chassis_number: "MABCT100UNKNOWN",
+    engine_number: "BJCT100EN1934"
+  },
+  // Key Demo Vehicles
+  "MH02FE4281": {
+    make: "Toyota",
+    model: "Fortuner Legender",
+    variant: "4x4 AT",
+    category: "CAR",
+    paint_color: "#000000",
+    nickname: "Executive Fortuner Legender",
+    rto_office: "MH-02 (Mumbai West / Andheri RTO)",
+    fuel_type: "Diesel",
+    vin_chassis_number: "MBJ11B81009871234",
+    engine_number: "1GD-FTV-887612"
   },
   "MH04KZ8822": {
     make: "Mahindra",
@@ -342,102 +524,6 @@ const RTO_PORTAL_REGISTRY: Record<string, Partial<VehiclePortalLookupResult>> = 
     vin_chassis_number: "MAT623001EV112233",
     engine_number: "ZIPTRON-LR-4455"
   },
-  "MH02FE4281": {
-    make: "Toyota",
-    model: "Fortuner Legender",
-    variant: "4x4 AT",
-    category: "CAR",
-    paint_color: "#000000",
-    nickname: "Executive Fortuner Legender",
-    rto_office: "MH-02 (Mumbai West / Andheri RTO)",
-    fuel_type: "Diesel",
-    vin_chassis_number: "MBJ11B81009871234",
-    engine_number: "1GD-FTV-887612"
-  },
-  "MH02GP9917": {
-    make: "Toyota",
-    model: "Urban Cruiser Hyryder",
-    variant: "V Hybrid",
-    category: "CAR",
-    paint_color: "#3b82f6",
-    nickname: "Toyota Hyryder V",
-    rto_office: "MH-02 (Mumbai West / Andheri RTO)",
-    fuel_type: "Petrol Hybrid",
-    vin_chassis_number: "MBJUYMM1SSK192545",
-    engine_number: "M15DNE93508"
-  },
-  "MH01ER8522": {
-    make: "Toyota",
-    model: "Vellfire",
-    variant: "Executive Lounge Hybrid",
-    category: "CAR",
-    paint_color: "#111827",
-    nickname: "VIP Toyota Vellfire",
-    rto_office: "MH-01 (Mumbai South / Tardeo RTO)",
-    fuel_type: "Petrol Hybrid",
-    vin_chassis_number: "JTNADAAH008003710-0524",
-    engine_number: "A2546125149"
-  },
-  "MH02FJ7883": {
-    make: "Audi",
-    model: "Q7",
-    variant: "55 TFSI Quattro Technology",
-    category: "CAR",
-    paint_color: "#1f2937",
-    nickname: "Audi Q7 Technology",
-    rto_office: "MH-02 (Mumbai West / Andheri RTO)",
-    fuel_type: "Petrol",
-    vin_chassis_number: "WAUZCK4M1KY000369",
-    engine_number: "CVM028984"
-  },
-  "MH02FR8522": {
-    make: "Mercedes-Benz",
-    model: "GLS",
-    variant: "400d 4MATIC",
-    category: "CAR",
-    paint_color: "#4b5563",
-    nickname: "Mercedes-Benz GLS 400d",
-    rto_office: "MH-02 (Mumbai West / Andheri RTO)",
-    fuel_type: "Diesel",
-    vin_chassis_number: "WIN1679236M006252",
-    engine_number: "65692980177181"
-  },
-  "MH02GD7883": {
-    make: "Toyota",
-    model: "Innova Hycross Platinum",
-    variant: "ZX(O) Hybrid",
-    category: "CAR",
-    paint_color: "#000000",
-    nickname: "Innova Hycross GD",
-    rto_office: "MH-02 (Mumbai West / Andheri RTO)",
-    fuel_type: "Petrol Hybrid",
-    vin_chassis_number: "MBJABBAA501438453-0224",
-    engine_number: "M20ANB93702"
-  },
-  "MH02FX8512": {
-    make: "Tata",
-    model: "Winger",
-    variant: "Executive Shuttle 9S",
-    category: "COMMERCIAL",
-    paint_color: "#f9fafb",
-    nickname: "Staff Shuttle Winger",
-    rto_office: "MH-02 (Mumbai West / Andheri RTO)",
-    fuel_type: "Diesel",
-    vin_chassis_number: "MAT557049RUD01729",
-    engine_number: "VARICOR11DVXJ05461"
-  },
-  "MH02FK6978": {
-    make: "Bajaj",
-    model: "CT-100",
-    variant: "ES Alloy",
-    category: "BIKE",
-    paint_color: "#ef4444",
-    nickname: "Site Inspection Bike",
-    rto_office: "MH-02 (Mumbai West / Andheri RTO)",
-    fuel_type: "Petrol",
-    vin_chassis_number: "MABCT100UNKNOWN",
-    engine_number: "BJCT100EN1934"
-  },
   "HR26CQ9999": {
     make: "Honda",
     model: "City",
@@ -461,30 +547,6 @@ const RTO_PORTAL_REGISTRY: Record<string, Partial<VehiclePortalLookupResult>> = 
     fuel_type: "Petrol",
     vin_chassis_number: "VBK390DUKE202401",
     engine_number: "KTM390EN88219"
-  },
-  "MH02EK9911": {
-    make: "Hyundai",
-    model: "Creta",
-    variant: "SX (O) 1.5 Turbo DCT",
-    category: "CAR",
-    paint_color: "#1e293b",
-    nickname: "Hyundai Creta SX(O)",
-    rto_office: "MH-02 (Mumbai West / Andheri RTO)",
-    fuel_type: "Petrol",
-    vin_chassis_number: "MALC381CLPM019911",
-    engine_number: "G4LD-199201"
-  },
-  "MH02CL5500": {
-    make: "BMW",
-    model: "5 Series",
-    variant: "530d M Sport",
-    category: "CAR",
-    paint_color: "#0f172a",
-    nickname: "BMW 530d M Sport",
-    rto_office: "MH-02 (Mumbai West / Andheri RTO)",
-    fuel_type: "Diesel",
-    vin_chassis_number: "WBA530DM0992318",
-    engine_number: "B57D30-88123"
   }
 };
 
@@ -493,19 +555,81 @@ const RTO_DISTRICT_MAP: Record<string, string> = {
   "MH02": "MH-02 (Mumbai West / Andheri RTO)",
   "MH03": "MH-03 (Mumbai East / Wadala RTO)",
   "MH04": "MH-04 (Thane RTO)",
-  "MH05": "MH-05 (Kalyan RTO)",
+  "MH05": "MH-05 (Kalyan / Dombivli RTO)",
+  "MH06": "MH-06 (Raigad / Pen RTO)",
+  "MH07": "MH-07 (Sindhudurg RTO)",
+  "MH08": "MH-08 (Ratnagiri RTO)",
+  "MH09": "MH-09 (Kolhapur RTO)",
+  "MH10": "MH-10 (Sangli RTO)",
+  "MH11": "MH-11 (Satara RTO)",
   "MH12": "MH-12 (Pune Central RTO)",
+  "MH13": "MH-13 (Solapur RTO)",
   "MH14": "MH-14 (Pimpri-Chinchwad RTO)",
+  "MH15": "MH-15 (Nashik RTO)",
+  "MH16": "MH-16 (Ahmednagar RTO)",
+  "MH17": "MH-17 (Shrirampur RTO)",
+  "MH18": "MH-18 (Dhule RTO)",
+  "MH19": "MH-19 (Jalgaon RTO)",
+  "MH20": "MH-20 (Aurangabad / Chh. Sambhajinagar RTO)",
+  "MH21": "MH-21 (Jalna RTO)",
+  "MH22": "MH-22 (Parbhani RTO)",
+  "MH23": "MH-23 (Beed RTO)",
+  "MH24": "MH-24 (Latur RTO)",
+  "MH25": "MH-25 (Osmanabad / Dharashiv RTO)",
+  "MH26": "MH-26 (Nanded RTO)",
+  "MH27": "MH-27 (Amravati RTO)",
+  "MH28": "MH-28 (Buldhana RTO)",
+  "MH29": "MH-29 (Yavatmal RTO)",
+  "MH30": "MH-30 (Akola RTO)",
+  "MH31": "MH-31 (Nagpur City RTO)",
+  "MH32": "MH-32 (Wardha RTO)",
+  "MH33": "MH-33 (Gadchiroli RTO)",
+  "MH34": "MH-34 (Chandrapur RTO)",
+  "MH35": "MH-35 (Gondia RTO)",
+  "MH36": "MH-36 (Bhandara RTO)",
+  "MH37": "MH-37 (Washim RTO)",
+  "MH38": "MH-38 (Hingoli RTO)",
+  "MH39": "MH-39 (Nandurbar RTO)",
+  "MH40": "MH-40 (Nagpur Rural RTO)",
+  "MH41": "MH-41 (Malegaon RTO)",
+  "MH42": "MH-42 (Baramati RTO)",
   "MH43": "MH-43 (Navi Mumbai / Vashi RTO)",
-  "MH46": "MH-46 (Panvel RTO)",
-  "MH47": "MH-47 (Borivali RTO)",
+  "MH44": "MH-44 (Ambejogai RTO)",
+  "MH45": "MH-45 (Akluj / Solapur District RTO)",
+  "MH46": "MH-46 (Panvel / Navi Mumbai South RTO)",
+  "MH47": "MH-47 (Mumbai North / Borivali RTO)",
+  "MH48": "MH-48 (Vasai-Virar / Palghar RTO)",
+  "MH49": "MH-49 (Nagpur East RTO)",
+  "MH50": "MH-50 (Karad / Satara RTO)",
   "DL01": "DL-01 (Delhi North / Mall Road RTO)",
   "DL02": "DL-02 (Delhi New Delhi / Tilak Marg RTO)",
   "DL03": "DL-03 (Delhi South / Sheikh Sarai RTO)",
+  "DL04": "DL-04 (Delhi West / Janakpuri RTO)",
+  "DL08": "DL-08 (Delhi North West / Wazirpur RTO)",
   "HR26": "HR-26 (Gurugram / Gurgaon RTO)",
+  "HR55": "HR-55 (Gurugram South RTO)",
   "KA01": "KA-01 (Bangalore Central / Koramangala RTO)",
   "KA03": "KA-03 (Bangalore East / Indiranagar RTO)",
-  "GJ01": "GJ-01 (Ahmedabad RTO)"
+  "GJ01": "GJ-01 (Ahmedabad RTO)",
+  "GJ06": "GJ-06 (Vadodara RTO)"
+};
+
+const STATE_NAMES: Record<string, string> = {
+  "MH": "Maharashtra",
+  "DL": "Delhi",
+  "HR": "Haryana",
+  "KA": "Karnataka",
+  "GJ": "Gujarat",
+  "TN": "Tamil Nadu",
+  "TS": "Telangana",
+  "UP": "Uttar Pradesh",
+  "RJ": "Rajasthan",
+  "WB": "West Bengal",
+  "GA": "Goa",
+  "MP": "Madhya Pradesh",
+  "AP": "Andhra Pradesh",
+  "PB": "Punjab",
+  "CH": "Chandigarh"
 };
 
 export async function fetchVehiclePortalDetailsAction(plateNumber: string): Promise<{
@@ -598,15 +722,15 @@ export async function fetchVehiclePortalDetailsAction(plateNumber: string): Prom
       }
     }
 
-    // 3. Fallback to built-in verified RTO portal registry cache
+    // 3. Fallback to built-in verified RTO portal registry cache (Enterprise Fleet Master)
     const cached = RTO_PORTAL_REGISTRY[rawClean];
     if (cached) {
       return {
         success: true,
         data: {
           registration_number: formattedPlate,
-          make: cached.make || "Toyota",
-          model: cached.model || "Fleet Vehicle",
+          make: cached.make || "",
+          model: cached.model || "",
           variant: cached.variant || "Standard",
           category: cached.category || "CAR",
           vin_chassis_number: cached.vin_chassis_number,
@@ -619,40 +743,34 @@ export async function fetchVehiclePortalDetailsAction(plateNumber: string): Prom
           rto_code: rawClean.slice(0, 4),
           fuel_type: cached.fuel_type || "Petrol",
           odometer_km: 0,
-          source: "Government RTO Parivahan Portal"
+          source: "enterprise_registry"
         }
       };
     }
 
-    // 4. Intelligent RTO District & Plate Resolution for any other plate
+    // 4. Intelligent RTO District Resolution for uncataloged plates
+    // IMPORTANT: Never invent fake Make/Model ("Toyota Innova") for unknown plates.
     const districtKey = rawClean.slice(0, 4);
     const stateCode = rawClean.slice(0, 2);
-    const rtoOffice = RTO_DISTRICT_MAP[districtKey] || `${stateCode} State RTO Transport Authority`;
-    const stateName = stateCode === "MH" ? "Maharashtra" :
-                      stateCode === "DL" ? "Delhi" :
-                      stateCode === "HR" ? "Haryana" :
-                      stateCode === "KA" ? "Karnataka" :
-                      stateCode === "GJ" ? "Gujarat" :
-                      stateCode === "TN" ? "Tamil Nadu" :
-                      stateCode === "TS" ? "Telangana" :
-                      stateCode === "UP" ? "Uttar Pradesh" : "India";
+    const rtoOffice = RTO_DISTRICT_MAP[districtKey] || `${stateCode} State Regional Transport Office`;
+    const stateName = STATE_NAMES[stateCode] || "India";
 
     return {
       success: true,
       data: {
         registration_number: formattedPlate,
-        make: "Toyota",
-        model: "Innova",
-        variant: "Standard",
+        make: "",
+        model: "",
+        variant: "",
         category: "CAR",
         paint_color: "#1e293b",
-        nickname: `Fleet ${districtKey} Vehicle`,
+        nickname: "",
         rto_office: rtoOffice,
         state: stateName,
         rto_code: `${stateCode}-${districtKey.slice(2)}`,
-        fuel_type: "Petrol Hybrid",
+        fuel_type: "Petrol",
         odometer_km: 0,
-        source: `Government RTO Parivahan Portal (${rtoOffice})`
+        source: "rto_jurisdiction_only"
       }
     };
   } catch (err: any) {

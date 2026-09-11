@@ -293,13 +293,23 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         if (d.nickname && !newVehicleNickname) setNewVehicleNickname(d.nickname);
         if (d.paint_color) setNewVehicleColor(d.paint_color);
 
-        const rtoLocation = d.rto_office ? d.rto_office : (d.state ? `${d.state} RTO` : "Verified Portal");
-        setPortalLookupMsg({
-          type: "success",
-          message: `Verified: ${d.make} ${d.model}${d.variant ? ` (${d.variant})` : ""} • ${rtoLocation}`,
-          rtoOffice: d.rto_office,
-          source: d.source === "live_api" ? "VAHAN Live API" : d.source === "enterprise_registry" ? "Govt. Portal Registry" : "RTO Format Registry"
-        });
+        const rtoLocation = d.rto_office ? d.rto_office : (d.state ? `${d.state} RTO` : "Identified RTO");
+
+        if (!d.make || d.source === "rto_jurisdiction_only") {
+          setPortalLookupMsg({
+            type: "info",
+            message: `RTO Location: ${rtoLocation}. Live Government VAHAN RC key not configured. Please enter vehicle Make & Model below.`,
+            rtoOffice: d.rto_office,
+            source: "RTO Region Identified"
+          });
+        } else {
+          setPortalLookupMsg({
+            type: "success",
+            message: `Verified: ${d.make} ${d.model}${d.variant ? ` (${d.variant})` : ""} • ${rtoLocation}`,
+            rtoOffice: d.rto_office,
+            source: d.source === "live_api" ? "VAHAN Live Gateway" : "Enterprise Fleet Master"
+          });
+        }
       } else {
         setPortalLookupMsg({
           type: "error",
@@ -406,13 +416,23 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         if (d.nickname && !editVehicleNickname) setEditVehicleNickname(d.nickname);
         if (d.paint_color) setEditVehicleColor(d.paint_color);
 
-        const rtoLocation = d.rto_office ? d.rto_office : (d.state ? `${d.state} RTO` : "Verified Portal");
-        setEditPortalLookupMsg({
-          type: "success",
-          message: `Verified: ${d.make} ${d.model}${d.variant ? ` (${d.variant})` : ""} • ${rtoLocation}`,
-          rtoOffice: d.rto_office,
-          source: d.source === "live_api" ? "VAHAN Live API" : d.source === "enterprise_registry" ? "Govt. Portal Registry" : "RTO Format Registry"
-        });
+        const rtoLocation = d.rto_office ? d.rto_office : (d.state ? `${d.state} RTO` : "Identified RTO");
+
+        if (!d.make || d.source === "rto_jurisdiction_only") {
+          setEditPortalLookupMsg({
+            type: "info",
+            message: `RTO Location: ${rtoLocation}. Please enter vehicle Make & Model below.`,
+            rtoOffice: d.rto_office,
+            source: "RTO Region Identified"
+          });
+        } else {
+          setEditPortalLookupMsg({
+            type: "success",
+            message: `Verified: ${d.make} ${d.model}${d.variant ? ` (${d.variant})` : ""} • ${rtoLocation}`,
+            rtoOffice: d.rto_office,
+            source: d.source === "live_api" ? "VAHAN Live Gateway" : "Enterprise Fleet Master"
+          });
+        }
       } else {
         setEditPortalLookupMsg({
           type: "error",
@@ -1710,10 +1730,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <div className={`p-2.5 rounded-lg border text-[11px] leading-relaxed flex items-start gap-2 animate-in fade-in duration-150 ${
                     portalLookupMsg.type === "success"
                       ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-700 dark:text-emerald-300"
+                      : portalLookupMsg.type === "info"
+                      ? "bg-blue-500/10 border-blue-500/25 text-blue-700 dark:text-blue-300"
                       : "bg-rose-500/10 border-rose-500/25 text-rose-700 dark:text-rose-300"
                   }`}>
                     {portalLookupMsg.type === "success" ? (
                       <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400 mt-0.5" />
+                    ) : portalLookupMsg.type === "info" ? (
+                      <MapPin className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
                     ) : (
                       <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" />
                     )}
@@ -1721,14 +1745,22 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       <div className="font-semibold flex items-center justify-between gap-2 flex-wrap">
                         <span>{portalLookupMsg.message}</span>
                         {portalLookupMsg.source && (
-                          <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase rounded bg-emerald-500/20 text-emerald-800 dark:text-emerald-200">
+                          <span className={`px-1.5 py-0.5 text-[9px] font-bold uppercase rounded ${
+                            portalLookupMsg.type === "success"
+                              ? "bg-emerald-500/20 text-emerald-800 dark:text-emerald-200"
+                              : "bg-blue-500/20 text-blue-800 dark:text-blue-200"
+                          }`}>
                             {portalLookupMsg.source}
                           </span>
                         )}
                       </div>
                       {portalLookupMsg.type === "success" ? (
                         <p className="text-[10px] opacity-80 mt-0.5">
-                          Make, Model, Category, and Specs populated from portal. You can modify any field below.
+                          Make, Model, Category, and Specs populated from fleet registry. You can modify any field below.
+                        </p>
+                      ) : portalLookupMsg.type === "info" ? (
+                        <p className="text-[10px] opacity-80 mt-0.5">
+                          RTO location verified. Enter vehicle make and model manually (or connect live VAHAN API key).
                         </p>
                       ) : (
                         <p className="text-[10px] opacity-80 mt-0.5">
@@ -1928,10 +1960,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <div className={`p-2.5 rounded-lg border text-[11px] leading-relaxed flex items-start gap-2 animate-in fade-in duration-150 ${
                     editPortalLookupMsg.type === "success"
                       ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-700 dark:text-emerald-300"
+                      : editPortalLookupMsg.type === "info"
+                      ? "bg-blue-500/10 border-blue-500/25 text-blue-700 dark:text-blue-300"
                       : "bg-rose-500/10 border-rose-500/25 text-rose-700 dark:text-rose-300"
                   }`}>
                     {editPortalLookupMsg.type === "success" ? (
                       <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400 mt-0.5" />
+                    ) : editPortalLookupMsg.type === "info" ? (
+                      <MapPin className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
                     ) : (
                       <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" />
                     )}
@@ -1939,7 +1975,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       <div className="font-semibold flex items-center justify-between gap-2 flex-wrap">
                         <span>{editPortalLookupMsg.message}</span>
                         {editPortalLookupMsg.source && (
-                          <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase rounded bg-emerald-500/20 text-emerald-800 dark:text-emerald-200">
+                          <span className={`px-1.5 py-0.5 text-[9px] font-bold uppercase rounded ${
+                            editPortalLookupMsg.type === "success"
+                              ? "bg-emerald-500/20 text-emerald-800 dark:text-emerald-200"
+                              : "bg-blue-500/20 text-blue-800 dark:text-blue-200"
+                          }`}>
                             {editPortalLookupMsg.source}
                           </span>
                         )}
