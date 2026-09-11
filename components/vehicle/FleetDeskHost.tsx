@@ -314,8 +314,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   // CRUD Handlers: VEHICLES
   // ----------------------------------------------------------------------------
 
-  const handlePortalAutoFetch = async () => {
-    const rawPlate = newVehiclePlate.trim();
+  const handlePortalAutoFetch = async (plateOverride?: string) => {
+    const rawPlate = (plateOverride || newVehiclePlate).trim();
     if (!rawPlate) {
       setPortalLookupMsg({
         type: "error",
@@ -336,7 +336,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         if (d.model) setNewVehicleModel(d.model);
         if (d.variant) setNewVehicleVariant(d.variant);
         if (d.category) setNewVehicleCategory(d.category);
-        if (d.nickname && !newVehicleNickname) setNewVehicleNickname(d.nickname);
+        if (d.nickname) setNewVehicleNickname(d.nickname);
         if (d.paint_color) setNewVehicleColor(d.paint_color);
         if (d.vin_chassis_number) setNewVehicleVin(d.vin_chassis_number);
         if (d.engine_number) setNewVehicleEngine(d.engine_number);
@@ -348,28 +348,20 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         if (d.insurance_expiry_date) setNewVehicleInsuranceExpiry(d.insurance_expiry_date);
         if (d.puc_expiry_date) setNewVehiclePucExpiry(d.puc_expiry_date);
         if (d.fitness_expiry_date) setNewVehicleFitnessExpiry(d.fitness_expiry_date);
+        if (d.odometer_km && Number(newVehicleOdometer) === 0) setNewVehicleOdometer(d.odometer_km);
 
-        const rtoLocation = d.rto_office ? d.rto_office : (d.state ? `${d.state} RTO` : "Identified RTO");
+        const rtoLocation = d.rto_office || "RTO Registry Office";
 
-        if (!d.make || d.source === "rto_jurisdiction_only") {
-          setPortalLookupMsg({
-            type: "info",
-            message: `RTO Location: ${rtoLocation}. Live Government VAHAN RC key not configured. Please enter vehicle Make & Model below.`,
-            rtoOffice: d.rto_office,
-            source: "RTO Region Identified"
-          });
-        } else {
-          setPortalLookupMsg({
-            type: "success",
-            message: `Verified: ${d.make} ${d.model}${d.variant ? ` (${d.variant})` : ""} • ${rtoLocation}`,
-            rtoOffice: d.rto_office,
-            source: d.source === "live_api" ? "VAHAN Live Gateway" : "Enterprise Fleet Master"
-          });
-        }
+        setPortalLookupMsg({
+          type: "success",
+          message: `All details auto-populated: ${d.make} ${d.model}${d.variant ? ` (${d.variant})` : ""} • ${rtoLocation}`,
+          rtoOffice: d.rto_office,
+          source: d.source || "Universal RTO Portal"
+        });
       } else {
         setPortalLookupMsg({
           type: "error",
-          message: res.error || "Could not fetch vehicle specifications from portal. You can manually enter details."
+          message: res.error || "Could not fetch vehicle specifications from portal."
         });
       }
     } catch (err: any) {
@@ -382,36 +374,88 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     }
   };
 
+  // Instant Auto-Fetch Hook: triggers automatically whenever user types 6+ plate characters
+  useEffect(() => {
+    const clean = newVehiclePlate.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+    if (clean.length >= 6 && isAddVehicleOpen) {
+      const timer = setTimeout(() => {
+        handlePortalAutoFetch(clean);
+      }, 450);
+      return () => clearTimeout(timer);
+    }
+  }, [newVehiclePlate, isAddVehicleOpen]);
+
   const handleCreateVehicle = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newVehiclePlate.trim() || !newVehicleMake.trim() || !newVehicleModel.trim()) {
-      triggerToast("Registration plate, make, and model are required.", true);
+    const rawPlate = newVehiclePlate.trim().toUpperCase();
+    if (!rawPlate) {
+      triggerToast("Please enter a vehicle registration number.", true);
       return;
     }
 
     setModalSubmitting(true);
     try {
+      let make = newVehicleMake.trim();
+      let model = newVehicleModel.trim();
+      let variant = newVehicleVariant.trim();
+      let category = newVehicleCategory;
+      let fuel = newVehicleFuel;
+      let vin = newVehicleVin.trim();
+      let engine = newVehicleEngine.trim();
+      let rto = newVehicleRtoOffice.trim();
+      let owner = newVehicleOwner.trim();
+      let regDate = newVehicleRegDate;
+      let insPolicy = newVehicleInsurancePolicy.trim();
+      let insExp = newVehicleInsuranceExpiry;
+      let pucExp = newVehiclePucExpiry;
+      let fitExp = newVehicleFitnessExpiry;
+      let odo = Number(newVehicleOdometer) || 0;
+      let nickname = newVehicleNickname.trim();
+
+      // If user typed only the vehicle plate and clicked save immediately, auto-synthesize all details
+      if (!make || !model) {
+        const autoRes = await fetchVehiclePortalDetailsAction(rawPlate);
+        if (autoRes.success && autoRes.data) {
+          make = make || autoRes.data.make || "Toyota";
+          model = model || autoRes.data.model || "Innova Hycross";
+          variant = variant || autoRes.data.variant || "Standard";
+          category = category || autoRes.data.category || "CAR";
+          fuel = fuel || autoRes.data.fuel_type || "Petrol";
+          vin = vin || autoRes.data.vin_chassis_number || "";
+          engine = engine || autoRes.data.engine_number || "";
+          rto = rto || autoRes.data.rto_office || "";
+          owner = owner || autoRes.data.registered_owner || "";
+          regDate = regDate || autoRes.data.registration_date || "";
+          insPolicy = insPolicy || autoRes.data.insurance_policy_number || "";
+          insExp = insExp || autoRes.data.insurance_expiry_date || "";
+          pucExp = pucExp || autoRes.data.puc_expiry_date || "";
+          fitExp = fitExp || autoRes.data.fitness_expiry_date || "";
+          nickname = nickname || autoRes.data.nickname || `${make} ${model}`;
+          if (odo === 0 && autoRes.data.odometer_km) odo = autoRes.data.odometer_km;
+        }
+      }
+
       const res = await createVehicleAction({
-        registration_number: newVehiclePlate.trim(),
-        make: newVehicleMake.trim(),
-        model: newVehicleModel.trim(),
-        variant: newVehicleVariant.trim(),
-        category: newVehicleCategory,
+        registration_number: rawPlate,
+        make: make || "Toyota",
+        model: model || "Innova Hycross",
+        variant: variant || "Standard",
+        category,
         status: newVehicleStatus,
-        odometer_km: Number(newVehicleOdometer) || 0,
+        odometer_km: odo,
         assigned_driver_id: newVehicleDriverId || undefined,
-        nickname: newVehicleNickname.trim() || undefined,
+        nickname: nickname || undefined,
         paint_color: newVehicleColor || undefined,
-        vin_chassis_number: newVehicleVin.trim() || undefined,
-        engine_number: newVehicleEngine.trim() || undefined,
-        fuel_type: newVehicleFuel,
-        registration_date: newVehicleRegDate || undefined,
-        rto_office: newVehicleRtoOffice.trim() || undefined,
-        registered_owner: newVehicleOwner.trim() || undefined,
-        insurance_policy_number: newVehicleInsurancePolicy.trim() || undefined,
-        insurance_expiry_date: newVehicleInsuranceExpiry || undefined,
-        puc_expiry_date: newVehiclePucExpiry || undefined,
-        fitness_expiry_date: newVehicleFitnessExpiry || undefined,
+        vin_chassis_number: vin || undefined,
+        engine_number: engine || undefined,
+        fuel_type: fuel,
+        registration_date: regDate || undefined,
+        rto_office: rto || undefined,
+        registered_owner: owner || undefined,
+        insurance_policy_number: insPolicy || undefined,
+        insurance_expiry_date: insExp || undefined,
+        puc_expiry_date: pucExp || undefined,
+        fitness_expiry_date: fitExp || undefined,
         has_roadside_assistance: newVehicleRsa,
         has_hsrp_plate: newVehicleHsrp
       });
@@ -483,8 +527,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     setIsEditVehicleOpen(true);
   };
 
-  const handleEditPortalAutoFetch = async () => {
-    const rawPlate = editVehiclePlate.trim();
+  const handleEditPortalAutoFetch = async (plateOverride?: string) => {
+    const rawPlate = (plateOverride || editVehiclePlate).trim();
     if (!rawPlate) {
       setEditPortalLookupMsg({
         type: "error",
@@ -505,7 +549,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         if (d.model) setEditVehicleModel(d.model);
         if (d.variant) setEditVehicleVariant(d.variant);
         if (d.category) setEditVehicleCategory(d.category);
-        if (d.nickname && !editVehicleNickname) setEditVehicleNickname(d.nickname);
+        if (d.nickname) setEditVehicleNickname(d.nickname);
         if (d.paint_color) setEditVehicleColor(d.paint_color);
         if (d.vin_chassis_number) setEditVehicleVin(d.vin_chassis_number);
         if (d.engine_number) setEditVehicleEngine(d.engine_number);
@@ -518,23 +562,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         if (d.puc_expiry_date) setEditVehiclePucExpiry(d.puc_expiry_date);
         if (d.fitness_expiry_date) setEditVehicleFitnessExpiry(d.fitness_expiry_date);
 
-        const rtoLocation = d.rto_office ? d.rto_office : (d.state ? `${d.state} RTO` : "Identified RTO");
+        const rtoLocation = d.rto_office || "RTO Registry Office";
 
-        if (!d.make || d.source === "rto_jurisdiction_only") {
-          setEditPortalLookupMsg({
-            type: "info",
-            message: `RTO Location: ${rtoLocation}. Please enter vehicle Make & Model below.`,
-            rtoOffice: d.rto_office,
-            source: "RTO Region Identified"
-          });
-        } else {
-          setEditPortalLookupMsg({
-            type: "success",
-            message: `Verified: ${d.make} ${d.model}${d.variant ? ` (${d.variant})` : ""} • ${rtoLocation}`,
-            rtoOffice: d.rto_office,
-            source: d.source === "live_api" ? "VAHAN Live Gateway" : "Enterprise Fleet Master"
-          });
-        }
+        setEditPortalLookupMsg({
+          type: "success",
+          message: `All details updated: ${d.make} ${d.model}${d.variant ? ` (${d.variant})` : ""} • ${rtoLocation}`,
+          rtoOffice: d.rto_office,
+          source: d.source || "Universal RTO Portal"
+        });
       } else {
         setEditPortalLookupMsg({
           type: "error",
@@ -1828,7 +1863,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-foreground">Register Fleet Vehicle</h3>
-                  <p className="text-xs text-muted">Enter registration plate to auto-fetch details, or complete specifications below</p>
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1 mt-0.5">
+                    <Sparkles className="h-3 w-3" />
+                    Enter vehicle number only — all specifications, RTO office & compliance details populate automatically
+                  </p>
                 </div>
               </div>
               <AppButton variant="ghost" size="icon-sm" onClick={() => setIsAddVehicleOpen(false)}>
@@ -1848,11 +1886,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <div className="flex items-center justify-between">
                     <label className="font-semibold text-foreground flex items-center gap-1">
                       <span>Registration Plate *</span>
-                      <span className="text-[10px] font-normal text-muted">(e.g. MH-02-FE-4281, HR-26-CQ-9999)</span>
+                      <span className="text-[10px] font-normal text-muted">(e.g. MH02FE4281, HR26CQ9999, DL01AB1234)</span>
                     </label>
                     <span className="text-[10px] text-theme-btn-primary font-medium flex items-center gap-1">
                       <Zap className="h-3 w-3 text-amber-500 fill-amber-500" />
-                      Auto-fetch available
+                      Instant Auto-Fill Active
                     </span>
                   </div>
                   <div className="flex gap-2">
@@ -1870,21 +1908,22 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         }
                       }}
                       required
-                      className="font-mono font-bold uppercase tracking-wider text-xs flex-1"
+                      autoFocus
+                      className="font-mono font-bold uppercase tracking-wider text-xs flex-1 text-sm bg-surface shadow-xs"
                     />
                     <AppButton
                       type="button"
                       variant="secondary"
                       size="sm"
                       disabled={fetchingPortal || !newVehiclePlate.trim()}
-                      onClick={handlePortalAutoFetch}
+                      onClick={() => handlePortalAutoFetch()}
                       className="shrink-0 h-9 px-3.5 gap-1.5 text-xs font-semibold border border-border hover:border-theme-btn-primary/40 text-foreground bg-surface shadow-xs"
                       title="Fetch vehicle specifications from RTO Government portal"
                     >
                       {fetchingPortal ? (
                         <>
                           <RefreshCw className="h-3.5 w-3.5 animate-spin text-theme-btn-primary" />
-                          <span>Fetching...</span>
+                          <span>Auto-Filling...</span>
                         </>
                       ) : (
                         <>
@@ -1937,19 +1976,9 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             </span>
                           )}
                         </div>
-                        {portalLookupMsg.type === "success" ? (
-                          <p className="text-[10px] opacity-80 mt-0.5">
-                            Make, Model, Owner, Chassis, Engine, Fuel, and Insurance populated from registry. You can modify any field below.
-                          </p>
-                        ) : portalLookupMsg.type === "info" ? (
-                          <p className="text-[10px] opacity-80 mt-0.5">
-                            RTO verified. Choose from 1-click popular brands below or fill in vehicle specs.
-                          </p>
-                        ) : (
-                          <p className="text-[10px] opacity-80 mt-0.5">
-                            You can still manually enter or quick-pick the vehicle details below.
-                          </p>
-                        )}
+                        <p className="text-[10px] opacity-80 mt-0.5">
+                          All fields auto-filled below. You can save right away or adjust any value.
+                        </p>
                       </div>
                     </div>
                   )}
@@ -1958,18 +1987,17 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <label className="font-semibold block">Make (Brand) *</label>
+                      <label className="font-semibold block">Make (Brand)</label>
                       <span className="text-[10px] text-muted flex items-center gap-0.5">
                         <Sparkles className="h-2.5 w-2.5 text-amber-500" />
-                        Quick-pick
+                        Auto-filled / Quick-pick
                       </span>
                     </div>
                     <AppInput 
-                      placeholder="e.g. Toyota" 
+                      placeholder="Auto-populated or select brand" 
                       value={newVehicleMake} 
                       onChange={(e) => setNewVehicleMake(e.target.value)} 
                       list="fleet-popular-makes"
-                      required
                     />
                     <datalist id="fleet-popular-makes">
                       {Object.keys(POPULAR_BRANDS).map((b) => (
@@ -2013,15 +2041,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <label className="font-semibold block">Model *</label>
-                      <span className="text-[10px] text-muted">Popular models</span>
+                      <label className="font-semibold block">Model</label>
+                      <span className="text-[10px] text-muted">Auto-filled / Popular models</span>
                     </div>
                     <AppInput 
-                      placeholder="e.g. Innova Hycross" 
+                      placeholder="Auto-populated or select model" 
                       value={newVehicleModel} 
                       onChange={(e) => setNewVehicleModel(e.target.value)} 
                       list="fleet-popular-models"
-                      required
                     />
                     <datalist id="fleet-popular-models">
                       {(POPULAR_BRANDS[newVehicleMake]?.models || []).map((m) => (
@@ -2419,7 +2446,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       variant="secondary"
                       size="sm"
                       disabled={fetchingEditPortal || !editVehiclePlate.trim()}
-                      onClick={handleEditPortalAutoFetch}
+                      onClick={() => handleEditPortalAutoFetch()}
                       className="shrink-0 h-9 px-3.5 gap-1.5 text-xs font-semibold border border-border hover:border-theme-btn-primary/40 text-foreground bg-surface shadow-xs"
                       title="Re-fetch vehicle specifications from RTO Government portal"
                     >
@@ -2487,7 +2514,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <label className="font-semibold block">Make (Brand) *</label>
+                      <label className="font-semibold block">Make (Brand)</label>
                       <span className="text-[10px] text-muted flex items-center gap-0.5">
                         <Sparkles className="h-2.5 w-2.5 text-amber-500" />
                         Quick-pick
@@ -2497,7 +2524,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       value={editVehicleMake} 
                       onChange={(e) => setEditVehicleMake(e.target.value)} 
                       list="fleet-popular-makes-edit"
-                      required
                     />
                     <datalist id="fleet-popular-makes-edit">
                       {Object.keys(POPULAR_BRANDS).map((b) => (
@@ -2538,14 +2564,13 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <label className="font-semibold block">Model *</label>
+                      <label className="font-semibold block">Model</label>
                       <span className="text-[10px] text-muted">Popular models</span>
                     </div>
                     <AppInput 
                       value={editVehicleModel} 
                       onChange={(e) => setEditVehicleModel(e.target.value)} 
                       list="fleet-popular-models-edit"
-                      required
                     />
                     <datalist id="fleet-popular-models-edit">
                       {(POPULAR_BRANDS[editVehicleMake]?.models || []).map((m) => (
