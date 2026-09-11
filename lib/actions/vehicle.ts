@@ -672,17 +672,22 @@ export async function fetchVehiclePortalDetailsAction(plateNumber: string): Prom
       };
     }
 
-    // 2. Check if an external government RTO API provider is configured (e.g. Surepass / Sandbox)
-    const apiKey = process.env.RTO_API_KEY || process.env.SUREPASS_API_KEY;
-    const apiUrl = process.env.RTO_API_URL || "https://api.surepass.io/api/v1/rc/vehicle-rc-verification";
+    // 2. Check for Universal Government VAHAN API Provider
+    // Supports: Surepass, Sandbox.co.in, RapidAPI, or Supabase Edge Function
+    const surepassKey = process.env.SUREPASS_API_KEY || process.env.RTO_API_KEY || process.env.VAHAN_API_KEY;
+    const sandboxKey = process.env.SANDBOX_API_KEY;
+    const rapidApiKey = process.env.RAPIDAPI_KEY;
+    const supabaseEdgeUrl = process.env.SUPABASE_VAHAN_FUNCTION_URL;
 
-    if (apiKey) {
+    // 2A. Try Surepass Gateway
+    if (surepassKey) {
       try {
+        const apiUrl = process.env.RTO_API_URL || "https://api.surepass.io/api/v1/rc/vehicle-rc-verification";
         const response = await fetch(apiUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`
+            Authorization: `Bearer ${surepassKey}`
           },
           body: JSON.stringify({ id_number: rawClean })
         });
@@ -703,7 +708,7 @@ export async function fetchVehiclePortalDetailsAction(plateNumber: string): Prom
                 make,
                 model,
                 variant: rtoData.maker_classification || "Standard",
-                category: (rtoData.vehicle_class || "").toLowerCase().includes("motorcycle") ? "BIKE" : "CAR",
+                category: (rtoData.vehicle_class || "").toLowerCase().includes("motorcycle") || (rtoData.vehicle_class || "").toLowerCase().includes("two wheeler") ? "BIKE" : "CAR",
                 vin_chassis_number: rtoData.chassis_number || "",
                 engine_number: rtoData.engine_number || "",
                 registration_date: rtoData.reg_date || "",
@@ -718,7 +723,130 @@ export async function fetchVehiclePortalDetailsAction(plateNumber: string): Prom
           }
         }
       } catch (apiErr) {
-        console.warn("[vehicle-actions] External RTO API call failed, falling back to registry cache:", apiErr);
+        console.warn("[vehicle-actions] Surepass API lookup failed:", apiErr);
+      }
+    }
+
+    // 2B. Try Sandbox.co.in KYC Gateway
+    if (sandboxKey) {
+      try {
+        const sandboxUrl = "https://api.sandbox.co.in/kyc/rc/verify";
+        const response = await fetch(sandboxUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": sandboxKey,
+            "x-api-key": sandboxKey,
+            "x-api-version": "1.0"
+          },
+          body: JSON.stringify({ rc_number: rawClean })
+        });
+
+        if (response.ok) {
+          const resJson = await response.json();
+          const d = resJson.data || resJson;
+          if (d && (d.maker || d.model || d.maker_model)) {
+            const make = d.maker || (d.maker_model ? d.maker_model.split(" ")[0] : "Vehicle");
+            const model = d.model || d.maker_model || "Fleet Unit";
+
+            return {
+              success: true,
+              data: {
+                registration_number: formattedPlate,
+                make,
+                model,
+                variant: d.variant || d.maker_classification || "Standard",
+                category: (d.vehicle_category || "").includes("2W") ? "BIKE" : "CAR",
+                vin_chassis_number: d.chassis_number || "",
+                engine_number: d.engine_number || "",
+                registration_date: d.registration_date || "",
+                paint_color: d.color || "#1e293b",
+                nickname: `${make} ${model}`,
+                rto_office: d.registered_at || d.rto || "RTO Office",
+                fuel_type: d.fuel_type || "Petrol",
+                odometer_km: 0,
+                source: "Live Government RTO Portal (Sandbox Gateway)"
+              }
+            };
+          }
+        }
+      } catch (sbErr) {
+        console.warn("[vehicle-actions] Sandbox API lookup failed:", sbErr);
+      }
+    }
+
+    // 2C. Try RapidAPI RTO Gateway
+    if (rapidApiKey) {
+      try {
+        const rapidUrl = `https://rto-vehicle-information-india.p.rapidapi.com/rc-details?vehicle_number=${rawClean}`;
+        const response = await fetch(rapidUrl, {
+          method: "GET",
+          headers: {
+            "X-RapidAPI-Key": rapidApiKey,
+            "X-RapidAPI-Host": "rto-vehicle-information-india.p.rapidapi.com"
+          }
+        });
+
+        if (response.ok) {
+          const resJson = await response.json();
+          const d = resJson.result || resJson.data || resJson;
+          if (d && (d.maker || d.model || d.maker_model)) {
+            const make = d.maker || (d.maker_model ? d.maker_model.split(" ")[0] : "Vehicle");
+            const model = d.model || d.maker_model || "Fleet Unit";
+
+            return {
+              success: true,
+              data: {
+                registration_number: formattedPlate,
+                make,
+                model,
+                variant: d.variant || "Standard",
+                category: (d.vehicle_class || "").toLowerCase().includes("two") ? "BIKE" : "CAR",
+                vin_chassis_number: d.chassis_number || "",
+                engine_number: d.engine_number || "",
+                registration_date: d.reg_date || "",
+                paint_color: d.color || "#1e293b",
+                nickname: `${make} ${model}`,
+                rto_office: d.registered_at || "RTO Transport Office",
+                fuel_type: d.fuel_type || "Petrol",
+                odometer_km: 0,
+                source: "Live Government RTO Portal (RapidAPI Gateway)"
+              }
+            };
+          }
+        }
+      } catch (rapidErr) {
+        console.warn("[vehicle-actions] RapidAPI lookup failed:", rapidErr);
+      }
+    }
+
+    // 2D. Try Custom Supabase Edge Function Proxy
+    if (supabaseEdgeUrl) {
+      try {
+        const response = await fetch(supabaseEdgeUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`
+          },
+          body: JSON.stringify({ vehicle_number: rawClean })
+        });
+
+        if (response.ok) {
+          const resJson = await response.json();
+          if (resJson.success && resJson.data) {
+            return {
+              success: true,
+              data: {
+                ...resJson.data,
+                registration_number: formattedPlate,
+                source: "Supabase Edge VAHAN Gateway"
+              }
+            };
+          }
+        }
+      } catch (sbFuncErr) {
+        console.warn("[vehicle-actions] Supabase Edge Function lookup failed:", sbFuncErr);
       }
     }
 
