@@ -23,8 +23,14 @@ import {
   Check,
   Phone,
   ArrowRight,
-  Zap
+  Zap,
+  Sparkles
 } from "lucide-react";
+import { 
+  POPULAR_BRANDS, 
+  TOP_BRAND_NAMES, 
+  analyzeIndianPlate 
+} from "./vehicleQuickPicks";
 import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
@@ -164,6 +170,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     rtoOffice?: string;
     source?: string;
   } | null>(null);
+
+  // Instant Smart Client-Side RTO Analyzers
+  const newPlateInfo = useMemo(() => analyzeIndianPlate(newVehiclePlate), [newVehiclePlate]);
+  const editPlateInfo = useMemo(() => analyzeIndianPlate(editVehiclePlate), [editVehiclePlate]);
 
   // ----------------------------------------------------------------------------
   // Form States — Add Driver
@@ -1725,6 +1735,19 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   </AppButton>
                 </div>
 
+                {/* Instant Real-Time RTO District Detection Badge */}
+                {newPlateInfo.isRecognized && (
+                  <div className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-700 dark:text-blue-300 text-[11px] animate-in fade-in duration-150">
+                    <div className="flex items-center gap-1.5 truncate">
+                      <MapPin className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                      <span className="font-semibold">{newPlateInfo.rtoName}</span>
+                    </div>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-800 dark:text-blue-200 shrink-0">
+                      {newPlateInfo.stateName}
+                    </span>
+                  </div>
+                )}
+
                 {/* Portal Lookup Feedback Banner */}
                 {portalLookupMsg && (
                   <div className={`p-2.5 rounded-lg border text-[11px] leading-relaxed flex items-start gap-2 animate-in fade-in duration-150 ${
@@ -1737,7 +1760,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     {portalLookupMsg.type === "success" ? (
                       <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400 mt-0.5" />
                     ) : portalLookupMsg.type === "info" ? (
-                      <MapPin className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
+                      <Sparkles className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
                     ) : (
                       <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" />
                     )}
@@ -1760,11 +1783,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         </p>
                       ) : portalLookupMsg.type === "info" ? (
                         <p className="text-[10px] opacity-80 mt-0.5">
-                          RTO location verified. Enter vehicle make and model manually (or connect live VAHAN API key).
+                          RTO location verified. Choose from 1-click popular brands below or enter vehicle specs manually.
                         </p>
                       ) : (
                         <p className="text-[10px] opacity-80 mt-0.5">
-                          You can still manually enter the vehicle details below.
+                          You can still manually enter or quick-pick the vehicle details below.
                         </p>
                       )}
                     </div>
@@ -1774,22 +1797,111 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-semibold block mb-1">Make (Brand) *</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="font-semibold block">Make (Brand) *</label>
+                    <span className="text-[10px] text-muted flex items-center gap-0.5">
+                      <Sparkles className="h-2.5 w-2.5 text-amber-500" />
+                      Quick-pick
+                    </span>
+                  </div>
                   <AppInput 
                     placeholder="e.g. Toyota" 
                     value={newVehicleMake} 
                     onChange={(e) => setNewVehicleMake(e.target.value)} 
+                    list="fleet-popular-makes"
                     required
                   />
+                  <datalist id="fleet-popular-makes">
+                    {Object.keys(POPULAR_BRANDS).map((b) => (
+                      <option key={b} value={b} />
+                    ))}
+                  </datalist>
+
+                  {/* Brand Quick-Pick Chips */}
+                  <div className="mt-1.5 flex flex-wrap gap-1">
+                    {TOP_BRAND_NAMES.map((brand) => {
+                      const isSelected = newVehicleMake.trim().toLowerCase() === brand.toLowerCase();
+                      return (
+                        <button
+                          key={brand}
+                          type="button"
+                          onClick={() => {
+                            setNewVehicleMake(brand);
+                            const cfg = POPULAR_BRANDS[brand];
+                            if (cfg) {
+                              setNewVehicleCategory(cfg.category);
+                              if (cfg.models.length > 0 && (!newVehicleModel || !cfg.models.includes(newVehicleModel))) {
+                                setNewVehicleModel(cfg.models[0]);
+                                if (newPlateInfo.districtCode) {
+                                  setNewVehicleNickname(`${newPlateInfo.stateCode} ${brand} ${cfg.models[0]}`.trim());
+                                }
+                              }
+                            }
+                          }}
+                          className={`px-1.5 py-0.5 rounded text-[10px] font-medium border transition-all cursor-pointer ${
+                            isSelected
+                              ? "bg-theme-btn-primary text-white border-theme-btn-primary shadow-xs font-semibold"
+                              : "bg-surface/80 hover:bg-surface border-border text-foreground/80 hover:text-foreground hover:border-theme-btn-primary/40"
+                          }`}
+                        >
+                          {brand}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
+
                 <div>
-                  <label className="font-semibold block mb-1">Model *</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="font-semibold block">Model *</label>
+                    <span className="text-[10px] text-muted">Popular models</span>
+                  </div>
                   <AppInput 
                     placeholder="e.g. Innova Hycross" 
                     value={newVehicleModel} 
                     onChange={(e) => setNewVehicleModel(e.target.value)} 
+                    list="fleet-popular-models"
                     required
                   />
+                  <datalist id="fleet-popular-models">
+                    {(POPULAR_BRANDS[newVehicleMake]?.models || []).map((m) => (
+                      <option key={m} value={m} />
+                    ))}
+                  </datalist>
+
+                  {/* Model Quick-Pick Chips */}
+                  {POPULAR_BRANDS[newVehicleMake]?.models ? (
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                      {POPULAR_BRANDS[newVehicleMake].models.slice(0, 6).map((m) => {
+                        const isSelected = newVehicleModel.trim().toLowerCase() === m.toLowerCase();
+                        return (
+                          <button
+                            key={m}
+                            type="button"
+                            onClick={() => {
+                              setNewVehicleModel(m);
+                              const cfg = POPULAR_BRANDS[newVehicleMake];
+                              if (cfg?.category) setNewVehicleCategory(cfg.category);
+                              if (newPlateInfo.districtCode) {
+                                setNewVehicleNickname(`${newPlateInfo.stateCode} ${m}`.trim());
+                              }
+                            }}
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-medium border transition-all cursor-pointer ${
+                              isSelected
+                                ? "bg-theme-btn-primary text-white border-theme-btn-primary shadow-xs font-semibold"
+                                : "bg-surface/80 hover:bg-surface border-border text-foreground/80 hover:text-foreground hover:border-theme-btn-primary/40"
+                            }`}
+                          >
+                            {m}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-[10px] text-muted mt-1 italic">
+                      Pick a brand to view models or type custom model.
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -1955,6 +2067,19 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   </AppButton>
                 </div>
 
+                {/* Instant Real-Time RTO District Detection Badge */}
+                {editPlateInfo.isRecognized && (
+                  <div className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-700 dark:text-blue-300 text-[11px] animate-in fade-in duration-150">
+                    <div className="flex items-center gap-1.5 truncate">
+                      <MapPin className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                      <span className="font-semibold">{editPlateInfo.rtoName}</span>
+                    </div>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-800 dark:text-blue-200 shrink-0">
+                      {editPlateInfo.stateName}
+                    </span>
+                  </div>
+                )}
+
                 {/* Edit Portal Lookup Feedback Banner */}
                 {editPortalLookupMsg && (
                   <div className={`p-2.5 rounded-lg border text-[11px] leading-relaxed flex items-start gap-2 animate-in fade-in duration-150 ${
@@ -1967,7 +2092,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     {editPortalLookupMsg.type === "success" ? (
                       <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400 mt-0.5" />
                     ) : editPortalLookupMsg.type === "info" ? (
-                      <MapPin className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
+                      <Sparkles className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
                     ) : (
                       <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" />
                     )}
@@ -1991,20 +2116,99 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-semibold block mb-1">Make *</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="font-semibold block">Make (Brand) *</label>
+                    <span className="text-[10px] text-muted flex items-center gap-0.5">
+                      <Sparkles className="h-2.5 w-2.5 text-amber-500" />
+                      Quick-pick
+                    </span>
+                  </div>
                   <AppInput 
                     value={editVehicleMake} 
                     onChange={(e) => setEditVehicleMake(e.target.value)} 
+                    list="fleet-popular-makes-edit"
                     required
                   />
+                  <datalist id="fleet-popular-makes-edit">
+                    {Object.keys(POPULAR_BRANDS).map((b) => (
+                      <option key={b} value={b} />
+                    ))}
+                  </datalist>
+
+                  {/* Brand Quick-Pick Chips */}
+                  <div className="mt-1.5 flex flex-wrap gap-1">
+                    {TOP_BRAND_NAMES.map((brand) => {
+                      const isSelected = editVehicleMake.trim().toLowerCase() === brand.toLowerCase();
+                      return (
+                        <button
+                          key={brand}
+                          type="button"
+                          onClick={() => {
+                            setEditVehicleMake(brand);
+                            const cfg = POPULAR_BRANDS[brand];
+                            if (cfg) {
+                              setEditVehicleCategory(cfg.category);
+                              if (cfg.models.length > 0 && (!editVehicleModel || !cfg.models.includes(editVehicleModel))) {
+                                setEditVehicleModel(cfg.models[0]);
+                              }
+                            }
+                          }}
+                          className={`px-1.5 py-0.5 rounded text-[10px] font-medium border transition-all cursor-pointer ${
+                            isSelected
+                              ? "bg-theme-btn-primary text-white border-theme-btn-primary shadow-xs font-semibold"
+                              : "bg-surface/80 hover:bg-surface border-border text-foreground/80 hover:text-foreground hover:border-theme-btn-primary/40"
+                          }`}
+                        >
+                          {brand}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
+
                 <div>
-                  <label className="font-semibold block mb-1">Model *</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="font-semibold block">Model *</label>
+                    <span className="text-[10px] text-muted">Popular models</span>
+                  </div>
                   <AppInput 
                     value={editVehicleModel} 
                     onChange={(e) => setEditVehicleModel(e.target.value)} 
+                    list="fleet-popular-models-edit"
                     required
                   />
+                  <datalist id="fleet-popular-models-edit">
+                    {(POPULAR_BRANDS[editVehicleMake]?.models || []).map((m) => (
+                      <option key={m} value={m} />
+                    ))}
+                  </datalist>
+
+                  {/* Model Quick-Pick Chips */}
+                  {POPULAR_BRANDS[editVehicleMake]?.models && (
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                      {POPULAR_BRANDS[editVehicleMake].models.slice(0, 6).map((m) => {
+                        const isSelected = editVehicleModel.trim().toLowerCase() === m.toLowerCase();
+                        return (
+                          <button
+                            key={m}
+                            type="button"
+                            onClick={() => {
+                              setEditVehicleModel(m);
+                              const cfg = POPULAR_BRANDS[editVehicleMake];
+                              if (cfg?.category) setEditVehicleCategory(cfg.category);
+                            }}
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-medium border transition-all cursor-pointer ${
+                              isSelected
+                                ? "bg-theme-btn-primary text-white border-theme-btn-primary shadow-xs font-semibold"
+                                : "bg-surface/80 hover:bg-surface border-border text-foreground/80 hover:text-foreground hover:border-theme-btn-primary/40"
+                            }`}
+                          >
+                            {m}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
 
