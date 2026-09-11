@@ -54,14 +54,10 @@ jobs:
 
       # Upload the compiled standalone zip file to Hostinger via FTP
       - name: Sync files via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./upload-payload/
-          server-dir: domains/chandakgroup.tech/public_html/
-          protocol: ftp
+        run: |
+          echo "Uploading deploy.zip to Hostinger via FTP..."
+          curl --retry 3 --retry-delay 5 -T ./upload-payload/deploy.zip --user "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/deploy.zip" || \
+          curl --retry 3 --retry-delay 5 --ftp-ssl -T ./upload-payload/deploy.zip --user "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/deploy.zip"
 
       # Automatically extract the zip and restart the Node.js server via SSH
       - name: Extract and Restart Server via SSH
@@ -75,7 +71,7 @@ jobs:
           script: |
             cd domains/chandakgroup.tech/public_html/
             unzip -o deploy.zip
-            rm -f deploy.zip
+            rm -f deploy.zip .ftp-deploy-sync-state.json
             # Restart Hostinger Node.js App (Passenger)
             mkdir -p tmp
             touch tmp/restart.txt
