@@ -1031,7 +1031,7 @@ export default function UserMasterPage() {
                         <AppTableHead className="w-28 text-center">Account Status</AppTableHead>
                         <AppTableHead>Unique Code (UIN)</AppTableHead>
                         <AppTableHead>System Role</AppTableHead>
-                        <AppTableHead className="text-right w-24 shrink-0 pr-4">Actions</AppTableHead>
+                        <AppTableHead className="text-right w-32 shrink-0 pr-4">Actions</AppTableHead>
                       </tr>
                     </AppTableHeader>
                     <AppTableBody>
@@ -1122,13 +1122,13 @@ export default function UserMasterPage() {
                               </span>
                             </AppTableCell>
 
-                            <AppTableCell className="text-right w-24 shrink-0 pr-4" onClick={(e) => e.stopPropagation()}>
-                              <div className="flex items-center justify-end gap-1 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
+                            <AppTableCell className="text-right w-32 shrink-0 pr-4" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex items-center justify-end gap-1.5">
                                 {(hasPermission("USERS_UPDATE") || isSuperAdmin) && (
                                   <AppButton variant="secondary"
                                     type="button"
                                     onClick={() => handleOpenModuleModal(usr)}
-                                    className="p-1.5 rounded transition-all text-indigo-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
+                                    className="p-1.5 rounded-lg transition-all text-indigo-600 dark:text-indigo-400 bg-indigo-50/80 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-indigo-200/70 dark:border-indigo-800/50 shadow-2xs"
                                     title="Assign Workspace Modules"
                                   >
                                     <Layers className="h-4 w-4" />
@@ -1138,8 +1138,8 @@ export default function UserMasterPage() {
                                   <AppButton variant="secondary"
                                     type="button"
                                     onClick={() => router.push("/users/" + usr.id)}
-                                    className={`p-1.5 rounded transition-all ${
-                                      "text-slate-400 dark:text-muted hover:text-theme-icon hover:bg-theme-btn-primary/10"
+                                    className={`p-1.5 rounded-lg transition-all ${
+                                      "text-slate-500 dark:text-muted hover:text-theme-icon hover:bg-theme-btn-primary/10 border border-transparent hover:border-border"
                                     }`}
                                     title="Edit User Profile"
                                   >
@@ -1150,8 +1150,8 @@ export default function UserMasterPage() {
                                   <AppButton variant="secondary"
                                     type="button"
                                     onClick={() => initiateDeleteCheck(usr)}
-                                    className={`p-1.5 rounded transition-all ${
-                                      "text-slate-400 dark:text-muted hover:text-danger hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                                    className={`p-1.5 rounded-lg transition-all ${
+                                      "text-slate-400 dark:text-muted hover:text-danger hover:bg-rose-50 dark:hover:bg-rose-900/20 border border-transparent hover:border-rose-200/40"
                                     }`}
                                     title="Remove User"
                                   >
