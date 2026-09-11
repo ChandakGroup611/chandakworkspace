@@ -10,8 +10,7 @@ import {
   Layers, 
   ArrowRight, 
   CheckCircle2, 
-  Sparkles,
-  ChevronDown,
+  ChevronDown, 
   Loader2
 } from "lucide-react";
 import { getUserAllowedModules, setActiveModule, UserModulesResult } from "@/lib/actions/module-switcher";
@@ -220,19 +219,6 @@ export default function SelectModulePage() {
 
       {/* Main Selection Area */}
       <main className="relative z-10 flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 md:py-12 flex flex-col justify-center">
-        {/* Title & Guidance */}
-        <div className="text-center max-w-2xl mx-auto mb-8 md:mb-10">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface border border-border text-xs text-muted mb-3 shadow-2xs">
-            <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-            <span className="font-semibold">Multi-Module Workspace Access</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-2">
-            Under which module do you want to enter?
-          </h1>
-          <p className="text-sm sm:text-base text-muted max-w-xl mx-auto">
-            Select your operational workspace for this session. You can switch between authorized modules anytime from the sidebar.
-          </p>
-        </div>
 
         {/* Quick Dropdown Selector for Fast Selection */}
         <div className="max-w-md mx-auto w-full mb-8">
