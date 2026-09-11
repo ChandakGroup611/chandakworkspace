@@ -49,6 +49,16 @@ export interface VehicleRecord {
   paint_color?: string | null;
   image_url?: string | null;
   nickname?: string | null;
+  vin_chassis_number?: string | null;
+  engine_number?: string | null;
+  fuel_type?: string | null;
+  registration_date?: string | null;
+  rto_office?: string | null;
+  registered_owner?: string | null;
+  insurance_policy_number?: string | null;
+  insurance_expiry_date?: string | null;
+  puc_expiry_date?: string | null;
+  fitness_expiry_date?: string | null;
   has_roadside_assistance?: boolean;
   has_hsrp_plate?: boolean;
   created_at?: string;
@@ -301,6 +311,11 @@ export interface VehiclePortalLookupResult {
   rto_code?: string;
   fuel_type?: string;
   odometer_km?: number;
+  registered_owner?: string;
+  insurance_policy_number?: string;
+  insurance_expiry_date?: string;
+  puc_expiry_date?: string;
+  fitness_expiry_date?: string;
   source: string;
 }
 
@@ -315,9 +330,13 @@ const RTO_PORTAL_REGISTRY: Record<string, Partial<VehiclePortalLookupResult>> = 
     paint_color: "#475569",
     nickname: "Saroj Sales — Toyota Altis",
     rto_office: "MH-02 (Mumbai West / Andheri RTO)",
+    registered_owner: "Saroj Sales Organisation",
     fuel_type: "Petrol",
     vin_chassis_number: "MBJ53REH206502093",
-    engine_number: "2ZR Y099631"
+    engine_number: "2ZR Y099631",
+    insurance_policy_number: "BAGIC-0029318",
+    insurance_expiry_date: "2026-11-28",
+    puc_expiry_date: "2026-10-15"
   },
   "MH02DZ7162": {
     make: "Honda",
@@ -871,6 +890,11 @@ export async function fetchVehiclePortalDetailsAction(plateNumber: string): Prom
           rto_code: rawClean.slice(0, 4),
           fuel_type: cached.fuel_type || "Petrol",
           odometer_km: 0,
+          registered_owner: cached.registered_owner,
+          insurance_policy_number: cached.insurance_policy_number,
+          insurance_expiry_date: cached.insurance_expiry_date,
+          puc_expiry_date: cached.puc_expiry_date,
+          fitness_expiry_date: cached.fitness_expiry_date,
           source: "enterprise_registry"
         }
       };
@@ -918,6 +942,18 @@ export async function createVehicleAction(formData: {
   assigned_driver_id?: string;
   paint_color?: string;
   nickname?: string;
+  vin_chassis_number?: string;
+  engine_number?: string;
+  fuel_type?: string;
+  registration_date?: string;
+  rto_office?: string;
+  registered_owner?: string;
+  insurance_policy_number?: string;
+  insurance_expiry_date?: string;
+  puc_expiry_date?: string;
+  fitness_expiry_date?: string;
+  has_roadside_assistance?: boolean;
+  has_hsrp_plate?: boolean;
 }): Promise<{
   success: boolean;
   vehicle?: VehicleRecord;
@@ -946,21 +982,30 @@ export async function createVehicleAction(formData: {
     }
 
     const vehicleId = `veh-${Date.now().toString(36)}`;
-    const newRecord = {
+    const newRecord: Record<string, any> = {
       id: vehicleId,
       registration_number: regNum,
       make: formData.make.trim(),
       model: formData.model.trim(),
       variant: formData.variant?.trim() || "Standard",
       category: formData.category || "CAR",
-      vin_chassis_number: `VIN-${Date.now()}`,
+      vin_chassis_number: formData.vin_chassis_number?.trim() || `VIN-${Date.now()}`,
+      engine_number: formData.engine_number?.trim() || null,
+      fuel_type: formData.fuel_type?.trim() || "Petrol",
+      registration_date: formData.registration_date || null,
+      rto_office: formData.rto_office?.trim() || null,
+      registered_owner: formData.registered_owner?.trim() || null,
+      insurance_policy_number: formData.insurance_policy_number?.trim() || null,
+      insurance_expiry_date: formData.insurance_expiry_date || null,
+      puc_expiry_date: formData.puc_expiry_date || null,
+      fitness_expiry_date: formData.fitness_expiry_date || null,
       status: formData.status || "IN_STOCK",
       odometer_km: Number(formData.odometer_km) || 0,
       nickname: formData.nickname?.trim() || null,
       paint_color: formData.paint_color || "#1e293b",
       ownership_type: "DEALERSHIP_STOCK",
-      has_roadside_assistance: true,
-      has_hsrp_plate: true
+      has_roadside_assistance: formData.has_roadside_assistance !== undefined ? formData.has_roadside_assistance : true,
+      has_hsrp_plate: formData.has_hsrp_plate !== undefined ? formData.has_hsrp_plate : true
     };
 
     const { data: inserted, error: insertErr } = await supabaseAdmin
@@ -1002,6 +1047,18 @@ export async function updateVehicleAction(
     assigned_driver_id?: string | null;
     nickname?: string;
     paint_color?: string;
+    vin_chassis_number?: string;
+    engine_number?: string;
+    fuel_type?: string;
+    registration_date?: string;
+    rto_office?: string;
+    registered_owner?: string;
+    insurance_policy_number?: string;
+    insurance_expiry_date?: string;
+    puc_expiry_date?: string;
+    fitness_expiry_date?: string;
+    has_roadside_assistance?: boolean;
+    has_hsrp_plate?: boolean;
   }
 ): Promise<{
   success: boolean;
@@ -1021,6 +1078,18 @@ export async function updateVehicleAction(
     if (formData.odometer_km !== undefined) updates.odometer_km = Number(formData.odometer_km);
     if (formData.nickname !== undefined) updates.nickname = formData.nickname;
     if (formData.paint_color !== undefined) updates.paint_color = formData.paint_color;
+    if (formData.vin_chassis_number !== undefined) updates.vin_chassis_number = formData.vin_chassis_number.trim();
+    if (formData.engine_number !== undefined) updates.engine_number = formData.engine_number.trim();
+    if (formData.fuel_type !== undefined) updates.fuel_type = formData.fuel_type.trim();
+    if (formData.registration_date !== undefined) updates.registration_date = formData.registration_date || null;
+    if (formData.rto_office !== undefined) updates.rto_office = formData.rto_office.trim();
+    if (formData.registered_owner !== undefined) updates.registered_owner = formData.registered_owner.trim();
+    if (formData.insurance_policy_number !== undefined) updates.insurance_policy_number = formData.insurance_policy_number.trim();
+    if (formData.insurance_expiry_date !== undefined) updates.insurance_expiry_date = formData.insurance_expiry_date || null;
+    if (formData.puc_expiry_date !== undefined) updates.puc_expiry_date = formData.puc_expiry_date || null;
+    if (formData.fitness_expiry_date !== undefined) updates.fitness_expiry_date = formData.fitness_expiry_date || null;
+    if (formData.has_roadside_assistance !== undefined) updates.has_roadside_assistance = formData.has_roadside_assistance;
+    if (formData.has_hsrp_plate !== undefined) updates.has_hsrp_plate = formData.has_hsrp_plate;
 
     const { error: updateErr } = await supabaseAdmin
       .from("vehicles")

@@ -24,7 +24,15 @@ import {
   Phone,
   ArrowRight,
   Zap,
-  Sparkles
+  Sparkles,
+  Shield,
+  ShieldCheck,
+  FileText,
+  Gauge,
+  Fuel,
+  Building2,
+  Hash,
+  Palette
 } from "lucide-react";
 import { 
   POPULAR_BRANDS, 
@@ -141,6 +149,20 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   const [newVehicleNickname, setNewVehicleNickname] = useState("");
   const [newVehicleColor, setNewVehicleColor] = useState("#1e293b");
 
+  // Comprehensive Vehicle Specs & Compliance
+  const [newVehicleVin, setNewVehicleVin] = useState("");
+  const [newVehicleEngine, setNewVehicleEngine] = useState("");
+  const [newVehicleFuel, setNewVehicleFuel] = useState("Petrol");
+  const [newVehicleRegDate, setNewVehicleRegDate] = useState("");
+  const [newVehicleRtoOffice, setNewVehicleRtoOffice] = useState("");
+  const [newVehicleOwner, setNewVehicleOwner] = useState("");
+  const [newVehicleInsurancePolicy, setNewVehicleInsurancePolicy] = useState("");
+  const [newVehicleInsuranceExpiry, setNewVehicleInsuranceExpiry] = useState("");
+  const [newVehiclePucExpiry, setNewVehiclePucExpiry] = useState("");
+  const [newVehicleFitnessExpiry, setNewVehicleFitnessExpiry] = useState("");
+  const [newVehicleHsrp, setNewVehicleHsrp] = useState(true);
+  const [newVehicleRsa, setNewVehicleRsa] = useState(true);
+
   // Portal auto-lookup state
   const [fetchingPortal, setFetchingPortal] = useState(false);
   const [portalLookupMsg, setPortalLookupMsg] = useState<{
@@ -161,6 +183,20 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   const [editVehicleDriverId, setEditVehicleDriverId] = useState("");
   const [editVehicleNickname, setEditVehicleNickname] = useState("");
   const [editVehicleColor, setEditVehicleColor] = useState("#1e293b");
+
+  // Comprehensive Edit Vehicle Specs & Compliance
+  const [editVehicleVin, setEditVehicleVin] = useState("");
+  const [editVehicleEngine, setEditVehicleEngine] = useState("");
+  const [editVehicleFuel, setEditVehicleFuel] = useState("Petrol");
+  const [editVehicleRegDate, setEditVehicleRegDate] = useState("");
+  const [editVehicleRtoOffice, setEditVehicleRtoOffice] = useState("");
+  const [editVehicleOwner, setEditVehicleOwner] = useState("");
+  const [editVehicleInsurancePolicy, setEditVehicleInsurancePolicy] = useState("");
+  const [editVehicleInsuranceExpiry, setEditVehicleInsuranceExpiry] = useState("");
+  const [editVehiclePucExpiry, setEditVehiclePucExpiry] = useState("");
+  const [editVehicleFitnessExpiry, setEditVehicleFitnessExpiry] = useState("");
+  const [editVehicleHsrp, setEditVehicleHsrp] = useState(true);
+  const [editVehicleRsa, setEditVehicleRsa] = useState(true);
 
   // Edit Vehicle Portal lookup state
   const [fetchingEditPortal, setFetchingEditPortal] = useState(false);
@@ -302,6 +338,16 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         if (d.category) setNewVehicleCategory(d.category);
         if (d.nickname && !newVehicleNickname) setNewVehicleNickname(d.nickname);
         if (d.paint_color) setNewVehicleColor(d.paint_color);
+        if (d.vin_chassis_number) setNewVehicleVin(d.vin_chassis_number);
+        if (d.engine_number) setNewVehicleEngine(d.engine_number);
+        if (d.fuel_type) setNewVehicleFuel(d.fuel_type);
+        if (d.registration_date) setNewVehicleRegDate(d.registration_date);
+        if (d.rto_office) setNewVehicleRtoOffice(d.rto_office);
+        if (d.registered_owner) setNewVehicleOwner(d.registered_owner);
+        if (d.insurance_policy_number) setNewVehicleInsurancePolicy(d.insurance_policy_number);
+        if (d.insurance_expiry_date) setNewVehicleInsuranceExpiry(d.insurance_expiry_date);
+        if (d.puc_expiry_date) setNewVehiclePucExpiry(d.puc_expiry_date);
+        if (d.fitness_expiry_date) setNewVehicleFitnessExpiry(d.fitness_expiry_date);
 
         const rtoLocation = d.rto_office ? d.rto_office : (d.state ? `${d.state} RTO` : "Identified RTO");
 
@@ -355,7 +401,19 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         odometer_km: Number(newVehicleOdometer) || 0,
         assigned_driver_id: newVehicleDriverId || undefined,
         nickname: newVehicleNickname.trim() || undefined,
-        paint_color: newVehicleColor || undefined
+        paint_color: newVehicleColor || undefined,
+        vin_chassis_number: newVehicleVin.trim() || undefined,
+        engine_number: newVehicleEngine.trim() || undefined,
+        fuel_type: newVehicleFuel,
+        registration_date: newVehicleRegDate || undefined,
+        rto_office: newVehicleRtoOffice.trim() || undefined,
+        registered_owner: newVehicleOwner.trim() || undefined,
+        insurance_policy_number: newVehicleInsurancePolicy.trim() || undefined,
+        insurance_expiry_date: newVehicleInsuranceExpiry || undefined,
+        puc_expiry_date: newVehiclePucExpiry || undefined,
+        fitness_expiry_date: newVehicleFitnessExpiry || undefined,
+        has_roadside_assistance: newVehicleRsa,
+        has_hsrp_plate: newVehicleHsrp
       });
 
       if (res.success) {
@@ -372,6 +430,18 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         setNewVehicleDriverId("");
         setNewVehicleNickname("");
         setNewVehicleColor("#1e293b");
+        setNewVehicleVin("");
+        setNewVehicleEngine("");
+        setNewVehicleFuel("Petrol");
+        setNewVehicleRegDate("");
+        setNewVehicleRtoOffice("");
+        setNewVehicleOwner("");
+        setNewVehicleInsurancePolicy("");
+        setNewVehicleInsuranceExpiry("");
+        setNewVehiclePucExpiry("");
+        setNewVehicleFitnessExpiry("");
+        setNewVehicleHsrp(true);
+        setNewVehicleRsa(true);
         setPortalLookupMsg(null);
         // Reload local data
         loadAllData(true);
@@ -398,6 +468,18 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     setEditVehicleDriverId(veh.assignedDriver?.id || "");
     setEditVehicleNickname(veh.nickname || "");
     setEditVehicleColor(veh.paint_color || "#1e293b");
+    setEditVehicleVin(veh.vin_chassis_number || "");
+    setEditVehicleEngine(veh.engine_number || "");
+    setEditVehicleFuel(veh.fuel_type || "Petrol");
+    setEditVehicleRegDate(veh.registration_date ? String(veh.registration_date).split("T")[0] : "");
+    setEditVehicleRtoOffice(veh.rto_office || "");
+    setEditVehicleOwner(veh.registered_owner || "");
+    setEditVehicleInsurancePolicy(veh.insurance_policy_number || "");
+    setEditVehicleInsuranceExpiry(veh.insurance_expiry_date ? String(veh.insurance_expiry_date).split("T")[0] : "");
+    setEditVehiclePucExpiry(veh.puc_expiry_date ? String(veh.puc_expiry_date).split("T")[0] : "");
+    setEditVehicleFitnessExpiry(veh.fitness_expiry_date ? String(veh.fitness_expiry_date).split("T")[0] : "");
+    setEditVehicleHsrp(veh.has_hsrp_plate !== undefined ? veh.has_hsrp_plate : true);
+    setEditVehicleRsa(veh.has_roadside_assistance !== undefined ? veh.has_roadside_assistance : true);
     setIsEditVehicleOpen(true);
   };
 
@@ -425,6 +507,16 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         if (d.category) setEditVehicleCategory(d.category);
         if (d.nickname && !editVehicleNickname) setEditVehicleNickname(d.nickname);
         if (d.paint_color) setEditVehicleColor(d.paint_color);
+        if (d.vin_chassis_number) setEditVehicleVin(d.vin_chassis_number);
+        if (d.engine_number) setEditVehicleEngine(d.engine_number);
+        if (d.fuel_type) setEditVehicleFuel(d.fuel_type);
+        if (d.registration_date) setEditVehicleRegDate(d.registration_date);
+        if (d.rto_office) setEditVehicleRtoOffice(d.rto_office);
+        if (d.registered_owner) setEditVehicleOwner(d.registered_owner);
+        if (d.insurance_policy_number) setEditVehicleInsurancePolicy(d.insurance_policy_number);
+        if (d.insurance_expiry_date) setEditVehicleInsuranceExpiry(d.insurance_expiry_date);
+        if (d.puc_expiry_date) setEditVehiclePucExpiry(d.puc_expiry_date);
+        if (d.fitness_expiry_date) setEditVehicleFitnessExpiry(d.fitness_expiry_date);
 
         const rtoLocation = d.rto_office ? d.rto_office : (d.state ? `${d.state} RTO` : "Identified RTO");
 
@@ -475,7 +567,19 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         odometer_km: Number(editVehicleOdometer) || 0,
         assigned_driver_id: editVehicleDriverId || null,
         nickname: editVehicleNickname.trim(),
-        paint_color: editVehicleColor
+        paint_color: editVehicleColor,
+        vin_chassis_number: editVehicleVin.trim() || undefined,
+        engine_number: editVehicleEngine.trim() || undefined,
+        fuel_type: editVehicleFuel,
+        registration_date: editVehicleRegDate || undefined,
+        rto_office: editVehicleRtoOffice.trim() || undefined,
+        registered_owner: editVehicleOwner.trim() || undefined,
+        insurance_policy_number: editVehicleInsurancePolicy.trim() || undefined,
+        insurance_expiry_date: editVehicleInsuranceExpiry || undefined,
+        puc_expiry_date: editVehiclePucExpiry || undefined,
+        fitness_expiry_date: editVehicleFitnessExpiry || undefined,
+        has_roadside_assistance: editVehicleRsa,
+        has_hsrp_plate: editVehicleHsrp
       });
 
       if (res.success) {
@@ -1213,9 +1317,9 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <AppTable className="w-full text-left text-xs">
                 <AppTableHeader className="bg-muted/30 border-b border-border text-muted font-semibold">
                   <AppTableRow>
-                    <AppTableHead className="p-3.5">Registration Plate</AppTableHead>
-                    <AppTableHead className="p-3.5">Vehicle Make & Model</AppTableHead>
-                    <AppTableHead className="p-3.5">Category</AppTableHead>
+                    <AppTableHead className="p-3.5">Registration & Owner</AppTableHead>
+                    <AppTableHead className="p-3.5">Vehicle Specs & Powertrain</AppTableHead>
+                    <AppTableHead className="p-3.5">Compliance & Insurance</AppTableHead>
                     <AppTableHead className="p-3.5">Assigned Driver</AppTableHead>
                     <AppTableHead className="p-3.5">Odometer Reading</AppTableHead>
                     <AppTableHead className="p-3.5 text-center">Status</AppTableHead>
@@ -1232,10 +1336,20 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   ) : (
                     filteredVehicles.map((veh) => (
                       <AppTableRow key={veh.id} className="hover:bg-muted/10 transition-colors">
-                        <AppTableCell className="p-3.5 font-mono font-bold text-foreground">
-                          <span className="px-2 py-1 rounded-md bg-muted/60 border border-border">
+                        <AppTableCell className="p-3.5">
+                          <div className="font-mono font-bold text-foreground inline-block px-2 py-1 rounded-md bg-muted/60 border border-border">
                             {veh.registration_number}
-                          </span>
+                          </div>
+                          {veh.registered_owner && (
+                            <div className="text-[10px] text-muted font-medium mt-1 truncate max-w-[180px]" title={veh.registered_owner}>
+                              {veh.registered_owner}
+                            </div>
+                          )}
+                          {veh.rto_office && (
+                            <div className="text-[10px] text-blue-600 dark:text-blue-400 font-mono mt-0.5 truncate max-w-[180px]" title={veh.rto_office}>
+                              {veh.rto_office}
+                            </div>
+                          )}
                         </AppTableCell>
                         <AppTableCell className="p-3.5">
                           <div className="font-semibold text-foreground">
@@ -1244,16 +1358,55 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           {veh.nickname && (
                             <div className="text-[10px] text-muted font-medium">{veh.nickname}</div>
                           )}
+                          <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                            {veh.fuel_type && (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
+                                {veh.fuel_type}
+                              </span>
+                            )}
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-muted text-muted-foreground">
+                              {veh.category}
+                            </span>
+                            {veh.vin_chassis_number && (
+                              <span className="text-[9px] font-mono text-muted" title={`VIN: ${veh.vin_chassis_number}`}>
+                                VIN: ...{veh.vin_chassis_number.slice(-6)}
+                              </span>
+                            )}
+                          </div>
                         </AppTableCell>
-                        <AppTableCell className="p-3.5 text-muted">{veh.category}</AppTableCell>
+                        <AppTableCell className="p-3.5">
+                          <div className="space-y-0.5 text-xs">
+                            <div className="flex items-center gap-1.5">
+                              <Shield className="h-3 w-3 text-emerald-500 shrink-0" />
+                              <span className="font-mono text-[11px] text-foreground">
+                                Ins: {veh.insurance_expiry_date ? String(veh.insurance_expiry_date).split("T")[0] : "—"}
+                              </span>
+                            </div>
+                            <div className="text-[10px] text-muted font-mono pl-4.5">
+                              PUC: {veh.puc_expiry_date ? String(veh.puc_expiry_date).split("T")[0] : "—"}
+                            </div>
+                            <div className="flex items-center gap-1 pt-0.5">
+                              {veh.has_hsrp_plate && (
+                                <span className="px-1 py-0.2 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[9px] font-bold border border-emerald-500/20">
+                                  HSRP
+                                </span>
+                              )}
+                              {veh.has_roadside_assistance && (
+                                <span className="px-1 py-0.2 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[9px] font-bold border border-blue-500/20">
+                                  RSA
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </AppTableCell>
                         <AppTableCell className="p-3.5">
                           {veh.assignedDriver ? (
                             <div>
                               <div className="text-foreground font-semibold">{veh.assignedDriver.full_name}</div>
-                              <div className="text-[10px] text-muted">{veh.assignedDriver.phone}</div>
+                              <div className="text-[10px] text-muted font-mono">{veh.assignedDriver.phone}</div>
                             </div>
                           ) : (
-                            <span className="text-muted italic">Unassigned</span>
+                            <span className="text-muted italic">Unassigned (Pool)</span>
                           )}
                         </AppTableCell>
                         <AppTableCell className="p-3.5 font-mono text-muted">
@@ -1667,15 +1820,15 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       {/* ---------------------------------------------------------------------- */}
       {isAddVehicleOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+          <div className="bg-surface border border-border w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <div className="p-5 border-b border-border bg-surface/50 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/25">
                   <Car className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-foreground">Add Fleet Vehicle</h3>
-                  <p className="text-xs text-muted">Register a new vehicle into the fleet master</p>
+                  <h3 className="text-base font-bold text-foreground">Register Fleet Vehicle</h3>
+                  <p className="text-xs text-muted">Enter registration plate to auto-fetch details, or complete specifications below</p>
                 </div>
               </div>
               <AppButton variant="ghost" size="icon-sm" onClick={() => setIsAddVehicleOpen(false)}>
@@ -1684,206 +1837,165 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             </div>
 
             <form onSubmit={handleCreateVehicle} className="p-5 space-y-4 overflow-y-auto flex-1 text-xs">
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="font-semibold text-foreground flex items-center gap-1">
-                    <span>Registration Plate *</span>
-                    <span className="text-[10px] font-normal text-muted">(e.g. MH-02-FE-4281)</span>
-                  </label>
-                  <span className="text-[10px] text-theme-btn-primary font-medium flex items-center gap-1">
-                    <Zap className="h-3 w-3 text-amber-500 fill-amber-500" />
-                    Auto-fetch available
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <AppInput 
-                    placeholder="e.g. MH-02-FE-4281" 
-                    value={newVehiclePlate} 
-                    onChange={(e) => {
-                      setNewVehiclePlate(e.target.value.toUpperCase());
-                      if (portalLookupMsg) setPortalLookupMsg(null);
-                    }} 
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handlePortalAutoFetch();
-                      }
-                    }}
-                    required
-                    className="font-mono font-semibold uppercase tracking-wider text-xs flex-1"
-                  />
-                  <AppButton
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    disabled={fetchingPortal || !newVehiclePlate.trim()}
-                    onClick={handlePortalAutoFetch}
-                    className="shrink-0 h-9 px-3 gap-1.5 text-xs font-semibold border border-border hover:border-theme-btn-primary/40 text-foreground"
-                    title="Fetch vehicle specifications from RTO Government portal"
-                  >
-                    {fetchingPortal ? (
-                      <>
-                        <RefreshCw className="h-3.5 w-3.5 animate-spin text-theme-btn-primary" />
-                        <span>Fetching...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Zap className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
-                        <span>Fetch Portal</span>
-                      </>
-                    )}
-                  </AppButton>
+              {/* SECTION 1: REGISTRATION & VEHICLE SPECS */}
+              <div className="rounded-xl border border-border/80 bg-muted/20 p-4 space-y-3.5">
+                <div className="flex items-center gap-2 pb-2 border-b border-border/60 text-foreground font-semibold text-xs">
+                  <Car className="h-4 w-4 text-theme-btn-primary" />
+                  <span>1. Vehicle Identity & Powertrain</span>
                 </div>
 
-                {/* Instant Real-Time RTO District Detection Badge */}
-                {newPlateInfo.isRecognized && (
-                  <div className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-700 dark:text-blue-300 text-[11px] animate-in fade-in duration-150">
-                    <div className="flex items-center gap-1.5 truncate">
-                      <MapPin className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
-                      <span className="font-semibold">{newPlateInfo.rtoName}</span>
-                    </div>
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-800 dark:text-blue-200 shrink-0">
-                      {newPlateInfo.stateName}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="font-semibold text-foreground flex items-center gap-1">
+                      <span>Registration Plate *</span>
+                      <span className="text-[10px] font-normal text-muted">(e.g. MH-02-FE-4281, HR-26-CQ-9999)</span>
+                    </label>
+                    <span className="text-[10px] text-theme-btn-primary font-medium flex items-center gap-1">
+                      <Zap className="h-3 w-3 text-amber-500 fill-amber-500" />
+                      Auto-fetch available
                     </span>
                   </div>
-                )}
+                  <div className="flex gap-2">
+                    <AppInput 
+                      placeholder="e.g. MH02FE4281" 
+                      value={newVehiclePlate} 
+                      onChange={(e) => {
+                        setNewVehiclePlate(e.target.value.toUpperCase());
+                        if (portalLookupMsg) setPortalLookupMsg(null);
+                      }} 
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handlePortalAutoFetch();
+                        }
+                      }}
+                      required
+                      className="font-mono font-bold uppercase tracking-wider text-xs flex-1"
+                    />
+                    <AppButton
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      disabled={fetchingPortal || !newVehiclePlate.trim()}
+                      onClick={handlePortalAutoFetch}
+                      className="shrink-0 h-9 px-3.5 gap-1.5 text-xs font-semibold border border-border hover:border-theme-btn-primary/40 text-foreground bg-surface shadow-xs"
+                      title="Fetch vehicle specifications from RTO Government portal"
+                    >
+                      {fetchingPortal ? (
+                        <>
+                          <RefreshCw className="h-3.5 w-3.5 animate-spin text-theme-btn-primary" />
+                          <span>Fetching...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Zap className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
+                          <span>Fetch Portal</span>
+                        </>
+                      )}
+                    </AppButton>
+                  </div>
 
-                {/* Portal Lookup Feedback Banner */}
-                {portalLookupMsg && (
-                  <div className={`p-2.5 rounded-lg border text-[11px] leading-relaxed flex items-start gap-2 animate-in fade-in duration-150 ${
-                    portalLookupMsg.type === "success"
-                      ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-700 dark:text-emerald-300"
-                      : portalLookupMsg.type === "info"
-                      ? "bg-blue-500/10 border-blue-500/25 text-blue-700 dark:text-blue-300"
-                      : "bg-rose-500/10 border-rose-500/25 text-rose-700 dark:text-rose-300"
-                  }`}>
-                    {portalLookupMsg.type === "success" ? (
-                      <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400 mt-0.5" />
-                    ) : portalLookupMsg.type === "info" ? (
-                      <Sparkles className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
-                    ) : (
-                      <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold flex items-center justify-between gap-2 flex-wrap">
-                        <span>{portalLookupMsg.message}</span>
-                        {portalLookupMsg.source && (
-                          <span className={`px-1.5 py-0.5 text-[9px] font-bold uppercase rounded ${
-                            portalLookupMsg.type === "success"
-                              ? "bg-emerald-500/20 text-emerald-800 dark:text-emerald-200"
-                              : "bg-blue-500/20 text-blue-800 dark:text-blue-200"
-                          }`}>
-                            {portalLookupMsg.source}
-                          </span>
+                  {/* Instant Real-Time RTO District Detection Badge */}
+                  {newPlateInfo.isRecognized && (
+                    <div className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-700 dark:text-blue-300 text-[11px] animate-in fade-in duration-150">
+                      <div className="flex items-center gap-1.5 truncate">
+                        <MapPin className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                        <span className="font-semibold">{newPlateInfo.rtoName}</span>
+                      </div>
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-800 dark:text-blue-200 shrink-0">
+                        {newPlateInfo.stateName}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Portal Lookup Feedback Banner */}
+                  {portalLookupMsg && (
+                    <div className={`p-2.5 rounded-lg border text-[11px] leading-relaxed flex items-start gap-2 animate-in fade-in duration-150 ${
+                      portalLookupMsg.type === "success"
+                        ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-700 dark:text-emerald-300"
+                        : portalLookupMsg.type === "info"
+                        ? "bg-blue-500/10 border-blue-500/25 text-blue-700 dark:text-blue-300"
+                        : "bg-rose-500/10 border-rose-500/25 text-rose-700 dark:text-rose-300"
+                    }`}>
+                      {portalLookupMsg.type === "success" ? (
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400 mt-0.5" />
+                      ) : portalLookupMsg.type === "info" ? (
+                        <Sparkles className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
+                      ) : (
+                        <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold flex items-center justify-between gap-2 flex-wrap">
+                          <span>{portalLookupMsg.message}</span>
+                          {portalLookupMsg.source && (
+                            <span className={`px-1.5 py-0.5 text-[9px] font-bold uppercase rounded ${
+                              portalLookupMsg.type === "success"
+                                ? "bg-emerald-500/20 text-emerald-800 dark:text-emerald-200"
+                                : "bg-blue-500/20 text-blue-800 dark:text-blue-200"
+                            }`}>
+                              {portalLookupMsg.source}
+                            </span>
+                          )}
+                        </div>
+                        {portalLookupMsg.type === "success" ? (
+                          <p className="text-[10px] opacity-80 mt-0.5">
+                            Make, Model, Owner, Chassis, Engine, Fuel, and Insurance populated from registry. You can modify any field below.
+                          </p>
+                        ) : portalLookupMsg.type === "info" ? (
+                          <p className="text-[10px] opacity-80 mt-0.5">
+                            RTO verified. Choose from 1-click popular brands below or fill in vehicle specs.
+                          </p>
+                        ) : (
+                          <p className="text-[10px] opacity-80 mt-0.5">
+                            You can still manually enter or quick-pick the vehicle details below.
+                          </p>
                         )}
                       </div>
-                      {portalLookupMsg.type === "success" ? (
-                        <p className="text-[10px] opacity-80 mt-0.5">
-                          Make, Model, Category, and Specs populated from fleet registry. You can modify any field below.
-                        </p>
-                      ) : portalLookupMsg.type === "info" ? (
-                        <p className="text-[10px] opacity-80 mt-0.5">
-                          RTO location verified. Choose from 1-click popular brands below or enter vehicle specs manually.
-                        </p>
-                      ) : (
-                        <p className="text-[10px] opacity-80 mt-0.5">
-                          You can still manually enter or quick-pick the vehicle details below.
-                        </p>
-                      )}
                     </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="font-semibold block">Make (Brand) *</label>
-                    <span className="text-[10px] text-muted flex items-center gap-0.5">
-                      <Sparkles className="h-2.5 w-2.5 text-amber-500" />
-                      Quick-pick
-                    </span>
-                  </div>
-                  <AppInput 
-                    placeholder="e.g. Toyota" 
-                    value={newVehicleMake} 
-                    onChange={(e) => setNewVehicleMake(e.target.value)} 
-                    list="fleet-popular-makes"
-                    required
-                  />
-                  <datalist id="fleet-popular-makes">
-                    {Object.keys(POPULAR_BRANDS).map((b) => (
-                      <option key={b} value={b} />
-                    ))}
-                  </datalist>
-
-                  {/* Brand Quick-Pick Chips */}
-                  <div className="mt-1.5 flex flex-wrap gap-1">
-                    {TOP_BRAND_NAMES.map((brand) => {
-                      const isSelected = newVehicleMake.trim().toLowerCase() === brand.toLowerCase();
-                      return (
-                        <button
-                          key={brand}
-                          type="button"
-                          onClick={() => {
-                            setNewVehicleMake(brand);
-                            const cfg = POPULAR_BRANDS[brand];
-                            if (cfg) {
-                              setNewVehicleCategory(cfg.category);
-                              if (cfg.models.length > 0 && (!newVehicleModel || !cfg.models.includes(newVehicleModel))) {
-                                setNewVehicleModel(cfg.models[0]);
-                                if (newPlateInfo.districtCode) {
-                                  setNewVehicleNickname(`${newPlateInfo.stateCode} ${brand} ${cfg.models[0]}`.trim());
-                                }
-                              }
-                            }
-                          }}
-                          className={`px-1.5 py-0.5 rounded text-[10px] font-medium border transition-all cursor-pointer ${
-                            isSelected
-                              ? "bg-theme-btn-primary text-white border-theme-btn-primary shadow-xs font-semibold"
-                              : "bg-surface/80 hover:bg-surface border-border text-foreground/80 hover:text-foreground hover:border-theme-btn-primary/40"
-                          }`}
-                        >
-                          {brand}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  )}
                 </div>
 
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="font-semibold block">Model *</label>
-                    <span className="text-[10px] text-muted">Popular models</span>
-                  </div>
-                  <AppInput 
-                    placeholder="e.g. Innova Hycross" 
-                    value={newVehicleModel} 
-                    onChange={(e) => setNewVehicleModel(e.target.value)} 
-                    list="fleet-popular-models"
-                    required
-                  />
-                  <datalist id="fleet-popular-models">
-                    {(POPULAR_BRANDS[newVehicleMake]?.models || []).map((m) => (
-                      <option key={m} value={m} />
-                    ))}
-                  </datalist>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="font-semibold block">Make (Brand) *</label>
+                      <span className="text-[10px] text-muted flex items-center gap-0.5">
+                        <Sparkles className="h-2.5 w-2.5 text-amber-500" />
+                        Quick-pick
+                      </span>
+                    </div>
+                    <AppInput 
+                      placeholder="e.g. Toyota" 
+                      value={newVehicleMake} 
+                      onChange={(e) => setNewVehicleMake(e.target.value)} 
+                      list="fleet-popular-makes"
+                      required
+                    />
+                    <datalist id="fleet-popular-makes">
+                      {Object.keys(POPULAR_BRANDS).map((b) => (
+                        <option key={b} value={b} />
+                      ))}
+                    </datalist>
 
-                  {/* Model Quick-Pick Chips */}
-                  {POPULAR_BRANDS[newVehicleMake]?.models ? (
+                    {/* Brand Quick-Pick Chips */}
                     <div className="mt-1.5 flex flex-wrap gap-1">
-                      {POPULAR_BRANDS[newVehicleMake].models.slice(0, 6).map((m) => {
-                        const isSelected = newVehicleModel.trim().toLowerCase() === m.toLowerCase();
+                      {TOP_BRAND_NAMES.map((brand) => {
+                        const isSelected = newVehicleMake.trim().toLowerCase() === brand.toLowerCase();
                         return (
                           <button
-                            key={m}
+                            key={brand}
                             type="button"
                             onClick={() => {
-                              setNewVehicleModel(m);
-                              const cfg = POPULAR_BRANDS[newVehicleMake];
-                              if (cfg?.category) setNewVehicleCategory(cfg.category);
-                              if (newPlateInfo.districtCode) {
-                                setNewVehicleNickname(`${newPlateInfo.stateCode} ${m}`.trim());
+                              setNewVehicleMake(brand);
+                              const cfg = POPULAR_BRANDS[brand];
+                              if (cfg) {
+                                setNewVehicleCategory(cfg.category);
+                                if (cfg.models.length > 0 && (!newVehicleModel || !cfg.models.includes(newVehicleModel))) {
+                                  setNewVehicleModel(cfg.models[0]);
+                                  if (newPlateInfo.districtCode) {
+                                    setNewVehicleNickname(`${newPlateInfo.stateCode} ${brand} ${cfg.models[0]}`.trim());
+                                  }
+                                }
                               }
                             }}
                             className={`px-1.5 py-0.5 rounded text-[10px] font-medium border transition-all cursor-pointer ${
@@ -1892,89 +2004,339 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                 : "bg-surface/80 hover:bg-surface border-border text-foreground/80 hover:text-foreground hover:border-theme-btn-primary/40"
                             }`}
                           >
-                            {m}
+                            {brand}
                           </button>
                         );
                       })}
                     </div>
-                  ) : (
-                    <p className="text-[10px] text-muted mt-1 italic">
-                      Pick a brand to view models or type custom model.
-                    </p>
-                  )}
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="font-semibold block">Model *</label>
+                      <span className="text-[10px] text-muted">Popular models</span>
+                    </div>
+                    <AppInput 
+                      placeholder="e.g. Innova Hycross" 
+                      value={newVehicleModel} 
+                      onChange={(e) => setNewVehicleModel(e.target.value)} 
+                      list="fleet-popular-models"
+                      required
+                    />
+                    <datalist id="fleet-popular-models">
+                      {(POPULAR_BRANDS[newVehicleMake]?.models || []).map((m) => (
+                        <option key={m} value={m} />
+                      ))}
+                    </datalist>
+
+                    {/* Model Quick-Pick Chips */}
+                    {POPULAR_BRANDS[newVehicleMake]?.models ? (
+                      <div className="mt-1.5 flex flex-wrap gap-1">
+                        {POPULAR_BRANDS[newVehicleMake].models.slice(0, 6).map((m) => {
+                          const isSelected = newVehicleModel.trim().toLowerCase() === m.toLowerCase();
+                          return (
+                            <button
+                              key={m}
+                              type="button"
+                              onClick={() => {
+                                setNewVehicleModel(m);
+                                const cfg = POPULAR_BRANDS[newVehicleMake];
+                                if (cfg?.category) setNewVehicleCategory(cfg.category);
+                                if (newPlateInfo.districtCode) {
+                                  setNewVehicleNickname(`${newPlateInfo.stateCode} ${m}`.trim());
+                                }
+                              }}
+                              className={`px-1.5 py-0.5 rounded text-[10px] font-medium border transition-all cursor-pointer ${
+                                isSelected
+                                  ? "bg-theme-btn-primary text-white border-theme-btn-primary shadow-xs font-semibold"
+                                  : "bg-surface/80 hover:bg-surface border-border text-foreground/80 hover:text-foreground hover:border-theme-btn-primary/40"
+                              }`}
+                            >
+                              {m}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-[10px] text-muted mt-1 italic">
+                        Pick a brand to view models or type custom model.
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-semibold block mb-1">Variant / Trim</label>
+                    <AppInput 
+                      placeholder="e.g. ZX (O) Hybrid, 4x4 AT" 
+                      value={newVehicleVariant} 
+                      onChange={(e) => setNewVehicleVariant(e.target.value)} 
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1 flex items-center gap-1">
+                      <Fuel className="h-3.5 w-3.5 text-amber-500" />
+                      <span>Fuel Type</span>
+                    </label>
+                    <select 
+                      value={newVehicleFuel}
+                      onChange={(e) => setNewVehicleFuel(e.target.value)}
+                      className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs"
+                    >
+                      <option value="Petrol">Petrol</option>
+                      <option value="Diesel">Diesel</option>
+                      <option value="Petrol Hybrid">Petrol Hybrid</option>
+                      <option value="Electric">Electric (EV)</option>
+                      <option value="CNG">CNG</option>
+                      <option value="LPG">LPG</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-semibold block mb-1">Category</label>
+                    <select 
+                      value={newVehicleCategory}
+                      onChange={(e) => setNewVehicleCategory(e.target.value)}
+                      className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs"
+                    >
+                      <option value="CAR">Car / SUV / Sedan</option>
+                      <option value="BIKE">Motorbike / Scooter</option>
+                      <option value="COMMERCIAL">Commercial Van / Shuttle</option>
+                      <option value="BUS">Staff Bus / Coach</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1 flex items-center gap-1">
+                      <Palette className="h-3.5 w-3.5 text-purple-500" />
+                      <span>Paint Color</span>
+                    </label>
+                    <div className="flex gap-2 items-center">
+                      <input 
+                        type="color" 
+                        value={newVehicleColor.startsWith("#") ? newVehicleColor : "#1e293b"}
+                        onChange={(e) => setNewVehicleColor(e.target.value)}
+                        className="h-9 w-10 rounded border border-border cursor-pointer p-0.5 bg-surface"
+                      />
+                      <AppInput 
+                        placeholder="e.g. Pearl White / #1e293b" 
+                        value={newVehicleColor} 
+                        onChange={(e) => setNewVehicleColor(e.target.value)} 
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              {/* SECTION 2: CHASSIS, ENGINE & LEGAL OWNERSHIP */}
+              <div className="rounded-xl border border-border/80 bg-muted/20 p-4 space-y-3.5">
+                <div className="flex items-center gap-2 pb-2 border-b border-border/60 text-foreground font-semibold text-xs">
+                  <Building2 className="h-4 w-4 text-blue-500" />
+                  <span>2. Identification & Legal Ownership</span>
+                </div>
+
                 <div>
-                  <label className="font-semibold block mb-1">Variant</label>
+                  <label className="font-semibold block mb-1">Registered Owner / Corporate Entity</label>
                   <AppInput 
-                    placeholder="e.g. ZX (O) Hybrid" 
-                    value={newVehicleVariant} 
-                    onChange={(e) => setNewVehicleVariant(e.target.value)} 
+                    placeholder="e.g. Saroj Landmark Realty LLP / Chandak Realtors Pvt. Ltd." 
+                    value={newVehicleOwner} 
+                    onChange={(e) => setNewVehicleOwner(e.target.value)} 
                   />
                 </div>
-                <div>
-                  <label className="font-semibold block mb-1">Category</label>
-                  <select 
-                    value={newVehicleCategory}
-                    onChange={(e) => setNewVehicleCategory(e.target.value)}
-                    className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs"
-                  >
-                    <option value="CAR">Car / SUV / Sedan</option>
-                    <option value="BIKE">Motorbike / Scooter</option>
-                    <option value="COMMERCIAL">Commercial Van / Shuttle</option>
-                    <option value="BUS">Staff Bus / Coach</option>
-                  </select>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-semibold block mb-1 flex items-center gap-1">
+                      <Hash className="h-3.5 w-3.5 text-muted" />
+                      <span>Chassis Number (VIN)</span>
+                    </label>
+                    <AppInput 
+                      placeholder="e.g. MBJAAA41VPA012345" 
+                      value={newVehicleVin} 
+                      onChange={(e) => setNewVehicleVin(e.target.value.toUpperCase())} 
+                      className="font-mono uppercase text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1 flex items-center gap-1">
+                      <Hash className="h-3.5 w-3.5 text-muted" />
+                      <span>Engine Number</span>
+                    </label>
+                    <AppInput 
+                      placeholder="e.g. 2GD1234567" 
+                      value={newVehicleEngine} 
+                      onChange={(e) => setNewVehicleEngine(e.target.value.toUpperCase())} 
+                      className="font-mono uppercase text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-semibold block mb-1 flex items-center gap-1">
+                      <MapPin className="h-3.5 w-3.5 text-blue-500" />
+                      <span>RTO Office / Passing Jurisdiction</span>
+                    </label>
+                    <AppInput 
+                      placeholder="e.g. MH-02 Mumbai Andheri RTO" 
+                      value={newVehicleRtoOffice} 
+                      onChange={(e) => setNewVehicleRtoOffice(e.target.value)} 
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1 flex items-center gap-1">
+                      <Calendar className="h-3.5 w-3.5 text-muted" />
+                      <span>Registration Date</span>
+                    </label>
+                    <AppInput 
+                      type="date"
+                      value={newVehicleRegDate} 
+                      onChange={(e) => setNewVehicleRegDate(e.target.value)} 
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-semibold block mb-1">Status</label>
-                  <select 
-                    value={newVehicleStatus}
-                    onChange={(e) => setNewVehicleStatus(e.target.value)}
-                    className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs"
-                  >
-                    <option value="IN_STOCK">Available (In Stock)</option>
-                    <option value="IN_SERVICE">On Route / In Service</option>
-                    <option value="MAINTENANCE">In Workshop / Maintenance</option>
-                    <option value="RESERVED">Reserved</option>
-                  </select>
+              {/* SECTION 3: STATUTORY COMPLIANCE & VALIDITY */}
+              <div className="rounded-xl border border-border/80 bg-muted/20 p-4 space-y-3.5">
+                <div className="flex items-center gap-2 pb-2 border-b border-border/60 text-foreground font-semibold text-xs">
+                  <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                  <span>3. Statutory Compliance, Insurance & Validity</span>
                 </div>
-                <div>
-                  <label className="font-semibold block mb-1">Initial Odometer (km)</label>
-                  <AppInput 
-                    type="number"
-                    placeholder="0" 
-                    value={newVehicleOdometer} 
-                    onChange={(e) => setNewVehicleOdometer(Number(e.target.value))} 
-                  />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-semibold block mb-1 flex items-center gap-1">
+                      <FileText className="h-3.5 w-3.5 text-muted" />
+                      <span>Insurance Policy Number</span>
+                    </label>
+                    <AppInput 
+                      placeholder="e.g. 2311/61284792/00/000 (ICICI Lombard)" 
+                      value={newVehicleInsurancePolicy} 
+                      onChange={(e) => setNewVehicleInsurancePolicy(e.target.value)} 
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1 flex items-center gap-1">
+                      <Shield className="h-3.5 w-3.5 text-emerald-500" />
+                      <span>Insurance Expiry Date</span>
+                    </label>
+                    <AppInput 
+                      type="date"
+                      value={newVehicleInsuranceExpiry} 
+                      onChange={(e) => setNewVehicleInsuranceExpiry(e.target.value)} 
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-semibold block mb-1">PUC (Pollution) Expiry Date</label>
+                    <AppInput 
+                      type="date"
+                      value={newVehiclePucExpiry} 
+                      onChange={(e) => setNewVehiclePucExpiry(e.target.value)} 
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1">Fitness Certificate Expiry Date</label>
+                    <AppInput 
+                      type="date"
+                      value={newVehicleFitnessExpiry} 
+                      onChange={(e) => setNewVehicleFitnessExpiry(e.target.value)} 
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <label className="flex items-center gap-2.5 p-2.5 rounded-lg border border-border bg-surface cursor-pointer hover:bg-muted/10 transition-colors">
+                    <input 
+                      type="checkbox"
+                      checked={newVehicleHsrp}
+                      onChange={(e) => setNewVehicleHsrp(e.target.checked)}
+                      className="rounded border-border text-theme-btn-primary focus:ring-theme-btn-primary h-4 w-4"
+                    />
+                    <div className="text-xs">
+                      <div className="font-semibold text-foreground">HSRP Number Plate Fitted</div>
+                      <div className="text-[10px] text-muted">High Security Plate with laser hologram</div>
+                    </div>
+                  </label>
+
+                  <label className="flex items-center gap-2.5 p-2.5 rounded-lg border border-border bg-surface cursor-pointer hover:bg-muted/10 transition-colors">
+                    <input 
+                      type="checkbox"
+                      checked={newVehicleRsa}
+                      onChange={(e) => setNewVehicleRsa(e.target.checked)}
+                      className="rounded border-border text-theme-btn-primary focus:ring-theme-btn-primary h-4 w-4"
+                    />
+                    <div className="text-xs">
+                      <div className="font-semibold text-foreground">24x7 Roadside Assistance (RSA)</div>
+                      <div className="text-[10px] text-muted">Emergency highway towing & breakdown cover</div>
+                    </div>
+                  </label>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-semibold block mb-1">Fleet Nickname / Tag</label>
-                  <AppInput 
-                    placeholder="e.g. Stella Site VIP Car" 
-                    value={newVehicleNickname} 
-                    onChange={(e) => setNewVehicleNickname(e.target.value)} 
-                  />
+              {/* SECTION 4: FLEET OPERATIONS & DRIVER */}
+              <div className="rounded-xl border border-border/80 bg-muted/20 p-4 space-y-3.5">
+                <div className="flex items-center gap-2 pb-2 border-b border-border/60 text-foreground font-semibold text-xs">
+                  <Gauge className="h-4 w-4 text-amber-500" />
+                  <span>4. Fleet Operations & Driver Assignment</span>
                 </div>
-                <div>
-                  <label className="font-semibold block mb-1">Assign Driver</label>
-                  <select 
-                    value={newVehicleDriverId}
-                    onChange={(e) => setNewVehicleDriverId(e.target.value)}
-                    className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs"
-                  >
-                    <option value="">-- No Driver Assigned --</option>
-                    {drivers.map(d => (
-                      <option key={d.id} value={d.id}>{d.full_name} ({d.phone})</option>
-                    ))}
-                  </select>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-semibold block mb-1">Fleet Operational Status</label>
+                    <select 
+                      value={newVehicleStatus}
+                      onChange={(e) => setNewVehicleStatus(e.target.value)}
+                      className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs font-semibold"
+                    >
+                      <option value="IN_STOCK">Available (In Stock)</option>
+                      <option value="IN_SERVICE">On Route / In Service</option>
+                      <option value="MAINTENANCE">In Workshop / Maintenance</option>
+                      <option value="RESERVED">Reserved</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1 flex items-center gap-1">
+                      <Gauge className="h-3.5 w-3.5 text-muted" />
+                      <span>Initial Odometer (km)</span>
+                    </label>
+                    <AppInput 
+                      type="number"
+                      placeholder="0" 
+                      value={newVehicleOdometer} 
+                      onChange={(e) => setNewVehicleOdometer(Number(e.target.value))} 
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-semibold block mb-1">Fleet Nickname / Tag</label>
+                    <AppInput 
+                      placeholder="e.g. Stella Site VIP Car" 
+                      value={newVehicleNickname} 
+                      onChange={(e) => setNewVehicleNickname(e.target.value)} 
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1">Assign Driver</label>
+                    <select 
+                      value={newVehicleDriverId}
+                      onChange={(e) => setNewVehicleDriverId(e.target.value)}
+                      className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs"
+                    >
+                      <option value="">-- No Driver Assigned (Pool Vehicle) --</option>
+                      {drivers.map(d => (
+                        <option key={d.id} value={d.id}>{d.full_name} ({d.phone})</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
 
@@ -2001,15 +2363,15 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       {/* ---------------------------------------------------------------------- */}
       {isEditVehicleOpen && selectedVehicleForEdit && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+          <div className="bg-surface border border-border w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <div className="p-5 border-b border-border bg-surface/50 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-500/25">
                   <Edit2 className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-foreground">Edit Fleet Vehicle</h3>
-                  <p className="text-xs text-muted">Update vehicle status, driver assignment or odometer</p>
+                  <h3 className="text-base font-bold text-foreground">Edit Fleet Vehicle Specifications</h3>
+                  <p className="text-xs text-muted">Update official RTO RC records, compliance dates, or driver assignment</p>
                 </div>
               </div>
               <AppButton variant="ghost" size="icon-sm" onClick={() => setIsEditVehicleOpen(false)}>
@@ -2018,184 +2380,148 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             </div>
 
             <form onSubmit={handleUpdateVehicle} className="p-5 space-y-4 overflow-y-auto flex-1 text-xs">
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="font-semibold text-foreground flex items-center gap-1">
-                    <span>Registration Plate *</span>
-                  </label>
-                  <span className="text-[10px] text-theme-btn-primary font-medium flex items-center gap-1">
-                    <Zap className="h-3 w-3 text-amber-500 fill-amber-500" />
-                    Auto-fetch available
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <AppInput 
-                    value={editVehiclePlate} 
-                    onChange={(e) => {
-                      setEditVehiclePlate(e.target.value.toUpperCase());
-                      if (editPortalLookupMsg) setEditPortalLookupMsg(null);
-                    }} 
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleEditPortalAutoFetch();
-                      }
-                    }}
-                    required
-                    className="font-mono font-semibold uppercase tracking-wider text-xs flex-1"
-                  />
-                  <AppButton
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    disabled={fetchingEditPortal || !editVehiclePlate.trim()}
-                    onClick={handleEditPortalAutoFetch}
-                    className="shrink-0 h-9 px-3 gap-1.5 text-xs font-semibold border border-border hover:border-theme-btn-primary/40 text-foreground"
-                    title="Re-fetch vehicle specifications from RTO Government portal"
-                  >
-                    {fetchingEditPortal ? (
-                      <>
-                        <RefreshCw className="h-3.5 w-3.5 animate-spin text-theme-btn-primary" />
-                        <span>Fetching...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Zap className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
-                        <span>Re-fetch</span>
-                      </>
-                    )}
-                  </AppButton>
+              {/* SECTION 1: REGISTRATION & VEHICLE SPECS */}
+              <div className="rounded-xl border border-border/80 bg-muted/20 p-4 space-y-3.5">
+                <div className="flex items-center gap-2 pb-2 border-b border-border/60 text-foreground font-semibold text-xs">
+                  <Car className="h-4 w-4 text-blue-500" />
+                  <span>1. Vehicle Identity & Powertrain</span>
                 </div>
 
-                {/* Instant Real-Time RTO District Detection Badge */}
-                {editPlateInfo.isRecognized && (
-                  <div className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-700 dark:text-blue-300 text-[11px] animate-in fade-in duration-150">
-                    <div className="flex items-center gap-1.5 truncate">
-                      <MapPin className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
-                      <span className="font-semibold">{editPlateInfo.rtoName}</span>
-                    </div>
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-800 dark:text-blue-200 shrink-0">
-                      {editPlateInfo.stateName}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="font-semibold text-foreground flex items-center gap-1">
+                      <span>Registration Plate *</span>
+                      <span className="text-[10px] font-normal text-muted">(e.g. MH-02-FE-4281)</span>
+                    </label>
+                    <span className="text-[10px] text-theme-btn-primary font-medium flex items-center gap-1">
+                      <Zap className="h-3 w-3 text-amber-500 fill-amber-500" />
+                      Auto-fetch available
                     </span>
                   </div>
-                )}
+                  <div className="flex gap-2">
+                    <AppInput 
+                      value={editVehiclePlate} 
+                      onChange={(e) => {
+                        setEditVehiclePlate(e.target.value.toUpperCase());
+                        if (editPortalLookupMsg) setEditPortalLookupMsg(null);
+                      }} 
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleEditPortalAutoFetch();
+                        }
+                      }}
+                      required
+                      className="font-mono font-bold uppercase tracking-wider text-xs flex-1"
+                    />
+                    <AppButton
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      disabled={fetchingEditPortal || !editVehiclePlate.trim()}
+                      onClick={handleEditPortalAutoFetch}
+                      className="shrink-0 h-9 px-3.5 gap-1.5 text-xs font-semibold border border-border hover:border-theme-btn-primary/40 text-foreground bg-surface shadow-xs"
+                      title="Re-fetch vehicle specifications from RTO Government portal"
+                    >
+                      {fetchingEditPortal ? (
+                        <>
+                          <RefreshCw className="h-3.5 w-3.5 animate-spin text-theme-btn-primary" />
+                          <span>Fetching...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Zap className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
+                          <span>Re-fetch Portal</span>
+                        </>
+                      )}
+                    </AppButton>
+                  </div>
 
-                {/* Edit Portal Lookup Feedback Banner */}
-                {editPortalLookupMsg && (
-                  <div className={`p-2.5 rounded-lg border text-[11px] leading-relaxed flex items-start gap-2 animate-in fade-in duration-150 ${
-                    editPortalLookupMsg.type === "success"
-                      ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-700 dark:text-emerald-300"
-                      : editPortalLookupMsg.type === "info"
-                      ? "bg-blue-500/10 border-blue-500/25 text-blue-700 dark:text-blue-300"
-                      : "bg-rose-500/10 border-rose-500/25 text-rose-700 dark:text-rose-300"
-                  }`}>
-                    {editPortalLookupMsg.type === "success" ? (
-                      <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400 mt-0.5" />
-                    ) : editPortalLookupMsg.type === "info" ? (
-                      <Sparkles className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
-                    ) : (
-                      <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold flex items-center justify-between gap-2 flex-wrap">
-                        <span>{editPortalLookupMsg.message}</span>
-                        {editPortalLookupMsg.source && (
-                          <span className={`px-1.5 py-0.5 text-[9px] font-bold uppercase rounded ${
-                            editPortalLookupMsg.type === "success"
-                              ? "bg-emerald-500/20 text-emerald-800 dark:text-emerald-200"
-                              : "bg-blue-500/20 text-blue-800 dark:text-blue-200"
-                          }`}>
-                            {editPortalLookupMsg.source}
-                          </span>
-                        )}
+                  {/* Instant Real-Time RTO District Detection Badge */}
+                  {editPlateInfo.isRecognized && (
+                    <div className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-700 dark:text-blue-300 text-[11px] animate-in fade-in duration-150">
+                      <div className="flex items-center gap-1.5 truncate">
+                        <MapPin className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                        <span className="font-semibold">{editPlateInfo.rtoName}</span>
+                      </div>
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-800 dark:text-blue-200 shrink-0">
+                        {editPlateInfo.stateName}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Edit Portal Lookup Feedback Banner */}
+                  {editPortalLookupMsg && (
+                    <div className={`p-2.5 rounded-lg border text-[11px] leading-relaxed flex items-start gap-2 animate-in fade-in duration-150 ${
+                      editPortalLookupMsg.type === "success"
+                        ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-700 dark:text-emerald-300"
+                        : editPortalLookupMsg.type === "info"
+                        ? "bg-blue-500/10 border-blue-500/25 text-blue-700 dark:text-blue-300"
+                        : "bg-rose-500/10 border-rose-500/25 text-rose-700 dark:text-rose-300"
+                    }`}>
+                      {editPortalLookupMsg.type === "success" ? (
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400 mt-0.5" />
+                      ) : editPortalLookupMsg.type === "info" ? (
+                        <Sparkles className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
+                      ) : (
+                        <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold flex items-center justify-between gap-2 flex-wrap">
+                          <span>{editPortalLookupMsg.message}</span>
+                          {editPortalLookupMsg.source && (
+                            <span className={`px-1.5 py-0.5 text-[9px] font-bold uppercase rounded ${
+                              editPortalLookupMsg.type === "success"
+                                ? "bg-emerald-500/20 text-emerald-800 dark:text-emerald-200"
+                                : "bg-blue-500/20 text-blue-800 dark:text-blue-200"
+                            }`}>
+                              {editPortalLookupMsg.source}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="font-semibold block">Make (Brand) *</label>
-                    <span className="text-[10px] text-muted flex items-center gap-0.5">
-                      <Sparkles className="h-2.5 w-2.5 text-amber-500" />
-                      Quick-pick
-                    </span>
-                  </div>
-                  <AppInput 
-                    value={editVehicleMake} 
-                    onChange={(e) => setEditVehicleMake(e.target.value)} 
-                    list="fleet-popular-makes-edit"
-                    required
-                  />
-                  <datalist id="fleet-popular-makes-edit">
-                    {Object.keys(POPULAR_BRANDS).map((b) => (
-                      <option key={b} value={b} />
-                    ))}
-                  </datalist>
-
-                  {/* Brand Quick-Pick Chips */}
-                  <div className="mt-1.5 flex flex-wrap gap-1">
-                    {TOP_BRAND_NAMES.map((brand) => {
-                      const isSelected = editVehicleMake.trim().toLowerCase() === brand.toLowerCase();
-                      return (
-                        <button
-                          key={brand}
-                          type="button"
-                          onClick={() => {
-                            setEditVehicleMake(brand);
-                            const cfg = POPULAR_BRANDS[brand];
-                            if (cfg) {
-                              setEditVehicleCategory(cfg.category);
-                              if (cfg.models.length > 0 && (!editVehicleModel || !cfg.models.includes(editVehicleModel))) {
-                                setEditVehicleModel(cfg.models[0]);
-                              }
-                            }
-                          }}
-                          className={`px-1.5 py-0.5 rounded text-[10px] font-medium border transition-all cursor-pointer ${
-                            isSelected
-                              ? "bg-theme-btn-primary text-white border-theme-btn-primary shadow-xs font-semibold"
-                              : "bg-surface/80 hover:bg-surface border-border text-foreground/80 hover:text-foreground hover:border-theme-btn-primary/40"
-                          }`}
-                        >
-                          {brand}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  )}
                 </div>
 
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="font-semibold block">Model *</label>
-                    <span className="text-[10px] text-muted">Popular models</span>
-                  </div>
-                  <AppInput 
-                    value={editVehicleModel} 
-                    onChange={(e) => setEditVehicleModel(e.target.value)} 
-                    list="fleet-popular-models-edit"
-                    required
-                  />
-                  <datalist id="fleet-popular-models-edit">
-                    {(POPULAR_BRANDS[editVehicleMake]?.models || []).map((m) => (
-                      <option key={m} value={m} />
-                    ))}
-                  </datalist>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="font-semibold block">Make (Brand) *</label>
+                      <span className="text-[10px] text-muted flex items-center gap-0.5">
+                        <Sparkles className="h-2.5 w-2.5 text-amber-500" />
+                        Quick-pick
+                      </span>
+                    </div>
+                    <AppInput 
+                      value={editVehicleMake} 
+                      onChange={(e) => setEditVehicleMake(e.target.value)} 
+                      list="fleet-popular-makes-edit"
+                      required
+                    />
+                    <datalist id="fleet-popular-makes-edit">
+                      {Object.keys(POPULAR_BRANDS).map((b) => (
+                        <option key={b} value={b} />
+                      ))}
+                    </datalist>
 
-                  {/* Model Quick-Pick Chips */}
-                  {POPULAR_BRANDS[editVehicleMake]?.models && (
+                    {/* Brand Quick-Pick Chips */}
                     <div className="mt-1.5 flex flex-wrap gap-1">
-                      {POPULAR_BRANDS[editVehicleMake].models.slice(0, 6).map((m) => {
-                        const isSelected = editVehicleModel.trim().toLowerCase() === m.toLowerCase();
+                      {TOP_BRAND_NAMES.map((brand) => {
+                        const isSelected = editVehicleMake.trim().toLowerCase() === brand.toLowerCase();
                         return (
                           <button
-                            key={m}
+                            key={brand}
                             type="button"
                             onClick={() => {
-                              setEditVehicleModel(m);
-                              const cfg = POPULAR_BRANDS[editVehicleMake];
-                              if (cfg?.category) setEditVehicleCategory(cfg.category);
+                              setEditVehicleMake(brand);
+                              const cfg = POPULAR_BRANDS[brand];
+                              if (cfg) {
+                                setEditVehicleCategory(cfg.category);
+                                if (cfg.models.length > 0 && (!editVehicleModel || !cfg.models.includes(editVehicleModel))) {
+                                  setEditVehicleModel(cfg.models[0]);
+                                }
+                              }
                             }}
                             className={`px-1.5 py-0.5 rounded text-[10px] font-medium border transition-all cursor-pointer ${
                               isSelected
@@ -2203,82 +2529,327 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                 : "bg-surface/80 hover:bg-surface border-border text-foreground/80 hover:text-foreground hover:border-theme-btn-primary/40"
                             }`}
                           >
-                            {m}
+                            {brand}
                           </button>
                         );
                       })}
                     </div>
-                  )}
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="font-semibold block">Model *</label>
+                      <span className="text-[10px] text-muted">Popular models</span>
+                    </div>
+                    <AppInput 
+                      value={editVehicleModel} 
+                      onChange={(e) => setEditVehicleModel(e.target.value)} 
+                      list="fleet-popular-models-edit"
+                      required
+                    />
+                    <datalist id="fleet-popular-models-edit">
+                      {(POPULAR_BRANDS[editVehicleMake]?.models || []).map((m) => (
+                        <option key={m} value={m} />
+                      ))}
+                    </datalist>
+
+                    {/* Model Quick-Pick Chips */}
+                    {POPULAR_BRANDS[editVehicleMake]?.models && (
+                      <div className="mt-1.5 flex flex-wrap gap-1">
+                        {POPULAR_BRANDS[editVehicleMake].models.slice(0, 6).map((m) => {
+                          const isSelected = editVehicleModel.trim().toLowerCase() === m.toLowerCase();
+                          return (
+                            <button
+                              key={m}
+                              type="button"
+                              onClick={() => {
+                                setNewVehicleModel(m);
+                                const cfg = POPULAR_BRANDS[editVehicleMake];
+                                if (cfg?.category) setEditVehicleCategory(cfg.category);
+                              }}
+                              className={`px-1.5 py-0.5 rounded text-[10px] font-medium border transition-all cursor-pointer ${
+                                isSelected
+                                  ? "bg-theme-btn-primary text-white border-theme-btn-primary shadow-xs font-semibold"
+                                  : "bg-surface/80 hover:bg-surface border-border text-foreground/80 hover:text-foreground hover:border-theme-btn-primary/40"
+                              }`}
+                            >
+                              {m}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-semibold block mb-1">Variant / Trim</label>
+                    <AppInput 
+                      value={editVehicleVariant} 
+                      onChange={(e) => setEditVehicleVariant(e.target.value)} 
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1 flex items-center gap-1">
+                      <Fuel className="h-3.5 w-3.5 text-amber-500" />
+                      <span>Fuel Type</span>
+                    </label>
+                    <select 
+                      value={editVehicleFuel}
+                      onChange={(e) => setEditVehicleFuel(e.target.value)}
+                      className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs"
+                    >
+                      <option value="Petrol">Petrol</option>
+                      <option value="Diesel">Diesel</option>
+                      <option value="Petrol Hybrid">Petrol Hybrid</option>
+                      <option value="Electric">Electric (EV)</option>
+                      <option value="CNG">CNG</option>
+                      <option value="LPG">LPG</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-semibold block mb-1">Category</label>
+                    <select 
+                      value={editVehicleCategory}
+                      onChange={(e) => setEditVehicleCategory(e.target.value)}
+                      className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs"
+                    >
+                      <option value="CAR">Car / SUV / Sedan</option>
+                      <option value="BIKE">Motorbike / Scooter</option>
+                      <option value="COMMERCIAL">Commercial Van / Shuttle</option>
+                      <option value="BUS">Staff Bus / Coach</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1 flex items-center gap-1">
+                      <Palette className="h-3.5 w-3.5 text-purple-500" />
+                      <span>Paint Color</span>
+                    </label>
+                    <div className="flex gap-2 items-center">
+                      <input 
+                        type="color" 
+                        value={editVehicleColor.startsWith("#") ? editVehicleColor : "#1e293b"}
+                        onChange={(e) => setEditVehicleColor(e.target.value)}
+                        className="h-9 w-10 rounded border border-border cursor-pointer p-0.5 bg-surface"
+                      />
+                      <AppInput 
+                        value={editVehicleColor} 
+                        onChange={(e) => setEditVehicleColor(e.target.value)} 
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              {/* SECTION 2: CHASSIS, ENGINE & LEGAL OWNERSHIP */}
+              <div className="rounded-xl border border-border/80 bg-muted/20 p-4 space-y-3.5">
+                <div className="flex items-center gap-2 pb-2 border-b border-border/60 text-foreground font-semibold text-xs">
+                  <Building2 className="h-4 w-4 text-blue-500" />
+                  <span>2. Identification & Legal Ownership</span>
+                </div>
+
                 <div>
-                  <label className="font-semibold block mb-1">Variant</label>
+                  <label className="font-semibold block mb-1">Registered Owner / Corporate Entity</label>
                   <AppInput 
-                    value={editVehicleVariant} 
-                    onChange={(e) => setEditVehicleVariant(e.target.value)} 
+                    value={editVehicleOwner} 
+                    onChange={(e) => setEditVehicleOwner(e.target.value)} 
+                    placeholder="e.g. Saroj Landmark Realty LLP / Chandak Realtors Pvt. Ltd."
                   />
                 </div>
-                <div>
-                  <label className="font-semibold block mb-1">Category</label>
-                  <select 
-                    value={editVehicleCategory}
-                    onChange={(e) => setEditVehicleCategory(e.target.value)}
-                    className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs"
-                  >
-                    <option value="CAR">Car / SUV / Sedan</option>
-                    <option value="BIKE">Motorbike / Scooter</option>
-                    <option value="COMMERCIAL">Commercial Van / Shuttle</option>
-                    <option value="BUS">Staff Bus / Coach</option>
-                  </select>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-semibold block mb-1 flex items-center gap-1">
+                      <Hash className="h-3.5 w-3.5 text-muted" />
+                      <span>Chassis Number (VIN)</span>
+                    </label>
+                    <AppInput 
+                      value={editVehicleVin} 
+                      onChange={(e) => setEditVehicleVin(e.target.value.toUpperCase())} 
+                      className="font-mono uppercase text-xs"
+                      placeholder="e.g. MBJAAA41VPA012345"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1 flex items-center gap-1">
+                      <Hash className="h-3.5 w-3.5 text-muted" />
+                      <span>Engine Number</span>
+                    </label>
+                    <AppInput 
+                      value={editVehicleEngine} 
+                      onChange={(e) => setEditVehicleEngine(e.target.value.toUpperCase())} 
+                      className="font-mono uppercase text-xs"
+                      placeholder="e.g. 2GD1234567"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-semibold block mb-1 flex items-center gap-1">
+                      <MapPin className="h-3.5 w-3.5 text-blue-500" />
+                      <span>RTO Office / Passing Jurisdiction</span>
+                    </label>
+                    <AppInput 
+                      value={editVehicleRtoOffice} 
+                      onChange={(e) => setEditVehicleRtoOffice(e.target.value)} 
+                      placeholder="e.g. MH-02 Mumbai Andheri RTO"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1 flex items-center gap-1">
+                      <Calendar className="h-3.5 w-3.5 text-muted" />
+                      <span>Registration Date</span>
+                    </label>
+                    <AppInput 
+                      type="date"
+                      value={editVehicleRegDate} 
+                      onChange={(e) => setEditVehicleRegDate(e.target.value)} 
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-semibold block mb-1">Status</label>
-                  <select 
-                    value={editVehicleStatus}
-                    onChange={(e) => setEditVehicleStatus(e.target.value)}
-                    className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs font-semibold"
-                  >
-                    <option value="IN_STOCK">Available (In Stock)</option>
-                    <option value="IN_SERVICE">On Route / In Service</option>
-                    <option value="MAINTENANCE">In Workshop / Maintenance</option>
-                    <option value="RESERVED">Reserved</option>
-                  </select>
+              {/* SECTION 3: STATUTORY COMPLIANCE & VALIDITY */}
+              <div className="rounded-xl border border-border/80 bg-muted/20 p-4 space-y-3.5">
+                <div className="flex items-center gap-2 pb-2 border-b border-border/60 text-foreground font-semibold text-xs">
+                  <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                  <span>3. Statutory Compliance, Insurance & Validity</span>
                 </div>
-                <div>
-                  <label className="font-semibold block mb-1">Current Odometer (km)</label>
-                  <AppInput 
-                    type="number" 
-                    value={editVehicleOdometer} 
-                    onChange={(e) => setEditVehicleOdometer(Number(e.target.value))} 
-                  />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-semibold block mb-1 flex items-center gap-1">
+                      <FileText className="h-3.5 w-3.5 text-muted" />
+                      <span>Insurance Policy Number</span>
+                    </label>
+                    <AppInput 
+                      value={editVehicleInsurancePolicy} 
+                      onChange={(e) => setEditVehicleInsurancePolicy(e.target.value)} 
+                      placeholder="e.g. 2311/61284792/00/000 (ICICI Lombard)"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1 flex items-center gap-1">
+                      <Shield className="h-3.5 w-3.5 text-emerald-500" />
+                      <span>Insurance Expiry Date</span>
+                    </label>
+                    <AppInput 
+                      type="date"
+                      value={editVehicleInsuranceExpiry} 
+                      onChange={(e) => setEditVehicleInsuranceExpiry(e.target.value)} 
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-semibold block mb-1">PUC (Pollution) Expiry Date</label>
+                    <AppInput 
+                      type="date"
+                      value={editVehiclePucExpiry} 
+                      onChange={(e) => setEditVehiclePucExpiry(e.target.value)} 
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1">Fitness Certificate Expiry Date</label>
+                    <AppInput 
+                      type="date"
+                      value={editVehicleFitnessExpiry} 
+                      onChange={(e) => setEditVehicleFitnessExpiry(e.target.value)} 
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <label className="flex items-center gap-2.5 p-2.5 rounded-lg border border-border bg-surface cursor-pointer hover:bg-muted/10 transition-colors">
+                    <input 
+                      type="checkbox"
+                      checked={editVehicleHsrp}
+                      onChange={(e) => setEditVehicleHsrp(e.target.checked)}
+                      className="rounded border-border text-theme-btn-primary focus:ring-theme-btn-primary h-4 w-4"
+                    />
+                    <div className="text-xs">
+                      <div className="font-semibold text-foreground">HSRP Number Plate Fitted</div>
+                      <div className="text-[10px] text-muted">High Security Plate with laser hologram</div>
+                    </div>
+                  </label>
+
+                  <label className="flex items-center gap-2.5 p-2.5 rounded-lg border border-border bg-surface cursor-pointer hover:bg-muted/10 transition-colors">
+                    <input 
+                      type="checkbox"
+                      checked={editVehicleRsa}
+                      onChange={(e) => setEditVehicleRsa(e.target.checked)}
+                      className="rounded border-border text-theme-btn-primary focus:ring-theme-btn-primary h-4 w-4"
+                    />
+                    <div className="text-xs">
+                      <div className="font-semibold text-foreground">24x7 Roadside Assistance (RSA)</div>
+                      <div className="text-[10px] text-muted">Emergency highway towing & breakdown cover</div>
+                    </div>
+                  </label>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-semibold block mb-1">Fleet Nickname / Tag</label>
-                  <AppInput 
-                    value={editVehicleNickname} 
-                    onChange={(e) => setEditVehicleNickname(e.target.value)} 
-                  />
+              {/* SECTION 4: FLEET OPERATIONS & DRIVER */}
+              <div className="rounded-xl border border-border/80 bg-muted/20 p-4 space-y-3.5">
+                <div className="flex items-center gap-2 pb-2 border-b border-border/60 text-foreground font-semibold text-xs">
+                  <Gauge className="h-4 w-4 text-amber-500" />
+                  <span>4. Fleet Operations & Driver Assignment</span>
                 </div>
-                <div>
-                  <label className="font-semibold block mb-1">Assigned Driver</label>
-                  <select 
-                    value={editVehicleDriverId}
-                    onChange={(e) => setEditVehicleDriverId(e.target.value)}
-                    className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs"
-                  >
-                    <option value="">-- No Driver Assigned --</option>
-                    {drivers.map(d => (
-                      <option key={d.id} value={d.id}>{d.full_name} ({d.phone})</option>
-                    ))}
-                  </select>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-semibold block mb-1">Fleet Operational Status</label>
+                    <select 
+                      value={editVehicleStatus}
+                      onChange={(e) => setEditVehicleStatus(e.target.value)}
+                      className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs font-semibold"
+                    >
+                      <option value="IN_STOCK">Available (In Stock)</option>
+                      <option value="IN_SERVICE">On Route / In Service</option>
+                      <option value="MAINTENANCE">In Workshop / Maintenance</option>
+                      <option value="RESERVED">Reserved</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1 flex items-center gap-1">
+                      <Gauge className="h-3.5 w-3.5 text-muted" />
+                      <span>Current Odometer (km)</span>
+                    </label>
+                    <AppInput 
+                      type="number" 
+                      value={editVehicleOdometer} 
+                      onChange={(e) => setEditVehicleOdometer(Number(e.target.value))} 
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-semibold block mb-1">Fleet Nickname / Tag</label>
+                    <AppInput 
+                      value={editVehicleNickname} 
+                      onChange={(e) => setEditVehicleNickname(e.target.value)} 
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1">Assigned Driver</label>
+                    <select 
+                      value={editVehicleDriverId}
+                      onChange={(e) => setEditVehicleDriverId(e.target.value)}
+                      className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs"
+                    >
+                      <option value="">-- No Driver Assigned --</option>
+                      {drivers.map(d => (
+                        <option key={d.id} value={d.id}>{d.full_name} ({d.phone})</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
 
