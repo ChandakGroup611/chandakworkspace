@@ -314,6 +314,62 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   // CRUD Handlers: VEHICLES
   // ----------------------------------------------------------------------------
 
+  // Resilient Portal Lookup & Creation Helpers:
+  // Directly queries the permanent REST API route `/api/vehicle/lookup` first.
+  // This is 100% immune to Next.js build-time Server Action ID hash rotation ("failed-to-find-server-action").
+  const queryVehiclePortal = async (plateNumber: string) => {
+    try {
+      const res = await fetch(`/api/vehicle/lookup?plate=${encodeURIComponent(plateNumber)}`, {
+        headers: { "Cache-Control": "no-cache" }
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (apiErr) {
+      console.warn("[vehicle] REST lookup failed, attempting Server Action fallback:", apiErr);
+    }
+
+    try {
+      return await fetchVehiclePortalDetailsAction(plateNumber);
+    } catch (err: any) {
+      if (err?.message?.includes("was not found on the server") || err?.message?.includes("failed-to-find-server-action")) {
+        console.warn("[vehicle] Stale Server Action hash detected, retrying via REST endpoint...");
+        const retryRes = await fetch(`/api/vehicle/lookup?plate=${encodeURIComponent(plateNumber)}`);
+        if (retryRes.ok) return await retryRes.json();
+      }
+      throw err;
+    }
+  };
+
+  const submitNewVehicle = async (formData: Parameters<typeof createVehicleAction>[0]) => {
+    try {
+      const res = await fetch("/api/vehicle/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData)
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (apiErr) {
+      console.warn("[vehicle] REST create failed, attempting Server Action fallback:", apiErr);
+    }
+
+    try {
+      return await createVehicleAction(formData);
+    } catch (err: any) {
+      if (err?.message?.includes("was not found on the server") || err?.message?.includes("failed-to-find-server-action")) {
+        const retryRes = await fetch("/api/vehicle/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData)
+        });
+        if (retryRes.ok) return await retryRes.json();
+      }
+      throw err;
+    }
+  };
+
   const handlePortalAutoFetch = async (plateOverride?: string) => {
     const rawPlate = (plateOverride || newVehiclePlate).trim();
     if (!rawPlate) {
@@ -328,7 +384,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     setPortalLookupMsg(null);
 
     try {
-      const res = await fetchVehiclePortalDetailsAction(rawPlate);
+      const res = await queryVehiclePortal(rawPlate);
       if (res.success && res.data) {
         const d = res.data;
         if (d.registration_number) setNewVehiclePlate(d.registration_number);
@@ -365,9 +421,12 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         });
       }
     } catch (err: any) {
+      const isSkew = err?.message?.includes("was not found on the server") || err?.message?.includes("failed-to-find-server-action");
       setPortalLookupMsg({
         type: "error",
-        message: err.message || "Failed to connect to vehicle portal service."
+        message: isSkew
+          ? "Portal update detected. Please refresh your browser tab (Ctrl+R) to synchronize."
+          : (err.message || "Failed to connect to vehicle portal service.")
       });
     } finally {
       setFetchingPortal(false);
@@ -414,7 +473,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
       // If user typed only the vehicle plate and clicked save immediately, auto-synthesize all details
       if (!make || !model) {
-        const autoRes = await fetchVehiclePortalDetailsAction(rawPlate);
+        const autoRes = await queryVehiclePortal(rawPlate);
         if (autoRes.success && autoRes.data) {
           make = make || autoRes.data.make || "Toyota";
           model = model || autoRes.data.model || "Innova Hycross";
@@ -435,7 +494,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         }
       }
 
-      const res = await createVehicleAction({
+      const res = await submitNewVehicle({
         registration_number: rawPlate,
         make: make || "Toyota",
         model: model || "Innova Hycross",
@@ -541,7 +600,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     setEditPortalLookupMsg(null);
 
     try {
-      const res = await fetchVehiclePortalDetailsAction(rawPlate);
+      const res = await queryVehiclePortal(rawPlate);
       if (res.success && res.data) {
         const d = res.data;
         if (d.registration_number) setEditVehiclePlate(d.registration_number);
@@ -577,9 +636,12 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         });
       }
     } catch (err: any) {
+      const isSkew = err?.message?.includes("was not found on the server") || err?.message?.includes("failed-to-find-server-action");
       setEditPortalLookupMsg({
         type: "error",
-        message: err.message || "Failed to connect to vehicle portal service."
+        message: isSkew
+          ? "Portal update detected. Please refresh your browser tab (Ctrl+R) to synchronize."
+          : (err.message || "Failed to connect to vehicle portal service.")
       });
     } finally {
       setFetchingEditPortal(false);
