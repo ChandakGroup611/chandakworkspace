@@ -6,7 +6,8 @@ import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/componen
 import { AppButton } from "@/components/ui/AppButton";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { createClient } from "@/utils/supabase/client";
-import { saveUserAction, fetchUsersDashboardData } from "@/lib/actions/users";
+import { saveUserAction, fetchUsersDashboardData, fetchUserModulesAction } from "@/lib/actions/users";
+import { assignUserModules } from "@/lib/actions/module-switcher";
 import ChandakLoader from "@/components/ui/ChandakLoader";
 import { 
   ArrowLeft, 
@@ -21,7 +22,13 @@ import {
   ChevronDown, 
   Eye, 
   EyeOff, 
-  Image as ImageIcon 
+  Image as ImageIcon,
+  FolderKanban,
+  Car,
+  Compass,
+  Layers,
+  Star,
+  CheckCircle2
 } from "lucide-react";
 
 const PRESET_AVATARS = [
@@ -43,6 +50,35 @@ const PRESET_AVATARS = [
   "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?auto=format&fit=crop&q=80&w=200",
 ];
 
+const getModuleMeta = (code: string) => {
+  switch (code) {
+    case "VEHICLE_DESK":
+      return {
+        icon: Car,
+        badgeBg: "bg-amber-500/15 text-amber-500 border-amber-500/30",
+        description: "Fleet master, vehicle inventory, daily trip sheets, driver roster, maintenance & parts."
+      };
+    case "TASK_WORKFLOW":
+      return {
+        icon: FolderKanban,
+        badgeBg: "bg-blue-500/15 text-blue-500 border-blue-500/30",
+        description: "Executive task tracker, sprints, ticketing/helpdesk, requirements lifecycle & AMC."
+      };
+    case "DESIGN_TRACKING":
+      return {
+        icon: Compass,
+        badgeBg: "bg-emerald-500/15 text-emerald-500 border-emerald-500/30",
+        description: "Architectural & structural drawing registers, consultant reviews, revisions & site GFC."
+      };
+    default:
+      return {
+        icon: Layers,
+        badgeBg: "bg-purple-500/15 text-purple-500 border-purple-500/30",
+        description: "Enterprise operational suite and specialized workflows."
+      };
+  }
+};
+
 export default function UserFormPage() {
   const router = useRouter();
   const params = useParams();
@@ -56,6 +92,7 @@ export default function UserFormPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errorAlert, setErrorAlert] = useState<string | null>(null);
+  const [successAlert, setSuccessAlert] = useState<string | null>(null);
 
   // Lookups
   const [departments, setDepartments] = useState<any[]>([]);
@@ -64,6 +101,13 @@ export default function UserFormPage() {
   const [availableAssets, setAvailableAssets] = useState<any[]>([]);
   const [availableManagers, setAvailableManagers] = useState<any[]>([]);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+
+  // Module Entitlements
+  const [availableModules, setAvailableModules] = useState<any[]>([]);
+  const [selectedModuleCodes, setSelectedModuleCodes] = useState<string[]>(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING"]);
+  const [defaultModuleCode, setDefaultModuleCode] = useState<string>("TASK_WORKFLOW");
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [assignModalSaving, setAssignModalSaving] = useState(false);
 
   // Form states
   const [formFullName, setFormFullName] = useState("");
@@ -102,6 +146,9 @@ export default function UserFormPage() {
       setRoles(data.roles || []);
       setAvailableAssets(data.assets || []);
 
+      const systemModules = (data as any).modules || [];
+      setAvailableModules(systemModules);
+
       const rawUsers = data.users || [];
       const managers = rawUsers.filter((u: any) => 
         data.roles?.find((r: any) => r.id === u.role_id)?.code !== "VIEWER" && u.is_active
@@ -132,6 +179,40 @@ export default function UserFormPage() {
             
           setFormAssignedAssets((userAssets).join(", "));
         }
+
+        // Fetch assigned modules
+        try {
+          const userModules: any[] = (await fetchUserModulesAction(id)) as any[];
+          if (userModules && userModules.length > 0) {
+            const assignedCodes: string[] = userModules
+              .map((m: any) => {
+                const mod = Array.isArray(m.module) ? m.module[0] : m.module;
+                return mod?.code;
+              })
+              .filter(Boolean);
+
+            if (assignedCodes.length > 0) {
+              setSelectedModuleCodes(assignedCodes);
+              const defaultEntry = userModules.find((m: any) => m.is_default);
+              const defaultModObj = defaultEntry ? (Array.isArray(defaultEntry.module) ? defaultEntry.module[0] : defaultEntry.module) : null;
+              const defaultMod = defaultModObj?.code;
+              if (defaultMod && assignedCodes.includes(defaultMod)) {
+                setDefaultModuleCode(defaultMod);
+              } else {
+                setDefaultModuleCode(assignedCodes[0]);
+              }
+            }
+          }
+        } catch (mErr) {
+          console.error("Failed to load user module entitlements:", mErr);
+        }
+      } else {
+        // New user: grant all active modules with TASK_WORKFLOW as default
+        const allCodes = systemModules.map((m: any) => m.code);
+        if (allCodes.length > 0) {
+          setSelectedModuleCodes(allCodes);
+        }
+        setDefaultModuleCode("TASK_WORKFLOW");
       }
     } catch (err: any) {
       setErrorAlert("Failed to load dependency records.");
@@ -145,7 +226,7 @@ export default function UserFormPage() {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      setErrorAlert("Only image file formats are allowed.");
+      setErrorAlert("Invalid file format. Please upload an image (PNG, JPG, WebP).");
       return;
     }
 
@@ -194,6 +275,11 @@ export default function UserFormPage() {
       }
     }
 
+    if (selectedModuleCodes.length === 0) {
+      setErrorAlert("At least one workspace module must be enabled for this user.");
+      return;
+    }
+
     const payload: any = {
       full_name: formFullName,
       email: formEmail,
@@ -204,7 +290,9 @@ export default function UserFormPage() {
       department_id: formDeptId || null,
       designation_id: formDesigId || null,
       manager_id: formManagerId || null,
-      assigned_assets: formAssignedAssets.split(",").map(a => a.trim()).filter(Boolean)
+      assigned_assets: formAssignedAssets.split(",").map(a => a.trim()).filter(Boolean),
+      module_codes: selectedModuleCodes,
+      default_module_code: defaultModuleCode || selectedModuleCodes[0] || "TASK_WORKFLOW"
     };
 
     setSaving(true);
@@ -261,6 +349,16 @@ export default function UserFormPage() {
         </div>
         <div className="flex items-center gap-3">
           <AppButton 
+            type="button"
+            variant="outline" 
+            onClick={() => setAssignModalOpen(true)}
+            className="px-4 h-10 font-semibold flex items-center gap-2 border-indigo-200 dark:border-indigo-800/60 bg-indigo-50/60 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-all shadow-xs cursor-pointer"
+            title="Configure and assign workspace modules"
+          >
+            <Layers className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+            <span>Assign Modules ({selectedModuleCodes.length})</span>
+          </AppButton>
+          <AppButton 
             variant="outline" 
             onClick={() => router.push("/users")}
             className="px-6 h-10 font-semibold"
@@ -278,7 +376,189 @@ export default function UserFormPage() {
         </div>
       </div>
 
+      {/* Interactive Assign Modules Modal Dialog */}
+      {assignModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-surface dark:bg-slate-900 border border-border w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            <div className="p-5 border-b border-border/60 bg-surface/50 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-indigo-500/15 text-indigo-500 flex items-center justify-center border border-indigo-500/25">
+                  <Layers className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">
+                    Assign Operational Modules
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Configure permitted workspaces and default landing for {formFullName || "this user"}
+                  </p>
+                </div>
+              </div>
+              <AppButton 
+                variant="ghost" 
+                size="icon-sm" 
+                onClick={() => setAssignModalOpen(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </AppButton>
+            </div>
+
+            <div className="p-5 space-y-3.5 overflow-y-auto flex-1">
+              {(availableModules.length > 0 ? availableModules : [
+                { id: "mod-1", code: "VEHICLE_DESK", name: "Vehicle Module", description: "Fleet master, vehicle inventory, daily trip sheets, driver roster, maintenance & parts." },
+                { id: "mod-2", code: "TASK_WORKFLOW", name: "Workspace Module", description: "Executive task tracker, sprints, ticketing/helpdesk, requirements lifecycle & AMC." },
+                { id: "mod-3", code: "DESIGN_TRACKING", name: "Design Tracking", description: "Architectural & structural drawing registers, consultant reviews, revisions & site GFC." },
+              ]).map((mod) => {
+                const isChecked = selectedModuleCodes.includes(mod.code);
+                const isDefault = defaultModuleCode === mod.code;
+                const meta = getModuleMeta(mod.code);
+                const Icon = meta.icon;
+
+                return (
+                  <div
+                    key={mod.id || mod.code}
+                    className={`p-4 rounded-xl border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
+                      isChecked
+                        ? "bg-surface border-border shadow-xs"
+                        : "bg-muted/20 border-border/40 opacity-60"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 border ${meta.badgeBg}`}>
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-bold text-sm text-foreground">
+                            {mod.name}
+                          </span>
+                          <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                            {mod.code}
+                          </span>
+                          {isDefault && isChecked && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                              <Star className="h-2.5 w-2.5 fill-amber-500 text-amber-500" /> Landing Default
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                          {mod.description || meta.description}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2.5 self-end sm:self-center shrink-0">
+                      {isChecked && (
+                        <AppButton
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          disabled={!isSuperAdmin || isDefault}
+                          onClick={() => setDefaultModuleCode(mod.code)}
+                          className={`text-xs h-7 px-2 rounded-lg border flex items-center gap-1 transition-all ${
+                            isDefault
+                              ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 font-semibold cursor-default"
+                              : "text-muted-foreground hover:text-foreground hover:bg-surface-hover border-border cursor-pointer"
+                          }`}
+                        >
+                          <Star className={`h-3 w-3 ${isDefault ? "fill-amber-500 text-amber-500" : ""}`} />
+                          <span>{isDefault ? "Default" : "Make Default"}</span>
+                        </AppButton>
+                      )}
+
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          disabled={!isSuperAdmin}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              const updated = [...selectedModuleCodes, mod.code];
+                              setSelectedModuleCodes(updated);
+                              if (!defaultModuleCode) setDefaultModuleCode(mod.code);
+                            } else {
+                              const updated = selectedModuleCodes.filter(c => c !== mod.code);
+                              setSelectedModuleCodes(updated);
+                              if (defaultModuleCode === mod.code && updated.length > 0) {
+                                setDefaultModuleCode(updated[0]);
+                              }
+                            }
+                          }}
+                          className="sr-only peer"
+                        />
+                        <div className="w-10 h-5 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-theme-btn-primary"></div>
+                      </label>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="p-4 border-t border-border/60 bg-surface/50 flex items-center justify-between gap-3">
+              <span className="text-xs text-muted-foreground">
+                {selectedModuleCodes.length} of {availableModules.length || 3} modules enabled
+              </span>
+              <div className="flex items-center gap-2">
+                <AppButton 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setAssignModalOpen(false)}
+                >
+                  Close
+                </AppButton>
+                <AppButton 
+                  type="button" 
+                  size="sm" 
+                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white font-semibold gap-1.5"
+                  onClick={async () => {
+                    if (isEditingMode && id) {
+                      setAssignModalSaving(true);
+                      try {
+                        const res = await assignUserModules(id, selectedModuleCodes, defaultModuleCode);
+                        if (res.success) {
+                          setAssignModalOpen(false);
+                          setSuccessAlert("Workspace module entitlements updated successfully!");
+                          setTimeout(() => setSuccessAlert(null), 4000);
+                        } else {
+                          setErrorAlert(res.error || "Failed to update module entitlements");
+                        }
+                      } catch (err: any) {
+                        setErrorAlert(err.message || "Failed to update modules");
+                      } finally {
+                        setAssignModalSaving(false);
+                      }
+                    } else {
+                      setAssignModalOpen(false);
+                      setSuccessAlert("Module selections applied to user profile form.");
+                      setTimeout(() => setSuccessAlert(null), 4000);
+                    }
+                  }}
+                  disabled={assignModalSaving}
+                >
+                  {assignModalSaving ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                  <span>{assignModalSaving ? "Saving..." : "Apply & Save Modules"}</span>
+                </AppButton>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="px-4 sm:px-6 lg:px-8">
+
+      {successAlert && (
+        <div className="p-4 mb-6 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-sm flex items-center justify-between animate-in fade-in duration-200">
+          <div className="flex items-center gap-2.5">
+            <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <span className="font-semibold">{successAlert}</span>
+          </div>
+          <AppButton variant="ghost" size="icon-sm" onClick={() => setSuccessAlert(null)}>
+            <X className="h-4 w-4" />
+          </AppButton>
+        </div>
+      )}
 
       {errorAlert && (
         <div className="p-4 mb-6 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm flex items-start gap-3">
@@ -441,6 +721,127 @@ export default function UserFormPage() {
                   </p>
                 </div>
               </div>
+            </AppCardContent>
+          </AppCard>
+
+          {/* SECTION 3: Workspace Module Entitlements */}
+          <AppCard className="overflow-hidden transition-all border-border shadow-xs">
+            <AppCardHeader className="bg-surface/50 pb-4 flex flex-row items-center justify-between border-b border-border/50">
+              <div className="flex items-center gap-2.5">
+                <div className="h-8 w-8 rounded-lg bg-indigo-500/15 text-indigo-500 flex items-center justify-center border border-indigo-500/25">
+                  <Layers className="h-4 w-4" />
+                </div>
+                <div>
+                  <AppCardTitle className="text-lg">Workspace Module Entitlements</AppCardTitle>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Assign permitted operational modules and configure user's landing default workspace.
+                  </p>
+                </div>
+              </div>
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 shrink-0">
+                {selectedModuleCodes.length} / {availableModules.length || 3} Permitted
+              </span>
+            </AppCardHeader>
+            <AppCardContent className="p-6 space-y-4">
+              {(availableModules.length > 0 ? availableModules : [
+                { id: "mod-1", code: "VEHICLE_DESK", name: "Vehicle Module", description: "Fleet master, vehicle inventory, daily trip sheets, driver roster, maintenance & parts." },
+                { id: "mod-2", code: "TASK_WORKFLOW", name: "Workspace Module", description: "Executive task tracker, sprints, ticketing/helpdesk, requirements lifecycle & AMC." },
+                { id: "mod-3", code: "DESIGN_TRACKING", name: "Design Tracking", description: "Architectural & structural drawing registers, consultant reviews, revisions & site GFC." },
+              ]).map((mod) => {
+                const isChecked = selectedModuleCodes.includes(mod.code);
+                const isDefault = defaultModuleCode === mod.code;
+                const meta = getModuleMeta(mod.code);
+                const Icon = meta.icon;
+
+                return (
+                  <div
+                    key={mod.id || mod.code}
+                    className={`p-4 rounded-xl border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
+                      isChecked
+                        ? "bg-surface border-border shadow-xs"
+                        : "bg-muted/20 border-border/40 opacity-60"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3.5 flex-1 min-w-0">
+                      <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 border ${meta.badgeBg}`}>
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-bold text-sm text-foreground">
+                            {mod.name}
+                          </span>
+                          <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-muted text-muted-foreground">
+                            {mod.code}
+                          </span>
+                          {isDefault && isChecked && (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                              <Star className="h-3 w-3 fill-amber-500 text-amber-500" /> Landing Default
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
+                          {mod.description || meta.description}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Action Controls */}
+                    <div className="flex items-center gap-3 self-end sm:self-center shrink-0">
+                      {/* Make Default Trigger */}
+                      {isChecked && (
+                        <AppButton
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          disabled={!isSuperAdmin || isDefault}
+                          onClick={() => setDefaultModuleCode(mod.code)}
+                          title={isDefault ? "Current landing default" : "Set as landing default workspace"}
+                          className={`text-xs h-8 px-2.5 rounded-lg border flex items-center gap-1.5 transition-all ${
+                            isDefault
+                              ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 font-semibold cursor-default"
+                              : "text-muted-foreground hover:text-foreground hover:bg-surface-hover border-border cursor-pointer"
+                          }`}
+                        >
+                          <Star className={`h-3.5 w-3.5 ${isDefault ? "fill-amber-500 text-amber-500" : ""}`} />
+                          <span className="hidden sm:inline">{isDefault ? "Default" : "Make Default"}</span>
+                        </AppButton>
+                      )}
+
+                      {/* Enable/Disable Toggle */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground hidden sm:inline">
+                          {isChecked ? "Enabled" : "Disabled"}
+                        </span>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            disabled={!isSuperAdmin}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                const updated = [...selectedModuleCodes, mod.code];
+                                setSelectedModuleCodes(updated);
+                                if (!defaultModuleCode) {
+                                  setDefaultModuleCode(mod.code);
+                                }
+                              } else {
+                                const updated = selectedModuleCodes.filter(c => c !== mod.code);
+                                setSelectedModuleCodes(updated);
+                                if (defaultModuleCode === mod.code && updated.length > 0) {
+                                  setDefaultModuleCode(updated[0]);
+                                }
+                              }
+                            }}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-theme-btn-primary"></div>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </AppCardContent>
           </AppCard>
 

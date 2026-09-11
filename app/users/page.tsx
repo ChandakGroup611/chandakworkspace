@@ -20,7 +20,8 @@ import { useTheme } from "@/components/theme/ThemeProvider";
 import { createClient } from "@/utils/supabase/client";
 import { usePermissions } from "@/hooks/usePermissions";
 import { usePresence } from "@/hooks/use-presence";
-import { saveUserAction, fetchUsersDashboardData, deleteUserAction, inviteUserAction } from "@/lib/actions/users";
+import { saveUserAction, fetchUsersDashboardData, deleteUserAction, inviteUserAction, fetchUserModulesAction } from "@/lib/actions/users";
+import { assignUserModules } from "@/lib/actions/module-switcher";
 import ChandakLoader from "@/components/ui/ChandakLoader";
 import { 
   Users, 
@@ -39,6 +40,10 @@ import {
   Camera, 
   Check, 
   Layers, 
+  Star,
+  Car,
+  FolderKanban,
+  Save,
   Briefcase, 
   Shield, 
   History,
@@ -172,6 +177,60 @@ export default function UserMasterPage() {
       triggerToast(res.error || "Failed to send invite.", true);
     }
     setInviteLoading(false);
+  };
+
+  // Module Assign Modal States
+  const [moduleModalOpen, setModuleModalOpen] = useState(false);
+  const [moduleModalUser, setModuleModalUser] = useState<AppUserItem | null>(null);
+  const [modalSelectedCodes, setModalSelectedCodes] = useState<string[]>(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING"]);
+  const [modalDefaultCode, setModalDefaultCode] = useState<string>("TASK_WORKFLOW");
+  const [moduleModalLoading, setModuleModalLoading] = useState(false);
+  const [moduleModalSaving, setModuleModalSaving] = useState(false);
+
+  const handleOpenModuleModal = async (user: AppUserItem) => {
+    setModuleModalUser(user);
+    setModuleModalOpen(true);
+    setModuleModalLoading(true);
+    try {
+      const userMods: any[] = (await fetchUserModulesAction(user.id)) as any[];
+      if (userMods && userMods.length > 0) {
+        const codes = userMods.map((m: any) => {
+          const mod = Array.isArray(m.module) ? m.module[0] : m.module;
+          return mod?.code;
+        }).filter(Boolean);
+        setModalSelectedCodes(codes.length > 0 ? codes : ["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING"]);
+        const def = userMods.find((m: any) => m.is_default);
+        const defObj = def ? (Array.isArray(def.module) ? def.module[0] : def.module) : null;
+        setModalDefaultCode(defObj?.code || codes[0] || "TASK_WORKFLOW");
+      } else {
+        setModalSelectedCodes(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING"]);
+        setModalDefaultCode("TASK_WORKFLOW");
+      }
+    } catch (e) {
+      console.error("[handleOpenModuleModal] Error:", e);
+      setModalSelectedCodes(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING"]);
+      setModalDefaultCode("TASK_WORKFLOW");
+    } finally {
+      setModuleModalLoading(false);
+    }
+  };
+
+  const handleSaveModules = async () => {
+    if (!moduleModalUser) return;
+    setModuleModalSaving(true);
+    try {
+      const res = await assignUserModules(moduleModalUser.id, modalSelectedCodes, modalDefaultCode);
+      if (res.success) {
+        triggerToast(`Operational modules updated for ${moduleModalUser.full_name}`);
+        setModuleModalOpen(false);
+      } else {
+        triggerToast(res.error || "Failed to assign modules", true);
+      }
+    } catch (err: any) {
+      triggerToast(err.message || "Failed to assign modules", true);
+    } finally {
+      setModuleModalSaving(false);
+    }
   };
 
 
@@ -696,6 +755,156 @@ export default function UserMasterPage() {
         </div>
       )}
 
+      {/* Assign Modules Modal Dialog */}
+      {moduleModalOpen && moduleModalUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-surface dark:bg-slate-900 border border-border w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            <div className="p-5 border-b border-border/60 bg-surface/50 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-indigo-500/15 text-indigo-500 flex items-center justify-center border border-indigo-500/25">
+                  <Layers className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">
+                    Assign Operational Modules
+                  </h3>
+                  <p className="text-xs text-muted">
+                    Configure permitted workspaces for {moduleModalUser.full_name} ({moduleModalUser.email})
+                  </p>
+                </div>
+              </div>
+              <AppButton 
+                variant="ghost" 
+                size="icon-sm" 
+                onClick={() => setModuleModalOpen(false)}
+                className="text-muted hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </AppButton>
+            </div>
+
+            <div className="p-5 space-y-3.5 overflow-y-auto flex-1">
+              {moduleModalLoading ? (
+                <div className="py-8 text-center text-muted flex flex-col items-center gap-2">
+                  <RefreshCw className="h-5 w-5 animate-spin text-indigo-500" />
+                  <span className="text-xs">Loading module entitlements...</span>
+                </div>
+              ) : (
+                [
+                  { code: "VEHICLE_DESK", name: "Vehicle Module", desc: "Fleet inventory, trip sheets, driver rosters, maintenance & spare parts.", icon: Car, color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20" },
+                  { code: "TASK_WORKFLOW", name: "Workspace Module", desc: "Executive task tracker, sprints, ticketing/helpdesk, requirements & AMC.", icon: FolderKanban, color: "text-blue-500 bg-blue-500/10 border-blue-500/20" },
+                  { code: "DESIGN_TRACKING", name: "Design Tracking", desc: "Architectural & structural drawing registers, consultant reviews & site GFC.", icon: Layers, color: "text-purple-500 bg-purple-500/10 border-purple-500/20" }
+                ].map((mod) => {
+                  const isChecked = modalSelectedCodes.includes(mod.code);
+                  const isDefault = modalDefaultCode === mod.code;
+                  const Icon = mod.icon;
+
+                  return (
+                    <div
+                      key={mod.code}
+                      className={`p-3.5 rounded-xl border transition-all flex items-center justify-between gap-3 ${
+                        isChecked
+                          ? "bg-surface border-border shadow-xs"
+                          : "bg-muted/20 border-border/40 opacity-60"
+                      }`}
+                    >
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 border ${mod.color}`}>
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold text-sm text-foreground">
+                              {mod.name}
+                            </span>
+                            {isDefault && isChecked && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                                <Star className="h-2.5 w-2.5 fill-amber-500 text-amber-500" /> Landing Default
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted mt-0.5 line-clamp-2">
+                            {mod.desc}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        {isChecked && (
+                          <AppButton
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            disabled={isDefault}
+                            onClick={() => setModalDefaultCode(mod.code)}
+                            className={`text-xs h-7 px-2 rounded-lg border flex items-center gap-1 transition-all ${
+                              isDefault
+                                ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 font-semibold cursor-default"
+                                : "text-muted hover:text-foreground hover:bg-surface-hover border-border cursor-pointer"
+                            }`}
+                          >
+                            <Star className={`h-3 w-3 ${isDefault ? "fill-amber-500 text-amber-500" : ""}`} />
+                            <span>{isDefault ? "Default" : "Make Default"}</span>
+                          </AppButton>
+                        )}
+
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                const updated = [...modalSelectedCodes, mod.code];
+                                setModalSelectedCodes(updated);
+                                if (!modalDefaultCode) setModalDefaultCode(mod.code);
+                              } else {
+                                const updated = modalSelectedCodes.filter(c => c !== mod.code);
+                                setModalSelectedCodes(updated);
+                                if (modalDefaultCode === mod.code && updated.length > 0) {
+                                  setModalDefaultCode(updated[0]);
+                                }
+                              }
+                            }}
+                            className="sr-only peer"
+                          />
+                          <div className="w-10 h-5 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-theme-btn-primary"></div>
+                        </label>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            <div className="p-4 border-t border-border/60 bg-surface/50 flex items-center justify-between gap-3">
+              <span className="text-xs text-muted">
+                {modalSelectedCodes.length} of 3 modules enabled
+              </span>
+              <div className="flex items-center gap-2">
+                <AppButton 
+                  type="button" 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setModuleModalOpen(false)}
+                >
+                  Cancel
+                </AppButton>
+                <AppButton 
+                  type="button" 
+                  size="sm" 
+                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white font-semibold gap-1.5"
+                  onClick={handleSaveModules}
+                  disabled={moduleModalSaving || moduleModalLoading}
+                >
+                  {moduleModalSaving ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                  <span>{moduleModalSaving ? "Saving..." : "Save Assignments"}</span>
+                </AppButton>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Dismissable Informational Alerts */}
       {successAlert && (
         <div className={`p-4 rounded-xl border flex items-center justify-between text-xs animate-in fade-in-20 ${
@@ -915,6 +1124,16 @@ export default function UserMasterPage() {
 
                             <AppTableCell className="text-right w-24 shrink-0 pr-4" onClick={(e) => e.stopPropagation()}>
                               <div className="flex items-center justify-end gap-1 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
+                                {(hasPermission("USERS_UPDATE") || isSuperAdmin) && (
+                                  <AppButton variant="secondary"
+                                    type="button"
+                                    onClick={() => handleOpenModuleModal(usr)}
+                                    className="p-1.5 rounded transition-all text-indigo-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
+                                    title="Assign Workspace Modules"
+                                  >
+                                    <Layers className="h-4 w-4" />
+                                  </AppButton>
+                                )}
                                 {(hasPermission("USERS_UPDATE") || isSuperAdmin) && (
                                   <AppButton variant="secondary"
                                     type="button"

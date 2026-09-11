@@ -22,13 +22,20 @@ import {
   BookOpen,
   LineChart,
   Trash2,
-  LifeBuoy
+  LifeBuoy,
+  Car,
+  Compass,
+  Wrench,
+  Package,
+  Calendar,
+  Layers
 } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { AppButton } from "@/components/ui/AppButton";
 import { useRenderLog } from "@/hooks/use-render-log";
 import { onRenderCallback } from "@/utils/performance/profiler-utils";
+import ModuleSwitcher from "./ModuleSwitcher";
 
 interface NavItem {
   label: string;
@@ -50,7 +57,7 @@ interface NavGroup {
   items: NavItem[];
 }
 
-const navGroups: NavGroup[] = [
+const taskNavGroups: NavGroup[] = [
   {
     label: "Core Operations",
     items: [
@@ -134,9 +141,79 @@ const navGroups: NavGroup[] = [
   }
 ];
 
+const vehicleNavGroups: NavGroup[] = [
+  {
+    label: "Fleet Operations",
+    items: [
+      { label: "Fleet Dashboard", href: "/vehicle", icon: LayoutDashboard },
+      { label: "Vehicle Inventory", href: "/vehicle/inventory", icon: Car },
+      { label: "Daily Trip Sheets", href: "/vehicle/trips", icon: Calendar },
+      { label: "Driver Roster", href: "/vehicle/drivers", icon: Users },
+      { label: "Traveler Allocations", href: "/vehicle/travelers", icon: UserCheck },
+    ]
+  },
+  {
+    label: "Service & Assets",
+    items: [
+      { label: "Maintenance & Job Cards", href: "/vehicle/maintenance", icon: Wrench },
+      { label: "Parts & Accessories", href: "/vehicle/parts", icon: Package },
+      { label: "Compliance & Alerts", href: "/vehicle/alerts", icon: ShieldAlert },
+    ]
+  },
+  {
+    label: "Analytics & System",
+    items: [
+      { label: "Fleet Reports", href: "/vehicle/reports", icon: LineChart },
+      { label: "My Assigned Vehicles", href: "/vehicle/my-garage", icon: LifeBuoy },
+      { label: "Fleet Guidelines / SOPs", href: "/vehicle/learning", icon: BookOpen },
+      { label: "Fleet Settings", href: "/vehicle/settings", icon: Settings },
+    ]
+  }
+];
+
+const designNavGroups: NavGroup[] = [
+  {
+    label: "Design Management",
+    items: [
+      { label: "Design Dashboard", href: "/design", icon: LayoutDashboard },
+      { label: "Drawing Register", href: "/design/drawings", icon: FolderKanban },
+      { label: "Approvals & Reviews", href: "/design/approvals", icon: FileCheck2 },
+      { label: "Revision History", href: "/design/revisions", icon: LineChart },
+    ]
+  },
+  {
+    label: "Execution & Governance",
+    items: [
+      { label: "Site Handover & GFC", href: "/design/handover", icon: ShieldCheck },
+      { label: "Consultant Directory", href: "/design/consultants", icon: Users },
+      { label: "Design Reports", href: "/design/reports", icon: BookOpen },
+      { label: "Design Settings", href: "/design/settings", icon: Settings },
+    ]
+  }
+];
+
 export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?: boolean; onCloseMobile?: () => void }) {
   useRenderLog("Sidebar", {});
   const pathname = usePathname() || "/";
+
+  // Auto-detect active module context based on current path
+  const activeModuleCode = React.useMemo(() => {
+    if (pathname.startsWith("/vehicle")) return "VEHICLE_DESK";
+    if (pathname.startsWith("/design")) return "DESIGN_TRACKING";
+    return "TASK_WORKFLOW";
+  }, [pathname]);
+
+  const navGroups = React.useMemo(() => {
+    if (activeModuleCode === "VEHICLE_DESK") return vehicleNavGroups;
+    if (activeModuleCode === "DESIGN_TRACKING") return designNavGroups;
+    return taskNavGroups;
+  }, [activeModuleCode]);
+
+  const moduleHomeHref = React.useMemo(() => {
+    if (activeModuleCode === "VEHICLE_DESK") return "/vehicle";
+    if (activeModuleCode === "DESIGN_TRACKING") return "/design";
+    return "/";
+  }, [activeModuleCode]);
   const searchParams = useSearchParams();
   const [isCompactState, setIsCompactState] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -401,13 +478,19 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
                 <img src="/Chandak_Group_Official_Logo.png" alt="Chandak Logo" className="h-8 w-auto dark:brightness-0 dark:invert" />
                 <span className="text-sm font-bold text-foreground">Chandak Workspace</span>
               </div>
-              <button
+              <AppButton
                 type="button"
+                variant="ghost"
+                size="icon-sm"
                 onClick={() => onCloseMobile?.()}
-                className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface-hover"
+                className="text-muted hover:text-foreground hover:bg-surface-hover"
               >
                 <ChevronLeft className="h-5 w-5" />
-              </button>
+              </AppButton>
+            </div>
+            {/* Mobile Module Switcher */}
+            <div className="px-3 pt-2 pb-2 border-b border-border/40">
+              <ModuleSwitcher onCloseMobile={onCloseMobile} />
             </div>
             {navContent}
           </div>
@@ -421,24 +504,35 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
         className={`hidden md:flex relative z-40 flex-col h-full shrink-0 font-sans transition-all duration-300 select-none theme-card-structural border-r border-border/30 shadow-[4px_0_24px_rgba(0,0,0,0.02)] ${ isCompact ? "w-16" : "w-[240px]" }`}
       >
         {/* Sidebar Top Master Header */}
-        <div className={`flex ${!isCompact ? 'flex-col pt-6 pb-0 px-3 gap-3' : 'h-14 items-center justify-center px-4'} shrink-0`}>
+        <div className={`flex ${!isCompact ? 'flex-col pt-5 pb-1 px-3 gap-2.5' : 'h-auto py-3 flex-col items-center justify-center px-2 gap-2'} shrink-0`}>
           {!isCompact ? (
-            <Link href="/" className="flex flex-col gap-1 overflow-hidden items-center justify-center pt-1">
-              <div className={`flex items-center justify-center transition-all duration-300 h-[64px] w-[210px] mx-auto shrink-0 px-1`}>
+            <Link href={moduleHomeHref} className="flex flex-col gap-1 overflow-hidden items-center justify-center pt-1">
+              <div className={`flex items-center justify-center transition-all duration-300 h-[58px] w-[200px] mx-auto shrink-0 px-1`}>
                 <img src="/Chandak_Group_Official_Logo.png" alt="Chandak Logo" className="max-h-full max-w-full object-contain dark:brightness-0 dark:invert" style={{ imageRendering: '-webkit-optimize-contrast' }} />
               </div>
               <div className="flex flex-col min-w-0 justify-center items-center px-1">
-                <span className={`text-[15px] font-bold tracking-tight truncate text-foreground`}>
+                <span className={`text-[14px] font-bold tracking-tight truncate text-foreground`}>
                   Chandak Workspace
                 </span>
               </div>
             </Link>
           ) : (
-            <Link href="/" className="flex h-14 w-14 mx-auto shrink-0 items-center justify-center mt-1">
-              <div className="h-10 w-10 mx-auto flex items-center justify-center rounded-lg mb-2 overflow-hidden px-1">
+            <Link href={moduleHomeHref} className="flex h-10 w-10 mx-auto shrink-0 items-center justify-center mt-1">
+              <div className="h-9 w-9 mx-auto flex items-center justify-center rounded-lg overflow-hidden px-1">
                 <img src="/chandak-40-icon.png" alt="Chandak 40 Years Logo" className="max-h-full max-w-full object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
               </div>
             </Link>
+          )}
+
+          {/* Module Switcher */}
+          {!isCompact ? (
+            <div className="w-full">
+              <ModuleSwitcher />
+            </div>
+          ) : (
+            <div className="w-full flex justify-center">
+              <ModuleSwitcher isCompact={true} />
+            </div>
           )}
 
           <AppButton

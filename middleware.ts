@@ -24,10 +24,11 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  // If user is authenticated and trying to access login/register, redirect to home page
+  // If user is authenticated and trying to access login/register, redirect to module selection
   if (user && isAuthPage) {
-    const nextParam = request.nextUrl.searchParams.get("next") || "/";
-    const redirectUrl = new URL(nextParam, request.url);
+    const nextParam = request.nextUrl.searchParams.get("next");
+    const target = nextParam && nextParam !== "/" ? nextParam : "/select-module";
+    const redirectUrl = new URL(target, request.url);
     const response = NextResponse.redirect(redirectUrl);
     
     // Copy refreshed Supabase cookies to avoid session desynchronization

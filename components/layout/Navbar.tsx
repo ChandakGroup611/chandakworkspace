@@ -154,6 +154,7 @@ export default function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => 
   const handleExecuteSignOut = async () => {
     setLoggingOut(true);
     try {
+      document.cookie = "active_module=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
       await supabase.auth.signOut();
       window.location.href = "/login";
     } catch (e) {

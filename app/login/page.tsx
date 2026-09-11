@@ -61,10 +61,11 @@ export default function LoginPage() {
         // Listen for the auth state change which sets the cookies in @supabase/ssr
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
           if (event === "SIGNED_IN" && session) {
-            const next = searchParams.get("next") || "/";
+            const rawNext = searchParams.get("next");
+            const destination = rawNext && rawNext !== "/" ? `/select-module?next=${encodeURIComponent(rawNext)}` : "/select-module";
             // Wait 500ms to ensure @supabase/ssr has completely finished writing cookies
             setTimeout(() => {
-              window.location.href = next;
+              window.location.href = destination;
             }, 500);
           }
         });
@@ -73,8 +74,9 @@ export default function LoginPage() {
         setTimeout(async () => {
           const { data: { session } } = await supabase.auth.getSession();
           if (session) {
-            const next = searchParams.get("next") || "/";
-            window.location.href = next;
+            const rawNext = searchParams.get("next");
+            const destination = rawNext && rawNext !== "/" ? `/select-module?next=${encodeURIComponent(rawNext)}` : "/select-module";
+            window.location.href = destination;
           }
         }, 1500);
         
@@ -93,6 +95,7 @@ export default function LoginPage() {
         }
         window.history.replaceState({}, document.title, window.location.pathname);
       } else if (isLogout) {
+        document.cookie = "active_module=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           await Promise.race([supabase.auth.signOut(), new Promise(resolve => setTimeout(resolve, 800))]);
@@ -100,6 +103,7 @@ export default function LoginPage() {
         setSuccessMsg("You have been successfully logged out.");
         window.history.replaceState({}, document.title, window.location.pathname);
       } else if (isTerminated) {
+        document.cookie = "active_module=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           await Promise.race([supabase.auth.signOut(), new Promise(resolve => setTimeout(resolve, 800))]);
@@ -123,8 +127,9 @@ export default function LoginPage() {
       } else {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-          const next = searchParams.get("next") || "/";
-          window.location.href = next;
+          const rawNext = searchParams.get("next");
+          const destination = rawNext && rawNext !== "/" ? `/select-module?next=${encodeURIComponent(rawNext)}` : "/select-module";
+          window.location.href = destination;
         }
       }
     };
@@ -180,8 +185,9 @@ export default function LoginPage() {
       }
 
       const searchParams = new URLSearchParams(window.location.search);
-      const next = searchParams.get("next") || "/";
-      window.location.href = next;
+      const rawNext = searchParams.get("next");
+      const destination = rawNext && rawNext !== "/" ? `/select-module?next=${encodeURIComponent(rawNext)}` : "/select-module";
+      window.location.href = destination;
 
     } catch (err: any) {
       setErrorMsg(err.message || "An error occurred during authentication.");
@@ -196,7 +202,8 @@ export default function LoginPage() {
       setSsoLoading(true);
 
       const searchParams = new URLSearchParams(window.location.search);
-      const next = searchParams.get("next") || "/";
+      const rawNext = searchParams.get("next");
+      const next = rawNext && rawNext !== "/" ? `/select-module?next=${encodeURIComponent(rawNext)}` : "/select-module";
 
       // Check if user is already authenticated before initiating SSO
       const { data: { session } } = await supabase.auth.getSession();
@@ -205,9 +212,7 @@ export default function LoginPage() {
         return;
       }
 
-      const callbackUrl = searchParams.has("next") 
-        ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(searchParams.get("next")!)}` 
-        : `${window.location.origin}/auth/callback`;
+      const callbackUrl = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'azure',

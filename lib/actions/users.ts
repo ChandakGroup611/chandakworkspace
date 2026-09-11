@@ -4,6 +4,7 @@ import { createClient as createServerClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/lib/supabase/service_role";
 
 // Admin client that uses service role key to bypass RLS and perform Auth updates
 const getAdminClient = () => {
@@ -61,6 +62,7 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
   const targetClient = isServiceRoleAvailable ? adminClient : supabase;
 
   // 3. Perform the Mutation
+  let savedUserId: string | null = editUserId;
   if (editUserId) {
     // ── UPDATE EXISTING USER ──
     
@@ -218,6 +220,7 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
       if (!newUserId) {
         return { success: false, error: "User creation failed: No ID returned." };
       }
+      savedUserId = newUserId;
 
       // Update in user_master
       const { error: dbError } = await supabase
@@ -265,6 +268,7 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
       }
 
       const newUserId = newAuthUser.user.id;
+      savedUserId = newUserId;
 
       // B. Update/Insert in user_master (ON CONFLICT DO UPDATE to handle sync triggers elegantly)
       const { error: dbError } = await adminClient
@@ -299,9 +303,23 @@ export async function saveUserAction(editUserId: string | null, payload: any, pa
     }
   }
 
-  // 4. Revalidate cache
+  // 4. Assign workspace modules if provided in payload
+  if (savedUserId && payload.module_codes && Array.isArray(payload.module_codes)) {
+    try {
+      const { assignUserModules } = await import("@/lib/actions/module-switcher");
+      const defaultMod = payload.default_module_code || payload.module_codes[0] || "TASK_WORKFLOW";
+      await assignUserModules(savedUserId, payload.module_codes, defaultMod);
+    } catch (modErr) {
+      console.error("[saveUserAction] Error saving module assignments:", modErr);
+    }
+  }
+
+  // 5. Revalidate cache
   revalidatePath("/users");
-  return { success: true };
+  if (savedUserId) {
+    revalidatePath(`/users/${savedUserId}`);
+  }
+  return { success: true, userId: savedUserId };
 }
 
 async function updateAssetAssignments(dbClient: any, userId: string, newAssetTags: string[]) {
@@ -390,14 +408,15 @@ export async function fetchUsersDashboardData() {
 
   const { getVisibleUsers } = await import('@/lib/repositories/users');
   
-  // Parallelize ALL network requests (Users list + 4 metadata lists) to eliminate waterfall latency
-  const [users, [deptRes, desigRes, roleRes, astRes]] = await Promise.all([
+  // Parallelize ALL network requests (Users list + metadata lists) to eliminate waterfall latency
+  const [users, [deptRes, desigRes, roleRes, astRes, modRes]] = await Promise.all([
     getVisibleUsers(user.id),
     Promise.all([
       supabase.from("departments").select("id, code, name").eq("is_deleted", false),
       supabase.from("designations").select("id, code, name, department_id").eq("is_deleted", false),
       supabase.from("roles").select("id, code, name").eq("is_deleted", false),
-      supabase.from("assets").select("id, code, name, asset_tag, assigned_user_id").eq("is_deleted", false)
+      supabase.from("assets").select("id, code, name, asset_tag, assigned_user_id").eq("is_deleted", false),
+      supabase.from("modules_master").select("id, code, name, description, icon, display_order").eq("is_active", true).order("display_order", { ascending: true })
     ])
   ]);
 
@@ -407,8 +426,26 @@ export async function fetchUsersDashboardData() {
     departments: deptRes.data || [],
     designations: desigRes.data || [],
     roles: roleRes.data || [],
-    assets: astRes.data || []
+    assets: astRes.data || [],
+    modules: modRes.data || []
   };
+}
+
+/**
+ * Fetches module assignments for a specific user.
+ */
+export async function fetchUserModulesAction(targetUserId: string) {
+  noStore();
+  const { data, error } = await supabaseAdmin
+    .from("user_modules")
+    .select("module_id, is_default, module:modules_master(id, code, name, icon)")
+    .eq("user_id", targetUserId);
+
+  if (error) {
+    console.error("[fetchUserModulesAction] Error:", error);
+    return [];
+  }
+  return data || [];
 }
 
 /**
