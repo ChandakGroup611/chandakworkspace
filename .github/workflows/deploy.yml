@@ -56,8 +56,8 @@ jobs:
       - name: Sync files via FTP
         run: |
           echo "Uploading deploy.zip to Hostinger via FTP..."
-          curl --retry 3 --retry-delay 5 -T ./upload-payload/deploy.zip --user "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/deploy.zip" || \
-          curl --retry 3 --retry-delay 5 --ftp-ssl -T ./upload-payload/deploy.zip --user "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/deploy.zip"
+          curl --retry 5 --retry-delay 10 --connect-timeout 60 --max-time 300 -T ./upload-payload/deploy.zip --user "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/deploy.zip" || \
+          curl --retry 5 --retry-delay 10 --connect-timeout 60 --max-time 300 --ftp-ssl -T ./upload-payload/deploy.zip --user "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/deploy.zip"
 
       # Automatically extract the zip and restart the Node.js server via SSH
       - name: Extract and Restart Server via SSH
