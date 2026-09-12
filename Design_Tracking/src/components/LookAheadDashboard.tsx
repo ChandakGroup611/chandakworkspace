@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { EY_LOOK_AHEAD_ITEMS, LookAheadItem } from "../data/eyTenderData";
+import React, { useState, useMemo, useEffect } from "react";
 import { 
   Clock, 
   AlertCircle, 
@@ -15,75 +14,115 @@ import {
   Zap,
   SlidersHorizontal,
   X,
-  Send,
+  Trash2,
   Sparkles,
-  ShieldAlert
+  ShieldAlert,
+  Plus
 } from "lucide-react";
+import { DesignMasterStore } from "../services/designMasterStore";
+import { LookAheadEntry } from "../types/masterTypes";
 
 export const LookAheadDashboard: React.FC = () => {
+  const [storeState, setStoreState] = useState(() => DesignMasterStore.getState());
   const [selectedProject, setSelectedProject] = useState<string>("ALL");
   const [timeframeFilter, setTimeframeFilter] = useState<"ALL" | "30_DAYS" | "60_DAYS">("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [selectedItem, setSelectedItem] = useState<LookAheadItem | null>(null);
-  const [expeditedIds, setExpeditedIds] = useState<Set<string>>(new Set());
+  const [selectedItem, setSelectedItem] = useState<LookAheadEntry | null>(null);
 
-  // Unique projects from look ahead items
-  const projects = useMemo(() => {
-    const list = Array.from(new Set(EY_LOOK_AHEAD_ITEMS.map(i => i.project).filter(Boolean)));
-    return list;
+  // Subscribe to DesignMasterStore for dynamic real-time reactivity
+  useEffect(() => {
+    const unsubscribe = DesignMasterStore.subscribe(() => {
+      setStoreState(DesignMasterStore.getState());
+    });
+    return unsubscribe;
   }, []);
+
+  const lookAheads = storeState.lookAheads;
+
+  // Name resolution maps
+  const projectMap = useMemo(() => {
+    return new Map(storeState.projects.map(p => [p.id, p.name]));
+  }, [storeState.projects]);
+
+  const towerMap = useMemo(() => {
+    return new Map(storeState.towers.map(t => [t.id, t.towerName]));
+  }, [storeState.towers]);
+
+  // Unique project names with look-ahead deliverables
+  const uniqueProjectNames = useMemo(() => {
+    const set = new Set<string>();
+    for (const item of lookAheads) {
+      const pName = projectMap.get(item.projectId);
+      if (pName) set.add(pName);
+    }
+    return Array.from(set);
+  }, [lookAheads, projectMap]);
 
   // Filtered items
   const filteredItems = useMemo(() => {
-    return EY_LOOK_AHEAD_ITEMS.filter(item => {
-      if (selectedProject !== "ALL" && item.project !== selectedProject) return false;
+    return lookAheads.filter(item => {
+      const projectName = projectMap.get(item.projectId) || "Development";
+      const towerName = towerMap.get(item.towerId) || "Wing";
+      const description = item.deliverableDescription || "";
+
+      if (selectedProject !== "ALL" && projectName !== selectedProject) return false;
       if (timeframeFilter !== "ALL" && item.timeframe !== timeframeFilter) return false;
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matches = 
-          item.project.toLowerCase().includes(q) || 
-          item.tower.toLowerCase().includes(q) || 
-          item.description.toLowerCase().includes(q);
+          projectName.toLowerCase().includes(q) || 
+          towerName.toLowerCase().includes(q) || 
+          description.toLowerCase().includes(q);
         if (!matches) return false;
       }
       return true;
     });
-  }, [selectedProject, timeframeFilter, searchQuery]);
+  }, [lookAheads, projectMap, towerMap, selectedProject, timeframeFilter, searchQuery]);
 
   // Group items by Project and Tower
   const groupedByProject = useMemo(() => {
-    const map = new Map<string, LookAheadItem[]>();
+    const map = new Map<string, LookAheadEntry[]>();
     for (const item of filteredItems) {
-      const key = `${item.project} • ${item.tower}`;
+      const projectName = projectMap.get(item.projectId) || "Development";
+      const towerName = towerMap.get(item.towerId) || "Wing";
+      const key = `${projectName} • ${towerName}`;
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(item);
     }
     return Array.from(map.entries());
-  }, [filteredItems]);
+  }, [filteredItems, projectMap, towerMap]);
 
-  const count30 = EY_LOOK_AHEAD_ITEMS.filter(i => i.timeframe === "30_DAYS").length;
-  const count60 = EY_LOOK_AHEAD_ITEMS.filter(i => i.timeframe === "60_DAYS").length;
+  const count30 = lookAheads.filter(i => i.timeframe === "30_DAYS").length;
+  const count60 = lookAheads.filter(i => i.timeframe === "60_DAYS").length;
 
-  const getItemKey = (item: LookAheadItem) => `${item.project}__${item.tower}__${item.description}`;
+  const handleToggleExpedite = (id: string) => {
+    DesignMasterStore.toggleExpediteLookAhead(id);
+    if (selectedItem && selectedItem.id === id) {
+      setSelectedItem(prev => prev ? { ...prev, isExpedited: !prev.isExpedited } : null);
+    }
+  };
 
-  const handleToggleExpedite = (key: string) => {
-    setExpeditedIds(prev => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
+  const handleDeleteItem = (id: string) => {
+    if (confirm("Are you sure you want to remove this milestone from the look-ahead schedule?")) {
+      DesignMasterStore.deleteLookAhead(id);
+      setSelectedItem(null);
+    }
   };
 
   const handleExportCsv = () => {
-    const headers = ["Timeframe", "Project", "Wing / Tower", "Deliverable Description", "Expedited Status"];
-    const rows = filteredItems.map(item => [
-      `"${item.timeframe === "30_DAYS" ? "30 Days (Immediate)" : "60 Days (Forecast)"}"`,
-      `"${item.project}"`,
-      `"${item.tower}"`,
-      `"${item.description.replace(/"/g, '""')}"`,
-      `"${expeditedIds.has(getItemKey(item)) ? "EXPEDITED" : "NORMAL"}"`
-    ].join(","));
+    const headers = ["Timeframe", "Project", "Wing / Tower", "Deliverable Description", "Expedited Status", "Target Date"];
+    const rows = filteredItems.map(item => {
+      const pName = projectMap.get(item.projectId) || "Development";
+      const tName = towerMap.get(item.towerId) || "Wing";
+      return [
+        `"${item.timeframe === "30_DAYS" ? "30 Days (Immediate)" : "60 Days (Forecast)"}"`,
+        `"${pName}"`,
+        `"${tName}"`,
+        `"${(item.deliverableDescription || "").replace(/"/g, '""')}"`,
+        `"${item.isExpedited ? "EXPEDITED" : "NORMAL"}"`,
+        `"${item.targetDate || "-"}"`
+      ].join(",");
+    });
     const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows].join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -101,12 +140,12 @@ export const LookAheadDashboard: React.FC = () => {
         <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-xs flex items-center justify-between">
           <div>
             <span className="text-[11px] font-black text-muted-foreground uppercase tracking-wider">
-              Total Look-Ahead Packages
+              Total Look-Ahead Milestones
             </span>
             <div className="text-3xl font-black text-foreground mt-1 tracking-tight">
-              {EY_LOOK_AHEAD_ITEMS.length}
+              {lookAheads.length}
             </div>
-            <span className="text-[11px] text-muted-foreground">Critical execution milestones</span>
+            <span className="text-[11px] text-muted-foreground">Master-driven critical deliverables</span>
           </div>
           <div className="h-12 w-12 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center border border-blue-500/20 shadow-inner">
             <Calendar className="h-6 w-6" />
@@ -158,7 +197,7 @@ export const LookAheadDashboard: React.FC = () => {
                 : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
             }`}
           >
-            All Windows ({EY_LOOK_AHEAD_ITEMS.length})
+            All Windows ({lookAheads.length})
           </button>
           <button
             type="button"
@@ -205,8 +244,8 @@ export const LookAheadDashboard: React.FC = () => {
             onChange={e => setSelectedProject(e.target.value)}
             className="h-8 px-2.5 rounded-xl border border-border bg-surface text-xs font-bold text-foreground focus:outline-none focus:border-emerald-500 cursor-pointer shadow-2xs"
           >
-            <option value="ALL">🏢 All Projects ({projects.length})</option>
-            {projects.map(p => (
+            <option value="ALL">🏢 All Projects ({uniqueProjectNames.length})</option>
+            {uniqueProjectNames.map(p => (
               <option key={p} value={p}>{p}</option>
             ))}
           </select>
@@ -222,6 +261,17 @@ export const LookAheadDashboard: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Empty State */}
+      {lookAheads.length === 0 && (
+        <div className="p-12 text-center rounded-2xl border border-dashed border-border bg-surface space-y-3">
+          <Calendar className="h-10 w-10 text-muted-foreground/40 mx-auto" />
+          <h4 className="text-sm font-bold text-foreground">No Look-Ahead Milestones Configured</h4>
+          <p className="text-xs text-muted-foreground max-w-md mx-auto">
+            Your workspace is master-driven. You can add look-ahead milestones using &ldquo;Quick Fill Entry&rdquo; above or restore the EY reference template from the &ldquo;Masters Setup&rdquo; tab.
+          </p>
+        </div>
+      )}
 
       {/* Grouped Look-Ahead Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -249,12 +299,11 @@ export const LookAheadDashboard: React.FC = () => {
                 </div>
 
                 <div className="space-y-2 pt-1">
-                  {items.map((item, itemIdx) => {
-                    const itemKey = getItemKey(item);
-                    const isExpedited = expeditedIds.has(itemKey);
+                  {items.map((item) => {
+                    const isExpedited = !!item.isExpedited;
                     return (
                       <div 
-                        key={itemIdx}
+                        key={item.id}
                         onClick={() => setSelectedItem(item)}
                         className={`p-2.5 rounded-xl border text-xs flex flex-col gap-1.5 transition-all cursor-pointer group ${
                           item.timeframe === "30_DAYS"
@@ -277,8 +326,13 @@ export const LookAheadDashboard: React.FC = () => {
                         </div>
 
                         <span className="leading-snug font-semibold text-foreground group-hover:text-emerald-500 transition-colors">
-                          {item.description}
+                          {item.deliverableDescription}
                         </span>
+                        {item.targetDate && (
+                          <span className="text-[10px] text-muted-foreground font-mono">
+                            Target: {item.targetDate}
+                          </span>
+                        )}
                       </div>
                     );
                   })}
@@ -307,10 +361,10 @@ export const LookAheadDashboard: React.FC = () => {
                   Look-Ahead Milestone Action
                 </span>
                 <h4 className="text-base font-bold text-foreground mt-0.5">
-                  {selectedItem.description}
+                  {selectedItem.deliverableDescription}
                 </h4>
                 <p className="text-xs text-muted-foreground">
-                  {selectedItem.project} • Wing {selectedItem.tower}
+                  {projectMap.get(selectedItem.projectId) || "Development"} • Wing {towerMap.get(selectedItem.towerId) || "Wing"}
                 </p>
               </div>
               <button
@@ -334,23 +388,38 @@ export const LookAheadDashboard: React.FC = () => {
               <div className="flex items-center justify-between text-muted-foreground">
                 <span>Priority Status:</span>
                 <span className="font-bold text-foreground">
-                  {expeditedIds.has(getItemKey(selectedItem)) ? "⚡ Fast-Track Expedited" : "Normal Schedule"}
+                  {selectedItem.isExpedited ? "⚡ Fast-Track Expedited" : "Normal Schedule"}
                 </span>
               </div>
+              {selectedItem.targetDate && (
+                <div className="flex items-center justify-between text-muted-foreground">
+                  <span>Target Date:</span>
+                  <span className="font-bold text-foreground">{selectedItem.targetDate}</span>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2 pt-2">
               <button
                 type="button"
-                onClick={() => handleToggleExpedite(getItemKey(selectedItem))}
+                onClick={() => handleToggleExpedite(selectedItem.id)}
                 className={`w-full py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                  expeditedIds.has(getItemKey(selectedItem))
+                  selectedItem.isExpedited
                     ? "bg-amber-500 text-white hover:bg-amber-600 shadow-md"
                     : "bg-emerald-600 text-white hover:bg-emerald-500 shadow-md"
                 }`}
               >
                 <Zap className="h-3.5 w-3.5" />
-                <span>{expeditedIds.has(getItemKey(selectedItem)) ? "Revoke Expedited Priority" : "Fast-Track / Mark Expedited"}</span>
+                <span>{selectedItem.isExpedited ? "Revoke Expedited Priority" : "Fast-Track / Mark Expedited"}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleDeleteItem(selectedItem.id)}
+                className="w-full py-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 border border-rose-500/30 flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                <span>Remove Milestone</span>
               </button>
             </div>
 
@@ -369,4 +438,3 @@ export const LookAheadDashboard: React.FC = () => {
     </div>
   );
 };
-

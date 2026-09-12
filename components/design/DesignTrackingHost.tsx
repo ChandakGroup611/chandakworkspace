@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { 
   Compass, 
   Layers, 
@@ -18,7 +18,10 @@ import {
   ArrowUpRight,
   TrendingUp,
   FileSpreadsheet,
-  Activity
+  Activity,
+  Plus,
+  Settings2,
+  Database
 } from "lucide-react";
 import { TenderDesignMatrix } from "../../Design_Tracking/src/components/TenderDesignMatrix";
 import { LookAheadDashboard } from "../../Design_Tracking/src/components/LookAheadDashboard";
@@ -28,29 +31,58 @@ import { DrawingRegister } from "../../Design_Tracking/src/components/DrawingReg
 import { GfcHandoverView } from "../../Design_Tracking/src/components/GfcHandoverView";
 import { UploadDrawingModal } from "../../Design_Tracking/src/components/UploadDrawingModal";
 import { ReviewApprovalModal } from "../../Design_Tracking/src/components/ReviewApprovalModal";
-import { EyTenderService } from "../../Design_Tracking/src/services/eyTenderService";
+import { MastersSetupView } from "../../Design_Tracking/src/components/MastersSetupView";
+import { DataEntryFormsModal } from "../../Design_Tracking/src/components/DataEntryFormsModal";
+import { DesignMasterStore } from "../../Design_Tracking/src/services/designMasterStore";
 import { mockDrawings, mockGfcReleases } from "../../Design_Tracking/src/mock/designMockData";
 import { DrawingItem, DrawingStatus } from "../../Design_Tracking/src/types";
-import { EY_PROJECT_COLUMNS, EY_UNIQUE_PROJECTS, EY_LOOK_AHEAD_ITEMS, EY_LIAISON_CONSULTANTS } from "../../Design_Tracking/src/data/eyTenderData";
 
-type ActiveTabType = "MATRIX" | "LOOK_AHEAD" | "LIAISONING" | "STAGES" | "DRAWINGS" | "GFC_HANDOVER";
+type ActiveTabType = "MATRIX" | "LOOK_AHEAD" | "LIAISONING" | "STAGES" | "DRAWINGS" | "GFC_HANDOVER" | "MASTERS";
 
 export default function DesignTrackingHost() {
   const [activeTab, setActiveTab] = useState<ActiveTabType>("MATRIX");
+
+  // Dynamic Master Store State
+  const [storeState, setStoreState] = useState(() => DesignMasterStore.getState());
+  const [isDataEntryOpen, setIsDataEntryOpen] = useState(false);
 
   // Drawings & Modals state
   const [drawings, setDrawings] = useState<DrawingItem[]>(mockDrawings);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [selectedDrawingForReview, setSelectedDrawingForReview] = useState<DrawingItem | null>(null);
 
-  // Overall KPIs from EyTenderService
-  const projectKpis = useMemo(() => EyTenderService.getProjectKpis(), []);
-  const totalReceived = useMemo(() => projectKpis.reduce((acc, p) => acc + p.receivedPackages, 0), [projectKpis]);
-  const totalPackages = useMemo(() => projectKpis.reduce((acc, p) => acc + p.totalPackages, 0), [projectKpis]);
-  const overallRate = totalPackages > 0 ? Math.round((totalReceived / totalPackages) * 100) : 0;
+  // Subscribe to DesignMasterStore for real-time live synchronization
+  useEffect(() => {
+    const unsubscribe = DesignMasterStore.subscribe(() => {
+      setStoreState(DesignMasterStore.getState());
+    });
+    return unsubscribe;
+  }, []);
 
-  const count30 = useMemo(() => EY_LOOK_AHEAD_ITEMS.filter(i => i.timeframe === "30_DAYS").length, []);
-  const count60 = useMemo(() => EY_LOOK_AHEAD_ITEMS.filter(i => i.timeframe === "60_DAYS").length, []);
+  // Dynamic KPI Metrics derived on the fly from active masters
+  const totalProjects = storeState.projects.length;
+  const totalTowers = storeState.towers.length;
+  const totalWorkPackages = storeState.packages.length;
+
+  const totalReceivedPackages = useMemo(() => {
+    return Object.values(storeState.packageStatuses).filter(s => {
+      const lower = s.status.toLowerCase();
+      return lower.includes("received") || lower.includes("cleared") || lower.includes("done");
+    }).length;
+  }, [storeState.packageStatuses]);
+
+  const totalPossiblePackageCells = totalWorkPackages * totalTowers;
+  const overallDeliveryRate = totalPossiblePackageCells > 0 
+    ? Math.min(100, Math.round((totalReceivedPackages / totalPossiblePackageCells) * 100))
+    : 0;
+
+  const count30 = useMemo(() => {
+    return storeState.lookAheads.filter(i => i.timeframe === "30_DAYS").length;
+  }, [storeState.lookAheads]);
+
+  const count60 = useMemo(() => {
+    return storeState.lookAheads.filter(i => i.timeframe === "60_DAYS").length;
+  }, [storeState.lookAheads]);
 
   const handleDrawingUploaded = (newDrawing: Omit<DrawingItem, "id">) => {
     const created: DrawingItem = {
@@ -87,17 +119,29 @@ export default function DesignTrackingHost() {
                 Design & Engineering Tracking Suite
               </h1>
               <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5 shadow-2xs">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
-                <span>EY Tender R2 Standard</span>
+                <Database className="h-3 w-3 text-emerald-400" />
+                <span>Master-Driven Platform</span>
               </span>
             </div>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-              Chandak Group Master Development Portfolio • 11 Projects • 24 Wings • Tender Freeze & GFC Release Cockpit
+              Chandak Group Development Portfolio • {totalProjects} Projects • {totalTowers} Wings • {totalWorkPackages} Work Packages
             </p>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 relative z-10 w-full md:w-auto justify-end">
+          {/* Quick Data Entry Button */}
+          <button
+            type="button"
+            onClick={() => setIsDataEntryOpen(true)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition-all shadow-lg shadow-teal-600/30 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+            title="Open live data entry modal to fill package status, look-ahead milestones, or authority NOCs"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Quick Fill Entry</span>
+          </button>
+
+          {/* Upload Drawing Button */}
           <button
             type="button"
             onClick={() => setIsUploadOpen(true)}
@@ -111,7 +155,7 @@ export default function DesignTrackingHost() {
 
       {/* KPI Metrics Dashboard Strip */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Metric 1: Projects */}
+        {/* Metric 1: Projects & Towers */}
         <div className="p-5 rounded-2xl bg-surface border border-border flex flex-col justify-between shadow-xs hover:border-blue-500/40 transition-all group">
           <div className="flex items-center justify-between text-muted-foreground text-xs font-bold">
             <span>Development Projects</span>
@@ -121,41 +165,41 @@ export default function DesignTrackingHost() {
           </div>
           <div className="mt-3">
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl sm:text-3xl font-black text-foreground">{EY_UNIQUE_PROJECTS.length}</span>
-              <span className="text-xs text-muted-foreground font-semibold">Projects</span>
+              <span className="text-2xl sm:text-3xl font-black text-foreground">{totalProjects}</span>
+              <span className="text-xs text-muted-foreground font-semibold">Active Developments</span>
             </div>
             <div className="mt-1 flex items-center gap-1.5 text-[11px] text-blue-500 font-bold">
-              <span>{EY_PROJECT_COLUMNS.length} Tower Wings Tracked</span>
+              <span>{totalTowers} Tower Wings Tracked</span>
             </div>
           </div>
         </div>
 
-        {/* Metric 2: Drawings Delivery */}
+        {/* Metric 2: Tender Package Delivery Rate */}
         <div className="p-5 rounded-2xl bg-surface border border-border flex flex-col justify-between shadow-xs hover:border-emerald-500/40 transition-all group">
           <div className="flex items-center justify-between text-muted-foreground text-xs font-bold">
-            <span>Tender Drawings Delivery</span>
+            <span>Tender Package Delivery</span>
             <div className="h-8 w-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center border border-emerald-500/20 group-hover:scale-110 transition-transform">
               <CheckCircle2 className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-3">
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl sm:text-3xl font-black text-emerald-500 font-mono">{overallRate}%</span>
+              <span className="text-2xl sm:text-3xl font-black text-emerald-500 font-mono">{overallDeliveryRate}%</span>
               <span className="text-xs text-muted-foreground font-semibold">Rate</span>
             </div>
             <div className="mt-1 flex items-center gap-2">
               <div className="w-full h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                 <div 
                   className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full" 
-                  style={{ width: `${overallRate}%` }} 
+                  style={{ width: `${overallDeliveryRate}%` }} 
                 />
               </div>
-              <span className="text-[10px] text-muted-foreground shrink-0">{totalReceived}/{totalPackages}</span>
+              <span className="text-[10px] text-muted-foreground shrink-0">{totalReceivedPackages} Received</span>
             </div>
           </div>
         </div>
 
-        {/* Metric 3: Look-Ahead */}
+        {/* Metric 3: Look-Ahead Milestones */}
         <div className="p-5 rounded-2xl bg-surface border border-border flex flex-col justify-between shadow-xs hover:border-amber-500/40 transition-all group">
           <div className="flex items-center justify-between text-muted-foreground text-xs font-bold">
             <span>Look-Ahead Milestones</span>
@@ -165,8 +209,8 @@ export default function DesignTrackingHost() {
           </div>
           <div className="mt-3">
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl sm:text-3xl font-black text-amber-500 font-mono">{EY_LOOK_AHEAD_ITEMS.length}</span>
-              <span className="text-xs text-muted-foreground font-semibold">Total</span>
+              <span className="text-2xl sm:text-3xl font-black text-amber-500 font-mono">{storeState.lookAheads.length}</span>
+              <span className="text-xs text-muted-foreground font-semibold">Total Milestones</span>
             </div>
             <div className="mt-1 flex items-center gap-1.5 text-[11px]">
               <span className="font-bold text-rose-500">🚨 {count30} in 30d</span>
@@ -176,7 +220,7 @@ export default function DesignTrackingHost() {
           </div>
         </div>
 
-        {/* Metric 4: Statutory */}
+        {/* Metric 4: Statutory Authorities */}
         <div className="p-5 rounded-2xl bg-surface border border-border flex flex-col justify-between shadow-xs hover:border-purple-500/40 transition-all group">
           <div className="flex items-center justify-between text-muted-foreground text-xs font-bold">
             <span>Statutory Authorities</span>
@@ -186,11 +230,11 @@ export default function DesignTrackingHost() {
           </div>
           <div className="mt-3">
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl sm:text-3xl font-black text-purple-500 font-mono">{EY_LIAISON_CONSULTANTS.length}</span>
-              <span className="text-xs text-muted-foreground font-semibold">Bodies</span>
+              <span className="text-2xl sm:text-3xl font-black text-purple-500 font-mono">{storeState.authorities.length}</span>
+              <span className="text-xs text-muted-foreground font-semibold">Clearance Bodies</span>
             </div>
             <div className="mt-1 flex items-center gap-1.5 text-[11px] text-purple-500 font-bold">
-              <span>BMC, CFO, Tree, RERA & MoEF</span>
+              <span>{Object.keys(storeState.statutoryClearances || {}).length} Clearances Recorded</span>
             </div>
           </div>
         </div>
@@ -211,7 +255,7 @@ export default function DesignTrackingHost() {
             <Layers className={`h-4 w-4 ${activeTab === "MATRIX" ? "text-emerald-500" : "text-muted-foreground"}`} />
             <span>Tender Design Matrix</span>
             <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-muted-foreground">
-              65
+              {totalWorkPackages}
             </span>
           </button>
 
@@ -243,7 +287,7 @@ export default function DesignTrackingHost() {
             <ShieldCheck className={`h-4 w-4 ${activeTab === "LIAISONING" ? "text-purple-500" : "text-muted-foreground"}`} />
             <span>Statutory Liaisoning</span>
             <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-purple-500/10 text-purple-500 font-bold">
-              25
+              {storeState.authorities.length}
             </span>
           </button>
 
@@ -294,6 +338,23 @@ export default function DesignTrackingHost() {
               {mockGfcReleases.length} Releases
             </span>
           </button>
+
+          {/* New Tab: Masters Setup */}
+          <button
+            type="button"
+            onClick={() => setActiveTab("MASTERS")}
+            className={`py-3 px-3.5 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
+              activeTab === "MASTERS"
+                ? "border-teal-500 text-foreground font-black"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Settings2 className={`h-4 w-4 ${activeTab === "MASTERS" ? "text-teal-500" : "text-muted-foreground"}`} />
+            <span>⚙️ Masters Setup</span>
+            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-teal-500/15 text-teal-600 dark:text-teal-400 font-bold">
+              Config
+            </span>
+          </button>
         </div>
       </div>
 
@@ -331,6 +392,17 @@ export default function DesignTrackingHost() {
         <GfcHandoverView releases={mockGfcReleases} />
       )}
 
+      {/* Tab 7: Masters Setup View */}
+      {activeTab === "MASTERS" && (
+        <MastersSetupView />
+      )}
+
+      {/* Quick Data Entry Modal */}
+      <DataEntryFormsModal
+        isOpen={isDataEntryOpen}
+        onClose={() => setIsDataEntryOpen(false)}
+      />
+
       {/* Upload Drawing Modal */}
       <UploadDrawingModal
         isOpen={isUploadOpen}
@@ -348,4 +420,3 @@ export default function DesignTrackingHost() {
     </div>
   );
 }
-

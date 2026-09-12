@@ -1,13 +1,8 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { 
-  EY_PROJECT_COLUMNS, 
-  EY_UNIQUE_PROJECTS, 
-  EY_TENDER_PACKAGES, 
-  TenderPackageItem,
-  ProjectTowerColumn
-} from "../data/eyTenderData";
+import React, { useState, useMemo, useEffect } from "react";
+import { DesignMasterStore, MasterStoreState } from "../services/designMasterStore";
+import { WorkPackageMaster, TowerMaster, ProjectMaster } from "../types/masterTypes";
 import { 
   Search, 
   Download, 
@@ -27,48 +22,77 @@ import {
   FileSpreadsheet
 } from "lucide-react";
 
+interface MatrixColumn {
+  colKey: string;
+  projectId: string;
+  projectName: string;
+  towerId: string;
+  towerName: string;
+  towerType: string;
+}
+
 export const TenderDesignMatrix: React.FC = () => {
-  // In-memory packages state allowing live interactive cell updates
-  const [packages, setPackages] = useState<TenderPackageItem[]>(EY_TENDER_PACKAGES);
+  const [storeState, setStoreState] = useState<MasterStoreState>(DesignMasterStore.getState());
   const [selectedProject, setSelectedProject] = useState<string>("ALL");
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [activeCell, setActiveCell] = useState<{
-    pkg: TenderPackageItem;
-    col: ProjectTowerColumn;
+    pkg: WorkPackageMaster;
+    col: MatrixColumn;
     currentVal: string;
   } | null>(null);
 
   // Status edit draft
   const [cellEditDraft, setCellEditDraft] = useState<string>("");
 
-  // Visible project tower columns
-  const visibleColumns = useMemo(() => {
-    if (selectedProject === "ALL") return EY_PROJECT_COLUMNS;
-    return EY_PROJECT_COLUMNS.filter(c => c.project === selectedProject);
-  }, [selectedProject]);
+  // Subscribe to real-time master store updates
+  useEffect(() => {
+    const unsub = DesignMasterStore.subscribe(() => {
+      setStoreState({ ...DesignMasterStore.getState() });
+    });
+    return () => unsub();
+  }, []);
 
-  // Unique categories
+  // Compute dynamic project tower columns
+  const visibleColumns = useMemo<MatrixColumn[]>(() => {
+    const projectMap = new Map(storeState.projects.map(p => [p.id, p.name]));
+    let towers = storeState.towers;
+    if (selectedProject !== "ALL") {
+      towers = towers.filter(t => t.projectId === selectedProject);
+    }
+
+    return towers.map(t => ({
+      colKey: t.id,
+      projectId: t.projectId,
+      projectName: projectMap.get(t.projectId) || "Development",
+      towerId: t.id,
+      towerName: t.towerName,
+      towerType: t.towerType
+    }));
+  }, [storeState.projects, storeState.towers, selectedProject]);
+
+  // Unique disciplines
   const categories = useMemo(() => {
-    const set = new Set(packages.map(p => p.category).filter(Boolean));
+    const set = new Set(storeState.packages.map(p => p.disciplineName).filter(Boolean));
     return Array.from(set);
-  }, [packages]);
+  }, [storeState.packages]);
 
   // Filtered packages
   const filteredPackages = useMemo(() => {
-    return packages.filter(pkg => {
-      if (categoryFilter !== "ALL" && pkg.category !== categoryFilter) return false;
+    return storeState.packages.filter(pkg => {
+      if (categoryFilter !== "ALL" && pkg.disciplineName !== categoryFilter) return false;
 
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
-        const matches = pkg.packageName.toLowerCase().includes(q) || pkg.category.toLowerCase().includes(q);
+        const matches = pkg.packageName.toLowerCase().includes(q) || pkg.disciplineName.toLowerCase().includes(q);
         if (!matches) return false;
       }
 
       if (statusFilter !== "ALL") {
         const hasMatchingStatus = visibleColumns.some(col => {
-          const val = (pkg.statuses[`${col.project}__${col.tower}`] || "").toLowerCase();
+          const entry = storeState.packageStatuses[`${col.projectId}__${col.towerId}__${pkg.id}`];
+          const val = (entry ? (entry.targetDate || entry.status) : "NA").toLowerCase();
           if (statusFilter === "RECEIVED" && val.includes("received")) return true;
           if (statusFilter === "PENDING" && (val.includes("pending") || val.includes("not onboard"))) return true;
           if (statusFilter === "IN_PROGRESS" && (val.includes("progress") || val.includes("onboard"))) return true;
@@ -80,7 +104,7 @@ export const TenderDesignMatrix: React.FC = () => {
 
       return true;
     });
-  }, [packages, categoryFilter, searchQuery, statusFilter, visibleColumns]);
+  }, [storeState.packages, storeState.packageStatuses, categoryFilter, searchQuery, statusFilter, visibleColumns]);
 
   // Live statistical calculation across current visible view
   const matrixStats = useMemo(() => {
@@ -92,7 +116,8 @@ export const TenderDesignMatrix: React.FC = () => {
 
     for (const pkg of filteredPackages) {
       for (const col of visibleColumns) {
-        const val = (pkg.statuses[`${col.project}__${col.tower}`] || "NA").toLowerCase();
+        const entry = storeState.packageStatuses[`${col.projectId}__${col.towerId}__${pkg.id}`];
+        const val = (entry ? (entry.targetDate || entry.status) : "NA").toLowerCase();
         if (val === "na" || val === "-") continue;
         totalCells++;
         if (val.includes("received")) received++;
@@ -104,7 +129,7 @@ export const TenderDesignMatrix: React.FC = () => {
 
     const rate = totalCells > 0 ? Math.round((received / totalCells) * 100) : 0;
     return { received, inProgress, pending, targetDates, totalCells, rate };
-  }, [filteredPackages, visibleColumns]);
+  }, [filteredPackages, visibleColumns, storeState.packageStatuses]);
 
   // Helper for cell badge styling
   const renderCellBadge = (rawVal: string) => {
@@ -146,7 +171,6 @@ export const TenderDesignMatrix: React.FC = () => {
       );
     }
 
-    // Likely a target date (e.g., 30-Aug, etc.)
     return (
       <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-sky-500/15 text-sky-700 dark:text-sky-300 border border-sky-500/30 inline-flex items-center gap-1 shadow-2xs">
         <span className="h-1.5 w-1.5 rounded-full bg-sky-500" />
@@ -156,45 +180,56 @@ export const TenderDesignMatrix: React.FC = () => {
   };
 
   // Open inspector
-  const handleOpenInspector = (pkg: TenderPackageItem, col: ProjectTowerColumn, currentVal: string) => {
+  const handleOpenInspector = (pkg: WorkPackageMaster, col: MatrixColumn, currentVal: string) => {
     setActiveCell({ pkg, col, currentVal });
     setCellEditDraft(currentVal);
   };
 
-  // Apply cell update
+  // Apply cell update into dynamic store
   const handleSaveCell = (newVal: string) => {
     if (!activeCell) return;
     const { pkg, col } = activeCell;
-    const key = `${col.project}__${col.tower}`;
 
-    setPackages(prev => prev.map(p => {
-      if (p.id === pkg.id) {
-        return {
-          ...p,
-          statuses: {
-            ...p.statuses,
-            [key]: newVal
-          }
-        };
-      }
-      return p;
-    }));
+    let status: any = "NA";
+    let targetDate: string | undefined = undefined;
+    const lower = newVal.toLowerCase();
+
+    if (lower.includes("received")) status = "Received";
+    else if (lower.includes("pending")) status = "Pending";
+    else if (lower.includes("progress")) status = "In progress";
+    else if (newVal !== "NA" && newVal.trim().length > 0) {
+      status = "Target Date";
+      targetDate = newVal;
+    }
+
+    DesignMasterStore.recordPackageStatus(
+      col.projectId,
+      col.towerId,
+      pkg.id,
+      status,
+      targetDate,
+      undefined,
+      newVal
+    );
 
     setActiveCell(null);
   };
 
   // Real CSV export
   const handleExportCsv = () => {
-    const headers = ["Discipline Category", "Work Package Name", ...visibleColumns.map(c => `${c.project} - ${c.tower}`)];
+    const headers = ["Discipline Category", "Work Package Name", ...visibleColumns.map(c => `${c.projectName} - ${c.towerName}`)];
     const rows = filteredPackages.map(pkg => {
-      const rowVals = visibleColumns.map(col => `"${(pkg.statuses[`${col.project}__${col.tower}`] || "NA").replace(/"/g, '""')}"`);
-      return [`"${pkg.category}"`, `"${pkg.packageName.replace(/"/g, '""')}"`, ...rowVals].join(",");
+      const rowVals = visibleColumns.map(col => {
+        const entry = storeState.packageStatuses[`${col.projectId}__${col.towerId}__${pkg.id}`];
+        return `"${(entry ? (entry.targetDate || entry.status) : "NA").replace(/"/g, '""')}"`;
+      });
+      return [`"${pkg.disciplineName}"`, `"${pkg.packageName.replace(/"/g, '""')}"`, ...rowVals].join(",");
     });
     const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows].join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Chandak_EY_Tender_Design_Matrix_${selectedProject}_${new Date().toISOString().split("T")[0]}.csv`);
+    link.setAttribute("download", `Chandak_Tender_Design_Matrix_${new Date().toISOString().split("T")[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -220,7 +255,7 @@ export const TenderDesignMatrix: React.FC = () => {
                 </span>
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Full 65 work packages cross-referenced across 11 Chandak developments and 24 individual tower wings
+                Dynamic master matrix rendered across {storeState.projects.length} development projects and {visibleColumns.length} individual tower wings
               </p>
             </div>
           </div>
@@ -253,9 +288,9 @@ export const TenderDesignMatrix: React.FC = () => {
               onChange={e => setSelectedProject(e.target.value)}
               className="h-9 px-3 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-xs font-bold text-foreground focus:outline-none focus:border-emerald-500 cursor-pointer shadow-2xs"
             >
-              <option value="ALL">🏢 All 11 Projects ({EY_PROJECT_COLUMNS.length} Wings)</option>
-              {EY_UNIQUE_PROJECTS.map(proj => (
-                <option key={proj} value={proj}>{proj}</option>
+              <option value="ALL">🏢 All {storeState.projects.length} Projects ({visibleColumns.length} Wings)</option>
+              {storeState.projects.map(proj => (
+                <option key={proj.id} value={proj.id}>{proj.name}</option>
               ))}
             </select>
 
@@ -393,9 +428,9 @@ export const TenderDesignMatrix: React.FC = () => {
                     key={idx}
                     className="p-2.5 text-center font-bold text-foreground border-r border-border/40 text-[10px] uppercase tracking-wider bg-slate-50 dark:bg-slate-900/60 min-w-[130px]"
                   >
-                    <div className="truncate font-black text-foreground">{col.project}</div>
+                    <div className="truncate font-black text-foreground">{col.projectName}</div>
                     <div className="text-muted-foreground font-mono font-semibold text-[9px] mt-0.5 px-1 py-0.5 rounded bg-slate-200/50 dark:bg-slate-800/60 inline-block">
-                      {col.tower}
+                      {col.towerName}
                     </div>
                   </th>
                 ))}
@@ -409,7 +444,7 @@ export const TenderDesignMatrix: React.FC = () => {
                     <div className="max-w-xs mx-auto space-y-2">
                       <Info className="h-8 w-8 text-muted-foreground/50 mx-auto" />
                       <p className="font-semibold text-foreground">No matching packages found</p>
-                      <p className="text-xs">Try clearing the search term or switching discipline filters</p>
+                      <p className="text-xs">Add new packages in the Masters Setup or adjust filters</p>
                     </div>
                   </td>
                 </tr>
@@ -420,7 +455,7 @@ export const TenderDesignMatrix: React.FC = () => {
                     <td className="p-3.5 sticky left-0 z-10 bg-surface group-hover:bg-slate-50 dark:group-hover:bg-slate-900 border-r border-border font-medium text-foreground shadow-sm">
                       <div className="flex items-center gap-1.5 mb-1">
                         <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                          {pkg.category}
+                          {pkg.disciplineName}
                         </span>
                       </div>
                       <div className="font-bold text-foreground text-xs leading-snug">
@@ -430,13 +465,14 @@ export const TenderDesignMatrix: React.FC = () => {
 
                     {/* Status Cells */}
                     {visibleColumns.map((col, colIdx) => {
-                      const val = pkg.statuses[`${col.project}__${col.tower}`] || "NA";
+                      const entry = storeState.packageStatuses[`${col.projectId}__${col.towerId}__${pkg.id}`];
+                      const val = entry ? (entry.targetDate || entry.status) : "NA";
                       return (
                         <td
                           key={colIdx}
                           onClick={() => handleOpenInspector(pkg, col, val)}
                           className="p-2 border-r border-border/30 text-center cursor-pointer hover:bg-emerald-500/5 transition-colors group/cell"
-                          title={`Click to inspect or update: ${pkg.packageName} • ${col.project} (${col.tower})`}
+                          title={`Click to update: ${pkg.packageName} • ${col.projectName} (${col.towerName})`}
                         >
                           <div className="flex items-center justify-center">
                             {renderCellBadge(val)}
@@ -467,9 +503,9 @@ export const TenderDesignMatrix: React.FC = () => {
                 </h4>
                 <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                   <Building className="h-3.5 w-3.5 text-blue-400" />
-                  <span className="font-semibold text-foreground">{activeCell.col.project}</span>
+                  <span className="font-semibold text-foreground">{activeCell.col.projectName}</span>
                   <span>•</span>
-                  <span>Wing: <strong>{activeCell.col.tower}</strong></span>
+                  <span>Wing: <strong>{activeCell.col.towerName}</strong></span>
                 </p>
               </div>
               <button
@@ -485,7 +521,7 @@ export const TenderDesignMatrix: React.FC = () => {
             <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-border space-y-2 text-xs">
               <div className="flex items-center justify-between text-muted-foreground">
                 <span>Discipline Category:</span>
-                <strong className="text-foreground">{activeCell.pkg.category}</strong>
+                <strong className="text-foreground">{activeCell.pkg.disciplineName}</strong>
               </div>
               <div className="flex items-center justify-between text-muted-foreground">
                 <span>Current Recorded Status:</span>

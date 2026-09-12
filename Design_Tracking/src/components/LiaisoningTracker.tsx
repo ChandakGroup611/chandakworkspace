@@ -1,13 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { 
-  EY_LIAISON_CONSULTANTS, 
-  EY_PROJECT_COLUMNS, 
-  EY_UNIQUE_PROJECTS,
-  LiaisonConsultantItem,
-  ProjectTowerColumn
-} from "../data/eyTenderData";
+import React, { useState, useMemo, useEffect } from "react";
 import { 
   Shield, 
   Search, 
@@ -29,36 +22,79 @@ import {
   Plane,
   FileBadge2
 } from "lucide-react";
+import { DesignMasterStore } from "../services/designMasterStore";
+import { StatutoryAuthorityMaster } from "../types/masterTypes";
 
 export const LiaisoningTracker: React.FC = () => {
-  const [consultants, setConsultants] = useState<LiaisonConsultantItem[]>(EY_LIAISON_CONSULTANTS);
+  const [storeState, setStoreState] = useState(() => DesignMasterStore.getState());
   const [selectedProject, setSelectedProject] = useState<string>("ALL");
   const [onboardFilter, setOnboardFilter] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [viewMode, setViewMode] = useState<"MATRIX" | "CARDS">("MATRIX");
+  const [customRemark, setCustomRemark] = useState<string>("");
+
   const [activeCell, setActiveCell] = useState<{
-    item: LiaisonConsultantItem;
-    col: ProjectTowerColumn;
+    authority: StatutoryAuthorityMaster;
+    col: { projectId: string; projectName: string; towerId: string; towerName: string };
     currentVal: string;
   } | null>(null);
 
-  const visibleColumns = useMemo(() => {
-    if (selectedProject === "ALL") return EY_PROJECT_COLUMNS;
-    return EY_PROJECT_COLUMNS.filter(c => c.project === selectedProject);
-  }, [selectedProject]);
+  // Subscribe to DesignMasterStore for dynamic real-time reactivity
+  useEffect(() => {
+    const unsubscribe = DesignMasterStore.subscribe(() => {
+      setStoreState(DesignMasterStore.getState());
+    });
+    return unsubscribe;
+  }, []);
 
-  const filteredConsultants = useMemo(() => {
-    return consultants.filter(item => {
+  const projects = storeState.projects;
+  const towers = storeState.towers;
+  const authorities = storeState.authorities;
+  const statutoryClearances = storeState.statutoryClearances;
+
+  // Dynamic project columns from active tower & project masters
+  const dynamicColumns = useMemo(() => {
+    const list: { projectId: string; projectName: string; towerId: string; towerName: string }[] = [];
+    for (const tower of towers) {
+      const proj = projects.find(p => p.id === tower.projectId);
+      if (!proj) continue;
+      if (selectedProject !== "ALL" && proj.name !== selectedProject) continue;
+      list.push({
+        projectId: proj.id,
+        projectName: proj.name,
+        towerId: tower.id,
+        towerName: tower.towerName
+      });
+    }
+    return list;
+  }, [projects, towers, selectedProject]);
+
+  const uniqueProjectNames = useMemo(() => {
+    return projects.map(p => p.name);
+  }, [projects]);
+
+  // Helper to read cell status
+  const getCellStatus = (authorityId: string, projectId: string, towerId: string): string => {
+    const key = `${projectId}__${towerId}__${authorityId}`;
+    return statutoryClearances[key]?.onboardingStatus || "NA";
+  };
+
+  // Filtered authorities
+  const filteredAuthorities = useMemo(() => {
+    return authorities.filter(item => {
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
-        const matches = item.consultantTitle.toLowerCase().includes(q) || item.scope.toLowerCase().includes(q);
+        const matches = 
+          item.authorityName.toLowerCase().includes(q) || 
+          item.scope.toLowerCase().includes(q) ||
+          item.category.toLowerCase().includes(q);
         if (!matches) return false;
       }
 
       if (onboardFilter !== "ALL") {
-        const hasMatch = visibleColumns.some(col => {
-          const val = (item.statuses[`${col.project}__${col.tower}`] || "").toLowerCase();
-          if (onboardFilter === "ONBOARD" && (val.includes("onboard") || val.includes("fixed")) && !val.includes("not onboard")) return true;
+        const hasMatch = dynamicColumns.some(col => {
+          const val = getCellStatus(item.id, col.projectId, col.towerId).toLowerCase();
+          if (onboardFilter === "ONBOARD" && (val.includes("onboard") || val.includes("fixed") || val.includes("cleared")) && !val.includes("not onboard")) return true;
           if (onboardFilter === "NOT_ONBOARD" && val.includes("not onboard")) return true;
           return false;
         });
@@ -67,7 +103,7 @@ export const LiaisoningTracker: React.FC = () => {
 
       return true;
     });
-  }, [consultants, searchQuery, onboardFilter, visibleColumns]);
+  }, [authorities, searchQuery, onboardFilter, dynamicColumns, statutoryClearances]);
 
   // Overall compliance stats
   const complianceStats = useMemo(() => {
@@ -75,19 +111,19 @@ export const LiaisoningTracker: React.FC = () => {
     let notOnboardCount = 0;
     let totalCells = 0;
 
-    for (const item of filteredConsultants) {
-      for (const col of visibleColumns) {
-        const val = (item.statuses[`${col.project}__${col.tower}`] || "NA").toLowerCase();
+    for (const item of filteredAuthorities) {
+      for (const col of dynamicColumns) {
+        const val = getCellStatus(item.id, col.projectId, col.towerId).toLowerCase();
         if (val === "na" || val === "-") continue;
         totalCells++;
         if (val.includes("not onboard")) notOnboardCount++;
-        else if (val.includes("onboard") || val.includes("fixed")) onboardCount++;
+        else if (val.includes("onboard") || val.includes("fixed") || val.includes("cleared")) onboardCount++;
       }
     }
 
     const rate = totalCells > 0 ? Math.round((onboardCount / totalCells) * 100) : 0;
     return { onboardCount, notOnboardCount, totalCells, rate };
-  }, [filteredConsultants, visibleColumns]);
+  }, [filteredAuthorities, dynamicColumns, statutoryClearances]);
 
   const renderBadge = (rawVal: string) => {
     const val = (rawVal || "NA").trim();
@@ -112,11 +148,11 @@ export const LiaisoningTracker: React.FC = () => {
         </span>
       );
     }
-    if (lower.includes("fixed")) {
+    if (lower.includes("fixed") || lower.includes("cleared") || lower.includes("obtained")) {
       return (
         <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-500/30 inline-flex items-center gap-1 shadow-2xs">
           <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-          <span>Fixed Partner</span>
+          <span>{val}</span>
         </span>
       );
     }
@@ -127,32 +163,31 @@ export const LiaisoningTracker: React.FC = () => {
     );
   };
 
-  const handleUpdateStatus = (newVal: string) => {
+  const handleUpdateStatus = (newVal: any) => {
     if (!activeCell) return;
-    const { item, col } = activeCell;
-    const key = `${col.project}__${col.tower}`;
+    const { authority, col } = activeCell;
 
-    setConsultants(prev => prev.map(c => {
-      if (c.id === item.id) {
-        return {
-          ...c,
-          statuses: {
-            ...c.statuses,
-            [key]: newVal
-          }
-        };
-      }
-      return c;
-    }));
+    DesignMasterStore.recordStatutoryClearance(
+      col.projectId,
+      col.towerId,
+      authority.id,
+      newVal,
+      undefined,
+      customRemark || undefined
+    );
 
     setActiveCell(null);
+    setCustomRemark("");
   };
 
   const handleExportCsv = () => {
-    const headers = ["Statutory Authority / Scope", "Scope Description", ...visibleColumns.map(c => `${c.project} - ${c.tower}`)];
-    const rows = filteredConsultants.map(item => {
-      const rowVals = visibleColumns.map(col => `"${(item.statuses[`${col.project}__${col.tower}`] || "NA").replace(/"/g, '""')}"`);
-      return [`"${item.consultantTitle.replace(/"/g, '""')}"`, `"${(item.scope || "").replace(/"/g, '""')}"`, ...rowVals].join(",");
+    const headers = ["Statutory Authority", "Category / Scope", ...dynamicColumns.map(c => `${c.projectName} - ${c.towerName}`)];
+    const rows = filteredAuthorities.map(item => {
+      const rowVals = dynamicColumns.map(col => {
+        const val = getCellStatus(item.id, col.projectId, col.towerId);
+        return `"${val.replace(/"/g, '""')}"`;
+      });
+      return [`"${item.authorityName.replace(/"/g, '""')}"`, `"${(item.scope || item.category).replace(/"/g, '""')}"`, ...rowVals].join(",");
     });
     const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows].join("\n");
     const encodedUri = encodeURI(csvContent);
@@ -170,7 +205,7 @@ export const LiaisoningTracker: React.FC = () => {
     if (lower.includes("tree")) return <Trees className="h-4 w-4 text-emerald-500" />;
     if (lower.includes("aviation") || lower.includes("aai")) return <Plane className="h-4 w-4 text-sky-500" />;
     if (lower.includes("rera")) return <FileBadge2 className="h-4 w-4 text-purple-500" />;
-    if (lower.includes("architect") || lower.includes("liaison")) return <Building2 className="h-4 w-4 text-blue-500" />;
+    if (lower.includes("architect") || lower.includes("liaison") || lower.includes("bmc") || lower.includes("mcgm")) return <Building2 className="h-4 w-4 text-blue-500" />;
     return <ShieldCheck className="h-4 w-4 text-emerald-500" />;
   };
 
@@ -189,11 +224,11 @@ export const LiaisoningTracker: React.FC = () => {
                   Statutory Liaisoning & Authority NOC Matrix
                 </h3>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30">
-                  {filteredConsultants.length} Authorities Active
+                  {filteredAuthorities.length} Authorities Active
                 </span>
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Municipal BMC sanctions, CFO Fire NOC, Tree Authority, Civil Aviation, RERA, and Environmental compliance onboarding
+                Master-driven compliance tracker across Municipal BMC sanctions, CFO Fire NOC, Tree Authority, Civil Aviation, RERA, and MoEF
               </p>
             </div>
           </div>
@@ -219,7 +254,7 @@ export const LiaisoningTracker: React.FC = () => {
                 }`}
               >
                 <LayoutGrid className="h-3.5 w-3.5" />
-                <span>Authority Cards</span>
+                <span>Cards View</span>
               </button>
             </div>
 
@@ -229,18 +264,18 @@ export const LiaisoningTracker: React.FC = () => {
               onChange={e => setSelectedProject(e.target.value)}
               className="h-9 px-3 rounded-xl border border-border bg-surface text-xs font-bold text-foreground focus:outline-none focus:border-purple-500 cursor-pointer shadow-2xs"
             >
-              <option value="ALL">🏢 All 11 Projects</option>
-              {EY_UNIQUE_PROJECTS.map(p => (
+              <option value="ALL">🏢 All Projects ({dynamicColumns.length} Wings)</option>
+              {uniqueProjectNames.map(p => (
                 <option key={p} value={p}>{p}</option>
               ))}
             </select>
 
             {/* Search */}
-            <div className="relative flex-1 sm:w-52">
+            <div className="relative flex-1 sm:w-56">
               <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Search NOC / Consultant..."
+                placeholder="Search authority / scope..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-purple-500"
@@ -270,7 +305,7 @@ export const LiaisoningTracker: React.FC = () => {
                 onboardFilter === "ALL" ? "bg-foreground text-background font-bold" : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              All ({filteredConsultants.length})
+              All ({filteredAuthorities.length})
             </button>
             <button
               type="button"
@@ -307,8 +342,19 @@ export const LiaisoningTracker: React.FC = () => {
         </div>
       </div>
 
+      {/* Empty State */}
+      {filteredAuthorities.length === 0 && (
+        <div className="p-12 text-center rounded-2xl border border-dashed border-border bg-surface space-y-3">
+          <Shield className="h-10 w-10 text-muted-foreground/40 mx-auto" />
+          <h4 className="text-sm font-bold text-foreground">No Statutory Authorities Configured</h4>
+          <p className="text-xs text-muted-foreground max-w-md mx-auto">
+            You can add statutory bodies from the &ldquo;Masters Setup&rdquo; tab or load the EY Reference Template.
+          </p>
+        </div>
+      )}
+
       {/* View 1: Matrix Table */}
-      {viewMode === "MATRIX" && (
+      {viewMode === "MATRIX" && filteredAuthorities.length > 0 && (
         <div className="rounded-2xl border border-border bg-surface overflow-hidden shadow-sm">
           <div className="overflow-x-auto max-h-[72vh]">
             <table className="w-full text-left text-xs border-collapse">
@@ -317,14 +363,14 @@ export const LiaisoningTracker: React.FC = () => {
                   <th className="p-3.5 sticky left-0 z-30 bg-slate-100 dark:bg-slate-900 border-r border-border min-w-[260px] font-black text-foreground uppercase tracking-wider text-[11px] shadow-sm">
                     Statutory Authority / Scope
                   </th>
-                  {visibleColumns.map((col, idx) => (
+                  {dynamicColumns.map((col, idx) => (
                     <th
                       key={idx}
                       className="p-2.5 text-center font-bold text-foreground border-r border-border/40 text-[10px] uppercase tracking-wider bg-slate-50 dark:bg-slate-900/60 min-w-[125px]"
                     >
-                      <div className="truncate font-black text-foreground">{col.project}</div>
+                      <div className="truncate font-black text-foreground">{col.projectName}</div>
                       <div className="text-muted-foreground font-mono font-semibold text-[9px] mt-0.5 px-1 py-0.5 rounded bg-slate-200/50 dark:bg-slate-800/60 inline-block">
-                        {col.tower}
+                        {col.towerName}
                       </div>
                     </th>
                   ))}
@@ -332,16 +378,16 @@ export const LiaisoningTracker: React.FC = () => {
               </thead>
 
               <tbody className="divide-y divide-border/60">
-                {filteredConsultants.map((item) => (
+                {filteredAuthorities.map((item) => (
                   <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group">
                     <td className="p-3.5 sticky left-0 z-10 bg-surface group-hover:bg-slate-50 dark:group-hover:bg-slate-900 border-r border-border shadow-sm">
                       <div className="flex items-center gap-2">
-                        {getAuthorityIcon(item.consultantTitle)}
+                        {getAuthorityIcon(item.authorityName)}
                         <div>
                           <div className="font-bold text-foreground text-xs leading-snug">
-                            {item.consultantTitle}
+                            {item.authorityName}
                           </div>
-                          {item.scope && item.scope !== item.consultantTitle && (
+                          {item.scope && (
                             <div className="text-[10px] text-muted-foreground mt-0.5">
                               {item.scope}
                             </div>
@@ -350,14 +396,17 @@ export const LiaisoningTracker: React.FC = () => {
                       </div>
                     </td>
 
-                    {visibleColumns.map((col, colIdx) => {
-                      const val = item.statuses[`${col.project}__${col.tower}`] || "NA";
+                    {dynamicColumns.map((col, colIdx) => {
+                      const val = getCellStatus(item.id, col.projectId, col.towerId);
                       return (
                         <td 
                           key={colIdx} 
-                          onClick={() => setActiveCell({ item, col, currentVal: val })}
+                          onClick={() => {
+                            setActiveCell({ authority: item, col, currentVal: val });
+                            setCustomRemark("");
+                          }}
                           className="p-2 border-r border-border/30 text-center cursor-pointer hover:bg-purple-500/5 transition-colors"
-                          title={`Click to update: ${item.consultantTitle} • ${col.project} (${col.tower})`}
+                          title={`Click to update: ${item.authorityName} • ${col.projectName} (${col.towerName})`}
                         >
                           <div className="flex items-center justify-center">
                             {renderBadge(val)}
@@ -374,13 +423,13 @@ export const LiaisoningTracker: React.FC = () => {
       )}
 
       {/* View 2: Authority Cards */}
-      {viewMode === "CARDS" && (
+      {viewMode === "CARDS" && filteredAuthorities.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredConsultants.map((item) => {
-            const totalTowers = visibleColumns.length;
-            const onboardTowers = visibleColumns.filter(col => {
-              const val = (item.statuses[`${col.project}__${col.tower}`] || "").toLowerCase();
-              return (val.includes("onboard") || val.includes("fixed")) && !val.includes("not onboard");
+          {filteredAuthorities.map((item) => {
+            const totalTowers = dynamicColumns.length;
+            const onboardTowers = dynamicColumns.filter(col => {
+              const val = getCellStatus(item.id, col.projectId, col.towerId).toLowerCase();
+              return (val.includes("onboard") || val.includes("fixed") || val.includes("cleared")) && !val.includes("not onboard");
             }).length;
             const towerRate = totalTowers > 0 ? Math.round((onboardTowers / totalTowers) * 100) : 0;
 
@@ -393,14 +442,14 @@ export const LiaisoningTracker: React.FC = () => {
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2.5">
                       <div className="h-9 w-9 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
-                        {getAuthorityIcon(item.consultantTitle)}
+                        {getAuthorityIcon(item.authorityName)}
                       </div>
                       <div>
                         <h4 className="text-xs font-black text-foreground leading-snug">
-                          {item.consultantTitle}
+                          {item.authorityName}
                         </h4>
                         <span className="text-[10px] text-muted-foreground">
-                          {item.scope}
+                          {item.scope || item.category}
                         </span>
                       </div>
                     </div>
@@ -439,10 +488,10 @@ export const LiaisoningTracker: React.FC = () => {
                   <span>Update Authority Status</span>
                 </span>
                 <h4 className="text-base font-bold text-foreground mt-0.5">
-                  {activeCell.item.consultantTitle}
+                  {activeCell.authority.authorityName}
                 </h4>
                 <p className="text-xs text-muted-foreground">
-                  {activeCell.col.project} • Wing {activeCell.col.tower}
+                  {activeCell.col.projectName} • Wing {activeCell.col.towerName}
                 </p>
               </div>
               <button
@@ -477,18 +526,42 @@ export const LiaisoningTracker: React.FC = () => {
                 </button>
                 <button
                   type="button"
+                  onClick={() => handleUpdateStatus("Compliance Pending")}
+                  className="p-2.5 rounded-xl border border-purple-500/30 bg-purple-500/10 text-purple-700 dark:text-purple-300 hover:bg-purple-500/20 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <FileCheck2 className="h-3.5 w-3.5 text-purple-500" />
+                  <span>Compliance Pending</span>
+                </button>
+                <button
+                  type="button"
                   onClick={() => handleUpdateStatus("Not Onboard")}
                   className="p-2.5 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300 hover:bg-rose-500/20 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                 >
                   <AlertCircle className="h-3.5 w-3.5 text-rose-500" />
                   <span>Not Onboard</span>
                 </button>
+              </div>
+            </div>
+
+            {/* Custom Target / Remarks Input */}
+            <div className="space-y-1.5 pt-2 border-t border-border">
+              <label className="text-xs font-bold text-foreground block">
+                Custom Target Date / Consultant Remark:
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={customRemark}
+                  onChange={e => setCustomRemark(e.target.value)}
+                  placeholder="e.g. Scrutiny in progress, CFO File #1289"
+                  className="flex-1 px-3 py-2 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-purple-500"
+                />
                 <button
                   type="button"
-                  onClick={() => handleUpdateStatus("NA")}
-                  className="p-2.5 rounded-xl border border-border bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                  onClick={() => handleUpdateStatus(customRemark || "NA")}
+                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-md cursor-pointer transition-all"
                 >
-                  <span>Not Applicable (NA)</span>
+                  Save
                 </button>
               </div>
             </div>
@@ -508,4 +581,3 @@ export const LiaisoningTracker: React.FC = () => {
     </div>
   );
 };
-
