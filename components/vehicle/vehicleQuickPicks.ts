@@ -990,3 +990,45 @@ export function calculateDaysRemaining(dateStr?: string | null): number | null {
   const diffMs = target.getTime() - today.getTime();
   return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 }
+
+/**
+ * Normalizes any date representation (ISO string, DD/MM/YYYY, DD-MM-YYYY, Date)
+ * into a strict HTML5 date input format: YYYY-MM-DD.
+ * Returns empty string if invalid or empty.
+ */
+export function normalizeDateToInputFormat(val?: string | Date | null): string {
+  if (!val) return "";
+  const str = String(val).trim();
+  if (!str) return "";
+
+  // Exact YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    return str;
+  }
+
+  // ISO string with time component (e.g. 2026-11-28T00:00:00.000Z)
+  if (str.includes("T")) {
+    const part = str.split("T")[0];
+    if (/^\d{4}-\d{2}-\d{2}$/.test(part)) {
+      return part;
+    }
+  }
+
+  // Common Indian / UK date format: DD/MM/YYYY or DD-MM-YYYY
+  const dmyMatch = str.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+  if (dmyMatch) {
+    const [, day, month, year] = dmyMatch;
+    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  }
+
+  // Fallback to JS Date parse
+  const parsed = new Date(str);
+  if (!isNaN(parsed.getTime())) {
+    const y = parsed.getFullYear();
+    const m = String(parsed.getMonth() + 1).padStart(2, "0");
+    const d = String(parsed.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+
+  return "";
+}

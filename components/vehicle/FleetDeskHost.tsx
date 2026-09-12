@@ -50,7 +50,8 @@ import {
   POPULAR_BRANDS, 
   TOP_BRAND_NAMES, 
   analyzeIndianPlate,
-  calculateDaysRemaining
+  calculateDaysRemaining,
+  normalizeDateToInputFormat
 } from "./vehicleQuickPicks";
 import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
@@ -469,14 +470,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         if (d.vin_chassis_number) setNewVehicleVin(d.vin_chassis_number);
         if (d.engine_number) setNewVehicleEngine(d.engine_number);
         if (d.fuel_type) setNewVehicleFuel(d.fuel_type);
-        if (d.registration_date) setNewVehicleRegDate(d.registration_date);
+        if (d.registration_date) setNewVehicleRegDate(normalizeDateToInputFormat(d.registration_date));
         if (d.rto_office) setNewVehicleRtoOffice(d.rto_office);
         if (d.registered_owner) setNewVehicleOwner(d.registered_owner);
         if (d.rto_rmn) setNewVehicleRtoRmn(d.rto_rmn);
         if (d.insurance_policy_number) setNewVehicleInsurancePolicy(d.insurance_policy_number);
-        if (d.insurance_expiry_date) setNewVehicleInsuranceExpiry(d.insurance_expiry_date);
-        if (d.puc_expiry_date) setNewVehiclePucExpiry(d.puc_expiry_date);
-        if (d.fitness_expiry_date) setNewVehicleFitnessExpiry(d.fitness_expiry_date);
+        if (d.insurance_expiry_date) setNewVehicleInsuranceExpiry(normalizeDateToInputFormat(d.insurance_expiry_date));
+        if (d.puc_expiry_date) setNewVehiclePucExpiry(normalizeDateToInputFormat(d.puc_expiry_date));
+        if (d.fitness_expiry_date) setNewVehicleFitnessExpiry(normalizeDateToInputFormat(d.fitness_expiry_date));
         if (d.odometer_km && Number(newVehicleOdometer) === 0) setNewVehicleOdometer(d.odometer_km);
 
         const rtoLocation = d.rto_office || "RTO Registry Office";
@@ -732,14 +733,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         if (d.vin_chassis_number) setEditVehicleVin(d.vin_chassis_number);
         if (d.engine_number) setEditVehicleEngine(d.engine_number);
         if (d.fuel_type) setEditVehicleFuel(d.fuel_type);
-        if (d.registration_date) setEditVehicleRegDate(d.registration_date);
+        if (d.registration_date) setEditVehicleRegDate(normalizeDateToInputFormat(d.registration_date));
         if (d.rto_office) setEditVehicleRtoOffice(d.rto_office);
         if (d.registered_owner) setEditVehicleOwner(d.registered_owner);
         if (d.rto_rmn) setEditVehicleRtoRmn(d.rto_rmn);
         if (d.insurance_policy_number) setEditVehicleInsurancePolicy(d.insurance_policy_number);
-        if (d.insurance_expiry_date) setEditVehicleInsuranceExpiry(d.insurance_expiry_date);
-        if (d.puc_expiry_date) setEditVehiclePucExpiry(d.puc_expiry_date);
-        if (d.fitness_expiry_date) setEditVehicleFitnessExpiry(d.fitness_expiry_date);
+        if (d.insurance_expiry_date) setEditVehicleInsuranceExpiry(normalizeDateToInputFormat(d.insurance_expiry_date));
+        if (d.puc_expiry_date) setEditVehiclePucExpiry(normalizeDateToInputFormat(d.puc_expiry_date));
+        if (d.fitness_expiry_date) setEditVehicleFitnessExpiry(normalizeDateToInputFormat(d.fitness_expiry_date));
 
         const rtoLocation = d.rto_office || "RTO Registry Office";
 
