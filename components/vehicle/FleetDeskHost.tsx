@@ -255,6 +255,21 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     );
   };
 
+  // Authentic Indian High Security Registration Plate (HSRP) Badge
+  const renderHsrpPlate = (plateNumber?: string) => {
+    if (!plateNumber) return <span className="text-muted-foreground">—</span>;
+    return (
+      <div className="inline-flex items-stretch rounded-sm border-2 border-slate-900 bg-white shadow-xs overflow-hidden select-none">
+        <div className="bg-[#003399] px-1.5 py-0.5 flex flex-col items-center justify-center border-r border-[#002266] shrink-0">
+          <span className="text-[7px] leading-none text-white font-black tracking-tighter">IND</span>
+        </div>
+        <div className="px-2 py-0.5 font-mono text-[11px] font-black tracking-widest text-slate-950 uppercase bg-white">
+          {plateNumber}
+        </div>
+      </div>
+    );
+  };
+
   // Edit Vehicle Portal lookup state
   const [fetchingEditPortal, setFetchingEditPortal] = useState(false);
   const [editPortalLookupMsg, setEditPortalLookupMsg] = useState<{
@@ -1254,80 +1269,112 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 variant={activeTab === "dashboard" ? "primary" : "secondary"}
                 size="sm"
                 onClick={() => router.push("/vehicle")}
-                className="text-xs h-9 font-semibold"
+                className={`text-xs h-9 font-semibold transition-all ${
+                  activeTab === "dashboard"
+                    ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
+                    : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
+                }`}
               >
-                <LayoutDashboard className="h-4 w-4 mr-1.5" />
-                Overview
+                <LayoutDashboard className={`h-4 w-4 mr-1.5 ${activeTab === "dashboard" ? "text-white" : "text-muted-foreground"}`} />
+                <span>Overview</span>
               </AppButton>
 
               <AppButton
                 variant={activeTab === "inventory" ? "primary" : "secondary"}
                 size="sm"
                 onClick={() => router.push("/vehicle/inventory")}
-                className="text-xs h-9 font-semibold"
+                className={`text-xs h-9 font-semibold transition-all ${
+                  activeTab === "inventory"
+                    ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
+                    : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
+                }`}
               >
-                <Car className="h-4 w-4 mr-1.5" />
-                Fleet ({stats.totalVehicles})
+                <Car className={`h-4 w-4 mr-1.5 ${activeTab === "inventory" ? "text-white" : "text-muted-foreground"}`} />
+                <span>Fleet ({stats.totalVehicles})</span>
               </AppButton>
 
               <AppButton
                 variant={activeTab === "drivers" ? "primary" : "secondary"}
                 size="sm"
                 onClick={() => router.push("/vehicle/drivers")}
-                className="text-xs h-9 font-semibold"
+                className={`text-xs h-9 font-semibold transition-all ${
+                  activeTab === "drivers"
+                    ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
+                    : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
+                }`}
               >
-                <Users className="h-4 w-4 mr-1.5" />
-                Drivers ({stats.activeDrivers})
+                <Users className={`h-4 w-4 mr-1.5 ${activeTab === "drivers" ? "text-white" : "text-muted-foreground"}`} />
+                <span>Drivers ({stats.activeDrivers})</span>
               </AppButton>
 
               <AppButton
                 variant={activeTab === "trips" ? "primary" : "secondary"}
                 size="sm"
                 onClick={() => router.push("/vehicle/trips")}
-                className="text-xs h-9 font-semibold"
+                className={`text-xs h-9 font-semibold transition-all ${
+                  activeTab === "trips"
+                    ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
+                    : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
+                }`}
               >
-                <Calendar className="h-4 w-4 mr-1.5" />
-                Trips ({stats.activeTrips})
+                <Calendar className={`h-4 w-4 mr-1.5 ${activeTab === "trips" ? "text-white" : "text-muted-foreground"}`} />
+                <span>Trips ({stats.activeTrips})</span>
               </AppButton>
 
               <AppButton
                 variant={activeTab === "maintenance" ? "primary" : "secondary"}
                 size="sm"
                 onClick={() => router.push("/vehicle/maintenance")}
-                className="text-xs h-9 font-semibold"
+                className={`text-xs h-9 font-semibold transition-all ${
+                  activeTab === "maintenance"
+                    ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
+                    : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
+                }`}
               >
-                <Wrench className="h-4 w-4 mr-1.5" />
-                Maintenance ({stats.inMaintenanceVehicles})
+                <Wrench className={`h-4 w-4 mr-1.5 ${activeTab === "maintenance" ? "text-white" : "text-muted-foreground"}`} />
+                <span>Maintenance ({stats.inMaintenanceVehicles})</span>
               </AppButton>
 
               <AppButton
                 variant={activeTab === "alerts" ? "primary" : "secondary"}
                 size="sm"
                 onClick={() => router.push("/vehicle/alerts")}
-                className="text-xs h-9 font-semibold"
+                className={`text-xs h-9 font-semibold transition-all ${
+                  activeTab === "alerts"
+                    ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
+                    : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
+                }`}
               >
-                <ShieldAlert className="h-4 w-4 mr-1.5 text-amber-500" />
-                Alerts
+                <ShieldAlert className={`h-4 w-4 mr-1.5 ${activeTab === "alerts" ? "text-white" : "text-amber-500"}`} />
+                <span>Alerts</span>
               </AppButton>
 
               <AppButton
                 variant={activeTab === "travelers" ? "primary" : "secondary"}
                 size="sm"
                 onClick={() => router.push("/vehicle/travelers")}
-                className="text-xs h-9 font-semibold"
+                className={`text-xs h-9 font-semibold transition-all ${
+                  activeTab === "travelers"
+                    ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
+                    : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
+                }`}
               >
-                <UserCheck className="h-4 w-4 mr-1.5 text-indigo-500" />
-                Travelers
+                <UserCheck className={`h-4 w-4 mr-1.5 ${activeTab === "travelers" ? "text-white" : "text-indigo-500"}`} />
+                <span>Travelers</span>
               </AppButton>
 
               <AppButton
                 variant={activeTab === "reports" ? "primary" : "secondary"}
                 size="sm"
                 onClick={() => router.push("/vehicle/reports")}
-                className="text-xs h-9 font-semibold"
+                className={`text-xs h-9 font-semibold transition-all ${
+                  activeTab === "reports"
+                    ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
+                    : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
+                }`}
               >
-                <LineChart className="h-4 w-4 mr-1.5 text-emerald-500" />
-                Reports
+                <LineChart className={`h-4 w-4 mr-1.5 ${activeTab === "reports" ? "text-white" : "text-emerald-500"}`} />
+                <span>Reports</span>
               </AppButton>
 
               {/* Action trigger button tailored to active tab */}
@@ -2283,9 +2330,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       <div key={trp.id} className="p-3.5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-xs">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <span className="font-mono font-bold text-slate-900 dark:text-slate-100 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-2 py-0.5 rounded tracking-wider shadow-2xs inline-flex items-center gap-1">
-                              {trp.vehicle_reg}
-                            </span>
+                            {renderHsrpPlate(trp.vehicle_reg)}
                             <span className="text-foreground font-semibold">{trp.traveler_name}</span>
                           </div>
                           <div className="text-muted-foreground text-[11px] flex items-center gap-1">
@@ -2370,9 +2415,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       <div key={veh.id} className="p-3.5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-xs">
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-mono font-bold text-slate-900 dark:text-slate-100 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-2 py-0.5 rounded tracking-wider shadow-2xs inline-flex items-center gap-1">
-                              {veh.registration_number}
-                            </span>
+                            {renderHsrpPlate(veh.registration_number)}
                             <span className="font-semibold text-foreground">{veh.make} {veh.model}</span>
                             {veh.variant && veh.variant !== "Standard" && (
                               <span className="text-[10px] text-muted-foreground">({veh.variant})</span>
@@ -2494,16 +2537,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       <AppTableRow key={veh.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                         {/* 1. Vehicle Name & Regn No */}
                         <AppTableCell className="p-3.5">
-                          <div className="font-mono font-bold text-slate-900 dark:text-slate-100 inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 shadow-2xs tracking-wider">
-                            {veh.registration_number}
-                          </div>
-                          <div className="font-semibold text-foreground mt-1">
+                          {renderHsrpPlate(veh.registration_number)}
+                          <div className="font-semibold text-foreground mt-1.5">
                             {veh.nickname || `${veh.make} ${veh.model}`}
                           </div>
                           <div className="text-[10px] text-muted-foreground flex items-center gap-1.5 mt-0.5">
                             <span>{veh.make} {veh.model}</span>
                             {veh.fuel_type && (
-                              <span className="px-1 py-0.2 rounded text-[9px] font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
+                              <span className="px-1.5 py-0.2 rounded text-[9px] font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
                                 {veh.fuel_type}
                               </span>
                             )}
@@ -2570,7 +2611,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             <span className={`px-2 py-0.5 rounded text-[10px] font-bold border inline-flex items-center gap-1 w-fit ${
                               veh.has_hsrp_plate !== false
                                 ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/25"
-                                : "bg-slate-200 dark:bg-slate-800 text-muted-foreground border-border"
+                                : "bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800/60 dark:text-slate-400 dark:border-slate-700"
                             }`}>
                               <ShieldCheck className="h-3 w-3" />
                               <span>HSRP Plate</span>
@@ -2578,7 +2619,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             <span className={`px-2 py-0.5 rounded text-[10px] font-bold border inline-flex items-center gap-1 w-fit ${
                               veh.has_roadside_assistance !== false
                                 ? "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/25"
-                                : "bg-slate-200 dark:bg-slate-800 text-muted-foreground border-border"
+                                : "bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800/60 dark:text-slate-400 dark:border-slate-700"
                             }`}>
                               <Zap className="h-3 w-3 text-amber-500 fill-amber-500" />
                               <span>24x7 RSA</span>
@@ -2822,9 +2863,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       <AppTableRow key={trp.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                         <AppTableCell className="p-3.5 font-mono text-muted-foreground">{trp.plan_date}</AppTableCell>
                         <AppTableCell className="p-3.5 font-bold text-foreground">
-                          <span className="font-mono font-bold text-slate-900 dark:text-slate-100 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-2 py-0.5 rounded tracking-wider shadow-2xs inline-flex items-center gap-1">
-                            {trp.vehicle_reg}
-                          </span>
+                          {renderHsrpPlate(trp.vehicle_reg)}
                         </AppTableCell>
                         <AppTableCell className="p-3.5 text-muted-foreground">{trp.driver_name}</AppTableCell>
                         <AppTableCell className="p-3.5">
@@ -2961,9 +3000,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       <AppTableRow key={m.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                         <AppTableCell className="p-3.5 font-mono text-muted-foreground">{m.service_date}</AppTableCell>
                         <AppTableCell className="p-3.5 font-bold text-foreground">
-                          <span className="font-mono font-bold text-slate-900 dark:text-slate-100 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-2 py-0.5 rounded tracking-wider shadow-2xs inline-flex items-center gap-1">
-                            {m.vehicle_reg}
-                          </span>
+                          {renderHsrpPlate(m.vehicle_reg)}
                         </AppTableCell>
                         <AppTableCell className="p-3.5 text-foreground max-w-md">{m.service_type}</AppTableCell>
                         <AppTableCell className="p-3.5 text-muted-foreground">{m.service_center}</AppTableCell>
@@ -3072,10 +3109,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                               <span className="text-theme-btn-primary font-semibold">{trp.destination}</span>
                             </div>
                           </AppTableCell>
-                          <AppTableCell className="p-3.5">
-                            <span className="font-mono font-bold text-slate-900 dark:text-slate-100 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 px-2 py-0.5 rounded tracking-wider shadow-2xs inline-flex items-center gap-1">
-                              {trp.vehicle_reg}
-                            </span>
+                          <AppTableCell className="p-3.5 font-bold text-foreground">
+                            {renderHsrpPlate(trp.vehicle_reg)}
                           </AppTableCell>
                           <AppTableCell className="p-3.5 text-muted-foreground">
                             <div className="font-medium text-foreground">{trp.driver_name}</div>
