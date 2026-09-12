@@ -129,6 +129,9 @@ export interface MaintenanceRecord {
   odometer_km: number;
   cost: number;
   next_service_due_date?: string | null;
+  next_service_due_odometer?: number | null;
+  technician_name?: string | null;
+  parts_replaced?: any;
   status?: string;
   created_at?: string;
 }
@@ -2063,11 +2066,14 @@ export async function fetchMaintenanceList(): Promise<{
         service_date,
         odometer_km,
         cost,
+        parts_replaced,
         next_service_due_date,
+        next_service_due_odometer,
+        technician_name,
         created_at
       `)
       .order("service_date", { ascending: false })
-      .limit(50);
+      .limit(100);
 
     if (error) return { success: false, records: [], error: error.message };
 
@@ -2102,6 +2108,10 @@ export async function createServiceRecordAction(formData: {
   odometer_km: number;
   cost: number;
   next_service_due_date?: string;
+  next_service_due_odometer?: number;
+  technician_name?: string;
+  parts_replaced?: any;
+  post_service_status?: string;
 }): Promise<{
   success: boolean;
   record?: MaintenanceRecord;
@@ -2112,7 +2122,7 @@ export async function createServiceRecordAction(formData: {
     if (!user) return { success: false, error: "Unauthorized" };
 
     if (!formData.vehicle_id || !formData.service_type || !formData.service_center) {
-      return { success: false, error: "Vehicle, service type, and service center are required" };
+      return { success: false, error: "Vehicle, service description, and authorized service center are required" };
     }
 
     const newService = {
@@ -2123,7 +2133,10 @@ export async function createServiceRecordAction(formData: {
       service_date: formData.service_date || new Date().toISOString().split("T")[0],
       odometer_km: Number(formData.odometer_km) || 0,
       cost: Number(formData.cost) || 0.0,
-      next_service_due_date: formData.next_service_due_date || null
+      next_service_due_date: formData.next_service_due_date || null,
+      next_service_due_odometer: formData.next_service_due_odometer ? Number(formData.next_service_due_odometer) : null,
+      technician_name: formData.technician_name ? formData.technician_name.trim() : null,
+      parts_replaced: formData.parts_replaced || null
     };
 
     const { data: inserted, error } = await supabaseAdmin
@@ -2134,20 +2147,27 @@ export async function createServiceRecordAction(formData: {
 
     if (error) return { success: false, error: error.message };
 
-    // Update vehicle odometer if new reading is higher
+    // Update vehicle odometer and post-service availability status
+    const updatePayload: Record<string, any> = {};
     if (formData.odometer_km) {
       const { data: currentV } = await supabaseAdmin
         .from("vehicles")
-        .select("odometer_km")
+        .select("odometer_km, status")
         .eq("id", formData.vehicle_id)
         .single();
 
       if (currentV && Number(formData.odometer_km) > (currentV.odometer_km || 0)) {
-        await supabaseAdmin
-          .from("vehicles")
-          .update({ odometer_km: Number(formData.odometer_km) })
-          .eq("id", formData.vehicle_id);
+        updatePayload.odometer_km = Number(formData.odometer_km);
       }
+    }
+    if (formData.post_service_status) {
+      updatePayload.status = formData.post_service_status;
+    }
+    if (Object.keys(updatePayload).length > 0) {
+      await supabaseAdmin
+        .from("vehicles")
+        .update(updatePayload)
+        .eq("id", formData.vehicle_id);
     }
 
     return { success: true, record: inserted as MaintenanceRecord };
