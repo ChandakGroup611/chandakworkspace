@@ -390,9 +390,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   // Resilient Portal Lookup & Creation Helpers:
   // Directly queries the permanent REST API route `/api/vehicle/lookup` first.
   // This is 100% immune to Next.js build-time Server Action ID hash rotation ("failed-to-find-server-action").
-  const queryVehiclePortal = async (plateNumber: string) => {
+  const queryVehiclePortal = async (plateNumber: string, categoryPreference?: string) => {
     try {
-      const res = await fetch(`/api/vehicle/lookup?plate=${encodeURIComponent(plateNumber)}`, {
+      const url = `/api/vehicle/lookup?plate=${encodeURIComponent(plateNumber)}${categoryPreference ? `&category=${encodeURIComponent(categoryPreference)}` : ""}`;
+      const res = await fetch(url, {
         headers: { "Cache-Control": "no-cache" }
       });
       if (res.ok) {
@@ -403,11 +404,12 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     }
 
     try {
-      return await fetchVehiclePortalDetailsAction(plateNumber);
+      return await fetchVehiclePortalDetailsAction(plateNumber, categoryPreference);
     } catch (err: any) {
       if (err?.message?.includes("was not found on the server") || err?.message?.includes("failed-to-find-server-action")) {
         console.warn("[vehicle] Stale Server Action hash detected, retrying via REST endpoint...");
-        const retryRes = await fetch(`/api/vehicle/lookup?plate=${encodeURIComponent(plateNumber)}`);
+        const retryUrl = `/api/vehicle/lookup?plate=${encodeURIComponent(plateNumber)}${categoryPreference ? `&category=${encodeURIComponent(categoryPreference)}` : ""}`;
+        const retryRes = await fetch(retryUrl);
         if (retryRes.ok) return await retryRes.json();
       }
       throw err;
@@ -457,7 +459,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     setPortalLookupMsg(null);
 
     try {
-      const res = await queryVehiclePortal(rawPlate);
+      const res = await queryVehiclePortal(rawPlate, newVehicleCategory);
       if (res.success && res.data) {
         const d = res.data;
         if (d.registration_number) setNewVehiclePlate(d.registration_number);
@@ -720,7 +722,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     setEditPortalLookupMsg(null);
 
     try {
-      const res = await queryVehiclePortal(rawPlate);
+      const res = await queryVehiclePortal(rawPlate, editVehicleCategory);
       if (res.success && res.data) {
         const d = res.data;
         if (d.registration_number) setEditVehiclePlate(d.registration_number);

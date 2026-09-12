@@ -15,7 +15,9 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const result = await fetchVehiclePortalDetailsAction(plate);
+    const category = searchParams.get("category") || "";
+
+    const result = await fetchVehiclePortalDetailsAction(plate, category);
     return NextResponse.json(result);
   } catch (err: any) {
     console.error("[api/vehicle/lookup] error:", err);

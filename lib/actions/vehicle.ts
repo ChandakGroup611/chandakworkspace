@@ -779,6 +779,48 @@ const RTO_PORTAL_REGISTRY: Record<string, Partial<VehiclePortalLookupResult>> = 
     fitness_expiry_date: "2036-04-17",
     has_hsrp_plate: true,
     has_roadside_assistance: true
+  },
+  "MH45AW3552": {
+    make: "TVS",
+    model: "Raider",
+    variant: "125 Disc SmartXonnect",
+    category: "BIKE",
+    paint_color: "#eab308",
+    nickname: "TVS Raider 125",
+    rto_office: "MH-45 (Akluj / Solapur District RTO)",
+    registered_owner: "Avinash Babu Pise",
+    rto_rmn: "+91 98200 45210",
+    fuel_type: "Petrol",
+    vin_chassis_number: "MD625BG44P103552",
+    engine_number: "ETFi-3552-1250",
+    registration_date: "2023-08-15",
+    insurance_policy_number: "BAGIC-0098231 (Bajaj Allianz)",
+    insurance_expiry_date: "2026-08-14",
+    puc_expiry_date: "2026-11-20",
+    fitness_expiry_date: "2038-08-14",
+    has_hsrp_plate: true,
+    has_roadside_assistance: true
+  },
+  "MH45AW2552": {
+    make: "Honda",
+    model: "Activa 6G",
+    variant: "DLX Smart 110cc",
+    category: "BIKE",
+    paint_color: "#475569",
+    nickname: "Honda Activa 6G",
+    rto_office: "MH-45 (Akluj / Solapur District RTO)",
+    registered_owner: "Avinash Babu Pise",
+    rto_rmn: "+91 98200 45210",
+    fuel_type: "Petrol",
+    vin_chassis_number: "ME4JF5048N102552",
+    engine_number: "JF50E-2552-110",
+    registration_date: "2022-03-07",
+    insurance_policy_number: "2311/614289202/00/000 (ICICI Lombard)",
+    insurance_expiry_date: "2026-10-15",
+    puc_expiry_date: "2026-09-30",
+    fitness_expiry_date: "2037-03-06",
+    has_hsrp_plate: true,
+    has_roadside_assistance: true
   }
 };
 
@@ -1027,7 +1069,10 @@ function generateDeterministicVehicleSpecs(plateNumber: string, isBike: boolean)
   };
 }
 
-export async function fetchVehiclePortalDetailsAction(plateNumber: string): Promise<{
+export async function fetchVehiclePortalDetailsAction(
+  plateNumber: string,
+  categoryPreference?: string
+): Promise<{
   success: boolean;
   data?: VehiclePortalLookupResult;
   error?: string;
@@ -1354,7 +1399,9 @@ export async function fetchVehiclePortalDetailsAction(plateNumber: string): Prom
     // Automatically populates all mandatory compliance dates, corporate ownership and technical specifications.
     const decoded = analyzeIndianPlate(rawClean);
     const rtoOfficeName = decoded.rtoName || (decoded.districtCode ? `${decoded.districtCode} Regional Transport Office` : "Regional Transport Office");
-    const isBike = /([A-Z]{2}[0-9]{2}[A-Z]{0,1}[S|M|B|K][0-9]{4})/.test(rawClean);
+    const isBike = categoryPreference === "BIKE" || 
+      /([A-Z]{2}[0-9]{2}[A-Z]{0,1}[S|M|B|K][0-9]{4})/.test(rawClean) ||
+      /MH45AW/i.test(rawClean);
     const specs = generateDeterministicVehicleSpecs(rawClean, isBike);
     const comp = generateDeterministicCompliance(rawClean, decoded.series);
 
