@@ -17,28 +17,45 @@ import {
   Sparkles,
   Search,
   ArrowUpRight,
-  TrendingUp,
-  FileSpreadsheet,
-  Activity,
-  Plus,
-  Settings2,
-  Database
+  TrendingUp, 
+  FileSpreadsheet, 
+  Activity, 
+  Plus, 
+  Settings2, 
+  Database,
+  RotateCcw,
+  LineChart
 } from "lucide-react";
 import { TenderDesignMatrix } from "../../Design_Tracking/src/components/TenderDesignMatrix";
 import { LookAheadDashboard } from "../../Design_Tracking/src/components/LookAheadDashboard";
 import { LiaisoningTracker } from "../../Design_Tracking/src/components/LiaisoningTracker";
 import { DesignStagesRoadmap } from "../../Design_Tracking/src/components/DesignStagesRoadmap";
 import { DrawingRegister } from "../../Design_Tracking/src/components/DrawingRegister";
+import { ApprovalsReviewQueue } from "../../Design_Tracking/src/components/ApprovalsReviewQueue";
+import { RevisionHistoryLogs } from "../../Design_Tracking/src/components/RevisionHistoryLogs";
 import { GfcHandoverView } from "../../Design_Tracking/src/components/GfcHandoverView";
+import { ConsultantDirectory } from "../../Design_Tracking/src/components/ConsultantDirectory";
+import { DesignReportsAnalytics } from "../../Design_Tracking/src/components/DesignReportsAnalytics";
 import { UploadDrawingModal } from "../../Design_Tracking/src/components/UploadDrawingModal";
 import { ReviewApprovalModal } from "../../Design_Tracking/src/components/ReviewApprovalModal";
 import { MastersSetupView } from "../../Design_Tracking/src/components/MastersSetupView";
 import { DataEntryFormsModal } from "../../Design_Tracking/src/components/DataEntryFormsModal";
 import { DesignMasterStore } from "../../Design_Tracking/src/services/designMasterStore";
-import { mockDrawings, mockGfcReleases } from "../../Design_Tracking/src/mock/designMockData";
+import { mockDrawings, mockGfcReleases, mockConsultants } from "../../Design_Tracking/src/mock/designMockData";
 import { DrawingItem, DrawingStatus } from "../../Design_Tracking/src/types";
 
-type ActiveTabType = "MATRIX" | "LOOK_AHEAD" | "LIAISONING" | "STAGES" | "DRAWINGS" | "GFC_HANDOVER" | "MASTERS";
+type ActiveTabType = 
+  | "MATRIX" 
+  | "LOOK_AHEAD" 
+  | "LIAISONING" 
+  | "STAGES" 
+  | "DRAWINGS" 
+  | "APPROVALS" 
+  | "REVISIONS" 
+  | "GFC_HANDOVER" 
+  | "CONSULTANTS" 
+  | "REPORTS" 
+  | "MASTERS";
 
 export default function DesignTrackingHost() {
   const pathname = usePathname() || "/design";
@@ -48,10 +65,14 @@ export default function DesignTrackingHost() {
   const tabFromUrl = useMemo<ActiveTabType>(() => {
     if (pathname.includes("/masters") || pathname.includes("/settings")) return "MASTERS";
     if (pathname.includes("/look-ahead") || pathname.includes("/forecast")) return "LOOK_AHEAD";
-    if (pathname.includes("/liaisoning") || pathname.includes("/clearances") || pathname.includes("/noc") || pathname.includes("/consultants")) return "LIAISONING";
+    if (pathname.includes("/liaisoning") || pathname.includes("/clearances") || pathname.includes("/noc")) return "LIAISONING";
     if (pathname.includes("/stages") || pathname.includes("/roadmap")) return "STAGES";
-    if (pathname.includes("/drawings") || pathname.includes("/sheets") || pathname.includes("/blueprints") || pathname.includes("/approvals") || pathname.includes("/revisions")) return "DRAWINGS";
+    if (pathname.includes("/approvals") || pathname.includes("/review")) return "APPROVALS";
+    if (pathname.includes("/revisions") || pathname.includes("/history")) return "REVISIONS";
+    if (pathname.includes("/drawings") || pathname.includes("/sheets") || pathname.includes("/register") || pathname.includes("/blueprints")) return "DRAWINGS";
     if (pathname.includes("/handover") || pathname.includes("/gfc") || pathname.includes("/site-release")) return "GFC_HANDOVER";
+    if (pathname.includes("/consultants") || pathname.includes("/directory") || pathname.includes("/dictionary")) return "CONSULTANTS";
+    if (pathname.includes("/reports") || pathname.includes("/analytics")) return "REPORTS";
     return "MATRIX";
   }, [pathname]);
 
@@ -70,7 +91,11 @@ export default function DesignTrackingHost() {
       LIAISONING: "/design/liaisoning",
       STAGES: "/design/stages",
       DRAWINGS: "/design/drawings",
+      APPROVALS: "/design/approvals",
+      REVISIONS: "/design/revisions",
       GFC_HANDOVER: "/design/handover",
+      CONSULTANTS: "/design/consultants",
+      REPORTS: "/design/reports",
       MASTERS: "/design/masters"
     };
     router.push(routeMap[tab]);
@@ -359,6 +384,38 @@ export default function DesignTrackingHost() {
 
           <button
             type="button"
+            onClick={() => handleTabChange("APPROVALS")}
+            className={`py-3 px-3.5 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
+              activeTab === "APPROVALS"
+                ? "border-emerald-500 text-foreground font-black"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <CheckCircle2 className={`h-4 w-4 ${activeTab === "APPROVALS" ? "text-emerald-500" : "text-muted-foreground"}`} />
+            <span>Approvals & Review</span>
+            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-500 font-bold">
+              {drawings.filter(d => d.status === "Under Review").length} In Review
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleTabChange("REVISIONS")}
+            className={`py-3 px-3.5 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
+              activeTab === "REVISIONS"
+                ? "border-emerald-500 text-foreground font-black"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <RotateCcw className={`h-4 w-4 ${activeTab === "REVISIONS" ? "text-blue-500" : "text-muted-foreground"}`} />
+            <span>Revision History</span>
+            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-blue-500/10 text-blue-500 font-bold">
+              Logs
+            </span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => handleTabChange("GFC_HANDOVER")}
             className={`py-3 px-3.5 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
               activeTab === "GFC_HANDOVER"
@@ -366,14 +423,46 @@ export default function DesignTrackingHost() {
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            <CheckCircle2 className={`h-4 w-4 ${activeTab === "GFC_HANDOVER" ? "text-emerald-500" : "text-muted-foreground"}`} />
-            <span>GFC Site Handovers</span>
+            <Building2 className={`h-4 w-4 ${activeTab === "GFC_HANDOVER" ? "text-emerald-500" : "text-muted-foreground"}`} />
+            <span>Site Handover & GFC</span>
             <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-muted-foreground">
               {mockGfcReleases.length} Releases
             </span>
           </button>
 
-          {/* New Tab: Masters Setup */}
+          <button
+            type="button"
+            onClick={() => handleTabChange("CONSULTANTS")}
+            className={`py-3 px-3.5 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
+              activeTab === "CONSULTANTS"
+                ? "border-emerald-500 text-foreground font-black"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Users className={`h-4 w-4 ${activeTab === "CONSULTANTS" ? "text-purple-500" : "text-muted-foreground"}`} />
+            <span>Consultant Directory</span>
+            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-purple-500/10 text-purple-500 font-bold">
+              {mockConsultants.length} Partners
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleTabChange("REPORTS")}
+            className={`py-3 px-3.5 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
+              activeTab === "REPORTS"
+                ? "border-emerald-500 text-foreground font-black"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <LineChart className={`h-4 w-4 ${activeTab === "REPORTS" ? "text-teal-500" : "text-muted-foreground"}`} />
+            <span>Design Reports</span>
+            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-teal-500/10 text-teal-500 font-bold">
+              Analytics
+            </span>
+          </button>
+
+          {/* Masters Setup */}
           <button
             type="button"
             onClick={() => handleTabChange("MASTERS")}
@@ -421,12 +510,41 @@ export default function DesignTrackingHost() {
         />
       )}
 
-      {/* Tab 6: GFC Handover View */}
+      {/* Tab 6: Approvals & Review Queue */}
+      {activeTab === "APPROVALS" && (
+        <ApprovalsReviewQueue 
+          drawings={drawings}
+          onOpenReviewModal={(drawing) => setSelectedDrawingForReview(drawing)}
+          onQuickStatusUpdate={handleStatusUpdated}
+        />
+      )}
+
+      {/* Tab 7: Revision History Logs */}
+      {activeTab === "REVISIONS" && (
+        <RevisionHistoryLogs 
+          drawings={drawings}
+        />
+      )}
+
+      {/* Tab 8: Site Handover & GFC View */}
       {activeTab === "GFC_HANDOVER" && (
         <GfcHandoverView releases={mockGfcReleases} />
       )}
 
-      {/* Tab 7: Masters Setup View */}
+      {/* Tab 9: Consultant Directory / Dictionary */}
+      {activeTab === "CONSULTANTS" && (
+        <ConsultantDirectory consultants={mockConsultants} />
+      )}
+
+      {/* Tab 10: Design Reports & Analytics */}
+      {activeTab === "REPORTS" && (
+        <DesignReportsAnalytics 
+          drawings={drawings}
+          consultants={mockConsultants}
+        />
+      )}
+
+      {/* Tab 11: Masters Setup View */}
       {activeTab === "MASTERS" && (
         <MastersSetupView />
       )}

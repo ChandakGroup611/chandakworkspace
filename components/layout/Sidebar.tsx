@@ -33,7 +33,9 @@ import {
   Clock,
   Settings2,
   FileText,
-  CheckCircle2
+  CheckCircle2,
+  RotateCcw,
+  Building2
 } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useTheme } from "@/components/theme/ThemeProvider";
@@ -188,15 +190,19 @@ const designNavGroups: NavGroup[] = [
     ]
   },
   {
-    label: "Drawings & Handovers",
+    label: "Drawings & Quality",
     items: [
       { label: "Drawing Register", href: "/design/drawings", icon: FileText },
-      { label: "GFC Site Handovers", href: "/design/handover", icon: CheckCircle2 },
+      { label: "Approvals & Review", href: "/design/approvals", icon: CheckCircle2 },
+      { label: "Revision History", href: "/design/revisions", icon: RotateCcw },
+      { label: "Site Handover & GFC", href: "/design/handover", icon: Building2 },
     ]
   },
   {
-    label: "Configuration & Masters",
+    label: "Directory & Analytics",
     items: [
+      { label: "Consultant Directory", href: "/design/consultants", icon: Users },
+      { label: "Design Reports", href: "/design/reports", icon: LineChart },
       { label: "⚙️ Masters Setup", href: "/design/masters", icon: Settings2 },
     ]
   }
