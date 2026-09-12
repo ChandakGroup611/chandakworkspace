@@ -165,48 +165,47 @@ export default function DesignTrackingHost() {
   };
 
   return (
-    <div className="flex-1 w-full flex flex-col p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto overflow-y-auto">
-      {/* Top Banner Executive Header */}
-      <div className="relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-5 p-6 sm:p-7 rounded-2xl bg-card border border-border shadow-xs">
-        <div className="flex items-center gap-4 relative z-10">
-          <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-xs shrink-0">
-            <Compass className="h-6 w-6 sm:h-7 sm:w-7" />
+    <div className="w-full flex-1 flex flex-col space-y-6 min-w-0 animate-in fade-in duration-300">
+      {/* Top Header & Actions Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-5">
+        <div className="flex items-start sm:items-center gap-3.5 min-w-0">
+          <div className="h-11 w-11 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/25 shrink-0 mt-0.5 sm:mt-0">
+            <Compass className="h-5 w-5" />
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
-                Design & Engineering Tracking Suite
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+                Design & Engineering Tracking
               </h1>
-              <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25 flex items-center gap-1.5 shadow-2xs">
+              <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25 flex items-center gap-1.5 shrink-0">
                 <Database className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
                 <span>Master-Driven Platform</span>
               </span>
             </div>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Chandak Group Development Portfolio • <span className="font-semibold text-foreground/80">{totalProjects} Projects</span> • <span className="font-semibold text-foreground/80">{totalTowers} Wings</span> • <span className="font-semibold text-foreground/80">{totalWorkPackages} Work Packages</span>
             </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5 relative z-10 w-full md:w-auto justify-start md:justify-end">
-          {/* Quick Data Entry Button */}
+        {/* Action Buttons on Right */}
+        <div className="flex items-center gap-2.5 shrink-0">
           <button
             type="button"
             onClick={() => setIsDataEntryOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
             title="Open live data entry modal to fill package status, look-ahead milestones, or authority NOCs"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-3.5 w-3.5" />
             <span>Quick Fill Entry</span>
           </button>
 
-          {/* Upload Drawing Button */}
           <button
             type="button"
             onClick={() => setIsUploadOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
           >
-            <Upload className="h-4 w-4" />
+            <Upload className="h-3.5 w-3.5" />
             <span>Upload Drawing Sheet</span>
           </button>
         </div>
