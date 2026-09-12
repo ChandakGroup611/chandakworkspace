@@ -29,7 +29,7 @@ async function getAuthenticatedUser() {
 // Types & Contracts
 // ------------------------------------------------------------------------------
 
-export function calculateDaysRemaining(dateStr?: string | null): number | null {
+function calculateDaysRemaining(dateStr?: string | null): number | null {
   if (!dateStr) return null;
   const target = new Date(dateStr);
   if (isNaN(target.getTime())) return null;

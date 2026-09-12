@@ -975,3 +975,18 @@ export function analyzeIndianPlate(rawInput: string): DecodedPlateInfo {
     isValidFormat
   };
 }
+
+/**
+ * Calculate dynamic days remaining from today until a target date.
+ * Positive = remaining days, 0 = expires today, negative = expired days ago.
+ */
+export function calculateDaysRemaining(dateStr?: string | null): number | null {
+  if (!dateStr) return null;
+  const target = new Date(dateStr);
+  if (isNaN(target.getTime())) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  target.setHours(0, 0, 0, 0);
+  const diffMs = target.getTime() - today.getTime();
+  return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+}

@@ -49,7 +49,8 @@ import {
 import { 
   POPULAR_BRANDS, 
   TOP_BRAND_NAMES, 
-  analyzeIndianPlate 
+  analyzeIndianPlate,
+  calculateDaysRemaining
 } from "./vehicleQuickPicks";
 import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
@@ -82,7 +83,6 @@ import {
   createServiceRecordAction,
   deleteServiceRecordAction,
   fetchVehiclePortalDetailsAction,
-  calculateDaysRemaining,
   VehicleDashboardStats,
   VehicleRecord,
   DriverRecord,
