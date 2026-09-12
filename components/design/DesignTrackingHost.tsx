@@ -167,33 +167,33 @@ export default function DesignTrackingHost() {
   return (
     <div className="flex-1 w-full flex flex-col p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto overflow-y-auto">
       {/* Top Banner Executive Header */}
-      <div className="relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-6 sm:p-7 rounded-3xl bg-gradient-to-r from-emerald-950/60 via-slate-900/80 to-teal-950/40 border border-emerald-500/25 backdrop-blur-2xl shadow-2xl">
-        <div className="flex items-center gap-4.5 relative z-10">
-          <div className="h-14 w-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-xl shrink-0">
-            <Compass className="h-7 w-7" />
+      <div className="relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-5 p-6 sm:p-7 rounded-2xl bg-card border border-border shadow-xs">
+        <div className="flex items-center gap-4 relative z-10">
+          <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-xs shrink-0">
+            <Compass className="h-6 w-6 sm:h-7 sm:w-7" />
           </div>
           <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
                 Design & Engineering Tracking Suite
               </h1>
-              <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5 shadow-2xs">
-                <Database className="h-3 w-3 text-emerald-400" />
+              <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25 flex items-center gap-1.5 shadow-2xs">
+                <Database className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
                 <span>Master-Driven Platform</span>
               </span>
             </div>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-              Chandak Group Development Portfolio • {totalProjects} Projects • {totalTowers} Wings • {totalWorkPackages} Work Packages
+              Chandak Group Development Portfolio • <span className="font-semibold text-foreground/80">{totalProjects} Projects</span> • <span className="font-semibold text-foreground/80">{totalTowers} Wings</span> • <span className="font-semibold text-foreground/80">{totalWorkPackages} Work Packages</span>
             </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5 relative z-10 w-full md:w-auto justify-end">
+        <div className="flex flex-wrap items-center gap-2.5 relative z-10 w-full md:w-auto justify-start md:justify-end">
           {/* Quick Data Entry Button */}
           <button
             type="button"
             onClick={() => setIsDataEntryOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition-all shadow-lg shadow-teal-600/30 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
             title="Open live data entry modal to fill package status, look-ahead milestones, or authority NOCs"
           >
             <Plus className="h-4 w-4" />
@@ -204,7 +204,7 @@ export default function DesignTrackingHost() {
           <button
             type="button"
             onClick={() => setIsUploadOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-lg shadow-emerald-600/30 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
           >
             <Upload className="h-4 w-4" />
             <span>Upload Drawing Sheet</span>

@@ -72,13 +72,13 @@ export const DesignReportsAnalytics: React.FC<DesignReportsAnalyticsProps> = ({
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* Top Banner Strip */}
-      <div className="p-5 rounded-2xl border border-border bg-gradient-to-r from-slate-900/60 via-slate-900/40 to-emerald-950/30 backdrop-blur-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="p-5 rounded-2xl border border-border bg-card flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center border border-emerald-500/30 shrink-0">
-            <LineChart className="h-6 w-6" />
+          <div className="h-11 w-11 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/25 shrink-0">
+            <LineChart className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-base font-black text-foreground">
+            <h3 className="text-base font-bold text-foreground">
               Design & Engineering Velocity Scoreboard
             </h3>
             <p className="text-xs text-muted-foreground mt-0.5">
