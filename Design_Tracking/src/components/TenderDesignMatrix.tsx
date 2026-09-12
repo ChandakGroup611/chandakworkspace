@@ -10,7 +10,6 @@ import {
 } from "../data/eyTenderData";
 import { 
   Search, 
-  Filter, 
   Download, 
   Layers, 
   Building, 
@@ -19,10 +18,18 @@ import {
   AlertTriangle, 
   Info,
   X,
-  Edit2
+  Edit2,
+  Calendar,
+  Sparkles,
+  RefreshCw,
+  SlidersHorizontal,
+  Check,
+  FileSpreadsheet
 } from "lucide-react";
 
 export const TenderDesignMatrix: React.FC = () => {
+  // In-memory packages state allowing live interactive cell updates
+  const [packages, setPackages] = useState<TenderPackageItem[]>(EY_TENDER_PACKAGES);
   const [selectedProject, setSelectedProject] = useState<string>("ALL");
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
@@ -33,27 +40,30 @@ export const TenderDesignMatrix: React.FC = () => {
     currentVal: string;
   } | null>(null);
 
-  // Filter columns based on selected project
+  // Status edit draft
+  const [cellEditDraft, setCellEditDraft] = useState<string>("");
+
+  // Visible project tower columns
   const visibleColumns = useMemo(() => {
     if (selectedProject === "ALL") return EY_PROJECT_COLUMNS;
     return EY_PROJECT_COLUMNS.filter(c => c.project === selectedProject);
   }, [selectedProject]);
 
-  // Extract unique categories
+  // Unique categories
   const categories = useMemo(() => {
-    const set = new Set(EY_TENDER_PACKAGES.map(p => p.category).filter(Boolean));
+    const set = new Set(packages.map(p => p.category).filter(Boolean));
     return Array.from(set);
-  }, []);
+  }, [packages]);
 
-  // Filter packages based on category, search, and status
+  // Filtered packages
   const filteredPackages = useMemo(() => {
-    return EY_TENDER_PACKAGES.filter(pkg => {
+    return packages.filter(pkg => {
       if (categoryFilter !== "ALL" && pkg.category !== categoryFilter) return false;
 
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
-        const matchesName = pkg.packageName.toLowerCase().includes(q) || pkg.category.toLowerCase().includes(q);
-        if (!matchesName) return false;
+        const matches = pkg.packageName.toLowerCase().includes(q) || pkg.category.toLowerCase().includes(q);
+        if (!matches) return false;
       }
 
       if (statusFilter !== "ALL") {
@@ -62,6 +72,7 @@ export const TenderDesignMatrix: React.FC = () => {
           if (statusFilter === "RECEIVED" && val.includes("received")) return true;
           if (statusFilter === "PENDING" && (val.includes("pending") || val.includes("not onboard"))) return true;
           if (statusFilter === "IN_PROGRESS" && (val.includes("progress") || val.includes("onboard"))) return true;
+          if (statusFilter === "TARGET_DATE" && !val.includes("received") && !val.includes("pending") && !val.includes("na") && val.trim().length > 0 && val !== "-") return true;
           return false;
         });
         if (!hasMatchingStatus) return false;
@@ -69,7 +80,31 @@ export const TenderDesignMatrix: React.FC = () => {
 
       return true;
     });
-  }, [categoryFilter, searchQuery, statusFilter, visibleColumns]);
+  }, [packages, categoryFilter, searchQuery, statusFilter, visibleColumns]);
+
+  // Live statistical calculation across current visible view
+  const matrixStats = useMemo(() => {
+    let received = 0;
+    let inProgress = 0;
+    let pending = 0;
+    let targetDates = 0;
+    let totalCells = 0;
+
+    for (const pkg of filteredPackages) {
+      for (const col of visibleColumns) {
+        const val = (pkg.statuses[`${col.project}__${col.tower}`] || "NA").toLowerCase();
+        if (val === "na" || val === "-") continue;
+        totalCells++;
+        if (val.includes("received")) received++;
+        else if (val.includes("pending") || val.includes("not onboard")) pending++;
+        else if (val.includes("progress") || val.includes("onboard") || val.includes("track")) inProgress++;
+        else targetDates++;
+      }
+    }
+
+    const rate = totalCells > 0 ? Math.round((received / totalCells) * 100) : 0;
+    return { received, inProgress, pending, targetDates, totalCells, rate };
+  }, [filteredPackages, visibleColumns]);
 
   // Helper for cell badge styling
   const renderCellBadge = (rawVal: string) => {
@@ -78,7 +113,7 @@ export const TenderDesignMatrix: React.FC = () => {
 
     if (lower === "na" || lower === "not applicable" || lower === "-") {
       return (
-        <span className="px-1.5 py-0.5 rounded text-[10px] font-mono text-muted-foreground/60 bg-slate-100/50 dark:bg-slate-800/40">
+        <span className="text-[11px] font-mono text-muted-foreground/30 select-none">
           —
         </span>
       );
@@ -86,8 +121,8 @@ export const TenderDesignMatrix: React.FC = () => {
 
     if (lower.includes("received")) {
       return (
-        <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 inline-flex items-center gap-1">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 inline-flex items-center gap-1 shadow-2xs">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
           <span className="truncate max-w-[110px]" title={val}>{val}</span>
         </span>
       );
@@ -95,7 +130,7 @@ export const TenderDesignMatrix: React.FC = () => {
 
     if (lower.includes("pending") || lower.includes("not onboard")) {
       return (
-        <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/25 inline-flex items-center gap-1">
+        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30 inline-flex items-center gap-1 shadow-2xs">
           <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
           <span className="truncate max-w-[110px]" title={val}>{val}</span>
         </span>
@@ -104,47 +139,119 @@ export const TenderDesignMatrix: React.FC = () => {
 
     if (lower.includes("progress") || lower.includes("onboard") || lower.includes("track")) {
       return (
-        <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25 inline-flex items-center gap-1">
+        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30 inline-flex items-center gap-1 shadow-2xs">
           <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
           <span className="truncate max-w-[110px]" title={val}>{val}</span>
         </span>
       );
     }
 
-    // Likely a target date (e.g., 30-Aug, 46280, etc.)
+    // Likely a target date (e.g., 30-Aug, etc.)
     return (
-      <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-medium bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-500/25 inline-flex items-center gap-1">
-        <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+      <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-sky-500/15 text-sky-700 dark:text-sky-300 border border-sky-500/30 inline-flex items-center gap-1 shadow-2xs">
+        <span className="h-1.5 w-1.5 rounded-full bg-sky-500" />
         <span className="truncate max-w-[110px]" title={val}>{val}</span>
       </span>
     );
   };
 
+  // Open inspector
+  const handleOpenInspector = (pkg: TenderPackageItem, col: ProjectTowerColumn, currentVal: string) => {
+    setActiveCell({ pkg, col, currentVal });
+    setCellEditDraft(currentVal);
+  };
+
+  // Apply cell update
+  const handleSaveCell = (newVal: string) => {
+    if (!activeCell) return;
+    const { pkg, col } = activeCell;
+    const key = `${col.project}__${col.tower}`;
+
+    setPackages(prev => prev.map(p => {
+      if (p.id === pkg.id) {
+        return {
+          ...p,
+          statuses: {
+            ...p.statuses,
+            [key]: newVal
+          }
+        };
+      }
+      return p;
+    }));
+
+    setActiveCell(null);
+  };
+
+  // Real CSV export
+  const handleExportCsv = () => {
+    const headers = ["Discipline Category", "Work Package Name", ...visibleColumns.map(c => `${c.project} - ${c.tower}`)];
+    const rows = filteredPackages.map(pkg => {
+      const rowVals = visibleColumns.map(col => `"${(pkg.statuses[`${col.project}__${col.tower}`] || "NA").replace(/"/g, '""')}"`);
+      return [`"${pkg.category}"`, `"${pkg.packageName.replace(/"/g, '""')}"`, ...rowVals].join(",");
+    });
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Chandak_EY_Tender_Design_Matrix_${selectedProject}_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-4">
-      {/* Filter & Control Bar */}
-      <div className="p-4 rounded-2xl border border-border bg-surface shadow-xs space-y-3">
+      {/* Top Filter & Control Ribbon */}
+      <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-sm space-y-4">
+        {/* Row 1: Header title, live search, and CSV export */}
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
-              <Layers className="h-4 w-4" />
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-2xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center border border-emerald-500/30 shadow-inner">
+              <Layers className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-foreground">
-                Tender Design Package Master Matrix
-              </h3>
-              <p className="text-[11px] text-muted-foreground">
-                Cross-project package statuses across 11 Chandak developments and 24 wings/towers
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-black text-foreground tracking-tight">
+                  Tender Design Package Master Matrix
+                </h3>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">
+                  {filteredPackages.length} Packages Active
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Full 65 work packages cross-referenced across 11 Chandak developments and 24 individual tower wings
               </p>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+          <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+            {/* Search Input */}
+            <div className="relative flex-1 sm:w-64">
+              <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search package (e.g. Civil, MEP, Lift)..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full pl-8 pr-7 py-1.5 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-emerald-500 transition-colors"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+
             {/* Project Filter */}
             <select
               value={selectedProject}
               onChange={e => setSelectedProject(e.target.value)}
-              className="h-8 px-2.5 rounded-lg border border-border bg-surface text-xs font-semibold text-foreground focus:outline-none focus:border-primary"
+              className="h-9 px-3 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-xs font-bold text-foreground focus:outline-none focus:border-emerald-500 cursor-pointer shadow-2xs"
             >
               <option value="ALL">🏢 All 11 Projects ({EY_PROJECT_COLUMNS.length} Wings)</option>
               {EY_UNIQUE_PROJECTS.map(proj => (
@@ -152,85 +259,142 @@ export const TenderDesignMatrix: React.FC = () => {
               ))}
             </select>
 
-            {/* Category Filter */}
-            <select
-              value={categoryFilter}
-              onChange={e => setCategoryFilter(e.target.value)}
-              className="h-8 px-2.5 rounded-lg border border-border bg-surface text-xs text-foreground focus:outline-none focus:border-primary"
+            {/* Export CSV Button */}
+            <button
+              type="button"
+              onClick={handleExportCsv}
+              className="h-9 px-3.5 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+              title="Download filtered matrix as Excel CSV"
             >
-              <option value="ALL">⚙️ All Disciplines ({categories.length})</option>
-              {categories.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
+              <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-500" />
+              <span>Export CSV</span>
+            </button>
+          </div>
+        </div>
 
-            {/* Status Filter */}
-            <select
-              value={statusFilter}
-              onChange={e => setStatusFilter(e.target.value)}
-              className="h-8 px-2.5 rounded-lg border border-border bg-surface text-xs text-foreground focus:outline-none focus:border-primary"
+        {/* Row 2: Discipline Filter Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+          <span className="text-[11px] font-bold text-muted-foreground mr-1 shrink-0 flex items-center gap-1">
+            <SlidersHorizontal className="h-3 w-3" />
+            <span>Discipline:</span>
+          </span>
+          <button
+            type="button"
+            onClick={() => setCategoryFilter("ALL")}
+            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
+              categoryFilter === "ALL"
+                ? "bg-emerald-600 text-white shadow-xs"
+                : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            All Disciplines ({categories.length})
+          </button>
+          {categories.map(cat => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => setCategoryFilter(cat)}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer ${
+                categoryFilter === cat
+                  ? "bg-emerald-600 text-white shadow-xs"
+                  : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
+              }`}
             >
-              <option value="ALL">Status: All</option>
-              <option value="RECEIVED">✅ Drawings Received</option>
-              <option value="IN_PROGRESS">⏳ In Progress / Onboard</option>
-              <option value="PENDING">⚠️ Pending / Delayed</option>
-            </select>
+              {cat}
+            </button>
+          ))}
+        </div>
 
-            {/* Search */}
-            <div className="relative flex-1 sm:w-56">
-              <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-              <input
-                type="text"
-                placeholder="Search package..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-2.5 py-1 text-xs rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:border-primary"
+        {/* Row 3: Status Pills & Live Progress Summary Bar */}
+        <div className="pt-3 border-t border-border flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[11px] font-bold text-muted-foreground">Status Filter:</span>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("ALL")}
+              className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer text-[11px] ${
+                statusFilter === "ALL" ? "bg-foreground text-background font-bold" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              All ({filteredPackages.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("RECEIVED")}
+              className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer text-[11px] flex items-center gap-1 ${
+                statusFilter === "RECEIVED" ? "bg-emerald-500 text-white font-bold" : "text-emerald-600 dark:text-emerald-400 hover:underline"
+              }`}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              <span>Received ({matrixStats.received})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("IN_PROGRESS")}
+              className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer text-[11px] flex items-center gap-1 ${
+                statusFilter === "IN_PROGRESS" ? "bg-amber-500 text-white font-bold" : "text-amber-600 dark:text-amber-400 hover:underline"
+              }`}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+              <span>In Progress ({matrixStats.inProgress})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("PENDING")}
+              className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer text-[11px] flex items-center gap-1 ${
+                statusFilter === "PENDING" ? "bg-rose-500 text-white font-bold" : "text-rose-600 dark:text-rose-400 hover:underline"
+              }`}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+              <span>Pending ({matrixStats.pending})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("TARGET_DATE")}
+              className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer text-[11px] flex items-center gap-1 ${
+                statusFilter === "TARGET_DATE" ? "bg-sky-500 text-white font-bold" : "text-sky-600 dark:text-sky-400 hover:underline"
+              }`}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-sky-500" />
+              <span>Target Dates ({matrixStats.targetDates})</span>
+            </button>
+          </div>
+
+          {/* Mini Health Strip */}
+          <div className="flex items-center gap-3 w-full md:w-auto justify-end">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-muted-foreground font-medium">Compliance Rate:</span>
+              <span className="text-xs font-black text-emerald-500 font-mono">{matrixStats.rate}%</span>
+            </div>
+            <div className="w-24 sm:w-32 h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500"
+                style={{ width: `${matrixStats.rate}%` }}
               />
             </div>
           </div>
         </div>
-
-        {/* Legend strip */}
-        <div className="pt-2 border-t border-border flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
-          <span className="font-bold text-foreground">Legend:</span>
-          <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" /> Received (GFC / Tender)
-          </span>
-          <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium">
-            <span className="h-2 w-2 rounded-full bg-amber-500" /> In Progress / Consultant Onboard
-          </span>
-          <span className="inline-flex items-center gap-1 text-rose-600 dark:text-rose-400 font-medium">
-            <span className="h-2 w-2 rounded-full bg-rose-500" /> Pending / Action Required
-          </span>
-          <span className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 font-medium">
-            <span className="h-2 w-2 rounded-full bg-blue-500" /> Target Delivery Date
-          </span>
-          <span className="inline-flex items-center gap-1 text-muted-foreground">
-            <span className="h-2 w-2 rounded-full bg-slate-400" /> Not Applicable (NA)
-          </span>
-        </div>
       </div>
 
       {/* Main Matrix Table with Frozen Header & First Column */}
-      <div className="rounded-2xl border border-border bg-surface overflow-hidden shadow-xs">
-        <div className="overflow-x-auto max-h-[70vh]">
+      <div className="rounded-2xl border border-border bg-surface overflow-hidden shadow-sm">
+        <div className="overflow-x-auto max-h-[72vh]">
           <table className="w-full text-left text-xs border-collapse">
-            <thead className="sticky top-0 z-20 bg-slate-100/95 dark:bg-slate-900/95 backdrop-blur-xs border-b border-border shadow-2xs">
-              {/* Row 1: Project Group Headers */}
+            <thead className="sticky top-0 z-20 bg-slate-100/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-border shadow-xs">
+              {/* Row 1: Project Names & Tower Headers */}
               <tr>
                 <th 
-                  rowSpan={2} 
-                  className="p-3 sticky left-0 z-30 bg-slate-100 dark:bg-slate-900 border-r border-border min-w-[240px] max-w-[280px] font-bold text-foreground uppercase tracking-wider text-[11px]"
+                  className="p-3.5 sticky left-0 z-30 bg-slate-100 dark:bg-slate-900 border-r border-border min-w-[260px] max-w-[300px] font-black text-foreground uppercase tracking-wider text-[11px] shadow-sm"
                 >
                   Work Package & Discipline
                 </th>
                 {visibleColumns.map((col, idx) => (
                   <th
                     key={idx}
-                    className="p-2.5 text-center font-bold text-foreground border-r border-border/50 text-[10px] uppercase tracking-wider bg-slate-50 dark:bg-slate-900/60 min-w-[130px]"
+                    className="p-2.5 text-center font-bold text-foreground border-r border-border/40 text-[10px] uppercase tracking-wider bg-slate-50 dark:bg-slate-900/60 min-w-[130px]"
                   >
-                    <div className="truncate font-black">{col.project}</div>
-                    <div className="text-muted-foreground font-mono font-medium text-[9px] mt-0.5">
+                    <div className="truncate font-black text-foreground">{col.project}</div>
+                    <div className="text-muted-foreground font-mono font-semibold text-[9px] mt-0.5 px-1 py-0.5 rounded bg-slate-200/50 dark:bg-slate-800/60 inline-block">
                       {col.tower}
                     </div>
                   </th>
@@ -241,21 +405,25 @@ export const TenderDesignMatrix: React.FC = () => {
             <tbody className="divide-y divide-border/60">
               {filteredPackages.length === 0 ? (
                 <tr>
-                  <td colSpan={visibleColumns.length + 1} className="text-center py-12 text-muted-foreground">
-                    No work packages match the current filter criteria.
+                  <td colSpan={visibleColumns.length + 1} className="text-center py-16 text-muted-foreground">
+                    <div className="max-w-xs mx-auto space-y-2">
+                      <Info className="h-8 w-8 text-muted-foreground/50 mx-auto" />
+                      <p className="font-semibold text-foreground">No matching packages found</p>
+                      <p className="text-xs">Try clearing the search term or switching discipline filters</p>
+                    </div>
                   </td>
                 </tr>
               ) : (
                 filteredPackages.map((pkg) => (
-                  <tr key={pkg.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                  <tr key={pkg.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group">
                     {/* Frozen Package Name Column */}
-                    <td className="p-3 sticky left-0 z-10 bg-surface border-r border-border font-medium text-foreground">
-                      <div className="flex items-center gap-1.5 mb-0.5">
-                        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-primary/10 text-primary border border-primary/20">
+                    <td className="p-3.5 sticky left-0 z-10 bg-surface group-hover:bg-slate-50 dark:group-hover:bg-slate-900 border-r border-border font-medium text-foreground shadow-sm">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                           {pkg.category}
                         </span>
                       </div>
-                      <div className="font-semibold text-foreground text-xs leading-snug">
+                      <div className="font-bold text-foreground text-xs leading-snug">
                         {pkg.packageName}
                       </div>
                     </td>
@@ -266,11 +434,13 @@ export const TenderDesignMatrix: React.FC = () => {
                       return (
                         <td
                           key={colIdx}
-                          onClick={() => setActiveCell({ pkg, col, currentVal: val })}
-                          className="p-2 border-r border-border/40 text-center cursor-pointer hover:bg-primary/5 transition-colors"
-                          title={`${pkg.packageName} for ${col.project} (${col.tower}): ${val}`}
+                          onClick={() => handleOpenInspector(pkg, col, val)}
+                          className="p-2 border-r border-border/30 text-center cursor-pointer hover:bg-emerald-500/5 transition-colors group/cell"
+                          title={`Click to inspect or update: ${pkg.packageName} • ${col.project} (${col.tower})`}
                         >
-                          {renderCellBadge(val)}
+                          <div className="flex items-center justify-center">
+                            {renderCellBadge(val)}
+                          </div>
                         </td>
                       );
                     })}
@@ -282,47 +452,115 @@ export const TenderDesignMatrix: React.FC = () => {
         </div>
       </div>
 
-      {/* Cell Detail / Update Modal */}
+      {/* Interactive Cell Status Inspector & Update Drawer Modal */}
       {activeCell && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-          <div className="bg-surface border border-border w-full max-w-md rounded-2xl shadow-2xl p-5 space-y-4">
+          <div className="bg-surface border border-border w-full max-w-lg rounded-2xl shadow-2xl p-6 space-y-5">
             <div className="flex items-start justify-between">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-primary">
-                  Package Status Inspector
+              <div className="space-y-1">
+                <span className="text-[10px] font-black uppercase tracking-wider text-emerald-500 flex items-center gap-1">
+                  <Edit2 className="h-3 w-3" />
+                  <span>Package Status Inspector</span>
                 </span>
-                <h4 className="text-sm font-bold text-foreground mt-0.5">
+                <h4 className="text-base font-bold text-foreground">
                   {activeCell.pkg.packageName}
                 </h4>
-                <p className="text-xs text-muted-foreground">
-                  {activeCell.col.project} • {activeCell.col.tower}
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <Building className="h-3.5 w-3.5 text-blue-400" />
+                  <span className="font-semibold text-foreground">{activeCell.col.project}</span>
+                  <span>•</span>
+                  <span>Wing: <strong>{activeCell.col.tower}</strong></span>
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setActiveCell(null)}
-                className="text-muted-foreground hover:text-foreground"
+                className="h-8 w-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-border space-y-1.5 text-xs">
+            {/* Quick Details Box */}
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-border space-y-2 text-xs">
               <div className="flex items-center justify-between text-muted-foreground">
                 <span>Discipline Category:</span>
                 <strong className="text-foreground">{activeCell.pkg.category}</strong>
               </div>
               <div className="flex items-center justify-between text-muted-foreground">
-                <span>Current Cell Value:</span>
-                <span className="font-mono font-bold text-foreground">{activeCell.currentVal}</span>
+                <span>Current Recorded Status:</span>
+                <div className="font-bold">{renderCellBadge(activeCell.currentVal)}</div>
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+            {/* Quick Status Presets */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-foreground block">
+                Quick Update Status:
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleSaveCell("Received")}
+                  className="p-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                  <span>Mark Received</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSaveCell("In progress")}
+                  className="p-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <Clock className="h-3.5 w-3.5 text-amber-500" />
+                  <span>Mark In Progress</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSaveCell("Pending")}
+                  className="p-2.5 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300 hover:bg-rose-500/20 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <AlertTriangle className="h-3.5 w-3.5 text-rose-500" />
+                  <span>Mark Pending</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSaveCell("NA")}
+                  className="p-2.5 rounded-xl border border-border bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <span>Mark Not Applicable (NA)</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Custom Target Date or Text Input */}
+            <div className="space-y-1.5 pt-2 border-t border-border">
+              <label className="text-xs font-bold text-foreground block">
+                Custom Target Date / Consultant Remark:
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={cellEditDraft}
+                  onChange={e => setCellEditDraft(e.target.value)}
+                  placeholder="e.g. 30-Aug, Onboarded, Delayed by BMC"
+                  className="flex-1 px-3 py-2 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-emerald-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleSaveCell(cellEditDraft || "NA")}
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md cursor-pointer transition-all"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end pt-2">
               <button
                 type="button"
                 onClick={() => setActiveCell(null)}
-                className="px-4 py-1.5 rounded-lg border border-border text-xs font-semibold text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                className="px-4 py-1.5 rounded-xl border border-border text-xs font-semibold text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
               >
                 Close
               </button>
@@ -333,3 +571,4 @@ export const TenderDesignMatrix: React.FC = () => {
     </div>
   );
 };
+
