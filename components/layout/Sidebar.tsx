@@ -28,7 +28,8 @@ import {
   Wrench,
   Package,
   Calendar,
-  Layers
+  Layers,
+  PlusCircle
 } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useTheme } from "@/components/theme/ThemeProvider";
@@ -147,6 +148,7 @@ const vehicleNavGroups: NavGroup[] = [
     items: [
       { label: "Fleet Dashboard", href: "/vehicle", icon: LayoutDashboard },
       { label: "Vehicle Inventory", href: "/vehicle/inventory", icon: Car },
+      { label: "Register Vehicle", href: "/vehicle/register", icon: PlusCircle },
       { label: "Daily Trip Sheets", href: "/vehicle/trips", icon: Calendar },
       { label: "Driver Roster", href: "/vehicle/drivers", icon: Users },
       { label: "Traveler Allocations", href: "/vehicle/travelers", icon: UserCheck },
