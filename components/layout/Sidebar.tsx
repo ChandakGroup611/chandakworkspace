@@ -29,7 +29,11 @@ import {
   Package,
   Calendar,
   Layers,
-  PlusCircle
+  PlusCircle,
+  Clock,
+  Settings2,
+  FileText,
+  CheckCircle2
 } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useTheme } from "@/components/theme/ThemeProvider";
@@ -175,21 +179,25 @@ const vehicleNavGroups: NavGroup[] = [
 
 const designNavGroups: NavGroup[] = [
   {
-    label: "Design Management",
+    label: "Tender & Design",
     items: [
-      { label: "Design Dashboard", href: "/design", icon: LayoutDashboard },
-      { label: "Drawing Register", href: "/design/drawings", icon: FolderKanban },
-      { label: "Approvals & Reviews", href: "/design/approvals", icon: FileCheck2 },
-      { label: "Revision History", href: "/design/revisions", icon: LineChart },
+      { label: "Tender Design Matrix", href: "/design/matrix", icon: Layers },
+      { label: "30/60d Look-Ahead", href: "/design/look-ahead", icon: Clock },
+      { label: "Statutory Liaisoning", href: "/design/liaisoning", icon: ShieldCheck },
+      { label: "5-Stage Roadmap", href: "/design/stages", icon: Calendar },
     ]
   },
   {
-    label: "Execution & Governance",
+    label: "Drawings & Handovers",
     items: [
-      { label: "Site Handover & GFC", href: "/design/handover", icon: ShieldCheck },
-      { label: "Consultant Directory", href: "/design/consultants", icon: Users },
-      { label: "Design Reports", href: "/design/reports", icon: BookOpen },
-      { label: "Design Settings", href: "/design/settings", icon: Settings },
+      { label: "Drawing Register", href: "/design/drawings", icon: FileText },
+      { label: "GFC Site Handovers", href: "/design/handover", icon: CheckCircle2 },
+    ]
+  },
+  {
+    label: "Configuration & Masters",
+    items: [
+      { label: "⚙️ Masters Setup", href: "/design/masters", icon: Settings2 },
     ]
   }
 ];
@@ -219,44 +227,38 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
   const searchParams = useSearchParams();
   const [isCompactState, setIsCompactState] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  // Accordion state
+  // Expandable tree accordion state
   const [expandedTrees, setExpandedTrees] = useState<Record<string, boolean>>({});
 
   // Sync accordion with active route on navigation
   useEffect(() => {
     const activeItem = navGroups.flatMap(g => g.items).find(item => 
-      item.href !== "/" && pathname.startsWith(item.href)
+      item.href !== "/" && (pathname === item.href || pathname.startsWith(item.href + "/"))
     );
     if (activeItem && activeItem.subItems) {
-      setExpandedTrees({ [activeItem.href]: true });
-    } else {
-      setExpandedTrees({});
+      setExpandedTrees(prev => ({ ...prev, [activeItem.href]: true }));
     }
     // Auto-close mobile drawer on route change
     if (onCloseMobile) {
       onCloseMobile();
     }
-  }, [pathname]);
-  const [clientQuery, setClientQuery] = useState("");
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setClientQuery(window.location.search);
-    }
-  }, []);
+  }, [pathname, navGroups]);
 
   const { theme } = useTheme();
   const { hasPermission, roleCode, loading: permsLoading } = usePermissions();
-  const isLight = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
+
+  const isSuperAdmin = React.useMemo(() => {
+    const code = (roleCode || "").toUpperCase();
+    return ["SUPER_ADMIN", "ROLE_SUPER_ADMIN", "ADMIN_ROLE", "ROLE_ADMIN", "ADMIN"].includes(code) || hasPermission("SUPER_ADMIN");
+  }, [roleCode, hasPermission]);
 
   const visibleNavTree = React.useMemo(() => {
     return navGroups.map(group => {
       const visibleItems = group.items.map(item => {
-        const isSuperAdmin = roleCode === "SUPER_ADMIN";
-
         if (!item.subItems) {
           if (isSuperAdmin) return item;
           if (!item.permission) return item;
-          if (permsLoading) return null;
+          if (permsLoading) return item;
           return hasPermission(item.permission) ? item : null;
         }
 
@@ -264,7 +266,7 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
           ? item.subItems
           : item.subItems.filter(sub => {
               if (!sub.permission) return true;
-              if (permsLoading) return false;
+              if (permsLoading) return true;
               return hasPermission(sub.permission);
             });
           
@@ -272,7 +274,7 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
           return { ...item, subItems: visibleSubItems };
         }
         
-        if (isSuperAdmin || (!item.permission && !permsLoading) || (item.permission && !permsLoading && hasPermission(item.permission))) {
+        if (isSuperAdmin || !item.permission || hasPermission(item.permission)) {
            return { ...item, subItems: undefined };
         }
         
@@ -282,16 +284,25 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
       if (visibleItems.length === 0) return null;
       return { ...group, items: visibleItems };
     }).filter(Boolean) as NavGroup[];
-  }, [roleCode, hasPermission, permsLoading]);
+  }, [navGroups, isSuperAdmin, hasPermission, permsLoading]);
 
   // When minimized, simply gliding mouse over sidebar gracefully expands it to reveal full module names and links temporarily
   const isCompact = isCompactState && !isHovered;
 
-  const toggleTree = (href: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    // Accordion behavior: toggle the target, close everything else
-    setExpandedTrees(prev => ({ [href]: !prev[href] }));
+  const toggleTree = (href: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setExpandedTrees(prev => {
+      const isCurrentlyExpanded = prev[href] !== undefined 
+        ? prev[href] 
+        : (href !== "/" && (pathname === href || pathname.startsWith(href + "/")));
+      return {
+        ...prev,
+        [href]: !isCurrentlyExpanded
+      };
+    });
   };
 
   // Broadcast compact state to outer layout so main content can adapt
@@ -307,12 +318,6 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
       {/* Navigation Group Links */}
       <div className="flex-1 px-3 pt-2 pb-24 md:pb-4 space-y-6 overflow-y-auto overflow-x-hidden scrollbar-hide">
         {visibleNavTree.map((group, groupIdx) => {
-          const groupColorClass = groupIdx === 0 
-            ? "text-accent dark:text-accent" 
-            : groupIdx === 1 
-            ? "text-theme-icon" 
-            : "text-warning dark:text-warning";
-
           return (
             <div key={groupIdx} className="flex flex-col mb-2">
               {(!isCompact || isOpenMobile) && (
@@ -326,14 +331,25 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
                 {group.items.map((item) => {
                 const IconComponent = item.icon;
                 
-                let isBaseActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+                let isBaseActive = false;
+                if (item.href === "/") {
+                  isBaseActive = pathname === "/";
+                } else if (item.href === "/design/matrix") {
+                  isBaseActive = pathname === "/design" || pathname === "/design/matrix";
+                } else if (item.href === "/vehicle") {
+                  isBaseActive = pathname === "/vehicle";
+                } else {
+                  isBaseActive = pathname === item.href || pathname.startsWith(item.href + "/");
+                }
                 if (item.href === '/requirements' && searchParams?.get('from') === 'approvals') {
                   isBaseActive = false;
                 }
                 
-                const isTreeExpanded = !!expandedTrees[item.href] || isBaseActive;
+                const isTreeExpanded = expandedTrees[item.href] !== undefined 
+                  ? expandedTrees[item.href] 
+                  : (item.href === "/" ? false : isBaseActive);
 
-                // Combine in chain: If tree is expanded, show the parent as active
+                // Combine in chain: If tree is expanded or base is active, show the parent as active
                 const showAsActive = isBaseActive || isTreeExpanded;
 
                 const getModuleTheme = (href: string) => {
@@ -345,15 +361,22 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
                 };
 
                 const modTheme = getModuleTheme(item.href);
-                
-                const dynamicBadge = item.badge;
 
                 return (
                   <div key={item.href} className="space-y-1 relative">
                     <div className="relative flex items-center">
                       <Link
                         href={item.href}
-                        onClick={() => onCloseMobile?.()}
+                        onClick={(e) => {
+                          onCloseMobile?.();
+                          if (item.subItems) {
+                            if (isBaseActive) {
+                              toggleTree(item.href, e);
+                            } else {
+                              setExpandedTrees(prev => ({ ...prev, [item.href]: true }));
+                            }
+                          }
+                        }}
                         className={`group relative flex items-center transition-all duration-200 select-none cursor-pointer active:scale-[0.98] ${
                           isCompact && !isOpenMobile
                             ? "w-10 h-10 mx-auto justify-center rounded-xl hover:bg-surface/80" 
@@ -385,6 +408,7 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
                           size="icon-sm"
                           onClick={(e) => toggleTree(item.href, e)}
                           className="absolute right-2 !h-6 !w-6 active:scale-90 transition-transform"
+                          title={isTreeExpanded ? "Collapse sub-menu" : "Expand sub-menu"}
                         >
                           <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-300 ${isTreeExpanded ? "rotate-0" : "-rotate-90"}`} />
                         </AppButton>
@@ -404,15 +428,24 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
                         <div className="absolute left-[1.125rem] top-0 bottom-3 w-[1px] bg-gradient-to-b from-border/80 via-border/40 to-transparent" />
                         
                         {item.subItems.map((sub) => {
-                          let isSubActive = pathname === sub.href;
-                          if (sub.href === '/requirements/approvals' && searchParams?.get('from') === 'approvals') {
-                            isSubActive = true;
-                          } else if (sub.href === '/requirements' && searchParams?.get('from') === 'approvals') {
-                            isSubActive = false;
-                          } else if (sub.href === '/workspaces' && pathname === '/workspaces/tasks' && searchParams?.get('workspaceId')) {
-                            isSubActive = true;
-                          } else if (sub.href === '/workspaces/tasks' && pathname === '/workspaces/tasks' && searchParams?.get('workspaceId')) {
-                            isSubActive = false;
+                          const currentView = searchParams?.get('view');
+                          const currentFrom = searchParams?.get('from');
+                          const currentWsId = searchParams?.get('workspaceId');
+
+                          let isSubActive = false;
+                          if (sub.href.startsWith("/?view=")) {
+                            const targetView = sub.href.split("view=")[1];
+                            isSubActive = pathname === "/" && (currentView === targetView || (!currentView && targetView === "overview"));
+                          } else if (sub.href === '/requirements/approvals') {
+                            isSubActive = pathname === '/requirements/approvals' || (pathname === '/requirements' && currentFrom === 'approvals');
+                          } else if (sub.href === '/requirements') {
+                            isSubActive = pathname === '/requirements' && currentFrom !== 'approvals';
+                          } else if (sub.href === '/workspaces/tasks') {
+                            isSubActive = pathname === '/workspaces/tasks' && !currentWsId;
+                          } else if (sub.href === '/workspaces') {
+                            isSubActive = pathname === '/workspaces' || (pathname === '/workspaces/tasks' && !!currentWsId);
+                          } else {
+                            isSubActive = pathname === sub.href;
                           }
                           
                           return (
@@ -420,7 +453,6 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
                               key={sub.href}
                               href={sub.href}
                               onClick={() => {
-                                setClientQuery(`?scope=${sub.scopeParam}`);
                                 onCloseMobile?.();
                               }}
                               className={`group relative flex items-center gap-2.5 px-3 py-1.5 rounded-r-lg text-xs transition-all duration-200 select-none cursor-pointer overflow-hidden active:scale-[0.98] ${

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { 
   Compass, 
   Layers, 
@@ -40,7 +41,40 @@ import { DrawingItem, DrawingStatus } from "../../Design_Tracking/src/types";
 type ActiveTabType = "MATRIX" | "LOOK_AHEAD" | "LIAISONING" | "STAGES" | "DRAWINGS" | "GFC_HANDOVER" | "MASTERS";
 
 export default function DesignTrackingHost() {
-  const [activeTab, setActiveTab] = useState<ActiveTabType>("MATRIX");
+  const pathname = usePathname() || "/design";
+  const router = useRouter();
+
+  // Compute active tab seamlessly from URL path
+  const tabFromUrl = useMemo<ActiveTabType>(() => {
+    if (pathname.includes("/masters") || pathname.includes("/settings")) return "MASTERS";
+    if (pathname.includes("/look-ahead") || pathname.includes("/forecast")) return "LOOK_AHEAD";
+    if (pathname.includes("/liaisoning") || pathname.includes("/clearances") || pathname.includes("/noc") || pathname.includes("/consultants")) return "LIAISONING";
+    if (pathname.includes("/stages") || pathname.includes("/roadmap")) return "STAGES";
+    if (pathname.includes("/drawings") || pathname.includes("/sheets") || pathname.includes("/blueprints") || pathname.includes("/approvals") || pathname.includes("/revisions")) return "DRAWINGS";
+    if (pathname.includes("/handover") || pathname.includes("/gfc") || pathname.includes("/site-release")) return "GFC_HANDOVER";
+    return "MATRIX";
+  }, [pathname]);
+
+  const [activeTab, setActiveTab] = useState<ActiveTabType>(tabFromUrl);
+
+  // Sync tab whenever URL pathname changes (e.g. sidebar navigation or browser back/forward)
+  useEffect(() => {
+    setActiveTab(tabFromUrl);
+  }, [tabFromUrl]);
+
+  const handleTabChange = (tab: ActiveTabType) => {
+    setActiveTab(tab);
+    const routeMap: Record<ActiveTabType, string> = {
+      MATRIX: "/design/matrix",
+      LOOK_AHEAD: "/design/look-ahead",
+      LIAISONING: "/design/liaisoning",
+      STAGES: "/design/stages",
+      DRAWINGS: "/design/drawings",
+      GFC_HANDOVER: "/design/handover",
+      MASTERS: "/design/masters"
+    };
+    router.push(routeMap[tab]);
+  };
 
   // Dynamic Master Store State
   const [storeState, setStoreState] = useState(() => DesignMasterStore.getState());
@@ -245,7 +279,7 @@ export default function DesignTrackingHost() {
         <div className="flex items-center gap-1 min-w-max pb-0.5">
           <button
             type="button"
-            onClick={() => setActiveTab("MATRIX")}
+            onClick={() => handleTabChange("MATRIX")}
             className={`py-3 px-3.5 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
               activeTab === "MATRIX"
                 ? "border-emerald-500 text-foreground font-black"
@@ -261,7 +295,7 @@ export default function DesignTrackingHost() {
 
           <button
             type="button"
-            onClick={() => setActiveTab("LOOK_AHEAD")}
+            onClick={() => handleTabChange("LOOK_AHEAD")}
             className={`py-3 px-3.5 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
               activeTab === "LOOK_AHEAD"
                 ? "border-emerald-500 text-foreground font-black"
@@ -277,7 +311,7 @@ export default function DesignTrackingHost() {
 
           <button
             type="button"
-            onClick={() => setActiveTab("LIAISONING")}
+            onClick={() => handleTabChange("LIAISONING")}
             className={`py-3 px-3.5 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
               activeTab === "LIAISONING"
                 ? "border-emerald-500 text-foreground font-black"
@@ -293,7 +327,7 @@ export default function DesignTrackingHost() {
 
           <button
             type="button"
-            onClick={() => setActiveTab("STAGES")}
+            onClick={() => handleTabChange("STAGES")}
             className={`py-3 px-3.5 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
               activeTab === "STAGES"
                 ? "border-emerald-500 text-foreground font-black"
@@ -309,7 +343,7 @@ export default function DesignTrackingHost() {
 
           <button
             type="button"
-            onClick={() => setActiveTab("DRAWINGS")}
+            onClick={() => handleTabChange("DRAWINGS")}
             className={`py-3 px-3.5 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
               activeTab === "DRAWINGS"
                 ? "border-emerald-500 text-foreground font-black"
@@ -325,7 +359,7 @@ export default function DesignTrackingHost() {
 
           <button
             type="button"
-            onClick={() => setActiveTab("GFC_HANDOVER")}
+            onClick={() => handleTabChange("GFC_HANDOVER")}
             className={`py-3 px-3.5 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
               activeTab === "GFC_HANDOVER"
                 ? "border-emerald-500 text-foreground font-black"
@@ -342,7 +376,7 @@ export default function DesignTrackingHost() {
           {/* New Tab: Masters Setup */}
           <button
             type="button"
-            onClick={() => setActiveTab("MASTERS")}
+            onClick={() => handleTabChange("MASTERS")}
             className={`py-3 px-3.5 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
               activeTab === "MASTERS"
                 ? "border-teal-500 text-foreground font-black"

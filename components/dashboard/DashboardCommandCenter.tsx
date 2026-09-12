@@ -68,6 +68,16 @@ export default function DashboardCommandCenter({ metrics = [], kpis, meta, dbErr
   const initialView = searchParams.get("view") === "portfolio" ? "portfolio" : "overview";
   const [activeView, setActiveView] = useState<"overview" | "portfolio">(initialView);
 
+  // Synchronize activeView immediately when query parameter changes (e.g. from sidebar links)
+  useEffect(() => {
+    const viewParam = searchParams.get("view");
+    if (viewParam === "portfolio") {
+      setActiveView("portfolio");
+    } else {
+      setActiveView("overview");
+    }
+  }, [searchParams]);
+
   // Hierarchy & Department filter state
   const [hierarchyScope, setHierarchyScope] = useState<HierarchyScope>("all");
   const [selectedDepartmentName, setSelectedDepartmentName] = useState<string>("ALL");
