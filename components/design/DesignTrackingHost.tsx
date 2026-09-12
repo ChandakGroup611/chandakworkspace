@@ -1,169 +1,99 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { 
   Compass, 
   Layers, 
-  FileCheck2, 
   Clock, 
   CheckCircle2, 
   AlertCircle, 
   Upload, 
-  Download, 
-  Filter, 
-  Search, 
-  Building, 
-  Calendar, 
-  ChevronRight,
-  ExternalLink,
-  ShieldCheck,
-  FileText
+  Building2, 
+  ShieldCheck, 
+  FileText, 
+  Users, 
+  Calendar,
+  Sparkles,
+  Search,
+  ArrowUpRight
 } from "lucide-react";
+import { TenderDesignMatrix } from "../../Design_Tracking/src/components/TenderDesignMatrix";
+import { LookAheadDashboard } from "../../Design_Tracking/src/components/LookAheadDashboard";
+import { LiaisoningTracker } from "../../Design_Tracking/src/components/LiaisoningTracker";
+import { DesignStagesRoadmap } from "../../Design_Tracking/src/components/DesignStagesRoadmap";
+import { DrawingRegister } from "../../Design_Tracking/src/components/DrawingRegister";
+import { GfcHandoverView } from "../../Design_Tracking/src/components/GfcHandoverView";
+import { UploadDrawingModal } from "../../Design_Tracking/src/components/UploadDrawingModal";
+import { ReviewApprovalModal } from "../../Design_Tracking/src/components/ReviewApprovalModal";
+import { EyTenderService } from "../../Design_Tracking/src/services/eyTenderService";
+import { mockDrawings, mockGfcReleases } from "../../Design_Tracking/src/mock/designMockData";
+import { DrawingItem, DrawingStatus } from "../../Design_Tracking/src/types";
+import { EY_PROJECT_COLUMNS, EY_UNIQUE_PROJECTS, EY_LOOK_AHEAD_ITEMS, EY_LIAISON_CONSULTANTS } from "../../Design_Tracking/src/data/eyTenderData";
 
-interface DrawingItem {
-  id: string;
-  code: string;
-  title: string;
-  discipline: "Architectural" | "Structural" | "MEP" | "Landscape" | "Interior";
-  project: string;
-  revision: string;
-  status: "Under Review" | "Approved (GFC)" | "Revision Requested" | "Site Handed Over";
-  consultant: string;
-  submittedDate: string;
-  approvedDate?: string;
-  fileSize: string;
-}
-
-const mockDrawings: DrawingItem[] = [
-  {
-    id: "drw-01",
-    code: "CK-CHD-ARC-L04-001",
-    title: "Tower 1 Typical Floor 4-18 Architectural Layout Plan",
-    discipline: "Architectural",
-    project: "Chandak Stella",
-    revision: "R3",
-    status: "Approved (GFC)",
-    consultant: "Morphogenesis Architects",
-    submittedDate: "2026-08-28",
-    approvedDate: "2026-09-04",
-    fileSize: "14.2 MB"
-  },
-  {
-    id: "drw-02",
-    code: "CK-CHD-STR-FDN-012",
-    title: "Raft Foundation Reinforcement Detail & Column Starter Schedule",
-    discipline: "Structural",
-    project: "Chandak Highscape City",
-    revision: "R2",
-    status: "Under Review",
-    consultant: "JW Consultants LLP",
-    submittedDate: "2026-09-02",
-    fileSize: "28.6 MB"
-  },
-  {
-    id: "drw-03",
-    code: "CK-CHD-MEP-HVAC-004",
-    title: "Basement 2 Mechanical Ventilation & Ducting Route Plan",
-    discipline: "MEP",
-    project: "Chandak GreenAir",
-    revision: "R1",
-    status: "Revision Requested",
-    consultant: "Enersave MEP Consultants",
-    submittedDate: "2026-08-15",
-    fileSize: "18.9 MB"
-  },
-  {
-    id: "drw-04",
-    code: "CK-CHD-LND-POD-007",
-    title: "Podium Garden Landscape Grading, Water Feature & Paving Detail",
-    discipline: "Landscape",
-    project: "Chandak 34 Park Estate",
-    revision: "R4",
-    status: "Site Handed Over",
-    consultant: "Site Concepts Landscape",
-    submittedDate: "2026-07-20",
-    approvedDate: "2026-08-10",
-    fileSize: "32.1 MB"
-  },
-  {
-    id: "drw-05",
-    code: "CK-CHD-ARC-FAC-008",
-    title: "Curtain Wall Glazing & ACP Cladding Sectional Details",
-    discipline: "Architectural",
-    project: "Chandak Stella",
-    revision: "R2",
-    status: "Approved (GFC)",
-    consultant: "Morphogenesis Architects",
-    submittedDate: "2026-09-01",
-    approvedDate: "2026-09-08",
-    fileSize: "21.5 MB"
-  }
-];
+type ActiveTabType = "MATRIX" | "LOOK_AHEAD" | "LIAISONING" | "STAGES" | "DRAWINGS" | "GFC_HANDOVER";
 
 export default function DesignTrackingHost() {
-  const [activeFilter, setActiveFilter] = useState<string>("ALL");
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [disciplineFilter, setDisciplineFilter] = useState<string>("ALL");
+  const [activeTab, setActiveTab] = useState<ActiveTabType>("MATRIX");
 
-  const filtered = mockDrawings.filter(item => {
-    if (activeFilter === "GFC" && item.status !== "Approved (GFC)") return false;
-    if (activeFilter === "REVIEW" && item.status !== "Under Review") return false;
-    if (activeFilter === "REVISION" && item.status !== "Revision Requested") return false;
-    if (activeFilter === "HANDOVER" && item.status !== "Site Handed Over") return false;
+  // Drawings & Modals state
+  const [drawings, setDrawings] = useState<DrawingItem[]>(mockDrawings);
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [selectedDrawingForReview, setSelectedDrawingForReview] = useState<DrawingItem | null>(null);
 
-    if (disciplineFilter !== "ALL" && item.discipline !== disciplineFilter) return false;
+  // Overall KPIs from EyTenderService
+  const projectKpis = useMemo(() => EyTenderService.getProjectKpis(), []);
+  const totalReceived = useMemo(() => projectKpis.reduce((acc, p) => acc + p.receivedPackages, 0), [projectKpis]);
+  const totalPackages = useMemo(() => projectKpis.reduce((acc, p) => acc + p.totalPackages, 0), [projectKpis]);
+  const overallRate = totalPackages > 0 ? Math.round((totalReceived / totalPackages) * 100) : 0;
 
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      return (
-        item.title.toLowerCase().includes(q) ||
-        item.code.toLowerCase().includes(q) ||
-        item.project.toLowerCase().includes(q) ||
-        item.consultant.toLowerCase().includes(q)
-      );
-    }
-    return true;
-  });
+  const handleDrawingUploaded = (newDrawing: Omit<DrawingItem, "id">) => {
+    const created: DrawingItem = {
+      ...newDrawing,
+      id: `drw-${Date.now().toString(36)}`
+    };
+    setDrawings(prev => [created, ...prev]);
+  };
 
-  const getStatusBadge = (status: DrawingItem["status"]) => {
-    switch (status) {
-      case "Approved (GFC)":
-        return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
-      case "Under Review":
-        return "bg-amber-500/10 text-amber-400 border-amber-500/20";
-      case "Revision Requested":
-        return "bg-rose-500/10 text-rose-400 border-rose-500/20";
-      case "Site Handed Over":
-        return "bg-blue-500/10 text-blue-400 border-blue-500/20";
-    }
+  const handleStatusUpdated = (drawingId: string, newStatus: DrawingStatus) => {
+    setDrawings(prev => prev.map(d => {
+      if (d.id === drawingId) {
+        return {
+          ...d,
+          status: newStatus,
+          approvedDate: newStatus === "Approved (GFC)" ? new Date().toISOString().split("T")[0] : d.approvedDate
+        };
+      }
+      return d;
+    }));
   };
 
   return (
     <div className="flex-1 w-full flex flex-col p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto overflow-y-auto">
-      {/* Header Banner */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-6 rounded-2xl bg-gradient-to-r from-emerald-900/30 via-slate-900/40 to-slate-900/20 border border-emerald-500/20 backdrop-blur-xl shadow-xl">
+      {/* Top Banner Header */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-6 rounded-2xl bg-gradient-to-r from-emerald-950/40 via-slate-900/50 to-slate-900/30 border border-emerald-500/20 backdrop-blur-xl shadow-xl">
         <div className="flex items-center gap-4">
-          <div className="h-12 w-12 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-lg">
+          <div className="h-12 w-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-lg shrink-0">
             <Compass className="h-6 w-6" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
-                Design & Engineering Tracking
+                Design & Tender Tracking Suite
               </h1>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                ACTIVE
+              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                EY Tender R2 Standard
               </span>
             </div>
-            <p className="text-xs sm:text-sm text-muted">
-              Architectural drawings, CAD revisions, consultant approvals, and site GFC releases.
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+              11 Projects • 24 Towers • Multi-disciplinary Tender Packages, 30/60d Look-Ahead, and Statutory Liaisoning
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button
             type="button"
+            onClick={() => setIsUploadOpen(true)}
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-lg shadow-emerald-600/25 cursor-pointer"
           >
             <Upload className="h-3.5 w-3.5" />
@@ -172,179 +102,184 @@ export default function DesignTrackingHost() {
         </div>
       </div>
 
-      {/* KPI Metrics Strip */}
+      {/* KPI Metrics Dashboard Strip */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-4 rounded-xl bg-surface border border-border flex flex-col justify-between">
-          <div className="flex items-center justify-between text-muted text-xs">
-            <span>Total Drawing Register</span>
-            <FileText className="h-4 w-4 text-blue-400" />
+        <div className="p-4 rounded-2xl bg-surface border border-border flex flex-col justify-between shadow-2xs">
+          <div className="flex items-center justify-between text-muted-foreground text-xs font-medium">
+            <span>Development Projects</span>
+            <Building2 className="h-4 w-4 text-blue-400" />
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-foreground">148</span>
-            <span className="text-[11px] text-emerald-400 font-semibold">+6 this month</span>
+            <span className="text-2xl font-bold text-foreground">{EY_UNIQUE_PROJECTS.length} Projects</span>
+            <span className="text-[11px] text-emerald-500 font-semibold">{EY_PROJECT_COLUMNS.length} Wings</span>
           </div>
         </div>
 
-        <div className="p-4 rounded-xl bg-surface border border-border flex flex-col justify-between">
-          <div className="flex items-center justify-between text-muted text-xs">
-            <span>Pending Approvals</span>
+        <div className="p-4 rounded-2xl bg-surface border border-border flex flex-col justify-between shadow-2xs">
+          <div className="flex items-center justify-between text-muted-foreground text-xs font-medium">
+            <span>Drawings Delivery Rate</span>
+            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+          </div>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-2xl font-bold text-emerald-500">{overallRate}%</span>
+            <span className="text-[11px] text-muted-foreground">{totalReceived} of {totalPackages} received</span>
+          </div>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-surface border border-border flex flex-col justify-between shadow-2xs">
+          <div className="flex items-center justify-between text-muted-foreground text-xs font-medium">
+            <span>Look-Ahead Milestones</span>
             <Clock className="h-4 w-4 text-amber-400" />
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-amber-400">12</span>
-            <span className="text-[11px] text-muted">Avg TAT: 3.2 days</span>
+            <span className="text-2xl font-bold text-amber-500">{EY_LOOK_AHEAD_ITEMS.length}</span>
+            <span className="text-[11px] text-rose-500 font-semibold">30d / 60d urgent</span>
           </div>
         </div>
 
-        <div className="p-4 rounded-xl bg-surface border border-border flex flex-col justify-between">
-          <div className="flex items-center justify-between text-muted text-xs">
-            <span>GFC Released</span>
-            <ShieldCheck className="h-4 w-4 text-emerald-400" />
+        <div className="p-4 rounded-2xl bg-surface border border-border flex flex-col justify-between shadow-2xs">
+          <div className="flex items-center justify-between text-muted-foreground text-xs font-medium">
+            <span>Statutory Authorities</span>
+            <ShieldCheck className="h-4 w-4 text-purple-400" />
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-emerald-400">94</span>
-            <span className="text-[11px] text-emerald-400 font-semibold">63.5% Rate</span>
-          </div>
-        </div>
-
-        <div className="p-4 rounded-xl bg-surface border border-border flex flex-col justify-between">
-          <div className="flex items-center justify-between text-muted text-xs">
-            <span>Site Handovers</span>
-            <Building className="h-4 w-4 text-purple-400" />
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-purple-400">42</span>
-            <span className="text-[11px] text-muted">4 Sites Active</span>
+            <span className="text-2xl font-bold text-purple-500">{EY_LIAISON_CONSULTANTS.length}</span>
+            <span className="text-[11px] text-muted-foreground">Compliance partners</span>
           </div>
         </div>
       </div>
 
-      {/* Filter Tabs & Search Controls */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 pt-2">
-        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-surface border border-border overflow-x-auto">
-          {[
-            { id: "ALL", label: "All Sheets" },
-            { id: "REVIEW", label: "Under Review" },
-            { id: "GFC", label: "Approved (GFC)" },
-            { id: "REVISION", label: "Revisions" },
-            { id: "HANDOVER", label: "Site Handover" },
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveFilter(tab.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 ${
-                activeFilter === tab.id
-                  ? "bg-accent text-accent-foreground shadow-sm"
-                  : "text-muted hover:text-foreground hover:bg-surface-hover"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1 md:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted" />
-            <input
-              type="text"
-              placeholder="Search code, title, consultant..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl bg-surface border border-border text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-emerald-500"
-            />
-          </div>
-
-          <select
-            value={disciplineFilter}
-            onChange={e => setDisciplineFilter(e.target.value)}
-            className="text-xs py-1.5 px-3 rounded-xl bg-surface border border-border text-foreground focus:outline-none"
+      {/* Main Module Tabs Bar */}
+      <div className="border-b border-border flex items-center justify-between gap-4 overflow-x-auto">
+        <div className="flex items-center gap-1 min-w-max pb-0.5">
+          <button
+            type="button"
+            onClick={() => setActiveTab("MATRIX")}
+            className={`py-3 px-3 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeTab === "MATRIX"
+                ? "border-emerald-500 text-foreground font-black"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
           >
-            <option value="ALL">All Disciplines</option>
-            <option value="Architectural">Architectural</option>
-            <option value="Structural">Structural</option>
-            <option value="MEP">MEP</option>
-            <option value="Landscape">Landscape</option>
-          </select>
+            <Layers className="h-3.5 w-3.5 text-primary" />
+            <span>Tender Design Matrix (11 Projects)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("LOOK_AHEAD")}
+            className={`py-3 px-3 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeTab === "LOOK_AHEAD"
+                ? "border-emerald-500 text-foreground font-black"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Clock className="h-3.5 w-3.5 text-amber-500" />
+            <span>30/60d Look-Ahead ({EY_LOOK_AHEAD_ITEMS.length})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("LIAISONING")}
+            className={`py-3 px-3 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeTab === "LIAISONING"
+                ? "border-emerald-500 text-foreground font-black"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <ShieldCheck className="h-3.5 w-3.5 text-purple-500" />
+            <span>Statutory Liaisoning ({EY_LIAISON_CONSULTANTS.length})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("STAGES")}
+            className={`py-3 px-3 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeTab === "STAGES"
+                ? "border-emerald-500 text-foreground font-black"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Calendar className="h-3.5 w-3.5 text-blue-500" />
+            <span>5-Stage Design Roadmap</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("DRAWINGS")}
+            className={`py-3 px-3 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeTab === "DRAWINGS"
+                ? "border-emerald-500 text-foreground font-black"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <FileText className="h-3.5 w-3.5 text-emerald-500" />
+            <span>Drawing Sheet Register</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("GFC_HANDOVER")}
+            className={`py-3 px-3 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeTab === "GFC_HANDOVER"
+                ? "border-emerald-500 text-foreground font-black"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+            <span>GFC Site Handovers</span>
+          </button>
         </div>
       </div>
 
-      {/* Drawing Register Table */}
-      <div className="rounded-2xl bg-surface border border-border overflow-hidden shadow-lg">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-surface-hover/50 text-muted uppercase font-bold text-[10px] tracking-wider border-b border-border">
-              <tr>
-                <th className="py-3 px-4">Drawing Code & Title</th>
-                <th className="py-3 px-4">Project</th>
-                <th className="py-3 px-4">Discipline</th>
-                <th className="py-3 px-4">Rev</th>
-                <th className="py-3 px-4">Consultant</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4">Submitted</th>
-                <th className="py-3 px-4 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/50">
-              {filtered.map(item => (
-                <tr key={item.id} className="hover:bg-surface-hover/60 transition-colors">
-                  <td className="py-3 px-4">
-                    <div className="flex flex-col">
-                      <span className="font-mono text-[11px] font-bold text-accent">
-                        {item.code}
-                      </span>
-                      <span className="font-semibold text-foreground text-xs line-clamp-1 mt-0.5">
-                        {item.title}
-                      </span>
-                      <span className="text-[10px] text-muted">{item.fileSize}</span>
-                    </div>
-                  </td>
-                  <td className="py-3 px-4 font-medium text-foreground">
-                    {item.project}
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white/5 border border-border text-foreground/80">
-                      {item.discipline}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 font-mono font-bold text-foreground">
-                    {item.revision}
-                  </td>
-                  <td className="py-3 px-4 text-muted">
-                    {item.consultant}
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${getStatusBadge(item.status)}`}>
-                      {item.status}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-muted font-mono">
-                    {item.submittedDate}
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <div className="inline-flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        title="Download Drawing File"
-                        className="p-1.5 rounded-lg hover:bg-surface-hover text-muted hover:text-foreground transition-colors"
-                      >
-                        <Download className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        title="View Revision Diff"
-                        className="p-1.5 rounded-lg hover:bg-surface-hover text-muted hover:text-foreground transition-colors"
-                      >
-                        <ExternalLink className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* Tab 1: Master Tender Design Matrix */}
+      {activeTab === "MATRIX" && (
+        <TenderDesignMatrix />
+      )}
+
+      {/* Tab 2: 30 / 60 Day Look Ahead */}
+      {activeTab === "LOOK_AHEAD" && (
+        <LookAheadDashboard />
+      )}
+
+      {/* Tab 3: Liaisoning Tracker */}
+      {activeTab === "LIAISONING" && (
+        <LiaisoningTracker />
+      )}
+
+      {/* Tab 4: Design Stages Roadmap */}
+      {activeTab === "STAGES" && (
+        <DesignStagesRoadmap />
+      )}
+
+      {/* Tab 5: Drawing Sheet Register */}
+      {activeTab === "DRAWINGS" && (
+        <DrawingRegister 
+          drawings={drawings}
+          onOpenReviewModal={(drawing) => setSelectedDrawingForReview(drawing)}
+          onOpenUploadModal={() => setIsUploadOpen(true)}
+        />
+      )}
+
+      {/* Tab 6: GFC Handover View */}
+      {activeTab === "GFC_HANDOVER" && (
+        <GfcHandoverView releases={mockGfcReleases} />
+      )}
+
+      {/* Upload Drawing Modal */}
+      <UploadDrawingModal
+        isOpen={isUploadOpen}
+        onClose={() => setIsUploadOpen(false)}
+        onDrawingUploaded={handleDrawingUploaded}
+      />
+
+      {/* Review & GFC Stamp Modal */}
+      <ReviewApprovalModal
+        drawing={selectedDrawingForReview}
+        isOpen={!!selectedDrawingForReview}
+        onClose={() => setSelectedDrawingForReview(null)}
+        onStatusUpdated={handleStatusUpdated}
+      />
     </div>
   );
 }

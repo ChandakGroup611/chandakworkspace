@@ -1,0 +1,17 @@
+{
+  "name": "chandak-design-tracking",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Architectural drawings, CAD revisions, stage-gate consultant reviews and site GFC releases for Chandak Group.",
+  "main": "src/index.ts",
+  "keywords": [
+    "design-tracking",
+    "architecture",
+    "cad",
+    "gfc",
+    "construction",
+    "chandak-workspace"
+  ],
+  "author": "Chandak Group IT & Digital Engineering",
+  "license": "UNLICENSED"
+}
