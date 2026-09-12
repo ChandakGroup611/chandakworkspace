@@ -1990,6 +1990,57 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       className="flex-1"
                     />
                   </div>
+                  {/* Model-Aware OEM Paint Color Quick-Picks */}
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {(() => {
+                      const modelUpper = `${newVehicleMake} ${newVehicleModel}`.toUpperCase();
+                      const isRaider = modelUpper.includes("RAIDER");
+                      const isShine = modelUpper.includes("SHINE");
+                      const isActiva = modelUpper.includes("ACTIVA");
+
+                      const swatches = isRaider
+                        ? [
+                            { name: "Wicked Black", hex: "#0f172a" },
+                            { name: "Fiery Yellow", hex: "#eab308" },
+                            { name: "Striking Red", hex: "#dc2626" },
+                            { name: "Blazing Blue", hex: "#2563eb" },
+                            { name: "Forza Blue", hex: "#1d4ed8" }
+                          ]
+                        : isShine || isActiva
+                        ? [
+                            { name: "Geny Grey Metallic", hex: "#475569" },
+                            { name: "Black", hex: "#0f172a" },
+                            { name: "Rebel Red Metallic", hex: "#991b1b" },
+                            { name: "Athletic Blue", hex: "#1e40af" }
+                          ]
+                        : [
+                            { name: "Pearl White", hex: "#f8fafc" },
+                            { name: "Attitude Black", hex: "#0f172a" },
+                            { name: "Silver / Grey", hex: "#64748b" },
+                            { name: "Royal Blue", hex: "#2563eb" },
+                            { name: "Crimson Red", hex: "#dc2626" }
+                          ];
+
+                      return swatches.map((s) => (
+                        <button
+                          key={s.name}
+                          type="button"
+                          onClick={() => setNewVehicleColor(s.name)}
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border transition-all cursor-pointer ${
+                            newVehicleColor === s.name || newVehicleColor === s.hex
+                              ? "border-theme-btn-primary bg-theme-btn-primary/10 text-theme-btn-primary font-bold shadow-2xs"
+                              : "border-border/70 bg-surface/70 text-muted-foreground hover:bg-surface hover:text-foreground"
+                          }`}
+                        >
+                          <span
+                            className="w-2 h-2 rounded-full border border-black/20 shrink-0 inline-block"
+                            style={{ backgroundColor: s.hex }}
+                          />
+                          <span>{s.name}</span>
+                        </button>
+                      ));
+                    })()}
+                  </div>
                 </div>
               </div>
             </div>
@@ -2025,11 +2076,15 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <span>RTO RMN (Registered Mobile Number) *</span>
                   </label>
                   <AppInput 
-                    placeholder="e.g. +91 98200 45210" 
+                    placeholder="Enter owner's 10-digit mobile number" 
                     value={newVehicleRtoRmn} 
                     onChange={(e) => setNewVehicleRtoRmn(e.target.value)} 
                     required
                   />
+                  <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
+                    <span className="text-amber-500 font-semibold">🔒 Protected:</span>
+                    <span>Parivahan privacy rules conceal personal phone numbers on public portals. Enter owner's genuine 10-digit mobile number.</span>
+                  </p>
                 </div>
               </div>
 
@@ -3981,6 +4036,57 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         className="flex-1"
                       />
                     </div>
+                    {/* Model-Aware OEM Paint Color Quick-Picks */}
+                    <div className="flex flex-wrap gap-1 mt-1.5">
+                      {(() => {
+                        const modelUpper = `${editVehicleMake} ${editVehicleModel}`.toUpperCase();
+                        const isRaider = modelUpper.includes("RAIDER");
+                        const isShine = modelUpper.includes("SHINE");
+                        const isActiva = modelUpper.includes("ACTIVA");
+
+                        const swatches = isRaider
+                          ? [
+                              { name: "Wicked Black", hex: "#0f172a" },
+                              { name: "Fiery Yellow", hex: "#eab308" },
+                              { name: "Striking Red", hex: "#dc2626" },
+                              { name: "Blazing Blue", hex: "#2563eb" },
+                              { name: "Forza Blue", hex: "#1d4ed8" }
+                            ]
+                          : isShine || isActiva
+                          ? [
+                              { name: "Geny Grey Metallic", hex: "#475569" },
+                              { name: "Black", hex: "#0f172a" },
+                              { name: "Rebel Red Metallic", hex: "#991b1b" },
+                              { name: "Athletic Blue", hex: "#1e40af" }
+                            ]
+                          : [
+                              { name: "Pearl White", hex: "#f8fafc" },
+                              { name: "Attitude Black", hex: "#0f172a" },
+                              { name: "Silver / Grey", hex: "#64748b" },
+                              { name: "Royal Blue", hex: "#2563eb" },
+                              { name: "Crimson Red", hex: "#dc2626" }
+                            ];
+
+                        return swatches.map((s) => (
+                          <button
+                            key={s.name}
+                            type="button"
+                            onClick={() => setEditVehicleColor(s.name)}
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border transition-all cursor-pointer ${
+                              editVehicleColor === s.name || editVehicleColor === s.hex
+                                ? "border-theme-btn-primary bg-theme-btn-primary/10 text-theme-btn-primary font-bold shadow-2xs"
+                                : "border-border/70 bg-surface/70 text-muted-foreground hover:bg-surface hover:text-foreground"
+                            }`}
+                          >
+                            <span
+                              className="w-2 h-2 rounded-full border border-black/20 shrink-0 inline-block"
+                              style={{ backgroundColor: s.hex }}
+                            />
+                            <span>{s.name}</span>
+                          </button>
+                        ));
+                      })()}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -4010,7 +4116,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <AppInput 
                       value={editVehicleRtoRmn} 
                       onChange={(e) => setEditVehicleRtoRmn(e.target.value)} 
-                      placeholder="e.g. +91 98200 45210"
+                      placeholder="Enter owner's 10-digit mobile number"
                       required
                     />
                   </div>
