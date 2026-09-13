@@ -42,7 +42,7 @@ import { MastersSetupView } from "../../Design_Tracking/src/components/MastersSe
 import { DataEntryFormsModal } from "../../Design_Tracking/src/components/DataEntryFormsModal";
 import { DesignMasterStore } from "../../Design_Tracking/src/services/designMasterStore";
 import { mockDrawings, mockGfcReleases, mockConsultants } from "../../Design_Tracking/src/mock/designMockData";
-import { DrawingItem, DrawingStatus } from "../../Design_Tracking/src/types";
+import { DrawingItem, DrawingStatus, ConsultantPartner } from "../../Design_Tracking/src/types";
 
 type ActiveTabType = 
   | "MATRIX" 
@@ -101,10 +101,23 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
   const [storeState, setStoreState] = useState(() => DesignMasterStore.getState());
   const [isDataEntryOpen, setIsDataEntryOpen] = useState(false);
 
-  // Drawings & Modals state
+  // Drawings, Consultants & Modals state
   const [drawings, setDrawings] = useState<DrawingItem[]>(mockDrawings);
+  const [consultants, setConsultants] = useState<ConsultantPartner[]>(mockConsultants);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [selectedDrawingForReview, setSelectedDrawingForReview] = useState<DrawingItem | null>(null);
+
+  const handleConsultantAdded = (newC: Omit<ConsultantPartner, "id">) => {
+    const created: ConsultantPartner = {
+      ...newC,
+      id: `cns-${Date.now().toString(36)}`
+    };
+    setConsultants(prev => [created, ...prev]);
+  };
+
+  const handleConsultantDeleted = (id: string) => {
+    setConsultants(prev => prev.filter(c => c.id !== id));
+  };
 
   // Subscribe to DesignMasterStore for real-time live synchronization
   useEffect(() => {
@@ -401,14 +414,19 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
 
       {/* Tab 9: Consultant Directory / Dictionary */}
       {activeTab === "CONSULTANTS" && (
-        <ConsultantDirectory consultants={mockConsultants} />
+        <ConsultantDirectory 
+          consultants={consultants} 
+          onAddConsultant={handleConsultantAdded}
+          onDeleteConsultant={handleConsultantDeleted}
+          availableProjects={storeState.projects.map(p => p.name)}
+        />
       )}
 
       {/* Tab 10: Design Reports & Analytics */}
       {activeTab === "REPORTS" && (
         <DesignReportsAnalytics 
           drawings={drawings}
-          consultants={mockConsultants}
+          consultants={consultants}
         />
       )}
 
