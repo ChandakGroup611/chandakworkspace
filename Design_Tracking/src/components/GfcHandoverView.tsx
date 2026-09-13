@@ -40,51 +40,51 @@ export const GfcHandoverView: React.FC<GfcHandoverViewProps> = ({
       </div>
 
       <div className="rounded-2xl border border-border bg-surface overflow-hidden shadow-xs">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse min-w-[950px]">
+        <div className="overflow-x-auto custom-scrollbar">
+          <table className="w-full text-left text-xs border-collapse min-w-[1200px]">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-900/60 border-b border-border text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
-                <th className="p-3.5 whitespace-nowrap min-w-[110px]">GFC Release ID</th>
-                <th className="p-3.5 whitespace-nowrap min-w-[240px]">Drawing Code & Title</th>
-                <th className="p-3.5 text-center whitespace-nowrap min-w-[120px]">Certified Revision</th>
-                <th className="p-3.5 whitespace-nowrap min-w-[150px]">Site Engineer</th>
-                <th className="p-3.5 whitespace-nowrap min-w-[170px]">Civil Contractor Firm</th>
-                <th className="p-3.5 whitespace-nowrap min-w-[120px]">Handover Date</th>
-                <th className="p-3.5 text-center whitespace-nowrap min-w-[110px]">Physical Prints</th>
-                <th className="p-3.5 text-right whitespace-nowrap min-w-[120px]">Certificate</th>
+                <th className="p-3.5 whitespace-nowrap min-w-[120px]">GFC Release ID</th>
+                <th className="p-3.5 whitespace-nowrap min-w-[280px]">Drawing Code & Title</th>
+                <th className="p-3.5 text-center whitespace-nowrap min-w-[130px]">Certified Revision</th>
+                <th className="p-3.5 whitespace-nowrap min-w-[160px]">Site Engineer</th>
+                <th className="p-3.5 whitespace-nowrap min-w-[190px]">Civil Contractor Firm</th>
+                <th className="p-3.5 whitespace-nowrap min-w-[130px]">Handover Date</th>
+                <th className="p-3.5 text-center whitespace-nowrap min-w-[120px]">Physical Prints</th>
+                <th className="p-3.5 text-right whitespace-nowrap min-w-[140px]">Certificate</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/60">
               {releases.map((rel) => (
                 <tr key={rel.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
-                  <td className="p-3.5 font-mono font-bold text-muted-foreground whitespace-nowrap">
+                  <td className="p-3.5 font-mono font-bold text-muted-foreground whitespace-nowrap min-w-[120px]">
                     #{rel.id}
                   </td>
-                  <td className="p-3.5 min-w-[240px]">
-                    <div className="font-mono font-bold text-foreground whitespace-nowrap">{rel.drawingCode}</div>
+                  <td className="p-3.5 min-w-[280px]">
+                    <div className="font-mono font-bold text-foreground whitespace-nowrap select-all">{rel.drawingCode}</div>
                     <div className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">{rel.drawingTitle}</div>
                   </td>
-                  <td className="p-3.5 text-center whitespace-nowrap">
+                  <td className="p-3.5 text-center whitespace-nowrap min-w-[130px]">
                     <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 whitespace-nowrap">
                       {rel.revisionNumber} GFC
                     </span>
                   </td>
-                  <td className="p-3.5 font-medium text-foreground whitespace-nowrap">
+                  <td className="p-3.5 font-medium text-foreground whitespace-nowrap min-w-[160px]">
                     {rel.siteEngineerName}
                   </td>
-                  <td className="p-3.5 text-foreground font-semibold whitespace-nowrap">
-                    <div className="flex items-center gap-1.5">
+                  <td className="p-3.5 text-foreground font-semibold whitespace-nowrap min-w-[190px]">
+                    <div className="flex items-center gap-1.5 whitespace-nowrap">
                       <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                       <span>{rel.contractorFirm}</span>
                     </div>
                   </td>
-                  <td className="p-3.5 font-mono text-muted-foreground whitespace-nowrap">
+                  <td className="p-3.5 font-mono text-muted-foreground whitespace-nowrap min-w-[130px]">
                     {rel.handoverDate}
                   </td>
-                  <td className="p-3.5 text-center font-mono font-bold text-foreground whitespace-nowrap">
+                  <td className="p-3.5 text-center font-mono font-bold text-foreground whitespace-nowrap min-w-[120px]">
                     {rel.physicalCopiesIssued} Sets
                   </td>
-                  <td className="p-3.5 text-right whitespace-nowrap">
+                  <td className="p-3.5 text-right whitespace-nowrap min-w-[140px]">
                     <button
                       type="button"
                       onClick={() => alert(`Downloading Verified GFC Digital Certificate for ${rel.drawingCode}`)}

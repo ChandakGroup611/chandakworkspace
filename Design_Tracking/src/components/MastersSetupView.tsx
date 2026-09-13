@@ -142,11 +142,11 @@ export const MastersSetupView: React.FC = () => {
         </div>
 
         {/* Sub-tab Navigation */}
-        <div className="p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-border flex items-center gap-1 text-xs">
+        <div className="p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-border flex items-center gap-1 text-xs overflow-x-auto custom-scrollbar max-w-full">
           <button
             type="button"
             onClick={() => setActiveSubTab("PROJECTS")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
               activeSubTab === "PROJECTS" ? "bg-surface text-foreground shadow-2xs font-bold" : "text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -156,7 +156,7 @@ export const MastersSetupView: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveSubTab("PACKAGES")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
               activeSubTab === "PACKAGES" ? "bg-surface text-foreground shadow-2xs font-bold" : "text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -166,7 +166,7 @@ export const MastersSetupView: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveSubTab("AUTHORITIES")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
               activeSubTab === "AUTHORITIES" ? "bg-surface text-foreground shadow-2xs font-bold" : "text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -176,7 +176,7 @@ export const MastersSetupView: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveSubTab("TEMPLATES")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
               activeSubTab === "TEMPLATES" ? "bg-surface text-foreground shadow-2xs font-bold" : "text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -191,13 +191,13 @@ export const MastersSetupView: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h4 className="text-sm font-bold text-foreground">Configured Real Estate Projects</h4>
-              <p className="text-xs text-muted-foreground">Each project can have multiple individual towers or wings</p>
+              <h4 className="text-sm font-bold text-foreground">Development Projects & Tower Wings</h4>
+              <p className="text-xs text-muted-foreground">Register residential, commercial, or mixed-use towers</p>
             </div>
             <button
               type="button"
               onClick={() => setIsNewProjectModalOpen(true)}
-              className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all"
+              className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
             >
               <Plus className="h-3.5 w-3.5" />
               <span>Add New Project</span>
@@ -215,7 +215,7 @@ export const MastersSetupView: React.FC = () => {
                   <div className="space-y-2">
                     <div className="flex items-start justify-between">
                       <div>
-                        <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                        <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 whitespace-nowrap">
                           {proj.code}
                         </span>
                         <h4 className="text-base font-black text-foreground mt-1">
@@ -246,14 +246,14 @@ export const MastersSetupView: React.FC = () => {
                         {projTowers.map(twr => (
                           <span 
                             key={twr.id}
-                            className="text-[10px] font-bold px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-foreground border border-border flex items-center gap-1.5 group"
+                            className="text-[10px] font-bold px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-foreground border border-border flex items-center gap-1.5 group whitespace-nowrap"
                           >
                             <span>{twr.towerName}</span>
                             <span className="text-[9px] text-muted-foreground">({twr.towerType})</span>
                             <button
                               type="button"
                               onClick={() => DesignMasterStore.deleteTower(twr.id)}
-                              className="text-muted-foreground hover:text-rose-500 ml-0.5"
+                              className="text-muted-foreground hover:text-rose-500 ml-0.5 cursor-pointer"
                             >
                               <X className="h-2.5 w-2.5" />
                             </button>
@@ -270,7 +270,7 @@ export const MastersSetupView: React.FC = () => {
                         setSelectedProjectIdForTower(proj.id);
                         setIsNewTowerModalOpen(true);
                       }}
-                      className="text-xs text-emerald-600 dark:text-emerald-400 font-bold inline-flex items-center gap-1 hover:underline cursor-pointer"
+                      className="text-xs text-emerald-600 dark:text-emerald-400 font-bold inline-flex items-center gap-1 hover:underline cursor-pointer whitespace-nowrap"
                     >
                       <Plus className="h-3 w-3" />
                       <span>Add Wing / Tower</span>
@@ -294,7 +294,7 @@ export const MastersSetupView: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsNewPackageModalOpen(true)}
-              className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all"
+              className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
             >
               <Plus className="h-3.5 w-3.5" />
               <span>Add Work Package</span>
@@ -302,38 +302,40 @@ export const MastersSetupView: React.FC = () => {
           </div>
 
           <div className="rounded-2xl border border-border bg-surface overflow-hidden shadow-xs">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="bg-slate-50 dark:bg-slate-900/60 border-b border-border text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
-                  <th className="p-3.5">Discipline</th>
-                  <th className="p-3.5">Package Code</th>
-                  <th className="p-3.5">Package Name</th>
-                  <th className="p-3.5 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/60">
-                {storeState.packages.map(pkg => (
-                  <tr key={pkg.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
-                    <td className="p-3.5">
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
-                        {pkg.disciplineName}
-                      </span>
-                    </td>
-                    <td className="p-3.5 font-mono text-muted-foreground">{pkg.packageCode || "—"}</td>
-                    <td className="p-3.5 font-bold text-foreground">{pkg.packageName}</td>
-                    <td className="p-3.5 text-right">
-                      <button
-                        type="button"
-                        onClick={() => DesignMasterStore.deletePackage(pkg.id)}
-                        className="h-7 w-7 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 inline-flex items-center justify-center transition-colors cursor-pointer"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </td>
+            <div className="overflow-x-auto custom-scrollbar">
+              <table className="w-full text-left text-xs border-collapse min-w-[650px]">
+                <thead>
+                  <tr className="bg-slate-50 dark:bg-slate-900/60 border-b border-border text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+                    <th className="p-3.5 whitespace-nowrap min-w-[140px]">Discipline</th>
+                    <th className="p-3.5 whitespace-nowrap min-w-[130px]">Package Code</th>
+                    <th className="p-3.5 min-w-[260px]">Package Name</th>
+                    <th className="p-3.5 text-right whitespace-nowrap min-w-[80px]">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-border/60">
+                  {storeState.packages.map(pkg => (
+                    <tr key={pkg.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                      <td className="p-3.5 whitespace-nowrap min-w-[140px]">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 whitespace-nowrap">
+                          {pkg.disciplineName}
+                        </span>
+                      </td>
+                      <td className="p-3.5 font-mono text-muted-foreground whitespace-nowrap min-w-[130px]">{pkg.packageCode || "—"}</td>
+                      <td className="p-3.5 font-bold text-foreground min-w-[260px]">{pkg.packageName}</td>
+                      <td className="p-3.5 text-right whitespace-nowrap min-w-[80px]">
+                        <button
+                          type="button"
+                          onClick={() => DesignMasterStore.deletePackage(pkg.id)}
+                          className="h-7 w-7 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 inline-flex items-center justify-center transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}

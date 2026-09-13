@@ -291,12 +291,12 @@ export const LiaisoningTracker: React.FC = () => {
 
         {/* Live Compliance Health Bar */}
         <div className="pt-3 border-t border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[11px] font-bold text-muted-foreground">Filter Onboarding:</span>
+          <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1 max-w-full">
+            <span className="text-[11px] font-bold text-muted-foreground shrink-0 whitespace-nowrap">Filter Onboarding:</span>
             <button
               type="button"
               onClick={() => setOnboardFilter("ALL")}
-              className={`px-2.5 py-0.5 rounded-md font-semibold cursor-pointer text-[11px] ${
+              className={`px-2.5 py-0.5 rounded-md font-semibold cursor-pointer text-[11px] shrink-0 whitespace-nowrap ${
                 onboardFilter === "ALL" ? "bg-foreground text-background font-bold" : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -305,7 +305,7 @@ export const LiaisoningTracker: React.FC = () => {
             <button
               type="button"
               onClick={() => setOnboardFilter("ONBOARD")}
-              className={`px-2.5 py-0.5 rounded-md font-semibold cursor-pointer text-[11px] flex items-center gap-1 ${
+              className={`px-2.5 py-0.5 rounded-md font-semibold cursor-pointer text-[11px] flex items-center gap-1 shrink-0 whitespace-nowrap ${
                 onboardFilter === "ONBOARD" ? "bg-emerald-500 text-white font-bold" : "text-emerald-600 dark:text-emerald-400 hover:underline"
               }`}
             >
@@ -315,7 +315,7 @@ export const LiaisoningTracker: React.FC = () => {
             <button
               type="button"
               onClick={() => setOnboardFilter("NOT_ONBOARD")}
-              className={`px-2.5 py-0.5 rounded-md font-semibold cursor-pointer text-[11px] flex items-center gap-1 ${
+              className={`px-2.5 py-0.5 rounded-md font-semibold cursor-pointer text-[11px] flex items-center gap-1 shrink-0 whitespace-nowrap ${
                 onboardFilter === "NOT_ONBOARD" ? "bg-rose-500 text-white font-bold" : "text-rose-600 dark:text-rose-400 hover:underline"
               }`}
             >
@@ -324,10 +324,10 @@ export const LiaisoningTracker: React.FC = () => {
             </button>
           </div>
 
-          <div className="flex items-center gap-3">
-            <span className="text-[11px] text-muted-foreground font-medium">Compliance Readiness:</span>
+          <div className="flex items-center gap-3 shrink-0">
+            <span className="text-[11px] text-muted-foreground font-medium whitespace-nowrap">Compliance Readiness:</span>
             <span className="text-xs font-black text-purple-600 dark:text-purple-400 font-mono">{complianceStats.rate}%</span>
-            <div className="w-28 h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+            <div className="w-28 h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden shrink-0">
               <div
                 className="h-full bg-gradient-to-r from-purple-500 to-indigo-400 rounded-full transition-all duration-500"
                 style={{ width: `${complianceStats.rate}%` }}
@@ -351,20 +351,20 @@ export const LiaisoningTracker: React.FC = () => {
       {/* View 1: Matrix Table */}
       {viewMode === "MATRIX" && filteredAuthorities.length > 0 && (
         <div className="rounded-2xl border border-border bg-surface overflow-hidden shadow-sm">
-          <div className="overflow-x-auto max-h-[72vh]">
-            <table className="w-full text-left text-xs border-collapse">
+          <div className="overflow-x-auto custom-scrollbar max-h-[72vh]">
+            <table className="w-full text-left text-xs border-collapse min-w-max">
               <thead className="sticky top-0 z-20 bg-slate-100/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-border shadow-xs">
                 <tr>
-                  <th className="p-3.5 sticky left-0 z-30 bg-slate-100 dark:bg-slate-900 border-r border-border min-w-[260px] font-black text-foreground uppercase tracking-wider text-[11px] shadow-sm">
+                  <th className="p-3.5 sticky left-0 z-30 bg-slate-100 dark:bg-slate-900 border-r border-border min-w-[280px] font-black text-foreground uppercase tracking-wider text-[11px] shadow-sm whitespace-nowrap">
                     Statutory Authority / Scope
                   </th>
                   {dynamicColumns.map((col, idx) => (
                     <th
                       key={idx}
-                      className="p-2.5 text-center font-bold text-foreground border-r border-border/40 text-[10px] uppercase tracking-wider bg-slate-50 dark:bg-slate-900/60 min-w-[125px]"
+                      className="p-2.5 text-center font-bold text-foreground border-r border-border/40 text-[10px] uppercase tracking-wider bg-slate-50 dark:bg-slate-900/60 min-w-[140px] whitespace-nowrap"
                     >
-                      <div className="truncate font-black text-foreground">{col.projectName}</div>
-                      <div className="text-muted-foreground font-mono font-semibold text-[9px] mt-0.5 px-1 py-0.5 rounded bg-slate-200/50 dark:bg-slate-800/60 inline-block">
+                      <div className="truncate font-black text-foreground whitespace-nowrap">{col.projectName}</div>
+                      <div className="text-muted-foreground font-mono font-semibold text-[9px] mt-0.5 px-1.5 py-0.5 rounded bg-slate-200/50 dark:bg-slate-800/60 inline-block whitespace-nowrap">
                         {col.towerName}
                       </div>
                     </th>

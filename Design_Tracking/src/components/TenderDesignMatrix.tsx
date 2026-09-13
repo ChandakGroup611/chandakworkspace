@@ -445,12 +445,12 @@ export const TenderDesignMatrix: React.FC = () => {
 
         {/* Row 3: Status Pills & Live Progress Summary Bar */}
         <div className="pt-3 border-t border-border flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[11px] font-bold text-muted-foreground">Status Filter:</span>
+          <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1 max-w-full">
+            <span className="text-[11px] font-bold text-muted-foreground shrink-0 whitespace-nowrap">Status Filter:</span>
             <button
               type="button"
               onClick={() => setStatusFilter("ALL")}
-              className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer text-[11px] ${
+              className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer text-[11px] shrink-0 whitespace-nowrap ${
                 statusFilter === "ALL" ? "bg-foreground text-background font-bold" : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -459,7 +459,7 @@ export const TenderDesignMatrix: React.FC = () => {
             <button
               type="button"
               onClick={() => setStatusFilter("RECEIVED")}
-              className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer text-[11px] flex items-center gap-1 ${
+              className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer text-[11px] flex items-center gap-1 shrink-0 whitespace-nowrap ${
                 statusFilter === "RECEIVED" ? "bg-emerald-500 text-white font-bold" : "text-emerald-600 dark:text-emerald-400 hover:underline"
               }`}
             >
@@ -469,7 +469,7 @@ export const TenderDesignMatrix: React.FC = () => {
             <button
               type="button"
               onClick={() => setStatusFilter("IN_PROGRESS")}
-              className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer text-[11px] flex items-center gap-1 ${
+              className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer text-[11px] flex items-center gap-1 shrink-0 whitespace-nowrap ${
                 statusFilter === "IN_PROGRESS" ? "bg-amber-500 text-white font-bold" : "text-amber-600 dark:text-amber-400 hover:underline"
               }`}
             >
@@ -479,7 +479,7 @@ export const TenderDesignMatrix: React.FC = () => {
             <button
               type="button"
               onClick={() => setStatusFilter("PENDING")}
-              className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer text-[11px] flex items-center gap-1 ${
+              className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer text-[11px] flex items-center gap-1 shrink-0 whitespace-nowrap ${
                 statusFilter === "PENDING" ? "bg-rose-500 text-white font-bold" : "text-rose-600 dark:text-rose-400 hover:underline"
               }`}
             >
@@ -489,7 +489,7 @@ export const TenderDesignMatrix: React.FC = () => {
             <button
               type="button"
               onClick={() => setStatusFilter("TARGET_DATE")}
-              className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer text-[11px] flex items-center gap-1 ${
+              className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer text-[11px] flex items-center gap-1 shrink-0 whitespace-nowrap ${
                 statusFilter === "TARGET_DATE" ? "bg-sky-500 text-white font-bold" : "text-sky-600 dark:text-sky-400 hover:underline"
               }`}
             >
@@ -499,12 +499,12 @@ export const TenderDesignMatrix: React.FC = () => {
           </div>
 
           {/* Mini Health Strip */}
-          <div className="flex items-center gap-3 w-full md:w-auto justify-end">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3 shrink-0 justify-end">
+            <div className="flex items-center gap-2 whitespace-nowrap">
               <span className="text-[11px] text-muted-foreground font-medium">Compliance Rate:</span>
               <span className="text-xs font-black text-emerald-500 font-mono">{matrixStats.rate}%</span>
             </div>
-            <div className="w-24 sm:w-32 h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+            <div className="w-24 sm:w-32 h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden shrink-0">
               <div
                 className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500"
                 style={{ width: `${matrixStats.rate}%` }}
@@ -516,23 +516,23 @@ export const TenderDesignMatrix: React.FC = () => {
 
       {/* Main Matrix Table with Frozen Header & First Column */}
       <div className="rounded-2xl border border-border bg-surface overflow-hidden shadow-sm">
-        <div className="overflow-x-auto max-h-[72vh]">
-          <table className="w-full text-left text-xs border-collapse">
+        <div className="overflow-x-auto custom-scrollbar max-h-[72vh]">
+          <table className="w-full text-left text-xs border-collapse min-w-max">
             <thead className="sticky top-0 z-20 bg-slate-100/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-border shadow-xs">
               {/* Row 1: Project Names & Tower Headers */}
               <tr>
                 <th 
-                  className="p-3.5 sticky left-0 z-30 bg-slate-100 dark:bg-slate-900 border-r border-border min-w-[260px] max-w-[300px] font-black text-foreground uppercase tracking-wider text-[11px] shadow-sm"
+                  className="p-3.5 sticky left-0 z-30 bg-slate-100 dark:bg-slate-900 border-r border-border min-w-[280px] max-w-[320px] font-black text-foreground uppercase tracking-wider text-[11px] shadow-sm whitespace-nowrap"
                 >
                   Work Package & Discipline
                 </th>
                 {visibleColumns.map((col, idx) => (
                   <th
                     key={idx}
-                    className="p-2.5 text-center font-bold text-foreground border-r border-border/40 text-[10px] uppercase tracking-wider bg-slate-50 dark:bg-slate-900/60 min-w-[130px]"
+                    className="p-2.5 text-center font-bold text-foreground border-r border-border/40 text-[10px] uppercase tracking-wider bg-slate-50 dark:bg-slate-900/60 min-w-[140px] whitespace-nowrap"
                   >
-                    <div className="truncate font-black text-foreground">{col.projectName}</div>
-                    <div className="text-muted-foreground font-mono font-semibold text-[9px] mt-0.5 px-1 py-0.5 rounded bg-slate-200/50 dark:bg-slate-800/60 inline-block">
+                    <div className="truncate font-black text-foreground whitespace-nowrap">{col.projectName}</div>
+                    <div className="text-muted-foreground font-mono font-semibold text-[9px] mt-0.5 px-1.5 py-0.5 rounded bg-slate-200/50 dark:bg-slate-800/60 inline-block whitespace-nowrap">
                       {col.towerName}
                     </div>
                   </th>

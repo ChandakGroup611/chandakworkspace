@@ -232,17 +232,17 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
 
       {/* Revision Table */}
       <div className="rounded-2xl border border-border bg-surface overflow-hidden shadow-xs">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse min-w-[1050px]">
+        <div className="overflow-x-auto custom-scrollbar">
+          <table className="w-full text-left text-xs border-collapse min-w-[1250px]">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-900/60 border-b border-border text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
-                <th className="p-3.5 whitespace-nowrap min-w-[220px]">Drawing Code & Discipline</th>
-                <th className="p-3.5 whitespace-nowrap min-w-[150px]">Project</th>
-                <th className="p-3.5 text-center whitespace-nowrap min-w-[130px]">Version Delta</th>
-                <th className="p-3.5 whitespace-nowrap min-w-[280px]">Change Summary & Remarks</th>
-                <th className="p-3.5 whitespace-nowrap min-w-[160px]">Consultant Firm</th>
-                <th className="p-3.5 whitespace-nowrap min-w-[130px]">Submission Date</th>
-                <th className="p-3.5 text-right whitespace-nowrap min-w-[100px]">File Size</th>
+                <th className="p-3.5 whitespace-nowrap min-w-[260px]">Drawing Code & Discipline</th>
+                <th className="p-3.5 whitespace-nowrap min-w-[160px]">Project</th>
+                <th className="p-3.5 text-center whitespace-nowrap min-w-[140px]">Version Delta</th>
+                <th className="p-3.5 whitespace-nowrap min-w-[320px]">Change Summary & Remarks</th>
+                <th className="p-3.5 whitespace-nowrap min-w-[180px]">Consultant Firm</th>
+                <th className="p-3.5 whitespace-nowrap min-w-[140px]">Submission Date</th>
+                <th className="p-3.5 text-right whitespace-nowrap min-w-[110px]">File Size</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/60">
@@ -255,23 +255,23 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
               ) : (
                 filteredLogs.map((entry) => (
                   <tr key={entry.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
-                    <td className="p-3.5 whitespace-nowrap">
+                    <td className="p-3.5 whitespace-nowrap min-w-[260px]">
                       <div>
-                        <span className="font-mono font-bold text-foreground block text-xs whitespace-nowrap">
+                        <span className="font-mono font-bold text-foreground block text-xs whitespace-nowrap select-all">
                           {entry.drawingCode}
                         </span>
-                        <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+                        <span className="text-[11px] text-muted-foreground whitespace-nowrap block mt-0.5">
                           {entry.drawingTitle}
                         </span>
                       </div>
                     </td>
-                    <td className="p-3.5 whitespace-nowrap">
-                      <span className="font-medium text-foreground flex items-center gap-1.5">
+                    <td className="p-3.5 whitespace-nowrap min-w-[160px]">
+                      <span className="font-medium text-foreground flex items-center gap-1.5 whitespace-nowrap">
                         <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                         <span>{entry.project}</span>
                       </span>
                     </td>
-                    <td className="p-3.5 text-center whitespace-nowrap">
+                    <td className="p-3.5 text-center whitespace-nowrap min-w-[140px]">
                       <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-700 dark:text-blue-300 font-mono font-bold text-xs border border-blue-500/20 whitespace-nowrap">
                         {entry.previousRevision && (
                           <>
@@ -282,7 +282,7 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
                         <span>{entry.revision}</span>
                       </div>
                     </td>
-                    <td className="p-3.5 min-w-[280px]">
+                    <td className="p-3.5 min-w-[320px] max-w-[440px]">
                       <p className="text-xs text-foreground font-medium leading-snug">
                         {entry.changeSummary}
                       </p>
@@ -293,13 +293,13 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
                         </span>
                       )}
                     </td>
-                    <td className="p-3.5 font-medium text-foreground whitespace-nowrap">
+                    <td className="p-3.5 font-medium text-foreground whitespace-nowrap min-w-[180px]">
                       {entry.consultant}
                     </td>
-                    <td className="p-3.5 font-mono text-[11px] text-muted-foreground whitespace-nowrap">
+                    <td className="p-3.5 font-mono text-[11px] text-muted-foreground whitespace-nowrap min-w-[140px]">
                       {entry.submittedDate}
                     </td>
-                    <td className="p-3.5 text-right font-mono text-[11px] text-muted-foreground whitespace-nowrap">
+                    <td className="p-3.5 text-right font-mono text-[11px] text-muted-foreground whitespace-nowrap min-w-[110px]">
                       {entry.fileSize}
                     </td>
                   </tr>

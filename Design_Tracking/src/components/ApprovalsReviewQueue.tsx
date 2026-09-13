@@ -89,14 +89,14 @@ export const ApprovalsReviewQueue: React.FC<ApprovalsReviewQueueProps> = ({
 
         {/* Filters */}
         <div className="pt-3 border-t border-border flex flex-wrap items-center justify-between gap-2 text-xs">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[11px] font-semibold text-muted-foreground mr-1">Status:</span>
+          <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 max-w-full">
+            <span className="text-[11px] font-semibold text-muted-foreground mr-1 shrink-0 whitespace-nowrap">Status:</span>
             {["ALL", "Under Review", "Revision Requested", "Approved (GFC)"].map(st => (
               <button
                 key={st}
                 type="button"
                 onClick={() => setStatusFilter(st)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer shrink-0 whitespace-nowrap ${
                   statusFilter === st
                     ? "bg-foreground text-background font-bold"
                     : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
@@ -107,12 +107,12 @@ export const ApprovalsReviewQueue: React.FC<ApprovalsReviewQueueProps> = ({
             ))}
           </div>
 
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[11px] font-semibold text-muted-foreground mr-1">Discipline:</span>
+          <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 max-w-full">
+            <span className="text-[11px] font-semibold text-muted-foreground mr-1 shrink-0 whitespace-nowrap">Discipline:</span>
             <button
               type="button"
               onClick={() => setDisciplineFilter("ALL")}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer shrink-0 whitespace-nowrap ${
                 disciplineFilter === "ALL"
                   ? "bg-emerald-600 text-white font-bold"
                   : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
@@ -125,7 +125,7 @@ export const ApprovalsReviewQueue: React.FC<ApprovalsReviewQueueProps> = ({
                 key={d}
                 type="button"
                 onClick={() => setDisciplineFilter(d)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer shrink-0 whitespace-nowrap ${
                   disciplineFilter === d
                     ? "bg-emerald-600 text-white font-bold"
                     : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground"

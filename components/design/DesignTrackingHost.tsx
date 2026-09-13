@@ -202,12 +202,12 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
       </div>
 
       {/* Main Module Segmented Tabs Navigation */}
-      <div className="border-b border-border flex items-center justify-between gap-4 overflow-x-auto no-scrollbar">
+      <div className="border-b border-border flex items-center justify-between gap-4 overflow-x-auto custom-scrollbar">
         <div className="flex items-center gap-1 min-w-max pb-0.5">
           <button
             type="button"
             onClick={() => handleTabChange("MATRIX")}
-            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
               activeTab === "MATRIX"
                 ? "border-emerald-500 text-foreground font-bold"
                 : "border-transparent text-muted-foreground hover:text-foreground"
@@ -220,7 +220,7 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
           <button
             type="button"
             onClick={() => handleTabChange("LOOK_AHEAD")}
-            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
               activeTab === "LOOK_AHEAD"
                 ? "border-emerald-500 text-foreground font-bold"
                 : "border-transparent text-muted-foreground hover:text-foreground"
@@ -233,7 +233,7 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
           <button
             type="button"
             onClick={() => handleTabChange("LIAISONING")}
-            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
               activeTab === "LIAISONING"
                 ? "border-emerald-500 text-foreground font-bold"
                 : "border-transparent text-muted-foreground hover:text-foreground"
@@ -246,7 +246,7 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
           <button
             type="button"
             onClick={() => handleTabChange("STAGES")}
-            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
               activeTab === "STAGES"
                 ? "border-emerald-500 text-foreground font-bold"
                 : "border-transparent text-muted-foreground hover:text-foreground"
@@ -259,7 +259,7 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
           <button
             type="button"
             onClick={() => handleTabChange("DRAWINGS")}
-            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
               activeTab === "DRAWINGS"
                 ? "border-emerald-500 text-foreground font-bold"
                 : "border-transparent text-muted-foreground hover:text-foreground"
@@ -272,7 +272,7 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
           <button
             type="button"
             onClick={() => handleTabChange("APPROVALS")}
-            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
               activeTab === "APPROVALS"
                 ? "border-emerald-500 text-foreground font-bold"
                 : "border-transparent text-muted-foreground hover:text-foreground"
@@ -285,7 +285,7 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
           <button
             type="button"
             onClick={() => handleTabChange("REVISIONS")}
-            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
               activeTab === "REVISIONS"
                 ? "border-emerald-500 text-foreground font-bold"
                 : "border-transparent text-muted-foreground hover:text-foreground"
@@ -298,7 +298,7 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
           <button
             type="button"
             onClick={() => handleTabChange("GFC_HANDOVER")}
-            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
               activeTab === "GFC_HANDOVER"
                 ? "border-emerald-500 text-foreground font-bold"
                 : "border-transparent text-muted-foreground hover:text-foreground"
@@ -311,7 +311,7 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
           <button
             type="button"
             onClick={() => handleTabChange("CONSULTANTS")}
-            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
               activeTab === "CONSULTANTS"
                 ? "border-emerald-500 text-foreground font-bold"
                 : "border-transparent text-muted-foreground hover:text-foreground"
@@ -324,7 +324,7 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
           <button
             type="button"
             onClick={() => handleTabChange("REPORTS")}
-            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
               activeTab === "REPORTS"
                 ? "border-emerald-500 text-foreground font-bold"
                 : "border-transparent text-muted-foreground hover:text-foreground"
@@ -337,7 +337,7 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
           <button
             type="button"
             onClick={() => handleTabChange("MASTERS")}
-            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
               activeTab === "MASTERS"
                 ? "border-teal-500 text-foreground font-bold"
                 : "border-transparent text-muted-foreground hover:text-foreground"

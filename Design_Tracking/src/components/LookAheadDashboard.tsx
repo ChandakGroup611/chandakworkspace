@@ -212,11 +212,11 @@ export const LookAheadDashboard: React.FC = () => {
 
         {/* Filter Controls */}
         <div className="pt-3 border-t border-border flex flex-wrap items-center justify-between gap-3 text-xs">
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 max-w-full">
             <button
               type="button"
               onClick={() => setTimeframeFilter("ALL")}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer shrink-0 whitespace-nowrap ${
                 timeframeFilter === "ALL" 
                   ? "bg-foreground text-background font-bold" 
                   : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
@@ -227,25 +227,25 @@ export const LookAheadDashboard: React.FC = () => {
             <button
               type="button"
               onClick={() => setTimeframeFilter("30_DAYS")}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
                 timeframeFilter === "30_DAYS" 
                   ? "bg-rose-600 text-white font-bold" 
                   : "bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20"
               }`}
             >
-              <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+              <span className="h-1.5 w-1.5 rounded-full bg-rose-500 shrink-0" />
               <span>30-Day Critical ({count30})</span>
             </button>
             <button
               type="button"
               onClick={() => setTimeframeFilter("60_DAYS")}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
                 timeframeFilter === "60_DAYS" 
                   ? "bg-amber-600 text-white font-bold" 
                   : "bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20"
               }`}
             >
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
               <span>60-Day Scheduled ({count60})</span>
             </button>
           </div>
@@ -267,7 +267,7 @@ export const LookAheadDashboard: React.FC = () => {
             <select
               value={selectedProject}
               onChange={e => setSelectedProject(e.target.value)}
-              className="h-7.5 px-2.5 rounded-lg border border-border bg-surface text-xs font-medium text-foreground focus:outline-none focus:border-emerald-500 cursor-pointer"
+              className="h-7.5 px-2.5 rounded-lg border border-border bg-surface text-xs font-medium text-foreground focus:outline-none focus:border-emerald-500 cursor-pointer whitespace-nowrap"
             >
               <option value="ALL">All Projects ({uniqueProjectNames.length})</option>
               {uniqueProjectNames.map(p => (
@@ -284,12 +284,12 @@ export const LookAheadDashboard: React.FC = () => {
         <div className="p-4 sm:p-5 rounded-2xl border border-rose-500/25 bg-rose-500/5 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-rose-500" />
-              <h3 className="text-xs font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400">
+              <span className="h-2 w-2 rounded-full bg-rose-500 shrink-0" />
+              <h3 className="text-xs font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400 whitespace-nowrap">
                 Critical Design Package Blockers
               </h3>
             </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/25">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/25 shrink-0 whitespace-nowrap">
               High Priority
             </span>
           </div>
@@ -298,7 +298,7 @@ export const LookAheadDashboard: React.FC = () => {
             {CRITICAL_DESIGN_BLOCKERS.map((blk, idx) => (
               <div key={idx} className="p-2.5 rounded-xl bg-surface border border-rose-500/20 text-xs flex items-center justify-between gap-3 shadow-2xs">
                 <div className="min-w-0">
-                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground">
+                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground whitespace-nowrap">
                     <span className="text-rose-600 dark:text-rose-400">{blk.project}</span>
                     <span className="text-muted-foreground">•</span>
                     <span>{blk.tower}</span>
@@ -308,10 +308,10 @@ export const LookAheadDashboard: React.FC = () => {
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  <span className="text-[10px] font-mono font-bold text-rose-600 dark:text-rose-400 block">
+                  <span className="text-[10px] font-mono font-bold text-rose-600 dark:text-rose-400 block whitespace-nowrap">
                     {blk.target}
                   </span>
-                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-rose-500 text-white font-bold inline-block mt-0.5">
+                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-rose-500 text-white font-bold inline-block mt-0.5 whitespace-nowrap">
                     {blk.status}
                   </span>
                 </div>
@@ -324,12 +324,12 @@ export const LookAheadDashboard: React.FC = () => {
         <div className="p-4 sm:p-5 rounded-2xl border border-amber-500/25 bg-amber-500/5 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-amber-500" />
-              <h3 className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+              <span className="h-2 w-2 rounded-full bg-amber-500 shrink-0" />
+              <h3 className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 whitespace-nowrap">
                 Consultant Onboarding Bottlenecks
               </h3>
             </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25 shrink-0 whitespace-nowrap">
               Work Order Gates
             </span>
           </div>
@@ -338,12 +338,12 @@ export const LookAheadDashboard: React.FC = () => {
             {CRITICAL_CONSULTANT_BOTTLENECKS.map((cst, idx) => (
               <div key={idx} className="p-2.5 rounded-xl bg-surface border border-amber-500/20 text-xs flex items-center justify-between gap-3 shadow-2xs">
                 <div className="min-w-0">
-                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground">
+                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground whitespace-nowrap">
                     <span className="text-amber-600 dark:text-amber-400">{cst.project}</span>
                     <span className="text-muted-foreground">•</span>
                     <span>{cst.tower}</span>
                   </div>
-                  <div className="text-xs font-bold text-foreground mt-0.5">
+                  <div className="text-xs font-bold text-foreground mt-0.5 truncate">
                     {cst.consultant}
                   </div>
                   <div className="text-[10px] text-muted-foreground truncate">
@@ -351,7 +351,7 @@ export const LookAheadDashboard: React.FC = () => {
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 whitespace-nowrap">
                     {cst.severity}
                   </span>
                 </div>

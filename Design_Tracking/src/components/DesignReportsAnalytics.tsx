@@ -232,32 +232,32 @@ export const DesignReportsAnalytics: React.FC<DesignReportsAnalyticsProps> = ({
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
+        <div className="overflow-x-auto custom-scrollbar">
+          <table className="w-full text-left text-xs border-collapse min-w-[850px]">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-900/60 border-b border-border text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
-                <th className="p-3">Consultant Firm</th>
-                <th className="p-3">Category</th>
-                <th className="p-3">Lead Contact</th>
-                <th className="p-3 text-center">Sheets Submitted</th>
-                <th className="p-3 text-center">Average TAT</th>
-                <th className="p-3 text-center">Quality Rating</th>
+                <th className="p-3 whitespace-nowrap min-w-[200px]">Consultant Firm</th>
+                <th className="p-3 whitespace-nowrap min-w-[130px]">Category</th>
+                <th className="p-3 whitespace-nowrap min-w-[160px]">Lead Contact</th>
+                <th className="p-3 text-center whitespace-nowrap min-w-[120px]">Sheets Submitted</th>
+                <th className="p-3 text-center whitespace-nowrap min-w-[120px]">Average TAT</th>
+                <th className="p-3 text-center whitespace-nowrap min-w-[120px]">Quality Rating</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/60">
               {consultants.map((c) => (
                 <tr key={c.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                  <td className="p-3 font-bold text-foreground">{c.name}</td>
-                  <td className="p-3">
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">
+                  <td className="p-3 font-bold text-foreground whitespace-nowrap min-w-[200px]">{c.name}</td>
+                  <td className="p-3 whitespace-nowrap min-w-[130px]">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/20 whitespace-nowrap">
                       {c.category}
                     </span>
                   </td>
-                  <td className="p-3 text-muted-foreground">{c.leadContact}</td>
-                  <td className="p-3 text-center font-mono font-bold text-foreground">{c.totalDrawingsSubmitted}</td>
-                  <td className="p-3 text-center font-mono text-foreground">{c.averageTatDays} days</td>
-                  <td className="p-3 text-center">
-                    <span className="inline-flex items-center gap-1 font-bold text-amber-500 text-xs">
+                  <td className="p-3 text-muted-foreground whitespace-nowrap min-w-[160px]">{c.leadContact}</td>
+                  <td className="p-3 text-center font-mono font-bold text-foreground whitespace-nowrap min-w-[120px]">{c.totalDrawingsSubmitted}</td>
+                  <td className="p-3 text-center font-mono text-foreground whitespace-nowrap min-w-[120px]">{c.averageTatDays} days</td>
+                  <td className="p-3 text-center whitespace-nowrap min-w-[120px]">
+                    <span className="inline-flex items-center gap-1 font-bold text-amber-500 text-xs whitespace-nowrap">
                       <Star className="h-3.5 w-3.5 fill-amber-500" />
                       <span>{c.rating}</span>
                     </span>

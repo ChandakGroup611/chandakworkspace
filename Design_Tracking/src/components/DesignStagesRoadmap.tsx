@@ -93,7 +93,7 @@ export const DesignStagesRoadmap: React.FC = () => {
       </div>
 
       {/* Stages Progression Stepper Bar */}
-      <div className="p-3 sm:p-4 rounded-2xl border border-border bg-surface shadow-xs overflow-x-auto no-scrollbar">
+      <div className="p-3 sm:p-4 rounded-2xl border border-border bg-surface shadow-xs overflow-x-auto custom-scrollbar">
         <div className="flex items-center gap-2.5 min-w-max">
           {groupedStages.map(([stageName, items], idx) => {
             const isSelected = activeStageIndex === idx;
@@ -106,7 +106,7 @@ export const DesignStagesRoadmap: React.FC = () => {
                   setActiveStageIndex(idx);
                   setSelectedConsultant("ALL");
                 }}
-                className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-3 min-w-[210px] ${
+                className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-3 min-w-[220px] shrink-0 whitespace-nowrap ${
                   isSelected
                     ? "border-emerald-500 bg-emerald-500/10 text-foreground ring-1 ring-emerald-500/50 shadow-xs"
                     : "border-border bg-surface text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -120,10 +120,10 @@ export const DesignStagesRoadmap: React.FC = () => {
                   0{idx + 1}
                 </div>
                 <div className="space-y-0.5 min-w-0">
-                  <div className="font-semibold text-xs leading-snug truncate text-foreground">
+                  <div className="font-semibold text-xs leading-snug truncate text-foreground whitespace-nowrap">
                     {stageName}
                   </div>
-                  <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                  <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground whitespace-nowrap">
                     <span>{items.length} items</span>
                     <span>•</span>
                     <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
@@ -179,15 +179,15 @@ export const DesignStagesRoadmap: React.FC = () => {
           </div>
 
           {/* Consultant Filter Ribbon */}
-          <div className="flex items-center gap-2 overflow-x-auto text-xs pb-1">
-            <span className="text-[11px] font-bold text-muted-foreground mr-1 shrink-0 flex items-center gap-1">
+          <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar text-xs pb-1 max-w-full">
+            <span className="text-[11px] font-bold text-muted-foreground mr-1 shrink-0 flex items-center gap-1 whitespace-nowrap">
               <SlidersHorizontal className="h-3 w-3" />
               <span>Filter Discipline:</span>
             </span>
             <button
               type="button"
               onClick={() => setSelectedConsultant("ALL")}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer whitespace-nowrap ${
                 selectedConsultant === "ALL"
                   ? "bg-emerald-600 text-white shadow-xs"
                   : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
@@ -200,7 +200,7 @@ export const DesignStagesRoadmap: React.FC = () => {
                 key={c}
                 type="button"
                 onClick={() => setSelectedConsultant(c)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer ${
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer whitespace-nowrap ${
                   selectedConsultant === c
                     ? "bg-emerald-600 text-white shadow-xs"
                     : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
