@@ -153,7 +153,6 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
               <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               <input
                 type="text"
-                placeholder="Search firm, contact, project..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-purple-500"
@@ -350,7 +349,6 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Morphogenesis Architects, JW Consultants LLP"
                   value={name}
                   onChange={e => setName(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-purple-500"
@@ -376,7 +374,6 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Sonali Rastogi"
                     value={leadContact}
                     onChange={e => setLeadContact(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-purple-500"
@@ -390,7 +387,6 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
                   <input
                     type="email"
                     required
-                    placeholder="e.g. design@firm.com"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-purple-500"
@@ -401,7 +397,6 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
                   <label className="block font-bold text-foreground mb-1">Phone Number</label>
                   <input
                     type="tel"
-                    placeholder="e.g. +91 22 6124 8800"
                     value={phone}
                     onChange={e => setPhone(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-purple-500"

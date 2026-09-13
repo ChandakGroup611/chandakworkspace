@@ -275,7 +275,6 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                 <label className="font-bold text-foreground">Target Date / Milestone</label>
                 <input
                   type="text"
-                  placeholder="e.g. 30-Oct, 2026-11-15"
                   value={pkgTargetDate}
                   onChange={e => setPkgTargetDate(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground"
@@ -287,7 +286,6 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
               <label className="font-bold text-foreground">Remarks / Action Item</label>
               <input
                 type="text"
-                placeholder="e.g. Consultant drafting BOQ; Pending structural approval"
                 value={pkgRemarks}
                 onChange={e => setPkgRemarks(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground"
@@ -348,7 +346,6 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
               <textarea
                 required
                 rows={2}
-                placeholder="e.g. Civil & Structural Tender Release with BOQ"
                 value={laDescription}
                 onChange={e => setLaDescription(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground"
@@ -464,7 +461,6 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
               <label className="font-bold text-foreground">Consultant Name / File Ref</label>
               <input
                 type="text"
-                placeholder="e.g. Architect firm name, BMC File #2026/894"
                 value={liaisonRemarks}
                 onChange={e => setLiaisonRemarks(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground"

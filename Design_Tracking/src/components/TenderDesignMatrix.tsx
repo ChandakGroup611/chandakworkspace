@@ -346,7 +346,6 @@ export const TenderDesignMatrix: React.FC = () => {
               <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               <input
                 type="text"
-                placeholder="Search package (e.g. Civil, MEP, Lift)..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 className="w-full pl-8 pr-7 py-1.5 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-emerald-500 transition-colors"
@@ -682,7 +681,6 @@ export const TenderDesignMatrix: React.FC = () => {
                   type="text"
                   value={cellEditDraft}
                   onChange={e => setCellEditDraft(e.target.value)}
-                  placeholder="e.g. 30-Aug, Onboarded, Delayed by BMC"
                   className="flex-1 px-3 py-2 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-emerald-500"
                 />
                 <button
@@ -883,7 +881,6 @@ export const TenderDesignMatrix: React.FC = () => {
                 <div className="pt-2">
                   <input
                     type="text"
-                    placeholder="e.g. 30-Aug, 15-Sep, 30-Nov"
                     value={batchDate}
                     onChange={e => setBatchDate(e.target.value)}
                     className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground font-mono focus:outline-none focus:border-teal-500"

@@ -108,7 +108,6 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
             <input
               type="text"
               required
-              placeholder="e.g. CK-CHD-ARC-L05-001"
               value={code}
               onChange={(e) => setCode(e.target.value)}
               className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs font-mono font-bold text-foreground uppercase"
@@ -120,7 +119,6 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
             <input
               type="text"
               required
-              placeholder="e.g. Tower 1 Podium 2 Slab Reinforcement Details"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs text-foreground"
@@ -146,7 +144,6 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
               <label className="font-semibold block mb-1">Author / Consultant</label>
               <input
                 type="text"
-                placeholder="e.g. Morphogenesis Architects"
                 value={consultant}
                 onChange={(e) => setConsultant(e.target.value)}
                 className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs text-foreground"
@@ -158,7 +155,6 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
             <label className="font-semibold block mb-1">Revision Change Summary & Notes</label>
             <textarea
               rows={2}
-              placeholder="e.g. Incorporates revised plumbing shafts per MEP coordination review dated 08-Sep."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="w-full rounded-lg border border-border bg-surface p-2.5 text-xs text-foreground"

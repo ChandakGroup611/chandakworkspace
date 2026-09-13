@@ -270,7 +270,6 @@ export const LiaisoningTracker: React.FC = () => {
               <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Search authority / scope..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-purple-500"
@@ -548,7 +547,6 @@ export const LiaisoningTracker: React.FC = () => {
                   type="text"
                   value={customRemark}
                   onChange={e => setCustomRemark(e.target.value)}
-                  placeholder="e.g. Scrutiny in progress, CFO File #1289"
                   className="flex-1 px-3 py-2 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-purple-500"
                 />
                 <button

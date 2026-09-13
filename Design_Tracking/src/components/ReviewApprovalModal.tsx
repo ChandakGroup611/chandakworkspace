@@ -135,7 +135,6 @@ export const ReviewApprovalModal: React.FC<ReviewApprovalModalProps> = ({
             </label>
             <textarea
               rows={3}
-              placeholder="e.g. Verified against architectural grid lines. MEP duct passing clearance approved at 2.4m clear height."
               value={reviewComments}
               onChange={(e) => setReviewComments(e.target.value)}
               className="w-full rounded-lg border border-border bg-surface p-2.5 text-xs text-foreground focus:outline-none focus:border-primary"

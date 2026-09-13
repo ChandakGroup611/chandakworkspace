@@ -256,7 +256,6 @@ export const LookAheadDashboard: React.FC = () => {
               <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               <input
                 type="text"
-                placeholder="Search deliverables..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 className="w-full pl-8 pr-3 py-1 text-xs rounded-lg border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-emerald-500"
@@ -620,7 +619,6 @@ export const LookAheadDashboard: React.FC = () => {
                   rows={2}
                   value={newDesc}
                   onChange={e => setNewDesc(e.target.value)}
-                  placeholder="e.g. Aluminium Windows (BOQ), Lift Lobby GFC, Tree NOC Clearance..."
                   className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-emerald-500"
                   required
                 />
@@ -661,7 +659,6 @@ export const LookAheadDashboard: React.FC = () => {
                     type="text"
                     value={newTargetDate}
                     onChange={e => setNewTargetDate(e.target.value)}
-                    placeholder="e.g. 15-May, 30-Aug"
                     className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-emerald-500 font-mono"
                   />
                 </div>

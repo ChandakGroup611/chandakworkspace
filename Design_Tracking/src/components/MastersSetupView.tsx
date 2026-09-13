@@ -516,7 +516,6 @@ export const MastersSetupView: React.FC = () => {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. BANDRA SEAFACE, SEVILLE"
                   value={newProjectName}
                   onChange={e => setNewProjectName(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground"
@@ -527,7 +526,6 @@ export const MastersSetupView: React.FC = () => {
                 <label className="font-bold text-foreground">Project Code (Optional)</label>
                 <input
                   type="text"
-                  placeholder="e.g. CDK-BND"
                   value={newProjectCode}
                   onChange={e => setNewProjectCode(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground"
@@ -574,7 +572,6 @@ export const MastersSetupView: React.FC = () => {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. WING-A, TOWER-1, SOCIETY, SALE"
                   value={newTowerName}
                   onChange={e => setNewTowerName(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground"
@@ -627,7 +624,6 @@ export const MastersSetupView: React.FC = () => {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Solar Energy Plant, STP System"
                   value={newPackageName}
                   onChange={e => setNewPackageName(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground"
