@@ -306,8 +306,8 @@ export const EY_TENDER_PACKAGES: TenderPackageItem[] = [
   {
     "id": "pkg-9",
     "rowNumber": 9,
-    "category": "HRC consultant  (&gt;180m height)",
-    "packageName": "HRC consultant  (&gt;180m height)",
+    "category": "HRC consultant  (>180m height)",
+    "packageName": "HRC consultant  (>180m height)",
     "statuses": {
       "JB NAGAR__SOCIETY": "NA",
       "JB NAGAR__SALE - DEF": "NA",
@@ -338,8 +338,8 @@ export const EY_TENDER_PACKAGES: TenderPackageItem[] = [
   {
     "id": "pkg-10",
     "rowNumber": 10,
-    "category": "Wind tunnel Consultant  (&gt;180m height)",
-    "packageName": "Wind tunnel Consultant  (&gt;180m height)",
+    "category": "Wind tunnel Consultant  (>180m height)",
+    "packageName": "Wind tunnel Consultant  (>180m height)",
     "statuses": {
       "JB NAGAR__SOCIETY": "NA",
       "JB NAGAR__SALE - DEF": "NA",
@@ -370,8 +370,8 @@ export const EY_TENDER_PACKAGES: TenderPackageItem[] = [
   {
     "id": "pkg-11",
     "rowNumber": 11,
-    "category": "Geotech peer-review consultant  (&gt;120m height)",
-    "packageName": "Geotech peer-review consultant  (&gt;120m height)",
+    "category": "Geotech peer-review consultant  (>120m height)",
+    "packageName": "Geotech peer-review consultant  (>120m height)",
     "statuses": {
       "JB NAGAR__SOCIETY": "NA",
       "JB NAGAR__SALE - DEF": "NA",
@@ -402,8 +402,8 @@ export const EY_TENDER_PACKAGES: TenderPackageItem[] = [
   {
     "id": "pkg-12",
     "rowNumber": 12,
-    "category": "Structural peer-review consultant  (&gt;120m height)",
-    "packageName": "Structural peer-review consultant  (&gt;120m height)",
+    "category": "Structural peer-review consultant  (>120m height)",
+    "packageName": "Structural peer-review consultant  (>120m height)",
     "statuses": {
       "JB NAGAR__SOCIETY": "NA",
       "JB NAGAR__SALE - DEF": "NA",
@@ -3154,8 +3154,8 @@ export const EY_LIAISON_CONSULTANTS: LiaisonConsultantItem[] = [
   },
   {
     "id": "lia-26",
-    "consultantTitle": "HRC consultant  (&gt;180m height)",
-    "scope": "HRC consultant  (&gt;180m height)",
+    "consultantTitle": "HRC consultant  (>180m height)",
+    "scope": "HRC consultant  (>180m height)",
     "statuses": {
       "JB NAGAR__SOCIETY": "NA",
       "JB NAGAR__SALE - DEF": "NA",
@@ -3185,8 +3185,8 @@ export const EY_LIAISON_CONSULTANTS: LiaisonConsultantItem[] = [
   },
   {
     "id": "lia-27",
-    "consultantTitle": "Wind tunnel Consultant  (&gt;180m height)",
-    "scope": "Wind tunnel Consultant  (&gt;180m height)",
+    "consultantTitle": "Wind tunnel Consultant  (>180m height)",
+    "scope": "Wind tunnel Consultant  (>180m height)",
     "statuses": {
       "JB NAGAR__SOCIETY": "NA",
       "JB NAGAR__SALE - DEF": "NA",
@@ -3216,8 +3216,8 @@ export const EY_LIAISON_CONSULTANTS: LiaisonConsultantItem[] = [
   },
   {
     "id": "lia-28",
-    "consultantTitle": "Geotech peer-review consultant  (&gt;120m height)",
-    "scope": "Geotech peer-review consultant  (&gt;120m height)",
+    "consultantTitle": "Geotech peer-review consultant  (>120m height)",
+    "scope": "Geotech peer-review consultant  (>120m height)",
     "statuses": {
       "JB NAGAR__SOCIETY": "NA",
       "JB NAGAR__SALE - DEF": "NA",
@@ -3247,8 +3247,8 @@ export const EY_LIAISON_CONSULTANTS: LiaisonConsultantItem[] = [
   },
   {
     "id": "lia-29",
-    "consultantTitle": "Structural peer-review consultant  (&gt;120m height)",
-    "scope": "Structural peer-review consultant  (&gt;120m height)",
+    "consultantTitle": "Structural peer-review consultant  (>120m height)",
+    "scope": "Structural peer-review consultant  (>120m height)",
     "statuses": {
       "JB NAGAR__SOCIETY": "NA",
       "JB NAGAR__SALE - DEF": "NA",
