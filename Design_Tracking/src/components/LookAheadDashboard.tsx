@@ -159,151 +159,122 @@ export const LookAheadDashboard: React.FC = () => {
   };
 
   return (
-    <div className="space-y-5 animate-in fade-in duration-150">
-      {/* Header & KPI Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-black text-muted-foreground uppercase tracking-wider">
-              Total Look-Ahead Milestones
-            </span>
-            <div className="text-3xl font-black text-foreground mt-1 tracking-tight">
-              {lookAheads.length}
+    <div className="space-y-4 animate-in fade-in duration-150">
+      {/* Header & Filter Ribbon */}
+      <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/20 shrink-0">
+              <Clock className="h-4 w-4" />
             </div>
-            <span className="text-[11px] text-muted-foreground">Master-driven critical deliverables</span>
-          </div>
-          <div className="h-12 w-12 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center border border-blue-500/20 shadow-inner">
-            <Calendar className="h-6 w-6" />
-          </div>
-        </div>
-
-        <div className="p-4 sm:p-5 rounded-2xl border border-rose-500/30 bg-rose-500/5 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-black text-rose-600 dark:text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-rose-500 animate-ping" />
-              <span>In 30 Days (Critical Priority)</span>
-            </span>
-            <div className="text-3xl font-black text-rose-600 dark:text-rose-400 mt-1 tracking-tight">
-              {count30}
+            <div>
+              <h2 className="text-base font-bold text-foreground">
+                Look-Ahead Forecast
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                30-day and 60-day milestone deliverables, critical design blockers, and consultant action items
+              </p>
             </div>
-            <span className="text-[11px] text-rose-500 font-semibold">Tenders required within 1 month</span>
           </div>
-          <div className="h-12 w-12 rounded-2xl bg-rose-500/15 text-rose-500 flex items-center justify-center border border-rose-500/30 shadow-inner">
-            <AlertCircle className="h-6 w-6" />
+
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Add Milestone Button */}
+            <button
+              type="button"
+              onClick={() => {
+                if (storeState.projects.length > 0) {
+                  const p = storeState.projects[0].id;
+                  setNewProjectId(p);
+                  const twrs = storeState.towers.filter(t => t.projectId === p);
+                  if (twrs.length > 0) setNewTowerId(twrs[0].id);
+                }
+                setNewDesc("");
+                setNewTargetDate("");
+                setIsAddModalOpen(true);
+              }}
+              className="h-8 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span>Add Milestone</span>
+            </button>
+
+            {/* CSV Export */}
+            <button
+              type="button"
+              onClick={handleExportCsv}
+              className="h-8 px-3 rounded-lg border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <FileSpreadsheet className="h-3.5 w-3.5 text-muted-foreground" />
+              <span>Export CSV</span>
+            </button>
           </div>
         </div>
 
-        <div className="p-4 sm:p-5 rounded-2xl border border-amber-500/30 bg-amber-500/5 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-amber-500" />
-              <span>In 60 Days (Mid-Term Forecast)</span>
-            </span>
-            <div className="text-3xl font-black text-amber-600 dark:text-amber-400 mt-1 tracking-tight">
-              {count60}
+        {/* Filter Controls */}
+        <div className="pt-3 border-t border-border flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setTimeframeFilter("ALL")}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                timeframeFilter === "ALL" 
+                  ? "bg-foreground text-background font-bold" 
+                  : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              All Windows ({lookAheads.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setTimeframeFilter("30_DAYS")}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 ${
+                timeframeFilter === "30_DAYS" 
+                  ? "bg-rose-600 text-white font-bold" 
+                  : "bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20"
+              }`}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+              <span>30-Day Critical ({count30})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTimeframeFilter("60_DAYS")}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 ${
+                timeframeFilter === "60_DAYS" 
+                  ? "bg-amber-600 text-white font-bold" 
+                  : "bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20"
+              }`}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+              <span>60-Day Scheduled ({count60})</span>
+            </button>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            {/* Search */}
+            <div className="relative flex-1 sm:w-56">
+              <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search deliverables..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full pl-8 pr-3 py-1 text-xs rounded-lg border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-emerald-500"
+              />
             </div>
-            <span className="text-[11px] text-amber-500 font-semibold">Tenders required within 2 months</span>
+
+            {/* Project Filter */}
+            <select
+              value={selectedProject}
+              onChange={e => setSelectedProject(e.target.value)}
+              className="h-7.5 px-2.5 rounded-lg border border-border bg-surface text-xs font-medium text-foreground focus:outline-none focus:border-emerald-500 cursor-pointer"
+            >
+              <option value="ALL">All Projects ({uniqueProjectNames.length})</option>
+              {uniqueProjectNames.map(p => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
           </div>
-          <div className="h-12 w-12 rounded-2xl bg-amber-500/15 text-amber-500 flex items-center justify-center border border-amber-500/30 shadow-inner">
-            <Clock className="h-6 w-6" />
-          </div>
-        </div>
-      </div>
-
-      {/* Filter Ribbon */}
-      <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs">
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setTimeframeFilter("ALL")}
-            className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${
-              timeframeFilter === "ALL" 
-                ? "bg-foreground text-background shadow-xs" 
-                : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            All Windows ({lookAheads.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setTimeframeFilter("30_DAYS")}
-            className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-              timeframeFilter === "30_DAYS" 
-                ? "bg-rose-600 text-white shadow-xs" 
-                : "bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20"
-            }`}
-          >
-            <span className="h-1.5 w-1.5 rounded-full bg-rose-400 animate-pulse" />
-            <span>🚨 In 30 Days ({count30})</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setTimeframeFilter("60_DAYS")}
-            className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-              timeframeFilter === "60_DAYS" 
-                ? "bg-amber-600 text-white shadow-xs" 
-                : "bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20"
-            }`}
-          >
-            <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-            <span>⏳ In 60 Days ({count60})</span>
-          </button>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
-          {/* Search */}
-          <div className="relative flex-1 sm:w-56">
-            <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search deliverables..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-emerald-500"
-            />
-          </div>
-
-          {/* Project Filter */}
-          <select
-            value={selectedProject}
-            onChange={e => setSelectedProject(e.target.value)}
-            className="h-8 px-2.5 rounded-xl border border-border bg-surface text-xs font-bold text-foreground focus:outline-none focus:border-emerald-500 cursor-pointer shadow-2xs"
-          >
-            <option value="ALL">🏢 All Projects ({uniqueProjectNames.length})</option>
-            {uniqueProjectNames.map(p => (
-              <option key={p} value={p}>{p}</option>
-            ))}
-          </select>
-
-          {/* Add Milestone Button */}
-          <button
-            type="button"
-            onClick={() => {
-              if (storeState.projects.length > 0) {
-                const p = storeState.projects[0].id;
-                setNewProjectId(p);
-                const twrs = storeState.towers.filter(t => t.projectId === p);
-                if (twrs.length > 0) setNewTowerId(twrs[0].id);
-              }
-              setNewDesc("");
-              setNewTargetDate("");
-              setIsAddModalOpen(true);
-            }}
-            className="h-8 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            <span>Add Milestone</span>
-          </button>
-
-          {/* CSV Export */}
-          <button
-            type="button"
-            onClick={handleExportCsv}
-            className="h-8 px-3 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
-          >
-            <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-500" />
-            <span>CSV</span>
-          </button>
         </div>
       </div>
 
@@ -313,10 +284,10 @@ export const LookAheadDashboard: React.FC = () => {
         <div className="p-4 sm:p-5 rounded-2xl border border-rose-500/25 bg-rose-500/5 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />
-              <h4 className="text-xs font-black uppercase tracking-wider text-rose-700 dark:text-rose-400">
-                🚨 Critical Design Package Blockers
-              </h4>
+              <span className="h-2 w-2 rounded-full bg-rose-500" />
+              <h3 className="text-xs font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400">
+                Critical Design Package Blockers
+              </h3>
             </div>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/25">
               High Priority
@@ -354,9 +325,9 @@ export const LookAheadDashboard: React.FC = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-amber-500" />
-              <h4 className="text-xs font-black uppercase tracking-wider text-amber-700 dark:text-amber-400">
-                ⏳ Critical Consultant Onboarding Blockers
-              </h4>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+                Consultant Onboarding Bottlenecks
+              </h3>
             </div>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25">
               Work Order Gates
@@ -419,9 +390,9 @@ export const LookAheadDashboard: React.FC = () => {
                     <span>{key}</span>
                   </div>
                   {has30 && (
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 flex items-center gap-1 shadow-2xs">
-                      <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-ping" />
-                      <span>Urgent Action</span>
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 flex items-center gap-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+                      <span>Urgent</span>
                     </span>
                   )}
                 </div>
@@ -443,11 +414,10 @@ export const LookAheadDashboard: React.FC = () => {
                           <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
                             item.timeframe === "30_DAYS" ? "bg-rose-500 text-white" : "bg-amber-500 text-white"
                           }`}>
-                            {item.timeframe === "30_DAYS" ? "🚨 30-Day Window" : "⏳ 60-Day Window"}
+                            {item.timeframe === "30_DAYS" ? "30-Day Critical" : "60-Day Forecast"}
                           </span>
                           {isExpedited && (
                             <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-500 text-white flex items-center gap-1">
-                              <Zap className="h-2.5 w-2.5 fill-white" />
                               <span>Expedited</span>
                             </span>
                           )}

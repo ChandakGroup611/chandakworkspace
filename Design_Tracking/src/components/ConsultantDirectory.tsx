@@ -13,15 +13,19 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
 }) => {
   return (
     <div className="space-y-4 animate-in fade-in duration-150">
-      <div className="p-4 rounded-2xl border border-border bg-slate-50/60 dark:bg-slate-900/50 flex items-center justify-between">
-        <div>
-          <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-            <Users className="h-4 w-4 text-purple-500" />
-            <span>Empanelled Design Consultants & Engineering Partners</span>
-          </h3>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Architecture, structural engineering, MEP clash coordinators, and landscape firms
-          </p>
+      <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-xs flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center border border-purple-500/20 shrink-0">
+            <Users className="h-4 w-4" />
+          </div>
+          <div>
+            <h2 className="text-base font-bold text-foreground">
+              Consultant Directory
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Empanelled architects, structural engineers, MEP consultants, and specialized partners
+            </p>
+          </div>
         </div>
       </div>
 

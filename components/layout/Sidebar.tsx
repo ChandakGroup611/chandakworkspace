@@ -184,26 +184,26 @@ const designNavGroups: NavGroup[] = [
     label: "Tender & Design",
     items: [
       { label: "Tender Design Matrix", href: "/design/matrix", icon: Layers },
-      { label: "30/60d Look-Ahead", href: "/design/look-ahead", icon: Clock },
+      { label: "Look-Ahead Forecast", href: "/design/look-ahead", icon: Clock },
       { label: "Statutory Liaisoning", href: "/design/liaisoning", icon: ShieldCheck },
-      { label: "8-Stage Roadmap", href: "/design/stages", icon: Calendar },
+      { label: "Design Stages Roadmap", href: "/design/stages", icon: Calendar },
     ]
   },
   {
     label: "Drawings & Quality",
     items: [
       { label: "Drawing Register", href: "/design/drawings", icon: FileText },
-      { label: "Approvals & Review", href: "/design/approvals", icon: CheckCircle2 },
+      { label: "Design Approvals", href: "/design/approvals", icon: CheckCircle2 },
       { label: "Revision History", href: "/design/revisions", icon: RotateCcw },
-      { label: "Site Handover & GFC", href: "/design/handover", icon: Building2 },
+      { label: "GFC Site Handover", href: "/design/handover", icon: Building2 },
     ]
   },
   {
     label: "Directory & Analytics",
     items: [
       { label: "Consultant Directory", href: "/design/consultants", icon: Users },
-      { label: "Design Reports", href: "/design/reports", icon: LineChart },
-      { label: "⚙️ Masters Setup", href: "/design/masters", icon: Settings2 },
+      { label: "Design Analytics", href: "/design/reports", icon: LineChart },
+      { label: "Masters Setup", href: "/design/masters", icon: Settings2 },
     ]
   }
 ];

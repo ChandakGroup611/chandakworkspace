@@ -70,14 +70,14 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
     }
   };
 
-  const getDisciplineIcon = (disc: string) => {
+  const getDisciplineBadge = (disc: string) => {
     switch (disc) {
-      case "Architectural": return "🏛️";
-      case "Structural": return "🏗️";
-      case "MEP": return "⚡";
-      case "Landscape": return "🌿";
-      case "Interior": return "🛋️";
-      default: return "📄";
+      case "Architectural": return "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20";
+      case "Structural": return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20";
+      case "MEP": return "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20";
+      case "Landscape": return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20";
+      case "Interior": return "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20";
+      default: return "bg-slate-100 dark:bg-slate-800 text-muted-foreground border-border";
     }
   };
 
@@ -109,21 +109,16 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
       {/* Control Header Strip */}
       <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-xs space-y-3.5">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center border border-emerald-500/25">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20 shrink-0">
               <FileText className="h-4 w-4" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-black text-foreground">
-                  Drawing Sheet Master Register
-                </h3>
-                <span className="text-[10px] font-bold px-2 py-0.2 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-                  {filteredDrawings.length} Sheets
-                </span>
-              </div>
-              <p className="text-[11px] text-muted-foreground">
-                Official CAD repository, revision history logs, and GFC certification transmittals
+              <h2 className="text-base font-bold text-foreground">
+                Drawing Register
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Central register of architectural, structural, MEP, and landscape drawing sheets
               </p>
             </div>
           </div>
@@ -131,7 +126,7 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
           <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
             {/* Search */}
             <div className="relative flex-1 sm:w-56">
-              <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               <input
                 type="text"
                 placeholder="Search code, title, consultant..."
@@ -227,14 +222,16 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
                 filteredDrawings.map((item) => (
                   <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                     <td className="p-3.5">
-                      <div className="flex items-center gap-2.5">
-                        <span className="text-lg">{getDisciplineIcon(item.discipline)}</span>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${getDisciplineBadge(item.discipline)}`}>
+                          {item.discipline}
+                        </span>
                         <div>
                           <span className="font-mono font-bold text-foreground block text-xs">
                             {item.code}
                           </span>
                           <span className="text-[10px] text-muted-foreground">
-                            {item.discipline} • {item.fileSize}
+                            {item.fileSize}
                           </span>
                         </div>
                       </div>

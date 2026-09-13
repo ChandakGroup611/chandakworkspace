@@ -128,20 +128,15 @@ export const MastersSetupView: React.FC = () => {
       {/* Top Masters Control Header */}
       <div className="p-5 rounded-2xl border border-border bg-surface shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
-            <Settings className="h-5 w-5" />
+          <div className="h-9 w-9 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center border border-teal-500/20 shrink-0">
+            <Settings className="h-4 w-4" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-base font-black text-foreground">
-                Master Configuration & Data Architecture
-              </h3>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                Master-Driven Core
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Configure development projects, tower wings, work packages, and statutory authorities. All tracking matrices and look-aheads render dynamically from these masters.
+            <h2 className="text-base font-bold text-foreground">
+              Design Masters Setup
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Configure development projects, tower wings, work packages, and statutory authorities
             </p>
           </div>
         </div>
@@ -151,18 +146,18 @@ export const MastersSetupView: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveSubTab("PROJECTS")}
-            className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-              activeSubTab === "PROJECTS" ? "bg-surface text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 ${
+              activeSubTab === "PROJECTS" ? "bg-surface text-foreground shadow-2xs font-bold" : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <Building2 className="h-3.5 w-3.5" />
-            <span>Projects & Towers ({storeState.projects.length})</span>
+            <span>Projects & Wings ({storeState.projects.length})</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveSubTab("PACKAGES")}
-            className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-              activeSubTab === "PACKAGES" ? "bg-surface text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 ${
+              activeSubTab === "PACKAGES" ? "bg-surface text-foreground shadow-2xs font-bold" : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <Layers className="h-3.5 w-3.5" />
@@ -171,8 +166,8 @@ export const MastersSetupView: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveSubTab("AUTHORITIES")}
-            className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-              activeSubTab === "AUTHORITIES" ? "bg-surface text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 ${
+              activeSubTab === "AUTHORITIES" ? "bg-surface text-foreground shadow-2xs font-bold" : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <ShieldCheck className="h-3.5 w-3.5" />
@@ -181,12 +176,12 @@ export const MastersSetupView: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveSubTab("TEMPLATES")}
-            className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-              activeSubTab === "TEMPLATES" ? "bg-surface text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 ${
+              activeSubTab === "TEMPLATES" ? "bg-surface text-foreground shadow-2xs font-bold" : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <RotateCcw className="h-3.5 w-3.5" />
-            <span>Templates & Reset</span>
+            <span>Backup & Templates</span>
           </button>
         </div>
       </div>

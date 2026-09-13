@@ -323,24 +323,19 @@ export const TenderDesignMatrix: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* Top Filter & Control Ribbon */}
-      <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-sm space-y-4">
+      <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-xs space-y-4">
         {/* Row 1: Header title, live search, and export buttons */}
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-2xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center border border-emerald-500/30 shadow-inner">
-              <Layers className="h-5 w-5" />
+            <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20 shrink-0">
+              <Layers className="h-4 w-4" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-base font-black text-foreground tracking-tight">
-                  Tender Design Package Master Matrix
-                </h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">
-                  {filteredPackages.length} Packages Active
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Dynamic master matrix rendered across {storeState.projects.length} development projects and {visibleColumns.length} individual tower wings
+              <h2 className="text-base font-bold text-foreground">
+                Tender Design Matrix
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Cross-project tender package delivery status across all development wings
               </p>
             </div>
           </div>

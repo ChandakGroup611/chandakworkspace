@@ -74,9 +74,26 @@ export const DesignStagesRoadmap: React.FC = () => {
     : 0;
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-150">
+    <div className="space-y-4 animate-in fade-in duration-150">
+      {/* Header Ribbon */}
+      <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-xs flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-500/20 shrink-0">
+            <Layers className="h-4 w-4" />
+          </div>
+          <div>
+            <h2 className="text-base font-bold text-foreground">
+              Design Stages Roadmap
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              8-stage design lifecycle gateways from Feasibility to Construction QA/QC
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Stages Progression Stepper Bar */}
-      <div className="p-3 sm:p-4 rounded-2xl border border-border bg-surface shadow-xs overflow-x-auto">
+      <div className="p-3 sm:p-4 rounded-2xl border border-border bg-surface shadow-xs overflow-x-auto no-scrollbar">
         <div className="flex items-center gap-2.5 min-w-max">
           {groupedStages.map(([stageName, items], idx) => {
             const isSelected = activeStageIndex === idx;
@@ -89,24 +106,24 @@ export const DesignStagesRoadmap: React.FC = () => {
                   setActiveStageIndex(idx);
                   setSelectedConsultant("ALL");
                 }}
-                className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex items-center gap-3.5 min-w-[220px] ${
+                className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-3 min-w-[210px] ${
                   isSelected
                     ? "border-emerald-500 bg-emerald-500/10 text-foreground ring-1 ring-emerald-500/50 shadow-xs"
                     : "border-border bg-surface text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
                 }`}
               >
-                <div className={`h-9 w-9 rounded-xl flex items-center justify-center font-black text-xs shrink-0 shadow-2xs ${
+                <div className={`h-8 w-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
                   isSelected 
                     ? "bg-emerald-600 text-white" 
                     : "bg-slate-100 dark:bg-slate-800 text-foreground"
                 }`}>
                   0{idx + 1}
                 </div>
-                <div className="space-y-0.5">
-                  <div className="font-bold text-xs leading-snug line-clamp-1 text-foreground">
+                <div className="space-y-0.5 min-w-0">
+                  <div className="font-semibold text-xs leading-snug truncate text-foreground">
                     {stageName}
                   </div>
-                  <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                  <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
                     <span>{items.length} items</span>
                     <span>•</span>
                     <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
@@ -122,19 +139,19 @@ export const DesignStagesRoadmap: React.FC = () => {
 
       {/* Active Stage Details & Interactive Deliverables Checklist */}
       {currentStage && (
-        <div className="p-5 sm:p-7 rounded-2xl border border-border bg-surface shadow-sm space-y-6">
+        <div className="p-5 sm:p-6 rounded-2xl border border-border bg-surface shadow-xs space-y-5">
           {/* Stage Banner Header */}
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-border pb-5">
-            <div className="flex items-center gap-3.5">
-              <div className="h-12 w-12 rounded-2xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center border border-emerald-500/30 shadow-inner shrink-0">
-                <Target className="h-6 w-6" />
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-border pb-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20 shrink-0">
+                <Target className="h-5 w-5" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-emerald-500">
-                    Stage 0{activeStageIndex + 1} Gate Milestone
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                    Stage 0{activeStageIndex + 1} Gateway
                   </span>
-                  <span className="text-[10px] font-bold px-2 py-0.2 rounded-full bg-slate-100 dark:bg-slate-800 border border-border text-muted-foreground">
+                  <span className="text-[10px] font-medium px-2 py-0.2 rounded-full bg-slate-100 dark:bg-slate-800 border border-border text-muted-foreground">
                     Target {STAGE_TARGETS[activeStageIndex]?.targetPct}
                   </span>
                 </div>

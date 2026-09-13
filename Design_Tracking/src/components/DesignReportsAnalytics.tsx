@@ -70,18 +70,18 @@ export const DesignReportsAnalytics: React.FC<DesignReportsAnalyticsProps> = ({
   }, [drawings]);
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
+    <div className="space-y-4 animate-in fade-in duration-150">
       {/* Top Banner Strip */}
-      <div className="p-5 rounded-2xl border border-border bg-card flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+      <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="h-11 w-11 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/25 shrink-0">
-            <LineChart className="h-5 w-5" />
+          <div className="h-9 w-9 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center border border-teal-500/20 shrink-0">
+            <LineChart className="h-4 w-4" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-foreground">
-              Design & Engineering Velocity Scoreboard
-            </h3>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <h2 className="text-base font-bold text-foreground">
+              Design Analytics & Reports
+            </h2>
+            <p className="text-xs text-muted-foreground">
               Portfolio drawing issuance speed, consultant turnaround metrics, and GFC release compliance
             </p>
           </div>

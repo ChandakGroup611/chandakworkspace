@@ -14,15 +14,19 @@ export const GfcHandoverView: React.FC<GfcHandoverViewProps> = ({
 }) => {
   return (
     <div className="space-y-4 animate-in fade-in duration-150">
-      <div className="p-4 rounded-2xl border border-border bg-slate-50/60 dark:bg-slate-900/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div>
-          <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-emerald-500" />
-            <span>Good For Construction (GFC) Site Handover Log</span>
-          </h3>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Audit register of certified GFC blueprint sheets issued to civil contractors and site project managers
-          </p>
+      <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20 shrink-0">
+            <ShieldCheck className="h-4 w-4" />
+          </div>
+          <div>
+            <h2 className="text-base font-bold text-foreground">
+              GFC Site Handover
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Good For Construction drawings issued to site execution teams and civil contractors
+            </p>
+          </div>
         </div>
 
         <button
