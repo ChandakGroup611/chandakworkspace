@@ -160,35 +160,35 @@ export const TenderDesignMatrix: React.FC = () => {
 
     if (lower.includes("received")) {
       return (
-        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 inline-flex items-center gap-1 shadow-2xs">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="truncate max-w-[110px]" title={val}>{val}</span>
+        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 inline-flex items-center gap-1 shadow-2xs whitespace-nowrap">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+          <span className="whitespace-nowrap" title={val}>{val}</span>
         </span>
       );
     }
 
     if (lower.includes("pending") || lower.includes("not onboard")) {
       return (
-        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30 inline-flex items-center gap-1 shadow-2xs">
-          <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
-          <span className="truncate max-w-[110px]" title={val}>{val}</span>
+        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30 inline-flex items-center gap-1 shadow-2xs whitespace-nowrap">
+          <span className="h-1.5 w-1.5 rounded-full bg-rose-500 shrink-0" />
+          <span className="whitespace-nowrap" title={val}>{val}</span>
         </span>
       );
     }
 
     if (lower.includes("progress") || lower.includes("onboard") || lower.includes("track")) {
       return (
-        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30 inline-flex items-center gap-1 shadow-2xs">
-          <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-          <span className="truncate max-w-[110px]" title={val}>{val}</span>
+        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30 inline-flex items-center gap-1 shadow-2xs whitespace-nowrap">
+          <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
+          <span className="whitespace-nowrap" title={val}>{val}</span>
         </span>
       );
     }
 
     return (
-      <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-sky-500/15 text-sky-700 dark:text-sky-300 border border-sky-500/30 inline-flex items-center gap-1 shadow-2xs">
-        <span className="h-1.5 w-1.5 rounded-full bg-sky-500" />
-        <span className="truncate max-w-[110px]" title={val}>{val}</span>
+      <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-sky-500/15 text-sky-700 dark:text-sky-300 border border-sky-500/30 inline-flex items-center gap-1 shadow-2xs whitespace-nowrap">
+        <span className="h-1.5 w-1.5 rounded-full bg-sky-500 shrink-0" />
+        <span className="whitespace-nowrap" title={val}>{val}</span>
       </span>
     );
   };

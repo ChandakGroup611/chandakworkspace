@@ -130,34 +130,34 @@ export const LiaisoningTracker: React.FC = () => {
     const lower = val.toLowerCase();
 
     if (lower === "na" || lower === "-") {
-      return <span className="text-[11px] text-muted-foreground/30 font-mono select-none">—</span>;
+      return <span className="text-[11px] text-muted-foreground/30 font-mono select-none whitespace-nowrap">—</span>;
     }
     if (lower.includes("not onboard")) {
       return (
-        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30 inline-flex items-center gap-1 shadow-2xs">
-          <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30 inline-flex items-center gap-1 shadow-2xs whitespace-nowrap">
+          <span className="h-1.5 w-1.5 rounded-full bg-rose-500 shrink-0" />
           <span>Not Onboard</span>
         </span>
       );
     }
     if (lower.includes("onboard")) {
       return (
-        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 inline-flex items-center gap-1 shadow-2xs">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 inline-flex items-center gap-1 shadow-2xs whitespace-nowrap">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
           <span>{lower.includes("pending") ? "Compliance Pending" : "Onboard"}</span>
         </span>
       );
     }
     if (lower.includes("fixed") || lower.includes("cleared") || lower.includes("obtained")) {
       return (
-        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-500/30 inline-flex items-center gap-1 shadow-2xs">
-          <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-500/30 inline-flex items-center gap-1 shadow-2xs whitespace-nowrap">
+          <span className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" />
           <span>{val}</span>
         </span>
       );
     }
     return (
-      <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-foreground border border-border">
+      <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-foreground border border-border whitespace-nowrap">
         {val}
       </span>
     );

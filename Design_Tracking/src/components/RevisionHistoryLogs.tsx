@@ -233,16 +233,16 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
       {/* Revision Table */}
       <div className="rounded-2xl border border-border bg-surface overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
+          <table className="w-full text-left text-xs border-collapse min-w-[1050px]">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-900/60 border-b border-border text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
-                <th className="p-3.5">Drawing Code & Discipline</th>
-                <th className="p-3.5">Project</th>
-                <th className="p-3.5 text-center">Version Delta</th>
-                <th className="p-3.5">Change Summary & Remarks</th>
-                <th className="p-3.5">Consultant Firm</th>
-                <th className="p-3.5">Submission Date</th>
-                <th className="p-3.5 text-right">File Size</th>
+                <th className="p-3.5 whitespace-nowrap min-w-[220px]">Drawing Code & Discipline</th>
+                <th className="p-3.5 whitespace-nowrap min-w-[150px]">Project</th>
+                <th className="p-3.5 text-center whitespace-nowrap min-w-[130px]">Version Delta</th>
+                <th className="p-3.5 whitespace-nowrap min-w-[280px]">Change Summary & Remarks</th>
+                <th className="p-3.5 whitespace-nowrap min-w-[160px]">Consultant Firm</th>
+                <th className="p-3.5 whitespace-nowrap min-w-[130px]">Submission Date</th>
+                <th className="p-3.5 text-right whitespace-nowrap min-w-[100px]">File Size</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/60">
@@ -255,51 +255,51 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
               ) : (
                 filteredLogs.map((entry) => (
                   <tr key={entry.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
-                    <td className="p-3.5">
+                    <td className="p-3.5 whitespace-nowrap">
                       <div>
-                        <span className="font-mono font-bold text-foreground block text-xs">
+                        <span className="font-mono font-bold text-foreground block text-xs whitespace-nowrap">
                           {entry.drawingCode}
                         </span>
-                        <span className="text-[11px] text-muted-foreground">
+                        <span className="text-[11px] text-muted-foreground whitespace-nowrap">
                           {entry.drawingTitle}
                         </span>
                       </div>
                     </td>
-                    <td className="p-3.5">
-                      <span className="font-medium text-foreground flex items-center gap-1">
-                        <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                    <td className="p-3.5 whitespace-nowrap">
+                      <span className="font-medium text-foreground flex items-center gap-1.5">
+                        <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                         <span>{entry.project}</span>
                       </span>
                     </td>
-                    <td className="p-3.5 text-center">
-                      <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-700 dark:text-blue-300 font-mono font-black text-xs border border-blue-500/20">
+                    <td className="p-3.5 text-center whitespace-nowrap">
+                      <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-700 dark:text-blue-300 font-mono font-bold text-xs border border-blue-500/20 whitespace-nowrap">
                         {entry.previousRevision && (
                           <>
                             <span className="text-muted-foreground">{entry.previousRevision}</span>
-                            <ArrowRight className="h-3 w-3 text-blue-500" />
+                            <ArrowRight className="h-3 w-3 text-blue-500 shrink-0" />
                           </>
                         )}
                         <span>{entry.revision}</span>
                       </div>
                     </td>
-                    <td className="p-3.5 max-w-md">
-                      <p className="text-xs text-foreground font-medium">
+                    <td className="p-3.5 min-w-[280px]">
+                      <p className="text-xs text-foreground font-medium leading-snug">
                         {entry.changeSummary}
                       </p>
                       {entry.certifiedGfcDate && (
-                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold inline-flex items-center gap-1 mt-1">
-                          <CheckCircle2 className="h-3 w-3" />
-                          <span>Certified as GFC on {entry.certifiedGfcDate}</span>
+                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold inline-flex items-center gap-1 mt-1 whitespace-nowrap">
+                          <CheckCircle2 className="h-3 w-3 shrink-0" />
+                          <span>Certified GFC on {entry.certifiedGfcDate}</span>
                         </span>
                       )}
                     </td>
-                    <td className="p-3.5 font-medium text-foreground truncate max-w-[150px]">
+                    <td className="p-3.5 font-medium text-foreground whitespace-nowrap">
                       {entry.consultant}
                     </td>
-                    <td className="p-3.5 font-mono text-[11px] text-muted-foreground">
+                    <td className="p-3.5 font-mono text-[11px] text-muted-foreground whitespace-nowrap">
                       {entry.submittedDate}
                     </td>
-                    <td className="p-3.5 text-right font-mono text-[11px] text-muted-foreground">
+                    <td className="p-3.5 text-right font-mono text-[11px] text-muted-foreground whitespace-nowrap">
                       {entry.fileSize}
                     </td>
                   </tr>

@@ -196,19 +196,19 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
       </div>
 
       {/* Table */}
-      <div className="rounded-2xl border border-border bg-surface overflow-hidden shadow-sm">
+      <div className="rounded-2xl border border-border bg-surface overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
+          <table className="w-full text-left text-xs border-collapse min-w-[1100px]">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-900/60 border-b border-border text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
-                <th className="p-3.5">Drawing Code & Discipline</th>
-                <th className="p-3.5">Sheet Title & Description</th>
-                <th className="p-3.5">Project</th>
-                <th className="p-3.5 text-center">Revision</th>
-                <th className="p-3.5">Status</th>
-                <th className="p-3.5">Consultant</th>
-                <th className="p-3.5">Dates</th>
-                <th className="p-3.5 text-right">Actions</th>
+                <th className="p-3.5 whitespace-nowrap min-w-[230px]">Drawing Code & Discipline</th>
+                <th className="p-3.5 whitespace-nowrap min-w-[280px]">Sheet Title & Description</th>
+                <th className="p-3.5 whitespace-nowrap min-w-[150px]">Project</th>
+                <th className="p-3.5 text-center whitespace-nowrap min-w-[80px]">Revision</th>
+                <th className="p-3.5 whitespace-nowrap min-w-[160px]">Status</th>
+                <th className="p-3.5 whitespace-nowrap min-w-[180px]">Consultant</th>
+                <th className="p-3.5 whitespace-nowrap min-w-[150px]">Dates</th>
+                <th className="p-3.5 text-right whitespace-nowrap min-w-[170px]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/60">
@@ -221,75 +221,75 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
               ) : (
                 filteredDrawings.map((item) => (
                   <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
-                    <td className="p-3.5">
+                    <td className="p-3.5 whitespace-nowrap">
                       <div className="flex items-center gap-2">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${getDisciplineBadge(item.discipline)}`}>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-semibold border whitespace-nowrap shrink-0 ${getDisciplineBadge(item.discipline)}`}>
                           {item.discipline}
                         </span>
                         <div>
-                          <span className="font-mono font-bold text-foreground block text-xs">
+                          <span className="font-mono font-bold text-foreground block text-xs whitespace-nowrap">
                             {item.code}
                           </span>
-                          <span className="text-[10px] text-muted-foreground">
+                          <span className="text-[10px] text-muted-foreground whitespace-nowrap">
                             {item.fileSize}
                           </span>
                         </div>
                       </div>
                     </td>
-                    <td className="p-3.5 max-w-sm">
-                      <div className="font-bold text-foreground leading-snug">
+                    <td className="p-3.5 min-w-[280px]">
+                      <div className="font-semibold text-foreground leading-snug">
                         {item.title}
                       </div>
                       {item.description && (
-                        <div className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                        <div className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">
                           {item.description}
                         </div>
                       )}
                     </td>
-                    <td className="p-3.5">
-                      <span className="font-medium text-foreground flex items-center gap-1">
-                        <Building className="h-3.5 w-3.5 text-muted-foreground" />
+                    <td className="p-3.5 whitespace-nowrap">
+                      <span className="font-medium text-foreground flex items-center gap-1.5">
+                        <Building className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                         <span>{item.project}</span>
                       </span>
                     </td>
-                    <td className="p-3.5 text-center">
-                      <span className="px-2 py-0.5 rounded font-mono font-black text-xs bg-slate-100 dark:bg-slate-800 border border-border text-foreground">
+                    <td className="p-3.5 text-center whitespace-nowrap">
+                      <span className="px-2 py-0.5 rounded font-mono font-bold text-xs bg-slate-100 dark:bg-slate-800 border border-border text-foreground">
                         {item.revision}
                       </span>
                     </td>
-                    <td className="p-3.5">
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border inline-flex items-center gap-1 ${getStatusBadge(item.status)}`}>
-                        {item.status === "Approved (GFC)" && <CheckCircle2 className="h-3 w-3" />}
-                        {item.status === "Under Review" && <Clock className="h-3 w-3" />}
-                        {item.status === "Revision Requested" && <AlertCircle className="h-3 w-3" />}
-                        {item.status === "Site Handed Over" && <ShieldCheck className="h-3 w-3" />}
+                    <td className="p-3.5 whitespace-nowrap">
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border inline-flex items-center gap-1 whitespace-nowrap ${getStatusBadge(item.status)}`}>
+                        {item.status === "Approved (GFC)" && <CheckCircle2 className="h-3 w-3 shrink-0" />}
+                        {item.status === "Under Review" && <Clock className="h-3 w-3 shrink-0" />}
+                        {item.status === "Revision Requested" && <AlertCircle className="h-3 w-3 shrink-0" />}
+                        {item.status === "Site Handed Over" && <ShieldCheck className="h-3 w-3 shrink-0" />}
                         <span>{item.status}</span>
                       </span>
                     </td>
-                    <td className="p-3.5 text-foreground font-medium truncate max-w-[160px]">
+                    <td className="p-3.5 text-foreground font-medium whitespace-nowrap">
                       {item.consultant}
                     </td>
-                    <td className="p-3.5 font-mono text-[11px] text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <span>Sub:</span>
+                    <td className="p-3.5 font-mono text-[11px] text-muted-foreground whitespace-nowrap">
+                      <div className="flex items-center gap-1 whitespace-nowrap">
+                        <span className="text-muted-foreground/80">Sub:</span>
                         <span className="text-foreground">{item.submittedDate}</span>
                       </div>
                       {item.approvedDate && (
-                        <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                        <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
                           <span>GFC:</span>
                           <span>{item.approvedDate}</span>
                         </div>
                       )}
                     </td>
-                    <td className="p-3.5 text-right">
-                      <div className="inline-flex items-center justify-end gap-1.5">
+                    <td className="p-3.5 text-right whitespace-nowrap">
+                      <div className="inline-flex items-center justify-end gap-1.5 whitespace-nowrap">
                         <button
                           type="button"
                           onClick={() => setPreviewDrawing(item)}
                           className="h-7 px-2.5 rounded-lg border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground font-semibold text-xs inline-flex items-center gap-1 transition-colors cursor-pointer"
                           title="Blueprint CAD Preview"
                         >
-                          <Maximize2 className="h-3 w-3" />
+                          <Maximize2 className="h-3 w-3 shrink-0" />
                           <span>Blueprint</span>
                         </button>
                         <button
@@ -298,7 +298,7 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
                           className="h-7 px-2.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-semibold text-xs inline-flex items-center gap-1 transition-colors hover:bg-emerald-500/20 cursor-pointer"
                           title="Review / GFC Stamp"
                         >
-                          <Eye className="h-3 w-3" />
+                          <Eye className="h-3 w-3 shrink-0" />
                           <span>Review</span>
                         </button>
                       </div>
