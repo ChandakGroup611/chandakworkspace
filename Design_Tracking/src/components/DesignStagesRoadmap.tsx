@@ -34,11 +34,14 @@ export const DesignStagesRoadmap: React.FC = () => {
   }, []);
 
   const STAGE_TARGETS = [
-    { label: "Stage 1: Feasibility & Massing", targetPct: "0% - 10%", color: "from-blue-600 to-cyan-500" },
-    { label: "Stage 2: Concept Freeze", targetPct: "20% - 30%", color: "from-indigo-600 to-blue-500" },
-    { label: "Stage 3: Design Basis Report (DBR)", targetPct: "30% - 40%", color: "from-purple-600 to-indigo-500" },
-    { label: "Stage 4: Tender Design & BOQ", targetPct: "60% - 70%", color: "from-amber-600 to-orange-500" },
-    { label: "Stage 5: Good For Construction (GFC)", targetPct: "100% GFC", color: "from-emerald-600 to-teal-500" }
+    { label: "Stage 1: Feasibility & Roadmap", targetPct: "0% - 10%", color: "from-blue-600 to-cyan-500", desc: "Topographical survey, statutory applicability, and site constraints" },
+    { label: "Stage 2: Concept Design Freeze", targetPct: "20% - 30%", color: "from-indigo-600 to-blue-500", desc: "Massing studies, area statements, and environmental strategy" },
+    { label: "Stage 3: Design Basis Freeze", targetPct: "30% - 40%", color: "from-purple-600 to-indigo-500", desc: "Soil investigation, Structural & MEP Design Basis Reports" },
+    { label: "Stage 4: Schematic Design Freeze", targetPct: "40% - 60%", color: "from-violet-600 to-purple-500", desc: "RCC framing, shaft layouts, facade concepts, and lift sizing" },
+    { label: "Stage 5: Detailed Design", targetPct: "60% - 80%", color: "from-amber-600 to-orange-500", desc: "Detailed structural, MEP, facade, and lighting schematics" },
+    { label: "Stage 6: Tender Design & BOQ", targetPct: "80% - 100%", color: "from-rose-600 to-amber-500", desc: "Procurement packages, tender drawings, and BOQs" },
+    { label: "Stage 7: Pre-Construction / GFC", targetPct: "100% GFC", color: "from-emerald-600 to-teal-500", desc: "Good For Construction drawings issued to site execution team" },
+    { label: "Stage 8: Construction Support", targetPct: "Site QA/QC", color: "from-teal-600 to-emerald-500", desc: "TPQA audits, PMC monitoring, site supervisor certifications" }
   ];
 
   const currentStage = groupedStages[activeStageIndex];

@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from "react";
 import { DesignMasterStore, MasterStoreState } from "../services/designMasterStore";
+import { exportTenderMatrixToExcel } from "../services/excelExportService";
 import { WorkPackageMaster, TowerMaster, ProjectMaster } from "../types/masterTypes";
 import { 
   Search, 
@@ -19,7 +20,10 @@ import {
   RefreshCw,
   SlidersHorizontal,
   Check,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Zap,
+  CheckSquare,
+  Square
 } from "lucide-react";
 
 interface MatrixColumn {
@@ -37,14 +41,24 @@ export const TenderDesignMatrix: React.FC = () => {
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [isExportingExcel, setIsExportingExcel] = useState<boolean>(false);
+
+  // Inspector & Edit
   const [activeCell, setActiveCell] = useState<{
     pkg: WorkPackageMaster;
     col: MatrixColumn;
     currentVal: string;
   } | null>(null);
-
-  // Status edit draft
   const [cellEditDraft, setCellEditDraft] = useState<string>("");
+
+  // Batch Update Modal State
+  const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
+  const [batchProjectId, setBatchProjectId] = useState<string>("");
+  const [batchSelectedTowers, setBatchSelectedTowers] = useState<string[]>([]);
+  const [batchDiscipline, setBatchDiscipline] = useState<string>("ALL");
+  const [batchStatus, setBatchStatus] = useState<"Received" | "In progress" | "Pending" | "Target Date" | "NA">("Received");
+  const [batchDate, setBatchDate] = useState<string>("");
+  const [batchRemarks, setBatchRemarks] = useState<string>("");
 
   // Subscribe to real-time master store updates
   useEffect(() => {
@@ -215,7 +229,20 @@ export const TenderDesignMatrix: React.FC = () => {
     setActiveCell(null);
   };
 
-  // Real CSV export
+  // Excel (.XLSX) formatted export
+  const handleExportExcel = async () => {
+    try {
+      setIsExportingExcel(true);
+      await exportTenderMatrixToExcel(storeState, filteredPackages, visibleColumns);
+    } catch (err) {
+      console.error("Excel export error:", err);
+      alert("Failed to export Excel file. Please try CSV export.");
+    } finally {
+      setIsExportingExcel(false);
+    }
+  };
+
+  // CSV export
   const handleExportCsv = () => {
     const headers = ["Discipline Category", "Work Package Name", ...visibleColumns.map(c => `${c.projectName} - ${c.towerName}`)];
     const rows = filteredPackages.map(pkg => {
@@ -235,11 +262,69 @@ export const TenderDesignMatrix: React.FC = () => {
     document.body.removeChild(link);
   };
 
+  // Open Batch Update Modal
+  const handleOpenBatchModal = () => {
+    const pId = selectedProject !== "ALL" ? selectedProject : (storeState.projects[0]?.id || "");
+    setBatchProjectId(pId);
+    const twrs = storeState.towers.filter(t => t.projectId === pId).map(t => t.id);
+    setBatchSelectedTowers(twrs);
+    setBatchDiscipline(categoryFilter !== "ALL" ? categoryFilter : "ALL");
+    setBatchStatus("Received");
+    setBatchDate("");
+    setBatchRemarks("");
+    setIsBatchModalOpen(true);
+  };
+
+  // Execute Batch Update
+  const handleExecuteBatchUpdate = () => {
+    if (!batchProjectId || batchSelectedTowers.length === 0) {
+      alert("Please select at least one Tower Wing to update.");
+      return;
+    }
+
+    // Determine target packages
+    let targetPkgs = storeState.packages;
+    if (batchDiscipline !== "ALL") {
+      targetPkgs = targetPkgs.filter(p => p.disciplineName === batchDiscipline);
+    }
+
+    if (targetPkgs.length === 0) {
+      alert("No packages found matching the selected discipline.");
+      return;
+    }
+
+    const updates: Array<{
+      projectId: string;
+      towerId: string;
+      packageId: string;
+      status: any;
+      targetDate?: string;
+      remarks?: string;
+    }> = [];
+
+    batchSelectedTowers.forEach(twrId => {
+      targetPkgs.forEach(pkg => {
+        updates.push({
+          projectId: batchProjectId,
+          towerId: twrId,
+          packageId: pkg.id,
+          status: batchStatus,
+          targetDate: batchStatus === "Target Date" ? batchDate : (batchDate || undefined),
+          remarks: batchRemarks || undefined
+        });
+      });
+    });
+
+    DesignMasterStore.bulkRecordPackageStatus(updates);
+    alert(`Batch Updated ${updates.length} cells successfully across ${batchSelectedTowers.length} wings and ${targetPkgs.length} packages!`);
+    setIsBatchModalOpen(false);
+  };
+
   return (
     <div className="space-y-4">
       {/* Top Filter & Control Ribbon */}
       <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-sm space-y-4">
-        {/* Row 1: Header title, live search, and CSV export */}
+        {/* Row 1: Header title, live search, and export buttons */}
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-2xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center border border-emerald-500/30 shadow-inner">
@@ -294,15 +379,38 @@ export const TenderDesignMatrix: React.FC = () => {
               ))}
             </select>
 
+            {/* Batch Update Button */}
+            <button
+              type="button"
+              onClick={handleOpenBatchModal}
+              className="h-9 px-3.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
+              title="Bulk fill package statuses across multiple tower wings at once"
+            >
+              <Zap className="h-3.5 w-3.5 text-amber-300" />
+              <span>Batch Fill</span>
+            </button>
+
+            {/* Export XLSX Button */}
+            <button
+              type="button"
+              onClick={handleExportExcel}
+              disabled={isExportingExcel}
+              className="h-9 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95 disabled:opacity-50"
+              title="Download beautifully styled .xlsx Excel spreadsheet"
+            >
+              <FileSpreadsheet className="h-3.5 w-3.5" />
+              <span>{isExportingExcel ? "Generating..." : "Export .XLSX"}</span>
+            </button>
+
             {/* Export CSV Button */}
             <button
               type="button"
               onClick={handleExportCsv}
-              className="h-9 px-3.5 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
-              title="Download filtered matrix as Excel CSV"
+              className="h-9 px-3 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+              title="Download CSV"
             >
-              <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-500" />
-              <span>Export CSV</span>
+              <Download className="h-3.5 w-3.5 text-muted-foreground" />
+              <span>CSV</span>
             </button>
           </div>
         </div>
@@ -599,6 +707,211 @@ export const TenderDesignMatrix: React.FC = () => {
                 className="px-4 py-1.5 rounded-xl border border-border text-xs font-semibold text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ⚡ Batch Update Modal */}
+      {isBatchModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="bg-surface border border-border w-full max-w-xl rounded-2xl shadow-2xl p-6 space-y-5">
+            <div className="flex items-start justify-between border-b border-border pb-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-teal-500/15 text-teal-600 dark:text-teal-400 flex items-center justify-center border border-teal-500/25">
+                  <Zap className="h-5 w-5 text-amber-500" />
+                </div>
+                <div>
+                  <h4 className="text-base font-bold text-foreground">
+                    ⚡ Batch Status Update
+                  </h4>
+                  <p className="text-xs text-muted-foreground">
+                    Apply status or target dates to multiple tower wings & packages simultaneously
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsBatchModalOpen(false)}
+                className="h-8 w-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Select Target Project */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-foreground block">
+                1. Select Target Project:
+              </label>
+              <select
+                value={batchProjectId}
+                onChange={e => {
+                  const pId = e.target.value;
+                  setBatchProjectId(pId);
+                  const twrs = storeState.towers.filter(t => t.projectId === pId).map(t => t.id);
+                  setBatchSelectedTowers(twrs);
+                }}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground font-bold focus:outline-none focus:border-teal-500 cursor-pointer"
+              >
+                {storeState.projects.map(proj => (
+                  <option key={proj.id} value={proj.id}>{proj.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Select Tower Wings */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-foreground">
+                  2. Select Tower Wings ({batchSelectedTowers.length} selected):
+                </label>
+                <div className="flex items-center gap-2 text-[11px]">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const all = storeState.towers.filter(t => t.projectId === batchProjectId).map(t => t.id);
+                      setBatchSelectedTowers(all);
+                    }}
+                    className="text-teal-600 dark:text-teal-400 hover:underline font-bold"
+                  >
+                    Select All
+                  </button>
+                  <span>•</span>
+                  <button
+                    type="button"
+                    onClick={() => setBatchSelectedTowers([])}
+                    className="text-muted-foreground hover:underline"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2 max-h-28 overflow-y-auto p-2 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-border">
+                {storeState.towers.filter(t => t.projectId === batchProjectId).map(twr => {
+                  const isChecked = batchSelectedTowers.includes(twr.id);
+                  return (
+                    <button
+                      key={twr.id}
+                      type="button"
+                      onClick={() => {
+                        setBatchSelectedTowers(prev => 
+                          isChecked ? prev.filter(id => id !== twr.id) : [...prev, twr.id]
+                        );
+                      }}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                        isChecked 
+                          ? "bg-teal-600 text-white shadow-xs" 
+                          : "bg-slate-200 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {isChecked ? <CheckSquare className="h-3 w-3" /> : <Square className="h-3 w-3" />}
+                      <span>{twr.towerName}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Select Discipline Filter */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-foreground block">
+                3. Apply to Packages of Discipline:
+              </label>
+              <select
+                value={batchDiscipline}
+                onChange={e => setBatchDiscipline(e.target.value)}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground font-semibold focus:outline-none focus:border-teal-500 cursor-pointer"
+              >
+                <option value="ALL">🌟 ALL Disciplines ({storeState.packages.length} Total Packages)</option>
+                {categories.map(cat => (
+                  <option key={cat} value={cat}>{cat} ({storeState.packages.filter(p => p.disciplineName === cat).length} Packages)</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Set Target Status */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-foreground block">
+                4. Select New Status:
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setBatchStatus("Received")}
+                  className={`p-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                    batchStatus === "Received"
+                      ? "border-emerald-500 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-500"
+                      : "border-border text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  ✓ Received
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBatchStatus("In progress")}
+                  className={`p-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                    batchStatus === "In progress"
+                      ? "border-amber-500 bg-amber-500/20 text-amber-700 dark:text-amber-300 ring-1 ring-amber-500"
+                      : "border-border text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  ⏳ In Progress
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBatchStatus("Pending")}
+                  className={`p-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                    batchStatus === "Pending"
+                      ? "border-rose-500 bg-rose-500/20 text-rose-700 dark:text-rose-300 ring-1 ring-rose-500"
+                      : "border-border text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  🚨 Pending
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBatchStatus("Target Date")}
+                  className={`p-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                    batchStatus === "Target Date"
+                      ? "border-sky-500 bg-sky-500/20 text-sky-700 dark:text-sky-300 ring-1 ring-sky-500"
+                      : "border-border text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  📅 Target Date
+                </button>
+              </div>
+
+              {batchStatus === "Target Date" && (
+                <div className="pt-2">
+                  <input
+                    type="text"
+                    placeholder="e.g. 30-Aug, 15-Sep, 30-Nov"
+                    value={batchDate}
+                    onChange={e => setBatchDate(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground font-mono focus:outline-none focus:border-teal-500"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
+              <button
+                type="button"
+                onClick={() => setIsBatchModalOpen(false)}
+                className="px-4 py-2 rounded-xl border border-border text-xs font-semibold text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleExecuteBatchUpdate}
+                className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shadow-md transition-all cursor-pointer active:scale-95"
+              >
+                ⚡ Apply Batch Update
               </button>
             </div>
           </div>

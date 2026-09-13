@@ -17,6 +17,8 @@ export interface TowerMaster {
   towerName: string;
   towerType: "Sale" | "Society" | "Commercial" | "Rehab / SRA" | "PTC / Hostel" | "Plot / Infrastructure";
   totalFloors?: number;
+  heightMeters?: number;
+  description?: string;
 }
 
 export interface DisciplineMaster {

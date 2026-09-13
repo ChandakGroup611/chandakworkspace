@@ -93,7 +93,7 @@ export class DesignMasterStore {
   }
 
   // ============================================================================
-  // Master Management: Projects & Towers
+  // Master Management: Projects & Towers (CRUD)
   // ============================================================================
 
   public static getProjects(): ProjectMaster[] {
@@ -113,10 +113,27 @@ export class DesignMasterStore {
     return newProj;
   }
 
+  public static updateProject(id: string, updates: Partial<Omit<ProjectMaster, "id">>): ProjectMaster | null {
+    const state = this.getState();
+    const idx = state.projects.findIndex(p => p.id === id);
+    if (idx === -1) return null;
+    state.projects[idx] = { ...state.projects[idx], ...updates };
+    this.notify();
+    return state.projects[idx];
+  }
+
   public static deleteProject(id: string): void {
     const state = this.getState();
     state.projects = state.projects.filter(p => p.id !== id);
     state.towers = state.towers.filter(t => t.projectId !== id);
+    // Cleanup orphaned statuses and look-aheads
+    Object.keys(state.packageStatuses).forEach(k => {
+      if (k.startsWith(`${id}__`)) delete state.packageStatuses[k];
+    });
+    Object.keys(state.statutoryClearances).forEach(k => {
+      if (k.startsWith(`${id}__`)) delete state.statutoryClearances[k];
+    });
+    state.lookAheads = state.lookAheads.filter(la => la.projectId !== id);
     this.notify();
   }
 
@@ -135,14 +152,24 @@ export class DesignMasterStore {
     return newTower;
   }
 
+  public static updateTower(id: string, updates: Partial<Omit<TowerMaster, "id">>): TowerMaster | null {
+    const state = this.getState();
+    const idx = state.towers.findIndex(t => t.id === id);
+    if (idx === -1) return null;
+    state.towers[idx] = { ...state.towers[idx], ...updates };
+    this.notify();
+    return state.towers[idx];
+  }
+
   public static deleteTower(id: string): void {
     const state = this.getState();
     state.towers = state.towers.filter(t => t.id !== id);
+    state.lookAheads = state.lookAheads.filter(la => la.towerId !== id);
     this.notify();
   }
 
   // ============================================================================
-  // Master Management: Disciplines & Work Packages
+  // Master Management: Disciplines & Work Packages (CRUD)
   // ============================================================================
 
   public static getDisciplines(): DisciplineMaster[] {
@@ -173,14 +200,26 @@ export class DesignMasterStore {
     return newPkg;
   }
 
+  public static updatePackage(id: string, updates: Partial<Omit<WorkPackageMaster, "id">>): WorkPackageMaster | null {
+    const state = this.getState();
+    const idx = state.packages.findIndex(p => p.id === id);
+    if (idx === -1) return null;
+    state.packages[idx] = { ...state.packages[idx], ...updates };
+    this.notify();
+    return state.packages[idx];
+  }
+
   public static deletePackage(id: string): void {
     const state = this.getState();
     state.packages = state.packages.filter(p => p.id !== id);
+    Object.keys(state.packageStatuses).forEach(k => {
+      if (k.endsWith(`__${id}`)) delete state.packageStatuses[k];
+    });
     this.notify();
   }
 
   // ============================================================================
-  // Master Management: Statutory Authorities
+  // Master Management: Statutory Authorities (CRUD)
   // ============================================================================
 
   public static getAuthorities(): StatutoryAuthorityMaster[] {
@@ -196,8 +235,61 @@ export class DesignMasterStore {
     return newAuth;
   }
 
+  public static updateAuthority(id: string, updates: Partial<Omit<StatutoryAuthorityMaster, "id">>): StatutoryAuthorityMaster | null {
+    const state = this.getState();
+    const idx = state.authorities.findIndex(a => a.id === id);
+    if (idx === -1) return null;
+    state.authorities[idx] = { ...state.authorities[idx], ...updates };
+    this.notify();
+    return state.authorities[idx];
+  }
+
+  public static deleteAuthority(id: string): void {
+    const state = this.getState();
+    state.authorities = state.authorities.filter(a => a.id !== id);
+    Object.keys(state.statutoryClearances).forEach(k => {
+      if (k.endsWith(`__${id}`)) delete state.statutoryClearances[k];
+    });
+    this.notify();
+  }
+
   // ============================================================================
-  // Transaction Fill: Package Status
+  // Master Management: Consultants Directory (CRUD)
+  // ============================================================================
+
+  public static getConsultants(): ConsultantMaster[] {
+    return this.getState().consultants || [];
+  }
+
+  public static addConsultant(c: Omit<ConsultantMaster, "id">): ConsultantMaster {
+    const state = this.getState();
+    const id = `cst-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+    const newC: ConsultantMaster = { ...c, id };
+    if (!state.consultants) state.consultants = [];
+    state.consultants.push(newC);
+    this.notify();
+    return newC;
+  }
+
+  public static updateConsultant(id: string, updates: Partial<Omit<ConsultantMaster, "id">>): ConsultantMaster | null {
+    const state = this.getState();
+    if (!state.consultants) return null;
+    const idx = state.consultants.findIndex(c => c.id === id);
+    if (idx === -1) return null;
+    state.consultants[idx] = { ...state.consultants[idx], ...updates };
+    this.notify();
+    return state.consultants[idx];
+  }
+
+  public static deleteConsultant(id: string): void {
+    const state = this.getState();
+    if (!state.consultants) return;
+    state.consultants = state.consultants.filter(c => c.id !== id);
+    this.notify();
+  }
+
+  // ============================================================================
+  // Transaction Fill: Package Status & Bulk Update
   // ============================================================================
 
   public static recordPackageStatus(
@@ -225,13 +317,43 @@ export class DesignMasterStore {
     this.notify();
   }
 
+  public static bulkRecordPackageStatus(
+    updates: Array<{
+      projectId: string;
+      towerId: string;
+      packageId: string;
+      status: PackageStatusEntry["status"];
+      targetDate?: string;
+      consultantName?: string;
+      remarks?: string;
+    }>
+  ): void {
+    const state = this.getState();
+    const now = new Date().toISOString();
+    updates.forEach(u => {
+      const key = `${u.projectId}__${u.towerId}__${u.packageId}`;
+      state.packageStatuses[key] = {
+        id: key,
+        projectId: u.projectId,
+        towerId: u.towerId,
+        packageId: u.packageId,
+        status: u.status,
+        targetDate: u.targetDate,
+        consultantName: u.consultantName,
+        remarks: u.remarks,
+        updatedAt: now
+      };
+    });
+    this.notify();
+  }
+
   public static getPackageStatus(projectId: string, towerId: string, packageId: string): PackageStatusEntry | undefined {
     const state = this.getState();
     return state.packageStatuses[`${projectId}__${towerId}__${packageId}`];
   }
 
   // ============================================================================
-  // Transaction Fill: Look-Ahead Milestones
+  // Transaction Fill: Look-Ahead Milestones (CRUD)
   // ============================================================================
 
   public static getLookAheads(projectId?: string, timeframe?: string): LookAheadEntry[] {
@@ -250,6 +372,15 @@ export class DesignMasterStore {
     state.lookAheads.unshift(newItem);
     this.notify();
     return newItem;
+  }
+
+  public static updateLookAhead(id: string, updates: Partial<Omit<LookAheadEntry, "id">>): LookAheadEntry | null {
+    const state = this.getState();
+    const idx = state.lookAheads.findIndex(la => la.id === id);
+    if (idx === -1) return null;
+    state.lookAheads[idx] = { ...state.lookAheads[idx], ...updates };
+    this.notify();
+    return state.lookAheads[idx];
   }
 
   public static toggleExpediteLookAhead(id: string): void {
@@ -500,4 +631,28 @@ export class DesignMasterStore {
       statutoryClearances
     };
   }
+
+  // ============================================================================
+  // Backup & Restore: JSON Import & Export
+  // ============================================================================
+
+  public static exportToJson(): string {
+    return JSON.stringify(this.getState(), null, 2);
+  }
+
+  public static importFromJson(jsonStr: string): boolean {
+    try {
+      const parsed = JSON.parse(jsonStr) as MasterStoreState;
+      if (!Array.isArray(parsed.projects) || !Array.isArray(parsed.packages)) {
+        throw new Error("Invalid structure");
+      }
+      this.state = parsed;
+      this.notify();
+      return true;
+    } catch (e) {
+      console.error("Failed to import JSON into DesignMasterStore:", e);
+      return false;
+    }
+  }
 }
+

@@ -29,6 +29,31 @@ export const LookAheadDashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedItem, setSelectedItem] = useState<LookAheadEntry | null>(null);
 
+  // Quick Add Milestone Modal State
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newProjectId, setNewProjectId] = useState<string>("");
+  const [newTowerId, setNewTowerId] = useState<string>("");
+  const [newDesc, setNewDesc] = useState<string>("");
+  const [newTimeframe, setNewTimeframe] = useState<"30_DAYS" | "60_DAYS">("30_DAYS");
+  const [newTargetDate, setNewTargetDate] = useState<string>("");
+  const [newPriority, setNewPriority] = useState<"CRITICAL" | "HIGH" | "NORMAL">("CRITICAL");
+
+  // Critical Design & Consultant Bottlenecks (Derived from reference analysis)
+  const CRITICAL_DESIGN_BLOCKERS = [
+    { project: "KRIPANAGAR", tower: "PLOT-B", package: "Aluminium windows, GRC/Fins, Glass railing", target: "15-May / 10-Aug", status: "Critical" },
+    { project: "JB NAGAR", tower: "SALE DEF", package: "Aluminium windows, GRC/Fins, Glass railing", target: "15-May / 10-Aug", status: "Critical" },
+    { project: "JB NAGAR", tower: "SOC BCD", package: "MEP works", target: "15-Jul / 30-Aug", status: "Urgent" },
+    { project: "NISCHAY", tower: "HOSTEL", package: "MEP works", target: "30-Jun / 30-Aug", status: "Critical" }
+  ];
+
+  const CRITICAL_CONSULTANT_BOTTLENECKS = [
+    { project: "KALINA-2", tower: "COMMERCIAL, REHAB", consultant: "MEP Consultant", issue: "Work order not given (Immediate)", severity: "HIGH" },
+    { project: "KALINA-1", tower: "COMMERCIAL", consultant: "Façade Consultant", issue: "Onboarding required immediately for window BOQ", severity: "HIGH" },
+    { project: "KALINA-1", tower: "COMMERCIAL, REHAB, SOC", consultant: "STP Consultant / Vendor", issue: "Sewage sizing & plant layout pending", severity: "MEDIUM" },
+    { project: "VANRAI", tower: "SOCIETY, SALE", consultant: "Geotech Consultant", issue: "Shoring pile recommendations pending", severity: "HIGH" },
+    { project: "KANHERI", tower: "SOCIETY, SALE", consultant: "Traffic Consultant", issue: "Preliminary circulation NOC pending", severity: "MEDIUM" }
+  ];
+
   // Subscribe to DesignMasterStore for dynamic real-time reactivity
   useEffect(() => {
     const unsubscribe = DesignMasterStore.subscribe(() => {
@@ -250,6 +275,26 @@ export const LookAheadDashboard: React.FC = () => {
             ))}
           </select>
 
+          {/* Add Milestone Button */}
+          <button
+            type="button"
+            onClick={() => {
+              if (storeState.projects.length > 0) {
+                const p = storeState.projects[0].id;
+                setNewProjectId(p);
+                const twrs = storeState.towers.filter(t => t.projectId === p);
+                if (twrs.length > 0) setNewTowerId(twrs[0].id);
+              }
+              setNewDesc("");
+              setNewTargetDate("");
+              setIsAddModalOpen(true);
+            }}
+            className="h-8 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            <span>Add Milestone</span>
+          </button>
+
           {/* CSV Export */}
           <button
             type="button"
@@ -259,6 +304,89 @@ export const LookAheadDashboard: React.FC = () => {
             <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-500" />
             <span>CSV</span>
           </button>
+        </div>
+      </div>
+
+      {/* Critical Packages & Consultant Bottlenecks Strip */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Critical Design Packages */}
+        <div className="p-4 sm:p-5 rounded-2xl border border-rose-500/25 bg-rose-500/5 shadow-xs space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />
+              <h4 className="text-xs font-black uppercase tracking-wider text-rose-700 dark:text-rose-400">
+                🚨 Critical Design Package Blockers
+              </h4>
+            </div>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/25">
+              High Priority
+            </span>
+          </div>
+
+          <div className="space-y-2">
+            {CRITICAL_DESIGN_BLOCKERS.map((blk, idx) => (
+              <div key={idx} className="p-2.5 rounded-xl bg-surface border border-rose-500/20 text-xs flex items-center justify-between gap-3 shadow-2xs">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground">
+                    <span className="text-rose-600 dark:text-rose-400">{blk.project}</span>
+                    <span className="text-muted-foreground">•</span>
+                    <span>{blk.tower}</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground truncate font-medium mt-0.5">
+                    {blk.package}
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <span className="text-[10px] font-mono font-bold text-rose-600 dark:text-rose-400 block">
+                    {blk.target}
+                  </span>
+                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-rose-500 text-white font-bold inline-block mt-0.5">
+                    {blk.status}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Critical Consultant Bottlenecks */}
+        <div className="p-4 sm:p-5 rounded-2xl border border-amber-500/25 bg-amber-500/5 shadow-xs space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-amber-500" />
+              <h4 className="text-xs font-black uppercase tracking-wider text-amber-700 dark:text-amber-400">
+                ⏳ Critical Consultant Onboarding Blockers
+              </h4>
+            </div>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25">
+              Work Order Gates
+            </span>
+          </div>
+
+          <div className="space-y-2">
+            {CRITICAL_CONSULTANT_BOTTLENECKS.map((cst, idx) => (
+              <div key={idx} className="p-2.5 rounded-xl bg-surface border border-amber-500/20 text-xs flex items-center justify-between gap-3 shadow-2xs">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground">
+                    <span className="text-amber-600 dark:text-amber-400">{cst.project}</span>
+                    <span className="text-muted-foreground">•</span>
+                    <span>{cst.tower}</span>
+                  </div>
+                  <div className="text-xs font-bold text-foreground mt-0.5">
+                    {cst.consultant}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground truncate">
+                    {cst.issue}
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                    {cst.severity}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -432,6 +560,159 @@ export const LookAheadDashboard: React.FC = () => {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Add Milestone Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="bg-surface border border-border w-full max-w-lg rounded-2xl shadow-2xl p-6 space-y-4">
+            <div className="flex items-start justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                  <Plus className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="text-base font-bold text-foreground">
+                    Add Look-Ahead Milestone
+                  </h4>
+                  <p className="text-xs text-muted-foreground">
+                    Record upcoming tender package or consultant deliverable
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddModalOpen(false)}
+                className="h-8 w-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={e => {
+                e.preventDefault();
+                if (!newProjectId || !newTowerId || !newDesc.trim()) {
+                  alert("Please select Project, Tower Wing, and enter Deliverable Description.");
+                  return;
+                }
+                DesignMasterStore.addLookAhead({
+                  projectId: newProjectId,
+                  towerId: newTowerId,
+                  deliverableDescription: newDesc.trim(),
+                  timeframe: newTimeframe,
+                  targetDate: newTargetDate || (newTimeframe === "30_DAYS" ? "30 Days Window" : "60 Days Window"),
+                  priority: newPriority,
+                  status: "PENDING"
+                });
+                setIsAddModalOpen(false);
+              }}
+              className="space-y-3.5 text-xs"
+            >
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground block">Project:</label>
+                  <select
+                    value={newProjectId}
+                    onChange={e => {
+                      const p = e.target.value;
+                      setNewProjectId(p);
+                      const twrs = storeState.towers.filter(t => t.projectId === p);
+                      if (twrs.length > 0) setNewTowerId(twrs[0].id);
+                    }}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground font-bold focus:outline-none focus:border-emerald-500 cursor-pointer"
+                  >
+                    {storeState.projects.map(p => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground block">Tower / Wing:</label>
+                  <select
+                    value={newTowerId}
+                    onChange={e => setNewTowerId(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground font-semibold focus:outline-none focus:border-emerald-500 cursor-pointer"
+                  >
+                    {storeState.towers.filter(t => t.projectId === newProjectId).map(t => (
+                      <option key={t.id} value={t.id}>{t.towerName} ({t.towerType})</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-foreground block">Deliverable Description:</label>
+                <textarea
+                  rows={2}
+                  value={newDesc}
+                  onChange={e => setNewDesc(e.target.value)}
+                  placeholder="e.g. Aluminium Windows (BOQ), Lift Lobby GFC, Tree NOC Clearance..."
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-emerald-500"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground block">Urgency Window:</label>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setNewTimeframe("30_DAYS")}
+                      className={`py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                        newTimeframe === "30_DAYS"
+                          ? "border-rose-500 bg-rose-500/20 text-rose-700 dark:text-rose-400 ring-1 ring-rose-500"
+                          : "border-border text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                      }`}
+                    >
+                      🚨 In 30 Days
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNewTimeframe("60_DAYS")}
+                      className={`py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                        newTimeframe === "60_DAYS"
+                          ? "border-amber-500 bg-amber-500/20 text-amber-700 dark:text-amber-400 ring-1 ring-amber-500"
+                          : "border-border text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                      }`}
+                    >
+                      ⏳ In 60 Days
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground block">Target Date / Milestone:</label>
+                  <input
+                    type="text"
+                    value={newTargetDate}
+                    onChange={e => setNewTargetDate(e.target.value)}
+                    placeholder="e.g. 15-May, 30-Aug"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-emerald-500 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-border text-xs font-semibold text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md cursor-pointer transition-all active:scale-95"
+                >
+                  Save Milestone
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

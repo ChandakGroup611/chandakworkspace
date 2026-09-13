@@ -385,22 +385,22 @@ export const MastersSetupView: React.FC = () => {
       {activeSubTab === "TEMPLATES" && (
         <div className="p-6 rounded-2xl border border-border bg-surface shadow-xs space-y-6">
           <div>
-            <h4 className="text-base font-black text-foreground">Workspace Seed & Reset Controls</h4>
+            <h4 className="text-base font-black text-foreground">Workspace Seed, Backup & Reset Controls</h4>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Choose between starting with a completely blank database or reloading the reference EY Tender Design Tracker R2 dataset.
+              Manage your master dataset: load reference templates, export full JSON database backups, or import an external backup.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Box 1: Reference Template */}
             <div className="p-5 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 space-y-3 flex flex-col justify-between">
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-emerald-500" />
-                  <h5 className="text-sm font-bold text-foreground">Load EY Tender Reference Template</h5>
+                  <h5 className="text-sm font-bold text-foreground">Load EY Reference Template</h5>
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Pre-populates the workspace with all 11 Chandak projects, 24 individual tower wings, 65 work packages, and 40 look-ahead milestones from the Excel reference sheet. Everything remains 100% editable.
+                  Pre-populates with all 11 Chandak projects, 24 wings, 65 packages, and look-ahead milestones extracted from the official Excel sheet.
                 </p>
               </div>
 
@@ -418,7 +418,62 @@ export const MastersSetupView: React.FC = () => {
               </button>
             </div>
 
-            {/* Box 2: Blank Slate */}
+            {/* Box 2: JSON Backup & Restore */}
+            <div className="p-5 rounded-2xl border border-blue-500/30 bg-blue-500/5 space-y-3 flex flex-col justify-between">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <Download className="h-4 w-4 text-blue-500" />
+                  <h5 className="text-sm font-bold text-foreground">JSON Backup & Restore</h5>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Export all master configurations, drawings, look-ahead items, and clearance matrices as a single JSON file for offline backup or transfer.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const jsonStr = DesignMasterStore.exportToJson();
+                    const blob = new Blob([jsonStr], { type: "application/json" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `Chandak_Design_Master_Backup_${new Date().toISOString().split("T")[0]}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                  className="flex-1 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-md cursor-pointer"
+                >
+                  Export Backup
+                </button>
+
+                <label className="flex-1 py-2 rounded-xl border border-blue-500/40 bg-surface hover:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold text-center transition-all cursor-pointer">
+                  Import Backup
+                  <input
+                    type="file"
+                    accept=".json"
+                    className="hidden"
+                    onChange={e => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = evt => {
+                        const content = evt.target?.result as string;
+                        if (content) {
+                          const success = DesignMasterStore.importFromJson(content);
+                          if (success) alert("Backup imported successfully!");
+                          else alert("Failed to parse backup JSON. Invalid structure.");
+                        }
+                      };
+                      reader.readAsText(file);
+                    }}
+                  />
+                </label>
+              </div>
+            </div>
+
+            {/* Box 3: Blank Slate */}
             <div className="p-5 rounded-2xl border border-rose-500/30 bg-rose-500/5 space-y-3 flex flex-col justify-between">
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2">
@@ -426,7 +481,7 @@ export const MastersSetupView: React.FC = () => {
                   <h5 className="text-sm font-bold text-foreground">Reset to Clean Blank State</h5>
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Wipes all projects, packages, and transaction records, giving you a fresh, clean canvas to configure your own custom developments and tender packages from scratch.
+                  Wipes all projects, packages, and transactions, giving you a fresh canvas to create your own custom developments.
                 </p>
               </div>
 
