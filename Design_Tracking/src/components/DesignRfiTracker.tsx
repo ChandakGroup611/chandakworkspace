@@ -19,7 +19,8 @@ import {
   AlertCircle,
   Tag,
   CornerDownRight,
-  ShieldAlert
+  ShieldAlert,
+  Trash2
 } from "lucide-react";
 import { DesignMasterStore } from "../services/designMasterStore";
 import { RfiItem, RfiPriority, RfiStatus, DesignDiscipline } from "../types";
@@ -389,6 +390,19 @@ export function DesignRfiTracker() {
                       <span>Submit Consultant Clarification</span>
                     </button>
                   )}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (confirm(`Delete RFI query ${r.rfiNumber}?`)) {
+                        DesignMasterStore.deleteRfi(r.id);
+                      }
+                    }}
+                    title="Delete RFI"
+                    className="h-7 w-7 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 inline-flex items-center justify-center transition-colors cursor-pointer"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               </div>
             );

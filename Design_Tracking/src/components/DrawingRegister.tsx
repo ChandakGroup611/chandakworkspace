@@ -19,8 +19,10 @@ import {
   Printer,
   Compass,
   Maximize2,
-  Sparkles
+  Sparkles,
+  Trash2
 } from "lucide-react";
+import { DesignMasterStore } from "../services/designMasterStore";
 
 interface DrawingRegisterProps {
   drawings: DrawingItem[];
@@ -299,6 +301,18 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
                         >
                           <Eye className="h-3 w-3 shrink-0" />
                           <span>Review</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (confirm(`Delete drawing ${item.code} from register?`)) {
+                              DesignMasterStore.deleteDrawing(item.id);
+                            }
+                          }}
+                          className="h-7 w-7 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 inline-flex items-center justify-center transition-colors cursor-pointer"
+                          title="Delete drawing"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     </td>

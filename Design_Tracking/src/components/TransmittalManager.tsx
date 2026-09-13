@@ -19,7 +19,8 @@ import {
   X,
   Eye,
   UserCheck,
-  Download
+  Download,
+  Trash2
 } from "lucide-react";
 import { DesignMasterStore } from "../services/designMasterStore";
 import { TransmittalItem, TransmittalPurpose } from "../types";
@@ -340,6 +341,19 @@ export function TransmittalManager() {
                               <span>Sign Receipt</span>
                             </button>
                           )}
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (confirm(`Delete transmittal note ${t.transmittalNumber}?`)) {
+                                DesignMasterStore.deleteTransmittal(t.id);
+                              }
+                            }}
+                            title="Delete Transmittal"
+                            className="h-7 w-7 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 inline-flex items-center justify-center transition-colors cursor-pointer"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
                         </div>
                       </td>
                     </tr>
