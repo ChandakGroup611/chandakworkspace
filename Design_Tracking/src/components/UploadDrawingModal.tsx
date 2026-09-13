@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { DesignDiscipline, DrawingItem } from "../types";
+import { DesignMasterStore } from "../services/designMasterStore";
 import { X, Upload, FileText, Check, Sparkles } from "lucide-react";
 
 interface UploadDrawingModalProps {
@@ -15,12 +16,13 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
   onClose,
   onDrawingUploaded
 }) => {
+  const projects = DesignMasterStore.getProjects();
   const [code, setCode] = useState("");
   const [title, setTitle] = useState("");
   const [discipline, setDiscipline] = useState<DesignDiscipline>("Architectural");
-  const [project, setProject] = useState("Chandak Stella");
+  const [project, setProject] = useState(projects[0]?.name || "Chandak Project");
   const [revision, setRevision] = useState("R0");
-  const [consultant, setConsultant] = useState("Morphogenesis Architects");
+  const [consultant, setConsultant] = useState("");
   const [description, setDescription] = useState("");
   const [fileSize, setFileSize] = useState("18.4 MB");
   const [submitting, setSubmitting] = useState(false);
@@ -40,7 +42,7 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
         project,
         revision,
         status: "Under Review",
-        consultant,
+        consultant: consultant.trim() || "Empanelled Design Consultant",
         submittedDate: new Date().toISOString().split("T")[0],
         fileSize,
         description: description.trim() || undefined
@@ -79,12 +81,11 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
               <select
                 value={project}
                 onChange={(e) => setProject(e.target.value)}
-                className="w-full h-9 rounded-lg border border-border bg-surface px-2.5 text-xs text-foreground"
+                className="w-full h-9 rounded-lg border border-border bg-surface px-2.5 text-xs text-foreground cursor-pointer"
               >
-                <option value="Chandak Stella">Chandak Stella</option>
-                <option value="Chandak Highscape City">Chandak Highscape City</option>
-                <option value="Chandak GreenAir">Chandak GreenAir</option>
-                <option value="Chandak 34 Park Estate">Chandak 34 Park Estate</option>
+                {projects.map(p => (
+                  <option key={p.id} value={p.name}>{p.name}</option>
+                ))}
               </select>
             </div>
             <div>
