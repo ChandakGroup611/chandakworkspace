@@ -10,7 +10,13 @@ export const metadata = {
   description: "Architectural drawings, CAD revisions, stage-gate reviews & site execution releases."
 };
 
-export default async function DesignModulePage() {
+export const dynamic = "force-dynamic";
+
+interface PageProps {
+  params: Promise<{ slug?: string[] }>;
+}
+
+export default async function DesignModulePage({ params }: PageProps) {
   const { user } = await getCachedUser();
 
   if (!user) {
@@ -37,5 +43,8 @@ export default async function DesignModulePage() {
     });
   }
 
-  return <DesignTrackingHost />;
+  const resolvedParams = await params;
+  const slug = resolvedParams.slug || [];
+
+  return <DesignTrackingHost initialSlug={slug} />;
 }

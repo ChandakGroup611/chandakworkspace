@@ -57,34 +57,30 @@ type ActiveTabType =
   | "REPORTS" 
   | "MASTERS";
 
-export default function DesignTrackingHost() {
+export default function DesignTrackingHost({ initialSlug }: { initialSlug?: string[] }) {
   const pathname = usePathname() || "/design";
   const router = useRouter();
 
-  // Compute active tab seamlessly from URL path
-  const tabFromUrl = useMemo<ActiveTabType>(() => {
-    if (pathname.includes("/masters") || pathname.includes("/settings")) return "MASTERS";
-    if (pathname.includes("/look-ahead") || pathname.includes("/forecast")) return "LOOK_AHEAD";
-    if (pathname.includes("/liaisoning") || pathname.includes("/clearances") || pathname.includes("/noc")) return "LIAISONING";
-    if (pathname.includes("/stages") || pathname.includes("/roadmap")) return "STAGES";
-    if (pathname.includes("/approvals") || pathname.includes("/review")) return "APPROVALS";
-    if (pathname.includes("/revisions") || pathname.includes("/history")) return "REVISIONS";
-    if (pathname.includes("/drawings") || pathname.includes("/sheets") || pathname.includes("/register") || pathname.includes("/blueprints")) return "DRAWINGS";
-    if (pathname.includes("/handover") || pathname.includes("/gfc") || pathname.includes("/site-release")) return "GFC_HANDOVER";
-    if (pathname.includes("/consultants") || pathname.includes("/directory") || pathname.includes("/dictionary")) return "CONSULTANTS";
-    if (pathname.includes("/reports") || pathname.includes("/analytics")) return "REPORTS";
+  // Compute active tab seamlessly from URL path and initialSlug
+  const activeTab = useMemo<ActiveTabType>(() => {
+    const slugStr = (initialSlug || []).join("/").toLowerCase();
+    const currentPath = (pathname || "/design").toLowerCase();
+    const combined = `${currentPath}/${slugStr}`;
+
+    if (combined.includes("master") || combined.includes("setting")) return "MASTERS";
+    if (combined.includes("look-ahead") || combined.includes("forecast")) return "LOOK_AHEAD";
+    if (combined.includes("liaison") || combined.includes("clearance") || combined.includes("noc")) return "LIAISONING";
+    if (combined.includes("stage") || combined.includes("roadmap")) return "STAGES";
+    if (combined.includes("approval") || combined.includes("review")) return "APPROVALS";
+    if (combined.includes("revision") || combined.includes("history")) return "REVISIONS";
+    if (combined.includes("drawing") || combined.includes("sheet") || combined.includes("register") || combined.includes("blueprint")) return "DRAWINGS";
+    if (combined.includes("handover") || combined.includes("gfc") || combined.includes("site-release")) return "GFC_HANDOVER";
+    if (combined.includes("consultant") || combined.includes("directory") || combined.includes("dictionary")) return "CONSULTANTS";
+    if (combined.includes("report") || combined.includes("analytic")) return "REPORTS";
     return "MATRIX";
-  }, [pathname]);
-
-  const [activeTab, setActiveTab] = useState<ActiveTabType>(tabFromUrl);
-
-  // Sync tab whenever URL pathname changes (e.g. sidebar navigation or browser back/forward)
-  useEffect(() => {
-    setActiveTab(tabFromUrl);
-  }, [tabFromUrl]);
+  }, [pathname, initialSlug]);
 
   const handleTabChange = (tab: ActiveTabType) => {
-    setActiveTab(tab);
     const routeMap: Record<ActiveTabType, string> = {
       MATRIX: "/design/matrix",
       LOOK_AHEAD: "/design/look-ahead",

@@ -186,7 +186,7 @@ const designNavGroups: NavGroup[] = [
       { label: "Tender Design Matrix", href: "/design/matrix", icon: Layers },
       { label: "30/60d Look-Ahead", href: "/design/look-ahead", icon: Clock },
       { label: "Statutory Liaisoning", href: "/design/liaisoning", icon: ShieldCheck },
-      { label: "5-Stage Roadmap", href: "/design/stages", icon: Calendar },
+      { label: "8-Stage Roadmap", href: "/design/stages", icon: Calendar },
     ]
   },
   {
