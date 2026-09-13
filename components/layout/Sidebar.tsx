@@ -35,7 +35,9 @@ import {
   FileText,
   CheckCircle2,
   RotateCcw,
-  Building2
+  Building2,
+  Send,
+  HelpCircle
 } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useTheme } from "@/components/theme/ThemeProvider";
@@ -196,6 +198,8 @@ const designNavGroups: NavGroup[] = [
       { label: "Design Approvals", href: "/design/approvals", icon: CheckCircle2 },
       { label: "Revision History", href: "/design/revisions", icon: RotateCcw },
       { label: "GFC Site Handover", href: "/design/handover", icon: Building2 },
+      { label: "Transmittals & Slips", href: "/design/transmittals", icon: Send },
+      { label: "RFI & Site Queries", href: "/design/rfis", icon: HelpCircle },
     ]
   },
   {

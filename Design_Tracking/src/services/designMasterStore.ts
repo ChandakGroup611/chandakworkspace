@@ -18,6 +18,20 @@ import {
 } from "../types/masterTypes";
 
 import { 
+  DrawingItem, 
+  DrawingRevision, 
+  TransmittalItem, 
+  RfiItem 
+} from "../types";
+
+import { 
+  mockDrawings, 
+  mockConsultants, 
+  mockTransmittals, 
+  mockRfis 
+} from "../mock/designMockData";
+
+import { 
   EY_PROJECT_COLUMNS, 
   EY_UNIQUE_PROJECTS, 
   EY_TENDER_PACKAGES, 
@@ -37,6 +51,9 @@ export interface MasterStoreState {
   packageStatuses: Record<string, PackageStatusEntry>; // Key: `${projectId}__${towerId}__${packageId}`
   lookAheads: LookAheadEntry[];
   statutoryClearances: Record<string, StatutoryClearanceEntry>; // Key: `${projectId}__${towerId}__${authorityId}`
+  drawings: DrawingItem[];
+  transmittals: TransmittalItem[];
+  rfis: RfiItem[];
 }
 
 export class DesignMasterStore {
@@ -68,7 +85,12 @@ export class DesignMasterStore {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
-          this.state = JSON.parse(raw);
+          const parsed = JSON.parse(raw);
+          // Migration check for new collections
+          if (!parsed.drawings || !Array.isArray(parsed.drawings)) parsed.drawings = mockDrawings;
+          if (!parsed.transmittals || !Array.isArray(parsed.transmittals)) parsed.transmittals = mockTransmittals;
+          if (!parsed.rfis || !Array.isArray(parsed.rfis)) parsed.rfis = mockRfis;
+          this.state = parsed;
           return this.state!;
         }
       } catch (e) {
@@ -430,6 +452,137 @@ export class DesignMasterStore {
   }
 
   // ============================================================================
+  // Drawing Register & Document Management
+  // ============================================================================
+
+  public static getDrawings(): DrawingItem[] {
+    return this.getState().drawings || [];
+  }
+
+  public static getDrawingById(id: string): DrawingItem | undefined {
+    return this.getDrawings().find(d => d.id === id);
+  }
+
+  public static saveDrawing(drawing: DrawingItem): void {
+    const state = this.getState();
+    if (!state.drawings) state.drawings = [];
+    const index = state.drawings.findIndex(d => d.id === drawing.id);
+    if (index >= 0) {
+      state.drawings[index] = drawing;
+    } else {
+      state.drawings.unshift(drawing);
+    }
+    this.notify();
+  }
+
+  public static updateDrawingStatus(id: string, status: DrawingItem["status"], approvedDate?: string): void {
+    const state = this.getState();
+    const item = (state.drawings || []).find(d => d.id === id);
+    if (item) {
+      item.status = status;
+      if (approvedDate) item.approvedDate = approvedDate;
+      this.notify();
+    }
+  }
+
+  public static deleteDrawing(id: string): void {
+    const state = this.getState();
+    state.drawings = (state.drawings || []).filter(d => d.id !== id);
+    this.notify();
+  }
+
+  // ============================================================================
+  // Transmittals & GFC Dispatch Slips
+  // ============================================================================
+
+  public static getTransmittals(): TransmittalItem[] {
+    return this.getState().transmittals || [];
+  }
+
+  public static getTransmittalById(id: string): TransmittalItem | undefined {
+    return this.getTransmittals().find(t => t.id === id);
+  }
+
+  public static saveTransmittal(transmittal: TransmittalItem): void {
+    const state = this.getState();
+    if (!state.transmittals) state.transmittals = [];
+    const index = state.transmittals.findIndex(t => t.id === transmittal.id);
+    if (index >= 0) {
+      state.transmittals[index] = transmittal;
+    } else {
+      state.transmittals.unshift(transmittal);
+    }
+    this.notify();
+  }
+
+  public static acknowledgeTransmittal(id: string, acknowledgedBy: string): void {
+    const state = this.getState();
+    const item = (state.transmittals || []).find(t => t.id === id);
+    if (item) {
+      item.status = "ACKNOWLEDGED";
+      item.acknowledgedAt = new Date().toISOString().split("T")[0];
+      item.acknowledgedBy = acknowledgedBy;
+      this.notify();
+    }
+  }
+
+  public static deleteTransmittal(id: string): void {
+    const state = this.getState();
+    state.transmittals = (state.transmittals || []).filter(t => t.id !== id);
+    this.notify();
+  }
+
+  // ============================================================================
+  // RFIs & Site Clash Query Log
+  // ============================================================================
+
+  public static getRfis(): RfiItem[] {
+    return this.getState().rfis || [];
+  }
+
+  public static getRfiById(id: string): RfiItem | undefined {
+    return this.getRfis().find(r => r.id === id);
+  }
+
+  public static saveRfi(rfi: RfiItem): void {
+    const state = this.getState();
+    if (!state.rfis) state.rfis = [];
+    const index = state.rfis.findIndex(r => r.id === rfi.id);
+    if (index >= 0) {
+      state.rfis[index] = rfi;
+    } else {
+      state.rfis.unshift(rfi);
+    }
+    this.notify();
+  }
+
+  public static resolveRfi(
+    id: string, 
+    response: string, 
+    respondedBy: string, 
+    resolvingRevisionNumber?: string
+  ): void {
+    const state = this.getState();
+    const item = (state.rfis || []).find(r => r.id === id);
+    if (item) {
+      item.status = "CLARIFIED";
+      item.consultantResponse = response;
+      item.respondedBy = respondedBy;
+      item.respondedDate = new Date().toISOString().split("T")[0];
+      if (resolvingRevisionNumber) {
+        item.resolvingRevisionNumber = resolvingRevisionNumber;
+      }
+      this.notify();
+    }
+  }
+
+  public static deleteRfi(id: string): void {
+    const state = this.getState();
+    state.rfis = (state.rfis || []).filter(r => r.id !== id);
+    this.notify();
+  }
+
+  // ============================================================================
   // Workspace Template Reset / Pre-fill Actions
   // ============================================================================
 
@@ -458,7 +611,10 @@ export class DesignMasterStore {
       consultants: [],
       packageStatuses: {},
       lookAheads: [],
-      statutoryClearances: {}
+      statutoryClearances: {},
+      drawings: [],
+      transmittals: [],
+      rfis: []
     };
     this.notify();
   }
@@ -628,7 +784,10 @@ export class DesignMasterStore {
       consultants: [],
       packageStatuses,
       lookAheads,
-      statutoryClearances
+      statutoryClearances,
+      drawings: mockDrawings,
+      transmittals: mockTransmittals,
+      rfis: mockRfis
     };
   }
 

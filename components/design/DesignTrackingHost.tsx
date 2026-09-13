@@ -24,7 +24,9 @@ import {
   Settings2, 
   Database,
   RotateCcw,
-  LineChart
+  LineChart,
+  Send,
+  HelpCircle
 } from "lucide-react";
 import { TenderDesignMatrix } from "../../Design_Tracking/src/components/TenderDesignMatrix";
 import { LookAheadDashboard } from "../../Design_Tracking/src/components/LookAheadDashboard";
@@ -34,6 +36,8 @@ import { DrawingRegister } from "../../Design_Tracking/src/components/DrawingReg
 import { ApprovalsReviewQueue } from "../../Design_Tracking/src/components/ApprovalsReviewQueue";
 import { RevisionHistoryLogs } from "../../Design_Tracking/src/components/RevisionHistoryLogs";
 import { GfcHandoverView } from "../../Design_Tracking/src/components/GfcHandoverView";
+import { TransmittalManager } from "../../Design_Tracking/src/components/TransmittalManager";
+import { DesignRfiTracker } from "../../Design_Tracking/src/components/DesignRfiTracker";
 import { ConsultantDirectory } from "../../Design_Tracking/src/components/ConsultantDirectory";
 import { DesignReportsAnalytics } from "../../Design_Tracking/src/components/DesignReportsAnalytics";
 import { UploadDrawingModal } from "../../Design_Tracking/src/components/UploadDrawingModal";
@@ -53,6 +57,8 @@ type ActiveTabType =
   | "APPROVALS" 
   | "REVISIONS" 
   | "GFC_HANDOVER" 
+  | "TRANSMITTALS"
+  | "RFIS"
   | "CONSULTANTS" 
   | "REPORTS" 
   | "MASTERS";
@@ -68,6 +74,8 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
     const combined = `${currentPath}/${slugStr}`;
 
     if (combined.includes("master") || combined.includes("setting")) return "MASTERS";
+    if (combined.includes("transmittal") || combined.includes("dispatch")) return "TRANSMITTALS";
+    if (combined.includes("rfi") || combined.includes("query") || combined.includes("clash")) return "RFIS";
     if (combined.includes("look-ahead") || combined.includes("forecast")) return "LOOK_AHEAD";
     if (combined.includes("liaison") || combined.includes("clearance") || combined.includes("noc")) return "LIAISONING";
     if (combined.includes("stage") || combined.includes("roadmap")) return "STAGES";
@@ -90,6 +98,8 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
       APPROVALS: "/design/approvals",
       REVISIONS: "/design/revisions",
       GFC_HANDOVER: "/design/handover",
+      TRANSMITTALS: "/design/transmittals",
+      RFIS: "/design/rfis",
       CONSULTANTS: "/design/consultants",
       REPORTS: "/design/reports",
       MASTERS: "/design/masters"
@@ -323,6 +333,32 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
 
           <button
             type="button"
+            onClick={() => handleTabChange("TRANSMITTALS")}
+            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
+              activeTab === "TRANSMITTALS"
+                ? "border-blue-500 text-foreground font-bold"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Send className={`h-3.5 w-3.5 ${activeTab === "TRANSMITTALS" ? "text-blue-500" : "text-muted-foreground"}`} />
+            <span>Transmittals</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleTabChange("RFIS")}
+            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
+              activeTab === "RFIS"
+                ? "border-purple-500 text-foreground font-bold"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <HelpCircle className={`h-3.5 w-3.5 ${activeTab === "RFIS" ? "text-purple-500" : "text-muted-foreground"}`} />
+            <span>RFI & Queries</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => handleTabChange("CONSULTANTS")}
             className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
               activeTab === "CONSULTANTS"
@@ -412,7 +448,17 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
         <GfcHandoverView releases={mockGfcReleases} />
       )}
 
-      {/* Tab 9: Consultant Directory / Dictionary */}
+      {/* Tab 9: Transmittals & GFC Dispatch Slips */}
+      {activeTab === "TRANSMITTALS" && (
+        <TransmittalManager />
+      )}
+
+      {/* Tab 10: RFI & Site Query Tracker */}
+      {activeTab === "RFIS" && (
+        <DesignRfiTracker />
+      )}
+
+      {/* Tab 11: Consultant Directory / Dictionary */}
       {activeTab === "CONSULTANTS" && (
         <ConsultantDirectory 
           consultants={consultants} 
@@ -422,7 +468,7 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
         />
       )}
 
-      {/* Tab 10: Design Reports & Analytics */}
+      {/* Tab 12: Design Reports & Analytics */}
       {activeTab === "REPORTS" && (
         <DesignReportsAnalytics 
           drawings={drawings}
@@ -430,7 +476,7 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
         />
       )}
 
-      {/* Tab 11: Masters Setup View */}
+      {/* Tab 13: Masters Setup View */}
       {activeTab === "MASTERS" && (
         <MastersSetupView />
       )}

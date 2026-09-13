@@ -223,3 +223,104 @@ export const mockGfcReleases: GfcRelease[] = [
     physicalCopiesIssued: 2
   }
 ];
+
+export const mockTransmittals: import("../types").TransmittalItem[] = [
+  {
+    id: "tr-01",
+    transmittalNumber: "TR-CK-2026-001",
+    projectId: "dp-01",
+    projectName: "Chandak Stella",
+    towerName: "Tower 1",
+    issueDate: "2026-09-05",
+    purpose: "GOOD_FOR_CONSTRUCTION",
+    recipientAgency: "L&T Construction Heavy Civil",
+    recipientContact: "Vikram Jadhav (Project Director)",
+    issuedBy: "Lead Structural & Architectural Coordinator",
+    drawingIds: ["drw-01", "drw-07"],
+    drawingDetails: [
+      {
+        drawingCode: "CK-CHD-ARC-L04-001",
+        drawingTitle: "Tower 1 Typical Floor 4-18 Architectural Layout Plan",
+        revision: "R3",
+        copiesIssued: 4
+      },
+      {
+        drawingCode: "CK-CHD-STR-SLB-024",
+        drawingTitle: "Podium 3 Transfer Slab Post-Tensioned Tendon Layout",
+        revision: "R3",
+        copiesIssued: 3
+      }
+    ],
+    remarks: "Official GFC issuance for execution of slab cast cycle #4. Hardcopies stamped and dispatched via courier.",
+    status: "ACKNOWLEDGED",
+    acknowledgedAt: "2026-09-06",
+    acknowledgedBy: "Vikram Jadhav"
+  },
+  {
+    id: "tr-02",
+    transmittalNumber: "TR-CK-2026-002",
+    projectId: "dp-04",
+    projectName: "Chandak 34 Park Estate",
+    towerName: "Podium & Landscape Area",
+    issueDate: "2026-08-12",
+    purpose: "GOOD_FOR_CONSTRUCTION",
+    recipientAgency: "Shapoorji Pallonji Real Estate",
+    recipientContact: "Prashant Kadam (Site Lead)",
+    issuedBy: "Landscape Project Manager",
+    drawingIds: ["drw-04"],
+    drawingDetails: [
+      {
+        drawingCode: "CK-CHD-LND-POD-007",
+        drawingTitle: "Podium Garden Landscape Grading, Water Feature & Paving Detail",
+        revision: "R4",
+        copiesIssued: 3
+      }
+    ],
+    remarks: "Handed over for hardscape execution and perimeter irrigation pipelining.",
+    status: "ISSUED"
+  }
+];
+
+export const mockRfis: import("../types").RfiItem[] = [
+  {
+    id: "rfi-01",
+    rfiNumber: "RFI-STR-042",
+    projectId: "dp-01",
+    projectName: "Chandak Stella",
+    towerName: "Tower 1",
+    discipline: "Structural",
+    drawingCode: "CK-CHD-STR-SLB-024",
+    drawingTitle: "Podium 3 Transfer Slab Post-Tensioned Tendon Layout",
+    subject: "PT Tendon Live End Pocket Clearance with Column C-14 Rebar",
+    queryDescription: "At Column C-14, the post-tensioning stressing jack requires 650mm clearance, but starter rebar from transfer beam TB-08 obstructs the hydraulic jack placement. Kindly clarify alternate stressing sequence or rebar crank allowance.",
+    raisedBy: "Sunil Shinde (Site Engineer, L&T)",
+    raisedDate: "2026-09-01",
+    assignedConsultant: "JW Consultants LLP",
+    priority: "URGENT",
+    targetResolutionDate: "2026-09-04",
+    status: "CLARIFIED",
+    consultantResponse: "Rebar from TB-08 may be staggered by 75mm towards Grid B. Revised tendon stressing sequence approved as per Detail-PT-04-A.",
+    respondedBy: "Giridhar Shirke (JW Consultants)",
+    respondedDate: "2026-09-02",
+    resolvingRevisionNumber: "R3"
+  },
+  {
+    id: "rfi-02",
+    rfiNumber: "RFI-MEP-019",
+    projectId: "dp-03",
+    projectName: "Chandak GreenAir",
+    towerName: "Basement 2",
+    discipline: "MEP",
+    drawingCode: "CK-CHD-MEP-HVAC-004",
+    drawingTitle: "Basement 2 Mechanical Ventilation & Ducting Route Plan",
+    subject: "HVAC Return Air Duct Clash with Primary Storm Water Down-take",
+    queryDescription: "Primary storm water pipe 200mm dia crosses duct D-12 at level -4.20m. Bottom of duct infringes minimum driveway headroom clearance (2.4m).",
+    raisedBy: "Anil Parab (MEP Site Lead)",
+    raisedDate: "2026-09-08",
+    assignedConsultant: "Enersave MEP Consultants",
+    priority: "HIGH",
+    targetResolutionDate: "2026-09-12",
+    status: "UNDER_REVIEW"
+  }
+];
+

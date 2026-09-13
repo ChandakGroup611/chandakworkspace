@@ -85,3 +85,62 @@ export interface DesignProjectSummary {
   gfcCount: number;
   underReviewCount: number;
 }
+
+export type TransmittalPurpose = 
+  | "GOOD_FOR_CONSTRUCTION" 
+  | "FOR_TENDER_BIDDING" 
+  | "FOR_REVIEW_APPROVAL" 
+  | "FOR_INFORMATION" 
+  | "AS_BUILT_RECORD";
+
+export interface TransmittalItem {
+  id: string;
+  transmittalNumber: string; // e.g. TR-CK-2026-004
+  projectId: string;
+  projectName: string;
+  towerName?: string;
+  issueDate: string;
+  purpose: TransmittalPurpose;
+  recipientAgency: string; // e.g. "Shapoorji Pallonji / Site Execution Team"
+  recipientContact?: string;
+  issuedBy: string; // e.g. "Lead Design Manager"
+  drawingIds: string[];
+  drawingDetails: Array<{
+    drawingCode: string;
+    drawingTitle: string;
+    revision: string;
+    copiesIssued: number;
+    fileUrl?: string;
+  }>;
+  remarks?: string;
+  status: "ISSUED" | "ACKNOWLEDGED" | "SUPERSEDED";
+  acknowledgedAt?: string;
+  acknowledgedBy?: string;
+}
+
+export type RfiPriority = "URGENT" | "HIGH" | "NORMAL";
+export type RfiStatus = "OPEN" | "UNDER_REVIEW" | "CLARIFIED" | "CLOSED";
+
+export interface RfiItem {
+  id: string;
+  rfiNumber: string; // e.g. RFI-STR-042
+  projectId: string;
+  projectName: string;
+  towerName?: string;
+  discipline: DesignDiscipline;
+  drawingCode?: string;
+  drawingTitle?: string;
+  subject: string;
+  queryDescription: string;
+  raisedBy: string; // Site Engineer / Contractor
+  raisedDate: string;
+  assignedConsultant: string;
+  priority: RfiPriority;
+  targetResolutionDate: string;
+  status: RfiStatus;
+  consultantResponse?: string;
+  respondedBy?: string;
+  respondedDate?: string;
+  resolvingRevisionNumber?: string;
+}
+
