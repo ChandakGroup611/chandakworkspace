@@ -14,14 +14,17 @@ import {
   ConsultantMaster,
   PackageStatusEntry,
   LookAheadEntry,
-  StatutoryClearanceEntry
+  StatutoryClearanceEntry,
+  MatrixAuditLog,
+  DesignRbacPolicy
 } from "../types/masterTypes";
 
 import { 
   DrawingItem, 
   DrawingRevision, 
   TransmittalItem, 
-  RfiItem 
+  RfiItem,
+  ConsultantPartner
 } from "../types";
 
 import { 
@@ -39,7 +42,7 @@ import {
   EY_LIAISON_CONSULTANTS 
 } from "../data/eyTenderData";
 
-const STORAGE_KEY = "CHANDAK_DESIGN_MASTER_STORE_V2";
+const STORAGE_KEY = "CHANDAK_DESIGN_MASTER_STORE_V3";
 
 export interface MasterStoreState {
   projects: ProjectMaster[];
@@ -47,13 +50,15 @@ export interface MasterStoreState {
   disciplines: DisciplineMaster[];
   packages: WorkPackageMaster[];
   authorities: StatutoryAuthorityMaster[];
-  consultants: ConsultantMaster[];
+  consultants: ConsultantPartner[];
   packageStatuses: Record<string, PackageStatusEntry>; // Key: `${projectId}__${towerId}__${packageId}`
   lookAheads: LookAheadEntry[];
   statutoryClearances: Record<string, StatutoryClearanceEntry>; // Key: `${projectId}__${towerId}__${authorityId}`
   drawings: DrawingItem[];
   transmittals: TransmittalItem[];
   rfis: RfiItem[];
+  auditLogs: MatrixAuditLog[];
+  rbacPolicies: DesignRbacPolicy[];
 }
 
 export class DesignMasterStore {
@@ -90,6 +95,10 @@ export class DesignMasterStore {
           if (!parsed.drawings || !Array.isArray(parsed.drawings)) parsed.drawings = mockDrawings;
           if (!parsed.transmittals || !Array.isArray(parsed.transmittals)) parsed.transmittals = mockTransmittals;
           if (!parsed.rfis || !Array.isArray(parsed.rfis)) parsed.rfis = mockRfis;
+          if (!parsed.consultants || !Array.isArray(parsed.consultants)) parsed.consultants = mockConsultants;
+          if (!parsed.auditLogs || !Array.isArray(parsed.auditLogs)) parsed.auditLogs = [];
+          if (!parsed.rbacPolicies || !Array.isArray(parsed.rbacPolicies)) parsed.rbacPolicies = this.buildDefaultRbacPolicies();
+          
           this.state = parsed;
           return this.state!;
         }
@@ -276,29 +285,55 @@ export class DesignMasterStore {
   }
 
   // ============================================================================
-  // Master Management: Consultants Directory (CRUD)
+  // Master Management: Consultants Directory (CRUD) with Multi-Expertise & Onboarding
   // ============================================================================
 
-  public static getConsultants(): ConsultantMaster[] {
-    return this.getState().consultants || [];
+  public static getConsultants(): ConsultantPartner[] {
+    const state = this.getState();
+    if (!state.consultants) state.consultants = [...mockConsultants];
+    return state.consultants;
   }
 
-  public static addConsultant(c: Omit<ConsultantMaster, "id">): ConsultantMaster {
+  public static addConsultant(c: Omit<ConsultantPartner, "id" | "onboardingStatus"> & { onboardingStatus?: "Onboard" | "Not Onboard" }): ConsultantPartner {
     const state = this.getState();
     const id = `cst-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
-    const newC: ConsultantMaster = { ...c, id };
+    const activeProjects = c.activeProjects || [];
+    const onboardingStatus: "Onboard" | "Not Onboard" = activeProjects.length > 0 ? "Onboard" : "Not Onboard";
+
+    const newC: ConsultantPartner = {
+      ...c,
+      id,
+      expertise: c.expertise || [],
+      activeProjects,
+      onboardingStatus,
+      totalDrawingsSubmitted: c.totalDrawingsSubmitted || 0,
+      averageTatDays: c.averageTatDays || 3.0,
+      rating: c.rating || 4.8,
+      createdAt: new Date().toISOString()
+    };
+    
     if (!state.consultants) state.consultants = [];
-    state.consultants.push(newC);
+    state.consultants.unshift(newC);
     this.notify();
     return newC;
   }
 
-  public static updateConsultant(id: string, updates: Partial<Omit<ConsultantMaster, "id">>): ConsultantMaster | null {
+  public static updateConsultant(id: string, updates: Partial<Omit<ConsultantPartner, "id">>): ConsultantPartner | null {
     const state = this.getState();
     if (!state.consultants) return null;
     const idx = state.consultants.findIndex(c => c.id === id);
     if (idx === -1) return null;
-    state.consultants[idx] = { ...state.consultants[idx], ...updates };
+
+    const current = state.consultants[idx];
+    const newActiveProjects = updates.activeProjects !== undefined ? updates.activeProjects : current.activeProjects;
+    const newOnboardingStatus: "Onboard" | "Not Onboard" = (newActiveProjects && newActiveProjects.length > 0) ? "Onboard" : "Not Onboard";
+
+    state.consultants[idx] = {
+      ...current,
+      ...updates,
+      activeProjects: newActiveProjects,
+      onboardingStatus: newOnboardingStatus
+    };
     this.notify();
     return state.consultants[idx];
   }
@@ -311,7 +346,7 @@ export class DesignMasterStore {
   }
 
   // ============================================================================
-  // Transaction Fill: Package Status & Bulk Update
+  // Transaction Fill: Package Status & Mandatory Planned/Actual Dates & Audit Trail
   // ============================================================================
 
   public static recordPackageStatus(
@@ -319,23 +354,77 @@ export class DesignMasterStore {
     towerId: string,
     packageId: string,
     status: PackageStatusEntry["status"],
+    plannedDate?: string,
+    actualDate?: string,
     targetDate?: string,
+    consultantId?: string,
     consultantName?: string,
-    remarks?: string
+    remarks?: string,
+    changedBy = "Lead Design Manager"
   ): void {
     const state = this.getState();
     const key = `${projectId}__${towerId}__${packageId}`;
+    const prevEntry = state.packageStatuses[key];
+
+    const todayIso = new Date().toISOString().split("T")[0];
+    const finalPlanned = (plannedDate && plannedDate.trim()) ? plannedDate.trim() : (prevEntry?.plannedDate || todayIso);
+    let finalActual = (actualDate && actualDate.trim()) ? actualDate.trim() : (prevEntry?.actualDate || (status === "Received" ? todayIso : "-"));
+
     state.packageStatuses[key] = {
       id: key,
       projectId,
       towerId,
       packageId,
       status,
-      targetDate,
+      plannedDate: finalPlanned,
+      actualDate: finalActual,
+      targetDate: targetDate || finalPlanned,
+      consultantId,
       consultantName,
       remarks,
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      updatedBy: changedBy
     };
+
+    // Find Project, Tower, Package details for Audit Log
+    const proj = state.projects.find(p => p.id === projectId);
+    const twr = state.towers.find(t => t.id === towerId);
+    const pkg = state.packages.find(p => p.id === packageId);
+
+    const auditLog: MatrixAuditLog = {
+      id: `aud-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+      entryKey: key,
+      projectId,
+      projectName: proj?.name || "Development Project",
+      towerId,
+      towerName: twr?.towerName || "Wing",
+      packageId,
+      packageName: pkg?.packageName || "Tender Work Package",
+      disciplineName: pkg?.disciplineName,
+      previousStatus: prevEntry?.status || "NA",
+      newStatus: status,
+      previousPlannedDate: prevEntry?.plannedDate || "-",
+      newPlannedDate: finalPlanned,
+      previousActualDate: prevEntry?.actualDate || "-",
+      newActualDate: finalActual,
+      consultantName: consultantName || prevEntry?.consultantName,
+      changedBy: changedBy || "Lead Design Manager",
+      changedByEmail: "design.head@chandakgroup.com",
+      timestamp: new Date().toISOString(),
+      remarks: remarks || `Matrix update: Status set to "${status}"`,
+      mailSent: true,
+      mailRecipientCount: 3,
+      mailSubject: `[Design Matrix Audit] ${proj?.name || "Project"} - ${pkg?.packageName || "Package"} status updated to "${status}"`
+    };
+
+    if (!state.auditLogs) state.auditLogs = [];
+    state.auditLogs.unshift(auditLog);
+
+    // Keep maximum 500 audit logs in memory
+    if (state.auditLogs.length > 500) {
+      state.auditLogs = state.auditLogs.slice(0, 500);
+    }
+
     this.notify();
   }
 
@@ -345,33 +434,269 @@ export class DesignMasterStore {
       towerId: string;
       packageId: string;
       status: PackageStatusEntry["status"];
+      plannedDate?: string;
+      actualDate?: string;
       targetDate?: string;
+      consultantId?: string;
       consultantName?: string;
       remarks?: string;
-    }>
+    }>,
+    changedBy = "Lead Design Manager"
   ): void {
     const state = this.getState();
     const now = new Date().toISOString();
+    const todayIso = now.split("T")[0];
+
+    if (!state.auditLogs) state.auditLogs = [];
+
     updates.forEach(u => {
       const key = `${u.projectId}__${u.towerId}__${u.packageId}`;
+      const prevEntry = state.packageStatuses[key];
+
+      const finalPlanned = (u.plannedDate && u.plannedDate.trim()) ? u.plannedDate.trim() : (prevEntry?.plannedDate || todayIso);
+      const finalActual = (u.actualDate && u.actualDate.trim()) ? u.actualDate.trim() : (prevEntry?.actualDate || (u.status === "Received" ? todayIso : "-"));
+
       state.packageStatuses[key] = {
         id: key,
         projectId: u.projectId,
         towerId: u.towerId,
         packageId: u.packageId,
         status: u.status,
-        targetDate: u.targetDate,
-        consultantName: u.consultantName,
+        plannedDate: finalPlanned,
+        actualDate: finalActual,
+        targetDate: u.targetDate || finalPlanned,
+        consultantId: u.consultantId || prevEntry?.consultantId,
+        consultantName: u.consultantName || prevEntry?.consultantName,
         remarks: u.remarks,
-        updatedAt: now
+        updatedAt: now,
+        updatedBy: changedBy
       };
+
+      const proj = state.projects.find(p => p.id === u.projectId);
+      const twr = state.towers.find(t => t.id === u.towerId);
+      const pkg = state.packages.find(p => p.id === u.packageId);
+
+      const auditLog: MatrixAuditLog = {
+        id: `aud-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+        entryKey: key,
+        projectId: u.projectId,
+        projectName: proj?.name || "Development Project",
+        towerId: u.towerId,
+        towerName: twr?.towerName || "Wing",
+        packageId: u.packageId,
+        packageName: pkg?.packageName || "Tender Work Package",
+        disciplineName: pkg?.disciplineName,
+        previousStatus: prevEntry?.status || "NA",
+        newStatus: u.status,
+        previousPlannedDate: prevEntry?.plannedDate || "-",
+        newPlannedDate: finalPlanned,
+        previousActualDate: prevEntry?.actualDate || "-",
+        newActualDate: finalActual,
+        consultantName: u.consultantName || prevEntry?.consultantName,
+        changedBy: changedBy,
+        changedByEmail: "design.head@chandakgroup.com",
+        timestamp: now,
+        remarks: u.remarks || `Batch matrix fill: Set to ${u.status}`,
+        mailSent: true,
+        mailRecipientCount: 3,
+        mailSubject: `[Design Matrix Batch Audit] ${proj?.name || "Project"} - ${pkg?.packageName || "Package"} updated`
+      };
+
+      state.auditLogs.unshift(auditLog);
     });
+
+    if (state.auditLogs.length > 500) {
+      state.auditLogs = state.auditLogs.slice(0, 500);
+    }
+
     this.notify();
   }
 
   public static getPackageStatus(projectId: string, towerId: string, packageId: string): PackageStatusEntry | undefined {
     const state = this.getState();
     return state.packageStatuses[`${projectId}__${towerId}__${packageId}`];
+  }
+
+  public static getAuditLogs(filters?: {
+    projectId?: string;
+    packageId?: string;
+    entryKey?: string;
+  }): MatrixAuditLog[] {
+    const state = this.getState();
+    let logs = state.auditLogs || [];
+    if (filters?.entryKey) {
+      logs = logs.filter(l => l.entryKey === filters.entryKey);
+    }
+    if (filters?.projectId && filters.projectId !== "ALL") {
+      logs = logs.filter(l => l.projectId === filters.projectId);
+    }
+    if (filters?.packageId && filters.packageId !== "ALL") {
+      logs = logs.filter(l => l.packageId === filters.packageId);
+    }
+    return logs;
+  }
+
+  // ============================================================================
+  // RBAC Policies: Project-wise / Role-based / CRUD options selection
+  // ============================================================================
+
+  public static getRbacPolicies(): DesignRbacPolicy[] {
+    const state = this.getState();
+    if (!state.rbacPolicies || state.rbacPolicies.length === 0) {
+      state.rbacPolicies = this.buildDefaultRbacPolicies();
+    }
+    return state.rbacPolicies;
+  }
+
+  public static updateRbacPolicy(policyId: string, updates: Partial<DesignRbacPolicy>): void {
+    const state = this.getState();
+    if (!state.rbacPolicies) state.rbacPolicies = this.buildDefaultRbacPolicies();
+    const idx = state.rbacPolicies.findIndex(p => p.id === policyId);
+    if (idx >= 0) {
+      state.rbacPolicies[idx] = {
+        ...state.rbacPolicies[idx],
+        ...updates,
+        updatedAt: new Date().toISOString()
+      };
+      this.notify();
+    }
+  }
+
+  public static bulkSaveRbacPolicies(policies: DesignRbacPolicy[]): void {
+    const state = this.getState();
+    state.rbacPolicies = policies;
+    this.notify();
+  }
+
+  public static hasPermission(
+    roleCode: string,
+    projectId: string,
+    module: DesignRbacPolicy["module"],
+    action: "CREATE" | "READ" | "UPDATE" | "DELETE"
+  ): boolean {
+    const policies = this.getRbacPolicies();
+    
+    // Super admin always has bypass access
+    if (roleCode === "SUPER_ADMIN" || roleCode === "SUPER_ADMINISTRATOR") return true;
+
+    // Find match by role, project (or "ALL"), and module (or "ALL")
+    const match = policies.find(p => 
+      p.roleCode === roleCode &&
+      (p.projectId === "ALL" || p.projectId === projectId) &&
+      (p.module === "ALL" || p.module === module)
+    );
+
+    if (!match) return true; // Default fallback permissive if no explicit deny
+
+    switch (action) {
+      case "CREATE": return match.canCreate;
+      case "READ": return match.canRead;
+      case "UPDATE": return match.canUpdate;
+      case "DELETE": return match.canDelete;
+      default: return true;
+    }
+  }
+
+  public static buildDefaultRbacPolicies(): DesignRbacPolicy[] {
+    const modules: DesignRbacPolicy["module"][] = [
+      "DESIGN_MATRIX",
+      "DRAWINGS",
+      "CONSULTANTS",
+      "LOOK_AHEAD",
+      "LIAISON",
+      "TRANSMITTALS",
+      "RFIS"
+    ];
+    
+    const policies: DesignRbacPolicy[] = [];
+    const now = new Date().toISOString();
+
+    // 1. Super Admin: full access
+    modules.forEach(m => {
+      policies.push({
+        id: `rbac-super-admin-${m.toLowerCase()}`,
+        roleCode: "SUPER_ADMIN",
+        roleName: "Super Administrator",
+        projectId: "ALL",
+        projectName: "All Development Projects",
+        module: m,
+        canCreate: true,
+        canRead: true,
+        canUpdate: true,
+        canDelete: true,
+        updatedAt: now
+      });
+    });
+
+    // 2. Design Director / Lead: full CRUD
+    modules.forEach(m => {
+      policies.push({
+        id: `rbac-director-${m.toLowerCase()}`,
+        roleCode: "DESIGN_DIRECTOR",
+        roleName: "Director of Design & Engineering",
+        projectId: "ALL",
+        projectName: "All Development Projects",
+        module: m,
+        canCreate: true,
+        canRead: true,
+        canUpdate: true,
+        canDelete: m !== "CONSULTANTS",
+        updatedAt: now
+      });
+    });
+
+    // 3. Project Manager: Create, Read, Update
+    modules.forEach(m => {
+      policies.push({
+        id: `rbac-pm-${m.toLowerCase()}`,
+        roleCode: "PROJECT_MANAGER",
+        roleName: "Senior Project Manager",
+        projectId: "ALL",
+        projectName: "All Development Projects",
+        module: m,
+        canCreate: true,
+        canRead: true,
+        canUpdate: true,
+        canDelete: false,
+        updatedAt: now
+      });
+    });
+
+    // 4. Site Engineer: Read on Matrix, C/R/U on Transmittals & RFIs
+    modules.forEach(m => {
+      policies.push({
+        id: `rbac-site-${m.toLowerCase()}`,
+        roleCode: "SITE_ENGINEER",
+        roleName: "Site Execution Engineer",
+        projectId: "ALL",
+        projectName: "All Development Projects",
+        module: m,
+        canCreate: m === "TRANSMITTALS" || m === "RFIS",
+        canRead: true,
+        canUpdate: m === "TRANSMITTALS" || m === "RFIS",
+        canDelete: false,
+        updatedAt: now
+      });
+    });
+
+    // 5. Consultant External: R on Drawings & Matrix, U on RFIs & Approvals
+    modules.forEach(m => {
+      policies.push({
+        id: `rbac-consultant-${m.toLowerCase()}`,
+        roleCode: "CONSULTANT",
+        roleName: "Empanelled Consultant Partner",
+        projectId: "ALL",
+        projectName: "All Development Projects",
+        module: m,
+        canCreate: m === "DRAWINGS" || m === "RFIS",
+        canRead: true,
+        canUpdate: m === "DRAWINGS" || m === "RFIS",
+        canDelete: false,
+        updatedAt: now
+      });
+    });
+
+    return policies;
   }
 
   // ============================================================================
@@ -614,7 +939,9 @@ export class DesignMasterStore {
       statutoryClearances: {},
       drawings: [],
       transmittals: [],
-      rfis: []
+      rfis: [],
+      auditLogs: [],
+      rbacPolicies: this.buildDefaultRbacPolicies()
     };
     this.notify();
   }
@@ -704,14 +1031,23 @@ export class DesignMasterStore {
 
         let status: PackageStatusEntry["status"] = "NA";
         let targetDate: string | undefined = undefined;
+        let plannedDate = "2026-04-15";
+        let actualDate = "-";
         const lower = rawVal.toLowerCase();
 
-        if (lower.includes("received")) status = "Received";
-        else if (lower.includes("pending") || lower.includes("not onboard")) status = "Pending";
-        else if (lower.includes("progress") || lower.includes("onboard") || lower.includes("track")) status = "In progress";
-        else {
+        if (lower.includes("received")) {
+          status = "Received";
+          actualDate = "2026-04-10";
+        } else if (lower.includes("pending") || lower.includes("not onboard")) {
+          status = "Pending";
+          plannedDate = "2026-05-01";
+        } else if (lower.includes("progress") || lower.includes("onboard") || lower.includes("track")) {
+          status = "In progress";
+          plannedDate = "2026-04-20";
+        } else {
           status = "Target Date";
           targetDate = rawVal;
+          plannedDate = rawVal;
         }
 
         const key = `${pId}__${tId}__pkg-${pkg.id}`;
@@ -721,6 +1057,8 @@ export class DesignMasterStore {
           towerId: tId,
           packageId: `pkg-${pkg.id}`,
           status,
+          plannedDate,
+          actualDate,
           targetDate,
           remarks: rawVal,
           updatedAt: new Date().toISOString()
@@ -775,19 +1113,75 @@ export class DesignMasterStore {
       }
     }
 
+    // 9. Initial Audit Logs seed
+    const auditLogs: MatrixAuditLog[] = [
+      {
+        id: "aud-seed-1",
+        entryKey: `prj-chandak-stella__twr-chandak-stella-tower-1__pkg-1`,
+        projectId: "prj-chandak-stella",
+        projectName: "Chandak Stella",
+        towerId: "twr-chandak-stella-tower-1",
+        towerName: "Tower 1",
+        packageId: "pkg-1",
+        packageName: "RCC & Structural Core",
+        disciplineName: "Civil & RCC",
+        previousStatus: "In progress",
+        newStatus: "Received",
+        previousPlannedDate: "2026-04-15",
+        newPlannedDate: "2026-04-15",
+        previousActualDate: "-",
+        newActualDate: "2026-04-10",
+        consultantName: "JW Consultants LLP",
+        changedBy: "Senior Design Lead",
+        changedByEmail: "design.head@chandakgroup.com",
+        timestamp: new Date(Date.now() - 3600 * 1000 * 4).toISOString(),
+        remarks: "Approved structural tender package received and verified against drawings.",
+        mailSent: true,
+        mailRecipientCount: 3,
+        mailSubject: "[Design Matrix Audit] Chandak Stella - RCC & Structural Core marked Received"
+      },
+      {
+        id: "aud-seed-2",
+        entryKey: `prj-chandak-highscape-city__twr-chandak-highscape-city-tower-a__pkg-3`,
+        projectId: "prj-chandak-highscape-city",
+        projectName: "Chandak Highscape City",
+        towerId: "twr-chandak-highscape-city-tower-a",
+        towerName: "Tower A",
+        packageId: "pkg-3",
+        packageName: "HVAC & Mechanical Ventilation",
+        disciplineName: "MEPF Services",
+        previousStatus: "Pending",
+        newStatus: "In progress",
+        previousPlannedDate: "2026-05-01",
+        newPlannedDate: "2026-04-25",
+        previousActualDate: "-",
+        newActualDate: "-",
+        consultantName: "Enersave MEP Consultants",
+        changedBy: "Design Coordination Manager",
+        changedByEmail: "coordination@chandakgroup.com",
+        timestamp: new Date(Date.now() - 3600 * 1000 * 18).toISOString(),
+        remarks: "Target delivery expedited after coordination review meeting.",
+        mailSent: true,
+        mailRecipientCount: 2,
+        mailSubject: "[Design Matrix Audit] Chandak Highscape City - HVAC target expedited"
+      }
+    ];
+
     return {
       projects,
       towers,
       disciplines,
       packages,
       authorities,
-      consultants: [],
+      consultants: mockConsultants,
       packageStatuses,
       lookAheads,
       statutoryClearances,
       drawings: mockDrawings,
       transmittals: mockTransmittals,
-      rfis: mockRfis
+      rfis: mockRfis,
+      auditLogs,
+      rbacPolicies: this.buildDefaultRbacPolicies()
     };
   }
 
@@ -814,4 +1208,3 @@ export class DesignMasterStore {
     }
   }
 }
-

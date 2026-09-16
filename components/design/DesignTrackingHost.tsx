@@ -113,26 +113,25 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
 
   // Drawings, Consultants & Modals state
   const [drawings, setDrawings] = useState<DrawingItem[]>(mockDrawings);
-  const [consultants, setConsultants] = useState<ConsultantPartner[]>(mockConsultants);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [selectedDrawingForReview, setSelectedDrawingForReview] = useState<DrawingItem | null>(null);
 
   const handleConsultantAdded = (newC: Omit<ConsultantPartner, "id">) => {
-    const created: ConsultantPartner = {
-      ...newC,
-      id: `cns-${Date.now().toString(36)}`
-    };
-    setConsultants(prev => [created, ...prev]);
+    DesignMasterStore.addConsultant(newC);
+  };
+
+  const handleConsultantUpdated = (id: string, updates: Partial<ConsultantPartner>) => {
+    DesignMasterStore.updateConsultant(id, updates);
   };
 
   const handleConsultantDeleted = (id: string) => {
-    setConsultants(prev => prev.filter(c => c.id !== id));
+    DesignMasterStore.deleteConsultant(id);
   };
 
   // Subscribe to DesignMasterStore for real-time live synchronization
   useEffect(() => {
     const unsubscribe = DesignMasterStore.subscribe(() => {
-      setStoreState(DesignMasterStore.getState());
+      setStoreState({ ...DesignMasterStore.getState() });
     });
     return unsubscribe;
   }, []);
@@ -461,10 +460,12 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
       {/* Tab 11: Consultant Directory / Dictionary */}
       {activeTab === "CONSULTANTS" && (
         <ConsultantDirectory 
-          consultants={consultants} 
+          consultants={storeState.consultants} 
           onAddConsultant={handleConsultantAdded}
+          onUpdateConsultant={handleConsultantUpdated}
           onDeleteConsultant={handleConsultantDeleted}
           availableProjects={storeState.projects.map(p => p.name)}
+          availableWorkPackages={storeState.packages.map(p => p.packageName)}
         />
       )}
 
@@ -472,7 +473,7 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
       {activeTab === "REPORTS" && (
         <DesignReportsAnalytics 
           drawings={drawings}
-          consultants={consultants}
+          consultants={storeState.consultants}
         />
       )}
 

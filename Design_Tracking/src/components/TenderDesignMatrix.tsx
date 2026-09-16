@@ -3,7 +3,9 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { DesignMasterStore, MasterStoreState } from "../services/designMasterStore";
 import { exportTenderMatrixToExcel } from "../services/excelExportService";
-import { WorkPackageMaster, TowerMaster, ProjectMaster } from "../types/masterTypes";
+import { WorkPackageMaster, TowerMaster, ProjectMaster, PackageStatusEntry, MatrixAuditLog } from "../types/masterTypes";
+import { recordMatrixAuditAction } from "@/lib/actions/designTracking";
+import { DesignRbacModal } from "./DesignRbacModal";
 import { 
   Search, 
   Download, 
@@ -23,7 +25,14 @@ import {
   FileSpreadsheet,
   Zap,
   CheckSquare,
-  Square
+  Square,
+  Users,
+  Mail,
+  ShieldCheck,
+  History,
+  Tag,
+  Send,
+  AlertCircle
 } from "lucide-react";
 
 interface MatrixColumn {
@@ -37,28 +46,47 @@ interface MatrixColumn {
 
 export const TenderDesignMatrix: React.FC = () => {
   const [storeState, setStoreState] = useState<MasterStoreState>(DesignMasterStore.getState());
-  const [selectedProject, setSelectedProject] = useState<string>("ALL");
-  const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
+  
+  // Multi-Selection Filter Dimensions
+  const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
+  const [selectedDisciplines, setSelectedDisciplines] = useState<string[]>([]);
+  const [selectedConsultants, setSelectedConsultants] = useState<string[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isExportingExcel, setIsExportingExcel] = useState<boolean>(false);
 
-  // Inspector & Edit
+  // Inspector & Edit Modal State
   const [activeCell, setActiveCell] = useState<{
     pkg: WorkPackageMaster;
     col: MatrixColumn;
-    currentVal: string;
+    entry?: PackageStatusEntry;
   } | null>(null);
-  const [cellEditDraft, setCellEditDraft] = useState<string>("");
+
+  const [inspectorTab, setInspectorTab] = useState<"EDIT" | "AUDIT">("EDIT");
+  const [cellStatus, setCellStatus] = useState<PackageStatusEntry["status"]>("Received");
+  const [cellPlannedDate, setCellPlannedDate] = useState<string>("");
+  const [cellActualDate, setCellActualDate] = useState<string>("");
+  const [cellConsultantId, setCellConsultantId] = useState<string>("");
+  const [cellRemarks, setCellRemarks] = useState<string>("");
+  const [cellFormError, setCellFormError] = useState<string>("");
 
   // Batch Update Modal State
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
   const [batchProjectId, setBatchProjectId] = useState<string>("");
   const [batchSelectedTowers, setBatchSelectedTowers] = useState<string[]>([]);
   const [batchDiscipline, setBatchDiscipline] = useState<string>("ALL");
-  const [batchStatus, setBatchStatus] = useState<"Received" | "In progress" | "Pending" | "Target Date" | "NA">("Received");
-  const [batchDate, setBatchDate] = useState<string>("");
+  const [batchStatus, setBatchStatus] = useState<PackageStatusEntry["status"]>("Received");
+  const [batchPlannedDate, setBatchPlannedDate] = useState<string>("");
+  const [batchActualDate, setBatchActualDate] = useState<string>("");
+  const [batchConsultantName, setBatchConsultantName] = useState<string>("");
   const [batchRemarks, setBatchRemarks] = useState<string>("");
+
+  // Audit Logs History Drawer State
+  const [isAuditDrawerOpen, setIsAuditDrawerOpen] = useState(false);
+  const [auditSearchQuery, setAuditSearchQuery] = useState("");
+
+  // RBAC Modal State
+  const [isRbacModalOpen, setIsRbacModalOpen] = useState(false);
 
   // Subscribe to real-time master store updates
   useEffect(() => {
@@ -68,12 +96,13 @@ export const TenderDesignMatrix: React.FC = () => {
     return () => unsub();
   }, []);
 
-  // Compute dynamic project tower columns
+  // Compute dynamic project tower columns based on multi-selected projects
   const visibleColumns = useMemo<MatrixColumn[]>(() => {
     const projectMap = new Map(storeState.projects.map(p => [p.id, p.name]));
     let towers = storeState.towers;
-    if (selectedProject !== "ALL") {
-      towers = towers.filter(t => t.projectId === selectedProject);
+
+    if (selectedProjects.length > 0) {
+      towers = towers.filter(t => selectedProjects.includes(t.projectId));
     }
 
     return towers.map(t => ({
@@ -84,29 +113,45 @@ export const TenderDesignMatrix: React.FC = () => {
       towerName: t.towerName,
       towerType: t.towerType
     }));
-  }, [storeState.projects, storeState.towers, selectedProject]);
+  }, [storeState.projects, storeState.towers, selectedProjects]);
 
-  // Unique disciplines
+  // Unique disciplines across all packages
   const categories = useMemo(() => {
     const set = new Set(storeState.packages.map(p => p.disciplineName).filter(Boolean));
     return Array.from(set);
   }, [storeState.packages]);
 
-  // Filtered packages
+  // Filtered packages based on search query, disciplines, consultant, and status
   const filteredPackages = useMemo(() => {
     return storeState.packages.filter(pkg => {
-      if (categoryFilter !== "ALL" && pkg.disciplineName !== categoryFilter) return false;
+      // 1. Discipline Filter (Multi-select)
+      if (selectedDisciplines.length > 0 && !selectedDisciplines.includes(pkg.disciplineName)) {
+        return false;
+      }
 
+      // 2. Search Query (Package name, discipline)
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
-        const matches = pkg.packageName.toLowerCase().includes(q) || pkg.disciplineName.toLowerCase().includes(q);
+        const matches = 
+          pkg.packageName.toLowerCase().includes(q) || 
+          pkg.disciplineName.toLowerCase().includes(q);
         if (!matches) return false;
       }
 
+      // 3. Consultant Filter (Multi-select)
+      if (selectedConsultants.length > 0) {
+        const hasMatchingConsultant = visibleColumns.some(col => {
+          const entry = storeState.packageStatuses[`${col.projectId}__${col.towerId}__${pkg.id}`];
+          return entry && entry.consultantName && selectedConsultants.includes(entry.consultantName);
+        });
+        if (!hasMatchingConsultant) return false;
+      }
+
+      // 4. Status Filter
       if (statusFilter !== "ALL") {
         const hasMatchingStatus = visibleColumns.some(col => {
           const entry = storeState.packageStatuses[`${col.projectId}__${col.towerId}__${pkg.id}`];
-          const val = (entry ? (entry.targetDate || entry.status) : "NA").toLowerCase();
+          const val = (entry ? (entry.status || entry.targetDate) : "NA").toLowerCase();
           if (statusFilter === "RECEIVED" && val.includes("received")) return true;
           if (statusFilter === "PENDING" && (val.includes("pending") || val.includes("not onboard"))) return true;
           if (statusFilter === "IN_PROGRESS" && (val.includes("progress") || val.includes("onboard"))) return true;
@@ -118,9 +163,9 @@ export const TenderDesignMatrix: React.FC = () => {
 
       return true;
     });
-  }, [storeState.packages, storeState.packageStatuses, categoryFilter, searchQuery, statusFilter, visibleColumns]);
+  }, [storeState.packages, storeState.packageStatuses, selectedDisciplines, searchQuery, selectedConsultants, statusFilter, visibleColumns]);
 
-  // Live statistical calculation across current visible view
+  // Statistical calculations across currently visible matrix
   const matrixStats = useMemo(() => {
     let received = 0;
     let inProgress = 0;
@@ -131,7 +176,7 @@ export const TenderDesignMatrix: React.FC = () => {
     for (const pkg of filteredPackages) {
       for (const col of visibleColumns) {
         const entry = storeState.packageStatuses[`${col.projectId}__${col.towerId}__${pkg.id}`];
-        const val = (entry ? (entry.targetDate || entry.status) : "NA").toLowerCase();
+        const val = (entry ? (entry.status || entry.targetDate) : "NA").toLowerCase();
         if (val === "na" || val === "-") continue;
         totalCells++;
         if (val.includes("received")) received++;
@@ -145,8 +190,9 @@ export const TenderDesignMatrix: React.FC = () => {
     return { received, inProgress, pending, targetDates, totalCells, rate };
   }, [filteredPackages, visibleColumns, storeState.packageStatuses]);
 
-  // Helper for cell badge styling
-  const renderCellBadge = (rawVal: string) => {
+  // Helper for cell badge styling with Planned & Actual Dates
+  const renderCellBadge = (entry?: PackageStatusEntry) => {
+    const rawVal = entry ? (entry.status || entry.targetDate || "NA") : "NA";
     const val = (rawVal || "NA").trim();
     const lower = val.toLowerCase();
 
@@ -158,131 +204,138 @@ export const TenderDesignMatrix: React.FC = () => {
       );
     }
 
+    let badgeClass = "bg-slate-100 dark:bg-slate-800 text-foreground border-border";
+    let dotClass = "bg-slate-400";
+
     if (lower.includes("received")) {
-      return (
-        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 inline-flex items-center gap-1 shadow-2xs whitespace-nowrap">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-          <span className="whitespace-nowrap" title={val}>{val}</span>
-        </span>
-      );
-    }
-
-    if (lower.includes("pending") || lower.includes("not onboard")) {
-      return (
-        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30 inline-flex items-center gap-1 shadow-2xs whitespace-nowrap">
-          <span className="h-1.5 w-1.5 rounded-full bg-rose-500 shrink-0" />
-          <span className="whitespace-nowrap" title={val}>{val}</span>
-        </span>
-      );
-    }
-
-    if (lower.includes("progress") || lower.includes("onboard") || lower.includes("track")) {
-      return (
-        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30 inline-flex items-center gap-1 shadow-2xs whitespace-nowrap">
-          <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
-          <span className="whitespace-nowrap" title={val}>{val}</span>
-        </span>
-      );
+      badgeClass = "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30";
+      dotClass = "bg-emerald-500 animate-pulse";
+    } else if (lower.includes("pending") || lower.includes("not onboard")) {
+      badgeClass = "bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-500/30";
+      dotClass = "bg-rose-500";
+    } else if (lower.includes("progress") || lower.includes("onboard") || lower.includes("track")) {
+      badgeClass = "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30";
+      dotClass = "bg-amber-500";
+    } else {
+      badgeClass = "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-500/30";
+      dotClass = "bg-sky-500";
     }
 
     return (
-      <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-sky-500/15 text-sky-700 dark:text-sky-300 border border-sky-500/30 inline-flex items-center gap-1 shadow-2xs whitespace-nowrap">
-        <span className="h-1.5 w-1.5 rounded-full bg-sky-500 shrink-0" />
-        <span className="whitespace-nowrap" title={val}>{val}</span>
-      </span>
+      <div className="flex flex-col items-center gap-0.5 max-w-[130px] mx-auto">
+        <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border inline-flex items-center gap-1 shadow-2xs whitespace-nowrap ${badgeClass}`}>
+          <span className={`h-1.5 w-1.5 rounded-full ${dotClass} shrink-0`} />
+          <span className="truncate max-w-[100px]" title={val}>{val}</span>
+        </span>
+        
+        {/* Planned and Actual Date mini tags */}
+        {(entry?.plannedDate || entry?.actualDate) && (
+          <div className="flex items-center gap-1 text-[9px] font-mono text-muted-foreground mt-0.5">
+            {entry.plannedDate && (
+              <span title={`Planned Date: ${entry.plannedDate}`}>
+                P: {entry.plannedDate.slice(5)}
+              </span>
+            )}
+            {entry.actualDate && entry.actualDate !== "-" && (
+              <>
+                <span>•</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold" title={`Actual Date: ${entry.actualDate}`}>
+                  A: {entry.actualDate.slice(5)}
+                </span>
+              </>
+            )}
+          </div>
+        )}
+      </div>
     );
   };
 
-  // Open inspector
-  const handleOpenInspector = (pkg: WorkPackageMaster, col: MatrixColumn, currentVal: string) => {
-    setActiveCell({ pkg, col, currentVal });
-    setCellEditDraft(currentVal);
+  // Open Cell Inspector Modal
+  const handleOpenInspector = (pkg: WorkPackageMaster, col: MatrixColumn) => {
+    const entry = storeState.packageStatuses[`${col.projectId}__${col.towerId}__${pkg.id}`];
+    setActiveCell({ pkg, col, entry });
+    setInspectorTab("EDIT");
+
+    const today = new Date().toISOString().split("T")[0];
+    setCellStatus(entry?.status || "Received");
+    setCellPlannedDate(entry?.plannedDate || today);
+    setCellActualDate(entry?.actualDate || (entry?.status === "Received" ? today : "-"));
+    setCellConsultantId(entry?.consultantId || "");
+    setCellRemarks(entry?.remarks || "");
+    setCellFormError("");
   };
 
-  // Apply cell update into dynamic store
-  const handleSaveCell = (newVal: string) => {
+  // Save Cell Updates with Mandatory Planned & Actual Dates + Audit Trail Email Dispatch
+  const handleSaveCell = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!activeCell) return;
-    const { pkg, col } = activeCell;
 
-    let status: any = "NA";
-    let targetDate: string | undefined = undefined;
-    const lower = newVal.toLowerCase();
-
-    if (lower.includes("received")) status = "Received";
-    else if (lower.includes("pending")) status = "Pending";
-    else if (lower.includes("progress")) status = "In progress";
-    else if (newVal !== "NA" && newVal.trim().length > 0) {
-      status = "Target Date";
-      targetDate = newVal;
+    if (!cellPlannedDate.trim()) {
+      setCellFormError("Planned Date is mandatory.");
+      return;
     }
 
+    if (!cellActualDate.trim()) {
+      setCellFormError("Actual Date is mandatory (use '-' if not yet executed).");
+      return;
+    }
+
+    const { pkg, col } = activeCell;
+    const selectedConsultant = storeState.consultants.find(c => c.id === cellConsultantId);
+
+    // 1. Record status and create local audit log
     DesignMasterStore.recordPackageStatus(
       col.projectId,
       col.towerId,
       pkg.id,
-      status,
-      targetDate,
-      undefined,
-      newVal
+      cellStatus,
+      cellPlannedDate.trim(),
+      cellActualDate.trim(),
+      cellPlannedDate.trim(),
+      cellConsultantId || undefined,
+      selectedConsultant?.name || undefined,
+      cellRemarks.trim() || undefined,
+      "Senior Design Manager"
     );
+
+    // 2. Dispatch audit email notification via server action
+    const key = `${col.projectId}__${col.towerId}__${pkg.id}`;
+    const latestAudit = DesignMasterStore.getAuditLogs({ entryKey: key })[0];
+    if (latestAudit) {
+      await recordMatrixAuditAction(latestAudit);
+    }
 
     setActiveCell(null);
   };
 
-  // Excel (.XLSX) formatted export
-  const handleExportExcel = async () => {
-    try {
-      setIsExportingExcel(true);
-      await exportTenderMatrixToExcel(storeState, filteredPackages, visibleColumns);
-    } catch (err) {
-      console.error("Excel export error:", err);
-      alert("Failed to export Excel file. Please try CSV export.");
-    } finally {
-      setIsExportingExcel(false);
-    }
-  };
-
-  // CSV export
-  const handleExportCsv = () => {
-    const headers = ["Discipline Category", "Work Package Name", ...visibleColumns.map(c => `${c.projectName} - ${c.towerName}`)];
-    const rows = filteredPackages.map(pkg => {
-      const rowVals = visibleColumns.map(col => {
-        const entry = storeState.packageStatuses[`${col.projectId}__${col.towerId}__${pkg.id}`];
-        return `"${(entry ? (entry.targetDate || entry.status) : "NA").replace(/"/g, '""')}"`;
-      });
-      return [`"${pkg.disciplineName}"`, `"${pkg.packageName.replace(/"/g, '""')}"`, ...rowVals].join(",");
-    });
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Chandak_Tender_Design_Matrix_${new Date().toISOString().split("T")[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   // Open Batch Update Modal
   const handleOpenBatchModal = () => {
-    const pId = selectedProject !== "ALL" ? selectedProject : (storeState.projects[0]?.id || "");
+    const pId = selectedProjects.length > 0 ? selectedProjects[0] : (storeState.projects[0]?.id || "");
     setBatchProjectId(pId);
     const twrs = storeState.towers.filter(t => t.projectId === pId).map(t => t.id);
     setBatchSelectedTowers(twrs);
-    setBatchDiscipline(categoryFilter !== "ALL" ? categoryFilter : "ALL");
+    setBatchDiscipline(selectedDisciplines.length > 0 ? selectedDisciplines[0] : "ALL");
     setBatchStatus("Received");
-    setBatchDate("");
+    const today = new Date().toISOString().split("T")[0];
+    setBatchPlannedDate(today);
+    setBatchActualDate(today);
+    setBatchConsultantName("");
     setBatchRemarks("");
     setIsBatchModalOpen(true);
   };
 
-  // Execute Batch Update
-  const handleExecuteBatchUpdate = () => {
+  // Execute Batch Update with Mandatory Dates
+  const handleExecuteBatchUpdate = async () => {
     if (!batchProjectId || batchSelectedTowers.length === 0) {
       alert("Please select at least one Tower Wing to update.");
       return;
     }
 
-    // Determine target packages
+    if (!batchPlannedDate.trim() || !batchActualDate.trim()) {
+      alert("Both Planned Date and Actual Date are mandatory for batch updates.");
+      return;
+    }
+
     let targetPkgs = storeState.packages;
     if (batchDiscipline !== "ALL") {
       targetPkgs = targetPkgs.filter(p => p.disciplineName === batchDiscipline);
@@ -297,8 +350,11 @@ export const TenderDesignMatrix: React.FC = () => {
       projectId: string;
       towerId: string;
       packageId: string;
-      status: any;
+      status: PackageStatusEntry["status"];
+      plannedDate?: string;
+      actualDate?: string;
       targetDate?: string;
+      consultantName?: string;
       remarks?: string;
     }> = [];
 
@@ -309,22 +365,74 @@ export const TenderDesignMatrix: React.FC = () => {
           towerId: twrId,
           packageId: pkg.id,
           status: batchStatus,
-          targetDate: batchStatus === "Target Date" ? batchDate : (batchDate || undefined),
+          plannedDate: batchPlannedDate.trim(),
+          actualDate: batchActualDate.trim(),
+          targetDate: batchPlannedDate.trim(),
+          consultantName: batchConsultantName || undefined,
           remarks: batchRemarks || undefined
         });
       });
     });
 
-    DesignMasterStore.bulkRecordPackageStatus(updates);
-    alert(`Batch Updated ${updates.length} cells successfully across ${batchSelectedTowers.length} wings and ${targetPkgs.length} packages!`);
+    DesignMasterStore.bulkRecordPackageStatus(updates, "Senior Design Manager");
+    alert(`⚡ Batch Updated ${updates.length} cells successfully with mandatory dates & audit logging!`);
     setIsBatchModalOpen(false);
   };
 
+  // Excel (.XLSX) Export
+  const handleExportExcel = async () => {
+    try {
+      setIsExportingExcel(true);
+      await exportTenderMatrixToExcel(storeState, filteredPackages, visibleColumns);
+    } catch (err) {
+      console.error("Excel export error:", err);
+      alert("Failed to export Excel file. Please try CSV export.");
+    } finally {
+      setIsExportingExcel(false);
+    }
+  };
+
+  // CSV Export
+  const handleExportCsv = () => {
+    const headers = ["Discipline Category", "Work Package Name", ...visibleColumns.map(c => `${c.projectName} - ${c.towerName} (Status)`)];
+    const rows = filteredPackages.map(pkg => {
+      const rowVals = visibleColumns.map(col => {
+        const entry = storeState.packageStatuses[`${col.projectId}__${col.towerId}__${pkg.id}`];
+        const status = entry ? entry.status : "NA";
+        const dates = entry ? ` [P: ${entry.plannedDate || "-"}, A: ${entry.actualDate || "-"}]` : "";
+        return `"${(status + dates).replace(/"/g, '""')}"`;
+      });
+      return [`"${pkg.disciplineName}"`, `"${pkg.packageName.replace(/"/g, '""')}"`, ...rowVals].join(",");
+    });
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Chandak_Design_Matrix_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Filtered Audit Logs
+  const filteredAuditLogs = useMemo(() => {
+    const logs = storeState.auditLogs || [];
+    if (!auditSearchQuery.trim()) return logs;
+    const q = auditSearchQuery.toLowerCase();
+    return logs.filter(l => 
+      l.projectName.toLowerCase().includes(q) ||
+      l.packageName.toLowerCase().includes(q) ||
+      l.newStatus.toLowerCase().includes(q) ||
+      l.changedBy.toLowerCase().includes(q) ||
+      (l.remarks && l.remarks.toLowerCase().includes(q))
+    );
+  }, [storeState.auditLogs, auditSearchQuery]);
+
   return (
     <div className="space-y-4">
-      {/* Top Filter & Control Ribbon */}
+      {/* 🌟 Top Filter & Control Ribbon */}
       <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-xs space-y-4">
-        {/* Row 1: Header title, live search, and export buttons */}
+        {/* Row 1: Header, Search, Actions */}
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20 shrink-0">
@@ -335,20 +443,21 @@ export const TenderDesignMatrix: React.FC = () => {
                 Tender Design Matrix
               </h2>
               <p className="text-xs text-muted-foreground">
-                Cross-project tender package delivery status across all development wings
+                Mandatory Planned & Actual dates, automated mail audit trails & multi-dimension filtering
               </p>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
-            {/* Search Input */}
-            <div className="relative flex-1 sm:w-64">
+          <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+            {/* Live Search */}
+            <div className="relative flex-1 sm:w-56">
               <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-7 py-1.5 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-emerald-500 transition-colors"
+                placeholder="Search packages..."
+                className="w-full pl-8 pr-7 py-1.5 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-emerald-500"
               />
               {searchQuery && (
                 <button
@@ -361,47 +470,54 @@ export const TenderDesignMatrix: React.FC = () => {
               )}
             </div>
 
-            {/* Project Filter */}
-            <select
-              value={selectedProject}
-              onChange={e => setSelectedProject(e.target.value)}
-              className="h-9 px-3 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-xs font-bold text-foreground focus:outline-none focus:border-emerald-500 cursor-pointer shadow-2xs"
+            {/* Audit Trail Button */}
+            <button
+              type="button"
+              onClick={() => setIsAuditDrawerOpen(true)}
+              className="h-9 px-3 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+              title="View live audit trail and mail notification logs"
             >
-              <option value="ALL">🏢 All {storeState.projects.length} Projects ({visibleColumns.length} Wings)</option>
-              {storeState.projects.map(proj => (
-                <option key={proj.id} value={proj.id}>{proj.name}</option>
-              ))}
-            </select>
+              <History className="h-3.5 w-3.5 text-purple-500" />
+              <span>Audit Trail ({storeState.auditLogs?.length || 0})</span>
+            </button>
 
-            {/* Batch Update Button */}
+            {/* RBAC Policies Button */}
+            <button
+              type="button"
+              onClick={() => setIsRbacModalOpen(true)}
+              className="h-9 px-3 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+              title="Configure Role-Based and Project-Wise CRUD permissions"
+            >
+              <ShieldCheck className="h-3.5 w-3.5 text-teal-600" />
+              <span>RBAC Policies</span>
+            </button>
+
+            {/* Batch Fill */}
             <button
               type="button"
               onClick={handleOpenBatchModal}
               className="h-9 px-3.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
-              title="Bulk fill package statuses across multiple tower wings at once"
             >
               <Zap className="h-3.5 w-3.5 text-amber-300" />
               <span>Batch Fill</span>
             </button>
 
-            {/* Export XLSX Button */}
+            {/* Export XLSX */}
             <button
               type="button"
               onClick={handleExportExcel}
               disabled={isExportingExcel}
               className="h-9 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95 disabled:opacity-50"
-              title="Download beautifully styled .xlsx Excel spreadsheet"
             >
               <FileSpreadsheet className="h-3.5 w-3.5" />
               <span>{isExportingExcel ? "Generating..." : "Export .XLSX"}</span>
             </button>
 
-            {/* Export CSV Button */}
+            {/* CSV */}
             <button
               type="button"
               onClick={handleExportCsv}
               className="h-9 px-3 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
-              title="Download CSV"
             >
               <Download className="h-3.5 w-3.5 text-muted-foreground" />
               <span>CSV</span>
@@ -409,47 +525,140 @@ export const TenderDesignMatrix: React.FC = () => {
           </div>
         </div>
 
-        {/* Row 2: Discipline Filter Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-          <span className="text-[11px] font-bold text-muted-foreground mr-1 shrink-0 flex items-center gap-1">
-            <SlidersHorizontal className="h-3 w-3" />
-            <span>Discipline:</span>
-          </span>
-          <button
-            type="button"
-            onClick={() => setCategoryFilter("ALL")}
-            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
-              categoryFilter === "ALL"
-                ? "bg-emerald-600 text-white shadow-xs"
-                : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            All Disciplines ({categories.length})
-          </button>
-          {categories.map(cat => (
+        {/* 🎯 Multi-Selection Dimensions Filter Ribbon */}
+        <div className="space-y-2 pt-2 border-t border-border text-xs">
+          {/* Dimension 1: Project-Wise Multi-Selection */}
+          <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1">
+            <span className="text-[11px] font-bold text-muted-foreground mr-1 shrink-0 flex items-center gap-1">
+              <Building className="h-3 w-3 text-blue-500" />
+              <span>Projects:</span>
+            </span>
             <button
-              key={cat}
               type="button"
-              onClick={() => setCategoryFilter(cat)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer ${
-                categoryFilter === cat
-                  ? "bg-emerald-600 text-white shadow-xs"
+              onClick={() => setSelectedProjects([])}
+              className={`px-2.5 py-0.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                selectedProjects.length === 0
+                  ? "bg-blue-600 text-white shadow-2xs"
                   : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
               }`}
             >
-              {cat}
+              All ({storeState.projects.length})
             </button>
-          ))}
+            {storeState.projects.map(p => {
+              const isSel = selectedProjects.includes(p.id);
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedProjects(prev => 
+                      isSel ? prev.filter(id => id !== p.id) : [...prev, p.id]
+                    );
+                  }}
+                  className={`px-2.5 py-0.5 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer flex items-center gap-1 ${
+                    isSel
+                      ? "bg-blue-600 text-white shadow-2xs font-bold"
+                      : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {isSel && <Check className="h-2.5 w-2.5" />}
+                  <span>{p.name}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Dimension 2: Work Package / Discipline Multi-Selection */}
+          <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1">
+            <span className="text-[11px] font-bold text-muted-foreground mr-1 shrink-0 flex items-center gap-1">
+              <SlidersHorizontal className="h-3 w-3 text-emerald-500" />
+              <span>Disciplines:</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setSelectedDisciplines([])}
+              className={`px-2.5 py-0.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                selectedDisciplines.length === 0
+                  ? "bg-emerald-600 text-white shadow-2xs"
+                  : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              All ({categories.length})
+            </button>
+            {categories.map(cat => {
+              const isSel = selectedDisciplines.includes(cat);
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => {
+                    setSelectedDisciplines(prev => 
+                      isSel ? prev.filter(c => c !== cat) : [...prev, cat]
+                    );
+                  }}
+                  className={`px-2.5 py-0.5 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer flex items-center gap-1 ${
+                    isSel
+                      ? "bg-emerald-600 text-white shadow-2xs font-bold"
+                      : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {isSel && <Check className="h-2.5 w-2.5" />}
+                  <span>{cat}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Dimension 3: Consultant-Wise Multi-Selection */}
+          <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1">
+            <span className="text-[11px] font-bold text-muted-foreground mr-1 shrink-0 flex items-center gap-1">
+              <Users className="h-3 w-3 text-purple-500" />
+              <span>Consultants:</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setSelectedConsultants([])}
+              className={`px-2.5 py-0.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                selectedConsultants.length === 0
+                  ? "bg-purple-600 text-white shadow-2xs"
+                  : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              All ({storeState.consultants.length})
+            </button>
+            {storeState.consultants.map(c => {
+              const isSel = selectedConsultants.includes(c.name);
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedConsultants(prev => 
+                      isSel ? prev.filter(name => name !== c.name) : [...prev, c.name]
+                    );
+                  }}
+                  className={`px-2.5 py-0.5 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer flex items-center gap-1 ${
+                    isSel
+                      ? "bg-purple-600 text-white shadow-2xs font-bold"
+                      : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {isSel && <Check className="h-2.5 w-2.5" />}
+                  <span>{c.name}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Row 3: Status Pills & Live Progress Summary Bar */}
-        <div className="pt-3 border-t border-border flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs">
+        {/* Row 3: Status Filter Pills & Compliance Bar */}
+        <div className="pt-2 border-t border-border flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1 max-w-full">
-            <span className="text-[11px] font-bold text-muted-foreground shrink-0 whitespace-nowrap">Status Filter:</span>
+            <span className="text-[11px] font-bold text-muted-foreground shrink-0 whitespace-nowrap">Status:</span>
             <button
               type="button"
               onClick={() => setStatusFilter("ALL")}
-              className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer text-[11px] shrink-0 whitespace-nowrap ${
+              className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer text-[11px] shrink-0 ${
                 statusFilter === "ALL" ? "bg-foreground text-background font-bold" : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -458,7 +667,7 @@ export const TenderDesignMatrix: React.FC = () => {
             <button
               type="button"
               onClick={() => setStatusFilter("RECEIVED")}
-              className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer text-[11px] flex items-center gap-1 shrink-0 whitespace-nowrap ${
+              className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer text-[11px] flex items-center gap-1 shrink-0 ${
                 statusFilter === "RECEIVED" ? "bg-emerald-500 text-white font-bold" : "text-emerald-600 dark:text-emerald-400 hover:underline"
               }`}
             >
@@ -468,7 +677,7 @@ export const TenderDesignMatrix: React.FC = () => {
             <button
               type="button"
               onClick={() => setStatusFilter("IN_PROGRESS")}
-              className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer text-[11px] flex items-center gap-1 shrink-0 whitespace-nowrap ${
+              className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer text-[11px] flex items-center gap-1 shrink-0 ${
                 statusFilter === "IN_PROGRESS" ? "bg-amber-500 text-white font-bold" : "text-amber-600 dark:text-amber-400 hover:underline"
               }`}
             >
@@ -478,7 +687,7 @@ export const TenderDesignMatrix: React.FC = () => {
             <button
               type="button"
               onClick={() => setStatusFilter("PENDING")}
-              className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer text-[11px] flex items-center gap-1 shrink-0 whitespace-nowrap ${
+              className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer text-[11px] flex items-center gap-1 shrink-0 ${
                 statusFilter === "PENDING" ? "bg-rose-500 text-white font-bold" : "text-rose-600 dark:text-rose-400 hover:underline"
               }`}
             >
@@ -488,7 +697,7 @@ export const TenderDesignMatrix: React.FC = () => {
             <button
               type="button"
               onClick={() => setStatusFilter("TARGET_DATE")}
-              className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer text-[11px] flex items-center gap-1 shrink-0 whitespace-nowrap ${
+              className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer text-[11px] flex items-center gap-1 shrink-0 ${
                 statusFilter === "TARGET_DATE" ? "bg-sky-500 text-white font-bold" : "text-sky-600 dark:text-sky-400 hover:underline"
               }`}
             >
@@ -513,12 +722,11 @@ export const TenderDesignMatrix: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Matrix Table with Frozen Header & First Column */}
+      {/* 📊 Main Matrix Table */}
       <div className="rounded-2xl border border-border bg-surface overflow-hidden shadow-sm">
         <div className="overflow-x-auto custom-scrollbar max-h-[72vh]">
           <table className="w-full text-left text-xs border-collapse min-w-max">
             <thead className="sticky top-0 z-20 bg-slate-100/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-border shadow-xs">
-              {/* Row 1: Project Names & Tower Headers */}
               <tr>
                 <th 
                   className="p-3.5 sticky left-0 z-30 bg-slate-100 dark:bg-slate-900 border-r border-border min-w-[280px] max-w-[320px] font-black text-foreground uppercase tracking-wider text-[11px] shadow-sm whitespace-nowrap"
@@ -530,8 +738,8 @@ export const TenderDesignMatrix: React.FC = () => {
                     key={idx}
                     className="p-2.5 text-center font-bold text-foreground border-r border-border/40 text-[10px] uppercase tracking-wider bg-slate-50 dark:bg-slate-900/60 min-w-[140px] whitespace-nowrap"
                   >
-                    <div className="truncate font-black text-foreground whitespace-nowrap">{col.projectName}</div>
-                    <div className="text-muted-foreground font-mono font-semibold text-[9px] mt-0.5 px-1.5 py-0.5 rounded bg-slate-200/50 dark:bg-slate-800/60 inline-block whitespace-nowrap">
+                    <div className="truncate font-black text-foreground">{col.projectName}</div>
+                    <div className="text-muted-foreground font-mono font-semibold text-[9px] mt-0.5 px-1.5 py-0.5 rounded bg-slate-200/50 dark:bg-slate-800/60 inline-block">
                       {col.towerName}
                     </div>
                   </th>
@@ -546,7 +754,7 @@ export const TenderDesignMatrix: React.FC = () => {
                     <div className="max-w-xs mx-auto space-y-2">
                       <Info className="h-8 w-8 text-muted-foreground/50 mx-auto" />
                       <p className="font-semibold text-foreground">No matching packages found</p>
-                      <p className="text-xs">Add new packages in the Masters Setup or adjust filters</p>
+                      <p className="text-xs">Adjust filters or add packages in Masters Setup</p>
                     </div>
                   </td>
                 </tr>
@@ -565,20 +773,17 @@ export const TenderDesignMatrix: React.FC = () => {
                       </div>
                     </td>
 
-                    {/* Status Cells */}
+                    {/* Status & Date Cells */}
                     {visibleColumns.map((col, colIdx) => {
                       const entry = storeState.packageStatuses[`${col.projectId}__${col.towerId}__${pkg.id}`];
-                      const val = entry ? (entry.targetDate || entry.status) : "NA";
                       return (
                         <td
                           key={colIdx}
-                          onClick={() => handleOpenInspector(pkg, col, val)}
+                          onClick={() => handleOpenInspector(pkg, col)}
                           className="p-2 border-r border-border/30 text-center cursor-pointer hover:bg-emerald-500/5 transition-colors group/cell"
-                          title={`Click to update: ${pkg.packageName} • ${col.projectName} (${col.towerName})`}
+                          title={`Click to inspect & edit: ${pkg.packageName} • ${col.projectName} (${col.towerName})`}
                         >
-                          <div className="flex items-center justify-center">
-                            {renderCellBadge(val)}
-                          </div>
+                          {renderCellBadge(entry)}
                         </td>
                       );
                     })}
@@ -590,21 +795,21 @@ export const TenderDesignMatrix: React.FC = () => {
         </div>
       </div>
 
-      {/* Interactive Cell Status Inspector & Update Drawer Modal */}
+      {/* 🔍 Interactive Cell Status Inspector Modal with Mandatory Dates & Audit Trail Tab */}
       {activeCell && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-          <div className="bg-surface border border-border w-full max-w-lg rounded-2xl shadow-2xl p-6 space-y-5">
-            <div className="flex items-start justify-between">
-              <div className="space-y-1">
-                <span className="text-[10px] font-black uppercase tracking-wider text-emerald-500 flex items-center gap-1">
+          <div className="bg-surface border border-border w-full max-w-lg rounded-2xl shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div className="flex items-start justify-between border-b border-border pb-3">
+              <div className="space-y-0.5">
+                <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                   <Edit2 className="h-3 w-3" />
-                  <span>Package Status Inspector</span>
+                  <span>Deliverable Inspector</span>
                 </span>
                 <h4 className="text-base font-bold text-foreground">
                   {activeCell.pkg.packageName}
                 </h4>
                 <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                  <Building className="h-3.5 w-3.5 text-blue-400" />
+                  <Building className="h-3.5 w-3.5 text-blue-500" />
                   <span className="font-semibold text-foreground">{activeCell.col.projectName}</span>
                   <span>•</span>
                   <span>Wing: <strong>{activeCell.col.towerName}</strong></span>
@@ -619,87 +824,354 @@ export const TenderDesignMatrix: React.FC = () => {
               </button>
             </div>
 
-            {/* Quick Details Box */}
-            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-border space-y-2 text-xs">
-              <div className="flex items-center justify-between text-muted-foreground">
-                <span>Discipline Category:</span>
-                <strong className="text-foreground">{activeCell.pkg.disciplineName}</strong>
-              </div>
-              <div className="flex items-center justify-between text-muted-foreground">
-                <span>Current Recorded Status:</span>
-                <div className="font-bold">{renderCellBadge(activeCell.currentVal)}</div>
-              </div>
-            </div>
-
-            {/* Quick Status Presets */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-foreground block">
-                Quick Update Status:
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleSaveCell("Received")}
-                  className="p-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                >
-                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                  <span>Mark Received</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSaveCell("In progress")}
-                  className="p-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                >
-                  <Clock className="h-3.5 w-3.5 text-amber-500" />
-                  <span>Mark In Progress</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSaveCell("Pending")}
-                  className="p-2.5 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300 hover:bg-rose-500/20 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                >
-                  <AlertTriangle className="h-3.5 w-3.5 text-rose-500" />
-                  <span>Mark Pending</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSaveCell("NA")}
-                  className="p-2.5 rounded-xl border border-border bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                >
-                  <span>Mark Not Applicable (NA)</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Custom Target Date or Text Input */}
-            <div className="space-y-1.5 pt-2 border-t border-border">
-              <label className="text-xs font-bold text-foreground block">
-                Custom Target Date / Consultant Remark:
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={cellEditDraft}
-                  onChange={e => setCellEditDraft(e.target.value)}
-                  className="flex-1 px-3 py-2 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-emerald-500"
-                />
-                <button
-                  type="button"
-                  onClick={() => handleSaveCell(cellEditDraft || "NA")}
-                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md cursor-pointer transition-all"
-                >
-                  Save
-                </button>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end pt-2">
+            {/* Segmented Tab: Edit vs. Audit Trail */}
+            <div className="p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-border flex items-center gap-1 text-xs">
               <button
                 type="button"
-                onClick={() => setActiveCell(null)}
-                className="px-4 py-1.5 rounded-xl border border-border text-xs font-semibold text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                onClick={() => setInspectorTab("EDIT")}
+                className={`flex-1 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                  inspectorTab === "EDIT" ? "bg-surface text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
+                }`}
               >
-                Close
+                <Edit2 className="h-3.5 w-3.5" />
+                <span>Edit Status & Mandatory Dates</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setInspectorTab("AUDIT")}
+                className={`flex-1 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                  inspectorTab === "AUDIT" ? "bg-surface text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <History className="h-3.5 w-3.5 text-purple-500" />
+                <span>Audit Trail & Mail History</span>
+              </button>
+            </div>
+
+            {/* Tab 1: Edit Form */}
+            {inspectorTab === "EDIT" && (
+              <form onSubmit={handleSaveCell} className="space-y-4 text-xs">
+                {cellFormError && (
+                  <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 shrink-0" />
+                    <span>{cellFormError}</span>
+                  </div>
+                )}
+
+                {/* Status Selector */}
+                <div>
+                  <label className="block font-bold text-foreground mb-1.5">Deliverable Status *</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setCellStatus("Received")}
+                      className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                        cellStatus === "Received"
+                          ? "border-emerald-500 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-500"
+                          : "border-border text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                      }`}
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                      <span>Received</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCellStatus("In progress")}
+                      className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                        cellStatus === "In progress"
+                          ? "border-amber-500 bg-amber-500/20 text-amber-700 dark:text-amber-300 ring-1 ring-amber-500"
+                          : "border-border text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                      }`}
+                    >
+                      <Clock className="h-3.5 w-3.5 text-amber-500" />
+                      <span>In Progress</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCellStatus("Pending")}
+                      className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                        cellStatus === "Pending"
+                          ? "border-rose-500 bg-rose-500/20 text-rose-700 dark:text-rose-300 ring-1 ring-rose-500"
+                          : "border-border text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                      }`}
+                    >
+                      <AlertTriangle className="h-3.5 w-3.5 text-rose-500" />
+                      <span>Pending</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCellStatus("NA")}
+                      className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                        cellStatus === "NA"
+                          ? "border-slate-500 bg-slate-500/20 text-foreground ring-1 ring-slate-500"
+                          : "border-border text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                      }`}
+                    >
+                      <span>Not Applicable (NA)</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* 📅 Mandatory Planned & Actual Dates */}
+                <div className="grid grid-cols-2 gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-border">
+                  <div>
+                    <label className="block font-bold text-foreground mb-1 flex items-center gap-1">
+                      <Calendar className="h-3.5 w-3.5 text-blue-500" />
+                      <span>Planned Date * (Mandatory)</span>
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={cellPlannedDate}
+                      onChange={e => setCellPlannedDate(e.target.value)}
+                      className="w-full px-3 py-1.5 rounded-xl border border-border bg-surface text-foreground font-mono focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-foreground mb-1 flex items-center gap-1">
+                      <Clock className="h-3.5 w-3.5 text-emerald-500" />
+                      <span>Actual Date * (Mandatory)</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={cellActualDate}
+                      onChange={e => setCellActualDate(e.target.value)}
+                      placeholder="YYYY-MM-DD or '-'"
+                      className="w-full px-3 py-1.5 rounded-xl border border-border bg-surface text-foreground font-mono focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Assigned Consultant */}
+                <div>
+                  <label className="block font-bold text-foreground mb-1 flex items-center gap-1">
+                    <Users className="h-3.5 w-3.5 text-purple-500" />
+                    <span>Assign Consultant Partner</span>
+                  </label>
+                  <select
+                    value={cellConsultantId}
+                    onChange={e => setCellConsultantId(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-surface text-foreground font-semibold focus:outline-none focus:border-emerald-500 cursor-pointer"
+                  >
+                    <option value="">Select Consultant</option>
+                    {storeState.consultants.map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} ({c.category}) - {c.onboardingStatus}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Remarks */}
+                <div>
+                  <label className="block font-bold text-foreground mb-1">Audit Remarks / Delivery Reason</label>
+                  <input
+                    type="text"
+                    value={cellRemarks}
+                    onChange={e => setCellRemarks(e.target.value)}
+                    placeholder="e.g. Revised tender drawings received from structural team."
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between pt-3 border-t border-border">
+                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                    <Mail className="h-3 w-3 text-teal-600" />
+                    <span>Audit email will be queued on save</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setActiveCell(null)}
+                      className="px-4 py-2 rounded-xl border border-border bg-surface text-foreground text-xs font-semibold cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md cursor-pointer transition-all active:scale-95"
+                    >
+                      Save & Log Audit Trail
+                    </button>
+                  </div>
+                </div>
+              </form>
+            )}
+
+            {/* Tab 2: Cell Audit Trail History */}
+            {inspectorTab === "AUDIT" && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h5 className="text-xs font-bold text-foreground uppercase tracking-wider">
+                    Change Audit History for this Deliverable
+                  </h5>
+                  <span className="text-[11px] text-muted-foreground font-mono">
+                    {DesignMasterStore.getAuditLogs({ entryKey: `${activeCell.col.projectId}__${activeCell.col.towerId}__${activeCell.pkg.id}` }).length} Logs Recorded
+                  </span>
+                </div>
+
+                <div className="space-y-2.5 max-h-72 overflow-y-auto custom-scrollbar p-1">
+                  {DesignMasterStore.getAuditLogs({ entryKey: `${activeCell.col.projectId}__${activeCell.col.towerId}__${activeCell.pkg.id}` }).length === 0 ? (
+                    <div className="p-8 text-center rounded-xl border border-dashed border-border text-muted-foreground text-xs">
+                      No prior audit history recorded for this cell yet.
+                    </div>
+                  ) : (
+                    DesignMasterStore.getAuditLogs({ entryKey: `${activeCell.col.projectId}__${activeCell.col.towerId}__${activeCell.pkg.id}` }).map((log) => (
+                      <div key={log.id} className="p-3.5 rounded-xl border border-border bg-slate-50 dark:bg-slate-900/60 space-y-2 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-foreground flex items-center gap-1.5">
+                            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                            <span>Status: <strong>{log.newStatus}</strong> (was: {log.previousStatus})</span>
+                          </span>
+                          <span className="text-[10px] text-muted-foreground font-mono">
+                            {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 text-[11px] text-muted-foreground">
+                          <div>Planned: <strong className="text-foreground">{log.newPlannedDate}</strong></div>
+                          <div>Actual: <strong className="text-foreground">{log.newActualDate}</strong></div>
+                        </div>
+
+                        {log.remarks && (
+                          <div className="text-[11px] text-muted-foreground italic bg-surface p-2 rounded-lg border border-border">
+                            &ldquo;{log.remarks}&rdquo;
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-1 border-t border-border">
+                          <span>Changed by: <strong className="text-foreground">{log.changedBy}</strong></span>
+                          <span className="text-teal-600 dark:text-teal-400 font-bold flex items-center gap-1">
+                            <Mail className="h-3 w-3" />
+                            <span>Mail Dispatched</span>
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 📜 Audit Trail & Mail Logs Drawer / Modal */}
+      {isAuditDrawerOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="bg-surface border border-border w-full max-w-3xl rounded-3xl shadow-2xl p-6 sm:p-7 space-y-5 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div className="flex items-start justify-between border-b border-border pb-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-2xl bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center border border-purple-500/25">
+                  <History className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-foreground">
+                    Master Design Matrix: Audit Trail & Mail Dispatch Ledger
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Immutable revision history of deliverable dates, status modifications & email notices
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAuditDrawerOpen(false)}
+                className="h-8 w-8 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Audit Search */}
+            <div className="relative">
+              <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                value={auditSearchQuery}
+                onChange={e => setAuditSearchQuery(e.target.value)}
+                placeholder="Search audit trail by project, package, or user..."
+                className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-purple-500"
+              />
+            </div>
+
+            {/* Audit List */}
+            <div className="space-y-3 max-h-96 overflow-y-auto custom-scrollbar p-1">
+              {filteredAuditLogs.length === 0 ? (
+                <div className="p-12 text-center rounded-2xl border border-dashed border-border text-muted-foreground text-xs">
+                  No audit logs match your search.
+                </div>
+              ) : (
+                filteredAuditLogs.map(log => (
+                  <div key={log.id} className="p-4 rounded-2xl border border-border bg-surface shadow-2xs space-y-2.5 text-xs hover:border-purple-500/30 transition-all">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-foreground text-sm">{log.projectName}</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 font-mono">
+                          {log.towerName}
+                        </span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/20">
+                          {log.newStatus}
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-muted-foreground font-mono">
+                        {new Date(log.timestamp).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST
+                      </span>
+                    </div>
+
+                    <div className="font-semibold text-foreground">
+                      Package: {log.packageName}
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-border">
+                      <div>
+                        <span className="text-muted-foreground block text-[10px]">Planned Date:</span>
+                        <strong className="text-foreground font-mono">{log.newPlannedDate}</strong>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground block text-[10px]">Actual Date:</span>
+                        <strong className="text-foreground font-mono">{log.newActualDate}</strong>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground block text-[10px]">Consultant:</span>
+                        <strong className="text-purple-600 dark:text-purple-400">{log.consultantName || "Not tagged"}</strong>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground block text-[10px]">Changed By:</span>
+                        <strong className="text-foreground">{log.changedBy}</strong>
+                      </div>
+                    </div>
+
+                    {log.remarks && (
+                      <div className="text-[11px] text-muted-foreground italic">
+                        &ldquo;{log.remarks}&rdquo;
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between pt-1 border-t border-border text-[11px]">
+                      <span className="text-teal-600 dark:text-teal-400 font-bold flex items-center gap-1">
+                        <Mail className="h-3 w-3" />
+                        <span>Audit Email Dispatched ({log.mailRecipientCount || 3} recipients)</span>
+                      </span>
+                      <span className="text-muted-foreground font-mono text-[10px]">
+                        ID: {log.id}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="flex items-center justify-end pt-3 border-t border-border">
+              <button
+                type="button"
+                onClick={() => setIsAuditDrawerOpen(false)}
+                className="px-5 py-2 rounded-xl bg-surface border border-border text-foreground font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              >
+                Close Audit Ledger
               </button>
             </div>
           </div>
@@ -709,18 +1181,18 @@ export const TenderDesignMatrix: React.FC = () => {
       {/* ⚡ Batch Update Modal */}
       {isBatchModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-          <div className="bg-surface border border-border w-full max-w-xl rounded-2xl shadow-2xl p-6 space-y-5">
-            <div className="flex items-start justify-between border-b border-border pb-4">
+          <div className="bg-surface border border-border w-full max-w-xl rounded-2xl shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div className="flex items-start justify-between border-b border-border pb-3">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-teal-500/15 text-teal-600 dark:text-teal-400 flex items-center justify-center border border-teal-500/25">
                   <Zap className="h-5 w-5 text-amber-500" />
                 </div>
                 <div>
                   <h4 className="text-base font-bold text-foreground">
-                    ⚡ Batch Status Update
+                    ⚡ Batch Status Update with Mandatory Dates
                   </h4>
                   <p className="text-xs text-muted-foreground">
-                    Apply status or target dates to multiple tower wings & packages simultaneously
+                    Apply status, mandatory planned/actual dates & audit logging to multiple wings at once
                   </p>
                 </div>
               </div>
@@ -734,7 +1206,7 @@ export const TenderDesignMatrix: React.FC = () => {
             </div>
 
             {/* Select Target Project */}
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <label className="text-xs font-bold text-foreground block">
                 1. Select Target Project:
               </label>
@@ -755,7 +1227,7 @@ export const TenderDesignMatrix: React.FC = () => {
             </div>
 
             {/* Select Tower Wings */}
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-foreground">
                   2. Select Tower Wings ({batchSelectedTowers.length} selected):
@@ -767,7 +1239,7 @@ export const TenderDesignMatrix: React.FC = () => {
                       const all = storeState.towers.filter(t => t.projectId === batchProjectId).map(t => t.id);
                       setBatchSelectedTowers(all);
                     }}
-                    className="text-teal-600 dark:text-teal-400 hover:underline font-bold"
+                    className="text-teal-600 dark:text-teal-400 hover:underline font-bold cursor-pointer"
                   >
                     Select All
                   </button>
@@ -775,14 +1247,14 @@ export const TenderDesignMatrix: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setBatchSelectedTowers([])}
-                    className="text-muted-foreground hover:underline"
+                    className="text-muted-foreground hover:underline cursor-pointer"
                   >
                     Clear
                   </button>
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-2 max-h-28 overflow-y-auto p-2 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-border">
+              <div className="flex flex-wrap gap-2 max-h-24 overflow-y-auto p-2 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-border">
                 {storeState.towers.filter(t => t.projectId === batchProjectId).map(twr => {
                   const isChecked = batchSelectedTowers.includes(twr.id);
                   return (
@@ -809,7 +1281,7 @@ export const TenderDesignMatrix: React.FC = () => {
             </div>
 
             {/* Select Discipline Filter */}
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <label className="text-xs font-bold text-foreground block">
                 3. Apply to Packages of Discipline:
               </label>
@@ -825,8 +1297,38 @@ export const TenderDesignMatrix: React.FC = () => {
               </select>
             </div>
 
-            {/* Set Target Status */}
-            <div className="space-y-2">
+            {/* 📅 Mandatory Planned & Actual Dates for Batch */}
+            <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-border">
+              <div>
+                <label className="block font-bold text-foreground mb-1 text-xs">
+                  Planned Date * (Mandatory)
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={batchPlannedDate}
+                  onChange={e => setBatchPlannedDate(e.target.value)}
+                  className="w-full px-3 py-1.5 text-xs rounded-xl border border-border bg-surface text-foreground font-mono focus:outline-none focus:border-teal-500"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-foreground mb-1 text-xs">
+                  Actual Date * (Mandatory)
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={batchActualDate}
+                  onChange={e => setBatchActualDate(e.target.value)}
+                  placeholder="YYYY-MM-DD or '-'"
+                  className="w-full px-3 py-1.5 text-xs rounded-xl border border-border bg-surface text-foreground font-mono focus:outline-none focus:border-teal-500"
+                />
+              </div>
+            </div>
+
+            {/* Status Selector */}
+            <div className="space-y-1.5">
               <label className="text-xs font-bold text-foreground block">
                 4. Select New Status:
               </label>
@@ -876,17 +1378,6 @@ export const TenderDesignMatrix: React.FC = () => {
                   📅 Target Date
                 </button>
               </div>
-
-              {batchStatus === "Target Date" && (
-                <div className="pt-2">
-                  <input
-                    type="text"
-                    value={batchDate}
-                    onChange={e => setBatchDate(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground font-mono focus:outline-none focus:border-teal-500"
-                  />
-                </div>
-              )}
             </div>
 
             {/* Actions */}
@@ -903,13 +1394,18 @@ export const TenderDesignMatrix: React.FC = () => {
                 onClick={handleExecuteBatchUpdate}
                 className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shadow-md transition-all cursor-pointer active:scale-95"
               >
-                ⚡ Apply Batch Update
+                ⚡ Apply Batch Update & Mail Audit
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* 🛡️ RBAC Policies Modal */}
+      <DesignRbacModal
+        isOpen={isRbacModalOpen}
+        onClose={() => setIsRbacModalOpen(false)}
+      />
     </div>
   );
 };
-

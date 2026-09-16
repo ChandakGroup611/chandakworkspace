@@ -67,14 +67,19 @@ export interface ConsultantPartner {
   id: string;
   name: string;
   category: DesignDiscipline;
+  expertise: string[]; // Multi-selected work package expertise tags
   leadContact: string;
   email: string;
   phone: string;
-  activeProjects: string[];
+  activeProjects: string[]; // Multi-selected project tags
+  onboardingStatus: "Onboard" | "Not Onboard"; // Auto Onboard once tagged to a project
   totalDrawingsSubmitted: number;
   averageTatDays: number;
   rating: number;
+  createdAt?: string;
 }
+
+export type { MatrixAuditLog, DesignRbacPolicy } from "./masterTypes";
 
 export interface DesignProjectSummary {
   id: string;

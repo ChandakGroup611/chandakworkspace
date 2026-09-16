@@ -142,10 +142,12 @@ export const mockConsultants: ConsultantPartner[] = [
     id: "cns-01",
     name: "Morphogenesis Architects",
     category: "Architectural",
+    expertise: ["Core Architectural Layouts", "Facade & Glazing", "Statutory Floor Plans"],
     leadContact: "Sonali Rastogi",
     email: "design.desk@morphogenesis.org",
     phone: "+91 22 6124 8800",
     activeProjects: ["Chandak Stella", "Chandak Highscape City"],
+    onboardingStatus: "Onboard",
     totalDrawingsSubmitted: 62,
     averageTatDays: 3.4,
     rating: 4.9
@@ -154,10 +156,12 @@ export const mockConsultants: ConsultantPartner[] = [
     id: "cns-02",
     name: "JW Consultants LLP",
     category: "Structural",
+    expertise: ["RCC & Structural Design", "PT Transfer Slabs", "Foundations & Substructure"],
     leadContact: "Giridhar Shirke",
     email: "structures@jwconsultants.in",
     phone: "+91 20 6721 4400",
     activeProjects: ["Chandak Stella", "Chandak Highscape City", "Chandak GreenAir"],
+    onboardingStatus: "Onboard",
     totalDrawingsSubmitted: 48,
     averageTatDays: 2.8,
     rating: 4.8
@@ -166,10 +170,12 @@ export const mockConsultants: ConsultantPartner[] = [
     id: "cns-03",
     name: "Enersave MEP Consultants",
     category: "MEP",
+    expertise: ["HVAC & Mechanical Ventilation", "Electrical & Transformers", "Plumbing & Drainage", "Fire Fighting & Suppression"],
     leadContact: "Rakesh Kulkarni",
     email: "services@enersavemep.com",
     phone: "+91 22 2847 9000",
     activeProjects: ["Chandak GreenAir", "Chandak 34 Park Estate"],
+    onboardingStatus: "Onboard",
     totalDrawingsSubmitted: 34,
     averageTatDays: 4.2,
     rating: 4.6
@@ -178,13 +184,29 @@ export const mockConsultants: ConsultantPartner[] = [
     id: "cns-04",
     name: "Site Concepts Landscape",
     category: "Landscape",
+    expertise: ["Podium & Terrace Hardscape", "Horticulture & Greenery", "Water Features & Pools"],
     leadContact: "Mark Wilson",
     email: "mumbai@siteconcepts.com",
     phone: "+91 22 4002 1122",
     activeProjects: ["Chandak 34 Park Estate", "Chandak Stella"],
+    onboardingStatus: "Onboard",
     totalDrawingsSubmitted: 18,
     averageTatDays: 3.1,
     rating: 4.7
+  },
+  {
+    id: "cns-05",
+    name: "Acoustic Design Partners",
+    category: "Interior",
+    expertise: ["Acoustic Wall Paneling", "Clubhouse Interior Fitouts"],
+    leadContact: "Anita Desai",
+    email: "anita@acousticsdesign.in",
+    phone: "+91 22 5555 1234",
+    activeProjects: [],
+    onboardingStatus: "Not Onboard",
+    totalDrawingsSubmitted: 0,
+    averageTatDays: 4.0,
+    rating: 4.5
   }
 ];
 

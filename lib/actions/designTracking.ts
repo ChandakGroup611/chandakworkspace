@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { cookies } from "next/headers";
 import { 
   ProjectMaster, 
@@ -10,13 +11,16 @@ import {
   ConsultantMaster,
   PackageStatusEntry,
   LookAheadEntry,
-  StatutoryClearanceEntry 
+  StatutoryClearanceEntry,
+  MatrixAuditLog,
+  DesignRbacPolicy
 } from "@/Design_Tracking/src/types/masterTypes";
 import { 
   DrawingItem, 
   DrawingRevision, 
   TransmittalItem, 
-  RfiItem 
+  RfiItem,
+  ConsultantPartner
 } from "@/Design_Tracking/src/types";
 
 // ==============================================================================
@@ -47,7 +51,9 @@ export async function fetchFullDesignTrackingState() {
       clearancesRes,
       drawingsRes,
       transmittalsRes,
-      rfisRes
+      rfisRes,
+      auditRes,
+      rbacRes
     ] = await Promise.all([
       supabase.from("design_projects").select("*").order("name"),
       supabase.from("design_towers").select("*"),
@@ -59,7 +65,9 @@ export async function fetchFullDesignTrackingState() {
       supabase.from("design_statutory_clearances").select("*"),
       supabase.from("design_drawings").select("*"),
       supabase.from("design_transmittals").select("*"),
-      supabase.from("design_rfis").select("*")
+      supabase.from("design_rfis").select("*"),
+      supabase.from("design_matrix_audit_logs").select("*").order("timestamp", { ascending: false }).limit(100),
+      supabase.from("design_rbac_policies").select("*")
     ]);
 
     return {
@@ -75,12 +83,158 @@ export async function fetchFullDesignTrackingState() {
         statutoryClearances: clearancesRes.data || null,
         drawings: drawingsRes.data || null,
         transmittals: transmittalsRes.data || null,
-        rfis: rfisRes.data || null
+        rfis: rfisRes.data || null,
+        auditLogs: auditRes.data || null,
+        rbacPolicies: rbacRes.data || null
       }
     };
   } catch (error: any) {
     console.warn("Supabase fetchFullDesignTrackingState fallback to local store:", error?.message || error);
     return { success: false, error: error?.message || "Failed to fetch from Supabase" };
+  }
+}
+
+/**
+ * Record a Design Matrix Audit Log & Queue an Audit Mail Notification
+ */
+export async function recordMatrixAuditAction(auditLog: MatrixAuditLog) {
+  try {
+    const supabase = await getSupabase();
+
+    // 1. Try to persist audit log into design_matrix_audit_logs
+    try {
+      await supabase.from("design_matrix_audit_logs").insert([{
+        id: auditLog.id,
+        entry_key: auditLog.entryKey,
+        project_id: auditLog.projectId,
+        project_name: auditLog.projectName,
+        tower_id: auditLog.towerId,
+        tower_name: auditLog.towerName,
+        package_id: auditLog.packageId,
+        package_name: auditLog.packageName,
+        discipline_name: auditLog.disciplineName,
+        previous_status: auditLog.previousStatus,
+        new_status: auditLog.newStatus,
+        previous_planned_date: auditLog.previousPlannedDate,
+        new_planned_date: auditLog.newPlannedDate,
+        previous_actual_date: auditLog.previousActualDate,
+        new_actual_date: auditLog.newActualDate,
+        consultant_name: auditLog.consultantName,
+        changed_by: auditLog.changedBy,
+        changed_by_email: auditLog.changedByEmail,
+        timestamp: auditLog.timestamp,
+        remarks: auditLog.remarks,
+        mail_sent: true
+      }]);
+    } catch (e) {
+      console.warn("Audit log DB insert suppressed:", e);
+    }
+
+    // 2. Queue corporate audit email notification
+    try {
+      const emailSubject = `[Design Matrix Audit] ${auditLog.projectName} (${auditLog.towerName}) - ${auditLog.packageName} status set to "${auditLog.newStatus}"`;
+      const emailHtml = `
+        <div style="font-family: Arial, sans-serif; font-size: 14px; color: #1e293b; line-height: 1.6; max-width: 600px; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+          <div style="background: #0f766e; color: #ffffff; padding: 18px 24px;">
+            <h2 style="margin: 0; font-size: 18px; font-weight: bold;">🏢 Chandak Design Tracking: Matrix Audit Trail</h2>
+            <p style="margin: 4px 0 0 0; font-size: 12px; opacity: 0.9;">Automated delivery schedule update & compliance notification</p>
+          </div>
+          <div style="padding: 24px; background: #ffffff;">
+            <p style="margin-top: 0;">An engineering deliverable status in the Master Tender Design Matrix was updated by <strong>${auditLog.changedBy}</strong>.</p>
+            
+            <table style="width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px;">
+              <tr style="border-bottom: 1px solid #f1f5f9;">
+                <td style="padding: 8px 0; font-weight: bold; color: #64748b; width: 40%;">Project:</td>
+                <td style="padding: 8px 0; font-weight: bold; color: #0f172a;">${auditLog.projectName} (${auditLog.towerName})</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #f1f5f9;">
+                <td style="padding: 8px 0; font-weight: bold; color: #64748b;">Work Package:</td>
+                <td style="padding: 8px 0; font-weight: bold; color: #0f172a;">${auditLog.packageName}</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #f1f5f9;">
+                <td style="padding: 8px 0; font-weight: bold; color: #64748b;">Discipline:</td>
+                <td style="padding: 8px 0;">${auditLog.disciplineName || "Design & Engineering"}</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #f1f5f9;">
+                <td style="padding: 8px 0; font-weight: bold; color: #64748b;">Assigned Consultant:</td>
+                <td style="padding: 8px 0; font-weight: bold; color: #7c3aed;">${auditLog.consultantName || "Not Assigned"}</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #f1f5f9;">
+                <td style="padding: 8px 0; font-weight: bold; color: #64748b;">New Recorded Status:</td>
+                <td style="padding: 8px 0; font-weight: bold; color: #059669;">${auditLog.newStatus}</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #f1f5f9;">
+                <td style="padding: 8px 0; font-weight: bold; color: #64748b;">Planned Date (Mandatory):</td>
+                <td style="padding: 8px 0; font-family: monospace; font-weight: bold;">${auditLog.newPlannedDate}</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #f1f5f9;">
+                <td style="padding: 8px 0; font-weight: bold; color: #64748b;">Actual Date (Mandatory):</td>
+                <td style="padding: 8px 0; font-family: monospace; font-weight: bold;">${auditLog.newActualDate}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; font-weight: bold; color: #64748b;">Remarks:</td>
+                <td style="padding: 8px 0; color: #475569;">${auditLog.remarks || "Updated via Design Matrix"}</td>
+              </tr>
+            </table>
+
+            <div style="margin-top: 20px; padding: 12px 16px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 12px; color: #64748b;">
+              <span style="font-weight: bold; color: #334155;">Audit Timestamp:</span> ${new Date(auditLog.timestamp).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST
+            </div>
+          </div>
+          <div style="padding: 14px 24px; background: #f8fafc; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; text-align: center;">
+            Chandak Workspace • Design & Engineering Governance Module
+          </div>
+        </div>
+      `;
+
+      await supabaseAdmin.from("email_queue").insert([{
+        recipient_email: "design.head@chandakgroup.com",
+        recipient_name: "Design & Project Controls Lead",
+        subject: emailSubject,
+        html_content: emailHtml,
+        plain_text_content: `Design Matrix Audit: ${auditLog.projectName} - ${auditLog.packageName} status set to ${auditLog.newStatus}. Planned: ${auditLog.newPlannedDate}, Actual: ${auditLog.newActualDate}. By: ${auditLog.changedBy}`,
+        status: "PENDING",
+        metadata: {
+          module: "DESIGN_TRACKING",
+          event: "MATRIX_AUDIT_UPDATE",
+          projectId: auditLog.projectId,
+          packageId: auditLog.packageId
+        }
+      }]);
+    } catch (e) {
+      console.warn("Email queue insert note:", e);
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message };
+  }
+}
+
+/**
+ * Save / Update RBAC Policies
+ */
+export async function saveRbacPoliciesAction(policies: DesignRbacPolicy[]) {
+  try {
+    const supabase = await getSupabase();
+    if (policies && policies.length > 0) {
+      await supabase.from("design_rbac_policies").upsert(policies.map(p => ({
+        id: p.id,
+        role_code: p.roleCode,
+        role_name: p.roleName,
+        project_id: p.projectId,
+        project_name: p.projectName,
+        module: p.module,
+        can_create: p.canCreate,
+        can_read: p.canRead,
+        can_update: p.canUpdate,
+        can_delete: p.canDelete,
+        updated_at: p.updatedAt || new Date().toISOString()
+      })));
+    }
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message };
   }
 }
 

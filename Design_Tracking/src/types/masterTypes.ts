@@ -49,9 +49,15 @@ export interface ConsultantMaster {
   id: string;
   firmName: string;
   discipline: string;
+  expertise: string[]; // Work package tags (multi-selection)
   contactPerson?: string;
   email?: string;
   phone?: string;
+  activeProjects: string[]; // Projects tagged (multi-selection)
+  onboardingStatus: "Onboard" | "Not Onboard"; // Onboard when activeProjects.length > 0
+  rating?: number;
+  totalDrawingsSubmitted?: number;
+  averageTatDays?: number;
 }
 
 // Live Transaction Entry (Filled by user)
@@ -61,9 +67,55 @@ export interface PackageStatusEntry {
   towerId: string;
   packageId: string;
   status: "Received" | "In progress" | "Pending" | "Target Date" | "NA";
+  plannedDate: string; // Mandatory planned date
+  actualDate: string;  // Mandatory actual/tracked date
   targetDate?: string;
+  consultantId?: string;
   consultantName?: string;
   remarks?: string;
+  updatedAt: string;
+  updatedBy?: string;
+}
+
+// Audit Trail Entry for Design Matrix & Package status mutations
+export interface MatrixAuditLog {
+  id: string;
+  entryKey: string; // `${projectId}__${towerId}__${packageId}`
+  projectId: string;
+  projectName: string;
+  towerId: string;
+  towerName: string;
+  packageId: string;
+  packageName: string;
+  disciplineName?: string;
+  previousStatus?: string;
+  newStatus: string;
+  previousPlannedDate?: string;
+  newPlannedDate: string;
+  previousActualDate?: string;
+  newActualDate: string;
+  consultantName?: string;
+  changedBy: string;
+  changedByEmail?: string;
+  timestamp: string;
+  remarks?: string;
+  mailSent: boolean;
+  mailRecipientCount?: number;
+  mailSubject?: string;
+}
+
+// Role-Based Access Control (RBAC) Policy: Project-wise / Role-based / CRUD options selection
+export interface DesignRbacPolicy {
+  id: string;
+  roleCode: string; // e.g. "SUPER_ADMIN", "DESIGN_DIRECTOR", "PROJECT_MANAGER", "SITE_ENGINEER", "CONSULTANT"
+  roleName: string;
+  projectId: string; // "ALL" or specific project id
+  projectName: string;
+  module: "DESIGN_MATRIX" | "DRAWINGS" | "CONSULTANTS" | "LOOK_AHEAD" | "LIAISON" | "TRANSMITTALS" | "RFIS" | "ALL";
+  canCreate: boolean; // [C]
+  canRead: boolean;   // [R]
+  canUpdate: boolean; // [U]
+  canDelete: boolean; // [D]
   updatedAt: string;
 }
 

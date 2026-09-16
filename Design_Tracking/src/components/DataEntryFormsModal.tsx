@@ -45,8 +45,12 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
   const [pkgTowerId, setPkgTowerId] = useState("");
   const [pkgId, setPkgId] = useState("");
   const [pkgStatus, setPkgStatus] = useState<"Received" | "In progress" | "Pending" | "Target Date" | "NA">("Received");
+  const [pkgPlannedDate, setPkgPlannedDate] = useState(new Date().toISOString().split("T")[0]);
+  const [pkgActualDate, setPkgActualDate] = useState(new Date().toISOString().split("T")[0]);
+  const [pkgConsultantId, setPkgConsultantId] = useState("");
   const [pkgTargetDate, setPkgTargetDate] = useState("");
   const [pkgRemarks, setPkgRemarks] = useState("");
+  const [pkgError, setPkgError] = useState("");
 
   // Form 2: Look-Ahead Milestone Entry
   const [laProjectId, setLaProjectId] = useState("");
@@ -83,21 +87,35 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
   const handleSavePackageStatus = (e: React.FormEvent) => {
     e.preventDefault();
     if (!pkgProjectId || !pkgTowerId || !pkgId) {
-      alert("Please select Project, Tower Wing, and Work Package.");
+      setPkgError("Please select Project, Tower Wing, and Work Package.");
       return;
     }
+    if (!pkgPlannedDate.trim()) {
+      setPkgError("Planned Date is mandatory.");
+      return;
+    }
+    if (!pkgActualDate.trim()) {
+      setPkgError("Actual Date is mandatory.");
+      return;
+    }
+
+    const selConsultant = storeState.consultants.find(c => c.id === pkgConsultantId);
 
     DesignMasterStore.recordPackageStatus(
       pkgProjectId,
       pkgTowerId,
       pkgId,
       pkgStatus,
-      pkgTargetDate || undefined,
-      undefined,
-      pkgRemarks || undefined
+      pkgPlannedDate.trim(),
+      pkgActualDate.trim(),
+      pkgTargetDate || pkgPlannedDate.trim(),
+      pkgConsultantId || undefined,
+      selConsultant?.name || undefined,
+      pkgRemarks || undefined,
+      "Senior Design Manager"
     );
 
-    alert("Tender Package Status updated! Matrix output updated.");
+    alert("Tender Package Status updated with mandatory dates and audit logged!");
     onClose();
   };
 
@@ -255,31 +273,73 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
               </select>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            {pkgError && (
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                <span>{pkgError}</span>
+              </div>
+            )}
+
+            <div className="space-y-1">
+              <label className="font-bold text-foreground">Status *</label>
+              <select
+                value={pkgStatus}
+                onChange={e => setPkgStatus(e.target.value as any)}
+                className="w-full px-3 py-2 rounded-xl border border-border bg-surface text-foreground font-semibold"
+              >
+                <option value="Received">✅ Received (Tender / GFC)</option>
+                <option value="In progress">⏳ In Progress / Onboard</option>
+                <option value="Pending">⚠️ Pending / Bottleneck</option>
+                <option value="Target Date">📅 Target Date Forecast</option>
+                <option value="NA">⚪ Not Applicable (NA)</option>
+              </select>
+            </div>
+
+            {/* Mandatory Planned & Actual Dates */}
+            <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-border">
               <div className="space-y-1">
-                <label className="font-bold text-foreground">Status *</label>
-                <select
-                  value={pkgStatus}
-                  onChange={e => setPkgStatus(e.target.value as any)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-surface text-foreground font-semibold"
-                >
-                  <option value="Received">✅ Received (Tender / GFC)</option>
-                  <option value="In progress">⏳ In Progress / Onboard</option>
-                  <option value="Pending">⚠️ Pending / Bottleneck</option>
-                  <option value="Target Date">📅 Target Date Forecast</option>
-                  <option value="NA">⚪ Not Applicable (NA)</option>
-                </select>
+                <label className="font-bold text-foreground flex items-center gap-1">
+                  <Calendar className="h-3 w-3 text-blue-500" />
+                  <span>Planned Date * (Mandatory)</span>
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={pkgPlannedDate}
+                  onChange={e => setPkgPlannedDate(e.target.value)}
+                  className="w-full px-3 py-1.5 rounded-xl border border-border bg-surface text-foreground font-mono"
+                />
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-foreground">Target Date / Milestone</label>
+                <label className="font-bold text-foreground flex items-center gap-1">
+                  <Clock className="h-3 w-3 text-emerald-500" />
+                  <span>Actual Date * (Mandatory)</span>
+                </label>
                 <input
                   type="text"
-                  value={pkgTargetDate}
-                  onChange={e => setPkgTargetDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground"
+                  required
+                  value={pkgActualDate}
+                  onChange={e => setPkgActualDate(e.target.value)}
+                  placeholder="YYYY-MM-DD or '-'"
+                  className="w-full px-3 py-1.5 rounded-xl border border-border bg-surface text-foreground font-mono"
                 />
               </div>
+            </div>
+
+            {/* Assigned Consultant */}
+            <div className="space-y-1">
+              <label className="font-bold text-foreground">Assigned Consultant Partner</label>
+              <select
+                value={pkgConsultantId}
+                onChange={e => setPkgConsultantId(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-border bg-surface text-foreground font-semibold"
+              >
+                <option value="">None / Internal Team</option>
+                {storeState.consultants.map(c => (
+                  <option key={c.id} value={c.id}>{c.name} ({c.category}) - {c.onboardingStatus}</option>
+                ))}
+              </select>
             </div>
 
             <div className="space-y-1">
@@ -288,6 +348,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                 type="text"
                 value={pkgRemarks}
                 onChange={e => setPkgRemarks(e.target.value)}
+                placeholder="Audit notes or delivery remarks..."
                 className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground"
               />
             </div>
@@ -297,7 +358,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                 Cancel
               </button>
               <button type="submit" className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer shadow-md">
-                Record Status
+                Record Status & Log Audit
               </button>
             </div>
           </form>
