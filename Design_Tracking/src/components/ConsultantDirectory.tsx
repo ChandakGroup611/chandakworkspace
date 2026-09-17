@@ -334,7 +334,7 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Search firm, contact, package tag..."
+                aria-label="Search firm, contact, package tag"
                 className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-purple-500"
               />
               {searchQuery && (
@@ -704,7 +704,7 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
                   required
                   value={name}
                   onChange={e => setName(e.target.value)}
-                  placeholder="e.g. JW Consultants LLP, Morphogenesis"
+                  aria-label="Consultant Firm or Company Name"
                   className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-purple-500"
                 />
               </div>
@@ -730,7 +730,7 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
                     required
                     value={leadContact}
                     onChange={e => setLeadContact(e.target.value)}
-                    placeholder="e.g. Giridhar Shirke"
+                    aria-label="Lead Contact Person"
                     className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-purple-500"
                   />
                 </div>
@@ -744,7 +744,7 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
                     required
                     value={email}
                     onChange={e => setEmail(e.target.value)}
-                    placeholder="e.g. structures@jwconsultants.in"
+                    aria-label="Official Email Address"
                     className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-purple-500"
                   />
                 </div>
@@ -755,7 +755,7 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
                     type="tel"
                     value={phone}
                     onChange={e => setPhone(e.target.value)}
-                    placeholder="e.g. +91 22 6721 4400"
+                    aria-label="Phone Number"
                     className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-purple-500"
                   />
                 </div>
@@ -801,7 +801,7 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
                     value={customExpertiseInput}
                     onChange={e => setCustomExpertiseInput(e.target.value)}
                     onKeyDown={handleAddCustomExpertise}
-                    placeholder="Add custom work package expertise tag..."
+                    aria-label="Add custom work package expertise tag"
                     className="flex-1 px-3 py-1.5 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-purple-500"
                   />
                   <button

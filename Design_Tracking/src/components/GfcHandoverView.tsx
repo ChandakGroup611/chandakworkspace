@@ -160,10 +160,10 @@ export const GfcHandoverView: React.FC<GfcHandoverViewProps> = ({
             <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             <input
               type="text"
-              placeholder="Search drawing, contractor, engineer..."
+              aria-label="Search drawing, contractor, engineer"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-emerald-500"
+              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-emerald-500"
             />
           </div>
 

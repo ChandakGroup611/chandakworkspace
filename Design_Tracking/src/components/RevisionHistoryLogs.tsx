@@ -187,10 +187,10 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
               <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Search revision logs..."
+                aria-label="Search revision logs"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-surface text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-blue-500"
+                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-surface text-foreground focus:outline-none focus:border-blue-500"
               />
             </div>
 

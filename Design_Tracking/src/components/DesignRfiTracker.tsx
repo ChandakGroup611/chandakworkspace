@@ -278,10 +278,10 @@ export function DesignRfiTracker() {
             <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             <input
               type="text"
-              placeholder="Search RFI #, subject, consultant..."
+              aria-label="Search RFI number, subject, consultant"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-purple-500"
+              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-purple-500"
             />
           </div>
 

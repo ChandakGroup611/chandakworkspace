@@ -537,7 +537,7 @@ export const TenderDesignMatrix: React.FC = () => {
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search packages..."
+              aria-label="Search packages"
               className="w-full pl-8 pr-7 py-1.5 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-emerald-500"
             />
             {searchQuery && (
@@ -986,7 +986,7 @@ export const TenderDesignMatrix: React.FC = () => {
                       required
                       value={cellActualDate}
                       onChange={e => setCellActualDate(e.target.value)}
-                      placeholder="YYYY-MM-DD or '-'"
+                      aria-label="Actual date"
                       className="w-full px-3 py-1.5 rounded-xl border border-border bg-surface text-foreground font-mono focus:outline-none focus:border-emerald-500"
                     />
                   </div>
@@ -1019,7 +1019,7 @@ export const TenderDesignMatrix: React.FC = () => {
                     type="text"
                     value={cellRemarks}
                     onChange={e => setCellRemarks(e.target.value)}
-                    placeholder="e.g. Revised tender drawings received from structural team."
+                    aria-label="Audit remarks or delivery reason"
                     className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-emerald-500"
                   />
                 </div>
@@ -1141,7 +1141,7 @@ export const TenderDesignMatrix: React.FC = () => {
                 type="text"
                 value={auditSearchQuery}
                 onChange={e => setAuditSearchQuery(e.target.value)}
-                placeholder="Search audit trail by project, package, or user..."
+                aria-label="Search audit trail by project, package, or user"
                 className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-purple-500"
               />
             </div>
@@ -1422,8 +1422,8 @@ export const TenderDesignMatrix: React.FC = () => {
                 rows={2}
                 value={batchRemarks}
                 onChange={e => setBatchRemarks(e.target.value)}
-                placeholder="Enter remarks or justification for batch update (e.g. Reviewed in design meeting, drawings received from MEP consultant)..."
-                className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-surface text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-teal-500 resize-none"
+                aria-label="Batch remarks or justification"
+                className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-surface text-foreground focus:outline-none focus:border-teal-500 resize-none"
               />
             </div>
 

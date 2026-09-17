@@ -147,7 +147,7 @@ export const ApprovalsReviewQueue: React.FC<ApprovalsReviewQueueProps> = ({
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search queue..."
+              aria-label="Search approvals review queue"
               className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-emerald-500"
             />
           </div>

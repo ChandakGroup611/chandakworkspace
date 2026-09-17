@@ -321,7 +321,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                   required
                   value={pkgActualDate}
                   onChange={e => setPkgActualDate(e.target.value)}
-                  placeholder="YYYY-MM-DD or '-'"
+                  aria-label="Actual date"
                   className="w-full px-3 py-1.5 rounded-xl border border-border bg-surface text-foreground font-mono"
                 />
               </div>
@@ -348,7 +348,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                 type="text"
                 value={pkgRemarks}
                 onChange={e => setPkgRemarks(e.target.value)}
-                placeholder="Audit notes or delivery remarks..."
+                aria-label="Audit notes or delivery remarks"
                 className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground"
               />
             </div>

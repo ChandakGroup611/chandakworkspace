@@ -276,8 +276,8 @@ export const DesignMultiSelectDropdown: React.FC<DesignMultiSelectDropdownProps>
                   type="text"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  placeholder={searchPlaceholder || `Search ${label.toLowerCase()}...`}
-                  className="w-full pl-8 pr-7 py-1 text-xs rounded-xl border border-border bg-white dark:bg-slate-950 text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary"
+                  aria-label={`Search ${label.toLowerCase()}`}
+                  className="w-full pl-8 pr-7 py-1 text-xs rounded-xl border border-border bg-white dark:bg-slate-950 text-foreground focus:outline-none focus:border-primary"
                 />
                 {searchQuery && (
                   <button
