@@ -23,6 +23,7 @@ import {
   Trash2
 } from "lucide-react";
 import { DesignMasterStore } from "../services/designMasterStore";
+import { DesignMultiSelectDropdown, DropdownOption } from "./DesignMultiSelectDropdown";
 
 interface DrawingRegisterProps {
   drawings: DrawingItem[];
@@ -36,16 +37,19 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
   onOpenUploadModal
 }) => {
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [disciplineFilter, setDisciplineFilter] = useState<string>("ALL");
-  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [selectedDisciplineFilters, setSelectedDisciplineFilters] = useState<string[]>([]);
+  const [selectedProjectFilters, setSelectedProjectFilters] = useState<string[]>([]);
+  const [selectedStatusFilters, setSelectedStatusFilters] = useState<string[]>([]);
   const [previewDrawing, setPreviewDrawing] = useState<DrawingItem | null>(null);
 
   const disciplines = ["Architectural", "Structural", "MEP", "Landscape", "Interior"];
+  const uniqueProjects = useMemo(() => Array.from(new Set(drawings.map(d => d.project))), [drawings]);
 
   const filteredDrawings = useMemo(() => {
     return drawings.filter(item => {
-      if (disciplineFilter !== "ALL" && item.discipline !== disciplineFilter) return false;
-      if (statusFilter !== "ALL" && item.status !== statusFilter) return false;
+      if (selectedDisciplineFilters.length > 0 && !selectedDisciplineFilters.includes(item.discipline)) return false;
+      if (selectedProjectFilters.length > 0 && !selectedProjectFilters.includes(item.project)) return false;
+      if (selectedStatusFilters.length > 0 && !selectedStatusFilters.includes(item.status)) return false;
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matches = 
@@ -57,7 +61,77 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
       }
       return true;
     });
-  }, [drawings, disciplineFilter, statusFilter, searchQuery]);
+  }, [drawings, selectedDisciplineFilters, selectedProjectFilters, selectedStatusFilters, searchQuery]);
+
+  // Dropdown options
+  const disciplineOptions = useMemo<DropdownOption[]>(() => {
+    return disciplines.map(d => {
+      const cnt = drawings.filter(item => item.discipline === d).length;
+      return {
+        value: d,
+        label: d,
+        count: cnt,
+        subtitle: `${cnt} drawing sheet${cnt === 1 ? "" : "s"}`
+      };
+    });
+  }, [disciplines, drawings]);
+
+  const projectOptions = useMemo<DropdownOption[]>(() => {
+    return uniqueProjects.map(p => {
+      const cnt = drawings.filter(item => item.project === p).length;
+      return {
+        value: p,
+        label: p,
+        count: cnt,
+        subtitle: `${cnt} sheet${cnt === 1 ? "" : "s"}`
+      };
+    });
+  }, [uniqueProjects, drawings]);
+
+  const statusOptions = useMemo<DropdownOption[]>(() => {
+    return [
+      {
+        value: "Approved (GFC)",
+        label: "Approved (GFC)",
+        count: drawings.filter(d => d.status === "Approved (GFC)").length,
+        colorDot: "#10b981",
+        subtitle: "Issued for site construction"
+      },
+      {
+        value: "Under Review",
+        label: "Under Review",
+        count: drawings.filter(d => d.status === "Under Review").length,
+        colorDot: "#f59e0b",
+        subtitle: "Awaiting engineering review"
+      },
+      {
+        value: "Revision Requested",
+        label: "Revision Requested",
+        count: drawings.filter(d => d.status === "Revision Requested").length,
+        colorDot: "#f43f5e",
+        subtitle: "Consultant action pending"
+      },
+      {
+        value: "Site Handed Over",
+        label: "Site Handed Over",
+        count: drawings.filter(d => d.status === "Site Handed Over").length,
+        colorDot: "#0ea5e9",
+        subtitle: "Civil team acknowledged"
+      }
+    ];
+  }, [drawings]);
+
+  const totalActiveFilterCount =
+    selectedDisciplineFilters.length +
+    selectedProjectFilters.length +
+    selectedStatusFilters.length;
+
+  const handleClearAllFilters = () => {
+    setSelectedDisciplineFilters([]);
+    setSelectedProjectFilters([]);
+    setSelectedStatusFilters([]);
+    setSearchQuery("");
+  };
 
   const getStatusBadge = (status: DrawingStatus) => {
     switch (status) {
@@ -149,51 +223,135 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
           </div>
         </div>
 
-        {/* Filter Pills */}
-        <div className="pt-2 border-t border-border flex flex-wrap items-center justify-between gap-2 text-xs">
-          <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 max-w-full">
-            <span className="text-[11px] font-bold text-muted-foreground mr-1 flex items-center gap-1 shrink-0 whitespace-nowrap">
-              <SlidersHorizontal className="h-3 w-3" />
-              <span>Discipline:</span>
-            </span>
-            <button
-              type="button"
-              onClick={() => setDisciplineFilter("ALL")}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all shrink-0 whitespace-nowrap ${
-                disciplineFilter === "ALL" ? "bg-emerald-600 text-white shadow-2xs" : "text-muted-foreground hover:text-foreground bg-slate-100/60 dark:bg-slate-800/60"
-              }`}
-            >
-              All
-            </button>
-            {disciplines.map(d => (
+        {/* Multi-Selection Dropdowns Filter Row */}
+        <div className="pt-3 border-t border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            {/* 1. Discipline Dropdown */}
+            <DesignMultiSelectDropdown
+              label="Discipline"
+              icon={<SlidersHorizontal className="h-3.5 w-3.5" />}
+              options={disciplineOptions}
+              selectedValues={selectedDisciplineFilters}
+              onChange={setSelectedDisciplineFilters}
+              colorTheme="emerald"
+              placeholder={`All Disciplines (${disciplines.length})`}
+              searchPlaceholder="Search discipline..."
+            />
+
+            {/* 2. Projects Dropdown */}
+            <DesignMultiSelectDropdown
+              label="Projects"
+              icon={<Building className="h-3.5 w-3.5" />}
+              options={projectOptions}
+              selectedValues={selectedProjectFilters}
+              onChange={setSelectedProjectFilters}
+              colorTheme="blue"
+              placeholder={`All Projects (${uniqueProjects.length})`}
+              searchPlaceholder="Search project..."
+            />
+
+            {/* 3. Status Dropdown */}
+            <DesignMultiSelectDropdown
+              label="Status"
+              icon={<CheckCircle2 className="h-3.5 w-3.5" />}
+              options={statusOptions}
+              selectedValues={selectedStatusFilters}
+              onChange={setSelectedStatusFilters}
+              colorTheme="amber"
+              placeholder="All Statuses"
+              searchPlaceholder="Filter status..."
+              showSearch={false}
+            />
+
+            {/* Clear All Filters Button */}
+            {totalActiveFilterCount > 0 && (
               <button
-                key={d}
                 type="button"
-                onClick={() => setDisciplineFilter(d)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-all shrink-0 whitespace-nowrap ${
-                  disciplineFilter === d ? "bg-emerald-600 text-white shadow-2xs" : "text-muted-foreground hover:text-foreground bg-slate-100/60 dark:bg-slate-800/60"
-                }`}
+                onClick={handleClearAllFilters}
+                className="h-9 px-3 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shrink-0 shadow-2xs"
+                title="Reset all active filters"
               >
-                {d}
+                <X className="h-3.5 w-3.5" />
+                <span>Reset Filters ({totalActiveFilterCount})</span>
               </button>
-            ))}
+            )}
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="text-[11px] font-bold text-muted-foreground whitespace-nowrap">Status:</span>
-            <select
-              value={statusFilter}
-              onChange={e => setStatusFilter(e.target.value)}
-              className="h-7 px-2 rounded-lg border border-border bg-surface text-xs font-semibold text-foreground focus:outline-none focus:border-emerald-500 whitespace-nowrap cursor-pointer"
-            >
-              <option value="ALL">All Statuses</option>
-              <option value="Approved (GFC)">Approved (GFC)</option>
-              <option value="Under Review">Under Review</option>
-              <option value="Revision Requested">Revision Requested</option>
-              <option value="Site Handed Over">Site Handed Over</option>
-            </select>
+          <div className="flex items-center gap-2 shrink-0 text-muted-foreground text-xs">
+            <span>Showing <strong className="text-foreground">{filteredDrawings.length}</strong> of {drawings.length} sheets</span>
           </div>
         </div>
+
+        {/* 🏷️ Active Selected Filter Badges */}
+        {totalActiveFilterCount > 0 && (
+          <div className="pt-2 border-t border-border flex flex-wrap items-center gap-1.5 text-xs animate-in fade-in duration-100">
+            <span className="text-[10px] font-bold uppercase text-muted-foreground mr-1 shrink-0">
+              Active Filters:
+            </span>
+
+            {/* Discipline Badges */}
+            {selectedDisciplineFilters.map(d => (
+              <span
+                key={`disc-${d}`}
+                className="px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
+              >
+                <SlidersHorizontal className="h-2.5 w-2.5" />
+                <span>{d}</span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedDisciplineFilters(prev => prev.filter(x => x !== d))}
+                  className="hover:text-rose-500 cursor-pointer p-0.5"
+                >
+                  <X className="h-2.5 w-2.5" />
+                </button>
+              </span>
+            ))}
+
+            {/* Project Badges */}
+            {selectedProjectFilters.map(p => (
+              <span
+                key={`proj-${p}`}
+                className="px-2 py-0.5 rounded-lg bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/30 text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
+              >
+                <Building className="h-2.5 w-2.5" />
+                <span>{p}</span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedProjectFilters(prev => prev.filter(x => x !== p))}
+                  className="hover:text-rose-500 cursor-pointer p-0.5"
+                >
+                  <X className="h-2.5 w-2.5" />
+                </button>
+              </span>
+            ))}
+
+            {/* Status Badges */}
+            {selectedStatusFilters.map(st => (
+              <span
+                key={`st-${st}`}
+                className="px-2 py-0.5 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30 text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
+              >
+                <CheckCircle2 className="h-2.5 w-2.5" />
+                <span>{st}</span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedStatusFilters(prev => prev.filter(x => x !== st))}
+                  className="hover:text-rose-500 cursor-pointer p-0.5"
+                >
+                  <X className="h-2.5 w-2.5" />
+                </button>
+              </span>
+            ))}
+
+            <button
+              type="button"
+              onClick={handleClearAllFilters}
+              className="text-[11px] text-muted-foreground hover:text-rose-500 underline ml-1 cursor-pointer font-medium"
+            >
+              Clear all
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Table with Horizontal Scroll Container */}

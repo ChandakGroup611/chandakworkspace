@@ -24,11 +24,13 @@ import {
 } from "lucide-react";
 import { DesignMasterStore } from "../services/designMasterStore";
 import { TransmittalItem, TransmittalPurpose } from "../types";
+import { DesignMultiSelectDropdown } from "./DesignMultiSelectDropdown";
 
 export function TransmittalManager() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [purposeFilter, setPurposeFilter] = useState<string>("ALL");
-  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
+  const [selectedPurposes, setSelectedPurposes] = useState<string[]>([]);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedTransmittal, setSelectedTransmittal] = useState<TransmittalItem | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isPrintSlipOpen, setIsPrintSlipOpen] = useState(false);
@@ -49,22 +51,45 @@ export function TransmittalManager() {
   const drawings = DesignMasterStore.getDrawings();
   const transmittals = DesignMasterStore.getTransmittals();
 
+  const projectFilterOptions = useMemo(() => {
+    return projects.map(p => ({
+      value: p.id,
+      label: p.name,
+      count: transmittals.filter(t => t.projectId === p.id).length
+    }));
+  }, [projects, transmittals]);
+
+  const purposeOptions = useMemo(() => [
+    { value: "GOOD_FOR_CONSTRUCTION", label: "Good For Construction (GFC)", count: transmittals.filter(t => t.purpose === "GOOD_FOR_CONSTRUCTION").length },
+    { value: "FOR_TENDER_BIDDING", label: "For Tender / Pricing", count: transmittals.filter(t => t.purpose === "FOR_TENDER_BIDDING").length },
+    { value: "FOR_REVIEW_APPROVAL", label: "For Review & Comments", count: transmittals.filter(t => t.purpose === "FOR_REVIEW_APPROVAL").length },
+    { value: "FOR_INFORMATION", label: "For Information Only", count: transmittals.filter(t => t.purpose === "FOR_INFORMATION").length },
+    { value: "AS_BUILT_RECORD", label: "As-Built Archive", count: transmittals.filter(t => t.purpose === "AS_BUILT_RECORD").length }
+  ], [transmittals]);
+
+  const statusOptions = useMemo(() => [
+    { value: "ISSUED", label: "Issued / In Transit", count: transmittals.filter(t => t.status === "ISSUED").length },
+    { value: "ACKNOWLEDGED", label: "Acknowledged & Received", count: transmittals.filter(t => t.status === "ACKNOWLEDGED").length }
+  ], [transmittals]);
+
   // Filtered Transmittals
   const filteredTransmittals = useMemo(() => {
     return transmittals.filter(t => {
-      const q = searchQuery.toLowerCase();
+      const q = searchQuery.toLowerCase().trim();
       const matchesSearch = 
+        !q ||
         t.transmittalNumber.toLowerCase().includes(q) ||
         t.projectName.toLowerCase().includes(q) ||
         t.recipientAgency.toLowerCase().includes(q) ||
         (t.towerName && t.towerName.toLowerCase().includes(q));
 
-      const matchesPurpose = purposeFilter === "ALL" || t.purpose === purposeFilter;
-      const matchesStatus = statusFilter === "ALL" || t.status === statusFilter;
+      const matchesProject = selectedProjects.length === 0 || selectedProjects.includes(t.projectId);
+      const matchesPurpose = selectedPurposes.length === 0 || selectedPurposes.includes(t.purpose);
+      const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(t.status);
 
-      return matchesSearch && matchesPurpose && matchesStatus;
+      return matchesSearch && matchesProject && matchesPurpose && matchesStatus;
     });
-  }, [transmittals, searchQuery, purposeFilter, statusFilter]);
+  }, [transmittals, searchQuery, selectedProjects, selectedPurposes, selectedStatuses]);
 
   // Handle Create Transmittal
   const handleCreateTransmittal = (e: React.FormEvent) => {
@@ -204,37 +229,141 @@ export function TransmittalManager() {
         </div>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="p-4 rounded-2xl bg-card border border-border space-y-3">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="relative w-full sm:w-72">
+      {/* Unified Multi-Select Filter and Search Bar */}
+      <div className="p-4 rounded-2xl bg-card border border-border space-y-3 shadow-xs">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
+          <div className="relative w-full lg:w-72 shrink-0">
             <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             <input
               type="text"
+              placeholder="Search transmittal #, recipient, tower..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-blue-500"
+              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-blue-500"
             />
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto custom-scrollbar pb-1">
-            <span className="text-[11px] font-semibold text-muted-foreground shrink-0">Purpose:</span>
-            {["ALL", "GOOD_FOR_CONSTRUCTION", "FOR_TENDER_BIDDING", "FOR_REVIEW_APPROVAL", "FOR_INFORMATION"].map(p => (
+          <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+            <DesignMultiSelectDropdown
+              label="Project"
+              options={projectFilterOptions}
+              selectedValues={selectedProjects}
+              onChange={setSelectedProjects}
+              colorTheme="blue"
+              placeholder="All Projects"
+            />
+
+            <DesignMultiSelectDropdown
+              label="Purpose"
+              options={purposeOptions}
+              selectedValues={selectedPurposes}
+              onChange={setSelectedPurposes}
+              colorTheme="emerald"
+              placeholder="All Purposes"
+            />
+
+            <DesignMultiSelectDropdown
+              label="Status"
+              options={statusOptions}
+              selectedValues={selectedStatuses}
+              onChange={setSelectedStatuses}
+              colorTheme="amber"
+              placeholder="All Status"
+            />
+
+            {(selectedProjects.length > 0 || selectedPurposes.length > 0 || selectedStatuses.length > 0 || searchQuery) && (
               <button
-                key={p}
                 type="button"
-                onClick={() => setPurposeFilter(p)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer shrink-0 whitespace-nowrap ${
-                  purposeFilter === p
-                    ? "bg-blue-600 text-white"
-                    : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
-                }`}
+                onClick={() => {
+                  setSelectedProjects([]);
+                  setSelectedPurposes([]);
+                  setSelectedStatuses([]);
+                  setSearchQuery("");
+                }}
+                className="h-8 px-2.5 rounded-xl border border-dashed border-rose-500/40 hover:border-rose-500/70 bg-rose-500/5 hover:bg-rose-500/10 text-rose-600 dark:text-rose-400 text-xs font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
               >
-                {p === "ALL" ? "All Purposes" : p.replace(/_/g, " ")}
+                <X className="h-3 w-3" />
+                <span>Reset</span>
               </button>
-            ))}
+            )}
           </div>
         </div>
+
+        {/* Active Filter Chips Bar */}
+        {(selectedProjects.length > 0 || selectedPurposes.length > 0 || selectedStatuses.length > 0) && (
+          <div className="pt-2 border-t border-border flex flex-wrap items-center gap-1.5 text-xs">
+            <span className="text-[11px] font-bold text-muted-foreground mr-1">Active:</span>
+
+            {selectedProjects.map(id => {
+              const p = projects.find(proj => proj.id === id);
+              return (
+                <span
+                  key={id}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20 text-[11px] font-medium"
+                >
+                  <span>Project: {p?.name || id}</span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedProjects(selectedProjects.filter(x => x !== id))}
+                    className="hover:text-blue-900 dark:hover:text-blue-100"
+                  >
+                    <X className="h-2.5 w-2.5" />
+                  </button>
+                </span>
+              );
+            })}
+
+            {selectedPurposes.map(purp => {
+              const opt = purposeOptions.find(o => o.value === purp);
+              return (
+                <span
+                  key={purp}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 text-[11px] font-medium"
+                >
+                  <span>Purpose: {opt?.label || purp}</span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPurposes(selectedPurposes.filter(x => x !== purp))}
+                    className="hover:text-emerald-900 dark:hover:text-emerald-100"
+                  >
+                    <X className="h-2.5 w-2.5" />
+                  </button>
+                </span>
+              );
+            })}
+
+            {selectedStatuses.map(st => {
+              const opt = statusOptions.find(o => o.value === st);
+              return (
+                <span
+                  key={st}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 text-[11px] font-medium"
+                >
+                  <span>Status: {opt?.label || st}</span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedStatuses(selectedStatuses.filter(x => x !== st))}
+                    className="hover:text-amber-900 dark:hover:text-amber-100"
+                  >
+                    <X className="h-2.5 w-2.5" />
+                  </button>
+                </span>
+              );
+            })}
+
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedProjects([]);
+                setSelectedPurposes([]);
+                setSelectedStatuses([]);
+              }}
+              className="text-[11px] font-semibold text-muted-foreground hover:text-foreground ml-1 underline cursor-pointer"
+            >
+              Clear all
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Transmittals List Table */}

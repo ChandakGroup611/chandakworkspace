@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import { ConsultantPartner, DesignDiscipline } from "../types";
+import { DesignMultiSelectDropdown, DropdownOption } from "./DesignMultiSelectDropdown";
 import { 
   Users, 
   Mail, 
@@ -12,17 +13,17 @@ import {
   Plus, 
   Search, 
   Trash2, 
-  SlidersHorizontal,
-  X,
-  CheckCircle2,
-  AlertCircle,
-  Tag,
-  Check,
-  Edit2,
-  Filter,
-  Layers,
-  Sparkles,
-  ShieldCheck
+  SlidersHorizontal, 
+  X, 
+  CheckCircle2, 
+  AlertCircle, 
+  Tag, 
+  Check, 
+  Edit2, 
+  Filter, 
+  Layers, 
+  Sparkles, 
+  ShieldCheck 
 } from "lucide-react";
 
 interface ConsultantDirectoryProps {
@@ -60,7 +61,7 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDisciplineFilters, setSelectedDisciplineFilters] = useState<string[]>([]);
   const [selectedProjectFilters, setSelectedProjectFilters] = useState<string[]>([]);
-  const [onboardingFilter, setOnboardingFilter] = useState<"ALL" | "ONBOARD" | "NOT_ONBOARD">("ALL");
+  const [selectedOnboardingFilters, setSelectedOnboardingFilters] = useState<string[]>([]);
   
   // Modal states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -213,11 +214,14 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
       }
 
       // Onboarding Status filter
-      if (onboardingFilter === "ONBOARD" && c.onboardingStatus !== "Onboard" && (c.activeProjects || []).length === 0) {
-        return false;
-      }
-      if (onboardingFilter === "NOT_ONBOARD" && (c.onboardingStatus === "Onboard" || (c.activeProjects || []).length > 0)) {
-        return false;
+      if (selectedOnboardingFilters.length > 0) {
+        const isOnboard = c.onboardingStatus === "Onboard" || (c.activeProjects || []).length > 0;
+        const matches = selectedOnboardingFilters.some(f => {
+          if (f === "ONBOARD" && isOnboard) return true;
+          if (f === "NOT_ONBOARD" && !isOnboard) return true;
+          return false;
+        });
+        if (!matches) return false;
       }
 
       // Search Query
@@ -234,7 +238,7 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
 
       return true;
     });
-  }, [consultants, selectedDisciplineFilters, selectedProjectFilters, onboardingFilter, searchQuery]);
+  }, [consultants, selectedDisciplineFilters, selectedProjectFilters, selectedOnboardingFilters, searchQuery]);
 
   const getDisciplineBadge = (cat: string) => {
     switch (cat) {
@@ -249,6 +253,62 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
 
   const totalOnboarded = consultants.filter(c => (c.activeProjects && c.activeProjects.length > 0) || c.onboardingStatus === "Onboard").length;
   const totalNotOnboarded = consultants.length - totalOnboarded;
+
+  // Multi-Select Dropdown Options
+  const disciplineOptions = useMemo<DropdownOption[]>(() => {
+    return disciplines.map(d => {
+      const cnt = consultants.filter(c => c.category === d).length;
+      return {
+        value: d,
+        label: d,
+        count: cnt,
+        subtitle: `${cnt} firm${cnt === 1 ? "" : "s"}`
+      };
+    });
+  }, [disciplines, consultants]);
+
+  const projectOptions = useMemo<DropdownOption[]>(() => {
+    return availableProjects.map(p => {
+      const cnt = consultants.filter(c => (c.activeProjects || []).includes(p)).length;
+      return {
+        value: p,
+        label: p,
+        count: cnt,
+        subtitle: `${cnt} firm${cnt === 1 ? "" : "s"} tagged`
+      };
+    });
+  }, [availableProjects, consultants]);
+
+  const onboardingOptions = useMemo<DropdownOption[]>(() => {
+    return [
+      {
+        value: "ONBOARD",
+        label: "Onboard",
+        count: totalOnboarded,
+        colorDot: "#10b981",
+        subtitle: "Active on 1+ project"
+      },
+      {
+        value: "NOT_ONBOARD",
+        label: "Not Onboard",
+        count: totalNotOnboarded,
+        colorDot: "#f59e0b",
+        subtitle: "No active projects tagged"
+      }
+    ];
+  }, [totalOnboarded, totalNotOnboarded]);
+
+  const totalActiveFilterCount =
+    selectedDisciplineFilters.length +
+    selectedProjectFilters.length +
+    selectedOnboardingFilters.length;
+
+  const handleClearAllFilters = () => {
+    setSelectedDisciplineFilters([]);
+    setSelectedProjectFilters([]);
+    setSelectedOnboardingFilters([]);
+    setSearchQuery("");
+  };
 
   return (
     <div className="space-y-4 animate-in fade-in duration-150">
@@ -303,119 +363,135 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
           </div>
         </div>
 
-        {/* Multi-Selection Filter Ribbon */}
-        <div className="pt-2 border-t border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1 max-w-full">
-            <span className="text-[11px] font-bold text-muted-foreground mr-1 shrink-0 flex items-center gap-1">
-              <SlidersHorizontal className="h-3 w-3" />
-              <span>Discipline:</span>
-            </span>
-            <button
-              type="button"
-              onClick={() => setSelectedDisciplineFilters([])}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                selectedDisciplineFilters.length === 0
-                  ? "bg-purple-600 text-white shadow-2xs"
-                  : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              All ({consultants.length})
-            </button>
-            {disciplines.map(d => {
-              const isSelected = selectedDisciplineFilters.includes(d);
-              return (
-                <button
-                  key={d}
-                  type="button"
-                  onClick={() => {
-                    setSelectedDisciplineFilters(prev =>
-                      isSelected ? prev.filter(x => x !== d) : [...prev, d]
-                    );
-                  }}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer flex items-center gap-1 ${
-                    isSelected
-                      ? "bg-purple-600 text-white shadow-2xs font-bold"
-                      : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {isSelected && <Check className="h-3 w-3" />}
-                  <span>{d}</span>
-                </button>
-              );
-            })}
-          </div>
+        {/* Multi-Selection Dropdowns Filter Row */}
+        <div className="pt-3 border-t border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            {/* 1. Discipline Dropdown */}
+            <DesignMultiSelectDropdown
+              label="Discipline"
+              icon={<SlidersHorizontal className="h-3.5 w-3.5" />}
+              options={disciplineOptions}
+              selectedValues={selectedDisciplineFilters}
+              onChange={setSelectedDisciplineFilters}
+              colorTheme="purple"
+              placeholder={`All Disciplines (${consultants.length})`}
+              searchPlaceholder="Search discipline..."
+            />
 
-          {/* Onboarding Status Filter Pills */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            <span className="text-[11px] font-bold text-muted-foreground mr-1">Status:</span>
-            <button
-              type="button"
-              onClick={() => setOnboardingFilter("ALL")}
-              className={`px-2 py-0.5 rounded-md text-[11px] font-semibold transition-all cursor-pointer ${
-                onboardingFilter === "ALL" ? "bg-foreground text-background font-bold" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              All
-            </button>
-            <button
-              type="button"
-              onClick={() => setOnboardingFilter("ONBOARD")}
-              className={`px-2 py-0.5 rounded-md text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
-                onboardingFilter === "ONBOARD" ? "bg-emerald-600 text-white" : "text-emerald-600 dark:text-emerald-400 hover:underline"
-              }`}
-            >
-              <CheckCircle2 className="h-3 w-3" />
-              <span>Onboard ({totalOnboarded})</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setOnboardingFilter("NOT_ONBOARD")}
-              className={`px-2 py-0.5 rounded-md text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
-                onboardingFilter === "NOT_ONBOARD" ? "bg-amber-600 text-white" : "text-amber-600 dark:text-amber-400 hover:underline"
-              }`}
-            >
-              <AlertCircle className="h-3 w-3" />
-              <span>Not Onboard ({totalNotOnboarded})</span>
-            </button>
-          </div>
-        </div>
+            {/* 2. Tagged Project Dropdown */}
+            <DesignMultiSelectDropdown
+              label="Projects"
+              icon={<Building className="h-3.5 w-3.5" />}
+              options={projectOptions}
+              selectedValues={selectedProjectFilters}
+              onChange={setSelectedProjectFilters}
+              colorTheme="blue"
+              placeholder={`All Projects (${availableProjects.length})`}
+              searchPlaceholder="Search project..."
+            />
 
-        {/* Project Multi-Selection Pills */}
-        <div className="pt-2 border-t border-border flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 text-xs">
-          <span className="text-[11px] font-bold text-muted-foreground mr-1 shrink-0 flex items-center gap-1">
-            <Building className="h-3 w-3 text-blue-500" />
-            <span>Tagged Project:</span>
-          </span>
-          <button
-            type="button"
-            onClick={() => setSelectedProjectFilters([])}
-            className={`px-2 py-0.5 rounded-md text-[11px] font-semibold transition-all cursor-pointer shrink-0 ${
-              selectedProjectFilters.length === 0 ? "bg-blue-600 text-white font-bold" : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            All Projects
-          </button>
-          {availableProjects.map(p => {
-            const isSel = selectedProjectFilters.includes(p);
-            return (
+            {/* 3. Onboarding Status Dropdown */}
+            <DesignMultiSelectDropdown
+              label="Onboarding"
+              icon={<CheckCircle2 className="h-3.5 w-3.5" />}
+              options={onboardingOptions}
+              selectedValues={selectedOnboardingFilters}
+              onChange={setSelectedOnboardingFilters}
+              colorTheme="emerald"
+              placeholder="All Statuses"
+              searchPlaceholder="Filter onboarding..."
+              showSearch={false}
+            />
+
+            {/* Clear All Filters Button */}
+            {totalActiveFilterCount > 0 && (
               <button
-                key={p}
                 type="button"
-                onClick={() => {
-                  setSelectedProjectFilters(prev =>
-                    isSel ? prev.filter(x => x !== p) : [...prev, p]
-                  );
-                }}
-                className={`px-2 py-0.5 rounded-md text-[11px] font-medium transition-all shrink-0 cursor-pointer flex items-center gap-1 ${
-                  isSel ? "bg-blue-600 text-white font-bold" : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
-                }`}
+                onClick={handleClearAllFilters}
+                className="h-9 px-3 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shrink-0 shadow-2xs"
+                title="Reset all active filters"
               >
-                {isSel && <Check className="h-2.5 w-2.5" />}
-                <span>{p}</span>
+                <X className="h-3.5 w-3.5" />
+                <span>Reset Filters ({totalActiveFilterCount})</span>
               </button>
-            );
-          })}
+            )}
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0 text-muted-foreground text-xs">
+            <span>Showing <strong className="text-foreground">{filteredConsultants.length}</strong> of {consultants.length} partners</span>
+          </div>
         </div>
+
+        {/* 🏷️ Active Selected Filter Badges */}
+        {totalActiveFilterCount > 0 && (
+          <div className="pt-2 border-t border-border flex flex-wrap items-center gap-1.5 text-xs animate-in fade-in duration-100">
+            <span className="text-[10px] font-bold uppercase text-muted-foreground mr-1 shrink-0">
+              Active Filters:
+            </span>
+
+            {/* Discipline Badges */}
+            {selectedDisciplineFilters.map(d => (
+              <span
+                key={`disc-${d}`}
+                className="px-2 py-0.5 rounded-lg bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/30 text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
+              >
+                <SlidersHorizontal className="h-2.5 w-2.5" />
+                <span>{d}</span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedDisciplineFilters(prev => prev.filter(x => x !== d))}
+                  className="hover:text-rose-500 cursor-pointer p-0.5"
+                >
+                  <X className="h-2.5 w-2.5" />
+                </button>
+              </span>
+            ))}
+
+            {/* Project Badges */}
+            {selectedProjectFilters.map(p => (
+              <span
+                key={`proj-${p}`}
+                className="px-2 py-0.5 rounded-lg bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/30 text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
+              >
+                <Building className="h-2.5 w-2.5" />
+                <span>{p}</span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedProjectFilters(prev => prev.filter(x => x !== p))}
+                  className="hover:text-rose-500 cursor-pointer p-0.5"
+                >
+                  <X className="h-2.5 w-2.5" />
+                </button>
+              </span>
+            ))}
+
+            {/* Onboarding Badges */}
+            {selectedOnboardingFilters.map(f => (
+              <span
+                key={`onb-${f}`}
+                className="px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
+              >
+                <CheckCircle2 className="h-2.5 w-2.5" />
+                <span>{f === "ONBOARD" ? "Onboard" : "Not Onboard"}</span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedOnboardingFilters(prev => prev.filter(x => x !== f))}
+                  className="hover:text-rose-500 cursor-pointer p-0.5"
+                >
+                  <X className="h-2.5 w-2.5" />
+                </button>
+              </span>
+            ))}
+
+            <button
+              type="button"
+              onClick={handleClearAllFilters}
+              className="text-[11px] text-muted-foreground hover:text-rose-500 underline ml-1 cursor-pointer font-medium"
+            >
+              Clear all
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Empty State */}

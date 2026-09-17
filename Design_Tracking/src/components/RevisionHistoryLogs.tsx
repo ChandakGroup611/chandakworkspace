@@ -15,8 +15,10 @@ import {
   Sparkles,
   Layers,
   SlidersHorizontal,
-  CheckCircle2
+  CheckCircle2,
+  X
 } from "lucide-react";
+import { DesignMultiSelectDropdown } from "./DesignMultiSelectDropdown";
 
 interface RevisionHistoryProps {
   drawings: DrawingItem[];
@@ -41,8 +43,8 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
   drawings
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [disciplineFilter, setDisciplineFilter] = useState("ALL");
-  const [projectFilter, setProjectFilter] = useState("ALL");
+  const [selectedDisciplines, setSelectedDisciplines] = useState<string[]>([]);
+  const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
 
   const disciplines = ["Architectural", "Structural", "MEP", "Landscape", "Interior"];
   const projects = useMemo(() => Array.from(new Set(drawings.map(d => d.project))), [drawings]);
@@ -102,12 +104,31 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
     return logs;
   }, [drawings]);
 
+  const disciplineFilterOptions = useMemo(() => {
+    return disciplines.map(d => ({
+      value: d,
+      label: d,
+      count: revisionLogs.filter(l => l.discipline === d).length
+    }));
+  }, [disciplines, revisionLogs]);
+
+  const projectFilterOptions = useMemo(() => {
+    return projects.map(p => ({
+      value: p,
+      label: p,
+      count: revisionLogs.filter(l => l.project === p).length
+    }));
+  }, [projects, revisionLogs]);
+
   const filteredLogs = useMemo(() => {
     return revisionLogs.filter(l => {
-      if (disciplineFilter !== "ALL" && l.discipline !== disciplineFilter) return false;
-      if (projectFilter !== "ALL" && l.project !== projectFilter) return false;
+      const matchesDiscipline = selectedDisciplines.length === 0 || selectedDisciplines.includes(l.discipline);
+      const matchesProject = selectedProjects.length === 0 || selectedProjects.includes(l.project);
+
+      if (!matchesDiscipline || !matchesProject) return false;
+
       if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
+        const q = searchQuery.toLowerCase().trim();
         return (
           l.drawingCode.toLowerCase().includes(q) ||
           l.drawingTitle.toLowerCase().includes(q) ||
@@ -118,7 +139,7 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
       }
       return true;
     });
-  }, [revisionLogs, disciplineFilter, projectFilter, searchQuery]);
+  }, [revisionLogs, selectedDisciplines, selectedProjects, searchQuery]);
 
   const handleExportCsv = () => {
     const headers = ["Drawing Code", "Title", "Project", "Discipline", "Revision", "Prior Revision", "Change Description", "Consultant", "Submission Date", "GFC Date"];
@@ -147,9 +168,9 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
 
   return (
     <div className="space-y-4 animate-in fade-in duration-150">
-      {/* Header Strip */}
+      {/* Header Strip & Unified Controls */}
       <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-xs space-y-3.5">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="h-9 w-9 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-500/20 shrink-0">
               <RotateCcw className="h-4 w-4" />
@@ -164,16 +185,50 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
             <div className="relative flex-1 sm:w-56">
               <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
+                placeholder="Search revision logs..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-surface text-foreground focus:outline-none focus:border-blue-500"
+                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-surface text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-blue-500"
               />
             </div>
+
+            <DesignMultiSelectDropdown
+              label="Discipline"
+              options={disciplineFilterOptions}
+              selectedValues={selectedDisciplines}
+              onChange={setSelectedDisciplines}
+              colorTheme="emerald"
+              placeholder="All Disciplines"
+            />
+
+            <DesignMultiSelectDropdown
+              label="Project"
+              options={projectFilterOptions}
+              selectedValues={selectedProjects}
+              onChange={setSelectedProjects}
+              colorTheme="blue"
+              placeholder="All Projects"
+            />
+
+            {(selectedDisciplines.length > 0 || selectedProjects.length > 0 || searchQuery) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedDisciplines([]);
+                  setSelectedProjects([]);
+                  setSearchQuery("");
+                }}
+                className="h-8 px-2.5 rounded-xl border border-dashed border-rose-500/40 hover:border-rose-500/70 bg-rose-500/5 hover:bg-rose-500/10 text-rose-600 dark:text-rose-400 text-xs font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
+              >
+                <X className="h-3 w-3" />
+                <span>Reset</span>
+              </button>
+            )}
 
             <button
               type="button"
@@ -186,47 +241,55 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
           </div>
         </div>
 
-        {/* Filter Pills */}
-        <div className="pt-2 border-t border-border flex flex-wrap items-center justify-between gap-2 text-xs">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[11px] font-bold text-muted-foreground mr-1">Discipline:</span>
+        {/* Active Filter Chips Bar */}
+        {(selectedDisciplines.length > 0 || selectedProjects.length > 0) && (
+          <div className="pt-2 border-t border-border flex flex-wrap items-center gap-1.5 text-xs">
+            <span className="text-[11px] font-bold text-muted-foreground mr-1">Active:</span>
+
+            {selectedDisciplines.map(disc => (
+              <span
+                key={disc}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 text-[11px] font-medium"
+              >
+                <span>Discipline: {disc}</span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedDisciplines(selectedDisciplines.filter(x => x !== disc))}
+                  className="hover:text-emerald-900 dark:hover:text-emerald-100"
+                >
+                  <X className="h-2.5 w-2.5" />
+                </button>
+              </span>
+            ))}
+
+            {selectedProjects.map(proj => (
+              <span
+                key={proj}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20 text-[11px] font-medium"
+              >
+                <span>Project: {proj}</span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedProjects(selectedProjects.filter(x => x !== proj))}
+                  className="hover:text-blue-900 dark:hover:text-blue-100"
+                >
+                  <X className="h-2.5 w-2.5" />
+                </button>
+              </span>
+            ))}
+
             <button
               type="button"
-              onClick={() => setDisciplineFilter("ALL")}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                disciplineFilter === "ALL" ? "bg-blue-600 text-white shadow-2xs" : "text-muted-foreground hover:text-foreground"
-              }`}
+              onClick={() => {
+                setSelectedDisciplines([]);
+                setSelectedProjects([]);
+              }}
+              className="text-[11px] font-semibold text-muted-foreground hover:text-foreground ml-1 underline cursor-pointer"
             >
-              All
+              Clear all
             </button>
-            {disciplines.map(d => (
-              <button
-                key={d}
-                type="button"
-                onClick={() => setDisciplineFilter(d)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-all ${
-                  disciplineFilter === d ? "bg-blue-600 text-white shadow-2xs" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {d}
-              </button>
-            ))}
           </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-bold text-muted-foreground">Project:</span>
-            <select
-              value={projectFilter}
-              onChange={e => setProjectFilter(e.target.value)}
-              className="h-7 px-2 rounded-lg border border-border bg-surface text-xs font-semibold text-foreground focus:outline-none focus:border-blue-500"
-            >
-              <option value="ALL">All Projects</option>
-              {projects.map(p => (
-                <option key={p} value={p}>{p}</option>
-              ))}
-            </select>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Revision Table */}

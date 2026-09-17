@@ -24,12 +24,14 @@ import {
 } from "lucide-react";
 import { DesignMasterStore } from "../services/designMasterStore";
 import { RfiItem, RfiPriority, RfiStatus, DesignDiscipline } from "../types";
+import { DesignMultiSelectDropdown } from "./DesignMultiSelectDropdown";
 
 export function DesignRfiTracker() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("ALL");
-  const [disciplineFilter, setDisciplineFilter] = useState<string>("ALL");
-  const [priorityFilter, setPriorityFilter] = useState<string>("ALL");
+  const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
+  const [selectedDisciplines, setSelectedDisciplines] = useState<string[]>([]);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [selectedPriorities, setSelectedPriorities] = useState<string[]>([]);
   
   // Modals
   const [isRaiseModalOpen, setIsRaiseModalOpen] = useState(false);
@@ -60,24 +62,55 @@ export function DesignRfiTracker() {
   const rfis = DesignMasterStore.getRfis();
   const consultants = DesignMasterStore.getConsultants();
 
+  const projectFilterOptions = useMemo(() => {
+    return projects.map(p => ({
+      value: p.id,
+      label: p.name,
+      count: rfis.filter(r => r.projectId === p.id).length
+    }));
+  }, [projects, rfis]);
+
+  const disciplineFilterOptions = useMemo(() => [
+    { value: "Architectural", label: "Architectural", count: rfis.filter(r => r.discipline === "Architectural").length },
+    { value: "Structural", label: "Structural", count: rfis.filter(r => r.discipline === "Structural").length },
+    { value: "MEP", label: "MEP Services", count: rfis.filter(r => r.discipline === "MEP").length },
+    { value: "Landscape", label: "Landscape", count: rfis.filter(r => r.discipline === "Landscape").length },
+    { value: "Interior", label: "Interior Design", count: rfis.filter(r => r.discipline === "Interior").length }
+  ], [rfis]);
+
+  const statusFilterOptions = useMemo(() => [
+    { value: "OPEN", label: "Open / Awaiting Response", count: rfis.filter(r => r.status === "OPEN").length },
+    { value: "UNDER_REVIEW", label: "Under Review / Escalated", count: rfis.filter(r => r.status === "UNDER_REVIEW").length },
+    { value: "CLARIFIED", label: "Clarified / Resolved", count: rfis.filter(r => r.status === "CLARIFIED").length },
+    { value: "CLOSED", label: "Closed & Signed-off", count: rfis.filter(r => r.status === "CLOSED").length }
+  ], [rfis]);
+
+  const priorityFilterOptions = useMemo(() => [
+    { value: "URGENT", label: "Urgent (24-48h SLA)", count: rfis.filter(r => r.priority === "URGENT").length },
+    { value: "HIGH", label: "High (3-5 Days SLA)", count: rfis.filter(r => r.priority === "HIGH").length },
+    { value: "NORMAL", label: "Normal (7 Days SLA)", count: rfis.filter(r => r.priority === "NORMAL").length }
+  ], [rfis]);
+
   // Filtered RFIs
   const filteredRfis = useMemo(() => {
     return rfis.filter(r => {
-      const q = searchQuery.toLowerCase();
+      const q = searchQuery.toLowerCase().trim();
       const matchesSearch = 
+        !q ||
         r.rfiNumber.toLowerCase().includes(q) ||
         r.projectName.toLowerCase().includes(q) ||
         r.subject.toLowerCase().includes(q) ||
         r.assignedConsultant.toLowerCase().includes(q) ||
         (r.drawingCode && r.drawingCode.toLowerCase().includes(q));
 
-      const matchesStatus = statusFilter === "ALL" || r.status === statusFilter;
-      const matchesDiscipline = disciplineFilter === "ALL" || r.discipline === disciplineFilter;
-      const matchesPriority = priorityFilter === "ALL" || r.priority === priorityFilter;
+      const matchesProject = selectedProjects.length === 0 || selectedProjects.includes(r.projectId);
+      const matchesDiscipline = selectedDisciplines.length === 0 || selectedDisciplines.includes(r.discipline);
+      const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(r.status);
+      const matchesPriority = selectedPriorities.length === 0 || selectedPriorities.includes(r.priority);
 
-      return matchesSearch && matchesStatus && matchesDiscipline && matchesPriority;
+      return matchesSearch && matchesProject && matchesDiscipline && matchesStatus && matchesPriority;
     });
-  }, [rfis, searchQuery, statusFilter, disciplineFilter, priorityFilter]);
+  }, [rfis, searchQuery, selectedProjects, selectedDisciplines, selectedStatuses, selectedPriorities]);
 
   // Handle Raise RFI
   const handleRaiseRfi = (e: React.FormEvent) => {
@@ -241,37 +274,168 @@ export function DesignRfiTracker() {
         </div>
       </div>
 
-      {/* Search & Filter Bar */}
-      <div className="p-4 rounded-2xl bg-card border border-border space-y-3">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="relative w-full sm:w-72">
+      {/* Unified Multi-Select Filter and Search Bar */}
+      <div className="p-4 rounded-2xl bg-card border border-border space-y-3 shadow-xs">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
+          <div className="relative w-full lg:w-72 shrink-0">
             <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             <input
               type="text"
+              placeholder="Search RFI #, subject, consultant..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-purple-500"
+              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-purple-500"
             />
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto custom-scrollbar pb-1">
-            <span className="text-[11px] font-semibold text-muted-foreground shrink-0">Status:</span>
-            {["ALL", "OPEN", "UNDER_REVIEW", "CLARIFIED"].map(st => (
+          <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+            <DesignMultiSelectDropdown
+              label="Project"
+              options={projectFilterOptions}
+              selectedValues={selectedProjects}
+              onChange={setSelectedProjects}
+              colorTheme="blue"
+              placeholder="All Projects"
+            />
+
+            <DesignMultiSelectDropdown
+              label="Discipline"
+              options={disciplineFilterOptions}
+              selectedValues={selectedDisciplines}
+              onChange={setSelectedDisciplines}
+              colorTheme="emerald"
+              placeholder="All Disciplines"
+            />
+
+            <DesignMultiSelectDropdown
+              label="Status"
+              options={statusFilterOptions}
+              selectedValues={selectedStatuses}
+              onChange={setSelectedStatuses}
+              colorTheme="purple"
+              placeholder="All Status"
+            />
+
+            <DesignMultiSelectDropdown
+              label="Priority"
+              options={priorityFilterOptions}
+              selectedValues={selectedPriorities}
+              onChange={setSelectedPriorities}
+              colorTheme="rose"
+              placeholder="All Priorities"
+            />
+
+            {(selectedProjects.length > 0 || selectedDisciplines.length > 0 || selectedStatuses.length > 0 || selectedPriorities.length > 0 || searchQuery) && (
               <button
-                key={st}
                 type="button"
-                onClick={() => setStatusFilter(st)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer shrink-0 whitespace-nowrap ${
-                  statusFilter === st
-                    ? "bg-purple-600 text-white"
-                    : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
-                }`}
+                onClick={() => {
+                  setSelectedProjects([]);
+                  setSelectedDisciplines([]);
+                  setSelectedStatuses([]);
+                  setSelectedPriorities([]);
+                  setSearchQuery("");
+                }}
+                className="h-8 px-2.5 rounded-xl border border-dashed border-rose-500/40 hover:border-rose-500/70 bg-rose-500/5 hover:bg-rose-500/10 text-rose-600 dark:text-rose-400 text-xs font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
               >
-                {st === "ALL" ? "All Status" : st.replace(/_/g, " ")}
+                <X className="h-3 w-3" />
+                <span>Reset</span>
               </button>
-            ))}
+            )}
           </div>
         </div>
+
+        {/* Active Filter Chips Bar */}
+        {(selectedProjects.length > 0 || selectedDisciplines.length > 0 || selectedStatuses.length > 0 || selectedPriorities.length > 0) && (
+          <div className="pt-2 border-t border-border flex flex-wrap items-center gap-1.5 text-xs">
+            <span className="text-[11px] font-bold text-muted-foreground mr-1">Active:</span>
+
+            {selectedProjects.map(id => {
+              const p = projects.find(proj => proj.id === id);
+              return (
+                <span
+                  key={id}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20 text-[11px] font-medium"
+                >
+                  <span>Project: {p?.name || id}</span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedProjects(selectedProjects.filter(x => x !== id))}
+                    className="hover:text-blue-900 dark:hover:text-blue-100"
+                  >
+                    <X className="h-2.5 w-2.5" />
+                  </button>
+                </span>
+              );
+            })}
+
+            {selectedDisciplines.map(disc => (
+              <span
+                key={disc}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 text-[11px] font-medium"
+              >
+                <span>Discipline: {disc}</span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedDisciplines(selectedDisciplines.filter(x => x !== disc))}
+                  className="hover:text-emerald-900 dark:hover:text-emerald-100"
+                >
+                  <X className="h-2.5 w-2.5" />
+                </button>
+              </span>
+            ))}
+
+            {selectedStatuses.map(st => {
+              const opt = statusFilterOptions.find(o => o.value === st);
+              return (
+                <span
+                  key={st}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20 text-[11px] font-medium"
+                >
+                  <span>Status: {opt?.label || st}</span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedStatuses(selectedStatuses.filter(x => x !== st))}
+                    className="hover:text-purple-900 dark:hover:text-purple-100"
+                  >
+                    <X className="h-2.5 w-2.5" />
+                  </button>
+                </span>
+              );
+            })}
+
+            {selectedPriorities.map(prio => {
+              const opt = priorityFilterOptions.find(o => o.value === prio);
+              return (
+                <span
+                  key={prio}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/20 text-[11px] font-medium"
+                >
+                  <span>Priority: {opt?.label || prio}</span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPriorities(selectedPriorities.filter(x => x !== prio))}
+                    className="hover:text-rose-900 dark:hover:text-rose-100"
+                  >
+                    <X className="h-2.5 w-2.5" />
+                  </button>
+                </span>
+              );
+            })}
+
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedProjects([]);
+                setSelectedDisciplines([]);
+                setSelectedStatuses([]);
+                setSelectedPriorities([]);
+              }}
+              className="text-[11px] font-semibold text-muted-foreground hover:text-foreground ml-1 underline cursor-pointer"
+            >
+              Clear all
+            </button>
+          </div>
+        )}
       </div>
 
       {/* RFI Cards List */}

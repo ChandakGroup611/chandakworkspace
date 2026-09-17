@@ -24,11 +24,12 @@ import {
 } from "lucide-react";
 import { DesignMasterStore } from "../services/designMasterStore";
 import { StatutoryAuthorityMaster } from "../types/masterTypes";
+import { DesignMultiSelectDropdown, DropdownOption } from "./DesignMultiSelectDropdown";
 
 export const LiaisoningTracker: React.FC = () => {
   const [storeState, setStoreState] = useState(() => DesignMasterStore.getState());
-  const [selectedProject, setSelectedProject] = useState<string>("ALL");
-  const [onboardFilter, setOnboardFilter] = useState<string>("ALL");
+  const [selectedProjectFilters, setSelectedProjectFilters] = useState<string[]>([]);
+  const [selectedOnboardingFilters, setSelectedOnboardingFilters] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [viewMode, setViewMode] = useState<"MATRIX" | "CARDS">("MATRIX");
   const [customRemark, setCustomRemark] = useState<string>("");
@@ -58,7 +59,7 @@ export const LiaisoningTracker: React.FC = () => {
     for (const tower of towers) {
       const proj = projects.find(p => p.id === tower.projectId);
       if (!proj) continue;
-      if (selectedProject !== "ALL" && proj.name !== selectedProject) continue;
+      if (selectedProjectFilters.length > 0 && !selectedProjectFilters.includes(proj.name)) continue;
       list.push({
         projectId: proj.id,
         projectName: proj.name,
@@ -67,7 +68,7 @@ export const LiaisoningTracker: React.FC = () => {
       });
     }
     return list;
-  }, [projects, towers, selectedProject]);
+  }, [projects, towers, selectedProjectFilters]);
 
   const uniqueProjectNames = useMemo(() => {
     return projects.map(p => p.name);
@@ -91,19 +92,21 @@ export const LiaisoningTracker: React.FC = () => {
         if (!matches) return false;
       }
 
-      if (onboardFilter !== "ALL") {
+      if (selectedOnboardingFilters.length > 0) {
         const hasMatch = dynamicColumns.some(col => {
           const val = getCellStatus(item.id, col.projectId, col.towerId).toLowerCase();
-          if (onboardFilter === "ONBOARD" && (val.includes("onboard") || val.includes("fixed") || val.includes("cleared")) && !val.includes("not onboard")) return true;
-          if (onboardFilter === "NOT_ONBOARD" && val.includes("not onboard")) return true;
-          return false;
+          return selectedOnboardingFilters.some(f => {
+            if (f === "ONBOARD" && (val.includes("onboard") || val.includes("fixed") || val.includes("cleared")) && !val.includes("not onboard")) return true;
+            if (f === "NOT_ONBOARD" && val.includes("not onboard")) return true;
+            return false;
+          });
         });
         if (!hasMatch) return false;
       }
 
       return true;
     });
-  }, [authorities, searchQuery, onboardFilter, dynamicColumns, statutoryClearances]);
+  }, [authorities, searchQuery, selectedOnboardingFilters, dynamicColumns, statutoryClearances]);
 
   // Overall compliance stats
   const complianceStats = useMemo(() => {
@@ -124,6 +127,48 @@ export const LiaisoningTracker: React.FC = () => {
     const rate = totalCells > 0 ? Math.round((onboardCount / totalCells) * 100) : 0;
     return { onboardCount, notOnboardCount, totalCells, rate };
   }, [filteredAuthorities, dynamicColumns, statutoryClearances]);
+
+  // Dropdown options
+  const projectOptions = useMemo<DropdownOption[]>(() => {
+    return projects.map(p => {
+      const towerCount = towers.filter(t => t.projectId === p.id).length;
+      return {
+        value: p.name,
+        label: p.name,
+        count: towerCount,
+        subtitle: `${towerCount} wing${towerCount === 1 ? "" : "s"}`
+      };
+    });
+  }, [projects, towers]);
+
+  const onboardingOptions = useMemo<DropdownOption[]>(() => {
+    return [
+      {
+        value: "ONBOARD",
+        label: "Onboarded / Cleared",
+        count: complianceStats.onboardCount,
+        colorDot: "#10b981",
+        subtitle: "Clearances in place"
+      },
+      {
+        value: "NOT_ONBOARD",
+        label: "Pending Onboarding",
+        count: complianceStats.notOnboardCount,
+        colorDot: "#f43f5e",
+        subtitle: "Action required with authorities"
+      }
+    ];
+  }, [complianceStats.onboardCount, complianceStats.notOnboardCount]);
+
+  const totalActiveFilterCount =
+    selectedProjectFilters.length +
+    selectedOnboardingFilters.length;
+
+  const handleClearAllFilters = () => {
+    setSelectedProjectFilters([]);
+    setSelectedOnboardingFilters([]);
+    setSearchQuery("");
+  };
 
   const renderBadge = (rawVal: string) => {
     const val = (rawVal || "NA").trim();
@@ -193,7 +238,7 @@ export const LiaisoningTracker: React.FC = () => {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Chandak_Statutory_Liaisoning_${selectedProject}_${new Date().toISOString().split("T")[0]}.csv`);
+    link.setAttribute("download", `Chandak_Statutory_Liaisoning_${new Date().toISOString().split("T")[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -212,7 +257,7 @@ export const LiaisoningTracker: React.FC = () => {
   return (
     <div className="space-y-4 animate-in fade-in duration-150">
       {/* Control Header Ribbon */}
-      <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-xs space-y-4">
+      <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-xs space-y-3.5">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="h-9 w-9 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center border border-purple-500/20 shrink-0">
@@ -253,18 +298,6 @@ export const LiaisoningTracker: React.FC = () => {
               </button>
             </div>
 
-            {/* Project Filter */}
-            <select
-              value={selectedProject}
-              onChange={e => setSelectedProject(e.target.value)}
-              className="h-9 px-3 rounded-xl border border-border bg-surface text-xs font-bold text-foreground focus:outline-none focus:border-purple-500 cursor-pointer shadow-2xs"
-            >
-              <option value="ALL">🏢 All Projects ({dynamicColumns.length} Wings)</option>
-              {uniqueProjectNames.map(p => (
-                <option key={p} value={p}>{p}</option>
-              ))}
-            </select>
-
             {/* Search */}
             <div className="relative flex-1 sm:w-56">
               <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -272,6 +305,7 @@ export const LiaisoningTracker: React.FC = () => {
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search authority..."
                 className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-purple-500"
               />
             </div>
@@ -288,39 +322,46 @@ export const LiaisoningTracker: React.FC = () => {
           </div>
         </div>
 
-        {/* Live Compliance Health Bar */}
+        {/* Multi-Selection Dropdowns Filter Row */}
         <div className="pt-3 border-t border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1 max-w-full">
-            <span className="text-[11px] font-bold text-muted-foreground shrink-0 whitespace-nowrap">Filter Onboarding:</span>
-            <button
-              type="button"
-              onClick={() => setOnboardFilter("ALL")}
-              className={`px-2.5 py-0.5 rounded-md font-semibold cursor-pointer text-[11px] shrink-0 whitespace-nowrap ${
-                onboardFilter === "ALL" ? "bg-foreground text-background font-bold" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              All ({filteredAuthorities.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setOnboardFilter("ONBOARD")}
-              className={`px-2.5 py-0.5 rounded-md font-semibold cursor-pointer text-[11px] flex items-center gap-1 shrink-0 whitespace-nowrap ${
-                onboardFilter === "ONBOARD" ? "bg-emerald-500 text-white font-bold" : "text-emerald-600 dark:text-emerald-400 hover:underline"
-              }`}
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              <span>Onboarded ({complianceStats.onboardCount})</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setOnboardFilter("NOT_ONBOARD")}
-              className={`px-2.5 py-0.5 rounded-md font-semibold cursor-pointer text-[11px] flex items-center gap-1 shrink-0 whitespace-nowrap ${
-                onboardFilter === "NOT_ONBOARD" ? "bg-rose-500 text-white font-bold" : "text-rose-600 dark:text-rose-400 hover:underline"
-              }`}
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
-              <span>Pending Onboard ({complianceStats.notOnboardCount})</span>
-            </button>
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            {/* 1. Projects Dropdown */}
+            <DesignMultiSelectDropdown
+              label="Projects"
+              icon={<Building className="h-3.5 w-3.5" />}
+              options={projectOptions}
+              selectedValues={selectedProjectFilters}
+              onChange={setSelectedProjectFilters}
+              colorTheme="blue"
+              placeholder={`All Projects (${projects.length})`}
+              searchPlaceholder="Search project name..."
+            />
+
+            {/* 2. Onboarding Status Dropdown */}
+            <DesignMultiSelectDropdown
+              label="Onboarding"
+              icon={<CheckCircle2 className="h-3.5 w-3.5" />}
+              options={onboardingOptions}
+              selectedValues={selectedOnboardingFilters}
+              onChange={setSelectedOnboardingFilters}
+              colorTheme="purple"
+              placeholder="All Statuses"
+              searchPlaceholder="Filter onboarding..."
+              showSearch={false}
+            />
+
+            {/* Clear All Filters Button */}
+            {totalActiveFilterCount > 0 && (
+              <button
+                type="button"
+                onClick={handleClearAllFilters}
+                className="h-9 px-3 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shrink-0 shadow-2xs"
+                title="Reset all active filters"
+              >
+                <X className="h-3.5 w-3.5" />
+                <span>Reset Filters ({totalActiveFilterCount})</span>
+              </button>
+            )}
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
@@ -334,6 +375,59 @@ export const LiaisoningTracker: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* 🏷️ Active Selected Filter Badges */}
+        {totalActiveFilterCount > 0 && (
+          <div className="pt-2 border-t border-border flex flex-wrap items-center gap-1.5 text-xs animate-in fade-in duration-100">
+            <span className="text-[10px] font-bold uppercase text-muted-foreground mr-1 shrink-0">
+              Active Filters:
+            </span>
+
+            {/* Project Badges */}
+            {selectedProjectFilters.map(p => (
+              <span
+                key={`proj-${p}`}
+                className="px-2 py-0.5 rounded-lg bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/30 text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
+              >
+                <Building className="h-2.5 w-2.5" />
+                <span>{p}</span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedProjectFilters(prev => prev.filter(x => x !== p))}
+                  className="hover:text-rose-500 cursor-pointer p-0.5"
+                >
+                  <X className="h-2.5 w-2.5" />
+                </button>
+              </span>
+            ))}
+
+            {/* Onboarding Badges */}
+            {selectedOnboardingFilters.map(f => (
+              <span
+                key={`onb-${f}`}
+                className="px-2 py-0.5 rounded-lg bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/30 text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
+              >
+                <CheckCircle2 className="h-2.5 w-2.5" />
+                <span>{f === "ONBOARD" ? "Onboarded / Cleared" : "Pending Onboarding"}</span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedOnboardingFilters(prev => prev.filter(x => x !== f))}
+                  className="hover:text-rose-500 cursor-pointer p-0.5"
+                >
+                  <X className="h-2.5 w-2.5" />
+                </button>
+              </span>
+            ))}
+
+            <button
+              type="button"
+              onClick={handleClearAllFilters}
+              className="text-[11px] text-muted-foreground hover:text-rose-500 underline ml-1 cursor-pointer font-medium"
+            >
+              Clear all
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Empty State */}

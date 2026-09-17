@@ -6,6 +6,7 @@ import { exportTenderMatrixToExcel } from "../services/excelExportService";
 import { WorkPackageMaster, TowerMaster, ProjectMaster, PackageStatusEntry, MatrixAuditLog } from "../types/masterTypes";
 import { recordMatrixAuditAction } from "@/lib/actions/designTracking";
 import { DesignRbacModal } from "./DesignRbacModal";
+import { DesignMultiSelectDropdown, DropdownOption } from "./DesignMultiSelectDropdown";
 import { 
   Search, 
   Download, 
@@ -32,7 +33,8 @@ import {
   History,
   Tag,
   Send,
-  AlertCircle
+  AlertCircle,
+  Filter
 } from "lucide-react";
 
 interface MatrixColumn {
@@ -47,11 +49,11 @@ interface MatrixColumn {
 export const TenderDesignMatrix: React.FC = () => {
   const [storeState, setStoreState] = useState<MasterStoreState>(DesignMasterStore.getState());
   
-  // Multi-Selection Filter Dimensions
+  // Multi-Selection Dropdown Filter Dimensions
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
   const [selectedDisciplines, setSelectedDisciplines] = useState<string[]>([]);
   const [selectedConsultants, setSelectedConsultants] = useState<string[]>([]);
-  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isExportingExcel, setIsExportingExcel] = useState<boolean>(false);
 
@@ -147,23 +149,25 @@ export const TenderDesignMatrix: React.FC = () => {
         if (!hasMatchingConsultant) return false;
       }
 
-      // 4. Status Filter
-      if (statusFilter !== "ALL") {
+      // 4. Status Filter (Multi-select)
+      if (selectedStatuses.length > 0) {
         const hasMatchingStatus = visibleColumns.some(col => {
           const entry = storeState.packageStatuses[`${col.projectId}__${col.towerId}__${pkg.id}`];
           const val = (entry ? (entry.status || entry.targetDate) : "NA").toLowerCase();
-          if (statusFilter === "RECEIVED" && val.includes("received")) return true;
-          if (statusFilter === "PENDING" && (val.includes("pending") || val.includes("not onboard"))) return true;
-          if (statusFilter === "IN_PROGRESS" && (val.includes("progress") || val.includes("onboard"))) return true;
-          if (statusFilter === "TARGET_DATE" && !val.includes("received") && !val.includes("pending") && !val.includes("na") && val.trim().length > 0 && val !== "-") return true;
-          return false;
+          return selectedStatuses.some(st => {
+            if (st === "RECEIVED" && val.includes("received")) return true;
+            if (st === "PENDING" && (val.includes("pending") || val.includes("not onboard"))) return true;
+            if (st === "IN_PROGRESS" && (val.includes("progress") || val.includes("onboard") || val.includes("track"))) return true;
+            if (st === "TARGET_DATE" && !val.includes("received") && !val.includes("pending") && !val.includes("na") && val.trim().length > 0 && val !== "-") return true;
+            return false;
+          });
         });
         if (!hasMatchingStatus) return false;
       }
 
       return true;
     });
-  }, [storeState.packages, storeState.packageStatuses, selectedDisciplines, searchQuery, selectedConsultants, statusFilter, visibleColumns]);
+  }, [storeState.packages, storeState.packageStatuses, selectedDisciplines, searchQuery, selectedConsultants, selectedStatuses, visibleColumns]);
 
   // Statistical calculations across currently visible matrix
   const matrixStats = useMemo(() => {
@@ -428,10 +432,93 @@ export const TenderDesignMatrix: React.FC = () => {
     );
   }, [storeState.auditLogs, auditSearchQuery]);
 
+  // Multi-select Dropdown Options
+  const projectOptions = useMemo<DropdownOption[]>(() => {
+    return storeState.projects.map(p => {
+      const towerCount = storeState.towers.filter(t => t.projectId === p.id).length;
+      return {
+        value: p.id,
+        label: p.name,
+        count: towerCount,
+        subtitle: `${towerCount} tower${towerCount === 1 ? "" : "s"}`
+      };
+    });
+  }, [storeState.projects, storeState.towers]);
+
+  const disciplineOptions = useMemo<DropdownOption[]>(() => {
+    return categories.map(cat => {
+      const pkgCount = storeState.packages.filter(p => p.disciplineName === cat).length;
+      return {
+        value: cat,
+        label: cat,
+        count: pkgCount,
+        subtitle: `${pkgCount} package${pkgCount === 1 ? "" : "s"}`
+      };
+    });
+  }, [categories, storeState.packages]);
+
+  const consultantOptions = useMemo<DropdownOption[]>(() => {
+    return storeState.consultants.map(c => {
+      return {
+        value: c.name,
+        label: c.name,
+        badge: c.onboardingStatus,
+        subtitle: c.category
+      };
+    });
+  }, [storeState.consultants]);
+
+  const statusOptions = useMemo<DropdownOption[]>(() => {
+    return [
+      {
+        value: "RECEIVED",
+        label: "Received",
+        count: matrixStats.received,
+        colorDot: "#10b981",
+        subtitle: "Drawings approved & received"
+      },
+      {
+        value: "IN_PROGRESS",
+        label: "In Progress / Onboard",
+        count: matrixStats.inProgress,
+        colorDot: "#f59e0b",
+        subtitle: "Drawings in production"
+      },
+      {
+        value: "PENDING",
+        label: "Pending / Not Onboard",
+        count: matrixStats.pending,
+        colorDot: "#f43f5e",
+        subtitle: "Consultant / drawing pending"
+      },
+      {
+        value: "TARGET_DATE",
+        label: "Target Dates",
+        count: matrixStats.targetDates,
+        colorDot: "#0ea5e9",
+        subtitle: "Scheduled target timeline"
+      }
+    ];
+  }, [matrixStats]);
+
+  const totalActiveFilterCount =
+    selectedProjects.length +
+    selectedDisciplines.length +
+    selectedConsultants.length +
+    selectedStatuses.length;
+
+  const handleClearAllFilters = () => {
+    setSelectedProjects([]);
+    setSelectedDisciplines([]);
+    setSelectedConsultants([]);
+    setSelectedStatuses([]);
+    setSearchQuery("");
+  };
+
   return (
     <div className="space-y-4">
       {/* 🌟 Top Filter & Control Ribbon */}
-      <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-xs space-y-4">
+      <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-xs space-y-3.5">
         {/* Row 1: Header, Search, Actions */}
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -443,7 +530,7 @@ export const TenderDesignMatrix: React.FC = () => {
                 Tender Design Matrix
               </h2>
               <p className="text-xs text-muted-foreground">
-                Mandatory Planned & Actual dates, automated mail audit trails & multi-dimension filtering
+                Mandatory Planned & Actual dates, automated mail audit trails & multi-dimension dropdown filtering
               </p>
             </div>
           </div>
@@ -525,189 +612,73 @@ export const TenderDesignMatrix: React.FC = () => {
           </div>
         </div>
 
-        {/* 🎯 Multi-Selection Dimensions Filter Ribbon */}
-        <div className="space-y-2 pt-2 border-t border-border text-xs">
-          {/* Dimension 1: Project-Wise Multi-Selection */}
-          <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1">
-            <span className="text-[11px] font-bold text-muted-foreground mr-1 shrink-0 flex items-center gap-1">
-              <Building className="h-3 w-3 text-blue-500" />
-              <span>Projects:</span>
-            </span>
-            <button
-              type="button"
-              onClick={() => setSelectedProjects([])}
-              className={`px-2.5 py-0.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                selectedProjects.length === 0
-                  ? "bg-blue-600 text-white shadow-2xs"
-                  : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              All ({storeState.projects.length})
-            </button>
-            {storeState.projects.map(p => {
-              const isSel = selectedProjects.includes(p.id);
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => {
-                    setSelectedProjects(prev => 
-                      isSel ? prev.filter(id => id !== p.id) : [...prev, p.id]
-                    );
-                  }}
-                  className={`px-2.5 py-0.5 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer flex items-center gap-1 ${
-                    isSel
-                      ? "bg-blue-600 text-white shadow-2xs font-bold"
-                      : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {isSel && <Check className="h-2.5 w-2.5" />}
-                  <span>{p.name}</span>
-                </button>
-              );
-            })}
+        {/* 🎯 Multi-Selection Dropdowns Filter Row */}
+        <div className="pt-3 border-t border-border flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+            {/* 1. Projects Dropdown */}
+            <DesignMultiSelectDropdown
+              label="Projects"
+              icon={<Building className="h-3.5 w-3.5" />}
+              options={projectOptions}
+              selectedValues={selectedProjects}
+              onChange={setSelectedProjects}
+              colorTheme="blue"
+              placeholder={`All Projects (${storeState.projects.length})`}
+              searchPlaceholder="Search project name..."
+            />
+
+            {/* 2. Disciplines / Work Packages Dropdown */}
+            <DesignMultiSelectDropdown
+              label="Disciplines"
+              icon={<SlidersHorizontal className="h-3.5 w-3.5" />}
+              options={disciplineOptions}
+              selectedValues={selectedDisciplines}
+              onChange={setSelectedDisciplines}
+              colorTheme="emerald"
+              placeholder={`All Disciplines (${categories.length})`}
+              searchPlaceholder="Search discipline..."
+            />
+
+            {/* 3. Consultants Dropdown */}
+            <DesignMultiSelectDropdown
+              label="Consultants"
+              icon={<Users className="h-3.5 w-3.5" />}
+              options={consultantOptions}
+              selectedValues={selectedConsultants}
+              onChange={setSelectedConsultants}
+              colorTheme="purple"
+              placeholder={`All Consultants (${storeState.consultants.length})`}
+              searchPlaceholder="Search consultant firm..."
+            />
+
+            {/* 4. Status Dropdown */}
+            <DesignMultiSelectDropdown
+              label="Status"
+              icon={<CheckCircle2 className="h-3.5 w-3.5" />}
+              options={statusOptions}
+              selectedValues={selectedStatuses}
+              onChange={setSelectedStatuses}
+              colorTheme="amber"
+              placeholder="All Statuses"
+              searchPlaceholder="Search status..."
+            />
+
+            {/* Clear All Filters Button */}
+            {totalActiveFilterCount > 0 && (
+              <button
+                type="button"
+                onClick={handleClearAllFilters}
+                className="h-9 px-3 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shrink-0 shadow-2xs"
+                title="Reset all active multi-selection filters"
+              >
+                <X className="h-3.5 w-3.5" />
+                <span>Reset Filters ({totalActiveFilterCount})</span>
+              </button>
+            )}
           </div>
 
-          {/* Dimension 2: Work Package / Discipline Multi-Selection */}
-          <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1">
-            <span className="text-[11px] font-bold text-muted-foreground mr-1 shrink-0 flex items-center gap-1">
-              <SlidersHorizontal className="h-3 w-3 text-emerald-500" />
-              <span>Disciplines:</span>
-            </span>
-            <button
-              type="button"
-              onClick={() => setSelectedDisciplines([])}
-              className={`px-2.5 py-0.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                selectedDisciplines.length === 0
-                  ? "bg-emerald-600 text-white shadow-2xs"
-                  : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              All ({categories.length})
-            </button>
-            {categories.map(cat => {
-              const isSel = selectedDisciplines.includes(cat);
-              return (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => {
-                    setSelectedDisciplines(prev => 
-                      isSel ? prev.filter(c => c !== cat) : [...prev, cat]
-                    );
-                  }}
-                  className={`px-2.5 py-0.5 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer flex items-center gap-1 ${
-                    isSel
-                      ? "bg-emerald-600 text-white shadow-2xs font-bold"
-                      : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {isSel && <Check className="h-2.5 w-2.5" />}
-                  <span>{cat}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Dimension 3: Consultant-Wise Multi-Selection */}
-          <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1">
-            <span className="text-[11px] font-bold text-muted-foreground mr-1 shrink-0 flex items-center gap-1">
-              <Users className="h-3 w-3 text-purple-500" />
-              <span>Consultants:</span>
-            </span>
-            <button
-              type="button"
-              onClick={() => setSelectedConsultants([])}
-              className={`px-2.5 py-0.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                selectedConsultants.length === 0
-                  ? "bg-purple-600 text-white shadow-2xs"
-                  : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              All ({storeState.consultants.length})
-            </button>
-            {storeState.consultants.map(c => {
-              const isSel = selectedConsultants.includes(c.name);
-              return (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => {
-                    setSelectedConsultants(prev => 
-                      isSel ? prev.filter(name => name !== c.name) : [...prev, c.name]
-                    );
-                  }}
-                  className={`px-2.5 py-0.5 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer flex items-center gap-1 ${
-                    isSel
-                      ? "bg-purple-600 text-white shadow-2xs font-bold"
-                      : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {isSel && <Check className="h-2.5 w-2.5" />}
-                  <span>{c.name}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Row 3: Status Filter Pills & Compliance Bar */}
-        <div className="pt-2 border-t border-border flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1 max-w-full">
-            <span className="text-[11px] font-bold text-muted-foreground shrink-0 whitespace-nowrap">Status:</span>
-            <button
-              type="button"
-              onClick={() => setStatusFilter("ALL")}
-              className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer text-[11px] shrink-0 ${
-                statusFilter === "ALL" ? "bg-foreground text-background font-bold" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              All ({filteredPackages.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setStatusFilter("RECEIVED")}
-              className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer text-[11px] flex items-center gap-1 shrink-0 ${
-                statusFilter === "RECEIVED" ? "bg-emerald-500 text-white font-bold" : "text-emerald-600 dark:text-emerald-400 hover:underline"
-              }`}
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              <span>Received ({matrixStats.received})</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setStatusFilter("IN_PROGRESS")}
-              className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer text-[11px] flex items-center gap-1 shrink-0 ${
-                statusFilter === "IN_PROGRESS" ? "bg-amber-500 text-white font-bold" : "text-amber-600 dark:text-amber-400 hover:underline"
-              }`}
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-              <span>In Progress ({matrixStats.inProgress})</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setStatusFilter("PENDING")}
-              className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer text-[11px] flex items-center gap-1 shrink-0 ${
-                statusFilter === "PENDING" ? "bg-rose-500 text-white font-bold" : "text-rose-600 dark:text-rose-400 hover:underline"
-              }`}
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
-              <span>Pending ({matrixStats.pending})</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setStatusFilter("TARGET_DATE")}
-              className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer text-[11px] flex items-center gap-1 shrink-0 ${
-                statusFilter === "TARGET_DATE" ? "bg-sky-500 text-white font-bold" : "text-sky-600 dark:text-sky-400 hover:underline"
-              }`}
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-sky-500" />
-              <span>Target Dates ({matrixStats.targetDates})</span>
-            </button>
-          </div>
-
-          {/* Mini Health Strip */}
-          <div className="flex items-center gap-3 shrink-0 justify-end">
+          {/* Compliance Rate Progress */}
+          <div className="flex items-center gap-3 shrink-0 self-end md:self-auto">
             <div className="flex items-center gap-2 whitespace-nowrap">
               <span className="text-[11px] text-muted-foreground font-medium">Compliance Rate:</span>
               <span className="text-xs font-black text-emerald-500 font-mono">{matrixStats.rate}%</span>
@@ -720,6 +691,104 @@ export const TenderDesignMatrix: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* 🏷️ Active Selected Filter Badges (Removable Tags Bar) */}
+        {totalActiveFilterCount > 0 && (
+          <div className="pt-2 border-t border-border flex flex-wrap items-center gap-1.5 text-xs animate-in fade-in duration-100">
+            <span className="text-[10px] font-bold uppercase text-muted-foreground mr-1 shrink-0">
+              Active Filters:
+            </span>
+
+            {/* Project Badges */}
+            {selectedProjects.map(pId => {
+              const p = storeState.projects.find(x => x.id === pId);
+              return (
+                <span
+                  key={`proj-${pId}`}
+                  className="px-2 py-0.5 rounded-lg bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/30 text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
+                >
+                  <Building className="h-2.5 w-2.5" />
+                  <span>{p?.name || pId}</span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedProjects(prev => prev.filter(x => x !== pId))}
+                    className="hover:text-rose-500 cursor-pointer p-0.5"
+                  >
+                    <X className="h-2.5 w-2.5" />
+                  </button>
+                </span>
+              );
+            })}
+
+            {/* Discipline Badges */}
+            {selectedDisciplines.map(d => (
+              <span
+                key={`disc-${d}`}
+                className="px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
+              >
+                <SlidersHorizontal className="h-2.5 w-2.5" />
+                <span>{d}</span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedDisciplines(prev => prev.filter(x => x !== d))}
+                  className="hover:text-rose-500 cursor-pointer p-0.5"
+                >
+                  <X className="h-2.5 w-2.5" />
+                </button>
+              </span>
+            ))}
+
+            {/* Consultant Badges */}
+            {selectedConsultants.map(cName => (
+              <span
+                key={`cons-${cName}`}
+                className="px-2 py-0.5 rounded-lg bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/30 text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
+              >
+                <Users className="h-2.5 w-2.5" />
+                <span>{cName}</span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedConsultants(prev => prev.filter(x => x !== cName))}
+                  className="hover:text-rose-500 cursor-pointer p-0.5"
+                >
+                  <X className="h-2.5 w-2.5" />
+                </button>
+              </span>
+            ))}
+
+            {/* Status Badges */}
+            {selectedStatuses.map(st => {
+              const opt = statusOptions.find(o => o.value === st);
+              return (
+                <span
+                  key={`st-${st}`}
+                  className="px-2 py-0.5 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30 text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
+                >
+                  <span
+                    className="h-1.5 w-1.5 rounded-full"
+                    style={{ backgroundColor: opt?.colorDot || "#f59e0b" }}
+                  />
+                  <span>{opt?.label || st}</span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedStatuses(prev => prev.filter(x => x !== st))}
+                    className="hover:text-rose-500 cursor-pointer p-0.5"
+                  >
+                    <X className="h-2.5 w-2.5" />
+                  </button>
+                </span>
+              );
+            })}
+
+            <button
+              type="button"
+              onClick={handleClearAllFilters}
+              className="text-[11px] text-muted-foreground hover:text-rose-500 underline ml-1 cursor-pointer font-medium"
+            >
+              Clear all
+            </button>
+          </div>
+        )}
       </div>
 
       {/* 📊 Main Matrix Table */}

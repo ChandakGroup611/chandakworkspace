@@ -13,13 +13,15 @@ import {
   Circle,
   SlidersHorizontal,
   Sparkles,
-  Check
+  Check,
+  X
 } from "lucide-react";
+import { DesignMultiSelectDropdown } from "./DesignMultiSelectDropdown";
 
 export const DesignStagesRoadmap: React.FC = () => {
   // Deliverables completion tracker state
   const [completedDeliverables, setCompletedDeliverables] = useState<Set<number>>(new Set([0, 1, 2, 5, 8, 12, 18]));
-  const [selectedConsultant, setSelectedConsultant] = useState<string>("ALL");
+  const [selectedConsultants, setSelectedConsultants] = useState<string[]>([]);
   const [activeStageIndex, setActiveStageIndex] = useState<number>(0);
 
   // Group deliverables by stageName
@@ -48,15 +50,19 @@ export const DesignStagesRoadmap: React.FC = () => {
   const currentDeliverables = currentStage ? currentStage[1] : [];
 
   // Consultants for filter
-  const stageConsultants = useMemo(() => {
+  const consultantFilterOptions = useMemo(() => {
     const set = new Set(currentDeliverables.map(d => d.consultant).filter(Boolean));
-    return Array.from(set);
+    return Array.from(set).map(c => ({
+      value: c,
+      label: c,
+      count: currentDeliverables.filter(d => d.consultant === c).length
+    }));
   }, [currentDeliverables]);
 
   const filteredDeliverables = useMemo(() => {
-    if (selectedConsultant === "ALL") return currentDeliverables;
-    return currentDeliverables.filter(d => d.consultant === selectedConsultant);
-  }, [currentDeliverables, selectedConsultant]);
+    if (selectedConsultants.length === 0) return currentDeliverables;
+    return currentDeliverables.filter(d => selectedConsultants.includes(d.consultant));
+  }, [currentDeliverables, selectedConsultants]);
 
   const toggleDeliverable = (itemIdx: number) => {
     setCompletedDeliverables(prev => {
@@ -104,7 +110,7 @@ export const DesignStagesRoadmap: React.FC = () => {
                 type="button"
                 onClick={() => {
                   setActiveStageIndex(idx);
-                  setSelectedConsultant("ALL");
+                  setSelectedConsultants([]);
                 }}
                 className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-3 min-w-[220px] shrink-0 whitespace-nowrap ${
                   isSelected
@@ -178,38 +184,65 @@ export const DesignStagesRoadmap: React.FC = () => {
             </div>
           </div>
 
-          {/* Consultant Filter Ribbon */}
-          <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar text-xs pb-1 max-w-full">
-            <span className="text-[11px] font-bold text-muted-foreground mr-1 shrink-0 flex items-center gap-1 whitespace-nowrap">
-              <SlidersHorizontal className="h-3 w-3" />
-              <span>Filter Discipline:</span>
-            </span>
-            <button
-              type="button"
-              onClick={() => setSelectedConsultant("ALL")}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer whitespace-nowrap ${
-                selectedConsultant === "ALL"
-                  ? "bg-emerald-600 text-white shadow-xs"
-                  : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              All Deliverables ({currentDeliverables.length})
-            </button>
-            {stageConsultants.map(c => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setSelectedConsultant(c)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer whitespace-nowrap ${
-                  selectedConsultant === c
-                    ? "bg-emerald-600 text-white shadow-xs"
-                    : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {c}
-              </button>
-            ))}
+          {/* Unified Consultant / Discipline Multi-Select Filter Ribbon */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <DesignMultiSelectDropdown
+                label="Discipline / Consultant"
+                options={consultantFilterOptions}
+                selectedValues={selectedConsultants}
+                onChange={setSelectedConsultants}
+                colorTheme="emerald"
+                placeholder="All Deliverables"
+              />
+
+              {selectedConsultants.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedConsultants([])}
+                  className="h-8 px-2.5 rounded-xl border border-dashed border-rose-500/40 hover:border-rose-500/70 bg-rose-500/5 hover:bg-rose-500/10 text-rose-600 dark:text-rose-400 text-xs font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <X className="h-3 w-3" />
+                  <span>Reset</span>
+                </button>
+              )}
+            </div>
+
+            <div className="text-[11px] font-semibold text-muted-foreground">
+              Showing <span className="font-bold text-foreground">{filteredDeliverables.length}</span> of {currentDeliverables.length} items
+            </div>
           </div>
+
+          {/* Active Filter Chips Bar */}
+          {selectedConsultants.length > 0 && (
+            <div className="pt-2 border-t border-border flex flex-wrap items-center gap-1.5 text-xs">
+              <span className="text-[11px] font-bold text-muted-foreground mr-1">Active:</span>
+
+              {selectedConsultants.map(c => (
+                <span
+                  key={c}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 text-[11px] font-medium"
+                >
+                  <span>{c}</span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedConsultants(selectedConsultants.filter(x => x !== c))}
+                    className="hover:text-emerald-900 dark:hover:text-emerald-100"
+                  >
+                    <X className="h-2.5 w-2.5" />
+                  </button>
+                </span>
+              ))}
+
+              <button
+                type="button"
+                onClick={() => setSelectedConsultants([])}
+                className="text-[11px] font-semibold text-muted-foreground hover:text-foreground ml-1 underline cursor-pointer"
+              >
+                Clear all
+              </button>
+            </div>
+          )}
 
           {/* Deliverables Checklist Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">

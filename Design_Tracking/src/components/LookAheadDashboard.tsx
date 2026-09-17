@@ -21,11 +21,12 @@ import {
 } from "lucide-react";
 import { DesignMasterStore } from "../services/designMasterStore";
 import { LookAheadEntry } from "../types/masterTypes";
+import { DesignMultiSelectDropdown, DropdownOption } from "./DesignMultiSelectDropdown";
 
 export const LookAheadDashboard: React.FC = () => {
   const [storeState, setStoreState] = useState(() => DesignMasterStore.getState());
-  const [selectedProject, setSelectedProject] = useState<string>("ALL");
-  const [timeframeFilter, setTimeframeFilter] = useState<"ALL" | "30_DAYS" | "60_DAYS">("ALL");
+  const [selectedProjectFilters, setSelectedProjectFilters] = useState<string[]>([]);
+  const [selectedTimeframeFilters, setSelectedTimeframeFilters] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedItem, setSelectedItem] = useState<LookAheadEntry | null>(null);
 
@@ -90,8 +91,8 @@ export const LookAheadDashboard: React.FC = () => {
       const towerName = towerMap.get(item.towerId) || "Wing";
       const description = item.deliverableDescription || "";
 
-      if (selectedProject !== "ALL" && projectName !== selectedProject) return false;
-      if (timeframeFilter !== "ALL" && item.timeframe !== timeframeFilter) return false;
+      if (selectedProjectFilters.length > 0 && !selectedProjectFilters.includes(projectName)) return false;
+      if (selectedTimeframeFilters.length > 0 && !selectedTimeframeFilters.includes(item.timeframe)) return false;
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matches = 
@@ -102,7 +103,7 @@ export const LookAheadDashboard: React.FC = () => {
       }
       return true;
     });
-  }, [lookAheads, projectMap, towerMap, selectedProject, timeframeFilter, searchQuery]);
+  }, [lookAheads, projectMap, towerMap, selectedProjectFilters, selectedTimeframeFilters, searchQuery]);
 
   // Group items by Project and Tower
   const groupedByProject = useMemo(() => {
@@ -119,6 +120,48 @@ export const LookAheadDashboard: React.FC = () => {
 
   const count30 = lookAheads.filter(i => i.timeframe === "30_DAYS").length;
   const count60 = lookAheads.filter(i => i.timeframe === "60_DAYS").length;
+
+  // Dropdown options
+  const projectOptions = useMemo<DropdownOption[]>(() => {
+    return uniqueProjectNames.map(p => {
+      const cnt = lookAheads.filter(i => projectMap.get(i.projectId) === p).length;
+      return {
+        value: p,
+        label: p,
+        count: cnt,
+        subtitle: `${cnt} milestone${cnt === 1 ? "" : "s"}`
+      };
+    });
+  }, [uniqueProjectNames, lookAheads, projectMap]);
+
+  const timeframeOptions = useMemo<DropdownOption[]>(() => {
+    return [
+      {
+        value: "30_DAYS",
+        label: "30-Day Critical Window",
+        count: count30,
+        colorDot: "#f43f5e",
+        subtitle: "Immediate action required"
+      },
+      {
+        value: "60_DAYS",
+        label: "60-Day Scheduled Window",
+        count: count60,
+        colorDot: "#f59e0b",
+        subtitle: "Planned forecast milestones"
+      }
+    ];
+  }, [count30, count60]);
+
+  const totalActiveFilterCount =
+    selectedProjectFilters.length +
+    selectedTimeframeFilters.length;
+
+  const handleClearAllFilters = () => {
+    setSelectedProjectFilters([]);
+    setSelectedTimeframeFilters([]);
+    setSearchQuery("");
+  };
 
   const handleToggleExpedite = (id: string) => {
     DesignMasterStore.toggleExpediteLookAhead(id);
@@ -210,71 +253,105 @@ export const LookAheadDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Filter Controls */}
-        <div className="pt-3 border-t border-border flex flex-wrap items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 max-w-full">
-            <button
-              type="button"
-              onClick={() => setTimeframeFilter("ALL")}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer shrink-0 whitespace-nowrap ${
-                timeframeFilter === "ALL" 
-                  ? "bg-foreground text-background font-bold" 
-                  : "bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              All Windows ({lookAheads.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setTimeframeFilter("30_DAYS")}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-                timeframeFilter === "30_DAYS" 
-                  ? "bg-rose-600 text-white font-bold" 
-                  : "bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20"
-              }`}
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-rose-500 shrink-0" />
-              <span>30-Day Critical ({count30})</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setTimeframeFilter("60_DAYS")}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-                timeframeFilter === "60_DAYS" 
-                  ? "bg-amber-600 text-white font-bold" 
-                  : "bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20"
-              }`}
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
-              <span>60-Day Scheduled ({count60})</span>
-            </button>
+        {/* Multi-Selection Dropdowns Filter Row */}
+        <div className="pt-3 border-t border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            {/* 1. Projects Dropdown */}
+            <DesignMultiSelectDropdown
+              label="Projects"
+              icon={<Building className="h-3.5 w-3.5" />}
+              options={projectOptions}
+              selectedValues={selectedProjectFilters}
+              onChange={setSelectedProjectFilters}
+              colorTheme="blue"
+              placeholder={`All Projects (${uniqueProjectNames.length})`}
+              searchPlaceholder="Search project name..."
+            />
+
+            {/* 2. Timeframe Window Dropdown */}
+            <DesignMultiSelectDropdown
+              label="Window"
+              icon={<Clock className="h-3.5 w-3.5" />}
+              options={timeframeOptions}
+              selectedValues={selectedTimeframeFilters}
+              onChange={setSelectedTimeframeFilters}
+              colorTheme="amber"
+              placeholder="All Milestone Windows"
+              searchPlaceholder="Filter timeframe..."
+              showSearch={false}
+            />
+
+            {/* Clear All Filters Button */}
+            {totalActiveFilterCount > 0 && (
+              <button
+                type="button"
+                onClick={handleClearAllFilters}
+                className="h-9 px-3 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shrink-0 shadow-2xs"
+                title="Reset all active filters"
+              >
+                <X className="h-3.5 w-3.5" />
+                <span>Reset Filters ({totalActiveFilterCount})</span>
+              </button>
+            )}
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-            {/* Search */}
-            <div className="relative flex-1 sm:w-56">
-              <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1 text-xs rounded-lg border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-emerald-500"
-              />
-            </div>
-
-            {/* Project Filter */}
-            <select
-              value={selectedProject}
-              onChange={e => setSelectedProject(e.target.value)}
-              className="h-7.5 px-2.5 rounded-lg border border-border bg-surface text-xs font-medium text-foreground focus:outline-none focus:border-emerald-500 cursor-pointer whitespace-nowrap"
-            >
-              <option value="ALL">All Projects ({uniqueProjectNames.length})</option>
-              {uniqueProjectNames.map(p => (
-                <option key={p} value={p}>{p}</option>
-              ))}
-            </select>
+          <div className="flex items-center gap-2 shrink-0 text-muted-foreground text-xs">
+            <span>Showing <strong className="text-foreground">{filteredItems.length}</strong> of {lookAheads.length} milestones</span>
           </div>
         </div>
+
+        {/* 🏷️ Active Selected Filter Badges */}
+        {totalActiveFilterCount > 0 && (
+          <div className="pt-2 border-t border-border flex flex-wrap items-center gap-1.5 text-xs animate-in fade-in duration-100">
+            <span className="text-[10px] font-bold uppercase text-muted-foreground mr-1 shrink-0">
+              Active Filters:
+            </span>
+
+            {/* Project Badges */}
+            {selectedProjectFilters.map(p => (
+              <span
+                key={`proj-${p}`}
+                className="px-2 py-0.5 rounded-lg bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/30 text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
+              >
+                <Building className="h-2.5 w-2.5" />
+                <span>{p}</span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedProjectFilters(prev => prev.filter(x => x !== p))}
+                  className="hover:text-rose-500 cursor-pointer p-0.5"
+                >
+                  <X className="h-2.5 w-2.5" />
+                </button>
+              </span>
+            ))}
+
+            {/* Timeframe Badges */}
+            {selectedTimeframeFilters.map(tf => (
+              <span
+                key={`tf-${tf}`}
+                className="px-2 py-0.5 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30 text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
+              >
+                <Clock className="h-2.5 w-2.5" />
+                <span>{tf === "30_DAYS" ? "30-Day Critical" : "60-Day Scheduled"}</span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedTimeframeFilters(prev => prev.filter(x => x !== tf))}
+                  className="hover:text-rose-500 cursor-pointer p-0.5"
+                >
+                  <X className="h-2.5 w-2.5" />
+                </button>
+              </span>
+            ))}
+
+            <button
+              type="button"
+              onClick={handleClearAllFilters}
+              className="text-[11px] text-muted-foreground hover:text-rose-500 underline ml-1 cursor-pointer font-medium"
+            >
+              Clear all
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Critical Packages & Consultant Bottlenecks Strip */}
