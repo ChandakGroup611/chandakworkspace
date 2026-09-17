@@ -39,22 +39,6 @@ export const LookAheadDashboard: React.FC = () => {
   const [newTargetDate, setNewTargetDate] = useState<string>("");
   const [newPriority, setNewPriority] = useState<"CRITICAL" | "HIGH" | "NORMAL">("CRITICAL");
 
-  // Critical Design & Consultant Bottlenecks (Derived from reference analysis)
-  const CRITICAL_DESIGN_BLOCKERS = [
-    { project: "KRIPANAGAR", tower: "PLOT-B", package: "Aluminium windows, GRC/Fins, Glass railing", target: "15-May / 10-Aug", status: "Critical" },
-    { project: "JB NAGAR", tower: "SALE DEF", package: "Aluminium windows, GRC/Fins, Glass railing", target: "15-May / 10-Aug", status: "Critical" },
-    { project: "JB NAGAR", tower: "SOC BCD", package: "MEP works", target: "15-Jul / 30-Aug", status: "Urgent" },
-    { project: "NISCHAY", tower: "HOSTEL", package: "MEP works", target: "30-Jun / 30-Aug", status: "Critical" }
-  ];
-
-  const CRITICAL_CONSULTANT_BOTTLENECKS = [
-    { project: "KALINA-2", tower: "COMMERCIAL, REHAB", consultant: "MEP Consultant", issue: "Work order not given (Immediate)", severity: "HIGH" },
-    { project: "KALINA-1", tower: "COMMERCIAL", consultant: "Façade Consultant", issue: "Onboarding required immediately for window BOQ", severity: "HIGH" },
-    { project: "KALINA-1", tower: "COMMERCIAL, REHAB, SOC", consultant: "STP Consultant / Vendor", issue: "Sewage sizing & plant layout pending", severity: "MEDIUM" },
-    { project: "VANRAI", tower: "SOCIETY, SALE", consultant: "Geotech Consultant", issue: "Shoring pile recommendations pending", severity: "HIGH" },
-    { project: "KANHERI", tower: "SOCIETY, SALE", consultant: "Traffic Consultant", issue: "Preliminary circulation NOC pending", severity: "MEDIUM" }
-  ];
-
   // Subscribe to DesignMasterStore for dynamic real-time reactivity
   useEffect(() => {
     const unsubscribe = DesignMasterStore.subscribe(() => {
@@ -73,6 +57,31 @@ export const LookAheadDashboard: React.FC = () => {
   const towerMap = useMemo(() => {
     return new Map(storeState.towers.map(t => [t.id, t.towerName]));
   }, [storeState.towers]);
+
+  // Critical Design & Consultant Bottlenecks dynamically derived from live store
+  const criticalDesignBlockers = useMemo(() => {
+    return storeState.lookAheads
+      .filter(item => item.priority === "CRITICAL" || item.timeframe === "30_DAYS")
+      .map(item => ({
+        project: projectMap.get(item.projectId) || "Development",
+        tower: towerMap.get(item.towerId) || "Wing",
+        package: item.deliverableDescription,
+        target: item.targetDate,
+        status: item.priority === "CRITICAL" ? "Critical" : "Urgent"
+      }));
+  }, [storeState.lookAheads, projectMap, towerMap]);
+
+  const criticalConsultantBottlenecks = useMemo(() => {
+    return storeState.consultants
+      .filter(c => c.onboardingStatus === "Not Onboard")
+      .map(c => ({
+        project: (c.activeProjects && c.activeProjects.length > 0) ? c.activeProjects.join(", ") : "All Developments",
+        tower: c.category,
+        consultant: c.name,
+        issue: "Work order onboarding pending",
+        severity: "HIGH"
+      }));
+  }, [storeState.consultants]);
 
   // Unique project names with look-ahead deliverables
   const uniqueProjectNames = useMemo(() => {
@@ -368,28 +377,34 @@ export const LookAheadDashboard: React.FC = () => {
           </div>
 
           <div className="space-y-2">
-            {CRITICAL_DESIGN_BLOCKERS.map((blk, idx) => (
-              <div key={idx} className="p-2.5 rounded-xl bg-surface border border-rose-500/20 text-xs flex items-center justify-between gap-3 shadow-2xs">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground whitespace-nowrap">
-                    <span className="text-rose-600 dark:text-rose-400">{blk.project}</span>
-                    <span className="text-muted-foreground">•</span>
-                    <span>{blk.tower}</span>
-                  </div>
-                  <div className="text-xs text-muted-foreground truncate font-medium mt-0.5">
-                    {blk.package}
-                  </div>
-                </div>
-                <div className="text-right shrink-0">
-                  <span className="text-[10px] font-mono font-bold text-rose-600 dark:text-rose-400 block whitespace-nowrap">
-                    {blk.target}
-                  </span>
-                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-rose-500 text-white font-bold inline-block mt-0.5 whitespace-nowrap">
-                    {blk.status}
-                  </span>
-                </div>
+            {criticalDesignBlockers.length === 0 ? (
+              <div className="p-3 rounded-xl bg-surface/60 border border-rose-500/10 text-center text-muted-foreground text-xs">
+                No critical package blockers logged
               </div>
-            ))}
+            ) : (
+              criticalDesignBlockers.map((blk, idx) => (
+                <div key={idx} className="p-2.5 rounded-xl bg-surface border border-rose-500/20 text-xs flex items-center justify-between gap-3 shadow-2xs">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground whitespace-nowrap">
+                      <span className="text-rose-600 dark:text-rose-400">{blk.project}</span>
+                      <span className="text-muted-foreground">•</span>
+                      <span>{blk.tower}</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate font-medium mt-0.5">
+                      {blk.package}
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span className="text-[10px] font-mono font-bold text-rose-600 dark:text-rose-400 block whitespace-nowrap">
+                      {blk.target}
+                    </span>
+                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-rose-500 text-white font-bold inline-block mt-0.5 whitespace-nowrap">
+                      {blk.status}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
@@ -408,28 +423,34 @@ export const LookAheadDashboard: React.FC = () => {
           </div>
 
           <div className="space-y-2">
-            {CRITICAL_CONSULTANT_BOTTLENECKS.map((cst, idx) => (
-              <div key={idx} className="p-2.5 rounded-xl bg-surface border border-amber-500/20 text-xs flex items-center justify-between gap-3 shadow-2xs">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground whitespace-nowrap">
-                    <span className="text-amber-600 dark:text-amber-400">{cst.project}</span>
-                    <span className="text-muted-foreground">•</span>
-                    <span>{cst.tower}</span>
-                  </div>
-                  <div className="text-xs font-bold text-foreground mt-0.5 truncate">
-                    {cst.consultant}
-                  </div>
-                  <div className="text-[10px] text-muted-foreground truncate">
-                    {cst.issue}
-                  </div>
-                </div>
-                <div className="text-right shrink-0">
-                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 whitespace-nowrap">
-                    {cst.severity}
-                  </span>
-                </div>
+            {criticalConsultantBottlenecks.length === 0 ? (
+              <div className="p-3 rounded-xl bg-surface/60 border border-amber-500/10 text-center text-muted-foreground text-xs">
+                No consultant onboarding blockers logged
               </div>
-            ))}
+            ) : (
+              criticalConsultantBottlenecks.map((cst, idx) => (
+                <div key={idx} className="p-2.5 rounded-xl bg-surface border border-amber-500/20 text-xs flex items-center justify-between gap-3 shadow-2xs">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-foreground whitespace-nowrap">
+                      <span className="text-amber-600 dark:text-amber-400">{cst.project}</span>
+                      <span className="text-muted-foreground">•</span>
+                      <span>{cst.tower}</span>
+                    </div>
+                    <div className="text-xs font-bold text-foreground mt-0.5 truncate">
+                      {cst.consultant}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground truncate">
+                      {cst.issue}
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 whitespace-nowrap">
+                      {cst.severity}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

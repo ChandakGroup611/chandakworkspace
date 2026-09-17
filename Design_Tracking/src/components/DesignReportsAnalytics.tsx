@@ -201,21 +201,27 @@ export const DesignReportsAnalytics: React.FC<DesignReportsAnalyticsProps> = ({
           </div>
 
           <div className="space-y-3">
-            {Object.entries(projectBreakdown).map(([proj, stats]) => {
-              const gfcPct = Math.round((stats.gfc / stats.total) * 100) || 0;
-              return (
-                <div key={proj} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-border/60 flex items-center justify-between">
-                  <div>
-                    <h5 className="text-xs font-bold text-foreground">{proj}</h5>
-                    <span className="text-[11px] text-muted-foreground">{stats.total} Total Drawing Sheets</span>
+            {Object.keys(projectBreakdown).length === 0 ? (
+              <div className="p-4 rounded-xl bg-slate-50/50 dark:bg-slate-900/40 text-center text-muted-foreground text-xs">
+                No project drawings recorded yet.
+              </div>
+            ) : (
+              Object.entries(projectBreakdown).map(([proj, stats]) => {
+                const gfcPct = Math.round((stats.gfc / stats.total) * 100) || 0;
+                return (
+                  <div key={proj} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-border/60 flex items-center justify-between">
+                    <div>
+                      <h5 className="text-xs font-bold text-foreground">{proj}</h5>
+                      <span className="text-[11px] text-muted-foreground">{stats.total} Total Drawing Sheets</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-sm font-black font-mono text-emerald-600 dark:text-emerald-400">{gfcPct}%</span>
+                      <span className="block text-[10px] text-muted-foreground font-medium">{stats.gfc} GFC Certified</span>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <span className="text-sm font-black font-mono text-emerald-600 dark:text-emerald-400">{gfcPct}%</span>
-                    <span className="block text-[10px] text-muted-foreground font-medium">{stats.gfc} GFC Certified</span>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
       </div>
@@ -242,25 +248,33 @@ export const DesignReportsAnalytics: React.FC<DesignReportsAnalyticsProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-border/60">
-              {consultants.map((c) => (
-                <tr key={c.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                  <td className="p-3 font-bold text-foreground whitespace-nowrap min-w-[200px]">{c.name}</td>
-                  <td className="p-3 whitespace-nowrap min-w-[130px]">
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/20 whitespace-nowrap">
-                      {c.category}
-                    </span>
-                  </td>
-                  <td className="p-3 text-muted-foreground whitespace-nowrap min-w-[160px]">{c.leadContact}</td>
-                  <td className="p-3 text-center font-mono font-bold text-foreground whitespace-nowrap min-w-[120px]">{c.totalDrawingsSubmitted}</td>
-                  <td className="p-3 text-center font-mono text-foreground whitespace-nowrap min-w-[120px]">{c.averageTatDays} days</td>
-                  <td className="p-3 text-center whitespace-nowrap min-w-[120px]">
-                    <span className="inline-flex items-center gap-1 font-bold text-amber-500 text-xs whitespace-nowrap">
-                      <Star className="h-3.5 w-3.5 fill-amber-500" />
-                      <span>{c.rating}</span>
-                    </span>
+              {consultants.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-8 text-muted-foreground text-xs">
+                    No consultants recorded in directory yet.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                consultants.map((c) => (
+                  <tr key={c.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                    <td className="p-3 font-bold text-foreground whitespace-nowrap min-w-[200px]">{c.name}</td>
+                    <td className="p-3 whitespace-nowrap min-w-[130px]">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/20 whitespace-nowrap">
+                        {c.category}
+                      </span>
+                    </td>
+                    <td className="p-3 text-muted-foreground whitespace-nowrap min-w-[160px]">{c.leadContact}</td>
+                    <td className="p-3 text-center font-mono font-bold text-foreground whitespace-nowrap min-w-[120px]">{c.totalDrawingsSubmitted}</td>
+                    <td className="p-3 text-center font-mono text-foreground whitespace-nowrap min-w-[120px]">{c.averageTatDays} days</td>
+                    <td className="p-3 text-center whitespace-nowrap min-w-[120px]">
+                      <span className="inline-flex items-center gap-1 font-bold text-amber-500 text-xs whitespace-nowrap">
+                        <Star className="h-3.5 w-3.5 fill-amber-500" />
+                        <span>{c.rating}</span>
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

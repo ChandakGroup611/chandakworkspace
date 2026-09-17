@@ -45,8 +45,7 @@ import { ReviewApprovalModal } from "../../Design_Tracking/src/components/Review
 import { MastersSetupView } from "../../Design_Tracking/src/components/MastersSetupView";
 import { DataEntryFormsModal } from "../../Design_Tracking/src/components/DataEntryFormsModal";
 import { DesignMasterStore } from "../../Design_Tracking/src/services/designMasterStore";
-import { mockDrawings, mockGfcReleases, mockConsultants } from "../../Design_Tracking/src/mock/designMockData";
-import { DrawingItem, DrawingStatus, ConsultantPartner } from "../../Design_Tracking/src/types";
+import { DrawingItem, DrawingStatus, ConsultantPartner, GfcRelease } from "../../Design_Tracking/src/types";
 
 type ActiveTabType = 
   | "MATRIX" 
@@ -112,7 +111,7 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
   const [isDataEntryOpen, setIsDataEntryOpen] = useState(false);
 
   // Drawings, Consultants & Modals state
-  const [drawings, setDrawings] = useState<DrawingItem[]>(mockDrawings);
+  const drawings = storeState.drawings || [];
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [selectedDrawingForReview, setSelectedDrawingForReview] = useState<DrawingItem | null>(null);
 
@@ -161,25 +160,37 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
     return storeState.lookAheads.filter(i => i.timeframe === "60_DAYS").length;
   }, [storeState.lookAheads]);
 
+  // Derived GFC releases from active drawings
+  const gfcReleases = useMemo<GfcRelease[]>(() => {
+    return (storeState.drawings || [])
+      .filter(d => d.status === "Approved (GFC)" || d.status === "Site Handed Over")
+      .map((d, i) => ({
+        id: `GFC-${d.code}-${i + 1}`,
+        drawingId: d.id,
+        drawingCode: d.code,
+        drawingTitle: d.title,
+        revisionNumber: d.revision,
+        certifiedDate: d.approvedDate || d.submittedDate,
+        siteEngineerName: "Site Execution Team",
+        contractorFirm: "General Civil Contractor",
+        physicalCopiesIssued: 3,
+        digitalStampVerified: true,
+        handoverDate: d.approvedDate || new Date().toISOString().split("T")[0],
+        status: "Active GFC" as const
+      }));
+  }, [storeState.drawings]);
+
   const handleDrawingUploaded = (newDrawing: Omit<DrawingItem, "id">) => {
     const created: DrawingItem = {
       ...newDrawing,
       id: `drw-${Date.now().toString(36)}`
     };
-    setDrawings(prev => [created, ...prev]);
+    DesignMasterStore.saveDrawing(created);
   };
 
   const handleStatusUpdated = (drawingId: string, newStatus: DrawingStatus) => {
-    setDrawings(prev => prev.map(d => {
-      if (d.id === drawingId) {
-        return {
-          ...d,
-          status: newStatus,
-          approvedDate: newStatus === "Approved (GFC)" ? new Date().toISOString().split("T")[0] : d.approvedDate
-        };
-      }
-      return d;
-    }));
+    const approvedDate = newStatus === "Approved (GFC)" ? new Date().toISOString().split("T")[0] : undefined;
+    DesignMasterStore.updateDrawingStatus(drawingId, newStatus, approvedDate);
   };
 
   return (
@@ -441,7 +452,7 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
 
       {/* Tab 8: Site Handover & GFC View */}
       {activeTab === "GFC_HANDOVER" && (
-        <GfcHandoverView releases={mockGfcReleases} />
+        <GfcHandoverView releases={gfcReleases} />
       )}
 
       {/* Tab 9: Transmittals & GFC Dispatch Slips */}

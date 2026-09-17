@@ -55,7 +55,7 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
   onAddConsultant,
   onUpdateConsultant,
   onDeleteConsultant,
-  availableProjects = ["Chandak Stella", "Chandak Highscape City", "Chandak GreenAir", "Chandak 34 Park Estate", "Chandak Sparkling Wings"],
+  availableProjects = [],
   availableWorkPackages = DEFAULT_WORK_PACKAGES
 }) => {
   const [searchQuery, setSearchQuery] = useState("");

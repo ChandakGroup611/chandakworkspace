@@ -1,14 +1,13 @@
 import { DrawingItem, DrawingStatus, ConsultantPartner, GfcRelease, DesignDiscipline } from "../types";
-import { mockDrawings, mockConsultants, mockGfcReleases, mockProjects } from "../mock/designMockData";
 
 /**
  * Design Tracking Module Service Client
  * Provides localized data fetching and mutation methods for drawings, revisions, and GFC handovers.
  */
 export class DesignTrackingService {
-  private static drawings: DrawingItem[] = [...mockDrawings];
-  private static consultants: ConsultantPartner[] = [...mockConsultants];
-  private static gfcReleases: GfcRelease[] = [...mockGfcReleases];
+  private static drawings: DrawingItem[] = [];
+  private static consultants: ConsultantPartner[] = [];
+  private static gfcReleases: GfcRelease[] = [];
 
   static async getDrawings(filters?: {
     discipline?: DesignDiscipline | "ALL";
@@ -87,6 +86,6 @@ export class DesignTrackingService {
   }
 
   static async getProjectsSummary() {
-    return [...mockProjects];
+    return [];
   }
 }

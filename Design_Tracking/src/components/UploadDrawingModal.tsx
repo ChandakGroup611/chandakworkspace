@@ -20,7 +20,7 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
   const [code, setCode] = useState("");
   const [title, setTitle] = useState("");
   const [discipline, setDiscipline] = useState<DesignDiscipline>("Architectural");
-  const [project, setProject] = useState(projects[0]?.name || "Chandak Project");
+  const [project, setProject] = useState(projects[0]?.name || "");
   const [revision, setRevision] = useState("R0");
   const [consultant, setConsultant] = useState("");
   const [description, setDescription] = useState("");
@@ -39,10 +39,10 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
         code: code.trim().toUpperCase(),
         title: title.trim(),
         discipline,
-        project,
+        project: project || (projects[0]?.name || "Unassigned"),
         revision,
         status: "Under Review",
-        consultant: consultant.trim() || "Empanelled Design Consultant",
+        consultant: consultant.trim() || "Design Consultant",
         submittedDate: new Date().toISOString().split("T")[0],
         fileSize,
         description: description.trim() || undefined

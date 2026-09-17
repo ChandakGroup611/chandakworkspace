@@ -19,8 +19,8 @@ import {
 import { DesignMultiSelectDropdown } from "./DesignMultiSelectDropdown";
 
 export const DesignStagesRoadmap: React.FC = () => {
-  // Deliverables completion tracker state
-  const [completedDeliverables, setCompletedDeliverables] = useState<Set<number>>(new Set([0, 1, 2, 5, 8, 12, 18]));
+  // Deliverables completion tracker state (clean empty start)
+  const [completedDeliverables, setCompletedDeliverables] = useState<Set<number>>(new Set());
   const [selectedConsultants, setSelectedConsultants] = useState<string[]>([]);
   const [activeStageIndex, setActiveStageIndex] = useState<number>(0);
 

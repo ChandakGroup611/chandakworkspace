@@ -28,13 +28,6 @@ import {
 } from "../types";
 
 import { 
-  mockDrawings, 
-  mockConsultants, 
-  mockTransmittals, 
-  mockRfis 
-} from "../mock/designMockData";
-
-import { 
   EY_PROJECT_COLUMNS, 
   EY_UNIQUE_PROJECTS, 
   EY_TENDER_PACKAGES, 
@@ -42,7 +35,7 @@ import {
   EY_LIAISON_CONSULTANTS 
 } from "../data/eyTenderData";
 
-const STORAGE_KEY = "CHANDAK_DESIGN_MASTER_STORE_V3";
+const STORAGE_KEY = "CHANDAK_DESIGN_MASTER_STORE_V4";
 
 export interface MasterStoreState {
   projects: ProjectMaster[];
@@ -81,21 +74,31 @@ export class DesignMasterStore {
   }
 
   /**
-   * Initializes store state from localStorage or loads seed template
+   * Initializes store state from localStorage or starts clean with blank state
    */
   public static getState(): MasterStoreState {
     if (this.state) return this.state;
 
     if (typeof window !== "undefined") {
       try {
+        // Clean up any legacy localStorage stores that had mock/predefined seed data
+        ["CHANDAK_DESIGN_MASTER_STORE_V1", "CHANDAK_DESIGN_MASTER_STORE_V2", "CHANDAK_DESIGN_MASTER_STORE_V3"].forEach(k => {
+          try { localStorage.removeItem(k); } catch (_) {}
+        });
+
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);
-          // Migration check for new collections
-          if (!parsed.drawings || !Array.isArray(parsed.drawings)) parsed.drawings = mockDrawings;
-          if (!parsed.transmittals || !Array.isArray(parsed.transmittals)) parsed.transmittals = mockTransmittals;
-          if (!parsed.rfis || !Array.isArray(parsed.rfis)) parsed.rfis = mockRfis;
-          if (!parsed.consultants || !Array.isArray(parsed.consultants)) parsed.consultants = mockConsultants;
+          // Migration check for collections
+          if (!parsed.projects || !Array.isArray(parsed.projects)) parsed.projects = [];
+          if (!parsed.towers || !Array.isArray(parsed.towers)) parsed.towers = [];
+          if (!parsed.disciplines || !Array.isArray(parsed.disciplines)) parsed.disciplines = [];
+          if (!parsed.packages || !Array.isArray(parsed.packages)) parsed.packages = [];
+          if (!parsed.authorities || !Array.isArray(parsed.authorities)) parsed.authorities = [];
+          if (!parsed.drawings || !Array.isArray(parsed.drawings)) parsed.drawings = [];
+          if (!parsed.transmittals || !Array.isArray(parsed.transmittals)) parsed.transmittals = [];
+          if (!parsed.rfis || !Array.isArray(parsed.rfis)) parsed.rfis = [];
+          if (!parsed.consultants || !Array.isArray(parsed.consultants)) parsed.consultants = [];
           if (!parsed.auditLogs || !Array.isArray(parsed.auditLogs)) parsed.auditLogs = [];
           if (!parsed.rbacPolicies || !Array.isArray(parsed.rbacPolicies)) parsed.rbacPolicies = this.buildDefaultRbacPolicies();
           
@@ -103,12 +106,12 @@ export class DesignMasterStore {
           return this.state!;
         }
       } catch (e) {
-        console.warn("Failed to load DesignMasterStore from localStorage, using initial template:", e);
+        console.warn("Failed to load DesignMasterStore from localStorage, using blank state:", e);
       }
     }
 
-    // Initialize with EY Tender Reference Template so user has a working starting base
-    this.state = this.buildEyReferenceSeed();
+    // Initialize with completely clean blank state (no predefined mock data)
+    this.state = this.buildBlankState();
     this.saveToStorage();
     return this.state;
   }
@@ -290,7 +293,7 @@ export class DesignMasterStore {
 
   public static getConsultants(): ConsultantPartner[] {
     const state = this.getState();
-    if (!state.consultants) state.consultants = [...mockConsultants];
+    if (!state.consultants) state.consultants = [];
     return state.consultants;
   }
 
@@ -912,10 +915,10 @@ export class DesignMasterStore {
   // ============================================================================
 
   /**
-   * Reset store to completely blank masters and entries (0 projects, 0 packages)
+   * Generates a completely empty blank state with 0 predefined data
    */
-  public static resetToBlank(): void {
-    this.state = {
+  public static buildBlankState(): MasterStoreState {
+    return {
       projects: [],
       towers: [],
       disciplines: [
@@ -926,13 +929,7 @@ export class DesignMasterStore {
         { id: "disc-5", name: "Landscape & Infrastructure", code: "LAND", icon: "🌿" }
       ],
       packages: [],
-      authorities: [
-        { id: "auth-1", authorityName: "Municipal Corporation (BMC)", scope: "Sanction / IOD / CC Approvals", category: "Municipal" },
-        { id: "auth-2", authorityName: "CFO Fire Department", scope: "Fire NOC & High-Rise Clearances", category: "Fire & Safety" },
-        { id: "auth-3", authorityName: "Tree Authority", scope: "Tree Cutting / Transplantation NOC", category: "Environment" },
-        { id: "auth-4", authorityName: "Civil Aviation (AAI)", scope: "Height Clearance NOC", category: "Aviation & Defence" },
-        { id: "auth-5", authorityName: "MAHA-RERA", scope: "Project Registration & Compliances", category: "Legal & RERA" }
-      ],
+      authorities: [],
       consultants: [],
       packageStatuses: {},
       lookAheads: [],
@@ -943,6 +940,13 @@ export class DesignMasterStore {
       auditLogs: [],
       rbacPolicies: this.buildDefaultRbacPolicies()
     };
+  }
+
+  /**
+   * Reset store to completely blank masters and entries (0 projects, 0 packages, 0 drawings)
+   */
+  public static resetToBlank(): void {
+    this.state = this.buildBlankState();
     this.notify();
   }
 
@@ -1173,13 +1177,13 @@ export class DesignMasterStore {
       disciplines,
       packages,
       authorities,
-      consultants: mockConsultants,
+      consultants: [],
       packageStatuses,
       lookAheads,
       statutoryClearances,
-      drawings: mockDrawings,
-      transmittals: mockTransmittals,
-      rfis: mockRfis,
+      drawings: [],
+      transmittals: [],
+      rfis: [],
       auditLogs,
       rbacPolicies: this.buildDefaultRbacPolicies()
     };
