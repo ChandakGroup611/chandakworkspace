@@ -34,7 +34,8 @@ import {
   Tag,
   Send,
   AlertCircle,
-  Filter
+  Filter,
+  MessageSquare
 } from "lucide-react";
 
 interface MatrixColumn {
@@ -248,6 +249,14 @@ export const TenderDesignMatrix: React.FC = () => {
                 </span>
               </>
             )}
+          </div>
+        )}
+
+        {/* Remarks Tag if present */}
+        {entry?.remarks && (
+          <div className="flex items-center gap-0.5 text-[8.5px] text-muted-foreground max-w-[110px] truncate mt-0.5" title={`Remark: ${entry.remarks}`}>
+            <MessageSquare className="h-2.5 w-2.5 shrink-0 text-slate-400" />
+            <span className="truncate italic">{entry.remarks}</span>
           </div>
         )}
       </div>
@@ -1221,19 +1230,15 @@ export const TenderDesignMatrix: React.FC = () => {
       {isBatchModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
           <div className="bg-surface border border-border w-full max-w-xl rounded-2xl shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
-            <div className="flex items-start justify-between border-b border-border pb-3">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-teal-500/15 text-teal-600 dark:text-teal-400 flex items-center justify-center border border-teal-500/25">
-                  <Zap className="h-5 w-5 text-amber-500" />
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-border pb-3.5">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center border border-teal-500/20">
+                  <Zap className="h-4 w-4" />
                 </div>
-                <div>
-                  <h4 className="text-base font-bold text-foreground">
-                    ⚡ Batch Status Update with Mandatory Dates
-                  </h4>
-                  <p className="text-xs text-muted-foreground">
-                    Apply status, mandatory planned/actual dates & audit logging to multiple wings at once
-                  </p>
-                </div>
+                <h4 className="text-base font-bold text-foreground">
+                  Batch Status Update
+                </h4>
               </div>
               <button
                 type="button"
@@ -1244,32 +1249,56 @@ export const TenderDesignMatrix: React.FC = () => {
               </button>
             </div>
 
-            {/* Select Target Project */}
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-foreground block">
-                1. Select Target Project:
-              </label>
-              <select
-                value={batchProjectId}
-                onChange={e => {
-                  const pId = e.target.value;
-                  setBatchProjectId(pId);
-                  const twrs = storeState.towers.filter(t => t.projectId === pId).map(t => t.id);
-                  setBatchSelectedTowers(twrs);
-                }}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground font-bold focus:outline-none focus:border-teal-500 cursor-pointer"
-              >
-                {storeState.projects.map(proj => (
-                  <option key={proj.id} value={proj.id}>{proj.name}</option>
-                ))}
-              </select>
+            {/* Project and Discipline Selection (2-Column Grid) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <Building className="h-3.5 w-3.5 text-blue-500" />
+                  <span>Target Project</span>
+                </label>
+                <select
+                  value={batchProjectId}
+                  onChange={e => {
+                    const pId = e.target.value;
+                    setBatchProjectId(pId);
+                    const twrs = storeState.towers.filter(t => t.projectId === pId).map(t => t.id);
+                    setBatchSelectedTowers(twrs);
+                  }}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground font-medium focus:outline-none focus:border-teal-500 cursor-pointer"
+                >
+                  {storeState.projects.map(proj => (
+                    <option key={proj.id} value={proj.id}>{proj.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <SlidersHorizontal className="h-3.5 w-3.5 text-emerald-500" />
+                  <span>Discipline Scope</span>
+                </label>
+                <select
+                  value={batchDiscipline}
+                  onChange={e => setBatchDiscipline(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground font-medium focus:outline-none focus:border-teal-500 cursor-pointer"
+                >
+                  <option value="ALL">All Disciplines ({storeState.packages.length} Packages)</option>
+                  {categories.map(cat => (
+                    <option key={cat} value={cat}>{cat} ({storeState.packages.filter(p => p.disciplineName === cat).length} Packages)</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            {/* Select Tower Wings */}
-            <div className="space-y-1">
+            {/* Tower Wings Selection */}
+            <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-foreground">
-                  2. Select Tower Wings ({batchSelectedTowers.length} selected):
+                <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <Layers className="h-3.5 w-3.5 text-purple-500" />
+                  <span>Target Wings</span>
+                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-muted-foreground font-mono font-bold">
+                    {batchSelectedTowers.length} of {storeState.towers.filter(t => t.projectId === batchProjectId).length}
+                  </span>
                 </label>
                 <div className="flex items-center gap-2 text-[11px]">
                   <button
@@ -1278,22 +1307,22 @@ export const TenderDesignMatrix: React.FC = () => {
                       const all = storeState.towers.filter(t => t.projectId === batchProjectId).map(t => t.id);
                       setBatchSelectedTowers(all);
                     }}
-                    className="text-teal-600 dark:text-teal-400 hover:underline font-bold cursor-pointer"
+                    className="text-teal-600 dark:text-teal-400 hover:underline font-semibold cursor-pointer"
                   >
                     Select All
                   </button>
-                  <span>•</span>
+                  <span className="text-muted-foreground/40">•</span>
                   <button
                     type="button"
                     onClick={() => setBatchSelectedTowers([])}
-                    className="text-muted-foreground hover:underline cursor-pointer"
+                    className="text-muted-foreground hover:text-rose-500 hover:underline cursor-pointer"
                   >
                     Clear
                   </button>
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-2 max-h-24 overflow-y-auto p-2 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-border">
+              <div className="flex flex-wrap gap-1.5 p-2.5 rounded-xl bg-slate-50/50 dark:bg-slate-900/50 border border-border max-h-28 overflow-y-auto custom-scrollbar">
                 {storeState.towers.filter(t => t.projectId === batchProjectId).map(twr => {
                   const isChecked = batchSelectedTowers.includes(twr.id);
                   return (
@@ -1305,13 +1334,13 @@ export const TenderDesignMatrix: React.FC = () => {
                           isChecked ? prev.filter(id => id !== twr.id) : [...prev, twr.id]
                         );
                       }}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer select-none ${
                         isChecked 
                           ? "bg-teal-600 text-white shadow-xs" 
-                          : "bg-slate-200 dark:bg-slate-800 text-muted-foreground hover:text-foreground"
+                          : "bg-surface border border-border text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
                       }`}
                     >
-                      {isChecked ? <CheckSquare className="h-3 w-3" /> : <Square className="h-3 w-3" />}
+                      {isChecked ? <CheckSquare className="h-3.5 w-3.5 text-white" /> : <Square className="h-3.5 w-3.5 text-muted-foreground/60" />}
                       <span>{twr.towerName}</span>
                     </button>
                   );
@@ -1319,108 +1348,87 @@ export const TenderDesignMatrix: React.FC = () => {
               </div>
             </div>
 
-            {/* Select Discipline Filter */}
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-foreground block">
-                3. Apply to Packages of Discipline:
-              </label>
-              <select
-                value={batchDiscipline}
-                onChange={e => setBatchDiscipline(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground font-semibold focus:outline-none focus:border-teal-500 cursor-pointer"
-              >
-                <option value="ALL">🌟 ALL Disciplines ({storeState.packages.length} Total Packages)</option>
-                {categories.map(cat => (
-                  <option key={cat} value={cat}>{cat} ({storeState.packages.filter(p => p.disciplineName === cat).length} Packages)</option>
-                ))}
-              </select>
-            </div>
-
-            {/* 📅 Mandatory Planned & Actual Dates for Batch */}
-            <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-border">
-              <div>
-                <label className="block font-bold text-foreground mb-1 text-xs">
-                  Planned Date * (Mandatory)
+            {/* Mandatory Dates Grid (Planned & Actual) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5 text-blue-500" />
+                  <span>Planned Date <span className="text-rose-500">*</span></span>
                 </label>
                 <input
                   type="date"
                   required
                   value={batchPlannedDate}
                   onChange={e => setBatchPlannedDate(e.target.value)}
-                  className="w-full px-3 py-1.5 text-xs rounded-xl border border-border bg-surface text-foreground font-mono focus:outline-none focus:border-teal-500"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-surface text-foreground font-mono focus:outline-none focus:border-teal-500"
                 />
               </div>
 
-              <div>
-                <label className="block font-bold text-foreground mb-1 text-xs">
-                  Actual Date * (Mandatory)
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5 text-emerald-500" />
+                  <span>Actual Date <span className="text-rose-500">*</span></span>
                 </label>
                 <input
-                  type="text"
+                  type="date"
                   required
                   value={batchActualDate}
                   onChange={e => setBatchActualDate(e.target.value)}
-                  placeholder="YYYY-MM-DD or '-'"
-                  className="w-full px-3 py-1.5 text-xs rounded-xl border border-border bg-surface text-foreground font-mono focus:outline-none focus:border-teal-500"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-surface text-foreground font-mono focus:outline-none focus:border-teal-500"
                 />
               </div>
             </div>
 
             {/* Status Selector */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground block">
-                4. Select New Status:
+              <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-amber-500" />
+                <span>New Status</span>
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setBatchStatus("Received")}
-                  className={`p-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                    batchStatus === "Received"
-                      ? "border-emerald-500 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-500"
-                      : "border-border text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-                  }`}
-                >
-                  ✓ Received
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setBatchStatus("In progress")}
-                  className={`p-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                    batchStatus === "In progress"
-                      ? "border-amber-500 bg-amber-500/20 text-amber-700 dark:text-amber-300 ring-1 ring-amber-500"
-                      : "border-border text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-                  }`}
-                >
-                  ⏳ In Progress
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setBatchStatus("Pending")}
-                  className={`p-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                    batchStatus === "Pending"
-                      ? "border-rose-500 bg-rose-500/20 text-rose-700 dark:text-rose-300 ring-1 ring-rose-500"
-                      : "border-border text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-                  }`}
-                >
-                  🚨 Pending
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setBatchStatus("Target Date")}
-                  className={`p-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                    batchStatus === "Target Date"
-                      ? "border-sky-500 bg-sky-500/20 text-sky-700 dark:text-sky-300 ring-1 ring-sky-500"
-                      : "border-border text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-                  }`}
-                >
-                  📅 Target Date
-                </button>
+                {[
+                  { id: "Received", label: "Received", dotColor: "#10b981", activeClass: "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-500/40 font-bold" },
+                  { id: "In progress", label: "In Progress", dotColor: "#f59e0b", activeClass: "border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-300 ring-1 ring-amber-500/40 font-bold" },
+                  { id: "Pending", label: "Pending", dotColor: "#f43f5e", activeClass: "border-rose-500 bg-rose-500/10 text-rose-700 dark:text-rose-400 ring-1 ring-rose-500/40 font-bold" },
+                  { id: "Target Date", label: "Target Date", dotColor: "#0ea5e9", activeClass: "border-sky-500 bg-sky-500/10 text-sky-700 dark:text-sky-300 ring-1 ring-sky-500/40 font-bold" },
+                ].map(st => {
+                  const isSelected = batchStatus === st.id;
+                  return (
+                    <button
+                      key={st.id}
+                      type="button"
+                      onClick={() => setBatchStatus(st.id as PackageStatusEntry["status"])}
+                      className={`p-2 rounded-xl text-xs border transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                        isSelected
+                          ? st.activeClass
+                          : "border-border text-muted-foreground hover:text-foreground hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                      }`}
+                    >
+                      <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: st.dotColor }} />
+                      <span>{st.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
+            {/* Remarks / Audit Notes Field */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <MessageSquare className="h-3.5 w-3.5 text-slate-500" />
+                <span>Remark / Notes</span>
+              </label>
+              <textarea
+                rows={2}
+                value={batchRemarks}
+                onChange={e => setBatchRemarks(e.target.value)}
+                placeholder="Enter remarks or justification for batch update (e.g. Reviewed in design meeting, drawings received from MEP consultant)..."
+                className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-surface text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-teal-500 resize-none"
+              />
+            </div>
+
             {/* Actions */}
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-border">
               <button
                 type="button"
                 onClick={() => setIsBatchModalOpen(false)}
@@ -1431,9 +1439,10 @@ export const TenderDesignMatrix: React.FC = () => {
               <button
                 type="button"
                 onClick={handleExecuteBatchUpdate}
-                className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shadow-md transition-all cursor-pointer active:scale-95"
+                className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shadow-xs transition-all cursor-pointer active:scale-95 flex items-center gap-1.5"
               >
-                ⚡ Apply Batch Update & Mail Audit
+                <Zap className="h-3.5 w-3.5" />
+                <span>Apply Batch Update</span>
               </button>
             </div>
           </div>
