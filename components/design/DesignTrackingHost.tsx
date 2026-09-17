@@ -43,6 +43,7 @@ import { DesignReportsAnalytics } from "../../Design_Tracking/src/components/Des
 import { UploadDrawingModal } from "../../Design_Tracking/src/components/UploadDrawingModal";
 import { ReviewApprovalModal } from "../../Design_Tracking/src/components/ReviewApprovalModal";
 import { MastersSetupView } from "../../Design_Tracking/src/components/MastersSetupView";
+import { DesignRbacGovernance } from "../../Design_Tracking/src/components/DesignRbacGovernance";
 import { DataEntryFormsModal } from "../../Design_Tracking/src/components/DataEntryFormsModal";
 import { DesignMasterStore } from "../../Design_Tracking/src/services/designMasterStore";
 import { DrawingItem, DrawingStatus, ConsultantPartner, GfcRelease } from "../../Design_Tracking/src/types";
@@ -60,6 +61,7 @@ type ActiveTabType =
   | "RFIS"
   | "CONSULTANTS" 
   | "REPORTS" 
+  | "RBAC"
   | "MASTERS";
 
 export default function DesignTrackingHost({ initialSlug }: { initialSlug?: string[] }) {
@@ -72,6 +74,7 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
     const currentPath = (pathname || "/design").toLowerCase();
     const combined = `${currentPath}/${slugStr}`;
 
+    if (combined.includes("rbac") || combined.includes("access") || combined.includes("policy") || combined.includes("permission") || combined.includes("governance")) return "RBAC";
     if (combined.includes("master") || combined.includes("setting")) return "MASTERS";
     if (combined.includes("transmittal") || combined.includes("dispatch")) return "TRANSMITTALS";
     if (combined.includes("rfi") || combined.includes("query") || combined.includes("clash")) return "RFIS";
@@ -101,6 +104,7 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
       RFIS: "/design/rfis",
       CONSULTANTS: "/design/consultants",
       REPORTS: "/design/reports",
+      RBAC: "/design/rbac",
       MASTERS: "/design/masters"
     };
     router.push(routeMap[tab]);
@@ -392,6 +396,19 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
 
           <button
             type="button"
+            onClick={() => handleTabChange("RBAC")}
+            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
+              activeTab === "RBAC"
+                ? "border-purple-500 text-foreground font-bold"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <ShieldCheck className={`h-3.5 w-3.5 ${activeTab === "RBAC" ? "text-purple-500" : "text-muted-foreground"}`} />
+            <span>RBAC & Access</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => handleTabChange("MASTERS")}
             className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
               activeTab === "MASTERS"
@@ -485,7 +502,12 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
         />
       )}
 
-      {/* Tab 13: Masters Setup View */}
+      {/* Tab 13: RBAC & User Access Governance */}
+      {activeTab === "RBAC" && (
+        <DesignRbacGovernance />
+      )}
+
+      {/* Tab 14: Masters Setup View */}
       {activeTab === "MASTERS" && (
         <MastersSetupView />
       )}

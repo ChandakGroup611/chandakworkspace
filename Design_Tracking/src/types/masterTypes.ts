@@ -144,3 +144,53 @@ export interface StatutoryClearanceEntry {
   fileReferenceNumber?: string;
   remarks?: string;
 }
+
+// ==============================================================================
+// User Access & RBAC Governance (Chandak Workspace Integration)
+// ==============================================================================
+
+export type DesignRoleCode = 
+  | "DESIGN_ADMIN" 
+  | "DESIGN_LEAD" 
+  | "DESIGN_COORDINATOR" 
+  | "CONSULTANT" 
+  | "SITE_ENGINEER" 
+  | "TPQA_AUDITOR" 
+  | "VIEWER";
+
+export type DesignProjectAccessType = "ALL" | "SPECIFIC";
+
+export interface DesignUserAccessRecord {
+  id?: string;
+  userId: string;
+  designRole: DesignRoleCode;
+  projectAccessType: DesignProjectAccessType;
+  assignedProjectIds: string[]; // Array of project IDs
+  canMatrixEdit: boolean;
+  canDrawingsUpload: boolean;
+  canDrawingsApproveGfc: boolean;
+  canTransmittalsCreate: boolean;
+  canRfisManage: boolean;
+  canMastersManage: boolean;
+  updatedAt?: string;
+  updatedBy?: string;
+}
+
+export interface DesignWorkspaceUser {
+  id: string;
+  fullName: string;
+  email: string;
+  userCode?: string;
+  profilePhoto?: string | null;
+  isActive: boolean;
+  roleId?: string;
+  roleName?: string;
+  roleCode?: string;
+  departmentId?: string;
+  departmentName?: string;
+  designationId?: string;
+  designationName?: string;
+  hasModuleAccess: boolean;
+  designAccess?: DesignUserAccessRecord | null;
+}
+

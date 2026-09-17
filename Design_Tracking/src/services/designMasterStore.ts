@@ -16,7 +16,11 @@ import {
   LookAheadEntry,
   StatutoryClearanceEntry,
   MatrixAuditLog,
-  DesignRbacPolicy
+  DesignRbacPolicy,
+  DesignUserAccessRecord,
+  DesignWorkspaceUser,
+  DesignRoleCode,
+  DesignProjectAccessType
 } from "../types/masterTypes";
 
 import { 
@@ -52,6 +56,7 @@ export interface MasterStoreState {
   rfis: RfiItem[];
   auditLogs: MatrixAuditLog[];
   rbacPolicies: DesignRbacPolicy[];
+  userAccessList: DesignUserAccessRecord[];
 }
 
 export class DesignMasterStore {
@@ -101,6 +106,7 @@ export class DesignMasterStore {
           if (!parsed.consultants || !Array.isArray(parsed.consultants)) parsed.consultants = [];
           if (!parsed.auditLogs || !Array.isArray(parsed.auditLogs)) parsed.auditLogs = [];
           if (!parsed.rbacPolicies || !Array.isArray(parsed.rbacPolicies)) parsed.rbacPolicies = this.buildDefaultRbacPolicies();
+          if (!parsed.userAccessList || !Array.isArray(parsed.userAccessList)) parsed.userAccessList = [];
           
           this.state = parsed;
           return this.state!;
@@ -600,6 +606,74 @@ export class DesignMasterStore {
     }
   }
 
+  // ============================================================================
+  // User Access & RBAC Governance (Chandak Workspace Integration)
+  // ============================================================================
+
+  public static getUserAccessList(): DesignUserAccessRecord[] {
+    const state = this.getState();
+    return state.userAccessList || [];
+  }
+
+  public static getUserAccess(userId: string): DesignUserAccessRecord | undefined {
+    const state = this.getState();
+    return (state.userAccessList || []).find(u => u.userId === userId);
+  }
+
+  public static saveUserAccess(record: DesignUserAccessRecord): void {
+    const state = this.getState();
+    if (!state.userAccessList) state.userAccessList = [];
+    const idx = state.userAccessList.findIndex(u => u.userId === record.userId);
+    if (idx >= 0) {
+      state.userAccessList[idx] = {
+        ...state.userAccessList[idx],
+        ...record,
+        updatedAt: new Date().toISOString()
+      };
+    } else {
+      state.userAccessList.push({
+        ...record,
+        id: record.id || `dua-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+        updatedAt: new Date().toISOString()
+      });
+    }
+    this.notify();
+  }
+
+  public static deleteUserAccess(userId: string): void {
+    const state = this.getState();
+    if (!state.userAccessList) return;
+    state.userAccessList = state.userAccessList.filter(u => u.userId !== userId);
+    this.notify();
+  }
+
+  public static hasUserProjectPermission(
+    userId: string,
+    projectId: string,
+    permission: "matrixEdit" | "drawingsUpload" | "gfcApproval" | "transmittalsCreate" | "rfisManage" | "mastersManage"
+  ): boolean {
+    const state = this.getState();
+    const access = (state.userAccessList || []).find(u => u.userId === userId);
+    if (!access) return true; // Default fallback permissive if no explicit deny
+
+    if (access.designRole === "DESIGN_ADMIN") return true;
+
+    // Check project restriction
+    if (access.projectAccessType === "SPECIFIC" && !access.assignedProjectIds.includes(projectId)) {
+      return false;
+    }
+
+    switch (permission) {
+      case "matrixEdit": return access.canMatrixEdit;
+      case "drawingsUpload": return access.canDrawingsUpload;
+      case "gfcApproval": return access.canDrawingsApproveGfc;
+      case "transmittalsCreate": return access.canTransmittalsCreate;
+      case "rfisManage": return access.canRfisManage;
+      case "mastersManage": return access.canMastersManage;
+      default: return true;
+    }
+  }
+
   public static buildDefaultRbacPolicies(): DesignRbacPolicy[] {
     const modules: DesignRbacPolicy["module"][] = [
       "DESIGN_MATRIX",
@@ -932,7 +1006,8 @@ export class DesignMasterStore {
       transmittals: [],
       rfis: [],
       auditLogs: [],
-      rbacPolicies: this.buildDefaultRbacPolicies()
+      rbacPolicies: this.buildDefaultRbacPolicies(),
+      userAccessList: []
     };
   }
 
@@ -1179,7 +1254,8 @@ export class DesignMasterStore {
       transmittals: [],
       rfis: [],
       auditLogs,
-      rbacPolicies: this.buildDefaultRbacPolicies()
+      rbacPolicies: this.buildDefaultRbacPolicies(),
+      userAccessList: []
     };
   }
 

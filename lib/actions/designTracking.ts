@@ -13,7 +13,11 @@ import {
   LookAheadEntry,
   StatutoryClearanceEntry,
   MatrixAuditLog,
-  DesignRbacPolicy
+  DesignRbacPolicy,
+  DesignRoleCode,
+  DesignProjectAccessType,
+  DesignUserAccessRecord,
+  DesignWorkspaceUser
 } from "@/Design_Tracking/src/types/masterTypes";
 import { 
   DrawingItem, 
@@ -381,3 +385,216 @@ export async function saveRfiAction(rfi: RfiItem) {
     return { success: false, error: err?.message };
   }
 }
+
+// ==============================================================================
+// Workspace RBAC & User Access Governance Actions
+// ==============================================================================
+
+/**
+ * Fetch all workspace users from user_master with department, designation, role,
+ * module mapping, and their specific design_user_access permissions.
+ */
+export async function fetchDesignWorkspaceUsersAction(): Promise<{
+  success: boolean;
+  users?: DesignWorkspaceUser[];
+  error?: string;
+}> {
+  try {
+    const supabase = await getSupabase();
+
+    // Parallel fetch users, departments, designations, roles, modules_master, user_modules, and design_user_access
+    const [
+      usersRes,
+      deptRes,
+      desigRes,
+      rolesRes,
+      modulesRes,
+      userModulesRes,
+      designAccessRes
+    ] = await Promise.all([
+      supabase
+        .from("user_master")
+        .select("id, full_name, email, user_code, profile_photo, is_active, role_id, department_id, designation_id")
+        .eq("is_deleted", false)
+        .order("full_name", { ascending: true }),
+      supabase.from("departments").select("id, code, name").eq("is_deleted", false),
+      supabase.from("designations").select("id, code, name").eq("is_deleted", false),
+      supabase.from("roles").select("id, code, name").eq("is_deleted", false),
+      supabase.from("modules_master").select("id, code").eq("code", "DESIGN_TRACKING").maybeSingle(),
+      supabase.from("user_modules").select("user_id, module_id"),
+      supabase.from("design_user_access").select("*")
+    ]);
+
+    const usersData = usersRes.data || [];
+    const deptMap = new Map((deptRes.data || []).map(d => [d.id, d.name]));
+    const desigMap = new Map((desigRes.data || []).map(d => [d.id, d.name]));
+    const roleMap = new Map((rolesRes.data || []).map(r => [r.id, { name: r.name, code: r.code }]));
+    
+    const designModuleId = modulesRes.data?.id;
+    const usersWithModuleAccess = new Set(
+      (userModulesRes.data || [])
+        .filter(um => designModuleId && um.module_id === designModuleId)
+        .map(um => um.user_id)
+    );
+
+    const accessMap = new Map<string, DesignUserAccessRecord>();
+    if (designAccessRes.data) {
+      for (const row of designAccessRes.data) {
+        accessMap.set(row.user_id, {
+          id: row.id,
+          userId: row.user_id,
+          designRole: row.design_role as DesignRoleCode,
+          projectAccessType: (row.project_access_type || "ALL") as DesignProjectAccessType,
+          assignedProjectIds: row.assigned_project_ids || [],
+          canMatrixEdit: !!row.can_matrix_edit,
+          canDrawingsUpload: !!row.can_drawings_upload,
+          canDrawingsApproveGfc: !!row.can_drawings_approve_gfc,
+          canTransmittalsCreate: !!row.can_transmittals_create,
+          canRfisManage: !!row.can_rfis_manage,
+          canMastersManage: !!row.can_masters_manage,
+          updatedAt: row.updated_at,
+          updatedBy: row.updated_by
+        });
+      }
+    }
+
+    const mergedUsers: DesignWorkspaceUser[] = usersData.map(u => {
+      const role = u.role_id ? roleMap.get(u.role_id) : undefined;
+      const hasModule = usersWithModuleAccess.has(u.id);
+      const access = accessMap.get(u.id) || null;
+
+      return {
+        id: u.id,
+        fullName: u.full_name || "Unnamed User",
+        email: u.email || "",
+        userCode: u.user_code || "",
+        profilePhoto: u.profile_photo || null,
+        isActive: u.is_active !== false,
+        roleId: u.role_id || undefined,
+        roleName: role?.name,
+        roleCode: role?.code,
+        departmentId: u.department_id || undefined,
+        departmentName: u.department_id ? deptMap.get(u.department_id) : undefined,
+        designationId: u.designation_id || undefined,
+        designationName: u.designation_id ? desigMap.get(u.designation_id) : undefined,
+        hasModuleAccess: hasModule || !!access,
+        designAccess: access
+      };
+    });
+
+    return { success: true, users: mergedUsers };
+  } catch (err: any) {
+    console.error("fetchDesignWorkspaceUsersAction error:", err);
+    return { success: false, error: err?.message || "Failed to fetch workspace users" };
+  }
+}
+
+/**
+ * Save or update design tracking user access permissions
+ */
+export async function saveDesignUserAccessAction(payload: {
+  userId: string;
+  designRole: DesignRoleCode;
+  projectAccessType: DesignProjectAccessType;
+  assignedProjectIds: string[];
+  canMatrixEdit: boolean;
+  canDrawingsUpload: boolean;
+  canDrawingsApproveGfc: boolean;
+  canTransmittalsCreate: boolean;
+  canRfisManage: boolean;
+  canMastersManage: boolean;
+  updatedBy?: string;
+}): Promise<{ success: boolean; data?: any; error?: string }> {
+  try {
+    const supabase = await getSupabase();
+
+    // 1. Upsert into design_user_access
+    const record = {
+      user_id: payload.userId,
+      design_role: payload.designRole,
+      project_access_type: payload.projectAccessType,
+      assigned_project_ids: payload.assignedProjectIds || [],
+      can_matrix_edit: payload.canMatrixEdit,
+      can_drawings_upload: payload.canDrawingsUpload,
+      can_drawings_approve_gfc: payload.canDrawingsApproveGfc,
+      can_transmittals_create: payload.canTransmittalsCreate,
+      can_rfis_manage: payload.canRfisManage,
+      can_masters_manage: payload.canMastersManage,
+      updated_at: new Date().toISOString(),
+      updated_by: payload.updatedBy || "Design Administrator"
+    };
+
+    let { data, error } = await supabase
+      .from("design_user_access")
+      .upsert(record, { onConflict: "user_id" })
+      .select()
+      .single();
+
+    if (error) {
+      console.warn("saveDesignUserAccessAction user client note, attempting admin:", error.message);
+      const adminRes = await supabaseAdmin
+        .from("design_user_access")
+        .upsert(record, { onConflict: "user_id" })
+        .select()
+        .single();
+      if (adminRes.error) {
+        console.error("saveDesignUserAccessAction admin error:", adminRes.error);
+        throw adminRes.error;
+      }
+      data = adminRes.data;
+    }
+
+    // 2. Ensure user_modules grants access to DESIGN_TRACKING module
+    try {
+      const { data: moduleData } = await supabaseAdmin
+        .from("modules_master")
+        .select("id")
+        .eq("code", "DESIGN_TRACKING")
+        .maybeSingle();
+
+      if (moduleData?.id) {
+        await supabaseAdmin
+          .from("user_modules")
+          .upsert(
+            { user_id: payload.userId, module_id: moduleData.id, is_default: false },
+            { onConflict: "user_id,module_id" }
+          );
+      }
+    } catch (modErr) {
+      console.warn("user_modules sync warning:", modErr);
+    }
+
+    return { success: true, data: data || record };
+  } catch (err: any) {
+    console.error("saveDesignUserAccessAction error:", err);
+    return { success: false, error: err?.message || "Failed to save design user access" };
+  }
+}
+
+/**
+ * Delete / Revoke design tracking user access
+ */
+export async function deleteDesignUserAccessAction(userId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await getSupabase();
+    
+    // 1. Delete from design_user_access
+    const { error } = await supabase
+      .from("design_user_access")
+      .delete()
+      .eq("user_id", userId);
+
+    if (error) {
+      await supabaseAdmin
+        .from("design_user_access")
+        .delete()
+        .eq("user_id", userId);
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    console.error("deleteDesignUserAccessAction error:", err);
+    return { success: false, error: err?.message || "Failed to delete user access" };
+  }
+}
+

@@ -27,6 +27,7 @@ import {
   Settings,
   AlertTriangle
 } from "lucide-react";
+import { DesignRbacGovernance } from "./DesignRbacGovernance";
 
 type MasterSubTab = "PROJECTS" | "PACKAGES" | "AUTHORITIES" | "RBAC" | "TEMPLATES";
 
@@ -387,71 +388,8 @@ export const MastersSetupView: React.FC = () => {
 
       {/* Sub-Tab 4: RBAC Policies (Project-Wise / Role-Based / CRUD Options) */}
       {activeSubTab === "RBAC" && (
-        <div className="space-y-4 animate-in fade-in duration-150">
-          <div className="p-5 rounded-2xl border border-border bg-surface space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-bold text-foreground">
-                  Role-Based Access Control (RBAC) & Project Scopes
-                </h3>
-                <p className="text-xs text-muted-foreground">
-                  Configure project-wise and role-based permissions with granular Create [C], Read [R], Update [U], Delete [D] capabilities.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const defaults = DesignMasterStore.buildDefaultRbacPolicies();
-                    DesignMasterStore.bulkSaveRbacPolicies(defaults);
-                    alert("RBAC Policies reset to recommended defaults!");
-                  }}
-                  className="px-3.5 py-1.5 rounded-xl border border-border text-xs font-semibold text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
-                >
-                  Reset Defaults
-                </button>
-              </div>
-            </div>
-
-            {/* Grid of Active Policies */}
-            <div className="rounded-2xl border border-border overflow-hidden">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead className="bg-slate-100/90 dark:bg-slate-900/90 border-b border-border text-[11px] font-bold text-foreground">
-                  <tr>
-                    <th className="p-3">User Role</th>
-                    <th className="p-3">Project Scope</th>
-                    <th className="p-3">Module</th>
-                    <th className="p-3 text-center">Create [C]</th>
-                    <th className="p-3 text-center">Read [R]</th>
-                    <th className="p-3 text-center">Update [U]</th>
-                    <th className="p-3 text-center">Delete [D]</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/60">
-                  {DesignMasterStore.getRbacPolicies().map(pol => (
-                    <tr key={pol.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
-                      <td className="p-3 font-bold text-foreground">{pol.roleName}</td>
-                      <td className="p-3 font-medium text-muted-foreground">{pol.projectName}</td>
-                      <td className="p-3 font-mono text-purple-600 dark:text-purple-400 font-semibold">{pol.module}</td>
-                      <td className="p-3 text-center font-bold">
-                        {pol.canCreate ? <span className="text-emerald-500 font-bold">✓</span> : <span className="text-muted-foreground/40">—</span>}
-                      </td>
-                      <td className="p-3 text-center font-bold">
-                        {pol.canRead ? <span className="text-blue-500 font-bold">✓</span> : <span className="text-muted-foreground/40">—</span>}
-                      </td>
-                      <td className="p-3 text-center font-bold">
-                        {pol.canUpdate ? <span className="text-amber-500 font-bold">✓</span> : <span className="text-muted-foreground/40">—</span>}
-                      </td>
-                      <td className="p-3 text-center font-bold">
-                        {pol.canDelete ? <span className="text-rose-500 font-bold">✓</span> : <span className="text-muted-foreground/40">—</span>}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+        <div className="space-y-6 animate-in fade-in duration-150">
+          <DesignRbacGovernance />
         </div>
       )}
 

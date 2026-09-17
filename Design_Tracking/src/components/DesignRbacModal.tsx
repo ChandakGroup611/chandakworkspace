@@ -20,8 +20,10 @@ import {
   FileText,
   Clock,
   Send,
-  HelpCircle
+  HelpCircle,
+  UserCheck
 } from "lucide-react";
+import { DesignRbacGovernance } from "./DesignRbacGovernance";
 
 interface DesignRbacModalProps {
   isOpen: boolean;
@@ -51,6 +53,7 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
   isOpen,
   onClose
 }) => {
+  const [activeModalTab, setActiveModalTab] = useState<"USERS" | "ROLES">("USERS");
   const [storeState, setStoreState] = useState(() => DesignMasterStore.getState());
   const [policies, setPolicies] = useState<DesignRbacPolicy[]>(() => DesignMasterStore.getRbacPolicies());
   const [selectedRole, setSelectedRole] = useState<string>("PROJECT_MANAGER");
@@ -229,15 +232,50 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
           </button>
         </div>
 
-        {saveSuccessMessage && (
-          <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-bold flex items-center gap-2 animate-in fade-in">
-            <CheckCircle2 className="h-4 w-4 shrink-0" />
-            <span>{saveSuccessMessage}</span>
-          </div>
-        )}
+        {/* Navigation Tabs */}
+        <div className="flex items-center gap-2 border-b border-border pb-2">
+          <button
+            type="button"
+            onClick={() => setActiveModalTab("USERS")}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+              activeModalTab === "USERS"
+                ? "bg-purple-600 text-white shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+            }`}
+          >
+            <UserCheck className="h-3.5 w-3.5" />
+            <span>Workspace User Access & Scopes</span>
+          </button>
 
-        {/* Dimension Selectors: Role & Project */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-border">
+          <button
+            type="button"
+            onClick={() => setActiveModalTab("ROLES")}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+              activeModalTab === "ROLES"
+                ? "bg-purple-600 text-white shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+            }`}
+          >
+            <ShieldCheck className="h-3.5 w-3.5" />
+            <span>Role Matrix & CRUD Defaults</span>
+          </button>
+        </div>
+
+        {activeModalTab === "USERS" ? (
+          <div className="py-2">
+            <DesignRbacGovernance />
+          </div>
+        ) : (
+          <>
+            {saveSuccessMessage && (
+              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-bold flex items-center gap-2 animate-in fade-in">
+                <CheckCircle2 className="h-4 w-4 shrink-0" />
+                <span>{saveSuccessMessage}</span>
+              </div>
+            )}
+
+            {/* Dimension Selectors: Role & Project */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-border">
           {/* 1. Select Role */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
@@ -435,17 +473,19 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
             >
               Cancel
             </button>
-            <button
-              type="button"
-              disabled={isSaving}
-              onClick={handleSavePolicies}
-              className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold shadow-md inline-flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 disabled:opacity-50"
-            >
-              <Save className="h-3.5 w-3.5" />
-              <span>{isSaving ? "Saving..." : "Save RBAC Policies"}</span>
-            </button>
+              <button
+                type="button"
+                disabled={isSaving}
+                onClick={handleSavePolicies}
+                className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold shadow-md inline-flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 disabled:opacity-50"
+              >
+                <Save className="h-3.5 w-3.5" />
+                <span>{isSaving ? "Saving..." : "Save RBAC Policies"}</span>
+              </button>
+            </div>
           </div>
-        </div>
+        </>
+      )}
       </div>
     </div>
   );
