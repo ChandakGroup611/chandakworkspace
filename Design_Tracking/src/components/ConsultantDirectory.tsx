@@ -35,32 +35,18 @@ interface ConsultantDirectoryProps {
   availableWorkPackages?: string[];
 }
 
-const DEFAULT_WORK_PACKAGES = [
-  "RCC & Structural Core",
-  "Facade Glazing & ACP",
-  "HVAC & Mechanical Ventilation",
-  "Electrical & Substations",
-  "Plumbing & Drainage",
-  "Fire Protection & Hydrants",
-  "Podium & Hardscape Landscape",
-  "Lobby & Clubhouse Interiors",
-  "Waterproofing & Insulation",
-  "BIM Clash Coordination",
-  "Geotechnical Soil Testing",
-  "Acoustic & AV Systems"
-];
-
 export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
   consultants,
   onAddConsultant,
   onUpdateConsultant,
   onDeleteConsultant,
   availableProjects = [],
-  availableWorkPackages = DEFAULT_WORK_PACKAGES
+  availableWorkPackages = []
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDisciplineFilters, setSelectedDisciplineFilters] = useState<string[]>([]);
   const [selectedProjectFilters, setSelectedProjectFilters] = useState<string[]>([]);
+  const [selectedPackageFilters, setSelectedPackageFilters] = useState<string[]>([]);
   const [selectedOnboardingFilters, setSelectedOnboardingFilters] = useState<string[]>([]);
   
   // Modal states
@@ -74,6 +60,7 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [selectedExpertise, setSelectedExpertise] = useState<string[]>([]);
+  const [modalPackageSearch, setModalPackageSearch] = useState("");
   const [customExpertiseInput, setCustomExpertiseInput] = useState("");
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
   const [tatDays, setTatDays] = useState("3.0");
@@ -96,7 +83,9 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
     setLeadContact("");
     setEmail("");
     setPhone("");
-    setSelectedExpertise(["Core Architectural Layouts"]);
+    setSelectedExpertise([]);
+    setModalPackageSearch("");
+    setCustomExpertiseInput("");
     setSelectedProjects([]);
     setTatDays("3.0");
     setRating("4.8");
@@ -113,6 +102,8 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
     setEmail(c.email);
     setPhone(c.phone);
     setSelectedExpertise(c.expertise || []);
+    setModalPackageSearch("");
+    setCustomExpertiseInput("");
     setSelectedProjects(c.activeProjects || []);
     setTatDays(c.averageTatDays?.toString() || "3.0");
     setRating(c.rating?.toString() || "4.8");
@@ -213,6 +204,12 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
         if (!hasMatchingProject) return false;
       }
 
+      // Work Package filter
+      if (selectedPackageFilters.length > 0) {
+        const hasMatchingPackage = (c.expertise || []).some(p => selectedPackageFilters.includes(p));
+        if (!hasMatchingPackage) return false;
+      }
+
       // Onboarding Status filter
       if (selectedOnboardingFilters.length > 0) {
         const isOnboard = c.onboardingStatus === "Onboard" || (c.activeProjects || []).length > 0;
@@ -238,7 +235,7 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
 
       return true;
     });
-  }, [consultants, selectedDisciplineFilters, selectedProjectFilters, selectedOnboardingFilters, searchQuery]);
+  }, [consultants, selectedDisciplineFilters, selectedProjectFilters, selectedPackageFilters, selectedOnboardingFilters, searchQuery]);
 
   const getDisciplineBadge = (cat: string) => {
     switch (cat) {
@@ -279,6 +276,19 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
     });
   }, [availableProjects, consultants]);
 
+  const packageOptions = useMemo<DropdownOption[]>(() => {
+    const allPkgNames = Array.from(new Set([...availableWorkPackages, ...consultants.flatMap(c => c.expertise || [])]));
+    return allPkgNames.map(pkg => {
+      const cnt = consultants.filter(c => (c.expertise || []).includes(pkg)).length;
+      return {
+        value: pkg,
+        label: pkg,
+        count: cnt,
+        subtitle: `${cnt} consultant${cnt === 1 ? "" : "s"}`
+      };
+    });
+  }, [availableWorkPackages, consultants]);
+
   const onboardingOptions = useMemo<DropdownOption[]>(() => {
     return [
       {
@@ -301,11 +311,13 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
   const totalActiveFilterCount =
     selectedDisciplineFilters.length +
     selectedProjectFilters.length +
+    selectedPackageFilters.length +
     selectedOnboardingFilters.length;
 
   const handleClearAllFilters = () => {
     setSelectedDisciplineFilters([]);
     setSelectedProjectFilters([]);
+    setSelectedPackageFilters([]);
     setSelectedOnboardingFilters([]);
     setSearchQuery("");
   };
@@ -348,15 +360,17 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
               )}
             </div>
 
-            {/* Add Consultant Button */}
-            <button
-              type="button"
-              onClick={handleOpenAddModal}
-              className="h-9 px-3.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-md cursor-pointer shrink-0 whitespace-nowrap active:scale-95"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              <span>Add Consultant</span>
-            </button>
+            {/* Register Consultant Button */}
+            {onAddConsultant && (
+              <button
+                type="button"
+                onClick={handleOpenAddModal}
+                className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all active:scale-95 shrink-0 whitespace-nowrap"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>Add Consultant</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -387,7 +401,19 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
               searchPlaceholder="Search project..."
             />
 
-            {/* 3. Onboarding Status Dropdown */}
+            {/* 3. Work Package Dropdown */}
+            <DesignMultiSelectDropdown
+              label="Work Packages"
+              icon={<Layers className="h-3.5 w-3.5" />}
+              options={packageOptions}
+              selectedValues={selectedPackageFilters}
+              onChange={setSelectedPackageFilters}
+              colorTheme="teal"
+              placeholder={`All Packages (${packageOptions.length})`}
+              searchPlaceholder="Search work package..."
+            />
+
+            {/* 4. Onboarding Status Dropdown */}
             <DesignMultiSelectDropdown
               label="Onboarding"
               icon={<CheckCircle2 className="h-3.5 w-3.5" />}
@@ -455,6 +481,24 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
                 <button
                   type="button"
                   onClick={() => setSelectedProjectFilters(prev => prev.filter(x => x !== p))}
+                  className="hover:text-rose-500 cursor-pointer p-0.5"
+                >
+                  <X className="h-2.5 w-2.5" />
+                </button>
+              </span>
+            ))}
+
+            {/* Work Package Badges */}
+            {selectedPackageFilters.map(pkg => (
+              <span
+                key={`pkg-${pkg}`}
+                className="px-2 py-0.5 rounded-lg bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/30 text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
+              >
+                <Layers className="h-2.5 w-2.5" />
+                <span>{pkg}</span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedPackageFilters(prev => prev.filter(x => x !== pkg))}
                   className="hover:text-rose-500 cursor-pointer p-0.5"
                 >
                   <X className="h-2.5 w-2.5" />
@@ -761,53 +805,129 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
                 </div>
               </div>
 
-              {/* 🎯 Multi-Selection: Expertise (Work Packages) Tagging */}
-              <div className="space-y-1.5 pt-1 border-t border-border">
-                <div className="flex items-center justify-between">
-                  <label className="font-bold text-foreground flex items-center gap-1.5">
-                    <Tag className="h-3.5 w-3.5 text-purple-600" />
-                    <span>Tag Expertise / Work Packages (Multi-Select):</span>
+              {/* 🎯 Multi-Selection: WORK PACKAGES (Assign Packages to Consultant) */}
+              <div className="space-y-2 pt-2 border-t border-border">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                  <label className="font-bold text-foreground flex items-center gap-1.5 text-xs">
+                    <Layers className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                    <span>WORK PACKAGES (Assign Packages to Consultant) *</span>
                   </label>
-                  <span className="text-[11px] text-muted-foreground">
-                    {selectedExpertise.length} tags selected
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-semibold text-purple-600 dark:text-purple-400">
+                      {selectedExpertise.length} {selectedExpertise.length === 1 ? "package" : "packages"} selected
+                    </span>
+                    {availableWorkPackages.length > 0 && (
+                      <div className="flex items-center gap-1.5 text-[11px]">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedExpertise(Array.from(new Set([...selectedExpertise, ...availableWorkPackages])))}
+                          className="text-purple-600 hover:underline cursor-pointer font-medium"
+                        >
+                          Select All
+                        </button>
+                        <span>•</span>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedExpertise([])}
+                          className="text-muted-foreground hover:text-rose-500 cursor-pointer"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                <div className="flex flex-wrap gap-1.5 p-2.5 rounded-xl border border-border bg-muted/20 max-h-32 overflow-y-auto custom-scrollbar">
-                  {availableWorkPackages.map(pkg => {
-                    const isSelected = selectedExpertise.includes(pkg);
-                    return (
-                      <button
-                        key={pkg}
-                        type="button"
-                        onClick={() => handleToggleExpertise(pkg)}
-                        className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-all border flex items-center gap-1 ${
-                          isSelected
-                            ? "bg-purple-600 text-white border-purple-600 shadow-2xs font-bold"
-                            : "bg-surface text-muted-foreground border-border hover:text-foreground"
-                        }`}
-                      >
-                        {isSelected && <Check className="h-3 w-3" />}
-                        <span>{pkg}</span>
-                      </button>
-                    );
-                  })}
-                </div>
+                {/* Search / Filter for available work packages if > 4 */}
+                {availableWorkPackages.length > 4 && (
+                  <div className="relative">
+                    <Search className="h-3 w-3 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                    <input
+                      type="text"
+                      value={modalPackageSearch}
+                      onChange={e => setModalPackageSearch(e.target.value)}
+                      aria-label="Filter available packages"
+                      className="w-full pl-7 pr-3 py-1 text-xs rounded-lg border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                    />
+                  </div>
+                )}
 
-                {/* Custom tag input */}
+                {/* Available Work Packages List or Empty Prompt */}
+                {availableWorkPackages.length === 0 ? (
+                  <div className="p-3 rounded-xl border border-dashed border-border bg-muted/20 text-xs space-y-1">
+                    <p className="text-muted-foreground font-medium">
+                      No work packages configured in <strong>Work Packages Master</strong> yet.
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      You can type custom package names in the box below to tag this consultant, or configure them in the Work Packages Master tab.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-1.5 p-2.5 rounded-xl border border-border bg-muted/20 max-h-36 overflow-y-auto custom-scrollbar">
+                    {availableWorkPackages
+                      .filter(pkg => !modalPackageSearch.trim() || pkg.toLowerCase().includes(modalPackageSearch.toLowerCase()))
+                      .map(pkg => {
+                        const isSelected = selectedExpertise.includes(pkg);
+                        return (
+                          <button
+                            key={pkg}
+                            type="button"
+                            onClick={() => handleToggleExpertise(pkg)}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-all border flex items-center gap-1.5 ${
+                              isSelected
+                                ? "bg-purple-600 text-white border-purple-600 shadow-2xs font-bold"
+                                : "bg-surface text-muted-foreground border-border hover:text-foreground hover:border-purple-500/40"
+                            }`}
+                          >
+                            {isSelected ? <Check className="h-3 w-3" /> : <Plus className="h-3 w-3 text-muted-foreground" />}
+                            <span>{pkg}</span>
+                          </button>
+                        );
+                      })}
+                  </div>
+                )}
+
+                {/* Selected Work Packages Chips Preview (if custom or selected) */}
+                {selectedExpertise.length > 0 && (
+                  <div className="space-y-1 pt-1">
+                    <span className="text-[11px] font-bold text-muted-foreground block">
+                      Assigned Work Packages ({selectedExpertise.length}):
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {selectedExpertise.map(tag => (
+                        <span
+                          key={tag}
+                          className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/30 flex items-center gap-1 shadow-2xs"
+                        >
+                          <span>{tag}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleExpertise(tag)}
+                            className="text-muted-foreground hover:text-rose-500 p-0.5 cursor-pointer"
+                            title="Remove tag"
+                          >
+                            <X className="h-2.5 w-2.5" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Custom Work Package Tag Input */}
                 <div className="flex items-center gap-2 pt-1">
                   <input
                     type="text"
                     value={customExpertiseInput}
                     onChange={e => setCustomExpertiseInput(e.target.value)}
                     onKeyDown={handleAddCustomExpertise}
-                    aria-label="Add custom work package expertise tag"
+                    aria-label="Add custom work package tag"
                     className="flex-1 px-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                   />
                   <button
                     type="button"
                     onClick={handleAddCustomExpertise}
-                    className="px-3 py-1.5 rounded-xl bg-purple-600 text-white font-bold text-xs hover:bg-purple-500 cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl bg-purple-600 text-white font-bold text-xs hover:bg-purple-500 cursor-pointer shadow-2xs"
                   >
                     Add Tag
                   </button>

@@ -31,9 +31,20 @@ import { DesignRbacGovernance } from "./DesignRbacGovernance";
 
 type MasterSubTab = "PROJECTS" | "PACKAGES" | "AUTHORITIES" | "RBAC" | "TEMPLATES";
 
-export const MastersSetupView: React.FC = () => {
+interface MastersSetupViewProps {
+  initialSubTab?: MasterSubTab;
+}
+
+export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTab = "PROJECTS" }) => {
   const [storeState, setStoreState] = useState<MasterStoreState>(DesignMasterStore.getState());
-  const [activeSubTab, setActiveSubTab] = useState<MasterSubTab>("PROJECTS");
+  const [activeSubTab, setActiveSubTab] = useState<MasterSubTab>(initialSubTab);
+
+  // Sync activeSubTab if initialSubTab prop changes
+  useEffect(() => {
+    if (initialSubTab) {
+      setActiveSubTab(initialSubTab);
+    }
+  }, [initialSubTab]);
 
   // Subscribe to real-time store changes
   useEffect(() => {
@@ -55,15 +66,35 @@ export const MastersSetupView: React.FC = () => {
   const [newTowerName, setNewTowerName] = useState("");
   const [newTowerType, setNewTowerType] = useState<TowerMaster["towerType"]>("Sale");
 
-  // Form states: New Work Package
+  // Form states: Work Package (Add & Edit)
   const [isNewPackageModalOpen, setIsNewPackageModalOpen] = useState(false);
+  const [isEditPackageModalOpen, setIsEditPackageModalOpen] = useState(false);
+  const [editingPackage, setEditingPackage] = useState<WorkPackageMaster | null>(null);
   const [newPackageName, setNewPackageName] = useState("");
+  const [newPackageCode, setNewPackageCode] = useState("");
   const [newPackageDiscipline, setNewPackageDiscipline] = useState("Civil & RCC");
+  const [newPackageDescription, setNewPackageDescription] = useState("");
+  const [packageSearchQuery, setPackageSearchQuery] = useState("");
+  const [selectedDisciplineFilter, setSelectedDisciplineFilter] = useState("ALL");
 
   // Form states: New Authority
   const [isNewAuthorityModalOpen, setIsNewAuthorityModalOpen] = useState(false);
   const [newAuthorityName, setNewAuthorityName] = useState("");
   const [newAuthorityScope, setNewAuthorityScope] = useState("");
+
+  const DISCIPLINE_OPTIONS = [
+    "Civil & RCC",
+    "Structural",
+    "MEPF Services",
+    "Architectural",
+    "Finishing & Interiors",
+    "Facade & Glazing",
+    "Landscape & Infrastructure",
+    "Vertical Transport",
+    "Geotechnical & Soil",
+    "Specialist Studies",
+    "BIM Coordination"
+  ];
 
   const handleCreateProject = (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,18 +126,58 @@ export const MastersSetupView: React.FC = () => {
     setIsNewTowerModalOpen(false);
   };
 
+  const handleOpenAddPackage = () => {
+    setEditingPackage(null);
+    setNewPackageName("");
+    setNewPackageCode("");
+    setNewPackageDiscipline("Civil & RCC");
+    setNewPackageDescription("");
+    setIsNewPackageModalOpen(true);
+  };
+
+  const handleOpenEditPackage = (pkg: WorkPackageMaster) => {
+    setEditingPackage(pkg);
+    setNewPackageName(pkg.packageName);
+    setNewPackageCode(pkg.packageCode || "");
+    setNewPackageDiscipline(pkg.disciplineName || "Civil & RCC");
+    setNewPackageDescription(pkg.description || "");
+    setIsEditPackageModalOpen(true);
+  };
+
   const handleCreatePackage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPackageName.trim()) return;
 
+    const generatedCode = newPackageCode.trim() || `PKG-${(storeState.packages.length + 1).toString().padStart(2, "0")}`;
+
     DesignMasterStore.addPackage({
-      disciplineId: "disc-custom",
+      disciplineId: `disc-${newPackageDiscipline.toLowerCase().replace(/[^a-z0-9]/g, "-")}`,
       disciplineName: newPackageDiscipline,
-      packageName: newPackageName.trim()
+      packageName: newPackageName.trim(),
+      packageCode: generatedCode,
+      description: newPackageDescription.trim() || undefined
     });
 
     setNewPackageName("");
+    setNewPackageCode("");
+    setNewPackageDescription("");
     setIsNewPackageModalOpen(false);
+  };
+
+  const handleUpdatePackage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPackage || !newPackageName.trim()) return;
+
+    DesignMasterStore.updatePackage(editingPackage.id, {
+      disciplineId: `disc-${newPackageDiscipline.toLowerCase().replace(/[^a-z0-9]/g, "-")}`,
+      disciplineName: newPackageDiscipline,
+      packageName: newPackageName.trim(),
+      packageCode: newPackageCode.trim() || editingPackage.packageCode,
+      description: newPackageDescription.trim() || undefined
+    });
+
+    setIsEditPackageModalOpen(false);
+    setEditingPackage(null);
   };
 
   const handleCreateAuthority = (e: React.FormEvent) => {
@@ -292,61 +363,185 @@ export const MastersSetupView: React.FC = () => {
       )}
 
       {/* Sub-tab 2: Work Packages Master */}
-      {activeSubTab === "PACKAGES" && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="text-sm font-bold text-foreground">Standard Work Packages Directory</h4>
-              <p className="text-xs text-muted-foreground">Tender packages categorized by engineering disciplines</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsNewPackageModalOpen(true)}
-              className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              <span>Add Work Package</span>
-            </button>
-          </div>
+      {activeSubTab === "PACKAGES" && (() => {
+        const filteredPackages = storeState.packages.filter(pkg => {
+          if (selectedDisciplineFilter !== "ALL" && pkg.disciplineName !== selectedDisciplineFilter) {
+            return false;
+          }
+          if (packageSearchQuery.trim()) {
+            const q = packageSearchQuery.toLowerCase();
+            const matchName = pkg.packageName.toLowerCase().includes(q);
+            const matchCode = (pkg.packageCode || "").toLowerCase().includes(q);
+            const matchDisc = pkg.disciplineName.toLowerCase().includes(q);
+            const matchDesc = (pkg.description || "").toLowerCase().includes(q);
+            if (!matchName && !matchCode && !matchDisc && !matchDesc) return false;
+          }
+          return true;
+        });
 
-          <div className="rounded-2xl border border-border bg-surface overflow-hidden shadow-xs">
-            <div className="overflow-x-auto custom-scrollbar">
-              <table className="w-full text-left text-xs border-collapse min-w-[650px]">
-                <thead>
-                  <tr className="bg-slate-50 dark:bg-slate-900/60 border-b border-border text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
-                    <th className="p-3.5 whitespace-nowrap min-w-[140px]">Discipline</th>
-                    <th className="p-3.5 whitespace-nowrap min-w-[130px]">Package Code</th>
-                    <th className="p-3.5 min-w-[260px]">Package Name</th>
-                    <th className="p-3.5 text-right whitespace-nowrap min-w-[80px]">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/60">
-                  {storeState.packages.map(pkg => (
-                    <tr key={pkg.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
-                      <td className="p-3.5 whitespace-nowrap min-w-[140px]">
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 whitespace-nowrap">
-                          {pkg.disciplineName}
-                        </span>
-                      </td>
-                      <td className="p-3.5 font-mono text-muted-foreground whitespace-nowrap min-w-[130px]">{pkg.packageCode || "—"}</td>
-                      <td className="p-3.5 font-bold text-foreground min-w-[260px]">{pkg.packageName}</td>
-                      <td className="p-3.5 text-right whitespace-nowrap min-w-[80px]">
-                        <button
-                          type="button"
-                          onClick={() => DesignMasterStore.deletePackage(pkg.id)}
-                          className="h-7 w-7 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 inline-flex items-center justify-center transition-colors cursor-pointer"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        return (
+          <div className="space-y-4">
+            {/* Top Toolbar */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h4 className="text-sm font-bold text-foreground">Standard Work Packages Directory</h4>
+                <p className="text-xs text-muted-foreground">Master engineering work packages used for tracking drawings, tenders, and consultant tagging</p>
+              </div>
+              <button
+                type="button"
+                onClick={handleOpenAddPackage}
+                className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>Add Work Package</span>
+              </button>
             </div>
+
+            {/* Filter & Search Bar */}
+            <div className="p-3 rounded-2xl border border-border bg-surface shadow-xs space-y-3">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                {/* Search */}
+                <div className="relative w-full sm:w-72">
+                  <input
+                    type="text"
+                    value={packageSearchQuery}
+                    onChange={e => setPackageSearchQuery(e.target.value)}
+                    aria-label="Search work packages"
+                    className="w-full pl-3 pr-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+
+                <div className="text-xs text-muted-foreground self-start sm:self-auto font-medium">
+                  Showing <strong>{filteredPackages.length}</strong> of {storeState.packages.length} Packages
+                </div>
+              </div>
+
+              {/* Discipline Filter Chips */}
+              <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 text-xs">
+                <span className="text-[11px] font-bold text-muted-foreground mr-1 shrink-0 flex items-center gap-1">
+                  <SlidersHorizontal className="h-3 w-3" />
+                  <span>Discipline:</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedDisciplineFilter("ALL")}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-colors whitespace-nowrap shrink-0 ${
+                    selectedDisciplineFilter === "ALL"
+                      ? "bg-primary text-primary-foreground font-bold shadow-2xs"
+                      : "bg-muted/40 text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  All ({storeState.packages.length})
+                </button>
+                {DISCIPLINE_OPTIONS.map(disc => {
+                  const count = storeState.packages.filter(p => p.disciplineName === disc).length;
+                  return (
+                    <button
+                      key={disc}
+                      type="button"
+                      onClick={() => setSelectedDisciplineFilter(disc)}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-colors whitespace-nowrap shrink-0 ${
+                        selectedDisciplineFilter === disc
+                          ? "bg-primary text-primary-foreground font-bold shadow-2xs"
+                          : "bg-muted/40 text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {disc} {count > 0 ? `(${count})` : ""}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Packages Table or Empty State */}
+            {filteredPackages.length === 0 ? (
+              <div className="p-8 rounded-2xl border border-dashed border-border bg-surface text-center space-y-3">
+                <div className="h-10 w-10 mx-auto rounded-xl bg-muted text-muted-foreground flex items-center justify-center">
+                  <Layers className="h-5 w-5" />
+                </div>
+                <div>
+                  <h5 className="text-sm font-bold text-foreground">No Work Packages Found</h5>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {storeState.packages.length === 0 
+                      ? "No work packages have been defined in the master yet. Create your first work package to start tracking."
+                      : "No work packages match the selected search or discipline filter."}
+                  </p>
+                </div>
+                {storeState.packages.length === 0 && (
+                  <button
+                    type="button"
+                    onClick={handleOpenAddPackage}
+                    className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>Create First Work Package</span>
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-border bg-surface overflow-hidden shadow-xs">
+                <div className="overflow-x-auto custom-scrollbar">
+                  <table className="w-full text-left text-xs border-collapse min-w-[650px]">
+                    <thead>
+                      <tr className="bg-slate-50 dark:bg-slate-900/60 border-b border-border text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+                        <th className="p-3.5 whitespace-nowrap min-w-[140px]">Discipline</th>
+                        <th className="p-3.5 whitespace-nowrap min-w-[130px]">Package Code</th>
+                        <th className="p-3.5 min-w-[260px]">Package Name</th>
+                        <th className="p-3.5 min-w-[200px]">Description</th>
+                        <th className="p-3.5 text-right whitespace-nowrap min-w-[100px]">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/60">
+                      {filteredPackages.map(pkg => (
+                        <tr key={pkg.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                          <td className="p-3.5 whitespace-nowrap min-w-[140px]">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 whitespace-nowrap">
+                              {pkg.disciplineName}
+                            </span>
+                          </td>
+                          <td className="p-3.5 font-mono font-bold text-foreground whitespace-nowrap min-w-[130px]">
+                            {pkg.packageCode || "—"}
+                          </td>
+                          <td className="p-3.5 font-bold text-foreground min-w-[260px]">
+                            {pkg.packageName}
+                          </td>
+                          <td className="p-3.5 text-muted-foreground min-w-[200px] truncate max-w-xs">
+                            {pkg.description || "—"}
+                          </td>
+                          <td className="p-3.5 text-right whitespace-nowrap min-w-[100px]">
+                            <div className="inline-flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEditPackage(pkg)}
+                                className="h-7 w-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-muted-foreground hover:text-foreground inline-flex items-center justify-center transition-colors cursor-pointer"
+                                title="Edit work package"
+                              >
+                                <SlidersHorizontal className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (confirm(`Delete work package "${pkg.packageName}" from master?`)) {
+                                    DesignMasterStore.deletePackage(pkg.id);
+                                  }
+                                }}
+                                className="h-7 w-7 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 inline-flex items-center justify-center transition-colors cursor-pointer"
+                                title="Delete work package"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Sub-tab 3: Authorities Master */}
       {activeSubTab === "AUTHORITIES" && (
@@ -628,14 +823,14 @@ export const MastersSetupView: React.FC = () => {
           <div className="bg-surface border border-border w-full max-w-md rounded-2xl shadow-2xl p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-bold text-foreground">Create New Work Package</h4>
-              <button type="button" onClick={() => setIsNewPackageModalOpen(false)} className="text-muted-foreground hover:text-foreground">
+              <button type="button" onClick={() => setIsNewPackageModalOpen(false)} className="text-muted-foreground hover:text-foreground cursor-pointer">
                 <X className="h-4 w-4" />
               </button>
             </div>
 
             <form onSubmit={handleCreatePackage} className="space-y-3 text-xs">
               <div className="space-y-1">
-                <label className="font-bold text-foreground">Package Title *</label>
+                <label className="font-bold text-foreground">Package Name / Title *</label>
                 <input
                   type="text"
                   required
@@ -645,21 +840,39 @@ export const MastersSetupView: React.FC = () => {
                 />
               </div>
 
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground">Discipline *</label>
+                  <select
+                    value={newPackageDiscipline}
+                    onChange={e => setNewPackageDiscipline(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                  >
+                    {DISCIPLINE_OPTIONS.map(disc => (
+                      <option key={disc} value={disc}>{disc}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground">Package Code</label>
+                  <input
+                    type="text"
+                    value={newPackageCode}
+                    onChange={e => setNewPackageCode(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+              </div>
+
               <div className="space-y-1">
-                <label className="font-bold text-foreground">Discipline</label>
-                <select
-                  value={newPackageDiscipline}
-                  onChange={e => setNewPackageDiscipline(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
-                >
-                  <option value="Civil & RCC">Civil & RCC</option>
-                  <option value="MEPF Services">MEPF Services</option>
-                  <option value="Finishing & Interiors">Finishing & Interiors</option>
-                  <option value="Facade & Glazing">Facade & Glazing</option>
-                  <option value="Landscape & Infrastructure">Landscape & Infrastructure</option>
-                  <option value="Vertical Transport">Vertical Transport</option>
-                  <option value="Specialist Studies">Specialist Studies</option>
-                </select>
+                <label className="font-bold text-foreground">Scope / Description</label>
+                <textarea
+                  rows={2}
+                  value={newPackageDescription}
+                  onChange={e => setNewPackageDescription(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                />
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
@@ -667,7 +880,78 @@ export const MastersSetupView: React.FC = () => {
                   Cancel
                 </button>
                 <button type="submit" className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer transition-all shadow-md">
-                  Save Package
+                  Create Package
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Edit Package */}
+      {isEditPackageModalOpen && editingPackage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="bg-surface border border-border w-full max-w-md rounded-2xl shadow-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-bold text-foreground">Edit Work Package</h4>
+              <button type="button" onClick={() => setIsEditPackageModalOpen(false)} className="text-muted-foreground hover:text-foreground cursor-pointer">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdatePackage} className="space-y-3 text-xs">
+              <div className="space-y-1">
+                <label className="font-bold text-foreground">Package Name / Title *</label>
+                <input
+                  type="text"
+                  required
+                  value={newPackageName}
+                  onChange={e => setNewPackageName(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground">Discipline *</label>
+                  <select
+                    value={newPackageDiscipline}
+                    onChange={e => setNewPackageDiscipline(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                  >
+                    {DISCIPLINE_OPTIONS.map(disc => (
+                      <option key={disc} value={disc}>{disc}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground">Package Code</label>
+                  <input
+                    type="text"
+                    value={newPackageCode}
+                    onChange={e => setNewPackageCode(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-foreground">Scope / Description</label>
+                <textarea
+                  rows={2}
+                  value={newPackageDescription}
+                  onChange={e => setNewPackageDescription(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
+                <button type="button" onClick={() => setIsEditPackageModalOpen(false)} className="px-4 py-1.5 rounded-xl border border-border bg-background text-foreground hover:bg-muted transition-colors cursor-pointer">
+                  Cancel
+                </button>
+                <button type="submit" className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer transition-all shadow-md">
+                  Update Package
                 </button>
               </div>
             </form>

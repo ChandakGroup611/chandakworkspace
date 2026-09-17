@@ -60,6 +60,7 @@ type ActiveTabType =
   | "TRANSMITTALS"
   | "RFIS"
   | "CONSULTANTS" 
+  | "PACKAGES"
   | "REPORTS" 
   | "RBAC"
   | "MASTERS";
@@ -75,6 +76,7 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
     const combined = `${currentPath}/${slugStr}`;
 
     if (combined.includes("rbac") || combined.includes("access") || combined.includes("policy") || combined.includes("permission") || combined.includes("governance")) return "RBAC";
+    if (combined.includes("package") || combined.includes("work-package") || combined.includes("workpackage")) return "PACKAGES";
     if (combined.includes("master") || combined.includes("setting")) return "MASTERS";
     if (combined.includes("transmittal") || combined.includes("dispatch")) return "TRANSMITTALS";
     if (combined.includes("rfi") || combined.includes("query") || combined.includes("clash")) return "RFIS";
@@ -103,6 +105,7 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
       TRANSMITTALS: "/design/transmittals",
       RFIS: "/design/rfis",
       CONSULTANTS: "/design/consultants",
+      PACKAGES: "/design/packages",
       REPORTS: "/design/reports",
       RBAC: "/design/rbac",
       MASTERS: "/design/masters"
@@ -383,6 +386,19 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
 
           <button
             type="button"
+            onClick={() => handleTabChange("PACKAGES")}
+            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
+              activeTab === "PACKAGES"
+                ? "border-emerald-500 text-foreground font-bold"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Layers className={`h-3.5 w-3.5 ${activeTab === "PACKAGES" ? "text-emerald-500" : "text-muted-foreground"}`} />
+            <span>Work Packages Master</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => handleTabChange("REPORTS")}
             className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
               activeTab === "REPORTS"
@@ -494,7 +510,12 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
         />
       )}
 
-      {/* Tab 12: Design Reports & Analytics */}
+      {/* Tab 12: Work Packages Master Direct View */}
+      {activeTab === "PACKAGES" && (
+        <MastersSetupView initialSubTab="PACKAGES" />
+      )}
+
+      {/* Tab 13: Design Reports & Analytics */}
       {activeTab === "REPORTS" && (
         <DesignReportsAnalytics 
           drawings={drawings}
@@ -502,12 +523,12 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
         />
       )}
 
-      {/* Tab 13: RBAC & User Access Governance */}
+      {/* Tab 14: RBAC & User Access Governance */}
       {activeTab === "RBAC" && (
         <DesignRbacGovernance />
       )}
 
-      {/* Tab 14: Masters Setup View */}
+      {/* Tab 15: Masters Setup View */}
       {activeTab === "MASTERS" && (
         <MastersSetupView />
       )}
