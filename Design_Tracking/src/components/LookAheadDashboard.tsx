@@ -214,9 +214,6 @@ export const LookAheadDashboard: React.FC = () => {
               <h2 className="text-base font-bold text-foreground">
                 Look-Ahead Forecast
               </h2>
-              <p className="text-xs text-muted-foreground">
-                30-day and 60-day milestone deliverables, critical design blockers, and consultant action items
-              </p>
             </div>
           </div>
 

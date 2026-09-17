@@ -267,9 +267,6 @@ export const LiaisoningTracker: React.FC = () => {
               <h2 className="text-base font-bold text-foreground">
                 Statutory Liaisoning
               </h2>
-              <p className="text-xs text-muted-foreground">
-                Onboarding readiness and clearance tracking across municipal & statutory authorities
-              </p>
             </div>
           </div>
 

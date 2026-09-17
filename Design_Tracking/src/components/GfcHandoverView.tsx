@@ -103,9 +103,6 @@ export const GfcHandoverView: React.FC<GfcHandoverViewProps> = ({
             <h2 className="text-base font-bold text-foreground">
               GFC Site Handover Manifest
             </h2>
-            <p className="text-xs text-muted-foreground">
-              Good For Construction drawings issued to site execution teams and civil contractors
-            </p>
           </div>
         </div>
 

@@ -179,9 +179,6 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
               <h2 className="text-base font-bold text-foreground">
                 Revision History
               </h2>
-              <p className="text-xs text-muted-foreground">
-                Historical revision log and change tracking across drawing releases
-              </p>
             </div>
           </div>
 

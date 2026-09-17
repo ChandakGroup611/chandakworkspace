@@ -223,9 +223,6 @@ export function DesignRfiTracker() {
             <h2 className="text-base font-bold text-foreground">
               RFI & Site Clash Query Tracker
             </h2>
-            <p className="text-xs text-muted-foreground">
-              Request for Information (RFI) cycles, site query SLA countdowns, and design clash resolution logs
-            </p>
           </div>
         </div>
 

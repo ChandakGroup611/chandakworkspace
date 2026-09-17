@@ -138,9 +138,6 @@ export const ApprovalsReviewQueue: React.FC<ApprovalsReviewQueueProps> = ({
               <h2 className="text-base font-bold text-foreground">
                 Design Approvals & Review
               </h2>
-              <p className="text-xs text-muted-foreground">
-                Drawing review workflow, consultant comments, and GFC certification sign-offs
-              </p>
             </div>
           </div>
 

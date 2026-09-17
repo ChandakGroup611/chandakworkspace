@@ -178,9 +178,6 @@ export function TransmittalManager() {
             <h2 className="text-base font-bold text-foreground">
               Document Transmittals & GFC Dispatch Slips
             </h2>
-            <p className="text-xs text-muted-foreground">
-              Formal drawing issuance records, contractor physical/cloud handovers, and legal verification seals
-            </p>
           </div>
         </div>
 

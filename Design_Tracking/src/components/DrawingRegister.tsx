@@ -193,9 +193,6 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
               <h2 className="text-base font-bold text-foreground">
                 Drawing Register
               </h2>
-              <p className="text-xs text-muted-foreground">
-                Central register of architectural, structural, MEP, and landscape drawing sheets
-              </p>
             </div>
           </div>
 

@@ -323,9 +323,6 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
               <h2 className="text-base font-bold text-foreground">
                 Consultants & Engineering Partners
               </h2>
-              <p className="text-xs text-muted-foreground">
-                Multi-expertise work package tagging, project assignments & real-time onboarding lifecycle
-              </p>
             </div>
           </div>
 

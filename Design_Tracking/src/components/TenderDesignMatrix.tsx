@@ -519,44 +519,30 @@ export const TenderDesignMatrix: React.FC = () => {
     <div className="space-y-4">
       {/* 🌟 Top Filter & Control Ribbon */}
       <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-xs space-y-3.5">
-        {/* Row 1: Header, Search, Actions */}
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20 shrink-0">
-              <Layers className="h-4 w-4" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-foreground">
-                Tender Design Matrix
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                Mandatory Planned & Actual dates, automated mail audit trails & multi-dimension dropdown filtering
-              </p>
-            </div>
+        {/* Row 1: Search & Action Buttons */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          {/* Live Search */}
+          <div className="relative flex-1 sm:max-w-xs">
+            <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Search packages..."
+              className="w-full pl-8 pr-7 py-1.5 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-emerald-500"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
-            {/* Live Search */}
-            <div className="relative flex-1 sm:w-56">
-              <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Search packages..."
-                className="w-full pl-8 pr-7 py-1.5 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-emerald-500"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              )}
-            </div>
-
+          <div className="flex flex-wrap items-center gap-2">
             {/* Audit Trail Button */}
             <button
               type="button"
@@ -613,83 +599,67 @@ export const TenderDesignMatrix: React.FC = () => {
         </div>
 
         {/* 🎯 Multi-Selection Dropdowns Filter Row */}
-        <div className="pt-3 border-t border-border flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-            {/* 1. Projects Dropdown */}
-            <DesignMultiSelectDropdown
-              label="Projects"
-              icon={<Building className="h-3.5 w-3.5" />}
-              options={projectOptions}
-              selectedValues={selectedProjects}
-              onChange={setSelectedProjects}
-              colorTheme="blue"
-              placeholder={`All Projects (${storeState.projects.length})`}
-              searchPlaceholder="Search project name..."
-            />
+        <div className="pt-3 border-t border-border flex flex-wrap items-center gap-2">
+          {/* 1. Projects Dropdown */}
+          <DesignMultiSelectDropdown
+            label="Projects"
+            icon={<Building className="h-3.5 w-3.5" />}
+            options={projectOptions}
+            selectedValues={selectedProjects}
+            onChange={setSelectedProjects}
+            colorTheme="blue"
+            placeholder={`All Projects (${storeState.projects.length})`}
+            searchPlaceholder="Search project name..."
+          />
 
-            {/* 2. Disciplines / Work Packages Dropdown */}
-            <DesignMultiSelectDropdown
-              label="Disciplines"
-              icon={<SlidersHorizontal className="h-3.5 w-3.5" />}
-              options={disciplineOptions}
-              selectedValues={selectedDisciplines}
-              onChange={setSelectedDisciplines}
-              colorTheme="emerald"
-              placeholder={`All Disciplines (${categories.length})`}
-              searchPlaceholder="Search discipline..."
-            />
+          {/* 2. Disciplines / Work Packages Dropdown */}
+          <DesignMultiSelectDropdown
+            label="Disciplines"
+            icon={<SlidersHorizontal className="h-3.5 w-3.5" />}
+            options={disciplineOptions}
+            selectedValues={selectedDisciplines}
+            onChange={setSelectedDisciplines}
+            colorTheme="emerald"
+            placeholder={`All Disciplines (${categories.length})`}
+            searchPlaceholder="Search discipline..."
+          />
 
-            {/* 3. Consultants Dropdown */}
-            <DesignMultiSelectDropdown
-              label="Consultants"
-              icon={<Users className="h-3.5 w-3.5" />}
-              options={consultantOptions}
-              selectedValues={selectedConsultants}
-              onChange={setSelectedConsultants}
-              colorTheme="purple"
-              placeholder={`All Consultants (${storeState.consultants.length})`}
-              searchPlaceholder="Search consultant firm..."
-            />
+          {/* 3. Consultants Dropdown */}
+          <DesignMultiSelectDropdown
+            label="Consultants"
+            icon={<Users className="h-3.5 w-3.5" />}
+            options={consultantOptions}
+            selectedValues={selectedConsultants}
+            onChange={setSelectedConsultants}
+            colorTheme="purple"
+            placeholder={`All Consultants (${storeState.consultants.length})`}
+            searchPlaceholder="Search consultant firm..."
+          />
 
-            {/* 4. Status Dropdown */}
-            <DesignMultiSelectDropdown
-              label="Status"
-              icon={<CheckCircle2 className="h-3.5 w-3.5" />}
-              options={statusOptions}
-              selectedValues={selectedStatuses}
-              onChange={setSelectedStatuses}
-              colorTheme="amber"
-              placeholder="All Statuses"
-              searchPlaceholder="Search status..."
-            />
+          {/* 4. Status Dropdown */}
+          <DesignMultiSelectDropdown
+            label="Status"
+            icon={<CheckCircle2 className="h-3.5 w-3.5" />}
+            options={statusOptions}
+            selectedValues={selectedStatuses}
+            onChange={setSelectedStatuses}
+            colorTheme="amber"
+            placeholder="All Statuses"
+            searchPlaceholder="Search status..."
+          />
 
-            {/* Clear All Filters Button */}
-            {totalActiveFilterCount > 0 && (
-              <button
-                type="button"
-                onClick={handleClearAllFilters}
-                className="h-9 px-3 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shrink-0 shadow-2xs"
-                title="Reset all active multi-selection filters"
-              >
-                <X className="h-3.5 w-3.5" />
-                <span>Reset Filters ({totalActiveFilterCount})</span>
-              </button>
-            )}
-          </div>
-
-          {/* Compliance Rate Progress */}
-          <div className="flex items-center gap-3 shrink-0 self-end md:self-auto">
-            <div className="flex items-center gap-2 whitespace-nowrap">
-              <span className="text-[11px] text-muted-foreground font-medium">Compliance Rate:</span>
-              <span className="text-xs font-black text-emerald-500 font-mono">{matrixStats.rate}%</span>
-            </div>
-            <div className="w-24 sm:w-32 h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden shrink-0">
-              <div
-                className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500"
-                style={{ width: `${matrixStats.rate}%` }}
-              />
-            </div>
-          </div>
+          {/* Clear All Filters Button */}
+          {totalActiveFilterCount > 0 && (
+            <button
+              type="button"
+              onClick={handleClearAllFilters}
+              className="h-9 px-3 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shrink-0 shadow-2xs"
+              title="Reset all active multi-selection filters"
+            >
+              <X className="h-3.5 w-3.5" />
+              <span>Reset Filters ({totalActiveFilterCount})</span>
+            </button>
+          )}
         </div>
 
         {/* 🏷️ Active Selected Filter Badges (Removable Tags Bar) */}

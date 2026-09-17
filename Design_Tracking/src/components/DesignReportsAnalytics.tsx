@@ -81,9 +81,6 @@ export const DesignReportsAnalytics: React.FC<DesignReportsAnalyticsProps> = ({
             <h2 className="text-base font-bold text-foreground">
               Design Analytics & Reports
             </h2>
-            <p className="text-xs text-muted-foreground">
-              Portfolio drawing issuance speed, consultant turnaround metrics, and GFC release compliance
-            </p>
           </div>
         </div>
 

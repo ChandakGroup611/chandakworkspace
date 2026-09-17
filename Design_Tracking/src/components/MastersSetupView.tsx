@@ -135,9 +135,6 @@ export const MastersSetupView: React.FC = () => {
             <h2 className="text-base font-bold text-foreground">
               Design Masters Setup
             </h2>
-            <p className="text-xs text-muted-foreground">
-              Configure development projects, tower wings, work packages, and statutory authorities
-            </p>
           </div>
         </div>
 

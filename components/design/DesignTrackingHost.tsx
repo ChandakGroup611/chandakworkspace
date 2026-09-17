@@ -194,9 +194,6 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
               Design & Engineering Tracking
             </h1>
-            <p className="text-xs text-muted-foreground">
-              Tender package matrices, statutory liaisoning, drawing revisions & GFC site releases
-            </p>
           </div>
         </div>
 

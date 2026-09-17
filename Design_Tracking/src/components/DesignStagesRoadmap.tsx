@@ -91,9 +91,6 @@ export const DesignStagesRoadmap: React.FC = () => {
             <h2 className="text-base font-bold text-foreground">
               Design Stages Roadmap
             </h2>
-            <p className="text-xs text-muted-foreground">
-              8-stage design lifecycle gateways from Feasibility to Construction QA/QC
-            </p>
           </div>
         </div>
       </div>
