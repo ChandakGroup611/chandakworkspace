@@ -55,7 +55,7 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 animate-in fade-in duration-200">
       <div className="bg-surface border border-border w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        <div className="p-5 border-b border-border bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
+        <div className="p-5 border-b border-border bg-surface flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/25">
               <Upload className="h-5 w-5" />
@@ -68,7 +68,7 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="h-8 w-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-muted-foreground flex items-center justify-center"
+            className="h-8 w-8 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors cursor-pointer"
           >
             <X className="h-4 w-4" />
           </button>
@@ -77,11 +77,11 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
         <form onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto flex-1 text-xs">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="font-semibold block mb-1">Target Project *</label>
+              <label className="font-semibold block mb-1 text-foreground">Target Project *</label>
               <select
                 value={project}
                 onChange={(e) => setProject(e.target.value)}
-                className="w-full h-9 rounded-lg border border-border bg-surface px-2.5 text-xs text-foreground cursor-pointer"
+                className="w-full h-9 rounded-lg border border-border bg-background px-2.5 text-xs text-foreground cursor-pointer focus:outline-hidden focus:ring-1 focus:ring-primary"
               >
                 {projects.map(p => (
                   <option key={p.id} value={p.name}>{p.name}</option>
@@ -89,11 +89,11 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
               </select>
             </div>
             <div>
-              <label className="font-semibold block mb-1">Discipline *</label>
+              <label className="font-semibold block mb-1 text-foreground">Discipline *</label>
               <select
                 value={discipline}
                 onChange={(e) => setDiscipline(e.target.value as DesignDiscipline)}
-                className="w-full h-9 rounded-lg border border-border bg-surface px-2.5 text-xs text-foreground"
+                className="w-full h-9 rounded-lg border border-border bg-background px-2.5 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
               >
                 <option value="Architectural">Architectural</option>
                 <option value="Structural">Structural</option>
@@ -105,34 +105,34 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
           </div>
 
           <div>
-            <label className="font-semibold block mb-1">Drawing Code / Number *</label>
+            <label className="font-semibold block mb-1 text-foreground">Drawing Code / Number *</label>
             <input
               type="text"
               required
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs font-mono font-bold text-foreground uppercase"
+              className="w-full h-9 rounded-lg border border-border bg-background px-3 text-xs font-mono font-bold text-foreground uppercase focus:outline-hidden focus:ring-1 focus:ring-primary"
             />
           </div>
 
           <div>
-            <label className="font-semibold block mb-1">Drawing Title *</label>
+            <label className="font-semibold block mb-1 text-foreground">Drawing Title *</label>
             <input
               type="text"
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs text-foreground"
+              className="w-full h-9 rounded-lg border border-border bg-background px-3 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="font-semibold block mb-1">Revision Tag</label>
+              <label className="font-semibold block mb-1 text-foreground">Revision Tag</label>
               <select
                 value={revision}
                 onChange={(e) => setRevision(e.target.value)}
-                className="w-full h-9 rounded-lg border border-border bg-surface px-2.5 text-xs text-foreground font-mono"
+                className="w-full h-9 rounded-lg border border-border bg-background px-2.5 text-xs text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
               >
                 <option value="R0">R0 (Schematic Draft)</option>
                 <option value="R1">R1 (First Review)</option>
@@ -142,28 +142,28 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
               </select>
             </div>
             <div>
-              <label className="font-semibold block mb-1">Author / Consultant</label>
+              <label className="font-semibold block mb-1 text-foreground">Author / Consultant</label>
               <input
                 type="text"
                 value={consultant}
                 onChange={(e) => setConsultant(e.target.value)}
-                className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs text-foreground"
+                className="w-full h-9 rounded-lg border border-border bg-background px-3 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
               />
             </div>
           </div>
 
           <div>
-            <label className="font-semibold block mb-1">Revision Change Summary & Notes</label>
+            <label className="font-semibold block mb-1 text-foreground">Revision Change Summary & Notes</label>
             <textarea
               rows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full rounded-lg border border-border bg-surface p-2.5 text-xs text-foreground"
+              className="w-full rounded-lg border border-border bg-background p-2.5 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
             />
           </div>
 
           {/* Drag and Drop Zone simulation */}
-          <div className="p-4 rounded-xl border border-dashed border-border bg-slate-50/50 dark:bg-slate-900/40 text-center space-y-2">
+          <div className="p-4 rounded-xl border border-dashed border-border bg-muted/20 text-center space-y-2">
             <FileText className="h-7 w-7 text-muted-foreground mx-auto" />
             <div className="text-xs text-foreground font-medium">
               CAD Sheet / DWG / DXF / PDF Attached
@@ -177,14 +177,14 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="px-4 py-2 rounded-xl text-xs font-semibold border border-border bg-background text-foreground hover:bg-muted transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="px-5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs cursor-pointer flex items-center gap-1.5"
+              className="px-5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs cursor-pointer flex items-center gap-1.5 transition-all"
             >
               {submitting ? "Uploading..." : "Register Drawing"}
             </button>

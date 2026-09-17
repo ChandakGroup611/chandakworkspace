@@ -683,7 +683,7 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(false)}
-                className="h-8 w-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                className="h-8 w-8 rounded-lg hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -705,7 +705,7 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
                   value={name}
                   onChange={e => setName(e.target.value)}
                   aria-label="Consultant Firm or Company Name"
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-purple-500"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
                 />
               </div>
 
@@ -715,7 +715,7 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
                   <select
                     value={category}
                     onChange={e => setCategory(e.target.value as DesignDiscipline)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-purple-500 cursor-pointer"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                   >
                     {disciplines.map(d => (
                       <option key={d} value={d}>{d}</option>
@@ -731,7 +731,7 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
                     value={leadContact}
                     onChange={e => setLeadContact(e.target.value)}
                     aria-label="Lead Contact Person"
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-purple-500"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
                   />
                 </div>
               </div>
@@ -745,7 +745,7 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     aria-label="Official Email Address"
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-purple-500"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
                   />
                 </div>
 
@@ -756,7 +756,7 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
                     value={phone}
                     onChange={e => setPhone(e.target.value)}
                     aria-label="Phone Number"
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-purple-500"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
                   />
                 </div>
               </div>
@@ -773,7 +773,7 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
                   </span>
                 </div>
 
-                <div className="flex flex-wrap gap-1.5 p-2.5 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 max-h-32 overflow-y-auto custom-scrollbar">
+                <div className="flex flex-wrap gap-1.5 p-2.5 rounded-xl border border-border bg-muted/20 max-h-32 overflow-y-auto custom-scrollbar">
                   {availableWorkPackages.map(pkg => {
                     const isSelected = selectedExpertise.includes(pkg);
                     return (
@@ -802,7 +802,7 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
                     onChange={e => setCustomExpertiseInput(e.target.value)}
                     onKeyDown={handleAddCustomExpertise}
                     aria-label="Add custom work package expertise tag"
-                    className="flex-1 px-3 py-1.5 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-purple-500"
+                    className="flex-1 px-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                   />
                   <button
                     type="button"
@@ -835,7 +835,7 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
                   Once tagged to one or more development projects, consultant onboarding will automatically become <strong>Onboard</strong>.
                 </p>
 
-                <div className="flex flex-wrap gap-2 p-2.5 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 max-h-32 overflow-y-auto custom-scrollbar">
+                <div className="flex flex-wrap gap-2 p-2.5 rounded-xl border border-border bg-muted/20 max-h-32 overflow-y-auto custom-scrollbar">
                   {availableProjects.map((proj) => {
                     const isSelected = selectedProjects.includes(proj);
                     return (
@@ -867,7 +867,7 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
                     min="0.5"
                     value={tatDays}
                     onChange={e => setTatDays(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-mono focus:outline-none focus:border-purple-500"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
                   />
                 </div>
 
@@ -880,7 +880,7 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
                     max="5.0"
                     value={rating}
                     onChange={e => setRating(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-mono focus:outline-none focus:border-purple-500"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
                   />
                 </div>
               </div>
@@ -889,7 +889,7 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-semibold cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-border bg-background hover:bg-muted text-foreground text-xs font-semibold cursor-pointer transition-colors"
                 >
                   Cancel
                 </button>

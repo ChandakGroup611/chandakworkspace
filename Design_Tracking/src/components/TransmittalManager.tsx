@@ -494,21 +494,21 @@ export function TransmittalManager() {
       {/* CREATE TRANSMITTAL MODAL */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-card border border-border w-full max-w-2xl rounded-2xl shadow-2xl p-6 relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+          <div className="bg-surface text-foreground border border-border w-full max-w-2xl rounded-2xl shadow-2xl p-6 relative max-h-[90vh] overflow-y-auto custom-scrollbar">
             <div className="flex items-center justify-between pb-3 border-b border-border mb-4">
               <div>
                 <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
                   <Send className="h-4 w-4 text-blue-500" />
                   <span>Generate Document Transmittal Note</span>
                 </h3>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted">
                   Create formal construction issue record with attached drawings schedule
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsCreateModalOpen(false)}
-                className="h-7 w-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-muted-foreground"
+                className="h-7 w-7 rounded-lg hover:bg-muted/20 flex items-center justify-center text-muted hover:text-foreground transition-colors"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -523,12 +523,13 @@ export function TransmittalManager() {
 
             <form onSubmit={handleCreateTransmittal} className="space-y-4 text-xs">
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-foreground mb-1">Target Project *</label>
+                <div className="space-y-1">
+                  <label className="block font-bold text-foreground">Target Project *</label>
                   <select
                     value={projectId}
                     onChange={e => setProjectId(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-blue-500 cursor-pointer"
+                    aria-label="Target Project"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
                   >
                     <option value="">Select Project</option>
                     {projects.map(p => (
@@ -537,24 +538,26 @@ export function TransmittalManager() {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block font-bold text-foreground mb-1">Tower / Zone / Sector</label>
+                <div className="space-y-1">
+                  <label className="block font-bold text-foreground">Tower / Zone / Sector</label>
                   <input
                     type="text"
                     value={towerName}
                     onChange={e => setTowerName(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-blue-500"
+                    aria-label="Tower, Zone, or Sector"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-foreground mb-1">Purpose of Issue *</label>
+                <div className="space-y-1">
+                  <label className="block font-bold text-foreground">Purpose of Issue *</label>
                   <select
                     value={purpose}
                     onChange={e => setPurpose(e.target.value as TransmittalPurpose)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-blue-500 cursor-pointer"
+                    aria-label="Purpose of Issue"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
                   >
                     <option value="GOOD_FOR_CONSTRUCTION">Good For Construction (GFC)</option>
                     <option value="FOR_TENDER_BIDDING">For Tender / Pricing</option>
@@ -564,102 +567,113 @@ export function TransmittalManager() {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block font-bold text-foreground mb-1">Issued By / Designation</label>
+                <div className="space-y-1">
+                  <label className="block font-bold text-foreground">Issued By / Designation</label>
                   <input
                     type="text"
                     value={issuedBy}
                     onChange={e => setIssuedBy(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-blue-500"
+                    aria-label="Issued By or Designation"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-foreground mb-1">Recipient Agency / Contractor *</label>
+                <div className="space-y-1">
+                  <label className="block font-bold text-foreground">Recipient Agency / Contractor *</label>
                   <input
                     type="text"
                     required
                     value={recipientAgency}
                     onChange={e => setRecipientAgency(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-blue-500"
+                    aria-label="Recipient Agency or Contractor"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
 
-                <div>
-                  <label className="block font-bold text-foreground mb-1">Recipient Contact Person</label>
+                <div className="space-y-1">
+                  <label className="block font-bold text-foreground">Recipient Contact Person</label>
                   <input
                     type="text"
                     value={recipientContact}
                     onChange={e => setRecipientContact(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-blue-500"
+                    aria-label="Recipient Contact Person"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
               </div>
 
               {/* Drawing Selection Checklist */}
-              <div>
-                <label className="block font-bold text-foreground mb-1.5">
+              <div className="space-y-1">
+                <label className="block font-bold text-foreground">
                   Select Drawings to Include ({selectedDrawingIds.length} selected) *
                 </label>
-                <div className="p-3 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 max-h-48 overflow-y-auto custom-scrollbar space-y-2">
-                  {drawings.map(d => {
-                    const isChecked = selectedDrawingIds.includes(d.id);
-                    return (
-                      <label
-                        key={d.id}
-                        className={`flex items-start gap-2.5 p-2 rounded-lg border text-xs cursor-pointer transition-colors ${
-                          isChecked 
-                            ? "bg-blue-500/10 border-blue-500/30 text-foreground" 
-                            : "bg-card border-border text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={e => {
-                            if (e.target.checked) {
-                              setSelectedDrawingIds([...selectedDrawingIds, d.id]);
-                            } else {
-                              setSelectedDrawingIds(selectedDrawingIds.filter(id => id !== d.id));
-                            }
-                          }}
-                          className="mt-0.5 rounded border-border text-blue-600 focus:ring-blue-500"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="font-mono font-bold text-foreground flex items-center gap-2">
-                            <span>{d.code}</span>
-                            <span className="px-1.5 py-0.2 rounded bg-slate-200 dark:bg-slate-800 text-[10px]">{d.revision}</span>
-                            <span className="text-[10px] text-muted-foreground">({d.discipline})</span>
+                <div className="p-3 rounded-xl border border-border bg-background max-h-48 overflow-y-auto custom-scrollbar space-y-2">
+                  {drawings.length === 0 ? (
+                    <div className="p-4 text-center text-muted text-xs">
+                      No drawings uploaded yet in Drawing Register.
+                    </div>
+                  ) : (
+                    drawings.map(d => {
+                      const isChecked = selectedDrawingIds.includes(d.id);
+                      return (
+                        <label
+                          key={d.id}
+                          className={`flex items-start gap-2.5 p-2 rounded-lg border text-xs cursor-pointer transition-colors ${
+                            isChecked 
+                              ? "bg-blue-500/10 border-blue-500/40 text-foreground" 
+                              : "bg-surface border-border text-muted hover:text-foreground"
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={e => {
+                              if (e.target.checked) {
+                                setSelectedDrawingIds([...selectedDrawingIds, d.id]);
+                              } else {
+                                setSelectedDrawingIds(selectedDrawingIds.filter(id => id !== d.id));
+                              }
+                            }}
+                            className="mt-0.5 rounded border-border text-blue-600 focus:ring-blue-500"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-mono font-bold text-foreground flex items-center gap-2">
+                              <span>{d.code}</span>
+                              <span className="px-1.5 py-0.2 rounded bg-muted/20 text-[10px]">{d.revision}</span>
+                              <span className="text-[10px] text-muted">({d.discipline})</span>
+                            </div>
+                            <div className="truncate text-muted text-[11px]">{d.title}</div>
                           </div>
-                          <div className="truncate text-muted-foreground text-[11px]">{d.title}</div>
-                        </div>
-                      </label>
-                    );
-                  })}
+                        </label>
+                      );
+                    })
+                  )}
                 </div>
               </div>
 
-              <div>
-                <label className="block font-bold text-foreground mb-1">Copies per Drawing</label>
+              <div className="space-y-1">
+                <label className="block font-bold text-foreground">Copies per Drawing</label>
                 <input
                   type="number"
                   min="1"
                   max="20"
                   value={copiesPerDrawing}
                   onChange={e => setCopiesPerDrawing(parseInt(e.target.value) || 1)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-blue-500"
+                  aria-label="Copies per Drawing"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
 
-              <div>
-                <label className="block font-bold text-foreground mb-1">Transmittal Remarks / Instructions</label>
+              <div className="space-y-1">
+                <label className="block font-bold text-foreground">Transmittal Remarks / Instructions</label>
                 <textarea
                   rows={2}
                   value={remarks}
                   onChange={e => setRemarks(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-blue-500 resize-none"
+                  aria-label="Transmittal remarks or instructions"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
                 />
               </div>
 
@@ -667,13 +681,13 @@ export function TransmittalManager() {
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="h-8 px-4 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-bold transition-colors cursor-pointer"
+                  className="h-9 px-4 rounded-xl border border-border bg-surface hover:bg-muted/20 text-foreground text-xs font-bold transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="h-8 px-5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-colors shadow cursor-pointer"
+                  className="h-9 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors shadow-sm cursor-pointer"
                 >
                   Generate & Dispatch
                 </button>

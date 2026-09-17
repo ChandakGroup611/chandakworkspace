@@ -35,7 +35,7 @@ export const ReviewApprovalModal: React.FC<ReviewApprovalModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 animate-in fade-in duration-200">
       <div className="bg-surface border border-border w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
-        <div className="p-5 border-b border-border bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
+        <div className="p-5 border-b border-border bg-surface flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-primary/15 text-primary flex items-center justify-center border border-primary/25">
               <ShieldCheck className="h-5 w-5" />
@@ -48,7 +48,7 @@ export const ReviewApprovalModal: React.FC<ReviewApprovalModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="h-8 w-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-muted-foreground flex items-center justify-center"
+            className="h-8 w-8 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors cursor-pointer"
           >
             <X className="h-4 w-4" />
           </button>
@@ -56,12 +56,12 @@ export const ReviewApprovalModal: React.FC<ReviewApprovalModalProps> = ({
 
         <div className="p-5 space-y-5 overflow-y-auto flex-1 text-xs">
           {/* Drawing Profile Card */}
-          <div className="p-4 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/40 space-y-2.5">
+          <div className="p-4 rounded-xl border border-border bg-muted/20 space-y-2.5">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                 {drawing.discipline} Discipline Sheet
               </span>
-              <span className="font-mono text-xs px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-bold">
+              <span className="font-mono text-xs px-2 py-0.5 rounded bg-muted text-foreground font-bold border border-border">
                 Revision: {drawing.revision}
               </span>
             </div>
@@ -117,7 +117,7 @@ export const ReviewApprovalModal: React.FC<ReviewApprovalModalProps> = ({
                     type="button"
                     onClick={() => setSelectedStatus(st.id as DrawingStatus)}
                     className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                      isSel ? `${st.badge} ring-2 ring-primary font-bold shadow-xs` : "border-border bg-surface text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                      isSel ? `${st.badge} ring-2 ring-primary font-bold shadow-xs` : "border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
                   >
                     <div className="text-xs">{st.label}</div>
@@ -137,7 +137,7 @@ export const ReviewApprovalModal: React.FC<ReviewApprovalModalProps> = ({
               rows={3}
               value={reviewComments}
               onChange={(e) => setReviewComments(e.target.value)}
-              className="w-full rounded-lg border border-border bg-surface p-2.5 text-xs text-foreground focus:outline-none focus:border-primary"
+              className="w-full rounded-lg border border-border bg-background p-2.5 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
             />
           </div>
 
@@ -151,11 +151,11 @@ export const ReviewApprovalModal: React.FC<ReviewApprovalModalProps> = ({
           )}
         </div>
 
-        <div className="p-4 border-t border-border bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-end gap-2">
+        <div className="p-4 border-t border-border bg-surface flex items-center justify-end gap-2">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="px-4 py-2 rounded-xl text-xs font-semibold border border-border bg-background text-foreground hover:bg-muted transition-colors cursor-pointer"
           >
             Cancel
           </button>
@@ -163,7 +163,7 @@ export const ReviewApprovalModal: React.FC<ReviewApprovalModalProps> = ({
             type="button"
             onClick={handleSaveReview}
             disabled={submitting}
-            className="px-5 py-2 rounded-xl text-xs font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs cursor-pointer flex items-center gap-1.5"
+            className="px-5 py-2 rounded-xl text-xs font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs cursor-pointer flex items-center gap-1.5 transition-all"
           >
             {submitting ? "Saving..." : "Commit Review Decision"}
           </button>

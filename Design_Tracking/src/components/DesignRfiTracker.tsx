@@ -574,21 +574,21 @@ export function DesignRfiTracker() {
       {/* RAISE RFI MODAL */}
       {isRaiseModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-card border border-border w-full max-w-xl rounded-2xl shadow-2xl p-6 relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+          <div className="bg-surface text-foreground border border-border w-full max-w-xl rounded-2xl shadow-2xl p-6 relative max-h-[90vh] overflow-y-auto custom-scrollbar">
             <div className="flex items-center justify-between pb-3 border-b border-border mb-4">
               <div>
                 <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
                   <HelpCircle className="h-4 w-4 text-purple-500" />
                   <span>Raise Site Request For Information (RFI)</span>
                 </h3>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted">
                   Log design query, site condition clash, or structural specification ambiguity
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsRaiseModalOpen(false)}
-                className="h-7 w-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-muted-foreground"
+                className="h-7 w-7 rounded-lg hover:bg-muted/20 flex items-center justify-center text-muted hover:text-foreground transition-colors"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -603,12 +603,13 @@ export function DesignRfiTracker() {
 
             <form onSubmit={handleRaiseRfi} className="space-y-4 text-xs">
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-foreground mb-1">Project *</label>
+                <div className="space-y-1">
+                  <label className="block font-bold text-foreground">Project *</label>
                   <select
                     value={projectId}
                     onChange={e => setProjectId(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-purple-500 cursor-pointer"
+                    aria-label="Select Project"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500 cursor-pointer"
                   >
                     <option value="">Select Project</option>
                     {projects.map(p => (
@@ -617,24 +618,26 @@ export function DesignRfiTracker() {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block font-bold text-foreground mb-1">Tower / Zone</label>
+                <div className="space-y-1">
+                  <label className="block font-bold text-foreground">Tower / Zone</label>
                   <input
                     type="text"
                     value={towerName}
                     onChange={e => setTowerName(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-purple-500"
+                    aria-label="Tower or Zone"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-foreground mb-1">Discipline *</label>
+                <div className="space-y-1">
+                  <label className="block font-bold text-foreground">Discipline *</label>
                   <select
                     value={discipline}
                     onChange={e => setDiscipline(e.target.value as DesignDiscipline)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-purple-500 cursor-pointer"
+                    aria-label="Discipline"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500 cursor-pointer"
                   >
                     <option value="Architectural">Architectural</option>
                     <option value="Structural">Structural</option>
@@ -644,84 +647,91 @@ export function DesignRfiTracker() {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block font-bold text-foreground mb-1">Priority Level *</label>
+                <div className="space-y-1">
+                  <label className="block font-bold text-foreground">Priority Level *</label>
                   <select
                     value={priority}
                     onChange={e => setPriority(e.target.value as RfiPriority)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-purple-500 cursor-pointer"
+                    aria-label="Priority Level"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500 cursor-pointer"
                   >
                     <option value="URGENT">Urgent (Site Stoppage Risk)</option>
-                    <option value="HIGH">High (Upcoming Pour / Activity)</option>
+                    <option value="HIGH">High (Upcoming Activity)</option>
                     <option value="NORMAL">Normal (Pre-construction / Planning)</option>
                   </select>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-foreground mb-1">Referenced Drawing Number</label>
+                <div className="space-y-1">
+                  <label className="block font-bold text-foreground">Referenced Drawing Number</label>
                   <input
                     type="text"
                     value={drawingCode}
                     onChange={e => setDrawingCode(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-purple-500"
+                    aria-label="Referenced Drawing Number"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500"
                   />
                 </div>
 
-                <div>
-                  <label className="block font-bold text-foreground mb-1">Target Resolution Date</label>
+                <div className="space-y-1">
+                  <label className="block font-bold text-foreground">Target Resolution Date</label>
                   <input
                     type="date"
                     value={targetResolutionDate}
                     onChange={e => setTargetResolutionDate(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-purple-500"
+                    aria-label="Target Resolution Date"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="block font-bold text-foreground mb-1">Subject / Query Title *</label>
+              <div className="space-y-1">
+                <label className="block font-bold text-foreground">Subject / Query Title *</label>
                 <input
                   type="text"
                   required
                   value={subject}
                   onChange={e => setSubject(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-purple-500"
+                  aria-label="Subject or Query Title"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500"
                 />
               </div>
 
-              <div>
-                <label className="block font-bold text-foreground mb-1">Detailed Query Description *</label>
+              <div className="space-y-1">
+                <label className="block font-bold text-foreground">Detailed Query Description *</label>
                 <textarea
                   rows={3}
                   required
                   value={queryDescription}
                   onChange={e => setQueryDescription(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-purple-500 resize-none"
+                  aria-label="Detailed Query Description"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500 resize-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-foreground mb-1">Raised By (Site Engineer) *</label>
+                <div className="space-y-1">
+                  <label className="block font-bold text-foreground">Raised By (Site Engineer) *</label>
                   <input
                     type="text"
                     required
                     value={raisedBy}
                     onChange={e => setRaisedBy(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-purple-500"
+                    aria-label="Raised By Site Engineer"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500"
                   />
                 </div>
 
-                <div>
-                  <label className="block font-bold text-foreground mb-1">Assigned Consultant Firm *</label>
+                <div className="space-y-1">
+                  <label className="block font-bold text-foreground">Assigned Consultant Firm *</label>
                   <input
                     type="text"
                     required
                     value={assignedConsultant}
                     onChange={e => setAssignedConsultant(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-purple-500"
+                    aria-label="Assigned Consultant Firm"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500"
                   />
                 </div>
               </div>
@@ -730,13 +740,13 @@ export function DesignRfiTracker() {
                 <button
                   type="button"
                   onClick={() => setIsRaiseModalOpen(false)}
-                  className="h-8 px-4 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-bold transition-colors cursor-pointer"
+                  className="h-9 px-4 rounded-xl border border-border bg-surface hover:bg-muted/20 text-foreground text-xs font-bold transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="h-8 px-5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-colors shadow cursor-pointer"
+                  className="h-9 px-5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-colors shadow-sm cursor-pointer"
                 >
                   Submit RFI
                 </button>
@@ -749,31 +759,31 @@ export function DesignRfiTracker() {
       {/* CONSULTANT REPLY MODAL */}
       {selectedRfiForReply && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-card border border-border w-full max-w-xl rounded-2xl shadow-2xl p-6 relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+          <div className="bg-surface text-foreground border border-border w-full max-w-xl rounded-2xl shadow-2xl p-6 relative max-h-[90vh] overflow-y-auto custom-scrollbar">
             <div className="flex items-center justify-between pb-3 border-b border-border mb-4">
               <div>
                 <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
                   <MessageSquare className="h-4 w-4 text-emerald-500" />
                   <span>Provide Consultant Clarification ({selectedRfiForReply.rfiNumber})</span>
                 </h3>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted">
                   Formal technical response and drawing revision resolution
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedRfiForReply(null)}
-                className="h-7 w-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-muted-foreground"
+                className="h-7 w-7 rounded-lg hover:bg-muted/20 flex items-center justify-center text-muted hover:text-foreground transition-colors"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
             {/* Query Summary */}
-            <div className="p-3.5 mb-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-border text-xs space-y-1">
+            <div className="p-3.5 mb-4 rounded-xl bg-muted/15 border border-border text-xs space-y-1">
               <div className="font-bold text-foreground">{selectedRfiForReply.subject}</div>
-              <div className="text-muted-foreground">{selectedRfiForReply.queryDescription}</div>
-              <div className="text-[10px] text-muted-foreground pt-1">
+              <div className="text-muted">{selectedRfiForReply.queryDescription}</div>
+              <div className="text-[10px] text-muted pt-1">
                 Raised by: {selectedRfiForReply.raisedBy} • Assigned: {selectedRfiForReply.assignedConsultant}
               </div>
             </div>
@@ -786,8 +796,8 @@ export function DesignRfiTracker() {
             )}
 
             <form onSubmit={handleConsultantReply} className="space-y-4 text-xs">
-              <div>
-                <label className="block font-bold text-foreground mb-1">
+              <div className="space-y-1">
+                <label className="block font-bold text-foreground">
                   Consultant Clarification & Technical Instructions *
                 </label>
                 <textarea
@@ -795,29 +805,32 @@ export function DesignRfiTracker() {
                   required
                   value={responseText}
                   onChange={e => setResponseText(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-emerald-500 resize-none"
+                  aria-label="Consultant clarification and instructions"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500 resize-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-foreground mb-1">Responded By (Consultant Engineer) *</label>
+                <div className="space-y-1">
+                  <label className="block font-bold text-foreground">Responded By (Consultant Engineer) *</label>
                   <input
                     type="text"
                     required
                     value={respondedByName}
                     onChange={e => setRespondedByName(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-emerald-500"
+                    aria-label="Responded By Consultant Engineer"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500"
                   />
                 </div>
 
-                <div>
-                  <label className="block font-bold text-foreground mb-1">Resolving Drawing Revision (e.g. R3)</label>
+                <div className="space-y-1">
+                  <label className="block font-bold text-foreground">Resolving Drawing Revision (e.g. R3)</label>
                   <input
                     type="text"
                     value={resolvingRev}
                     onChange={e => setResolvingRev(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50 dark:bg-slate-900 text-foreground font-semibold focus:outline-none focus:border-emerald-500"
+                    aria-label="Resolving Drawing Revision"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500"
                   />
                 </div>
               </div>
@@ -826,13 +839,13 @@ export function DesignRfiTracker() {
                 <button
                   type="button"
                   onClick={() => setSelectedRfiForReply(null)}
-                  className="h-8 px-4 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-bold transition-colors cursor-pointer"
+                  className="h-9 px-4 rounded-xl border border-border bg-surface hover:bg-muted/20 text-foreground text-xs font-bold transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="h-8 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-colors shadow cursor-pointer"
+                  className="h-9 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors shadow-sm cursor-pointer"
                 >
                   Resolve & Close RFI
                 </button>

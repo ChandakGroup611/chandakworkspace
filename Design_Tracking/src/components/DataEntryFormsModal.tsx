@@ -187,7 +187,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
         </div>
 
         {/* Tab Selector */}
-        <div className="p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-border flex items-center gap-1 text-xs">
+        <div className="p-1 rounded-xl bg-muted/40 border border-border flex items-center gap-1 text-xs">
           <button
             type="button"
             onClick={() => setActiveTab("PACKAGE")}
@@ -233,7 +233,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                     setPkgProjectId(e.target.value);
                     setPkgTowerId("");
                   }}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-surface text-foreground font-semibold"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
                 >
                   <option value="">Select Project</option>
                   {storeState.projects.map(p => (
@@ -248,7 +248,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                   required
                   value={pkgTowerId}
                   onChange={e => setPkgTowerId(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-surface text-foreground font-semibold"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
                 >
                   <option value="">Select Wing</option>
                   {pkgAvailableTowers.map(t => (
@@ -264,7 +264,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                 required
                 value={pkgId}
                 onChange={e => setPkgId(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-border bg-surface text-foreground font-semibold"
+                className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
               >
                 <option value="">Select Package</option>
                 {storeState.packages.map(p => (
@@ -285,7 +285,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
               <select
                 value={pkgStatus}
                 onChange={e => setPkgStatus(e.target.value as any)}
-                className="w-full px-3 py-2 rounded-xl border border-border bg-surface text-foreground font-semibold"
+                className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
               >
                 <option value="Received">✅ Received (Tender / GFC)</option>
                 <option value="In progress">⏳ In Progress / Onboard</option>
@@ -296,7 +296,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
             </div>
 
             {/* Mandatory Planned & Actual Dates */}
-            <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-border">
+            <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-muted/20 border border-border">
               <div className="space-y-1">
                 <label className="font-bold text-foreground flex items-center gap-1">
                   <Calendar className="h-3 w-3 text-blue-500" />
@@ -307,7 +307,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                   required
                   value={pkgPlannedDate}
                   onChange={e => setPkgPlannedDate(e.target.value)}
-                  className="w-full px-3 py-1.5 rounded-xl border border-border bg-surface text-foreground font-mono"
+                  className="w-full px-3 py-1.5 rounded-xl border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
                 />
               </div>
 
@@ -322,7 +322,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                   value={pkgActualDate}
                   onChange={e => setPkgActualDate(e.target.value)}
                   aria-label="Actual date"
-                  className="w-full px-3 py-1.5 rounded-xl border border-border bg-surface text-foreground font-mono"
+                  className="w-full px-3 py-1.5 rounded-xl border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
                 />
               </div>
             </div>
@@ -333,7 +333,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
               <select
                 value={pkgConsultantId}
                 onChange={e => setPkgConsultantId(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-border bg-surface text-foreground font-semibold"
+                className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
               >
                 <option value="">None / Internal Team</option>
                 {storeState.consultants.map(c => (
@@ -349,15 +349,15 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                 value={pkgRemarks}
                 onChange={e => setPkgRemarks(e.target.value)}
                 aria-label="Audit notes or delivery remarks"
-                className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground"
+                className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
               />
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
-              <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl border border-border text-muted-foreground cursor-pointer">
+              <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl border border-border bg-background text-foreground hover:bg-muted transition-colors cursor-pointer">
                 Cancel
               </button>
-              <button type="submit" className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer shadow-md">
+              <button type="submit" className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer shadow-md transition-all">
                 Record Status & Log Audit
               </button>
             </div>
@@ -377,7 +377,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                     setLaProjectId(e.target.value);
                     setLaTowerId("");
                   }}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-surface text-foreground font-semibold"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
                 >
                   <option value="">Select Project</option>
                   {storeState.projects.map(p => (
@@ -392,7 +392,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                   required
                   value={laTowerId}
                   onChange={e => setLaTowerId(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-surface text-foreground font-semibold"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
                 >
                   <option value="">Select Wing</option>
                   {laAvailableTowers.map(t => (
@@ -409,7 +409,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                 rows={2}
                 value={laDescription}
                 onChange={e => setLaDescription(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground"
+                className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
               />
             </div>
 
@@ -419,7 +419,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                 <select
                   value={laTimeframe}
                   onChange={e => setLaTimeframe(e.target.value as any)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-surface text-foreground font-semibold"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
                 >
                   <option value="30_DAYS">🚨 In 30 Days (Immediate Action)</option>
                   <option value="60_DAYS">⏳ In 60 Days (Mid-Term Forecast)</option>
@@ -431,7 +431,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                 <select
                   value={laPriority}
                   onChange={e => setLaPriority(e.target.value as any)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-surface text-foreground font-semibold"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
                 >
                   <option value="CRITICAL">Critical (High Urgency)</option>
                   <option value="HIGH">High Priority</option>
@@ -441,10 +441,10 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
-              <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl border border-border text-muted-foreground cursor-pointer">
+              <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl border border-border bg-background text-foreground hover:bg-muted transition-colors cursor-pointer">
                 Cancel
               </button>
-              <button type="submit" className="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold cursor-pointer shadow-md">
+              <button type="submit" className="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold cursor-pointer shadow-md transition-all">
                 Add Look-Ahead
               </button>
             </div>
@@ -464,7 +464,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                     setLiaisonProjectId(e.target.value);
                     setLiaisonTowerId("");
                   }}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-surface text-foreground font-semibold"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
                 >
                   <option value="">Select Project</option>
                   {storeState.projects.map(p => (
@@ -479,7 +479,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                   required
                   value={liaisonTowerId}
                   onChange={e => setLiaisonTowerId(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-surface text-foreground font-semibold"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
                 >
                   <option value="">Select Wing</option>
                   {liaisonAvailableTowers.map(t => (
@@ -495,7 +495,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                 required
                 value={liaisonAuthorityId}
                 onChange={e => setLiaisonAuthorityId(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-border bg-surface text-foreground font-semibold"
+                className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
               >
                 <option value="">Select Authority</option>
                 {storeState.authorities.map(a => (
@@ -509,7 +509,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
               <select
                 value={liaisonStatus}
                 onChange={e => setLiaisonStatus(e.target.value as any)}
-                className="w-full px-3 py-2 rounded-xl border border-border bg-surface text-foreground font-semibold"
+                className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
               >
                 <option value="Onboard">✅ Onboard (Clearance Active)</option>
                 <option value="Fixed consultant">🔷 Fixed Corporate Partner</option>
@@ -524,15 +524,15 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                 type="text"
                 value={liaisonRemarks}
                 onChange={e => setLiaisonRemarks(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground"
+                className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
               />
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
-              <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl border border-border text-muted-foreground cursor-pointer">
+              <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl border border-border bg-background text-foreground hover:bg-muted transition-colors cursor-pointer">
                 Cancel
               </button>
-              <button type="submit" className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold cursor-pointer shadow-md">
+              <button type="submit" className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold cursor-pointer shadow-md transition-all">
                 Update Authority
               </button>
             </div>

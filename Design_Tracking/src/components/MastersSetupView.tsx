@@ -533,7 +533,7 @@ export const MastersSetupView: React.FC = () => {
                   required
                   value={newProjectName}
                   onChange={e => setNewProjectName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                 />
               </div>
 
@@ -543,7 +543,7 @@ export const MastersSetupView: React.FC = () => {
                   type="text"
                   value={newProjectCode}
                   onChange={e => setNewProjectCode(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                 />
               </div>
 
@@ -553,15 +553,15 @@ export const MastersSetupView: React.FC = () => {
                   type="text"
                   value={newProjectLocation}
                   onChange={e => setNewProjectLocation(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                 />
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
-                <button type="button" onClick={() => setIsNewProjectModalOpen(false)} className="px-4 py-1.5 rounded-xl border border-border text-muted-foreground">
+                <button type="button" onClick={() => setIsNewProjectModalOpen(false)} className="px-4 py-1.5 rounded-xl border border-border bg-background text-foreground hover:bg-muted transition-colors cursor-pointer">
                   Cancel
                 </button>
-                <button type="submit" className="px-4 py-1.5 rounded-xl bg-emerald-600 text-white font-bold">
+                <button type="submit" className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer transition-all shadow-md">
                   Create Project
                 </button>
               </div>
@@ -589,7 +589,7 @@ export const MastersSetupView: React.FC = () => {
                   required
                   value={newTowerName}
                   onChange={e => setNewTowerName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                 />
               </div>
 
@@ -598,7 +598,7 @@ export const MastersSetupView: React.FC = () => {
                 <select
                   value={newTowerType}
                   onChange={e => setNewTowerType(e.target.value as any)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-surface text-foreground font-semibold"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
                 >
                   <option value="Sale">Sale Tower</option>
                   <option value="Society">Society Wing</option>
@@ -610,10 +610,10 @@ export const MastersSetupView: React.FC = () => {
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
-                <button type="button" onClick={() => setIsNewTowerModalOpen(false)} className="px-4 py-1.5 rounded-xl border border-border text-muted-foreground">
+                <button type="button" onClick={() => setIsNewTowerModalOpen(false)} className="px-4 py-1.5 rounded-xl border border-border bg-background text-foreground hover:bg-muted transition-colors cursor-pointer">
                   Cancel
                 </button>
-                <button type="submit" className="px-4 py-1.5 rounded-xl bg-emerald-600 text-white font-bold">
+                <button type="submit" className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer transition-all shadow-md">
                   Add Tower
                 </button>
               </div>
@@ -641,7 +641,7 @@ export const MastersSetupView: React.FC = () => {
                   required
                   value={newPackageName}
                   onChange={e => setNewPackageName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                 />
               </div>
 
@@ -650,7 +650,7 @@ export const MastersSetupView: React.FC = () => {
                 <select
                   value={newPackageDiscipline}
                   onChange={e => setNewPackageDiscipline(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-surface text-foreground font-semibold"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
                 >
                   <option value="Civil & RCC">Civil & RCC</option>
                   <option value="MEPF Services">MEPF Services</option>
@@ -663,11 +663,57 @@ export const MastersSetupView: React.FC = () => {
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
-                <button type="button" onClick={() => setIsNewPackageModalOpen(false)} className="px-4 py-1.5 rounded-xl border border-border text-muted-foreground">
+                <button type="button" onClick={() => setIsNewPackageModalOpen(false)} className="px-4 py-1.5 rounded-xl border border-border bg-background text-foreground hover:bg-muted transition-colors cursor-pointer">
                   Cancel
                 </button>
-                <button type="submit" className="px-4 py-1.5 rounded-xl bg-emerald-600 text-white font-bold">
+                <button type="submit" className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer transition-all shadow-md">
                   Save Package
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: New Authority */}
+      {isNewAuthorityModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="bg-surface border border-border w-full max-w-md rounded-2xl shadow-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-bold text-foreground">Add Statutory Authority</h4>
+              <button type="button" onClick={() => setIsNewAuthorityModalOpen(false)} className="text-muted-foreground hover:text-foreground">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateAuthority} className="space-y-3 text-xs">
+              <div className="space-y-1">
+                <label className="font-bold text-foreground">Authority / Body Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={newAuthorityName}
+                  onChange={e => setNewAuthorityName(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-foreground">Scope / Category Description</label>
+                <input
+                  type="text"
+                  value={newAuthorityScope}
+                  onChange={e => setNewAuthorityScope(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
+                <button type="button" onClick={() => setIsNewAuthorityModalOpen(false)} className="px-4 py-1.5 rounded-xl border border-border bg-background text-foreground hover:bg-muted transition-colors cursor-pointer">
+                  Cancel
+                </button>
+                <button type="submit" className="px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold cursor-pointer transition-all shadow-md">
+                  Add Authority
                 </button>
               </div>
             </form>

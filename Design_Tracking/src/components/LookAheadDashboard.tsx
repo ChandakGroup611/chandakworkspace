@@ -562,13 +562,13 @@ export const LookAheadDashboard: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setSelectedItem(null)}
-                className="h-8 w-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                className="h-8 w-8 rounded-lg hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-border space-y-2 text-xs">
+            <div className="p-3.5 rounded-xl bg-muted/20 border border-border space-y-2 text-xs">
               <div className="flex items-center justify-between text-muted-foreground">
                 <span>Execution Urgency:</span>
                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
@@ -619,7 +619,7 @@ export const LookAheadDashboard: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setSelectedItem(null)}
-                className="px-4 py-1.5 rounded-xl border border-border text-xs font-semibold text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                className="px-4 py-1.5 rounded-xl border border-border bg-background text-xs font-semibold text-foreground hover:bg-muted transition-colors cursor-pointer"
               >
                 Close
               </button>
@@ -649,7 +649,7 @@ export const LookAheadDashboard: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(false)}
-                className="h-8 w-8 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                className="h-8 w-8 rounded-lg hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -686,7 +686,7 @@ export const LookAheadDashboard: React.FC = () => {
                       const twrs = storeState.towers.filter(t => t.projectId === p);
                       if (twrs.length > 0) setNewTowerId(twrs[0].id);
                     }}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground font-bold focus:outline-none focus:border-emerald-500 cursor-pointer"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-bold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                   >
                     {storeState.projects.map(p => (
                       <option key={p.id} value={p.id}>{p.name}</option>
@@ -699,7 +699,7 @@ export const LookAheadDashboard: React.FC = () => {
                   <select
                     value={newTowerId}
                     onChange={e => setNewTowerId(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground font-semibold focus:outline-none focus:border-emerald-500 cursor-pointer"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                   >
                     {storeState.towers.filter(t => t.projectId === newProjectId).map(t => (
                       <option key={t.id} value={t.id}>{t.towerName} ({t.towerType})</option>
@@ -714,7 +714,7 @@ export const LookAheadDashboard: React.FC = () => {
                   rows={2}
                   value={newDesc}
                   onChange={e => setNewDesc(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-emerald-500"
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                   required
                 />
               </div>
@@ -729,7 +729,7 @@ export const LookAheadDashboard: React.FC = () => {
                       className={`py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                         newTimeframe === "30_DAYS"
                           ? "border-rose-500 bg-rose-500/20 text-rose-700 dark:text-rose-400 ring-1 ring-rose-500"
-                          : "border-border text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                          : "border-border text-muted-foreground hover:bg-muted"
                       }`}
                     >
                       🚨 In 30 Days
@@ -740,7 +740,7 @@ export const LookAheadDashboard: React.FC = () => {
                       className={`py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                         newTimeframe === "60_DAYS"
                           ? "border-amber-500 bg-amber-500/20 text-amber-700 dark:text-amber-400 ring-1 ring-amber-500"
-                          : "border-border text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                          : "border-border text-muted-foreground hover:bg-muted"
                       }`}
                     >
                       ⏳ In 60 Days
@@ -754,7 +754,7 @@ export const LookAheadDashboard: React.FC = () => {
                     type="text"
                     value={newTargetDate}
                     onChange={e => setNewTargetDate(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-emerald-500 font-mono"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary font-mono"
                   />
                 </div>
               </div>
@@ -763,7 +763,7 @@ export const LookAheadDashboard: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-border text-xs font-semibold text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-border bg-background text-xs font-semibold text-foreground hover:bg-muted transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
