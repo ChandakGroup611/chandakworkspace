@@ -7,6 +7,16 @@ export interface ProjectMaster {
   code: string;
   name: string;
   location: string;
+  projectType?: "Residential High-Rise" | "Luxury Residential" | "Commercial Office" | "Mixed-Use Development" | "Township" | "SRA / Redevelopment" | "Hospitality" | "Infrastructure" | string;
+  plotArea?: string;
+  builtUpArea?: string;
+  estimatedBudget?: string;
+  reraNumber?: string;
+  projectStatus?: "Planning & Design" | "Statutory Approvals" | "Tendering" | "Under Construction" | "Finishing & Handover" | "Completed" | string;
+  targetCompletionDate?: string;
+  leadManager?: string;
+  leadManagerEmail?: string;
+  taggedConsultants?: string[]; // Multi-selected consultant partner names / IDs
   description?: string;
   createdAt: string;
 }

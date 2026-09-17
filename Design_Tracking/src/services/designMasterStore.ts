@@ -149,6 +149,21 @@ export class DesignMasterStore {
       createdAt: new Date().toISOString()
     };
     state.projects.push(newProj);
+
+    // Sync tagged consultants' active projects
+    if (newProj.taggedConsultants && newProj.taggedConsultants.length > 0) {
+      newProj.taggedConsultants.forEach(cName => {
+        const c = state.consultants.find(cons => cons.name === cName || cons.id === cName);
+        if (c) {
+          if (!c.activeProjects) c.activeProjects = [];
+          if (!c.activeProjects.includes(newProj.name)) {
+            c.activeProjects.push(newProj.name);
+          }
+          c.onboardingStatus = "Onboard";
+        }
+      });
+    }
+
     this.notify();
     return newProj;
   }
@@ -157,15 +172,64 @@ export class DesignMasterStore {
     const state = this.getState();
     const idx = state.projects.findIndex(p => p.id === id);
     if (idx === -1) return null;
+
+    const oldProj = { ...state.projects[idx] };
     state.projects[idx] = { ...state.projects[idx], ...updates };
+    const updatedProj = state.projects[idx];
+
+    // Synchronize consultant tagging
+    if (updates.taggedConsultants !== undefined || (updates.name && updates.name !== oldProj.name)) {
+      const currentTagged = updatedProj.taggedConsultants || [];
+      const oldTagged = oldProj.taggedConsultants || [];
+
+      // Add project to newly tagged consultants
+      currentTagged.forEach(cName => {
+        const c = state.consultants.find(cons => cons.name === cName || cons.id === cName);
+        if (c) {
+          if (!c.activeProjects) c.activeProjects = [];
+          if (!c.activeProjects.includes(updatedProj.name)) {
+            c.activeProjects.push(updatedProj.name);
+          }
+          c.onboardingStatus = "Onboard";
+        }
+      });
+
+      // Remove project from untagged consultants
+      oldTagged.forEach(cName => {
+        if (!currentTagged.includes(cName)) {
+          const c = state.consultants.find(cons => cons.name === cName || cons.id === cName);
+          if (c && c.activeProjects) {
+            c.activeProjects = c.activeProjects.filter(p => p !== oldProj.name && p !== updatedProj.name);
+            if (c.activeProjects.length === 0) {
+              c.onboardingStatus = "Not Onboard";
+            }
+          }
+        }
+      });
+    }
+
     this.notify();
     return state.projects[idx];
   }
 
   public static deleteProject(id: string): void {
     const state = this.getState();
+    const proj = state.projects.find(p => p.id === id);
     state.projects = state.projects.filter(p => p.id !== id);
     state.towers = state.towers.filter(t => t.projectId !== id);
+
+    // Untag from consultants
+    if (proj) {
+      state.consultants.forEach(c => {
+        if (c.activeProjects) {
+          c.activeProjects = c.activeProjects.filter(p => p !== proj.name);
+          if (c.activeProjects.length === 0) {
+            c.onboardingStatus = "Not Onboard";
+          }
+        }
+      });
+    }
+
     // Cleanup orphaned statuses and look-aheads
     Object.keys(state.packageStatuses).forEach(k => {
       if (k.startsWith(`${id}__`)) delete state.packageStatuses[k];

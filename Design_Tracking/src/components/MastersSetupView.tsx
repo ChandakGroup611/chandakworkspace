@@ -54,11 +54,47 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
     return () => unsubscribe();
   }, []);
 
-  // Form states: New Project
+  // Form states: Project (Add & Edit)
   const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false);
+  const [isEditProjectModalOpen, setIsEditProjectModalOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState<ProjectMaster | null>(null);
+
   const [newProjectName, setNewProjectName] = useState("");
   const [newProjectCode, setNewProjectCode] = useState("");
   const [newProjectLocation, setNewProjectLocation] = useState("Mumbai MMR");
+  const [newProjectType, setNewProjectType] = useState("Residential High-Rise");
+  const [newProjectPlotArea, setNewProjectPlotArea] = useState("");
+  const [newProjectBUA, setNewProjectBUA] = useState("");
+  const [newProjectBudget, setNewProjectBudget] = useState("");
+  const [newProjectRera, setNewProjectRera] = useState("");
+  const [newProjectStatus, setNewProjectStatus] = useState("Planning & Design");
+  const [newProjectTargetDate, setNewProjectTargetDate] = useState("");
+  const [newProjectLeadManager, setNewProjectLeadManager] = useState("");
+  const [newProjectLeadManagerEmail, setNewProjectLeadManagerEmail] = useState("");
+  const [newProjectDescription, setNewProjectDescription] = useState("");
+  const [selectedTaggedConsultants, setSelectedTaggedConsultants] = useState<string[]>([]);
+  const [projectConsultantSearch, setProjectConsultantSearch] = useState("");
+  const [customProjectConsultantInput, setCustomProjectConsultantInput] = useState("");
+
+  const PROJECT_TYPE_OPTIONS = [
+    "Residential High-Rise",
+    "Luxury Residential",
+    "Commercial Office",
+    "Mixed-Use Development",
+    "Township",
+    "SRA / Redevelopment",
+    "Hospitality",
+    "Infrastructure & Utilities"
+  ];
+
+  const PROJECT_STATUS_OPTIONS = [
+    "Planning & Design",
+    "Statutory Approvals",
+    "Tendering",
+    "Under Construction",
+    "Finishing & Handover",
+    "Completed"
+  ];
 
   // Form states: New Tower
   const [isNewTowerModalOpen, setIsNewTowerModalOpen] = useState(false);
@@ -96,6 +132,65 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
     "BIM Coordination"
   ];
 
+  const handleOpenAddProject = () => {
+    setEditingProject(null);
+    setNewProjectName("");
+    setNewProjectCode("");
+    setNewProjectLocation("Mumbai MMR");
+    setNewProjectType("Residential High-Rise");
+    setNewProjectPlotArea("");
+    setNewProjectBUA("");
+    setNewProjectBudget("");
+    setNewProjectRera("");
+    setNewProjectStatus("Planning & Design");
+    setNewProjectTargetDate("");
+    setNewProjectLeadManager("");
+    setNewProjectLeadManagerEmail("");
+    setNewProjectDescription("");
+    setSelectedTaggedConsultants([]);
+    setProjectConsultantSearch("");
+    setCustomProjectConsultantInput("");
+    setIsNewProjectModalOpen(true);
+  };
+
+  const handleOpenEditProject = (proj: ProjectMaster) => {
+    setEditingProject(proj);
+    setNewProjectName(proj.name);
+    setNewProjectCode(proj.code);
+    setNewProjectLocation(proj.location || "Mumbai MMR");
+    setNewProjectType(proj.projectType || "Residential High-Rise");
+    setNewProjectPlotArea(proj.plotArea || "");
+    setNewProjectBUA(proj.builtUpArea || "");
+    setNewProjectBudget(proj.estimatedBudget || "");
+    setNewProjectRera(proj.reraNumber || "");
+    setNewProjectStatus(proj.projectStatus || "Planning & Design");
+    setNewProjectTargetDate(proj.targetCompletionDate || "");
+    setNewProjectLeadManager(proj.leadManager || "");
+    setNewProjectLeadManagerEmail(proj.leadManagerEmail || "");
+    setNewProjectDescription(proj.description || "");
+    setSelectedTaggedConsultants(proj.taggedConsultants || []);
+    setProjectConsultantSearch("");
+    setCustomProjectConsultantInput("");
+    setIsEditProjectModalOpen(true);
+  };
+
+  const handleToggleProjectConsultant = (consName: string) => {
+    setSelectedTaggedConsultants(prev => 
+      prev.includes(consName) ? prev.filter(c => c !== consName) : [...prev, consName]
+    );
+  };
+
+  const handleAddCustomProjectConsultant = (e: React.KeyboardEvent | React.MouseEvent) => {
+    if (("key" in e && e.key === "Enter") || !("key" in e)) {
+      e.preventDefault();
+      const val = customProjectConsultantInput.trim();
+      if (val && !selectedTaggedConsultants.includes(val)) {
+        setSelectedTaggedConsultants(prev => [...prev, val]);
+        setCustomProjectConsultantInput("");
+      }
+    }
+  };
+
   const handleCreateProject = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newProjectName.trim()) return;
@@ -104,12 +199,46 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
     DesignMasterStore.addProject({
       name: newProjectName.trim(),
       code,
-      location: newProjectLocation.trim()
+      location: newProjectLocation.trim(),
+      projectType: newProjectType,
+      plotArea: newProjectPlotArea.trim() || undefined,
+      builtUpArea: newProjectBUA.trim() || undefined,
+      estimatedBudget: newProjectBudget.trim() || undefined,
+      reraNumber: newProjectRera.trim() || undefined,
+      projectStatus: newProjectStatus,
+      targetCompletionDate: newProjectTargetDate.trim() || undefined,
+      leadManager: newProjectLeadManager.trim() || undefined,
+      leadManagerEmail: newProjectLeadManagerEmail.trim() || undefined,
+      description: newProjectDescription.trim() || undefined,
+      taggedConsultants: selectedTaggedConsultants
     });
 
-    setNewProjectName("");
-    setNewProjectCode("");
     setIsNewProjectModalOpen(false);
+  };
+
+  const handleUpdateProject = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProject || !newProjectName.trim()) return;
+
+    DesignMasterStore.updateProject(editingProject.id, {
+      name: newProjectName.trim(),
+      code: newProjectCode.trim() || editingProject.code,
+      location: newProjectLocation.trim(),
+      projectType: newProjectType,
+      plotArea: newProjectPlotArea.trim() || undefined,
+      builtUpArea: newProjectBUA.trim() || undefined,
+      estimatedBudget: newProjectBudget.trim() || undefined,
+      reraNumber: newProjectRera.trim() || undefined,
+      projectStatus: newProjectStatus,
+      targetCompletionDate: newProjectTargetDate.trim() || undefined,
+      leadManager: newProjectLeadManager.trim() || undefined,
+      leadManagerEmail: newProjectLeadManagerEmail.trim() || undefined,
+      description: newProjectDescription.trim() || undefined,
+      taggedConsultants: selectedTaggedConsultants
+    });
+
+    setIsEditProjectModalOpen(false);
+    setEditingProject(null);
   };
 
   const handleCreateTower = (e: React.FormEvent) => {
@@ -268,14 +397,14 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
       {/* Sub-tab 1: Projects & Towers Master */}
       {activeSubTab === "PROJECTS" && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h4 className="text-sm font-bold text-foreground">Development Projects & Tower Wings</h4>
-              <p className="text-xs text-muted-foreground">Register residential, commercial, or mixed-use towers</p>
+              <p className="text-xs text-muted-foreground">Comprehensive real estate project masters with specifications, tagged consultants, and tower wings</p>
             </div>
             <button
               type="button"
-              onClick={() => setIsNewProjectModalOpen(true)}
+              onClick={handleOpenAddProject}
               className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
             >
               <Plus className="h-3.5 w-3.5" />
@@ -283,82 +412,217 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {storeState.projects.map(proj => {
-              const projTowers = storeState.towers.filter(t => t.projectId === proj.id);
-              return (
-                <div 
-                  key={proj.id}
-                  className="p-5 rounded-2xl border border-border bg-surface shadow-xs space-y-4 flex flex-col justify-between"
-                >
-                  <div className="space-y-2">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 whitespace-nowrap">
-                          {proj.code}
-                        </span>
-                        <h4 className="text-base font-black text-foreground mt-1">
-                          {proj.name}
-                        </h4>
-                        <span className="text-xs text-muted-foreground">{proj.location}</span>
+          {storeState.projects.length === 0 ? (
+            <div className="p-8 rounded-2xl border border-dashed border-border bg-surface text-center space-y-3">
+              <div className="h-10 w-10 mx-auto rounded-xl bg-muted text-muted-foreground flex items-center justify-center">
+                <Building2 className="h-5 w-5" />
+              </div>
+              <div>
+                <h5 className="text-sm font-bold text-foreground">No Projects Created Yet</h5>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Register your development projects, specify area parameters, and tag specialized consultant partners.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleOpenAddProject}
+                className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>Create First Project</span>
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {storeState.projects.map(proj => {
+                const projTowers = storeState.towers.filter(t => t.projectId === proj.id);
+                const taggedConsList = proj.taggedConsultants || [];
+
+                return (
+                  <div 
+                    key={proj.id}
+                    className="p-5 rounded-2xl border border-border bg-surface shadow-xs space-y-4 flex flex-col justify-between hover:border-emerald-500/40 transition-all"
+                  >
+                    <div className="space-y-3.5">
+                      {/* Project Header */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 whitespace-nowrap">
+                              {proj.code}
+                            </span>
+                            {proj.projectType && (
+                              <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20 whitespace-nowrap">
+                                {proj.projectType}
+                              </span>
+                            )}
+                            {proj.projectStatus && (
+                              <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20 whitespace-nowrap">
+                                {proj.projectStatus}
+                              </span>
+                            )}
+                          </div>
+                          <h4 className="text-base font-black text-foreground mt-1 truncate">
+                            {proj.name}
+                          </h4>
+                          <span className="text-xs text-muted-foreground">{proj.location}</span>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEditProject(proj)}
+                            className="h-7 w-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors cursor-pointer"
+                            title="Edit project details & consultants"
+                          >
+                            <SlidersHorizontal className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (confirm(`Delete project "${proj.name}" and all its associated wings?`)) {
+                                DesignMasterStore.deleteProject(proj.id);
+                              }
+                            }}
+                            className="h-7 w-7 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 flex items-center justify-center transition-colors cursor-pointer"
+                            title="Delete project"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                       </div>
+
+                      {/* Detailed Project Specifications Grid */}
+                      <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-border grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+                        {proj.builtUpArea && (
+                          <div>
+                            <span className="text-[10px] text-muted-foreground block font-medium">Built-Up Area:</span>
+                            <span className="font-bold text-foreground">{proj.builtUpArea}</span>
+                          </div>
+                        )}
+                        {proj.plotArea && (
+                          <div>
+                            <span className="text-[10px] text-muted-foreground block font-medium">Plot Area:</span>
+                            <span className="font-bold text-foreground">{proj.plotArea}</span>
+                          </div>
+                        )}
+                        {proj.estimatedBudget && (
+                          <div>
+                            <span className="text-[10px] text-muted-foreground block font-medium">Est. Budget:</span>
+                            <span className="font-bold text-foreground">{proj.estimatedBudget}</span>
+                          </div>
+                        )}
+                        {proj.reraNumber && (
+                          <div>
+                            <span className="text-[10px] text-muted-foreground block font-medium">MahaRERA No:</span>
+                            <span className="font-mono font-bold text-foreground text-[11px]">{proj.reraNumber}</span>
+                          </div>
+                        )}
+                        {proj.targetCompletionDate && (
+                          <div>
+                            <span className="text-[10px] text-muted-foreground block font-medium">Target Handover:</span>
+                            <span className="font-bold text-foreground">{proj.targetCompletionDate}</span>
+                          </div>
+                        )}
+                        {proj.leadManager && (
+                          <div>
+                            <span className="text-[10px] text-muted-foreground block font-medium">Lead Manager:</span>
+                            <span className="font-bold text-foreground truncate block">{proj.leadManager}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 🤝 Tagged Consultants Section */}
+                      <div className="space-y-1.5 pt-1 border-t border-border">
+                        <span className="text-[11px] font-bold text-muted-foreground flex items-center justify-between">
+                          <span className="flex items-center gap-1">
+                            <ShieldCheck className="h-3.5 w-3.5 text-purple-500" />
+                            <span>Tagged Consultants ({taggedConsList.length}):</span>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEditProject(proj)}
+                            className="text-[10px] text-purple-600 dark:text-purple-400 hover:underline cursor-pointer font-semibold"
+                          >
+                            + Tag / Manage
+                          </button>
+                        </span>
+                        <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto custom-scrollbar">
+                          {taggedConsList.length > 0 ? (
+                            taggedConsList.map((consName, idx) => {
+                              const consMaster = storeState.consultants.find(c => c.name === consName || c.id === consName);
+                              return (
+                                <span 
+                                  key={idx}
+                                  className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20 flex items-center gap-1"
+                                >
+                                  <span>{consName}</span>
+                                  {consMaster && (
+                                    <span className="text-[9px] text-muted-foreground">({consMaster.category})</span>
+                                  )}
+                                </span>
+                              );
+                            })
+                          ) : (
+                            <span className="text-[11px] text-muted-foreground italic">
+                              No consultants tagged yet. Click &ldquo;+ Tag / Manage&rdquo; to assign partners.
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Towers / Wings list */}
+                      <div className="space-y-1.5 pt-1 border-t border-border">
+                        <span className="text-[11px] font-bold text-muted-foreground block">
+                          Wings / Towers ({projTowers.length}):
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {projTowers.map(twr => (
+                            <span 
+                              key={twr.id}
+                              className="text-[10px] font-bold px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-foreground border border-border flex items-center gap-1.5 group whitespace-nowrap"
+                            >
+                              <span>{twr.towerName}</span>
+                              <span className="text-[9px] text-muted-foreground">({twr.towerType})</span>
+                              <button
+                                type="button"
+                                onClick={() => DesignMasterStore.deleteTower(twr.id)}
+                                className="text-muted-foreground hover:text-rose-500 ml-0.5 cursor-pointer"
+                              >
+                                <X className="h-2.5 w-2.5" />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-border flex items-center justify-between">
                       <button
                         type="button"
                         onClick={() => {
-                          if (confirm(`Delete project ${proj.name} and all its towers?`)) {
-                            DesignMasterStore.deleteProject(proj.id);
-                          }
+                          setSelectedProjectIdForTower(proj.id);
+                          setIsNewTowerModalOpen(true);
                         }}
-                        className="h-7 w-7 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 flex items-center justify-center transition-colors cursor-pointer"
-                        title="Delete project"
+                        className="text-xs text-emerald-600 dark:text-emerald-400 font-bold inline-flex items-center gap-1 hover:underline cursor-pointer whitespace-nowrap"
                       >
-                        <Trash2 className="h-3.5 w-3.5" />
+                        <Plus className="h-3 w-3" />
+                        <span>Add Wing / Tower</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditProject(proj)}
+                        className="text-xs text-muted-foreground hover:text-foreground font-semibold inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
+                      >
+                        <span>Edit Project Specs</span>
                       </button>
                     </div>
-
-                    {/* Towers list */}
-                    <div className="space-y-1.5 pt-2">
-                      <span className="text-[11px] font-bold text-muted-foreground block">
-                        Wings / Towers ({projTowers.length}):
-                      </span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {projTowers.map(twr => (
-                          <span 
-                            key={twr.id}
-                            className="text-[10px] font-bold px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-foreground border border-border flex items-center gap-1.5 group whitespace-nowrap"
-                          >
-                            <span>{twr.towerName}</span>
-                            <span className="text-[9px] text-muted-foreground">({twr.towerType})</span>
-                            <button
-                              type="button"
-                              onClick={() => DesignMasterStore.deleteTower(twr.id)}
-                              className="text-muted-foreground hover:text-rose-500 ml-0.5 cursor-pointer"
-                            >
-                              <X className="h-2.5 w-2.5" />
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
                   </div>
-
-                  <div className="pt-3 border-t border-border flex items-center justify-between">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedProjectIdForTower(proj.id);
-                        setIsNewTowerModalOpen(true);
-                      }}
-                      className="text-xs text-emerald-600 dark:text-emerald-400 font-bold inline-flex items-center gap-1 hover:underline cursor-pointer whitespace-nowrap"
-                    >
-                      <Plus className="h-3 w-3" />
-                      <span>Add Wing / Tower</span>
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
@@ -712,52 +976,626 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
       {/* Modal: New Project */}
       {isNewProjectModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-          <div className="bg-surface border border-border w-full max-w-md rounded-2xl shadow-2xl p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h4 className="text-sm font-bold text-foreground">Create New Development Project</h4>
-              <button type="button" onClick={() => setIsNewProjectModalOpen(false)} className="text-muted-foreground hover:text-foreground">
+          <div className="bg-surface border border-border w-full max-w-2xl rounded-2xl shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20">
+                  <Building2 className="h-4 w-4" />
+                </div>
+                <div>
+                  <h4 className="text-base font-bold text-foreground">Create New Development Project</h4>
+                  <p className="text-[11px] text-muted-foreground">Register full project parameters, MahaRERA details, and tag consultant partners</p>
+                </div>
+              </div>
+              <button type="button" onClick={() => setIsNewProjectModalOpen(false)} className="text-muted-foreground hover:text-foreground cursor-pointer">
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateProject} className="space-y-3 text-xs">
+            <form onSubmit={handleCreateProject} className="space-y-3.5 text-xs">
+              {/* Row 1: Name & Code */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="sm:col-span-2 space-y-1">
+                  <label className="font-bold text-foreground">Project Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newProjectName}
+                    onChange={e => setNewProjectName(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground">Project Code</label>
+                  <input
+                    type="text"
+                    value={newProjectCode}
+                    onChange={e => setNewProjectCode(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+              </div>
+
+              {/* Row 2: Location & Project Type */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground">Location / Micro-Market *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newProjectLocation}
+                    onChange={e => setNewProjectLocation(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground">Project Type / Asset Class *</label>
+                  <select
+                    value={newProjectType}
+                    onChange={e => setNewProjectType(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                  >
+                    {PROJECT_TYPE_OPTIONS.map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Row 3: Plot Area & BUA */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground">Plot / Land Area</label>
+                  <input
+                    type="text"
+                    value={newProjectPlotArea}
+                    onChange={e => setNewProjectPlotArea(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground">Total Built-Up Area (BUA)</label>
+                  <input
+                    type="text"
+                    value={newProjectBUA}
+                    onChange={e => setNewProjectBUA(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+              </div>
+
+              {/* Row 4: Budget & RERA Number */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground">Estimated Budget / Cost</label>
+                  <input
+                    type="text"
+                    value={newProjectBudget}
+                    onChange={e => setNewProjectBudget(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground">MahaRERA / RERA Reg. No.</label>
+                  <input
+                    type="text"
+                    value={newProjectRera}
+                    onChange={e => setNewProjectRera(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+              </div>
+
+              {/* Row 5: Lifecycle Status & Target Handover Date */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground">Lifecycle Status</label>
+                  <select
+                    value={newProjectStatus}
+                    onChange={e => setNewProjectStatus(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                  >
+                    {PROJECT_STATUS_OPTIONS.map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground">Target Completion / Handover</label>
+                  <input
+                    type="date"
+                    value={newProjectTargetDate}
+                    onChange={e => setNewProjectTargetDate(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+              </div>
+
+              {/* Row 6: Lead Manager */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground">Lead Design Manager / Director</label>
+                  <input
+                    type="text"
+                    value={newProjectLeadManager}
+                    onChange={e => setNewProjectLeadManager(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground">Lead Manager Email</label>
+                  <input
+                    type="email"
+                    value={newProjectLeadManagerEmail}
+                    onChange={e => setNewProjectLeadManagerEmail(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+              </div>
+
+              {/* Row 7: Scope / Brief Description */}
               <div className="space-y-1">
-                <label className="font-bold text-foreground">Project Name *</label>
-                <input
-                  type="text"
-                  required
-                  value={newProjectName}
-                  onChange={e => setNewProjectName(e.target.value)}
+                <label className="font-bold text-foreground">Scope / Architectural Brief Description</label>
+                <textarea
+                  rows={2}
+                  value={newProjectDescription}
+                  onChange={e => setNewProjectDescription(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                 />
               </div>
 
-              <div className="space-y-1">
-                <label className="font-bold text-foreground">Project Code (Optional)</label>
-                <input
-                  type="text"
-                  value={newProjectCode}
-                  onChange={e => setNewProjectCode(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
-                />
+              {/* 🤝 Row 8: TAGGED CONSULTANTS (Multi-Selection) */}
+              <div className="space-y-2 pt-2 border-t border-border">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                  <label className="font-bold text-foreground flex items-center gap-1.5 text-xs">
+                    <ShieldCheck className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                    <span>TAGGED CONSULTANTS (Assign Consultant Partners to Project) *</span>
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-semibold text-purple-600 dark:text-purple-400">
+                      {selectedTaggedConsultants.length} {selectedTaggedConsultants.length === 1 ? "consultant" : "consultants"} tagged
+                    </span>
+                    {storeState.consultants.length > 0 && (
+                      <div className="flex items-center gap-1.5 text-[11px]">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedTaggedConsultants(storeState.consultants.map(c => c.name))}
+                          className="text-purple-600 hover:underline cursor-pointer font-medium"
+                        >
+                          Select All
+                        </button>
+                        <span>•</span>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedTaggedConsultants([])}
+                          className="text-muted-foreground hover:text-rose-500 cursor-pointer"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {storeState.consultants.length > 4 && (
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={projectConsultantSearch}
+                      onChange={e => setProjectConsultantSearch(e.target.value)}
+                      aria-label="Filter consultants list"
+                      className="w-full px-3 py-1 text-xs rounded-lg border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                    />
+                  </div>
+                )}
+
+                {/* Available Consultants List or Empty State */}
+                {storeState.consultants.length === 0 ? (
+                  <div className="p-3 rounded-xl border border-dashed border-border bg-muted/20 text-xs space-y-1">
+                    <p className="text-muted-foreground font-medium">
+                      No consultant partners registered in <strong>Consultant Directory</strong> yet.
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      You can type custom consultant firm names in the box below to tag this project, or register them in the Consultants tab.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-1.5 p-2.5 rounded-xl border border-border bg-muted/20 max-h-36 overflow-y-auto custom-scrollbar">
+                    {storeState.consultants
+                      .filter(c => !projectConsultantSearch.trim() || c.name.toLowerCase().includes(projectConsultantSearch.toLowerCase()) || c.category.toLowerCase().includes(projectConsultantSearch.toLowerCase()))
+                      .map(cons => {
+                        const isSelected = selectedTaggedConsultants.includes(cons.name);
+                        return (
+                          <button
+                            key={cons.id}
+                            type="button"
+                            onClick={() => handleToggleProjectConsultant(cons.name)}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-all border flex items-center gap-1.5 ${
+                              isSelected
+                                ? "bg-purple-600 text-white border-purple-600 shadow-2xs font-bold"
+                                : "bg-surface text-muted-foreground border-border hover:text-foreground hover:border-purple-500/40"
+                            }`}
+                          >
+                            {isSelected ? <CheckCircle2 className="h-3 w-3" /> : <Plus className="h-3 w-3 text-muted-foreground" />}
+                            <span>{cons.name}</span>
+                            <span className={`text-[9px] px-1 py-0.2 rounded ${isSelected ? "bg-white/20 text-white" : "bg-muted text-muted-foreground"}`}>
+                              {cons.category}
+                            </span>
+                          </button>
+                        );
+                      })}
+                  </div>
+                )}
+
+                {/* Selected Tagged Consultants Chips */}
+                {selectedTaggedConsultants.length > 0 && (
+                  <div className="space-y-1 pt-1">
+                    <span className="text-[11px] font-bold text-muted-foreground block">
+                      Currently Assigned ({selectedTaggedConsultants.length}):
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {selectedTaggedConsultants.map(tag => (
+                        <span
+                          key={tag}
+                          className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/30 flex items-center gap-1 shadow-2xs"
+                        >
+                          <span>{tag}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleProjectConsultant(tag)}
+                            className="text-muted-foreground hover:text-rose-500 p-0.5 cursor-pointer"
+                            title="Untag consultant"
+                          >
+                            <X className="h-2.5 w-2.5" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Custom Consultant Tag Input */}
+                <div className="flex items-center gap-2 pt-1">
+                  <input
+                    type="text"
+                    value={customProjectConsultantInput}
+                    onChange={e => setCustomProjectConsultantInput(e.target.value)}
+                    onKeyDown={handleAddCustomProjectConsultant}
+                    aria-label="Add custom consultant tag"
+                    className="flex-1 px-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddCustomProjectConsultant}
+                    className="px-3 py-1.5 rounded-xl bg-purple-600 text-white font-bold text-xs hover:bg-purple-500 cursor-pointer shadow-2xs"
+                  >
+                    Add Tag
+                  </button>
+                </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="font-bold text-foreground">Location</label>
-                <input
-                  type="text"
-                  value={newProjectLocation}
-                  onChange={e => setNewProjectLocation(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
-                />
-              </div>
-
+              {/* Modal Footer */}
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
                 <button type="button" onClick={() => setIsNewProjectModalOpen(false)} className="px-4 py-1.5 rounded-xl border border-border bg-background text-foreground hover:bg-muted transition-colors cursor-pointer">
                   Cancel
                 </button>
-                <button type="submit" className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer transition-all shadow-md">
-                  Create Project
+                <button type="submit" className="px-5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer transition-all shadow-md">
+                  Create Project & Tag Consultants
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Edit Project */}
+      {isEditProjectModalOpen && editingProject && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="bg-surface border border-border w-full max-w-2xl rounded-2xl shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20">
+                  <Building2 className="h-4 w-4" />
+                </div>
+                <div>
+                  <h4 className="text-base font-bold text-foreground">Edit Project: {editingProject.name}</h4>
+                  <p className="text-[11px] text-muted-foreground">Update project parameters, specifications, and assigned consultant partners</p>
+                </div>
+              </div>
+              <button type="button" onClick={() => setIsEditProjectModalOpen(false)} className="text-muted-foreground hover:text-foreground cursor-pointer">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateProject} className="space-y-3.5 text-xs">
+              {/* Row 1: Name & Code */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="sm:col-span-2 space-y-1">
+                  <label className="font-bold text-foreground">Project Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newProjectName}
+                    onChange={e => setNewProjectName(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground">Project Code</label>
+                  <input
+                    type="text"
+                    value={newProjectCode}
+                    onChange={e => setNewProjectCode(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+              </div>
+
+              {/* Row 2: Location & Project Type */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground">Location / Micro-Market *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newProjectLocation}
+                    onChange={e => setNewProjectLocation(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground">Project Type / Asset Class *</label>
+                  <select
+                    value={newProjectType}
+                    onChange={e => setNewProjectType(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                  >
+                    {PROJECT_TYPE_OPTIONS.map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Row 3: Plot Area & BUA */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground">Plot / Land Area</label>
+                  <input
+                    type="text"
+                    value={newProjectPlotArea}
+                    onChange={e => setNewProjectPlotArea(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground">Total Built-Up Area (BUA)</label>
+                  <input
+                    type="text"
+                    value={newProjectBUA}
+                    onChange={e => setNewProjectBUA(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+              </div>
+
+              {/* Row 4: Budget & RERA Number */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground">Estimated Budget / Cost</label>
+                  <input
+                    type="text"
+                    value={newProjectBudget}
+                    onChange={e => setNewProjectBudget(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground">MahaRERA / RERA Reg. No.</label>
+                  <input
+                    type="text"
+                    value={newProjectRera}
+                    onChange={e => setNewProjectRera(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+              </div>
+
+              {/* Row 5: Lifecycle Status & Target Handover Date */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground">Lifecycle Status</label>
+                  <select
+                    value={newProjectStatus}
+                    onChange={e => setNewProjectStatus(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                  >
+                    {PROJECT_STATUS_OPTIONS.map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground">Target Completion / Handover</label>
+                  <input
+                    type="date"
+                    value={newProjectTargetDate}
+                    onChange={e => setNewProjectTargetDate(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+              </div>
+
+              {/* Row 6: Lead Manager */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground">Lead Design Manager / Director</label>
+                  <input
+                    type="text"
+                    value={newProjectLeadManager}
+                    onChange={e => setNewProjectLeadManager(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground">Lead Manager Email</label>
+                  <input
+                    type="email"
+                    value={newProjectLeadManagerEmail}
+                    onChange={e => setNewProjectLeadManagerEmail(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+              </div>
+
+              {/* Row 7: Scope / Brief Description */}
+              <div className="space-y-1">
+                <label className="font-bold text-foreground">Scope / Architectural Brief Description</label>
+                <textarea
+                  rows={2}
+                  value={newProjectDescription}
+                  onChange={e => setNewProjectDescription(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                />
+              </div>
+
+              {/* 🤝 Row 8: TAGGED CONSULTANTS (Multi-Selection) */}
+              <div className="space-y-2 pt-2 border-t border-border">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                  <label className="font-bold text-foreground flex items-center gap-1.5 text-xs">
+                    <ShieldCheck className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                    <span>TAGGED CONSULTANTS (Assign Consultant Partners to Project) *</span>
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-semibold text-purple-600 dark:text-purple-400">
+                      {selectedTaggedConsultants.length} {selectedTaggedConsultants.length === 1 ? "consultant" : "consultants"} tagged
+                    </span>
+                    {storeState.consultants.length > 0 && (
+                      <div className="flex items-center gap-1.5 text-[11px]">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedTaggedConsultants(storeState.consultants.map(c => c.name))}
+                          className="text-purple-600 hover:underline cursor-pointer font-medium"
+                        >
+                          Select All
+                        </button>
+                        <span>•</span>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedTaggedConsultants([])}
+                          className="text-muted-foreground hover:text-rose-500 cursor-pointer"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {storeState.consultants.length > 4 && (
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={projectConsultantSearch}
+                      onChange={e => setProjectConsultantSearch(e.target.value)}
+                      aria-label="Filter consultants list"
+                      className="w-full px-3 py-1 text-xs rounded-lg border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                    />
+                  </div>
+                )}
+
+                {/* Available Consultants List or Empty State */}
+                {storeState.consultants.length === 0 ? (
+                  <div className="p-3 rounded-xl border border-dashed border-border bg-muted/20 text-xs space-y-1">
+                    <p className="text-muted-foreground font-medium">
+                      No consultant partners registered in <strong>Consultant Directory</strong> yet.
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      You can type custom consultant firm names in the box below to tag this project, or register them in the Consultants tab.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-1.5 p-2.5 rounded-xl border border-border bg-muted/20 max-h-36 overflow-y-auto custom-scrollbar">
+                    {storeState.consultants
+                      .filter(c => !projectConsultantSearch.trim() || c.name.toLowerCase().includes(projectConsultantSearch.toLowerCase()) || c.category.toLowerCase().includes(projectConsultantSearch.toLowerCase()))
+                      .map(cons => {
+                        const isSelected = selectedTaggedConsultants.includes(cons.name);
+                        return (
+                          <button
+                            key={cons.id}
+                            type="button"
+                            onClick={() => handleToggleProjectConsultant(cons.name)}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-all border flex items-center gap-1.5 ${
+                              isSelected
+                                ? "bg-purple-600 text-white border-purple-600 shadow-2xs font-bold"
+                                : "bg-surface text-muted-foreground border-border hover:text-foreground hover:border-purple-500/40"
+                            }`}
+                          >
+                            {isSelected ? <CheckCircle2 className="h-3 w-3" /> : <Plus className="h-3 w-3 text-muted-foreground" />}
+                            <span>{cons.name}</span>
+                            <span className={`text-[9px] px-1 py-0.2 rounded ${isSelected ? "bg-white/20 text-white" : "bg-muted text-muted-foreground"}`}>
+                              {cons.category}
+                            </span>
+                          </button>
+                        );
+                      })}
+                  </div>
+                )}
+
+                {/* Selected Tagged Consultants Chips */}
+                {selectedTaggedConsultants.length > 0 && (
+                  <div className="space-y-1 pt-1">
+                    <span className="text-[11px] font-bold text-muted-foreground block">
+                      Currently Assigned ({selectedTaggedConsultants.length}):
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {selectedTaggedConsultants.map(tag => (
+                        <span
+                          key={tag}
+                          className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/30 flex items-center gap-1 shadow-2xs"
+                        >
+                          <span>{tag}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleProjectConsultant(tag)}
+                            className="text-muted-foreground hover:text-rose-500 p-0.5 cursor-pointer"
+                            title="Untag consultant"
+                          >
+                            <X className="h-2.5 w-2.5" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Custom Consultant Tag Input */}
+                <div className="flex items-center gap-2 pt-1">
+                  <input
+                    type="text"
+                    value={customProjectConsultantInput}
+                    onChange={e => setCustomProjectConsultantInput(e.target.value)}
+                    onKeyDown={handleAddCustomProjectConsultant}
+                    aria-label="Add custom consultant tag"
+                    className="flex-1 px-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddCustomProjectConsultant}
+                    className="px-3 py-1.5 rounded-xl bg-purple-600 text-white font-bold text-xs hover:bg-purple-500 cursor-pointer shadow-2xs"
+                  >
+                    Add Tag
+                  </button>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
+                <button type="button" onClick={() => setIsEditProjectModalOpen(false)} className="px-4 py-1.5 rounded-xl border border-border bg-background text-foreground hover:bg-muted transition-colors cursor-pointer">
+                  Cancel
+                </button>
+                <button type="submit" className="px-5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer transition-all shadow-md">
+                  Update Project & Consultant Tags
                 </button>
               </div>
             </form>
