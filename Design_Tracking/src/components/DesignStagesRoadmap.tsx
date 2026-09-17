@@ -96,49 +96,59 @@ export const DesignStagesRoadmap: React.FC = () => {
       </div>
 
       {/* Stages Progression Stepper Bar */}
-      <div className="p-3 sm:p-4 rounded-2xl border border-border bg-surface shadow-xs overflow-x-auto custom-scrollbar">
-        <div className="flex items-center gap-2.5 min-w-max">
-          {groupedStages.map(([stageName, items], idx) => {
-            const isSelected = activeStageIndex === idx;
-            const targetInfo = STAGE_TARGETS[idx] || { targetPct: "100%", color: "from-emerald-600 to-teal-500" };
-            return (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => {
-                  setActiveStageIndex(idx);
-                  setSelectedConsultants([]);
-                }}
-                className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-3 min-w-[220px] shrink-0 whitespace-nowrap ${
-                  isSelected
-                    ? "border-emerald-500 bg-emerald-500/10 text-foreground ring-1 ring-emerald-500/50 shadow-xs"
-                    : "border-border bg-surface text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-                }`}
-              >
-                <div className={`h-8 w-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
-                  isSelected 
-                    ? "bg-emerald-600 text-white" 
-                    : "bg-slate-100 dark:bg-slate-800 text-foreground"
-                }`}>
-                  0{idx + 1}
-                </div>
-                <div className="space-y-0.5 min-w-0">
-                  <div className="font-semibold text-xs leading-snug truncate text-foreground whitespace-nowrap">
-                    {stageName}
-                  </div>
-                  <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground whitespace-nowrap">
-                    <span>{items.length} items</span>
-                    <span>•</span>
-                    <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                      {targetInfo.targetPct}
-                    </span>
-                  </div>
-                </div>
-              </button>
-            );
-          })}
+      {groupedStages.length === 0 ? (
+        <div className="p-12 text-center rounded-2xl border border-dashed border-border bg-surface space-y-3">
+          <Layers className="h-10 w-10 text-muted-foreground/40 mx-auto" />
+          <h4 className="text-sm font-bold text-foreground">No Design Stage Deliverables Configured</h4>
+          <p className="text-xs text-muted-foreground max-w-md mx-auto">
+            Design stages are dynamically populated as deliverables are added to your project.
+          </p>
         </div>
-      </div>
+      ) : (
+        <div className="p-3 sm:p-4 rounded-2xl border border-border bg-surface shadow-xs overflow-x-auto custom-scrollbar">
+          <div className="flex items-center gap-2.5 min-w-max">
+            {groupedStages.map(([stageName, items], idx) => {
+              const isSelected = activeStageIndex === idx;
+              const targetInfo = STAGE_TARGETS[idx] || { targetPct: "100%", color: "from-emerald-600 to-teal-500" };
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setActiveStageIndex(idx);
+                    setSelectedConsultants([]);
+                  }}
+                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-3 min-w-[220px] shrink-0 whitespace-nowrap ${
+                    isSelected
+                      ? "border-emerald-500 bg-emerald-500/10 text-foreground ring-1 ring-emerald-500/50 shadow-xs"
+                      : "border-border bg-surface text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  <div className={`h-8 w-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
+                    isSelected 
+                      ? "bg-emerald-600 text-white" 
+                      : "bg-slate-100 dark:bg-slate-800 text-foreground"
+                  }`}>
+                    0{idx + 1}
+                  </div>
+                  <div className="space-y-0.5 min-w-0">
+                    <div className="font-semibold text-xs leading-snug truncate text-foreground whitespace-nowrap">
+                      {stageName}
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground whitespace-nowrap">
+                      <span>{items.length} items</span>
+                      <span>•</span>
+                      <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                        {targetInfo.targetPct}
+                      </span>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Active Stage Details & Interactive Deliverables Checklist */}
       {currentStage && (

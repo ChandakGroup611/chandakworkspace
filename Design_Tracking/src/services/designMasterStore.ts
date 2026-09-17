@@ -921,13 +921,7 @@ export class DesignMasterStore {
     return {
       projects: [],
       towers: [],
-      disciplines: [
-        { id: "disc-1", name: "Civil & RCC", code: "CIVIL", icon: "🏗️" },
-        { id: "disc-2", name: "MEPF Services", code: "MEPF", icon: "⚡" },
-        { id: "disc-3", name: "Finishing & Interiors", code: "FIN", icon: "🛋️" },
-        { id: "disc-4", name: "Facade & Glazing", code: "FACADE", icon: "🏢" },
-        { id: "disc-5", name: "Landscape & Infrastructure", code: "LAND", icon: "🌿" }
-      ],
+      disciplines: [],
       packages: [],
       authorities: [],
       consultants: [],
