@@ -5,7 +5,6 @@ import { DesignMasterStore, MasterStoreState } from "../services/designMasterSto
 import { exportTenderMatrixToExcel } from "../services/excelExportService";
 import { WorkPackageMaster, TowerMaster, ProjectMaster, PackageStatusEntry, MatrixAuditLog } from "../types/masterTypes";
 import { recordMatrixAuditAction } from "@/lib/actions/designTracking";
-import { DesignRbacModal } from "./DesignRbacModal";
 import { DesignMultiSelectDropdown, DropdownOption } from "./DesignMultiSelectDropdown";
 import { 
   Search, 
@@ -1448,12 +1447,6 @@ export const TenderDesignMatrix: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* 🛡️ RBAC Policies Modal */}
-      <DesignRbacModal
-        isOpen={isRbacModalOpen}
-        onClose={() => setIsRbacModalOpen(false)}
-      />
     </div>
   );
 };

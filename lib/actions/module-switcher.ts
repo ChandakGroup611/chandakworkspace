@@ -249,6 +249,38 @@ export async function assignUserModules(
       }
     }
 
+    // Synchronize design_user_access if DESIGN_TRACKING is included
+    if (moduleCodes.includes("DESIGN_TRACKING")) {
+      try {
+        const { data: existingAccess } = await supabaseAdmin
+          .from("design_user_access")
+          .select("id")
+          .eq("user_id", targetUserId)
+          .maybeSingle();
+
+        if (!existingAccess) {
+          await supabaseAdmin
+            .from("design_user_access")
+            .insert({
+              user_id: targetUserId,
+              design_role: "DESIGN_COORDINATOR",
+              project_access_type: "ALL",
+              assigned_project_ids: [],
+              can_matrix_edit: true,
+              can_drawings_upload: true,
+              can_drawings_approve_gfc: false,
+              can_transmittals_create: true,
+              can_rfis_manage: true,
+              can_masters_manage: false,
+              updated_at: new Date().toISOString(),
+              updated_by: "Module Assignment Sync"
+            });
+        }
+      } catch (accessErr) {
+        console.warn("[assignUserModules] design_user_access sync warning:", accessErr);
+      }
+    }
+
     return { success: true };
   } catch (error: any) {
     console.error("[assignUserModules] Error:", error);

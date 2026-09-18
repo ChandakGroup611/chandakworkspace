@@ -114,18 +114,19 @@ export interface MatrixAuditLog {
   mailSubject?: string;
 }
 
-// Role-Based Access Control (RBAC) Policy: Project-wise / Role-based / CRUD options selection
 export interface DesignRbacPolicy {
   id: string;
-  roleCode: string; // e.g. "SUPER_ADMIN", "DESIGN_DIRECTOR", "PROJECT_MANAGER", "SITE_ENGINEER", "CONSULTANT"
+  roleCode: string; // e.g. "SUPER_ADMIN", "DESIGN_ADMIN", "DESIGN_LEAD", "DESIGN_COORDINATOR", "SITE_ENGINEER", "CONSULTANT", "TPQA_AUDITOR", "VIEWER"
   roleName: string;
   projectId: string; // "ALL" or specific project id
   projectName: string;
-  module: "DESIGN_MATRIX" | "DRAWINGS" | "CONSULTANTS" | "LOOK_AHEAD" | "LIAISON" | "TRANSMITTALS" | "RFIS" | "ALL";
+  module: "DESIGN_MATRIX" | "DRAWINGS" | "CONSULTANTS" | "LOOK_AHEAD" | "LIAISON" | "TRANSMITTALS" | "RFIS" | "MASTERS" | "ALL";
   canCreate: boolean; // [C]
   canRead: boolean;   // [R]
   canUpdate: boolean; // [U]
   canDelete: boolean; // [D]
+  canApprove?: boolean; // [A]
+  canExport?: boolean; // [E]
   updatedAt: string;
 }
 

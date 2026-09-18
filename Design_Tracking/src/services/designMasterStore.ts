@@ -641,6 +641,18 @@ export class DesignMasterStore {
     this.notify();
   }
 
+  public static saveRbacPolicy(policy: DesignRbacPolicy): void {
+    const state = this.getState();
+    if (!state.rbacPolicies) state.rbacPolicies = this.buildDefaultRbacPolicies();
+    const idx = state.rbacPolicies.findIndex(p => p.id === policy.id);
+    if (idx >= 0) {
+      state.rbacPolicies[idx] = { ...policy, updatedAt: new Date().toISOString() };
+    } else {
+      state.rbacPolicies.push({ ...policy, updatedAt: new Date().toISOString() });
+    }
+    this.notify();
+  }
+
   public static hasPermission(
     roleCode: string,
     projectId: string,

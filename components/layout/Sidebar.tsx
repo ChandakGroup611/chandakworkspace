@@ -37,7 +37,8 @@ import {
   RotateCcw,
   Building2,
   Send,
-  HelpCircle
+  HelpCircle,
+  Key
 } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useTheme } from "@/components/theme/ThemeProvider";
@@ -114,6 +115,7 @@ const taskNavGroups: NavGroup[] = [
       { label: "SLA Monitoring", href: "/sla", icon: ShieldAlert, permission: "SLA_VIEW" },
       { label: "AMC & Subscriptions", href: "/amc", icon: ShieldCheck, permission: "AMC_VIEW" },
       { label: "User Master", href: "/users", icon: Users, permission: "USERS_VIEW" },
+      { label: "RBAC Access Policies", href: "/rbac", icon: Key, permission: "USERS_VIEW" },
       { label: "IAM Controls", href: "/iam", icon: UserCheck, permission: "IAM_VIEW" },
       { label: "Learning Hub", href: "/learning", icon: BookOpen, permission: "LEARNING_VIEW" },
     ]
@@ -203,9 +205,10 @@ const designNavGroups: NavGroup[] = [
     ]
   },
   {
-    label: "Directory & Analytics",
+    label: "Directory & Governance",
     items: [
       { label: "Consultant Directory", href: "/design/consultants", icon: Users },
+      { label: "RBAC Access Policies", href: "/design/rbac", icon: Key },
       { label: "Design Analytics", href: "/design/reports", icon: LineChart },
       { label: "Masters Setup", href: "/design/masters", icon: Settings2 },
     ]
