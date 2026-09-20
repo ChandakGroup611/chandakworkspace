@@ -53,7 +53,8 @@ import {
   ChevronDown,
   Key,
   AlertCircle,
-  EyeOff
+  EyeOff,
+  Compass
 } from "lucide-react";
 
 // Initial premium fallback/mock user datasets to guarantee absolute rich presentation
@@ -1351,6 +1352,180 @@ export default function UserMasterPage() {
               </>
             )}
 
+          </div>
+        </div>
+      )}
+
+      {/* ── Assign Workspace Modules Modal ── */}
+      {moduleModalOpen && moduleModalUser && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150"
+          onClick={() => { if (!moduleModalSaving) setModuleModalOpen(false); }}
+        >
+          <div 
+            className="relative w-full max-w-lg rounded-2xl border border-border bg-surface shadow-2xl p-6 space-y-5 text-foreground"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-500/20 shrink-0">
+                  <Layers className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">
+                    Assign Operational Modules
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Personnel: <strong>{moduleModalUser.full_name}</strong> ({moduleModalUser.email})
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModuleModalOpen(false)}
+                className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted transition-colors cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {moduleModalLoading ? (
+              <div className="flex flex-col items-center justify-center py-8 space-y-3">
+                <RefreshCw className="h-7 w-7 animate-spin text-indigo-500" />
+                <p className="text-xs text-muted-foreground">Loading assigned module entitlements...</p>
+              </div>
+            ) : (
+              <div className="space-y-4 text-xs">
+                <p className="text-xs text-muted-foreground">
+                  Select which workspace modules this user can access. Unauthorized modules will be completely hidden from their switcher and navigation.
+                </p>
+
+                {/* Module Cards */}
+                <div className="space-y-2.5">
+                  {[
+                    {
+                      code: "TASK_WORKFLOW",
+                      name: "Workspace Tasks & Governance",
+                      desc: "Executive tasks, sprints, tickets, requirements, SLA, and enterprise analytics.",
+                      icon: FolderKanban,
+                      color: "text-blue-500 border-blue-500/30 bg-blue-500/10"
+                    },
+                    {
+                      code: "DESIGN_TRACKING",
+                      name: "Design & Engineering Tracking",
+                      desc: "Architectural drawings, CAD revisions, stage-gate reviews, GFC site handover & consultant directory.",
+                      icon: Compass,
+                      color: "text-emerald-500 border-emerald-500/30 bg-emerald-500/10"
+                    },
+                    {
+                      code: "VEHICLE_DESK",
+                      name: "Fleet & Vehicle Desk",
+                      desc: "Vehicle allocations, driver roster, trip sheets, maintenance, parts inventory & logistics.",
+                      icon: Car,
+                      color: "text-amber-500 border-amber-500/30 bg-amber-500/10"
+                    }
+                  ].map(mod => {
+                    const isSelected = modalSelectedCodes.includes(mod.code);
+                    const isDefault = modalDefaultCode === mod.code;
+                    const IconComp = mod.icon;
+
+                    return (
+                      <div
+                        key={mod.code}
+                        onClick={() => {
+                          if (isSelected) {
+                            if (modalSelectedCodes.length === 1) {
+                              triggerToast("User must have at least one active module assigned.", true);
+                              return;
+                            }
+                            const updated = modalSelectedCodes.filter(c => c !== mod.code);
+                            setModalSelectedCodes(updated);
+                            if (isDefault) {
+                              setModalDefaultCode(updated[0] || "TASK_WORKFLOW");
+                            }
+                          } else {
+                            setModalSelectedCodes([...modalSelectedCodes, mod.code]);
+                          }
+                        }}
+                        className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-start justify-between gap-3 ${
+                          isSelected 
+                            ? "bg-surface border-indigo-500/50 shadow-xs ring-1 ring-indigo-500/20" 
+                            : "bg-muted/30 border-border opacity-60 hover:opacity-100"
+                        }`}
+                      >
+                        <div className="flex items-start gap-3 min-w-0">
+                          <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 border ${mod.color}`}>
+                            <IconComp className="h-4 w-4" />
+                          </div>
+                          <div className="space-y-0.5 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-foreground text-xs">{mod.name}</span>
+                              {isDefault && (
+                                <span className="text-[10px] px-1.5 py-0.2 rounded bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-500/30">
+                                  Default Landing
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-muted-foreground leading-relaxed">{mod.desc}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
+                          <div className={`h-5 w-5 rounded-md flex items-center justify-center border transition-all ${
+                            isSelected 
+                              ? "bg-indigo-600 border-indigo-600 text-white shadow-2xs" 
+                              : "border-border bg-surface"
+                          }`}>
+                            {isSelected && <Check className="h-3 w-3" />}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Default Landing Module Dropdown */}
+                <div className="pt-2 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <label className="text-xs font-bold text-foreground">Default Landing Module:</label>
+                  <select
+                    value={modalDefaultCode}
+                    onChange={e => setModalDefaultCode(e.target.value)}
+                    className="px-3 py-1.5 rounded-xl border border-border bg-background text-foreground font-semibold text-xs focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                  >
+                    {modalSelectedCodes.map(code => (
+                      <option key={code} value={code}>
+                        {code === "TASK_WORKFLOW" ? "Workspace Tasks" : code === "DESIGN_TRACKING" ? "Design Tracking" : "Vehicle Desk"}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
+              <AppButton
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setModuleModalOpen(false)}
+                disabled={moduleModalSaving}
+              >
+                Cancel
+              </AppButton>
+              <AppButton
+                type="button"
+                variant="primary"
+                size="sm"
+                onClick={handleSaveModules}
+                disabled={moduleModalSaving || moduleModalLoading}
+                leftIcon={moduleModalSaving ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold"
+              >
+                {moduleModalSaving ? "Saving Allocations..." : "Save Module Allocations"}
+              </AppButton>
+            </div>
           </div>
         </div>
       )}
