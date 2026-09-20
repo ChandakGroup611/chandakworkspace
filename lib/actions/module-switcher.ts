@@ -70,15 +70,20 @@ export async function getUserAllowedModules(targetUserId?: string): Promise<User
     const assignedModuleIds = new Set((userAssignments || []).map(a => a.module_id));
     const defaultAssignment = (userAssignments || []).find(a => a.is_default);
 
-    // All active modules (Workspace, Vehicle, Design Tracking) are available to users
-    let allowedModules: ModuleInfo[] = allActiveModules.map(m => ({
-      ...m,
-      is_default: defaultAssignment ? defaultAssignment.module_id === m.id : m.code === "TASK_WORKFLOW"
-    }));
+    // Filter modules based on user assignments (Super Admins see all active modules)
+    let allowedModules: ModuleInfo[] = allActiveModules
+      .filter(m => isAdmin || assignedModuleIds.has(m.id))
+      .map(m => ({
+        ...m,
+        is_default: defaultAssignment ? defaultAssignment.module_id === m.id : m.code === "TASK_WORKFLOW"
+      }));
 
-    // If user explicitly has a subset assigned in user_modules, ensure at least the 3 primary modules exist
+    // If non-admin user has no specific rows assigned in user_modules yet, fallback to default primary module (TASK_WORKFLOW)
     if (allowedModules.length === 0) {
-      allowedModules = allActiveModules;
+      const fallbackModule = allActiveModules.find(m => m.code === "TASK_WORKFLOW") || allActiveModules[0];
+      if (fallbackModule) {
+        allowedModules = [{ ...fallbackModule, is_default: true }];
+      }
     }
 
     // Determine default module

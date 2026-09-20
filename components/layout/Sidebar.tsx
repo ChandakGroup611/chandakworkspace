@@ -178,7 +178,7 @@ const vehicleNavGroups: NavGroup[] = [
       { label: "Fleet Reports", href: "/vehicle/reports", icon: LineChart },
       { label: "My Assigned Vehicles", href: "/vehicle/my-garage", icon: LifeBuoy },
       { label: "Fleet Guidelines / SOPs", href: "/vehicle/learning", icon: BookOpen },
-      { label: "Fleet Settings", href: "/vehicle/settings", icon: Settings },
+      { label: "Fleet Settings", href: "/vehicle/settings", icon: Settings, permission: "SETTINGS_MANAGE" },
     ]
   }
 ];
@@ -208,9 +208,9 @@ const designNavGroups: NavGroup[] = [
     label: "Directory & Governance",
     items: [
       { label: "Consultant Directory", href: "/design/consultants", icon: Users },
-      { label: "RBAC Access Policies", href: "/design/rbac", icon: Key },
+      { label: "RBAC Access Policies", href: "/design/rbac", icon: Key, permission: "USERS_VIEW" },
       { label: "Design Analytics", href: "/design/reports", icon: LineChart },
-      { label: "Masters Setup", href: "/design/masters", icon: Settings2 },
+      { label: "Masters Setup", href: "/design/masters", icon: Settings2, permission: "MASTERS_VIEW" },
     ]
   }
 ];

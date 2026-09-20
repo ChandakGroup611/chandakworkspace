@@ -1,6 +1,7 @@
 import React from "react";
 import { redirect } from "next/navigation";
 import { getCachedUser } from "@/lib/auth/cached-user";
+import { getUserAllowedModules } from "@/lib/actions/module-switcher";
 import { DesignRbacGovernance } from "@/Design_Tracking/src/components/DesignRbacGovernance";
 
 export const metadata = {
@@ -15,6 +16,14 @@ export default async function RbacPage() {
 
   if (!user) {
     redirect("/login?next=/rbac");
+  }
+
+  // Verify that user is Admin or has access to DESIGN_TRACKING module
+  const allowed = await getUserAllowedModules(user.id);
+  const hasAccess = allowed.isAdmin || allowed.modules.some(m => m.code === "DESIGN_TRACKING");
+
+  if (!hasAccess) {
+    redirect("/select-module");
   }
 
   return (
