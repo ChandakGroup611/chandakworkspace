@@ -88,6 +88,7 @@ import {
   createServiceRecordAction,
   deleteServiceRecordAction,
   fetchVehiclePortalDetailsAction,
+  isElectricFuel,
   VehicleDashboardStats,
   VehicleRecord,
   DriverRecord,
@@ -638,7 +639,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         if (d.rto_rmn) setNewVehicleRtoRmn(d.rto_rmn);
         if (d.insurance_policy_number) setNewVehicleInsurancePolicy(d.insurance_policy_number);
         if (d.insurance_expiry_date) setNewVehicleInsuranceExpiry(normalizeDateToInputFormat(d.insurance_expiry_date));
-        if (d.puc_expiry_date) setNewVehiclePucExpiry(normalizeDateToInputFormat(d.puc_expiry_date));
+        if (isElectricFuel(d.fuel_type)) {
+          setNewVehiclePucExpiry("");
+        } else if (d.puc_expiry_date) {
+          setNewVehiclePucExpiry(normalizeDateToInputFormat(d.puc_expiry_date));
+        }
         if (d.fitness_expiry_date) setNewVehicleFitnessExpiry(normalizeDateToInputFormat(d.fitness_expiry_date));
         if (d.odometer_km && Number(newVehicleOdometer) === 0) setNewVehicleOdometer(d.odometer_km);
 
@@ -751,7 +756,9 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       let odo = Number(newVehicleOdometer) || 0;
       let nickname = (newVehicleNickname.trim() || `${make} ${model}`).trim();
 
-      // Mandatory validation for all 11 required input fields
+      const isElectric = isElectricFuel(fuel);
+
+      // Mandatory validation for required input fields
       if (!rawPlate) {
         triggerToast("Registration plate number (Regn. No.) is mandatory.", true);
         setModalSubmitting(false);
@@ -767,8 +774,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         setModalSubmitting(false);
         return;
       }
-      if (!pucExp) {
-        triggerToast("PUC End Date is mandatory.", true);
+      if (!isElectric && !pucExp) {
+        triggerToast("PUC End Date is mandatory for non-electric vehicles.", true);
         setModalSubmitting(false);
         return;
       }
@@ -818,7 +825,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         rto_rmn: rtoRmn,
         insurance_policy_number: insPolicy || undefined,
         insurance_expiry_date: insExp,
-        puc_expiry_date: pucExp,
+        puc_expiry_date: isElectric ? undefined : pucExp,
         fitness_expiry_date: fitExp || undefined,
         has_roadside_assistance: newVehicleRsa,
         has_hsrp_plate: newVehicleHsrp
@@ -860,8 +867,9 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     setEditVehicleOwner(veh.registered_owner || "");
     setEditVehicleRtoRmn(veh.rto_rmn || "");
     setEditVehicleInsurancePolicy(veh.insurance_policy_number || "");
+    const isEv = isElectricFuel(veh.fuel_type);
     setEditVehicleInsuranceExpiry(veh.insurance_expiry_date ? String(veh.insurance_expiry_date).split("T")[0] : "");
-    setEditVehiclePucExpiry(veh.puc_expiry_date ? String(veh.puc_expiry_date).split("T")[0] : "");
+    setEditVehiclePucExpiry(isEv ? "" : (veh.puc_expiry_date ? String(veh.puc_expiry_date).split("T")[0] : ""));
     setEditVehicleFitnessExpiry(veh.fitness_expiry_date ? String(veh.fitness_expiry_date).split("T")[0] : "");
     setEditVehicleHsrp(veh.has_hsrp_plate !== undefined ? veh.has_hsrp_plate : true);
     setEditVehicleRsa(veh.has_roadside_assistance !== undefined ? veh.has_roadside_assistance : true);
@@ -901,7 +909,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         if (d.rto_rmn) setEditVehicleRtoRmn(d.rto_rmn);
         if (d.insurance_policy_number) setEditVehicleInsurancePolicy(d.insurance_policy_number);
         if (d.insurance_expiry_date) setEditVehicleInsuranceExpiry(normalizeDateToInputFormat(d.insurance_expiry_date));
-        if (d.puc_expiry_date) setEditVehiclePucExpiry(normalizeDateToInputFormat(d.puc_expiry_date));
+        if (isElectricFuel(d.fuel_type)) {
+          setEditVehiclePucExpiry("");
+        } else if (d.puc_expiry_date) {
+          setEditVehiclePucExpiry(normalizeDateToInputFormat(d.puc_expiry_date));
+        }
         if (d.fitness_expiry_date) setEditVehicleFitnessExpiry(normalizeDateToInputFormat(d.fitness_expiry_date));
 
         const rtoLocation = d.rto_office || "RTO Registry Office";
@@ -1310,8 +1322,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         });
       };
 
+      const isEv = isElectricFuel(v.fuel_type);
       checkDoc("Insurance Policy", v.insurance_expiry_date);
-      checkDoc("Pollution (PUC)", v.puc_expiry_date);
+      if (!isEv) {
+        checkDoc("Pollution (PUC)", v.puc_expiry_date);
+      }
       checkDoc("Fitness Certificate", v.fitness_expiry_date);
     });
 
@@ -1812,17 +1827,19 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       { plate: "KA01MJ5555", label: "KA-01 Bangalore" },
                       { plate: "GJ01AB1122", label: "GJ-01 Ahmedabad" }
                     ].map((sample) => (
-                      <button
+                      <AppButton
                         key={sample.plate}
                         type="button"
+                        variant="outline"
+                        size="sm"
                         onClick={() => {
                           setNewVehiclePlate(sample.plate);
                           if (portalLookupMsg) setPortalLookupMsg(null);
                         }}
-                        className="px-2 py-0.5 rounded text-[10px] font-mono font-medium border border-border/80 bg-surface hover:border-theme-btn-primary hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground transition-all cursor-pointer"
+                        className="h-6 px-2 text-[10px] font-mono font-medium border-border/80 bg-surface text-foreground shadow-2xs hover:border-theme-btn-primary"
                       >
-                        {sample.label}
-                      </button>
+                        <span>{sample.label}</span>
+                      </AppButton>
                     ))}
                   </div>
                 </div>
@@ -2016,9 +2033,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     {TOP_BRAND_NAMES.map((brand) => {
                       const isSelected = newVehicleMake.trim().toLowerCase() === brand.toLowerCase();
                       return (
-                        <button
+                        <AppButton
                           key={brand}
                           type="button"
+                          variant={isSelected ? "primary" : "outline"}
+                          size="sm"
                           onClick={() => {
                             setNewVehicleMake(brand);
                             const cfg = POPULAR_BRANDS[brand];
@@ -2032,14 +2051,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                               }
                             }
                           }}
-                          className={`px-2 py-0.5 rounded text-xs font-medium border transition-all cursor-pointer ${
+                          className={`h-6 px-2 text-xs font-medium ${
                             isSelected
-                              ? "bg-theme-btn-primary text-white border-theme-btn-primary shadow-xs font-semibold"
-                              : "bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 border-border text-foreground hover:border-theme-btn-primary/40"
+                              ? "bg-theme-btn-primary text-white border-theme-btn-primary font-semibold shadow-xs"
+                              : "border-border text-foreground hover:border-theme-btn-primary/40 bg-surface"
                           }`}
                         >
-                          {brand}
-                        </button>
+                          <span>{brand}</span>
+                        </AppButton>
                       );
                     })}
                   </div>
@@ -2053,7 +2072,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <AppInput 
                     placeholder="e.g. Innova Hycross, Fortuner, Swift" 
                     value={newVehicleModel} 
-                    onChange={(e) => setNewVehicleModel(e.target.value)} 
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setNewVehicleModel(val);
+                      if (/\b(ev|electric)\b/i.test(val) || /ioniq|recharge/i.test(val)) {
+                        setNewVehicleFuel("Electric");
+                        setNewVehiclePucExpiry("");
+                      }
+                    }} 
                     list="fleet-popular-models-form"
                     required
                   />
@@ -2069,25 +2095,31 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       {POPULAR_BRANDS[newVehicleMake].models.slice(0, 6).map((m) => {
                         const isSelected = newVehicleModel.trim().toLowerCase() === m.toLowerCase();
                         return (
-                          <button
+                          <AppButton
                             key={m}
                             type="button"
+                            variant={isSelected ? "primary" : "outline"}
+                            size="sm"
                             onClick={() => {
                               setNewVehicleModel(m);
                               const cfg = POPULAR_BRANDS[newVehicleMake];
                               if (cfg?.category) setNewVehicleCategory(cfg.category);
+                              if (/\b(ev|electric)\b/i.test(m) || /ioniq|recharge/i.test(m)) {
+                                setNewVehicleFuel("Electric");
+                                setNewVehiclePucExpiry("");
+                              }
                               if (newPlateInfo.districtCode) {
                                 setNewVehicleNickname(`${newPlateInfo.stateCode} ${m}`.trim());
                               }
                             }}
-                            className={`px-2 py-0.5 rounded text-xs font-medium border transition-all cursor-pointer ${
+                            className={`h-6 px-2 text-xs font-medium ${
                               isSelected
-                                ? "bg-theme-btn-primary text-white border-theme-btn-primary shadow-xs font-semibold"
-                                : "bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 border-border text-foreground hover:border-theme-btn-primary/40"
+                                ? "bg-theme-btn-primary text-white border-theme-btn-primary font-semibold shadow-xs"
+                                : "border-border text-foreground hover:border-theme-btn-primary/40 bg-surface"
                             }`}
                           >
-                            {m}
-                          </button>
+                            <span>{m}</span>
+                          </AppButton>
                         );
                       })}
                     </div>
@@ -2116,7 +2148,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   </label>
                   <select 
                     value={newVehicleFuel}
-                    onChange={(e) => setNewVehicleFuel(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setNewVehicleFuel(val);
+                      if (isElectricFuel(val)) setNewVehiclePucExpiry("");
+                    }}
                     className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs text-foreground font-medium focus:outline-none focus:border-theme-btn-primary shadow-2xs"
                   >
                     <option value="Petrol">Petrol</option>
@@ -2193,11 +2229,13 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           ];
 
                       return swatches.map((s) => (
-                        <button
+                        <AppButton
                           key={s.name}
                           type="button"
+                          variant="outline"
+                          size="sm"
                           onClick={() => setNewVehicleColor(s.name)}
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border transition-all cursor-pointer ${
+                          className={`h-6 px-2 rounded-full text-[10px] font-medium gap-1 ${
                             newVehicleColor === s.name || newVehicleColor === s.hex
                               ? "border-theme-btn-primary bg-theme-btn-primary/10 text-theme-btn-primary font-bold shadow-2xs"
                               : "border-border/70 bg-surface/70 text-muted-foreground hover:bg-surface hover:text-foreground"
@@ -2208,7 +2246,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             style={{ backgroundColor: s.hex }}
                           />
                           <span>{s.name}</span>
-                        </button>
+                        </AppButton>
                       ));
                     })()}
                   </div>
@@ -2358,21 +2396,40 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
                 <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-semibold text-foreground flex items-center gap-1">
-                      <ShieldCheck className="h-3.5 w-3.5 text-amber-500" />
-                      <span>PUC End Date *</span>
-                    </label>
-                    {newVehiclePucExpiry && (
-                      <div>{renderExpiryBadge(calculateDaysRemaining(newVehiclePucExpiry))}</div>
-                    )}
-                  </div>
-                  <AppInput 
-                    type="date"
-                    value={newVehiclePucExpiry} 
-                    onChange={(e) => setNewVehiclePucExpiry(e.target.value)} 
-                    required
-                  />
+                  {isElectricFuel(newVehicleFuel) ? (
+                    <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 flex items-start gap-3 shadow-2xs">
+                      <div className="h-8 w-8 rounded-lg bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+                        <Zap className="h-4 w-4 text-emerald-500 fill-emerald-500" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                          <span>PUC Not Required (Zero Emission)</span>
+                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 font-mono font-bold">CMVR Exempt</span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                          Electric Vehicles (EVs) produce zero tailpipe emissions and are legally exempt from PUC certificate requirements under Parivahan CMVR rules.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-semibold text-foreground flex items-center gap-1">
+                          <ShieldCheck className="h-3.5 w-3.5 text-amber-500" />
+                          <span>PUC End Date *</span>
+                        </label>
+                        {newVehiclePucExpiry && (
+                          <div>{renderExpiryBadge(calculateDaysRemaining(newVehiclePucExpiry))}</div>
+                        )}
+                      </div>
+                      <AppInput 
+                        type="date"
+                        value={newVehiclePucExpiry} 
+                        onChange={(e) => setNewVehiclePucExpiry(e.target.value)} 
+                        required
+                      />
+                    </>
+                  )}
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-foreground block mb-1.5">Fitness Certificate Expiry Date</label>
@@ -2548,9 +2605,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 {trips.length === 0 ? (
                   <div className="p-8 text-center text-xs text-muted-foreground">
                     No trip movements logged yet. Click{" "}
-                    <button onClick={() => setIsDispatchTripOpen(true)} className="text-theme-btn-primary font-bold hover:underline">
+                    <AppButton
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsDispatchTripOpen(true)}
+                      className="p-0 h-auto text-xs font-bold text-theme-btn-primary hover:underline inline"
+                    >
                       Dispatch Trip
-                    </button>{" "}
+                    </AppButton>{" "}
                     to schedule a movement.
                   </div>
                 ) : (
@@ -2633,9 +2695,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 {vehicles.length === 0 ? (
                   <div className="p-8 text-center text-xs text-muted-foreground">
                     No vehicles enrolled in fleet master. Click{" "}
-                    <button onClick={() => router.push("/vehicle/register")} className="text-theme-btn-primary font-bold hover:underline">
+                    <AppButton
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => router.push("/vehicle/register")}
+                      className="p-0 h-auto text-xs font-bold text-theme-btn-primary hover:underline inline"
+                    >
                       Add Vehicle
-                    </button>{" "}
+                    </AppButton>{" "}
                     to register a vehicle.
                   </div>
                 ) : (
@@ -2664,15 +2731,30 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           }`}>
                             {veh.status === "IN_STOCK" ? "Available" : veh.status === "IN_SERVICE" ? "On Route" : veh.status}
                           </span>
-                          <AppButton
-                            variant="ghost"
-                            size="icon-sm"
-                            title="Edit Vehicle"
-                            onClick={() => openEditVehicleModal(veh)}
-                            className="h-7 w-7"
-                          >
-                            <Edit2 className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
-                          </AppButton>
+                          <div className="flex items-center gap-1.5">
+                            <AppButton
+                              variant="outline"
+                              size="icon-sm"
+                              title="Edit Vehicle"
+                              onClick={() => openEditVehicleModal(veh)}
+                              className="h-7 w-7 hover:border-theme-btn-primary hover:text-theme-btn-primary"
+                            >
+                              <Edit2 className="h-3.5 w-3.5 text-muted-foreground" />
+                            </AppButton>
+                            <AppButton
+                              variant="outline"
+                              size="icon-sm"
+                              title="Delete Vehicle"
+                              onClick={() => setDeleteTarget({
+                                type: "vehicle",
+                                id: veh.id,
+                                label: `Vehicle ${veh.registration_number} (${veh.make} ${veh.model})`
+                              })}
+                              className="h-7 w-7 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </AppButton>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -2755,9 +2837,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <AppTableRow>
                       <AppTableCell colSpan={9} className="text-center py-12 text-muted-foreground">
                         No vehicles found matching criteria. Click{" "}
-                        <button onClick={() => router.push("/vehicle/register")} className="text-theme-btn-primary font-bold hover:underline">
+                        <AppButton
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => router.push("/vehicle/register")}
+                          className="p-0 h-auto text-xs font-bold text-theme-btn-primary hover:underline inline"
+                        >
                           Add Vehicle
-                        </button>{" "}
+                        </AppButton>{" "}
                         to enroll a new vehicle.
                       </AppTableCell>
                     </AppTableRow>
@@ -2815,12 +2902,21 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
                         {/* 5. PUC End Date & PUC Expire in Days */}
                         <AppTableCell className="p-3.5">
-                          <div className="font-mono text-[11px] font-semibold text-foreground">
-                            {veh.puc_expiry_date ? String(veh.puc_expiry_date).split("T")[0] : "—"}
-                          </div>
-                          <div className="mt-1">
-                            {renderExpiryBadge(veh.puc_expire_days ?? calculateDaysRemaining(veh.puc_expiry_date))}
-                          </div>
+                          {isElectricFuel(veh.fuel_type) ? (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 inline-flex items-center gap-1 shadow-2xs">
+                              <Zap className="h-3 w-3 text-emerald-500 fill-emerald-500" />
+                              <span>EV Exempt (N/A)</span>
+                            </span>
+                          ) : (
+                            <>
+                              <div className="font-mono text-[11px] font-semibold text-foreground">
+                                {veh.puc_expiry_date ? String(veh.puc_expiry_date).split("T")[0] : "—"}
+                              </div>
+                              <div className="mt-1">
+                                {renderExpiryBadge(veh.puc_expire_days ?? calculateDaysRemaining(veh.puc_expiry_date))}
+                              </div>
+                            </>
+                          )}
                         </AppTableCell>
 
                         {/* 6. Insurance End Date & Insurance Expire in Days */}
@@ -2879,25 +2975,27 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           <div className="flex items-center justify-end gap-1.5">
                             <AppButton
                               variant="outline"
-                              size="icon-sm"
+                              size="sm"
                               title="Edit Vehicle"
                               onClick={() => openEditVehicleModal(veh)}
-                              className="h-7 w-7"
+                              className="h-7 px-2.5 text-xs gap-1 font-semibold hover:border-theme-btn-primary hover:text-theme-btn-primary shadow-2xs"
                             >
-                              <Edit2 className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                              <Edit2 className="h-3 w-3 text-muted-foreground" />
+                              <span>Edit</span>
                             </AppButton>
                             <AppButton
                               variant="outline"
-                              size="icon-sm"
+                              size="sm"
                               title="Delete Vehicle"
                               onClick={() => setDeleteTarget({
                                 type: "vehicle",
                                 id: veh.id,
-                                label: `Vehicle ${veh.registration_number}`
+                                label: `Vehicle ${veh.registration_number} (${veh.make} ${veh.model})`
                               })}
-                              className="h-7 w-7 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900"
+                              className="h-7 px-2.5 text-xs gap-1 font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900 shadow-2xs"
                             >
-                              <Trash2 className="h-3.5 w-3.5" />
+                              <Trash2 className="h-3 w-3" />
+                              <span>Delete</span>
                             </AppButton>
                           </div>
                         </AppTableCell>
@@ -3887,6 +3985,30 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         <span className="font-mono text-foreground font-semibold">{veh.odometer_km.toLocaleString()} km</span>
                       </div>
                     </div>
+                    <div className="pt-2 border-t border-border/40 flex items-center justify-end gap-1.5">
+                      <AppButton
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openEditVehicleModal(veh)}
+                        className="h-6 px-2 text-[11px] gap-1 hover:border-theme-btn-primary hover:text-theme-btn-primary"
+                      >
+                        <Edit2 className="h-3 w-3" />
+                        <span>Edit</span>
+                      </AppButton>
+                      <AppButton
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setDeleteTarget({
+                          type: "vehicle",
+                          id: veh.id,
+                          label: `Vehicle ${veh.registration_number} (${veh.make} ${veh.model})`
+                        })}
+                        className="h-6 px-2 text-[11px] gap-1 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        <span>Delete</span>
+                      </AppButton>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -4158,27 +4280,29 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       {TOP_BRAND_NAMES.map((brand) => {
                         const isSelected = editVehicleMake.trim().toLowerCase() === brand.toLowerCase();
                         return (
-                          <button
+                          <AppButton
                             key={brand}
                             type="button"
+                            variant={isSelected ? "primary" : "outline"}
+                            size="sm"
                             onClick={() => {
                               setEditVehicleMake(brand);
                               const cfg = POPULAR_BRANDS[brand];
                               if (cfg) {
-                                setEditVehicleCategory(cfg.category);
+                                setNewVehicleCategory(cfg.category);
                                 if (cfg.models.length > 0 && (!editVehicleModel || !cfg.models.includes(editVehicleModel))) {
                                   setEditVehicleModel(cfg.models[0]);
                                 }
                               }
                             }}
-                            className={`px-1.5 py-0.5 rounded text-[10px] font-medium border transition-all cursor-pointer ${
+                            className={`h-6 px-1.5 text-[10px] font-medium ${
                               isSelected
                                 ? "bg-theme-btn-primary text-white border-theme-btn-primary shadow-xs font-semibold"
-                                : "bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 border-border text-foreground hover:border-theme-btn-primary/40"
+                                : "border-border text-foreground hover:border-theme-btn-primary/40 bg-surface"
                             }`}
                           >
-                            {brand}
-                          </button>
+                            <span>{brand}</span>
+                          </AppButton>
                         );
                       })}
                     </div>
@@ -4191,7 +4315,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     </div>
                     <AppInput 
                       value={editVehicleModel} 
-                      onChange={(e) => setEditVehicleModel(e.target.value)} 
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setEditVehicleModel(val);
+                        if (/\b(ev|electric)\b/i.test(val) || /ioniq|recharge/i.test(val)) {
+                          setEditVehicleFuel("Electric");
+                          setEditVehiclePucExpiry("");
+                        }
+                      }} 
                       list="fleet-popular-models-edit"
                     />
                     <datalist id="fleet-popular-models-edit">
@@ -4206,22 +4337,28 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         {POPULAR_BRANDS[editVehicleMake].models.slice(0, 6).map((m) => {
                           const isSelected = editVehicleModel.trim().toLowerCase() === m.toLowerCase();
                           return (
-                            <button
+                            <AppButton
                               key={m}
                               type="button"
+                              variant={isSelected ? "primary" : "outline"}
+                              size="sm"
                               onClick={() => {
                                 setEditVehicleModel(m);
                                 const cfg = POPULAR_BRANDS[editVehicleMake];
                                 if (cfg?.category) setEditVehicleCategory(cfg.category);
+                                if (/\b(ev|electric)\b/i.test(m) || /ioniq|recharge/i.test(m)) {
+                                  setEditVehicleFuel("Electric");
+                                  setEditVehiclePucExpiry("");
+                                }
                               }}
-                              className={`px-1.5 py-0.5 rounded text-[10px] font-medium border transition-all cursor-pointer ${
+                              className={`h-6 px-1.5 text-[10px] font-medium ${
                                 isSelected
                                   ? "bg-theme-btn-primary text-white border-theme-btn-primary shadow-xs font-semibold"
-                                  : "bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 border-border text-foreground hover:border-theme-btn-primary/40"
+                                  : "border-border text-foreground hover:border-theme-btn-primary/40 bg-surface"
                               }`}
                             >
-                              {m}
-                            </button>
+                              <span>{m}</span>
+                            </AppButton>
                           );
                         })}
                       </div>
@@ -4244,7 +4381,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     </label>
                     <select 
                       value={editVehicleFuel}
-                      onChange={(e) => setEditVehicleFuel(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setEditVehicleFuel(val);
+                        if (isElectricFuel(val)) setEditVehiclePucExpiry("");
+                      }}
                       className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs"
                     >
                       <option value="Petrol">Petrol</option>
@@ -4321,11 +4462,13 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             ];
 
                         return swatches.map((s) => (
-                          <button
+                          <AppButton
                             key={s.name}
                             type="button"
+                            variant="outline"
+                            size="sm"
                             onClick={() => setEditVehicleColor(s.name)}
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border transition-all cursor-pointer ${
+                            className={`h-6 px-2 rounded-full text-[10px] font-medium gap-1 ${
                               editVehicleColor === s.name || editVehicleColor === s.hex
                                 ? "border-theme-btn-primary bg-theme-btn-primary/10 text-theme-btn-primary font-bold shadow-2xs"
                                 : "border-border/70 bg-surface/70 text-muted-foreground hover:bg-surface hover:text-foreground"
@@ -4336,7 +4479,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                               style={{ backgroundColor: s.hex }}
                             />
                             <span>{s.name}</span>
-                          </button>
+                          </AppButton>
                         ));
                       })()}
                     </div>
@@ -4471,18 +4614,35 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="font-semibold">PUC (Pollution) Expiry Date *</label>
-                      {editVehiclePucExpiry && (
-                        <div>{renderExpiryBadge(calculateDaysRemaining(editVehiclePucExpiry))}</div>
-                      )}
-                    </div>
-                    <AppInput 
-                      type="date"
-                      value={editVehiclePucExpiry} 
-                      onChange={(e) => setEditVehiclePucExpiry(e.target.value)} 
-                      required
-                    />
+                    {isElectricFuel(editVehicleFuel) ? (
+                      <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 flex items-start gap-2.5">
+                        <Zap className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                        <div>
+                          <div className="text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1">
+                            <span>PUC Not Required</span>
+                            <span className="text-[9px] px-1 py-0.2 rounded bg-emerald-500/20 font-mono">CMVR Exempt</span>
+                          </div>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                            Zero-emission electric vehicle — legally exempt from PUC under CMVR.
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="font-semibold">PUC (Pollution) Expiry Date *</label>
+                          {editVehiclePucExpiry && (
+                            <div>{renderExpiryBadge(calculateDaysRemaining(editVehiclePucExpiry))}</div>
+                          )}
+                        </div>
+                        <AppInput 
+                          type="date"
+                          value={editVehiclePucExpiry} 
+                          onChange={(e) => setEditVehiclePucExpiry(e.target.value)} 
+                          required
+                        />
+                      </>
+                    )}
                   </div>
                   <div>
                     <label className="font-semibold block mb-1">Fitness Certificate Expiry Date</label>
@@ -4581,18 +4741,40 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-border flex items-center justify-end gap-2">
-                <AppButton type="button" variant="ghost" onClick={() => setIsEditVehicleOpen(false)}>
-                  Cancel
-                </AppButton>
-                <AppButton 
-                  type="submit" 
-                  disabled={modalSubmitting}
-                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white font-semibold gap-1.5"
+              <div className="pt-4 border-t border-border flex items-center justify-between gap-2">
+                <AppButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const target = selectedVehicleForEdit;
+                    setIsEditVehicleOpen(false);
+                    if (target) {
+                      setDeleteTarget({
+                        type: "vehicle",
+                        id: target.id,
+                        label: `Vehicle ${target.registration_number} (${target.make} ${target.model})`
+                      });
+                    }
+                  }}
+                  className="text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900 gap-1.5"
                 >
-                  {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                  <span>Update Vehicle</span>
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>Delete Vehicle</span>
                 </AppButton>
+                <div className="flex items-center gap-2">
+                  <AppButton type="button" variant="ghost" onClick={() => setIsEditVehicleOpen(false)}>
+                    Cancel
+                  </AppButton>
+                  <AppButton 
+                    type="submit" 
+                    disabled={modalSubmitting}
+                    className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white font-semibold gap-1.5"
+                  >
+                    {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                    <span>Update Vehicle</span>
+                  </AppButton>
+                </div>
               </div>
             </form>
           </div>
@@ -5011,53 +5193,45 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
             {/* Navigation Tabs Header */}
             <div className="px-5 py-2.5 bg-surface/80 border-b border-border flex items-center gap-2 overflow-x-auto text-xs font-semibold">
-              <button
+              <AppButton
                 type="button"
+                variant={newMaintActiveSection === "SCOPE" ? "primary" : "ghost"}
+                size="sm"
                 onClick={() => setNewMaintActiveSection("SCOPE")}
-                className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shrink-0 ${
-                  newMaintActiveSection === "SCOPE"
-                    ? "bg-theme-btn-primary text-white shadow-xs font-bold"
-                    : "bg-surface text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-                }`}
+                className={`h-8 text-xs shrink-0 ${newMaintActiveSection === "SCOPE" ? "bg-theme-btn-primary text-white font-bold" : "text-muted-foreground"}`}
               >
                 <span>1. Service Scope & Vehicle</span>
-              </button>
-              <button
+              </AppButton>
+              <AppButton
                 type="button"
+                variant={newMaintActiveSection === "PARTS" ? "primary" : "ghost"}
+                size="sm"
                 onClick={() => setNewMaintActiveSection("PARTS")}
-                className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shrink-0 ${
-                  newMaintActiveSection === "PARTS"
-                    ? "bg-theme-btn-primary text-white shadow-xs font-bold"
-                    : "bg-surface text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-                }`}
+                className={`h-8 text-xs shrink-0 gap-1.5 ${newMaintActiveSection === "PARTS" ? "bg-theme-btn-primary text-white font-bold" : "text-muted-foreground"}`}
               >
                 <ClipboardCheck className="h-3.5 w-3.5" />
                 <span>2. Inspection & Parts ({newMaintPartsItems.length})</span>
-              </button>
-              <button
+              </AppButton>
+              <AppButton
                 type="button"
+                variant={newMaintActiveSection === "BILLING" ? "primary" : "ghost"}
+                size="sm"
                 onClick={() => setNewMaintActiveSection("BILLING")}
-                className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shrink-0 ${
-                  newMaintActiveSection === "BILLING"
-                    ? "bg-theme-btn-primary text-white shadow-xs font-bold"
-                    : "bg-surface text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-                }`}
+                className={`h-8 text-xs shrink-0 gap-1.5 ${newMaintActiveSection === "BILLING" ? "bg-theme-btn-primary text-white font-bold" : "text-muted-foreground"}`}
               >
                 <Receipt className="h-3.5 w-3.5" />
                 <span>3. Workshop & Billing</span>
-              </button>
-              <button
+              </AppButton>
+              <AppButton
                 type="button"
+                variant={newMaintActiveSection === "FORECAST" ? "primary" : "ghost"}
+                size="sm"
                 onClick={() => setNewMaintActiveSection("FORECAST")}
-                className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shrink-0 ${
-                  newMaintActiveSection === "FORECAST"
-                    ? "bg-theme-btn-primary text-white shadow-xs font-bold"
-                    : "bg-surface text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-                }`}
+                className={`h-8 text-xs shrink-0 gap-1.5 ${newMaintActiveSection === "FORECAST" ? "bg-theme-btn-primary text-white font-bold" : "text-muted-foreground"}`}
               >
                 <Calendar className="h-3.5 w-3.5" />
                 <span>4. Forecast & Handover</span>
-              </button>
+              </AppButton>
             </div>
 
             <form onSubmit={handleLogMaintenance} className="flex-1 overflow-y-auto flex flex-col">
@@ -5129,21 +5303,23 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         {MAINTENANCE_CATEGORIES.map((cat) => {
                           const isSelected = newMaintCategory === cat.id;
                           return (
-                            <button
+                            <AppButton
                               key={cat.id}
                               type="button"
+                              variant={isSelected ? "primary" : "outline"}
+                              size="sm"
                               onClick={() => setNewMaintCategory(cat.id)}
-                              className={`p-2.5 rounded-xl border text-left flex items-center gap-2.5 transition-all text-xs ${
+                              className={`p-2.5 h-auto rounded-xl text-left flex items-center justify-start gap-2.5 text-xs ${
                                 isSelected
                                   ? "border-theme-btn-primary bg-theme-btn-primary/5 text-foreground ring-1 ring-theme-btn-primary"
-                                  : "border-border bg-surface hover:bg-slate-50 dark:hover:bg-slate-800 text-muted-foreground"
+                                  : "border-border bg-surface text-muted-foreground"
                               }`}
                             >
                               <span className="text-base">{cat.icon}</span>
                               <span className={`font-semibold leading-tight text-[11px] ${isSelected ? "text-foreground" : ""}`}>
                                 {cat.label}
                               </span>
-                            </button>
+                            </AppButton>
                           );
                         })}
                       </div>
@@ -5169,14 +5345,16 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       <div className="mt-2.5 flex flex-wrap gap-1.5 items-center">
                         <span className="text-[10px] uppercase font-bold text-muted-foreground mr-1">Quick Presets:</span>
                         {SERVICE_PRESETS.map((preset) => (
-                          <button
+                          <AppButton
                             key={preset}
                             type="button"
+                            variant="outline"
+                            size="sm"
                             onClick={() => setNewMaintServiceType(preset)}
-                            className="px-2 py-1 rounded-md text-[11px] bg-slate-100 dark:bg-slate-800/80 hover:bg-theme-btn-primary/10 hover:text-theme-btn-primary border border-border transition-colors text-muted-foreground"
+                            className="h-6 px-2 text-[11px] bg-slate-100 dark:bg-slate-800/80 border-border text-muted-foreground hover:text-theme-btn-primary"
                           >
-                            + {preset}
-                          </button>
+                            <span>+ {preset}</span>
+                          </AppButton>
                         ))}
                       </div>
                     </div>
@@ -5202,19 +5380,21 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         {CHECKLIST_ITEMS.map((item) => {
                           const isDone = !!newMaintChecklist[item.key];
                           return (
-                            <button
+                            <AppButton
                               key={item.key}
                               type="button"
+                              variant="outline"
+                              size="sm"
                               onClick={() => {
                                 setNewMaintChecklist((prev) => ({
                                   ...prev,
                                   [item.key]: !prev[item.key]
                                 }));
                               }}
-                              className={`p-2.5 rounded-lg border text-left flex items-center justify-between gap-2 transition-all text-xs ${
+                              className={`p-2.5 h-auto rounded-lg text-left flex items-center justify-between gap-2 text-xs ${
                                 isDone
                                   ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-800 dark:text-emerald-300 font-semibold"
-                                  : "bg-surface border-border text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                                  : "bg-surface border-border text-muted-foreground"
                               }`}
                             >
                               <div className="flex items-center gap-2">
@@ -5226,7 +5406,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                               }`}>
                                 ✓
                               </span>
-                            </button>
+                            </AppButton>
                           );
                         })}
                       </div>
@@ -5295,14 +5475,16 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                   />
                                 </div>
                                 <div className="col-span-1 text-center">
-                                  <button
+                                  <AppButton
                                     type="button"
+                                    variant="ghost"
+                                    size="icon-sm"
                                     onClick={() => handleRemovePartItem(idx)}
-                                    className="h-7 w-7 inline-flex items-center justify-center text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors"
+                                    className="h-7 w-7 text-rose-500 hover:bg-rose-500/10"
                                     title="Remove Item"
                                   >
                                     <Trash2 className="h-3.5 w-3.5" />
-                                  </button>
+                                  </AppButton>
                                 </div>
                               </div>
                             ))
@@ -5370,18 +5552,20 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           <Receipt className="h-4 w-4 text-amber-500" />
                           <h4 className="font-bold text-xs text-foreground">Invoicing & Financial Cost Breakdown</h4>
                         </div>
-                        <button
+                        <AppButton
                           type="button"
+                          variant="ghost"
+                          size="sm"
                           onClick={() => {
                             const sub = (Number(newMaintPartsCost) || 0) + (Number(newMaintLabourCost) || 0);
                             const gst = Math.round(sub * 0.18);
                             setNewMaintTaxCost(gst);
                             setNewMaintCost(sub + gst);
                           }}
-                          className="text-[11px] font-semibold text-primary hover:underline"
+                          className="text-[11px] font-semibold text-primary hover:underline p-0 h-auto"
                         >
                           Auto-Calculate 18% GST
-                        </button>
+                        </AppButton>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -5544,17 +5728,21 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         ].map((st) => {
                           const isSel = newMaintPostStatus === st.id;
                           return (
-                            <button
+                            <AppButton
                               key={st.id}
                               type="button"
+                              variant="outline"
+                              size="sm"
                               onClick={() => setNewMaintPostStatus(st.id)}
-                              className={`p-2.5 rounded-xl border text-left transition-all ${
-                                isSel ? `${st.color} ring-1 ring-primary font-semibold` : "border-border bg-surface text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                              className={`p-2.5 h-auto rounded-xl text-left transition-all ${
+                                isSel ? `${st.color} ring-1 ring-primary font-semibold` : "border-border bg-surface text-muted-foreground"
                               }`}
                             >
-                              <div className="font-bold text-xs">{st.label}</div>
-                              <div className="text-[10px] opacity-80 mt-0.5">{st.desc}</div>
-                            </button>
+                              <div>
+                                <div className="font-bold text-xs">{st.label}</div>
+                                <div className="text-[10px] opacity-80 mt-0.5">{st.desc}</div>
+                              </div>
+                            </AppButton>
                           );
                         })}
                       </div>

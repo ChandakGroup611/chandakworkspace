@@ -41,6 +41,11 @@ function calculateDaysRemaining(dateStr?: string | null): number | null {
   return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 }
 
+export function isElectricFuel(fuel?: string | null): boolean {
+  if (!fuel) return false;
+  return /electric|ev\b/i.test(fuel.trim());
+}
+
 export interface VehicleDashboardStats {
   totalVehicles: number;
   availableVehicles: number;
@@ -309,12 +314,16 @@ export async function fetchVehiclesList(params?: {
     });
 
     // Merge driver assignments and compute live expiration countdowns
-    const enrichedVehicles = vehiclesList.map((v) => ({
-      ...v,
-      puc_expire_days: calculateDaysRemaining(v.puc_expiry_date),
-      insurance_expire_days: calculateDaysRemaining(v.insurance_expiry_date),
-      assignedDriver: driverMap.get(v.id) || null
-    }));
+    const enrichedVehicles = vehiclesList.map((v) => {
+      const isEv = isElectricFuel(v.fuel_type);
+      return {
+        ...v,
+        puc_expiry_date: isEv ? null : v.puc_expiry_date,
+        puc_expire_days: isEv ? null : calculateDaysRemaining(v.puc_expiry_date),
+        insurance_expire_days: calculateDaysRemaining(v.insurance_expiry_date),
+        assignedDriver: driverMap.get(v.id) || null
+      };
+    });
 
     return {
       success: true,
@@ -350,9 +359,9 @@ export interface VehiclePortalLookupResult {
   rto_rmn?: string;
   insurance_policy_number?: string;
   insurance_expiry_date?: string;
-  insurance_expire_days?: number;
-  puc_expiry_date?: string;
-  puc_expire_days?: number;
+  insurance_expire_days?: number | null;
+  puc_expiry_date?: string | null;
+  puc_expire_days?: number | null;
   fitness_expiry_date?: string;
   has_hsrp_plate?: boolean;
   has_roadside_assistance?: boolean;
@@ -737,7 +746,7 @@ const RTO_PORTAL_REGISTRY: Record<string, Partial<VehiclePortalLookupResult>> = 
     registration_date: "2023-09-10",
     insurance_policy_number: "TATA-AIG-5566778 (Tata AIG)",
     insurance_expiry_date: "2026-09-09",
-    puc_expiry_date: "2026-12-31",
+    puc_expiry_date: null,
     fitness_expiry_date: "2028-09-09",
     has_hsrp_plate: true,
     has_roadside_assistance: true
@@ -855,7 +864,7 @@ function normalizeDateString(val?: string | Date | null): string {
   return "";
 }
 
-function generateDeterministicCompliance(plateNumber: string, series?: string) {
+function generateDeterministicCompliance(plateNumber: string, series?: string, isElectric: boolean = false) {
   const clean = plateNumber.replace(/[^A-Z0-9]/g, "").toUpperCase();
   let hash = 0;
   for (let i = 0; i < clean.length; i++) {
@@ -876,10 +885,10 @@ function generateDeterministicCompliance(plateNumber: string, series?: string) {
   const insDateObj = new Date(now.getFullYear(), now.getMonth() + insMonthsAhead, 1 + (hash % 28));
   const insDateStr = insDateObj.toISOString().split("T")[0];
 
-  // PUC Expiry Date: 3 to 6 months forward (YYYY-MM-DD)
+  // PUC Expiry Date: 3 to 6 months forward (YYYY-MM-DD) - Null for Electric Vehicles
   const pucMonthsAhead = 3 + (hash % 4);
   const pucDateObj = new Date(now.getFullYear(), now.getMonth() + pucMonthsAhead, 1 + (hash % 28));
-  const pucDateStr = pucDateObj.toISOString().split("T")[0];
+  const pucDateStr = isElectric ? null : pucDateObj.toISOString().split("T")[0];
 
   // Fitness Expiry Date: 1 to 3 years forward (YYYY-MM-DD)
   const fitYearsAhead = 1 + (hash % 3);
@@ -1654,7 +1663,12 @@ export async function createVehicleAction(formData: {
     let nickname = formData.nickname?.trim();
     let odo = formData.odometer_km ?? 0;
 
-    if (!make || !model || !reg_owner || !puc_exp || !ins_exp || !vin_chassis || !engine_num || !rto_rmn) {
+    const isElectric = isElectricFuel(fuel_type);
+    if (isElectric) {
+      puc_exp = undefined;
+    }
+
+    if (!make || !model || !reg_owner || (!isElectric && !puc_exp) || !ins_exp || !vin_chassis || !engine_num || !rto_rmn) {
       const autoRes = await fetchVehiclePortalDetailsAction(regNum);
       if (autoRes.success && autoRes.data) {
         if (autoRes.data.make) make = make || autoRes.data.make;
@@ -1670,13 +1684,15 @@ export async function createVehicleAction(formData: {
         if (autoRes.data.registration_date) reg_date = reg_date || autoRes.data.registration_date;
         if (autoRes.data.insurance_policy_number) ins_policy = ins_policy || autoRes.data.insurance_policy_number;
         if (autoRes.data.insurance_expiry_date) ins_exp = ins_exp || autoRes.data.insurance_expiry_date;
-        if (autoRes.data.puc_expiry_date) puc_exp = puc_exp || autoRes.data.puc_expiry_date;
+        if (!isElectricFuel(fuel_type) && autoRes.data.puc_expiry_date) puc_exp = puc_exp || autoRes.data.puc_expiry_date;
         if (autoRes.data.fitness_expiry_date) fit_exp = fit_exp || autoRes.data.fitness_expiry_date;
         if (autoRes.data.paint_color) paint_color = paint_color || autoRes.data.paint_color;
         if (autoRes.data.nickname) nickname = nickname || autoRes.data.nickname;
         if (odo === 0 && autoRes.data.odometer_km) odo = autoRes.data.odometer_km;
       }
     }
+
+    const finalIsElectric = isElectricFuel(fuel_type);
 
     // Mandatory Field Validations
     const vehicleName = (nickname || `${make} ${model}`).trim();
@@ -1689,8 +1705,8 @@ export async function createVehicleAction(formData: {
     if (!reg_owner) {
       return { success: false, error: "Owner Name (Registered Corporate Entity / Owner) is mandatory." };
     }
-    if (!puc_exp) {
-      return { success: false, error: "PUC End Date is mandatory." };
+    if (!finalIsElectric && !puc_exp) {
+      return { success: false, error: "PUC End Date is mandatory for non-electric vehicles." };
     }
     if (!ins_exp) {
       return { success: false, error: "Insurance End Date is mandatory." };
@@ -1736,7 +1752,7 @@ export async function createVehicleAction(formData: {
       rto_rmn: rto_rmn || null,
       insurance_policy_number: ins_policy || null,
       insurance_expiry_date: ins_exp || null,
-      puc_expiry_date: puc_exp || null,
+      puc_expiry_date: finalIsElectric ? null : (puc_exp || null),
       fitness_expiry_date: fit_exp || null,
       status: formData.status || "IN_STOCK",
       odometer_km: Number(odo) || 0,
@@ -1821,13 +1837,28 @@ export async function updateVehicleAction(
     if (formData.vin_chassis_number !== undefined) updates.vin_chassis_number = formData.vin_chassis_number.trim();
     if (formData.engine_number !== undefined) updates.engine_number = formData.engine_number.trim();
     if (formData.fuel_type !== undefined) updates.fuel_type = formData.fuel_type.trim();
+    let isUpdateElectric = formData.fuel_type ? isElectricFuel(formData.fuel_type) : false;
+    if (!formData.fuel_type) {
+      const { data: currVeh } = await supabaseAdmin
+        .from("vehicles")
+        .select("fuel_type")
+        .eq("id", id)
+        .maybeSingle();
+      if (currVeh && isElectricFuel(currVeh.fuel_type)) {
+        isUpdateElectric = true;
+      }
+    }
+    if (isUpdateElectric) {
+      updates.puc_expiry_date = null;
+    } else if (formData.puc_expiry_date !== undefined) {
+      updates.puc_expiry_date = formData.puc_expiry_date || null;
+    }
     if (formData.registration_date !== undefined) updates.registration_date = formData.registration_date || null;
     if (formData.rto_office !== undefined) updates.rto_office = formData.rto_office.trim();
     if (formData.registered_owner !== undefined) updates.registered_owner = formData.registered_owner.trim();
     if (formData.rto_rmn !== undefined) updates.rto_rmn = formData.rto_rmn ? formData.rto_rmn.trim() : null;
     if (formData.insurance_policy_number !== undefined) updates.insurance_policy_number = formData.insurance_policy_number.trim();
     if (formData.insurance_expiry_date !== undefined) updates.insurance_expiry_date = formData.insurance_expiry_date || null;
-    if (formData.puc_expiry_date !== undefined) updates.puc_expiry_date = formData.puc_expiry_date || null;
     if (formData.fitness_expiry_date !== undefined) updates.fitness_expiry_date = formData.fitness_expiry_date || null;
     if (formData.has_roadside_assistance !== undefined) updates.has_roadside_assistance = formData.has_roadside_assistance;
     if (formData.has_hsrp_plate !== undefined) updates.has_hsrp_plate = formData.has_hsrp_plate;
