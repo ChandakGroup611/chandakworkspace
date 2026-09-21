@@ -178,6 +178,7 @@ const vehicleNavGroups: NavGroup[] = [
       { label: "Fleet Reports", href: "/vehicle/reports", icon: LineChart },
       { label: "My Assigned Vehicles", href: "/vehicle/my-garage", icon: LifeBuoy },
       { label: "Fleet Guidelines / SOPs", href: "/vehicle/learning", icon: BookOpen },
+      { label: "RBAC Access Policies", href: "/vehicle/rbac", icon: Key, permission: "USERS_VIEW" },
       { label: "Fleet Settings", href: "/vehicle/settings", icon: Settings, permission: "SETTINGS_MANAGE" },
     ]
   }

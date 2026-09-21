@@ -2,7 +2,7 @@ import React from "react";
 import { redirect } from "next/navigation";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { getUserAllowedModules } from "@/lib/actions/module-switcher";
-import { DesignRbacGovernance } from "@/Design_Tracking/src/components/DesignRbacGovernance";
+import MultiModuleRbacHost from "@/components/rbac/MultiModuleRbacHost";
 
 export const metadata = {
   title: "RBAC Access Policies | Chandak Workspace",
@@ -18,17 +18,21 @@ export default async function RbacPage() {
     redirect("/login?next=/rbac");
   }
 
-  // Verify that user is Admin or has access to DESIGN_TRACKING module
+  // Fetch user allowed modules and active module state
   const allowed = await getUserAllowedModules(user.id);
-  const hasAccess = allowed.isAdmin || allowed.modules.some(m => m.code === "DESIGN_TRACKING");
 
-  if (!hasAccess) {
+  if (!allowed.isAdmin && allowed.modules.length === 0) {
     redirect("/select-module");
   }
 
+  const initialActiveModule = allowed.activeModuleCode || allowed.defaultModule?.code || "TASK_WORKFLOW";
+
   return (
     <div className="w-full flex-1 flex flex-col min-w-0">
-      <DesignRbacGovernance />
+      <MultiModuleRbacHost 
+        initialActiveModule={initialActiveModule}
+        userModulesData={allowed}
+      />
     </div>
   );
 }

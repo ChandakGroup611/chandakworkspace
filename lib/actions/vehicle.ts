@@ -15,6 +15,7 @@
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { NATIONAL_RTO_MAP, STATE_MAP, analyzeIndianPlate } from "@/components/vehicle/vehicleQuickPicks";
+import { hasPermission } from "@/lib/permissions";
 import crypto from "crypto";
 
 async function getAuthenticatedUser() {
@@ -75,6 +76,8 @@ export interface VehicleRecord {
   registered_owner?: string | null;
   insurance_policy_number?: string | null;
   insurance_expiry_date?: string | null;
+  insurance_vendor_id?: string | null;
+  insurance_vendor?: string | null;
   puc_expiry_date?: string | null;
   fitness_expiry_date?: string | null;
   has_roadside_assistance?: boolean;
@@ -92,6 +95,29 @@ export interface VehicleRecord {
     pucExpiry?: string | null;
     insuranceExpiry?: string | null;
   };
+}
+
+export interface InsuranceVendorRecord {
+  id: string;
+  name: string;
+  code?: string | null;
+  contact_person?: string | null;
+  contact_email?: string | null;
+  email?: string | null;
+  contact_phone?: string | null;
+  contact_number?: string | null;
+  toll_free_number?: string | null;
+  support_toll_free?: string | null;
+  claim_portal_url?: string | null;
+  website?: string | null;
+  address?: string | null;
+  description?: string | null;
+  gst_number?: string | null;
+  policy_types_offered?: string[] | null;
+  is_active: boolean;
+  display_order: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface DriverRecord {
@@ -262,6 +288,8 @@ export async function fetchVehiclesList(params?: {
         registered_owner,
         insurance_policy_number,
         insurance_expiry_date,
+        insurance_vendor_id,
+        insurance_vendor,
         puc_expiry_date,
         fitness_expiry_date,
         rto_rmn,
@@ -1623,6 +1651,8 @@ export async function createVehicleAction(formData: {
   rto_rmn?: string;
   insurance_policy_number?: string;
   insurance_expiry_date?: string;
+  insurance_vendor_id?: string;
+  insurance_vendor?: string;
   puc_expiry_date?: string;
   fitness_expiry_date?: string;
   has_roadside_assistance?: boolean;
@@ -1636,6 +1666,11 @@ export async function createVehicleAction(formData: {
     const user = await getAuthenticatedUser();
     if (!user) {
       return { success: false, error: "Unauthorized request" };
+    }
+
+    const canCreate = (await hasPermission(user.id, "VEHICLES_CREATE")) || (await hasPermission(user.id, "VEHICLES_MANAGE"));
+    if (!canCreate) {
+      return { success: false, error: "Access Denied: You lack permission to register new vehicles." };
     }
 
     const regNum = formData.registration_number?.trim().toUpperCase();
@@ -1752,6 +1787,8 @@ export async function createVehicleAction(formData: {
       rto_rmn: rto_rmn || null,
       insurance_policy_number: ins_policy || null,
       insurance_expiry_date: ins_exp || null,
+      insurance_vendor_id: formData.insurance_vendor_id || null,
+      insurance_vendor: formData.insurance_vendor?.trim() || null,
       puc_expiry_date: finalIsElectric ? null : (puc_exp || null),
       fitness_expiry_date: fit_exp || null,
       status: formData.status || "IN_STOCK",
@@ -1811,6 +1848,8 @@ export async function updateVehicleAction(
     rto_rmn?: string;
     insurance_policy_number?: string;
     insurance_expiry_date?: string;
+    insurance_vendor_id?: string | null;
+    insurance_vendor?: string | null;
     puc_expiry_date?: string;
     fitness_expiry_date?: string;
     has_roadside_assistance?: boolean;
@@ -1823,6 +1862,11 @@ export async function updateVehicleAction(
   try {
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
+
+    const canUpdate = (await hasPermission(user.id, "VEHICLES_UPDATE")) || (await hasPermission(user.id, "VEHICLES_MANAGE")) || (await hasPermission(user.id, "VEHICLES_EDIT"));
+    if (!canUpdate) {
+      return { success: false, error: "Access Denied: You lack permission to edit vehicle specifications." };
+    }
 
     const updates: Record<string, any> = { updated_at: new Date().toISOString() };
     if (formData.registration_number) updates.registration_number = formData.registration_number.trim().toUpperCase();
@@ -1859,6 +1903,8 @@ export async function updateVehicleAction(
     if (formData.rto_rmn !== undefined) updates.rto_rmn = formData.rto_rmn ? formData.rto_rmn.trim() : null;
     if (formData.insurance_policy_number !== undefined) updates.insurance_policy_number = formData.insurance_policy_number.trim();
     if (formData.insurance_expiry_date !== undefined) updates.insurance_expiry_date = formData.insurance_expiry_date || null;
+    if (formData.insurance_vendor_id !== undefined) updates.insurance_vendor_id = formData.insurance_vendor_id || null;
+    if (formData.insurance_vendor !== undefined) updates.insurance_vendor = formData.insurance_vendor ? formData.insurance_vendor.trim() : null;
     if (formData.fitness_expiry_date !== undefined) updates.fitness_expiry_date = formData.fitness_expiry_date || null;
     if (formData.has_roadside_assistance !== undefined) updates.has_roadside_assistance = formData.has_roadside_assistance;
     if (formData.has_hsrp_plate !== undefined) updates.has_hsrp_plate = formData.has_hsrp_plate;
@@ -1900,6 +1946,11 @@ export async function deleteVehicleAction(id: string): Promise<{
   try {
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
+
+    const canDelete = (await hasPermission(user.id, "VEHICLES_DELETE")) || (await hasPermission(user.id, "VEHICLES_MANAGE"));
+    if (!canDelete) {
+      return { success: false, error: "Access Denied: You lack permission to delete fleet vehicles." };
+    }
 
     // Unassign any driver
     await supabaseAdmin
@@ -2036,6 +2087,11 @@ export async function createTripPlanAction(formData: {
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
+    const canDispatch = (await hasPermission(user.id, "TRIPS_CREATE")) || (await hasPermission(user.id, "TRIPS_DISPATCH")) || (await hasPermission(user.id, "TRIPS_MANAGE"));
+    if (!canDispatch) {
+      return { success: false, error: "Access Denied: You lack permission to book or dispatch trip movements." };
+    }
+
     if (!formData.vehicle_id || !formData.driver_id || !formData.traveler_name || !formData.purpose) {
       return { success: false, error: "Vehicle, driver, traveler name, and purpose are required" };
     }
@@ -2152,6 +2208,11 @@ export async function createServiceRecordAction(formData: {
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
+    const canManageMaint = await hasPermission(user.id, "FLEET_MAINTENANCE_MANAGE");
+    if (!canManageMaint) {
+      return { success: false, error: "Access Denied: You lack permission to log maintenance records." };
+    }
+
     if (!formData.vehicle_id || !formData.service_type || !formData.service_center) {
       return { success: false, error: "Vehicle, service description, and authorized service center are required" };
     }
@@ -2224,6 +2285,11 @@ export async function createDriverAction(formData: {
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
+    const canManageDrivers = await hasPermission(user.id, "DRIVERS_MANAGE");
+    if (!canManageDrivers) {
+      return { success: false, error: "Access Denied: You lack permission to onboard chauffeurs and drivers." };
+    }
+
     if (!formData.full_name?.trim() || !formData.phone?.trim() || !formData.license_number?.trim()) {
       return { success: false, error: "Driver name, phone, and license number are required" };
     }
@@ -2274,6 +2340,11 @@ export async function updateDriverAction(
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
+    const canManageDrivers = await hasPermission(user.id, "DRIVERS_MANAGE");
+    if (!canManageDrivers) {
+      return { success: false, error: "Access Denied: You lack permission to update chauffeur profiles." };
+    }
+
     const updates: Record<string, any> = { updated_at: new Date().toISOString() };
     if (formData.full_name) updates.full_name = formData.full_name.trim();
     if (formData.phone) updates.phone = formData.phone.trim();
@@ -2304,6 +2375,11 @@ export async function deleteDriverAction(id: string): Promise<{
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
+    const canManageDrivers = await hasPermission(user.id, "DRIVERS_MANAGE");
+    if (!canManageDrivers) {
+      return { success: false, error: "Access Denied: You lack permission to delete chauffeur profiles." };
+    }
+
     // Unlink any trip plans
     await supabaseAdmin
       .from("trip_plans")
@@ -2332,6 +2408,11 @@ export async function updateTripStatusAction(
   try {
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
+
+    const canManageTrips = (await hasPermission(user.id, "TRIPS_MANAGE")) || (await hasPermission(user.id, "TRIPS_DISPATCH"));
+    if (!canManageTrips) {
+      return { success: false, error: "Access Denied: You lack permission to update trip status." };
+    }
 
     const { data: trip } = await supabaseAdmin
       .from("trip_plans")
@@ -2369,6 +2450,11 @@ export async function deleteTripAction(id: string): Promise<{
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
+    const canManageTrips = (await hasPermission(user.id, "TRIPS_MANAGE")) || (await hasPermission(user.id, "TRIPS_DISPATCH"));
+    if (!canManageTrips) {
+      return { success: false, error: "Access Denied: You lack permission to cancel or delete trips." };
+    }
+
     const { data: trip } = await supabaseAdmin
       .from("trip_plans")
       .select("vehicle_id, status")
@@ -2404,6 +2490,11 @@ export async function deleteServiceRecordAction(id: string): Promise<{
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
+    const canManageMaint = await hasPermission(user.id, "FLEET_MAINTENANCE_MANAGE");
+    if (!canManageMaint) {
+      return { success: false, error: "Access Denied: You lack permission to delete service records." };
+    }
+
     const { error } = await supabaseAdmin
       .from("service_records")
       .delete()
@@ -2415,5 +2506,205 @@ export async function deleteServiceRecordAction(id: string): Promise<{
     return { success: false, error: err.message };
   }
 }
+
+// ------------------------------------------------------------------------------
+// 8. Insurance Vendor Master Operations
+// ------------------------------------------------------------------------------
+
+export async function fetchInsuranceVendorsListAction(): Promise<{
+  success: boolean;
+  vendors: InsuranceVendorRecord[];
+  error?: string;
+}> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("fleet_insurance_vendors")
+      .select("*")
+      .eq("is_deleted", false)
+      .order("display_order", { ascending: true })
+      .order("name", { ascending: true });
+
+    if (error) {
+      console.error("[vehicle-actions] fetchInsuranceVendorsListAction error:", error);
+      return { success: false, vendors: [], error: error.message };
+    }
+
+    const normalized: InsuranceVendorRecord[] = (data || []).map((r: any) => ({
+      ...r,
+      contact_number: r.contact_number || r.contact_phone || null,
+      contact_phone: r.contact_phone || r.contact_number || null,
+      email: r.email || r.contact_email || null,
+      contact_email: r.contact_email || r.email || null,
+      support_toll_free: r.support_toll_free || r.toll_free_number || null,
+      toll_free_number: r.toll_free_number || r.support_toll_free || null,
+      description: r.description || r.address || null,
+      address: r.address || r.description || null
+    }));
+
+    return { success: true, vendors: normalized };
+  } catch (err: any) {
+    console.error("[vehicle-actions] fetchInsuranceVendorsListAction exception:", err);
+    return { success: false, vendors: [], error: err.message || "Failed to fetch insurance vendors" };
+  }
+}
+
+export async function createInsuranceVendorAction(formData: {
+  name: string;
+  code?: string;
+  toll_free_number?: string;
+  support_toll_free?: string;
+  website?: string;
+  claim_portal_url?: string;
+  contact_person?: string;
+  contact_phone?: string;
+  contact_number?: string;
+  contact_email?: string;
+  email?: string;
+  address?: string;
+  description?: string;
+  gst_number?: string;
+  is_active?: boolean;
+  display_order?: number;
+}): Promise<{
+  success: boolean;
+  vendor?: InsuranceVendorRecord;
+  error?: string;
+}> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    if (!formData.name || !formData.name.trim()) {
+      return { success: false, error: "Insurance Vendor Name is mandatory." };
+    }
+
+    const phone = formData.contact_phone || formData.contact_number;
+    const emailVal = formData.contact_email || formData.email;
+    const tollFree = formData.toll_free_number || formData.support_toll_free;
+    const desc = formData.description || formData.address;
+
+    const payload = {
+      name: formData.name.trim(),
+      code: formData.code?.trim() || formData.name.trim().toUpperCase().replace(/[^A-Z0-9]/g, "_").slice(0, 30),
+      toll_free_number: tollFree?.trim() || null,
+      website: formData.website?.trim() || null,
+      claim_portal_url: formData.claim_portal_url?.trim() || null,
+      contact_person: formData.contact_person?.trim() || null,
+      contact_phone: phone?.trim() || null,
+      contact_email: emailVal?.trim() || null,
+      address: desc?.trim() || null,
+      gst_number: formData.gst_number?.trim() || null,
+      is_active: formData.is_active !== undefined ? formData.is_active : true,
+      display_order: formData.display_order || 1,
+      is_deleted: false,
+      updated_at: new Date().toISOString()
+    };
+
+    const { data, error } = await supabaseAdmin
+      .from("fleet_insurance_vendors")
+      .insert(payload)
+      .select()
+      .single();
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    const savedVendor: InsuranceVendorRecord = {
+      ...data,
+      contact_number: data.contact_number || data.contact_phone || null,
+      contact_phone: data.contact_phone || data.contact_number || null,
+      email: data.email || data.contact_email || null,
+      contact_email: data.contact_email || data.email || null,
+      support_toll_free: data.support_toll_free || data.toll_free_number || null,
+      toll_free_number: data.toll_free_number || data.support_toll_free || null,
+      description: data.description || data.address || null,
+      address: data.address || data.description || null
+    };
+
+    return { success: true, vendor: savedVendor };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to create insurance vendor" };
+  }
+}
+
+export async function updateInsuranceVendorAction(
+  id: string,
+  formData: Partial<InsuranceVendorRecord>
+): Promise<{
+  success: boolean;
+  vendor?: InsuranceVendorRecord;
+  error?: string;
+}> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    const updates: Record<string, any> = { updated_at: new Date().toISOString() };
+    if (formData.name !== undefined) updates.name = formData.name.trim();
+    if (formData.code !== undefined) updates.code = formData.code ? formData.code.trim() : null;
+    const tollFree = formData.toll_free_number !== undefined ? formData.toll_free_number : formData.support_toll_free;
+    if (tollFree !== undefined) updates.toll_free_number = tollFree ? tollFree.trim() : null;
+    if (formData.website !== undefined) updates.website = formData.website ? formData.website.trim() : null;
+    if (formData.claim_portal_url !== undefined) updates.claim_portal_url = formData.claim_portal_url ? formData.claim_portal_url.trim() : null;
+    if (formData.contact_person !== undefined) updates.contact_person = formData.contact_person ? formData.contact_person.trim() : null;
+    const phone = formData.contact_phone !== undefined ? formData.contact_phone : formData.contact_number;
+    if (phone !== undefined) updates.contact_phone = phone ? phone.trim() : null;
+    const emailVal = formData.contact_email !== undefined ? formData.contact_email : formData.email;
+    if (emailVal !== undefined) updates.contact_email = emailVal ? emailVal.trim() : null;
+    const desc = formData.address !== undefined ? formData.address : formData.description;
+    if (desc !== undefined) updates.address = desc ? desc.trim() : null;
+    if (formData.gst_number !== undefined) updates.gst_number = formData.gst_number ? formData.gst_number.trim() : null;
+    if (formData.is_active !== undefined) updates.is_active = formData.is_active;
+    if (formData.display_order !== undefined) updates.display_order = Number(formData.display_order);
+
+    const { data, error } = await supabaseAdmin
+      .from("fleet_insurance_vendors")
+      .update(updates)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) return { success: false, error: error.message };
+
+    const updatedVendor: InsuranceVendorRecord = data ? {
+      ...data,
+      contact_number: data.contact_number || data.contact_phone || null,
+      contact_phone: data.contact_phone || data.contact_number || null,
+      email: data.email || data.contact_email || null,
+      contact_email: data.contact_email || data.email || null,
+      support_toll_free: data.support_toll_free || data.toll_free_number || null,
+      toll_free_number: data.toll_free_number || data.support_toll_free || null,
+      description: data.description || data.address || null,
+      address: data.address || data.description || null
+    } : undefined;
+
+    return { success: true, vendor: updatedVendor };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
+export async function deleteInsuranceVendorAction(id: string): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    // Soft delete
+    const { error } = await supabaseAdmin
+      .from("fleet_insurance_vendors")
+      .update({ is_deleted: true, is_active: false, updated_at: new Date().toISOString() })
+      .eq("id", id);
+
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
 
 

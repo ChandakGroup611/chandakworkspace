@@ -69,6 +69,9 @@ const MASTER_TABLES = [
   { id: "erp_workflow_states", table: "status_master", scopeId: "e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2", label: "Status", category: "ERP", icon: Activity, desc: "Application stages for software tickets", parentTable: null, parentKey: null, parentRequired: false },
   { id: "erp_master_priorities", table: "priority_master", scopeId: "e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2", label: "Priority", category: "ERP", icon: Hash, desc: "Software priority levels and SLA resolution times", parentTable: null, parentKey: null, parentRequired: false },
 
+  // ── FLEET Category ──
+  { id: "fleet_insurance_vendors", table: "fleet_insurance_vendors", scopeId: null, label: "Insurance Vendors", category: "FLEET", icon: ShieldCheck, desc: "Motor insurance companies & underwriters for corporate vehicles", parentTable: null, parentKey: null, parentRequired: false },
+
   // ── USERS Category ──
   { id: "departments", table: "departments", scopeId: null, label: "Department", category: "USERS", icon: Layers, desc: "Company departments and business units", parentTable: null, parentKey: null, parentRequired: false },
   { id: "designations", table: "designations", scopeId: null, label: "Job Roles", category: "USERS", icon: UsersIcon, desc: "Employee job titles and designations", parentTable: "departments", parentKey: "department_id", parentRequired: true },
@@ -611,11 +614,12 @@ function MastersPageContent() {
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0 overflow-hidden">
         {/* Mobile Navigation Controller (<1024px) */}
         <div className="block lg:hidden space-y-3">
-          <div className="p-1 rounded-xl grid grid-cols-3 sm:grid-cols-5 gap-1 text-xs font-bold tracking-tight bg-elevated/80 text-muted">
+          <div className="p-1 rounded-xl grid grid-cols-3 sm:grid-cols-6 gap-1 text-xs font-bold tracking-tight bg-elevated/80 text-muted">
             {[
               { id: "ALL", label: "All" },
               { id: "IT INFRA", label: "IT Infra" },
               { id: "ERP", label: "Software" },
+              { id: "FLEET", label: "Fleet" },
               { id: "USERS", label: "Users" },
               { id: "OTHERS", label: "Other" }
             ].map(tier => {
@@ -666,13 +670,14 @@ function MastersPageContent() {
           <AppCard className="flex-1 p-4 space-y-4 flex flex-col min-h-0 overflow-hidden border-none shadow-none bg-surface/50">
             
             {/* Category Tier Selector Tabs */}
-            <div className={`p-1 rounded-xl grid grid-cols-2 gap-1 text-xs font-bold tracking-tight ${
+            <div className={`p-1 rounded-xl grid grid-cols-2 sm:grid-cols-3 gap-1 text-xs font-bold tracking-tight ${
               "bg-elevated/80 text-muted"
             }`}>
               {[
                 { id: "ALL", label: "All Configs" },
                 { id: "IT INFRA", label: "IT Infra" },
                 { id: "ERP", label: "Software" },
+                { id: "FLEET", label: "Fleet" },
                 { id: "USERS", label: "Users" },
                 { id: "OTHERS", label: "Other" }
               ].map(tier => {
@@ -689,7 +694,7 @@ function MastersPageContent() {
                         if (firstItem) setActiveTab(firstItem.id);
                       }
                     }}
-                    className={`py-1.5 px-2 rounded-lg text-center transition-all truncate ${tier.id === "ALL" ? "col-span-2" : ""} ${
+                    className={`py-1.5 px-2 rounded-lg text-center transition-all truncate ${
                       isSelected
                         ? ("bg-surface text-theme-icon shadow-sm ring-1 ring-border/50")
                         : ("hover:text-foreground hover:bg-surface/50")
@@ -702,7 +707,7 @@ function MastersPageContent() {
             </div>
 
             <div className="flex-1 overflow-y-auto pr-1 scrollbar-thin">
-              {(["IT INFRA", "ERP", "USERS", "OTHERS"] as const).map((groupCategory) => {
+              {(["IT INFRA", "ERP", "FLEET", "USERS", "OTHERS"] as const).map((groupCategory) => {
                 // If activeCategoryFilter is not "ALL", only show the requested tier
                 if (activeCategoryFilter !== "ALL" && groupCategory !== activeCategoryFilter) return null;
 

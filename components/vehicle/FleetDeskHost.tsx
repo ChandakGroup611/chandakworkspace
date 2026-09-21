@@ -60,6 +60,8 @@ import {
 import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
+import { usePermissions } from "@/hooks/usePermissions";
+import FleetRbacGovernance from "./FleetRbacGovernance";
 import { 
   AppTableContainer, 
   AppTable, 
@@ -76,6 +78,10 @@ import {
   fetchDriversList,
   fetchTripsList,
   fetchMaintenanceList,
+  fetchInsuranceVendorsListAction,
+  createInsuranceVendorAction,
+  updateInsuranceVendorAction,
+  deleteInsuranceVendorAction,
   createVehicleAction,
   updateVehicleAction,
   deleteVehicleAction,
@@ -93,7 +99,8 @@ import {
   VehicleRecord,
   DriverRecord,
   TripRecord,
-  MaintenanceRecord
+  MaintenanceRecord,
+  InsuranceVendorRecord
 } from "@/lib/actions/vehicle";
 
 export const MAINTENANCE_CATEGORIES = [
@@ -133,6 +140,19 @@ export const CHECKLIST_ITEMS = [
 export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] }) {
   const pathname = usePathname() || "/vehicle";
   const router = useRouter();
+  const { hasPermission, roleCode } = usePermissions();
+
+  const isSuperAdmin = useMemo(() => {
+    return roleCode === "SUPER_ADMIN" || roleCode === "ROLE_ADMIN" || hasPermission("SUPER_ADMIN");
+  }, [roleCode, hasPermission]);
+
+  const canCreateVehicle = isSuperAdmin || hasPermission("VEHICLES_CREATE") || hasPermission("VEHICLES_MANAGE");
+  const canEditVehicle = isSuperAdmin || hasPermission("VEHICLES_UPDATE") || hasPermission("VEHICLES_MANAGE") || hasPermission("VEHICLES_EDIT");
+  const canDeleteVehicle = isSuperAdmin || hasPermission("VEHICLES_DELETE") || hasPermission("VEHICLES_MANAGE");
+  const canManageDrivers = isSuperAdmin || hasPermission("DRIVERS_MANAGE");
+  const canDispatchTrips = isSuperAdmin || hasPermission("TRIPS_CREATE") || hasPermission("TRIPS_DISPATCH") || hasPermission("TRIPS_MANAGE");
+  const canManageMaintenance = isSuperAdmin || hasPermission("FLEET_MAINTENANCE_MANAGE");
+  const canViewReports = isSuperAdmin || hasPermission("FLEET_REPORTS_VIEW") || hasPermission("VEHICLES_MANAGE");
 
   // Active sub-navigation tab based on URL
   const activeTab = useMemo(() => {
@@ -148,6 +168,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     if (pathname.includes("/my-garage")) return "my-garage";
     if (pathname.includes("/learning")) return "learning";
     if (pathname.includes("/settings")) return "settings";
+    if (pathname.includes("/rbac")) return "rbac";
     return "dashboard";
   }, [pathname]);
 
@@ -170,6 +191,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   const [drivers, setDrivers] = useState<DriverRecord[]>([]);
   const [trips, setTrips] = useState<TripRecord[]>([]);
   const [maintenance, setMaintenance] = useState<MaintenanceRecord[]>([]);
+  const [insuranceVendors, setInsuranceVendors] = useState<InsuranceVendorRecord[]>([]);
 
   // Filtering and search
   const [searchQuery, setSearchQuery] = useState("");
@@ -186,9 +208,21 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   const [isDispatchTripOpen, setIsDispatchTripOpen] = useState(false);
   const [isAddMaintenanceOpen, setIsAddMaintenanceOpen] = useState(false);
 
+  // Insurance Vendor Master Modal State
+  const [isVendorModalOpen, setIsVendorModalOpen] = useState(false);
+  const [selectedVendorForEdit, setSelectedVendorForEdit] = useState<InsuranceVendorRecord | null>(null);
+  const [vendorFormCode, setVendorFormCode] = useState("");
+  const [vendorFormName, setVendorFormName] = useState("");
+  const [vendorFormContactPerson, setVendorFormContactPerson] = useState("");
+  const [vendorFormContactNumber, setVendorFormContactNumber] = useState("");
+  const [vendorFormEmail, setVendorFormEmail] = useState("");
+  const [vendorFormSupportTollFree, setVendorFormSupportTollFree] = useState("");
+  const [vendorFormWebsite, setVendorFormWebsite] = useState("");
+  const [vendorFormDesc, setVendorFormDesc] = useState("");
+
   // Generic Delete Confirmation Dialog State
   const [deleteTarget, setDeleteTarget] = useState<{
-    type: "vehicle" | "driver" | "trip" | "maintenance";
+    type: "vehicle" | "driver" | "trip" | "maintenance" | "vendor";
     id: string;
     label: string;
   } | null>(null);
@@ -217,6 +251,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   const [newVehicleRtoOffice, setNewVehicleRtoOffice] = useState("");
   const [newVehicleOwner, setNewVehicleOwner] = useState("");
   const [newVehicleRtoRmn, setNewVehicleRtoRmn] = useState("");
+  const [newVehicleInsuranceVendorId, setNewVehicleInsuranceVendorId] = useState("");
+  const [newVehicleInsuranceVendor, setNewVehicleInsuranceVendor] = useState("");
   const [newVehicleInsurancePolicy, setNewVehicleInsurancePolicy] = useState("");
   const [newVehicleInsuranceExpiry, setNewVehicleInsuranceExpiry] = useState("");
   const [newVehiclePucExpiry, setNewVehiclePucExpiry] = useState("");
@@ -253,6 +289,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   const [editVehicleRtoOffice, setEditVehicleRtoOffice] = useState("");
   const [editVehicleOwner, setEditVehicleOwner] = useState("");
   const [editVehicleRtoRmn, setEditVehicleRtoRmn] = useState("");
+  const [editVehicleInsuranceVendorId, setEditVehicleInsuranceVendorId] = useState("");
+  const [editVehicleInsuranceVendor, setEditVehicleInsuranceVendor] = useState("");
   const [editVehicleInsurancePolicy, setEditVehicleInsurancePolicy] = useState("");
   const [editVehicleInsuranceExpiry, setEditVehicleInsuranceExpiry] = useState("");
   const [editVehiclePucExpiry, setEditVehiclePucExpiry] = useState("");
@@ -499,12 +537,13 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       if (!isSilent) setLoading(true);
       else setRefreshing(true);
 
-      const [statsRes, vehiclesRes, driversRes, tripsRes, maintRes] = await Promise.all([
+      const [statsRes, vehiclesRes, driversRes, tripsRes, maintRes, vendorsRes] = await Promise.all([
         fetchVehicleDashboardStats(),
         fetchVehiclesList({ pageSize: 100 }),
         fetchDriversList(),
         fetchTripsList(),
-        fetchMaintenanceList()
+        fetchMaintenanceList(),
+        fetchInsuranceVendorsListAction()
       ]);
 
       if (statsRes.success) setStats(statsRes.stats);
@@ -512,6 +551,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       if (driversRes.success) setDrivers(driversRes.drivers);
       if (tripsRes.success) setTrips(tripsRes.trips);
       if (maintRes.success) setMaintenance(maintRes.records);
+      if (vendorsRes.success) setInsuranceVendors(vendorsRes.vendors);
 
       if (vehiclesRes.error && !isSilent) {
         setErrorBanner(vehiclesRes.error);
@@ -701,6 +741,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     setNewVehicleRtoOffice("");
     setNewVehicleOwner("");
     setNewVehicleRtoRmn("");
+    setNewVehicleInsuranceVendorId("");
+    setNewVehicleInsuranceVendor("");
     setNewVehicleInsurancePolicy("");
     setNewVehicleInsuranceExpiry("");
     setNewVehiclePucExpiry("");
@@ -749,6 +791,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       let owner = newVehicleOwner.trim();
       let rtoRmn = newVehicleRtoRmn.trim();
       let regDate = newVehicleRegDate;
+      let insVendorId = newVehicleInsuranceVendorId;
+      let insVendor = newVehicleInsuranceVendor.trim();
       let insPolicy = newVehicleInsurancePolicy.trim();
       let insExp = newVehicleInsuranceExpiry;
       let pucExp = newVehiclePucExpiry;
@@ -823,6 +867,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         rto_office: rto || undefined,
         registered_owner: owner,
         rto_rmn: rtoRmn,
+        insurance_vendor_id: insVendorId || undefined,
+        insurance_vendor: insVendor || undefined,
         insurance_policy_number: insPolicy || undefined,
         insurance_expiry_date: insExp,
         puc_expiry_date: isElectric ? undefined : pucExp,
@@ -866,6 +912,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     setEditVehicleRtoOffice(veh.rto_office || "");
     setEditVehicleOwner(veh.registered_owner || "");
     setEditVehicleRtoRmn(veh.rto_rmn || "");
+    setEditVehicleInsuranceVendorId(veh.insurance_vendor_id || "");
+    setEditVehicleInsuranceVendor(veh.insurance_vendor || "");
     setEditVehicleInsurancePolicy(veh.insurance_policy_number || "");
     const isEv = isElectricFuel(veh.fuel_type);
     setEditVehicleInsuranceExpiry(veh.insurance_expiry_date ? String(veh.insurance_expiry_date).split("T")[0] : "");
@@ -967,6 +1015,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         rto_office: editVehicleRtoOffice.trim() || undefined,
         registered_owner: editVehicleOwner.trim() || undefined,
         rto_rmn: editVehicleRtoRmn.trim() || undefined,
+        insurance_vendor_id: editVehicleInsuranceVendorId || null,
+        insurance_vendor: editVehicleInsuranceVendor || null,
         insurance_policy_number: editVehicleInsurancePolicy.trim() || undefined,
         insurance_expiry_date: editVehicleInsuranceExpiry || undefined,
         puc_expiry_date: editVehiclePucExpiry || undefined,
@@ -987,6 +1037,103 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       triggerToast(err.message || "Failed to update vehicle", true);
     } finally {
       setModalSubmitting(false);
+    }
+  };
+
+  // ----------------------------------------------------------------------------
+  // CRUD Handlers: INSURANCE VENDORS
+  // ----------------------------------------------------------------------------
+
+  const openCreateVendorModal = () => {
+    setSelectedVendorForEdit(null);
+    setVendorFormCode("");
+    setVendorFormName("");
+    setVendorFormContactPerson("");
+    setVendorFormContactNumber("");
+    setVendorFormEmail("");
+    setVendorFormSupportTollFree("");
+    setVendorFormWebsite("");
+    setVendorFormDesc("");
+    setIsVendorModalOpen(true);
+  };
+
+  const openEditVendorModal = (vendor: InsuranceVendorRecord) => {
+    setSelectedVendorForEdit(vendor);
+    setVendorFormCode(vendor.code || "");
+    setVendorFormName(vendor.name || "");
+    setVendorFormContactPerson(vendor.contact_person || "");
+    setVendorFormContactNumber(vendor.contact_number || "");
+    setVendorFormEmail(vendor.email || "");
+    setVendorFormSupportTollFree(vendor.support_toll_free || "");
+    setVendorFormWebsite(vendor.website || "");
+    setVendorFormDesc(vendor.description || "");
+    setIsVendorModalOpen(true);
+  };
+
+  const handleSaveVendor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!vendorFormName.trim()) {
+      triggerToast("Insurance vendor name is mandatory.", true);
+      return;
+    }
+
+    setModalSubmitting(true);
+    try {
+      const generatedCode = vendorFormCode.trim().toUpperCase() || vendorFormName.trim().slice(0, 8).toUpperCase().replace(/[^A-Z0-9]/g, "");
+      const payload = {
+        code: generatedCode,
+        name: vendorFormName.trim(),
+        contact_person: vendorFormContactPerson.trim() || undefined,
+        contact_number: vendorFormContactNumber.trim() || undefined,
+        email: vendorFormEmail.trim() || undefined,
+        support_toll_free: vendorFormSupportTollFree.trim() || undefined,
+        website: vendorFormWebsite.trim() || undefined,
+        description: vendorFormDesc.trim() || undefined,
+        is_active: true
+      };
+
+      let res;
+      if (selectedVendorForEdit) {
+        res = await updateInsuranceVendorAction(selectedVendorForEdit.id, payload);
+      } else {
+        res = await createInsuranceVendorAction(payload);
+      }
+
+      if (res.success) {
+        triggerToast(`Insurance vendor '${payload.name}' saved successfully!`);
+        setIsVendorModalOpen(false);
+        // Auto-select in form if adding from a vehicle creation or edit flow
+        if (!selectedVendorForEdit && res.vendor) {
+          if (activeTab === "register") {
+            setNewVehicleInsuranceVendorId(res.vendor.id);
+            setNewVehicleInsuranceVendor(res.vendor.name);
+          } else if (isEditVehicleOpen) {
+            setEditVehicleInsuranceVendorId(res.vendor.id);
+            setEditVehicleInsuranceVendor(res.vendor.name);
+          }
+        }
+        loadAllData(true);
+      } else {
+        triggerToast(res.error || "Failed to save insurance vendor.", true);
+      }
+    } catch (err: any) {
+      triggerToast(err.message || "Failed to save insurance vendor.", true);
+    } finally {
+      setModalSubmitting(false);
+    }
+  };
+
+  const handleDeleteVendor = async (id: string, name: string) => {
+    try {
+      const res = await deleteInsuranceVendorAction(id);
+      if (res.success) {
+        triggerToast(`Insurance vendor '${name}' deleted successfully.`);
+        loadAllData(true);
+      } else {
+        triggerToast(res.error || "Failed to delete insurance vendor.", true);
+      }
+    } catch (err: any) {
+      triggerToast(err.message || "Failed to delete insurance vendor.", true);
     }
   };
 
@@ -1211,6 +1358,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         res = await deleteDriverAction(deleteTarget.id);
       } else if (deleteTarget.type === "trip") {
         res = await deleteTripAction(deleteTarget.id);
+      } else if (deleteTarget.type === "vendor") {
+        res = await deleteInsuranceVendorAction(deleteTarget.id);
       } else {
         res = await deleteServiceRecordAction(deleteTarget.id);
       }
@@ -1420,8 +1569,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         </div>
       )}
 
-      {/* Top Header & KPI Bar — Shown when NOT on dedicated Register Form page */}
-      {activeTab !== "register" && (
+      {/* Top Header & KPI Bar — Shown when NOT on dedicated Register Form page or RBAC page */}
+      {activeTab !== "register" && activeTab !== "rbac" && (
         <>
           {/* Top Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/50 pb-6">
@@ -1552,22 +1701,24 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <span>Travelers</span>
               </AppButton>
 
-              <AppButton
-                variant={activeTab === "reports" ? "primary" : "secondary"}
-                size="sm"
-                onClick={() => router.push("/vehicle/reports")}
-                className={`text-xs h-9 font-semibold transition-all ${
-                  activeTab === "reports"
-                    ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
-                    : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
-                }`}
-              >
-                <LineChart className={`h-4 w-4 mr-1.5 ${activeTab === "reports" ? "text-white" : "text-emerald-500"}`} />
-                <span>Reports</span>
-              </AppButton>
+              {canViewReports && (
+                <AppButton
+                  variant={activeTab === "reports" ? "primary" : "secondary"}
+                  size="sm"
+                  onClick={() => router.push("/vehicle/reports")}
+                  className={`text-xs h-9 font-semibold transition-all ${
+                    activeTab === "reports"
+                      ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
+                      : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
+                  }`}
+                >
+                  <LineChart className={`h-4 w-4 mr-1.5 ${activeTab === "reports" ? "text-white" : "text-emerald-500"}`} />
+                  <span>Reports</span>
+                </AppButton>
+              )}
 
-              {/* Action trigger button tailored to active tab */}
-              {activeTab === "drivers" ? (
+              {/* Action trigger button tailored to active tab and RBAC capability */}
+              {activeTab === "drivers" && canManageDrivers ? (
                 <AppButton
                   variant="primary"
                   size="sm"
@@ -1577,7 +1728,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <Plus className="h-4 w-4" />
                   <span>Add Driver</span>
                 </AppButton>
-              ) : activeTab === "trips" || activeTab === "travelers" ? (
+              ) : (activeTab === "trips" || activeTab === "travelers") && canDispatchTrips ? (
                 <AppButton
                   variant="primary"
                   size="sm"
@@ -1587,7 +1738,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <Plus className="h-4 w-4" />
                   <span>Dispatch Trip</span>
                 </AppButton>
-              ) : activeTab === "maintenance" ? (
+              ) : activeTab === "maintenance" && canManageMaintenance ? (
                 <AppButton
                   variant="primary"
                   size="sm"
@@ -1597,7 +1748,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <Plus className="h-4 w-4" />
                   <span>Log Maintenance</span>
                 </AppButton>
-              ) : (
+              ) : canCreateVehicle ? (
                 <AppButton
                   variant="primary"
                   size="sm"
@@ -1607,7 +1758,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <Plus className="h-4 w-4" />
                   <span>Add Vehicle</span>
                 </AppButton>
-              )}
+              ) : null}
             </div>
           </div>
 
@@ -1669,9 +1820,33 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       )}
 
       {/* ---------------------------------------------------------------------- */}
+      {/* VEHICLE RBAC ACCESS POLICIES & GOVERNANCE VIEW */}
+      {/* ---------------------------------------------------------------------- */}
+      {activeTab === "rbac" && (
+        <FleetRbacGovernance />
+      )}
+
+      {/* ---------------------------------------------------------------------- */}
       {/* REGISTER VEHICLE FULL-PAGE FORM (DEDICATED FORM VIEW) */}
       {/* ---------------------------------------------------------------------- */}
-      {activeTab === "register" && (
+      {activeTab === "register" && !canCreateVehicle && (
+        <div className="w-full flex-1 flex flex-col items-center justify-center p-12 text-center space-y-4">
+          <div className="h-14 w-14 rounded-2xl bg-rose-500/10 text-rose-600 flex items-center justify-center border border-rose-500/20">
+            <ShieldAlert className="h-7 w-7" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-foreground">Access Restricted</h2>
+            <p className="text-xs text-muted-foreground mt-1 max-w-md">
+              You do not have permission (`VEHICLES_CREATE`) to register new fleet assets. Please contact your Fleet Administrator.
+            </p>
+          </div>
+          <AppButton variant="primary" size="sm" onClick={() => router.push("/vehicle/inventory")}>
+            Return to Fleet Inventory
+          </AppButton>
+        </div>
+      )}
+
+      {activeTab === "register" && canCreateVehicle && (
         <div className="w-full flex-1 flex flex-col space-y-8 animate-in fade-in duration-200">
           {/* Top Form Navigation Bar */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-6">
@@ -2363,14 +2538,49 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 pt-2">
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-semibold text-foreground flex items-center gap-1">
+                      <ShieldCheck className="h-3.5 w-3.5 text-blue-500" />
+                      <span>Insurance Vendor / Company</span>
+                    </label>
+                    <AppButton
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={openCreateVendorModal}
+                      className="p-0 h-auto text-[11px] font-semibold text-theme-btn-primary hover:underline flex items-center gap-1"
+                    >
+                      <Plus className="h-3 w-3" />
+                      <span>New Vendor</span>
+                    </AppButton>
+                  </div>
+                  <select
+                    value={newVehicleInsuranceVendorId}
+                    onChange={(e) => {
+                      const selId = e.target.value;
+                      setNewVehicleInsuranceVendorId(selId);
+                      const sel = insuranceVendors.find(v => v.id === selId);
+                      setNewVehicleInsuranceVendor(sel ? sel.name : "");
+                    }}
+                    className="w-full text-xs p-2.5 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none cursor-pointer"
+                  >
+                    <option value="">— Select Insurance Vendor —</option>
+                    {insuranceVendors.map((vendor) => (
+                      <option key={vendor.id} value={vendor.id}>
+                        {vendor.name} ({vendor.code})
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <div>
                   <label className="text-xs font-semibold text-foreground block mb-1.5 flex items-center gap-1">
                     <FileText className="h-3.5 w-3.5 text-muted-foreground" />
                     <span>Insurance Policy Number</span>
                   </label>
                   <AppInput 
-                    placeholder="e.g. 2311/61284792/00/000 (ICICI Lombard)" 
+                    placeholder="e.g. 2311/61284792/00/000" 
                     value={newVehicleInsurancePolicy} 
                     onChange={(e) => setNewVehicleInsurancePolicy(e.target.value)} 
                   />
@@ -2804,15 +3014,17 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <option value="RESERVED">Reserved</option>
               </select>
 
-              <AppButton
-                variant="primary"
-                size="sm"
-                onClick={() => router.push("/vehicle/register")}
-                className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-8 font-semibold gap-1.5 shadow-xs shrink-0"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                <span>Register Vehicle</span>
-              </AppButton>
+              {canCreateVehicle && (
+                <AppButton
+                  variant="primary"
+                  size="sm"
+                  onClick={() => router.push("/vehicle/register")}
+                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-8 font-semibold gap-1.5 shadow-xs shrink-0"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>Register Vehicle</span>
+                </AppButton>
+              )}
             </div>
           </AppCardHeader>
 
@@ -2919,12 +3131,17 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           )}
                         </AppTableCell>
 
-                        {/* 6. Insurance End Date & Insurance Expire in Days */}
+                        {/* 6. Insurance End Date, Vendor & Insurance Expire in Days */}
                         <AppTableCell className="p-3.5">
                           <div className="font-mono text-[11px] font-semibold text-foreground flex items-center gap-1">
                             <Shield className="h-3 w-3 text-emerald-500 shrink-0" />
                             <span>{veh.insurance_expiry_date ? String(veh.insurance_expiry_date).split("T")[0] : "—"}</span>
                           </div>
+                          {veh.insurance_vendor && (
+                            <div className="text-[10px] text-blue-600 dark:text-blue-400 font-medium truncate max-w-[150px] mt-0.5" title={`${veh.insurance_vendor}${veh.insurance_policy_number ? ` • ${veh.insurance_policy_number}` : ''}`}>
+                              {veh.insurance_vendor}
+                            </div>
+                          )}
                           <div className="mt-1">
                             {renderExpiryBadge(veh.insurance_expire_days ?? calculateDaysRemaining(veh.insurance_expiry_date))}
                           </div>
@@ -2973,30 +3190,37 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         {/* 9. Actions */}
                         <AppTableCell className="p-3.5 text-right">
                           <div className="flex items-center justify-end gap-1.5">
-                            <AppButton
-                              variant="outline"
-                              size="sm"
-                              title="Edit Vehicle"
-                              onClick={() => openEditVehicleModal(veh)}
-                              className="h-7 px-2.5 text-xs gap-1 font-semibold hover:border-theme-btn-primary hover:text-theme-btn-primary shadow-2xs"
-                            >
-                              <Edit2 className="h-3 w-3 text-muted-foreground" />
-                              <span>Edit</span>
-                            </AppButton>
-                            <AppButton
-                              variant="outline"
-                              size="sm"
-                              title="Delete Vehicle"
-                              onClick={() => setDeleteTarget({
-                                type: "vehicle",
-                                id: veh.id,
-                                label: `Vehicle ${veh.registration_number} (${veh.make} ${veh.model})`
-                              })}
-                              className="h-7 px-2.5 text-xs gap-1 font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900 shadow-2xs"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                              <span>Delete</span>
-                            </AppButton>
+                            {canEditVehicle && (
+                              <AppButton
+                                variant="outline"
+                                size="sm"
+                                title="Edit Vehicle"
+                                onClick={() => openEditVehicleModal(veh)}
+                                className="h-7 px-2.5 text-xs gap-1 font-semibold hover:border-theme-btn-primary hover:text-theme-btn-primary shadow-2xs"
+                              >
+                                <Edit2 className="h-3 w-3 text-muted-foreground" />
+                                <span>Edit</span>
+                              </AppButton>
+                            )}
+                            {canDeleteVehicle && (
+                              <AppButton
+                                variant="outline"
+                                size="sm"
+                                title="Delete Vehicle"
+                                onClick={() => setDeleteTarget({
+                                  type: "vehicle",
+                                  id: veh.id,
+                                  label: `Vehicle ${veh.registration_number} (${veh.make} ${veh.model})`
+                                })}
+                                className="h-7 px-2.5 text-xs gap-1 font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900 shadow-2xs"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                                <span>Delete</span>
+                              </AppButton>
+                            )}
+                            {!canEditVehicle && !canDeleteVehicle && (
+                              <span className="text-[11px] text-muted-foreground italic">Read-only</span>
+                            )}
                           </div>
                         </AppTableCell>
                       </AppTableRow>
@@ -3101,28 +3325,35 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           </AppTableCell>
                           <AppTableCell className="p-3.5 text-right">
                             <div className="flex items-center justify-end gap-1.5">
-                              <AppButton
-                                variant="outline"
-                                size="icon-sm"
-                                title="Edit Driver"
-                                onClick={() => openEditDriverModal(drv)}
-                                className="h-7 w-7"
-                              >
-                                <Edit2 className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
-                              </AppButton>
-                              <AppButton
-                                variant="outline"
-                                size="icon-sm"
-                                title="Delete Driver"
-                                onClick={() => setDeleteTarget({
-                                  type: "driver",
-                                  id: drv.id,
-                                  label: `Driver ${drv.full_name}`
-                                })}
-                                className="h-7 w-7 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </AppButton>
+                              {canManageDrivers && (
+                                <>
+                                  <AppButton
+                                    variant="outline"
+                                    size="icon-sm"
+                                    title="Edit Driver"
+                                    onClick={() => openEditDriverModal(drv)}
+                                    className="h-7 w-7"
+                                  >
+                                    <Edit2 className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                                  </AppButton>
+                                  <AppButton
+                                    variant="outline"
+                                    size="icon-sm"
+                                    title="Delete Driver"
+                                    onClick={() => setDeleteTarget({
+                                      type: "driver",
+                                      id: drv.id,
+                                      label: `Driver ${drv.full_name}`
+                                    })}
+                                    className="h-7 w-7 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </AppButton>
+                                </>
+                              )}
+                              {!canManageDrivers && (
+                                <span className="text-[11px] text-muted-foreground italic">Read-only</span>
+                              )}
                             </div>
                           </AppTableCell>
                         </AppTableRow>
@@ -3417,19 +3648,21 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                 <Eye className="h-3.5 w-3.5" />
                                 <span className="hidden sm:inline">Job Card</span>
                               </AppButton>
-                              <AppButton
-                                variant="outline"
-                                size="icon-sm"
-                                title="Delete Record"
-                                onClick={() => setDeleteTarget({
-                                  type: "maintenance",
-                                  id: m.id,
-                                  label: `Service record for ${m.vehicle_reg}`
-                                })}
-                                className="h-7 w-7 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </AppButton>
+                              {canManageMaintenance && (
+                                <AppButton
+                                  variant="outline"
+                                  size="icon-sm"
+                                  title="Delete Record"
+                                  onClick={() => setDeleteTarget({
+                                    type: "maintenance",
+                                    id: m.id,
+                                    label: `Service record for ${m.vehicle_reg}`
+                                  })}
+                                  className="h-7 w-7 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </AppButton>
+                              )}
                             </div>
                           </AppTableCell>
                         </AppTableRow>
@@ -3542,18 +3775,28 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           </AppTableCell>
                           <AppTableCell className="p-3.5 text-right">
                             <div className="flex items-center justify-end gap-1.5">
-                              {trp.status === "PLANNED" && (
-                                <AppButton
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleUpdateTripStatus(trp.id, "IN_PROGRESS")}
-                                  className="h-7 text-xs px-2 text-emerald-600 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
-                                >
-                                  <Play className="h-3 w-3 mr-1" />
-                                  Start
-                                </AppButton>
+                              {canDispatchTrips && trp.status === "PLANNED" && (
+                                <>
+                                  <AppButton
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleUpdateTripStatus(trp.id, "IN_PROGRESS")}
+                                    className="h-7 text-xs px-2 text-emerald-600 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+                                  >
+                                    <Play className="h-3 w-3 mr-1" />
+                                    Start
+                                  </AppButton>
+                                  <AppButton
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleUpdateTripStatus(trp.id, "CANCELLED")}
+                                    className="h-7 text-xs px-2 text-muted-foreground hover:text-rose-600"
+                                  >
+                                    Cancel
+                                  </AppButton>
+                                </>
                               )}
-                              {trp.status === "IN_PROGRESS" && (
+                              {canDispatchTrips && trp.status === "IN_PROGRESS" && (
                                 <AppButton
                                   variant="outline"
                                   size="sm"
@@ -3564,19 +3807,24 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                   Complete
                                 </AppButton>
                               )}
-                              <AppButton
-                                variant="outline"
-                                size="icon-sm"
-                                title="Delete Trip"
-                                onClick={() => setDeleteTarget({
-                                  type: "trip",
-                                  id: trp.id,
-                                  label: `Trip for ${trp.traveler_name}`
-                                })}
-                                className="h-7 w-7 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </AppButton>
+                              {canDispatchTrips && (
+                                <AppButton
+                                  variant="outline"
+                                  size="icon-sm"
+                                  title="Delete Trip"
+                                  onClick={() => setDeleteTarget({
+                                    type: "trip",
+                                    id: trp.id,
+                                    label: `Trip for ${trp.traveler_name}`
+                                  })}
+                                  className="h-7 w-7 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </AppButton>
+                              )}
+                              {!canDispatchTrips && (
+                                <span className="text-[11px] text-muted-foreground italic">Read-only</span>
+                              )}
                             </div>
                           </AppTableCell>
                         </AppTableRow>
@@ -3986,28 +4234,32 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       </div>
                     </div>
                     <div className="pt-2 border-t border-border/40 flex items-center justify-end gap-1.5">
-                      <AppButton
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openEditVehicleModal(veh)}
-                        className="h-6 px-2 text-[11px] gap-1 hover:border-theme-btn-primary hover:text-theme-btn-primary"
-                      >
-                        <Edit2 className="h-3 w-3" />
-                        <span>Edit</span>
-                      </AppButton>
-                      <AppButton
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setDeleteTarget({
-                          type: "vehicle",
-                          id: veh.id,
-                          label: `Vehicle ${veh.registration_number} (${veh.make} ${veh.model})`
-                        })}
-                        className="h-6 px-2 text-[11px] gap-1 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                        <span>Delete</span>
-                      </AppButton>
+                      {canEditVehicle && (
+                        <AppButton
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openEditVehicleModal(veh)}
+                          className="h-6 px-2 text-[11px] gap-1 hover:border-theme-btn-primary hover:text-theme-btn-primary"
+                        >
+                          <Edit2 className="h-3 w-3" />
+                          <span>Edit</span>
+                        </AppButton>
+                      )}
+                      {canDeleteVehicle && (
+                        <AppButton
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setDeleteTarget({
+                            type: "vehicle",
+                            id: veh.id,
+                            label: `Vehicle ${veh.registration_number} (${veh.make} ${veh.model})`
+                          })}
+                          className="h-6 px-2 text-[11px] gap-1 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                          <span>Delete</span>
+                        </AppButton>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -4124,6 +4376,136 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   Every 10,000 km
                 </span>
               </div>
+            </AppCardContent>
+          </AppCard>
+
+          {/* Insurance Vendors Master Table Card */}
+          <AppCard className="border-border shadow-xs overflow-hidden">
+            <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <AppCardTitle className="text-lg flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5 text-blue-500" />
+                  <span>Fleet Insurance Vendors Master</span>
+                </AppCardTitle>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Authorized motor insurance companies, underwriters, and toll-free emergency contacts
+                </p>
+              </div>
+
+              <AppButton
+                type="button"
+                variant="primary"
+                size="sm"
+                onClick={openCreateVendorModal}
+                className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-8 font-semibold gap-1.5 shadow-xs shrink-0"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>Add Insurance Vendor</span>
+              </AppButton>
+            </AppCardHeader>
+
+            <AppCardContent className="p-0 overflow-x-auto">
+              <AppTableContainer className="rounded-none border-none">
+                <AppTable className="w-full text-left text-xs">
+                  <AppTableHeader className="bg-slate-50 dark:bg-slate-900/60 border-b border-border text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                    <AppTableRow>
+                      <AppTableHead className="p-3.5">Vendor / Underwriter</AppTableHead>
+                      <AppTableHead className="p-3.5">Code</AppTableHead>
+                      <AppTableHead className="p-3.5">Contact Person & Phone</AppTableHead>
+                      <AppTableHead className="p-3.5">24x7 Toll-Free Support</AppTableHead>
+                      <AppTableHead className="p-3.5">Official Website</AppTableHead>
+                      <AppTableHead className="p-3.5 text-center">Status</AppTableHead>
+                      <AppTableHead className="p-3.5 text-right">Actions</AppTableHead>
+                    </AppTableRow>
+                  </AppTableHeader>
+                  <AppTableBody className="divide-y divide-border/60">
+                    {insuranceVendors.length === 0 ? (
+                      <AppTableRow>
+                        <AppTableCell colSpan={7} className="text-center py-10 text-muted-foreground">
+                          No insurance vendors configured yet. Click <strong>Add Insurance Vendor</strong> to create one.
+                        </AppTableCell>
+                      </AppTableRow>
+                    ) : (
+                      insuranceVendors.map((vendor) => (
+                        <AppTableRow key={vendor.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                          <AppTableCell className="p-3.5 font-bold text-foreground">
+                            <div>{vendor.name}</div>
+                            {vendor.description && (
+                              <div className="text-[10px] text-muted-foreground font-normal line-clamp-1">{vendor.description}</div>
+                            )}
+                          </AppTableCell>
+                          <AppTableCell className="p-3.5 font-mono text-xs text-muted-foreground font-semibold">
+                            {vendor.code}
+                          </AppTableCell>
+                          <AppTableCell className="p-3.5">
+                            <div className="font-semibold text-foreground">{vendor.contact_person || "—"}</div>
+                            {vendor.contact_number && (
+                              <div className="text-[11px] font-mono text-blue-600 dark:text-blue-400 mt-0.5">{vendor.contact_number}</div>
+                            )}
+                            {vendor.email && (
+                              <div className="text-[10px] text-muted-foreground">{vendor.email}</div>
+                            )}
+                          </AppTableCell>
+                          <AppTableCell className="p-3.5 font-mono text-xs text-foreground font-semibold">
+                            {vendor.support_toll_free || "—"}
+                          </AppTableCell>
+                          <AppTableCell className="p-3.5">
+                            {vendor.website ? (
+                              <a
+                                href={vendor.website.startsWith("http") ? vendor.website : `https://${vendor.website}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-theme-btn-primary hover:underline font-mono text-[11px]"
+                              >
+                                {vendor.website.replace(/^https?:\/\//, "")}
+                              </a>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </AppTableCell>
+                          <AppTableCell className="p-3.5 text-center">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase inline-block ${
+                              vendor.is_active !== false
+                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                                : "bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700"
+                            }`}>
+                              {vendor.is_active !== false ? "Active" : "Disabled"}
+                            </span>
+                          </AppTableCell>
+                          <AppTableCell className="p-3.5 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <AppButton
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openEditVendorModal(vendor)}
+                                className="h-7 px-2 text-xs gap-1 font-semibold hover:border-theme-btn-primary"
+                              >
+                                <Edit2 className="h-3 w-3" />
+                                <span>Edit</span>
+                              </AppButton>
+                              <AppButton
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setDeleteTarget({
+                                  type: "vendor",
+                                  id: vendor.id,
+                                  label: `Insurance Vendor '${vendor.name}'`
+                                })}
+                                className="h-7 px-2 text-xs gap-1 font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                                <span>Delete</span>
+                              </AppButton>
+                            </div>
+                          </AppTableCell>
+                        </AppTableRow>
+                      ))
+                    )}
+                  </AppTableBody>
+                </AppTable>
+              </AppTableContainer>
             </AppCardContent>
           </AppCard>
         </div>
@@ -4581,7 +4963,42 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <span>3. Statutory Compliance, Insurance & Validity</span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="font-semibold flex items-center gap-1">
+                        <ShieldCheck className="h-3.5 w-3.5 text-blue-500" />
+                        <span>Insurance Vendor</span>
+                      </label>
+                      <AppButton
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={openCreateVendorModal}
+                        className="p-0 h-auto text-[10px] font-semibold text-theme-btn-primary hover:underline flex items-center gap-0.5"
+                      >
+                        <Plus className="h-2.5 w-2.5" />
+                        <span>New</span>
+                      </AppButton>
+                    </div>
+                    <select
+                      value={editVehicleInsuranceVendorId}
+                      onChange={(e) => {
+                        const selId = e.target.value;
+                        setEditVehicleInsuranceVendorId(selId);
+                        const sel = insuranceVendors.find(v => v.id === selId);
+                        setEditVehicleInsuranceVendor(sel ? sel.name : "");
+                      }}
+                      className="w-full text-xs p-2 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none cursor-pointer"
+                    >
+                      <option value="">— Select Vendor —</option>
+                      {insuranceVendors.map((vendor) => (
+                        <option key={vendor.id} value={vendor.id}>
+                          {vendor.name} ({vendor.code})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   <div>
                     <label className="font-semibold block mb-1 flex items-center gap-1">
                       <FileText className="h-3.5 w-3.5 text-muted-foreground" />
@@ -4590,7 +5007,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <AppInput 
                       value={editVehicleInsurancePolicy} 
                       onChange={(e) => setEditVehicleInsurancePolicy(e.target.value)} 
-                      placeholder="e.g. 2311/61284792/00/000 (ICICI Lombard)"
+                      placeholder="e.g. 2311/61284792/00/000"
                     />
                   </div>
                   <div>
@@ -4742,38 +5159,42 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               </div>
 
               <div className="pt-4 border-t border-border flex items-center justify-between gap-2">
-                <AppButton
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const target = selectedVehicleForEdit;
-                    setIsEditVehicleOpen(false);
-                    if (target) {
-                      setDeleteTarget({
-                        type: "vehicle",
-                        id: target.id,
-                        label: `Vehicle ${target.registration_number} (${target.make} ${target.model})`
-                      });
-                    }
-                  }}
-                  className="text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900 gap-1.5"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  <span>Delete Vehicle</span>
-                </AppButton>
+                {canDeleteVehicle ? (
+                  <AppButton
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const target = selectedVehicleForEdit;
+                      setIsEditVehicleOpen(false);
+                      if (target) {
+                        setDeleteTarget({
+                          type: "vehicle",
+                          id: target.id,
+                          label: `Vehicle ${target.registration_number} (${target.make} ${target.model})`
+                        });
+                      }
+                    }}
+                    className="text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900 gap-1.5"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    <span>Delete Vehicle</span>
+                  </AppButton>
+                ) : <div />}
                 <div className="flex items-center gap-2">
                   <AppButton type="button" variant="ghost" onClick={() => setIsEditVehicleOpen(false)}>
                     Cancel
                   </AppButton>
-                  <AppButton 
-                    type="submit" 
-                    disabled={modalSubmitting}
-                    className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white font-semibold gap-1.5"
-                  >
-                    {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                    <span>Update Vehicle</span>
-                  </AppButton>
+                  {canEditVehicle && (
+                    <AppButton 
+                      type="submit" 
+                      disabled={modalSubmitting}
+                      className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white font-semibold gap-1.5"
+                    >
+                      {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                      <span>Update Vehicle</span>
+                    </AppButton>
+                  )}
                 </div>
               </div>
             </form>
@@ -6085,6 +6506,149 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 Close Job Card
               </AppButton>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------------------------- */}
+      {/* INSURANCE VENDOR MASTER MODAL (ADD / EDIT) */}
+      {/* ---------------------------------------------------------------------- */}
+      {isVendorModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-surface border border-border w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-5 border-b border-border bg-surface/50 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-500/25">
+                  <ShieldCheck className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-foreground">
+                    {selectedVendorForEdit ? "Edit Insurance Vendor" : "Register Insurance Vendor"}
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Configure motor insurance company master profile and toll-free emergency support
+                  </p>
+                </div>
+              </div>
+              <AppButton variant="ghost" size="icon-sm" onClick={() => setIsVendorModalOpen(false)}>
+                <X className="h-4 w-4" />
+              </AppButton>
+            </div>
+
+            <form onSubmit={handleSaveVendor} className="p-5 space-y-4 overflow-y-auto flex-1 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="font-semibold block mb-1 flex items-center gap-1">
+                    <span>Vendor Code *</span>
+                    <span className="text-[10px] text-muted-foreground font-normal">(Short identifier)</span>
+                  </label>
+                  <AppInput
+                    placeholder="e.g. ICICI, TATA-AIG, HDFC-ERGO"
+                    value={vendorFormCode}
+                    onChange={(e) => setVendorFormCode(e.target.value.toUpperCase())}
+                    className="font-mono uppercase font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="font-semibold block mb-1">
+                    <span>Company / Vendor Name *</span>
+                  </label>
+                  <AppInput
+                    placeholder="e.g. ICICI Lombard General Insurance Co."
+                    value={vendorFormName}
+                    onChange={(e) => setVendorFormName(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="font-semibold block mb-1">Contact Person</label>
+                  <AppInput
+                    placeholder="e.g. Ramesh Sharma (Key Account Mgr)"
+                    value={vendorFormContactPerson}
+                    onChange={(e) => setVendorFormContactPerson(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="font-semibold block mb-1 flex items-center gap-1">
+                    <Phone className="h-3.5 w-3.5 text-blue-500" />
+                    <span>Contact Number / Mobile</span>
+                  </label>
+                  <AppInput
+                    placeholder="e.g. +91 98200 12345"
+                    value={vendorFormContactNumber}
+                    onChange={(e) => setVendorFormContactNumber(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="font-semibold block mb-1">Official Email</label>
+                  <AppInput
+                    type="email"
+                    placeholder="e.g. corporate.fleet@icicilombard.com"
+                    value={vendorFormEmail}
+                    onChange={(e) => setVendorFormEmail(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="font-semibold block mb-1 flex items-center gap-1">
+                    <Zap className="h-3.5 w-3.5 text-amber-500" />
+                    <span>24x7 Toll-Free RSA / Support</span>
+                  </label>
+                  <AppInput
+                    placeholder="e.g. 1800 2666 / 1800 102 1800"
+                    value={vendorFormSupportTollFree}
+                    onChange={(e) => setVendorFormSupportTollFree(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-semibold block mb-1">Portal / Claim Website URL</label>
+                <AppInput
+                  placeholder="e.g. https://www.icicilombard.com"
+                  value={vendorFormWebsite}
+                  onChange={(e) => setVendorFormWebsite(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="font-semibold block mb-1">Policy Coverage Remarks / Notes</label>
+                <textarea
+                  rows={2}
+                  placeholder="e.g. Zero-depreciation corporate comprehensive policy with engine protect and 24x7 pan-India roadside towing."
+                  value={vendorFormDesc}
+                  onChange={(e) => setVendorFormDesc(e.target.value)}
+                  className="w-full text-xs p-2.5 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                />
+              </div>
+
+              <div className="pt-3 border-t border-border flex items-center justify-end gap-2">
+                <AppButton
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsVendorModalOpen(false)}
+                  disabled={modalSubmitting}
+                >
+                  Cancel
+                </AppButton>
+                <AppButton
+                  type="submit"
+                  variant="primary"
+                  size="sm"
+                  disabled={modalSubmitting}
+                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white font-semibold gap-1.5"
+                >
+                  {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                  <span>{selectedVendorForEdit ? "Update Vendor" : "Save Insurance Vendor"}</span>
+                </AppButton>
+              </div>
+            </form>
           </div>
         </div>
       )}
