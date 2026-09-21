@@ -1032,3 +1032,8 @@ export function normalizeDateToInputFormat(val?: string | Date | null): string {
 
   return "";
 }
+
+export function isElectricFuel(fuel?: string | null): boolean {
+  if (!fuel) return false;
+  return /electric|ev\b/i.test(fuel.trim());
+}

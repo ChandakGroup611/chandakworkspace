@@ -55,7 +55,8 @@ import {
   TOP_BRAND_NAMES, 
   analyzeIndianPlate,
   calculateDaysRemaining,
-  normalizeDateToInputFormat
+  normalizeDateToInputFormat,
+  isElectricFuel
 } from "./vehicleQuickPicks";
 import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
@@ -94,7 +95,6 @@ import {
   createServiceRecordAction,
   deleteServiceRecordAction,
   fetchVehiclePortalDetailsAction,
-  isElectricFuel,
   VehicleDashboardStats,
   VehicleRecord,
   DriverRecord,

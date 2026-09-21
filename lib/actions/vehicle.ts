@@ -42,7 +42,7 @@ function calculateDaysRemaining(dateStr?: string | null): number | null {
   return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 }
 
-export function isElectricFuel(fuel?: string | null): boolean {
+function isElectricFuel(fuel?: string | null): boolean {
   if (!fuel) return false;
   return /electric|ev\b/i.test(fuel.trim());
 }
