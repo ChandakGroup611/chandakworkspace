@@ -161,7 +161,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   const canViewReports = isSuperAdmin || hasPermission("FLEET_REPORTS_VIEW") || hasPermission("VEHICLES_MANAGE");
 
   // Active sub-navigation tab based on URL
-  const activeTab = useMemo(() => {
+  const activeTab: string = useMemo(() => {
     if (pathname.includes("/register") || pathname.includes("/new")) return "register";
     if (pathname.includes("/inventory")) return "inventory";
     if (pathname.includes("/trips")) return "trips";
@@ -2012,6 +2012,20 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               </AppButton>
 
               <AppButton
+                variant={activeTab === "parts" ? "primary" : "secondary"}
+                size="sm"
+                onClick={() => router.push("/vehicle/parts")}
+                className={`text-xs h-9 font-semibold transition-all ${
+                  activeTab === "parts"
+                    ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
+                    : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
+                }`}
+              >
+                <Package className={`h-4 w-4 mr-1.5 ${activeTab === "parts" ? "text-white" : "text-amber-500"}`} />
+                <span>Parts & Spares ({parts.length})</span>
+              </AppButton>
+
+              <AppButton
                 variant={activeTab === "alerts" ? "primary" : "secondary"}
                 size="sm"
                 onClick={() => router.push("/vehicle/alerts")}
@@ -2055,8 +2069,46 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 </AppButton>
               )}
 
+              <AppButton
+                variant={activeTab === "rbac" ? "primary" : "secondary"}
+                size="sm"
+                onClick={() => router.push("/vehicle/rbac")}
+                className={`text-xs h-9 font-semibold transition-all ${
+                  activeTab === "rbac"
+                    ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
+                    : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
+                }`}
+              >
+                <Shield className={`h-4 w-4 mr-1.5 ${activeTab === "rbac" ? "text-white" : "text-blue-500"}`} />
+                <span>RBAC Policies</span>
+              </AppButton>
+
+              <AppButton
+                variant={activeTab === "settings" ? "primary" : "secondary"}
+                size="sm"
+                onClick={() => router.push("/vehicle/settings")}
+                className={`text-xs h-9 font-semibold transition-all ${
+                  activeTab === "settings"
+                    ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
+                    : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
+                }`}
+              >
+                <Settings className={`h-4 w-4 mr-1.5 ${activeTab === "settings" ? "text-white" : "text-muted-foreground"}`} />
+                <span>Settings</span>
+              </AppButton>
+
               {/* Action trigger button tailored to active tab and RBAC capability */}
-              {activeTab === "drivers" && canManageDrivers ? (
+              {activeTab === "parts" ? (
+                <AppButton
+                  variant="primary"
+                  size="sm"
+                  onClick={openCreatePartModal}
+                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Register Part</span>
+                </AppButton>
+              ) : activeTab === "drivers" && canManageDrivers ? (
                 <AppButton
                   variant="primary"
                   size="sm"
