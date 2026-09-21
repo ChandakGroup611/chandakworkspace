@@ -114,9 +114,17 @@ export interface MatrixAuditLog {
   mailSubject?: string;
 }
 
+export type DesignTicketAccessScope = 
+  | "ALL" 
+  | "ASSIGNED_ONLY" 
+  | "CREATED_ONLY" 
+  | "PROJECT_ONLY" 
+  | "DEPARTMENT_ONLY" 
+  | "NONE";
+
 export interface DesignRbacPolicy {
   id: string;
-  roleCode: string; // e.g. "SUPER_ADMIN", "DESIGN_ADMIN", "DESIGN_LEAD", "DESIGN_COORDINATOR", "SITE_ENGINEER", "CONSULTANT", "TPQA_AUDITOR", "VIEWER"
+  roleCode: string; // e.g. "SUPER_ADMIN", "DESIGN_ADMIN", "DESIGN_LEAD", "DESIGN_COORDINATOR", "SITE_ENGINEER", "CONSULTANT", "TPQA_AUDITOR", "VIEWER", or custom role code
   roleName: string;
   projectId: string; // "ALL" or specific project id
   projectName: string;
@@ -125,8 +133,9 @@ export interface DesignRbacPolicy {
   canRead: boolean;   // [R]
   canUpdate: boolean; // [U]
   canDelete: boolean; // [D]
-  canApprove?: boolean; // [A]
-  canExport?: boolean; // [E]
+  canApprove?: boolean; // [A] (e.g. GFC Release / Verification approval)
+  canExport?: boolean; // [E] (e.g. Export Matrix / Reports)
+  ticketAccessScope?: DesignTicketAccessScope; // Ticket-based / Assignment-based option
   updatedAt: string;
 }
 
@@ -160,7 +169,7 @@ export interface StatutoryClearanceEntry {
 // User Access & RBAC Governance (Chandak Workspace Integration)
 // ==============================================================================
 
-export type DesignRoleCode = 
+export type StandardDesignRoleCode = 
   | "DESIGN_ADMIN" 
   | "DESIGN_LEAD" 
   | "DESIGN_COORDINATOR" 
@@ -168,6 +177,30 @@ export type DesignRoleCode =
   | "SITE_ENGINEER" 
   | "TPQA_AUDITOR" 
   | "VIEWER";
+
+export type DesignRoleCode = StandardDesignRoleCode | string;
+
+export interface DesignRoleDefinition {
+  id: string;
+  code: string;
+  label: string;
+  badgeColor: string;
+  description: string;
+  isSystem: boolean;
+  departmentId?: string;
+  departmentName?: string;
+  defaultPermissions: {
+    canMatrixEdit: boolean;
+    canDrawingsUpload: boolean;
+    canDrawingsApproveGfc: boolean;
+    canTransmittalsCreate: boolean;
+    canRfisManage: boolean;
+    canMastersManage: boolean;
+  };
+  ticketAccessScope?: DesignTicketAccessScope;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 export type DesignProjectAccessType = "ALL" | "SPECIFIC";
 
@@ -183,6 +216,7 @@ export interface DesignUserAccessRecord {
   canTransmittalsCreate: boolean;
   canRfisManage: boolean;
   canMastersManage: boolean;
+  ticketAccessScope?: DesignTicketAccessScope;
   updatedAt?: string;
   updatedBy?: string;
 }

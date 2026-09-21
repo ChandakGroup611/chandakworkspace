@@ -20,6 +20,8 @@ import {
   DesignUserAccessRecord,
   DesignWorkspaceUser,
   DesignRoleCode,
+  DesignRoleDefinition,
+  DesignTicketAccessScope,
   DesignProjectAccessType
 } from "../types/masterTypes";
 
@@ -41,6 +43,128 @@ import {
 
 const STORAGE_KEY = "CHANDAK_DESIGN_MASTER_STORE_V4";
 
+export const STANDARD_DESIGN_ROLES: DesignRoleDefinition[] = [
+  {
+    id: "role-design-admin",
+    code: "DESIGN_ADMIN",
+    label: "Design Administrator",
+    badgeColor: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30",
+    description: "Full administrative control across all projects, drawing releases, masters, and access permissions.",
+    isSystem: true,
+    ticketAccessScope: "ALL",
+    defaultPermissions: {
+      canMatrixEdit: true,
+      canDrawingsUpload: true,
+      canDrawingsApproveGfc: true,
+      canTransmittalsCreate: true,
+      canRfisManage: true,
+      canMastersManage: true,
+    }
+  },
+  {
+    id: "role-design-lead",
+    code: "DESIGN_LEAD",
+    label: "Design Lead / Principal",
+    badgeColor: "bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border-indigo-500/30",
+    description: "Authority to approve drawings, stamp GFC releases, edit matrices, and manage RFIs.",
+    isSystem: true,
+    ticketAccessScope: "ALL",
+    defaultPermissions: {
+      canMatrixEdit: true,
+      canDrawingsUpload: true,
+      canDrawingsApproveGfc: true,
+      canTransmittalsCreate: true,
+      canRfisManage: true,
+      canMastersManage: false,
+    }
+  },
+  {
+    id: "role-design-coordinator",
+    code: "DESIGN_COORDINATOR",
+    label: "Design Coordinator",
+    badgeColor: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30",
+    description: "Coordinates consultants, maintains delivery matrix, uploads drawings, and prepares transmittals.",
+    isSystem: true,
+    ticketAccessScope: "ALL",
+    defaultPermissions: {
+      canMatrixEdit: true,
+      canDrawingsUpload: true,
+      canDrawingsApproveGfc: false,
+      canTransmittalsCreate: true,
+      canRfisManage: true,
+      canMastersManage: false,
+    }
+  },
+  {
+    id: "role-consultant",
+    code: "CONSULTANT",
+    label: "Consultant / Architect",
+    badgeColor: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
+    description: "External partner: Uploads drawings and revision sheets, responds to RFIs and queries.",
+    isSystem: true,
+    ticketAccessScope: "ASSIGNED_ONLY",
+    defaultPermissions: {
+      canMatrixEdit: false,
+      canDrawingsUpload: true,
+      canDrawingsApproveGfc: false,
+      canTransmittalsCreate: false,
+      canRfisManage: true,
+      canMastersManage: false,
+    }
+  },
+  {
+    id: "role-site-engineer",
+    code: "SITE_ENGINEER",
+    label: "Site Execution Engineer",
+    badgeColor: "bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border-cyan-500/30",
+    description: "Site execution team: Downloads GFC drawings, acknowledges transmittals, raises site RFIs.",
+    isSystem: true,
+    ticketAccessScope: "PROJECT_ONLY",
+    defaultPermissions: {
+      canMatrixEdit: false,
+      canDrawingsUpload: false,
+      canDrawingsApproveGfc: false,
+      canTransmittalsCreate: false,
+      canRfisManage: true,
+      canMastersManage: false,
+    }
+  },
+  {
+    id: "role-tpqa-auditor",
+    code: "TPQA_AUDITOR",
+    label: "TPQA / Quality Auditor",
+    badgeColor: "bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/30",
+    description: "Third-party quality auditor: Reviews drawing compliance, audit trails, and certification history.",
+    isSystem: true,
+    ticketAccessScope: "ALL",
+    defaultPermissions: {
+      canMatrixEdit: false,
+      canDrawingsUpload: false,
+      canDrawingsApproveGfc: false,
+      canTransmittalsCreate: false,
+      canRfisManage: false,
+      canMastersManage: false,
+    }
+  },
+  {
+    id: "role-viewer",
+    code: "VIEWER",
+    label: "Executive Viewer",
+    badgeColor: "bg-slate-500/15 text-slate-600 dark:text-slate-400 border-slate-500/30",
+    description: "Read-only executive observer across dashboards, matrices, and project analytics.",
+    isSystem: true,
+    ticketAccessScope: "ALL",
+    defaultPermissions: {
+      canMatrixEdit: false,
+      canDrawingsUpload: false,
+      canDrawingsApproveGfc: false,
+      canTransmittalsCreate: false,
+      canRfisManage: false,
+      canMastersManage: false,
+    }
+  }
+];
+
 export interface MasterStoreState {
   projects: ProjectMaster[];
   towers: TowerMaster[];
@@ -57,6 +181,7 @@ export interface MasterStoreState {
   auditLogs: MatrixAuditLog[];
   rbacPolicies: DesignRbacPolicy[];
   userAccessList: DesignUserAccessRecord[];
+  customRoles: DesignRoleDefinition[];
 }
 
 export class DesignMasterStore {
@@ -107,6 +232,7 @@ export class DesignMasterStore {
           if (!parsed.auditLogs || !Array.isArray(parsed.auditLogs)) parsed.auditLogs = [];
           if (!parsed.rbacPolicies || !Array.isArray(parsed.rbacPolicies)) parsed.rbacPolicies = this.buildDefaultRbacPolicies();
           if (!parsed.userAccessList || !Array.isArray(parsed.userAccessList)) parsed.userAccessList = [];
+          if (!parsed.customRoles || !Array.isArray(parsed.customRoles)) parsed.customRoles = [];
           
           this.state = parsed;
           return this.state!;
@@ -610,7 +736,150 @@ export class DesignMasterStore {
   }
 
   // ============================================================================
-  // RBAC Policies: Project-wise / Role-based / CRUD options selection
+  // Dynamic Role Management & Role CRUD (Workspace / IAM Style)
+  // ============================================================================
+
+  public static getRoles(): DesignRoleDefinition[] {
+    const state = this.getState();
+    const custom = state.customRoles || [];
+    return [...STANDARD_DESIGN_ROLES, ...custom];
+  }
+
+  public static getRoleByCode(code: string): DesignRoleDefinition | undefined {
+    return this.getRoles().find(r => r.code === code);
+  }
+
+  public static addCustomRole(roleData: Omit<DesignRoleDefinition, "id" | "isSystem" | "createdAt" | "updatedAt">): DesignRoleDefinition {
+    const state = this.getState();
+    if (!state.customRoles) state.customRoles = [];
+
+    const cleanCode = roleData.code.trim().toUpperCase().replace(/[^A-Z0-9_]/g, "_");
+    const existing = this.getRoleByCode(cleanCode);
+    if (existing) {
+      throw new Error(`A role with code '${cleanCode}' already exists.`);
+    }
+
+    const now = new Date().toISOString();
+    const newRole: DesignRoleDefinition = {
+      ...roleData,
+      id: `role-${cleanCode.toLowerCase()}-${Date.now().toString(36)}`,
+      code: cleanCode,
+      isSystem: false,
+      createdAt: now,
+      updatedAt: now
+    };
+
+    state.customRoles.push(newRole);
+
+    // Initialize baseline policies for all modules for this new custom role
+    const modules: DesignRbacPolicy["module"][] = [
+      "DESIGN_MATRIX",
+      "DRAWINGS",
+      "LOOK_AHEAD",
+      "LIAISON",
+      "TRANSMITTALS",
+      "RFIS",
+      "CONSULTANTS",
+      "MASTERS"
+    ];
+
+    modules.forEach(m => {
+      const isDrawingOrRfi = m === "DRAWINGS" || m === "RFIS" || m === "TRANSMITTALS";
+      state.rbacPolicies.push({
+        id: `rbac-${cleanCode.toLowerCase()}-${m.toLowerCase()}`,
+        roleCode: cleanCode,
+        roleName: newRole.label,
+        projectId: "ALL",
+        projectName: "All Development Projects",
+        module: m,
+        canCreate: newRole.defaultPermissions.canMatrixEdit || (isDrawingOrRfi && newRole.defaultPermissions.canDrawingsUpload),
+        canRead: true,
+        canUpdate: newRole.defaultPermissions.canMatrixEdit || (isDrawingOrRfi && newRole.defaultPermissions.canRfisManage),
+        canDelete: false,
+        canApprove: newRole.defaultPermissions.canDrawingsApproveGfc && (m === "DRAWINGS" || m === "DESIGN_MATRIX"),
+        canExport: true,
+        ticketAccessScope: newRole.ticketAccessScope || "ASSIGNED_ONLY",
+        updatedAt: now
+      });
+    });
+
+    this.notify();
+    return newRole;
+  }
+
+  public static updateCustomRole(code: string, updates: Partial<DesignRoleDefinition>): DesignRoleDefinition {
+    const state = this.getState();
+    if (!state.customRoles) state.customRoles = [];
+    const idx = state.customRoles.findIndex(r => r.code === code);
+    if (idx === -1) {
+      throw new Error(`Custom role with code '${code}' not found.`);
+    }
+
+    const updatedRole: DesignRoleDefinition = {
+      ...state.customRoles[idx],
+      ...updates,
+      updatedAt: new Date().toISOString()
+    };
+
+    state.customRoles[idx] = updatedRole;
+
+    // Update role names in matching policies
+    if (updates.label) {
+      state.rbacPolicies.forEach(p => {
+        if (p.roleCode === code) {
+          p.roleName = updates.label!;
+        }
+      });
+    }
+
+    this.notify();
+    return updatedRole;
+  }
+
+  public static deleteCustomRole(code: string): boolean {
+    const state = this.getState();
+    const isStandard = STANDARD_DESIGN_ROLES.some(r => r.code === code);
+    if (isStandard) {
+      throw new Error(`Standard system roles cannot be deleted.`);
+    }
+
+    state.customRoles = (state.customRoles || []).filter(r => r.code !== code);
+    state.rbacPolicies = (state.rbacPolicies || []).filter(p => p.roleCode !== code);
+
+    // If users were assigned this role, downgrade them to VIEWER
+    (state.userAccessList || []).forEach(u => {
+      if (u.designRole === code) {
+        u.designRole = "VIEWER";
+      }
+    });
+
+    this.notify();
+    return true;
+  }
+
+  public static cloneCustomRole(
+    sourceRoleCode: string, 
+    newRoleData: { code: string; label: string; description: string; badgeColor?: string; departmentId?: string; departmentName?: string }
+  ): DesignRoleDefinition {
+    const sourceRole = this.getRoleByCode(sourceRoleCode);
+    if (!sourceRole) {
+      throw new Error(`Source role '${sourceRoleCode}' not found.`);
+    }
+
+    return this.addCustomRole({
+      code: newRoleData.code,
+      label: newRoleData.label,
+      description: newRoleData.description,
+      badgeColor: newRoleData.badgeColor || "bg-violet-500/15 text-violet-600 dark:text-violet-400 border-violet-500/30",
+      departmentId: newRoleData.departmentId,
+      departmentName: newRoleData.departmentName,
+      defaultPermissions: { ...sourceRole.defaultPermissions },
+      ticketAccessScope: sourceRole.ticketAccessScope || "ASSIGNED_ONLY"
+    });
+  }
+
+  // ============================================================================
+  // RBAC Policies: Project-wise / Role-based / CRUD & Ticket options
   // ============================================================================
 
   public static getRbacPolicies(): DesignRbacPolicy[] {
@@ -657,12 +926,12 @@ export class DesignMasterStore {
     roleCode: string,
     projectId: string,
     module: DesignRbacPolicy["module"],
-    action: "CREATE" | "READ" | "UPDATE" | "DELETE"
+    action: "CREATE" | "READ" | "UPDATE" | "DELETE" | "APPROVE" | "EXPORT"
   ): boolean {
     const policies = this.getRbacPolicies();
     
     // Super admin always has bypass access
-    if (roleCode === "SUPER_ADMIN" || roleCode === "SUPER_ADMINISTRATOR") return true;
+    if (roleCode === "SUPER_ADMIN" || roleCode === "SUPER_ADMINISTRATOR" || roleCode === "DESIGN_ADMIN") return true;
 
     // Find match by role, project (or "ALL"), and module (or "ALL")
     const match = policies.find(p => 
@@ -678,6 +947,8 @@ export class DesignMasterStore {
       case "READ": return match.canRead;
       case "UPDATE": return match.canUpdate;
       case "DELETE": return match.canDelete;
+      case "APPROVE": return !!match.canApprove;
+      case "EXPORT": return !!match.canExport;
       default: return true;
     }
   }
@@ -726,17 +997,39 @@ export class DesignMasterStore {
   public static hasUserProjectPermission(
     userId: string,
     projectId: string,
-    permission: "matrixEdit" | "drawingsUpload" | "gfcApproval" | "transmittalsCreate" | "rfisManage" | "mastersManage"
+    permission: "matrixEdit" | "drawingsUpload" | "gfcApproval" | "transmittalsCreate" | "rfisManage" | "mastersManage",
+    itemContext?: {
+      creatorId?: string;
+      assigneeId?: string;
+      consultantId?: string;
+      userDepartmentId?: string;
+      itemDepartmentId?: string;
+    }
   ): boolean {
     const state = this.getState();
     const access = (state.userAccessList || []).find(u => u.userId === userId);
     if (!access) return true; // Default fallback permissive if no explicit deny
 
-    if (access.designRole === "DESIGN_ADMIN") return true;
+    if (access.designRole === "DESIGN_ADMIN" || access.designRole === "SUPER_ADMIN") return true;
 
     // Check project restriction
     if (access.projectAccessType === "SPECIFIC" && !access.assignedProjectIds.includes(projectId)) {
       return false;
+    }
+
+    // Check ticket-based / item-based scope restriction if applicable
+    const ticketScope = access.ticketAccessScope || "ALL";
+    if (itemContext && ticketScope !== "ALL") {
+      if (ticketScope === "NONE") return false;
+      if (ticketScope === "ASSIGNED_ONLY" && itemContext.assigneeId && itemContext.assigneeId !== userId && itemContext.consultantId !== userId) {
+        return false;
+      }
+      if (ticketScope === "CREATED_ONLY" && itemContext.creatorId && itemContext.creatorId !== userId) {
+        return false;
+      }
+      if (ticketScope === "DEPARTMENT_ONLY" && itemContext.userDepartmentId && itemContext.itemDepartmentId && itemContext.userDepartmentId !== itemContext.itemDepartmentId) {
+        return false;
+      }
     }
 
     switch (permission) {
@@ -754,11 +1047,12 @@ export class DesignMasterStore {
     const modules: DesignRbacPolicy["module"][] = [
       "DESIGN_MATRIX",
       "DRAWINGS",
-      "CONSULTANTS",
       "LOOK_AHEAD",
       "LIAISON",
       "TRANSMITTALS",
-      "RFIS"
+      "RFIS",
+      "CONSULTANTS",
+      "MASTERS"
     ];
     
     const policies: DesignRbacPolicy[] = [];
@@ -777,45 +1071,74 @@ export class DesignMasterStore {
         canRead: true,
         canUpdate: true,
         canDelete: true,
+        canApprove: true,
+        canExport: true,
+        ticketAccessScope: "ALL",
         updatedAt: now
       });
     });
 
-    // 2. Design Director / Lead: full CRUD
+    // 2. Design Administrator: full administrative CRUD
     modules.forEach(m => {
       policies.push({
-        id: `rbac-director-${m.toLowerCase()}`,
-        roleCode: "DESIGN_DIRECTOR",
-        roleName: "Director of Design & Engineering",
+        id: `rbac-admin-${m.toLowerCase()}`,
+        roleCode: "DESIGN_ADMIN",
+        roleName: "Design Administrator",
         projectId: "ALL",
         projectName: "All Development Projects",
         module: m,
         canCreate: true,
         canRead: true,
         canUpdate: true,
-        canDelete: m !== "CONSULTANTS",
+        canDelete: true,
+        canApprove: true,
+        canExport: true,
+        ticketAccessScope: "ALL",
         updatedAt: now
       });
     });
 
-    // 3. Project Manager: Create, Read, Update
+    // 3. Design Lead: full CRUD + GFC approval
     modules.forEach(m => {
       policies.push({
-        id: `rbac-pm-${m.toLowerCase()}`,
-        roleCode: "PROJECT_MANAGER",
-        roleName: "Senior Project Manager",
+        id: `rbac-lead-${m.toLowerCase()}`,
+        roleCode: "DESIGN_LEAD",
+        roleName: "Design Lead / Principal",
         projectId: "ALL",
         projectName: "All Development Projects",
         module: m,
         canCreate: true,
         canRead: true,
         canUpdate: true,
+        canDelete: m !== "CONSULTANTS" && m !== "MASTERS",
+        canApprove: true,
+        canExport: true,
+        ticketAccessScope: "ALL",
+        updatedAt: now
+      });
+    });
+
+    // 4. Design Coordinator: Create, Read, Update, Transmittals, RFIs
+    modules.forEach(m => {
+      policies.push({
+        id: `rbac-coordinator-${m.toLowerCase()}`,
+        roleCode: "DESIGN_COORDINATOR",
+        roleName: "Design Coordinator",
+        projectId: "ALL",
+        projectName: "All Development Projects",
+        module: m,
+        canCreate: m !== "MASTERS",
+        canRead: true,
+        canUpdate: m !== "MASTERS",
         canDelete: false,
+        canApprove: false,
+        canExport: true,
+        ticketAccessScope: "ALL",
         updatedAt: now
       });
     });
 
-    // 4. Site Engineer: Read on Matrix, C/R/U on Transmittals & RFIs
+    // 5. Site Engineer: Read on Matrix, C/R/U on Transmittals & RFIs
     modules.forEach(m => {
       policies.push({
         id: `rbac-site-${m.toLowerCase()}`,
@@ -828,11 +1151,14 @@ export class DesignMasterStore {
         canRead: true,
         canUpdate: m === "TRANSMITTALS" || m === "RFIS",
         canDelete: false,
+        canApprove: false,
+        canExport: true,
+        ticketAccessScope: "PROJECT_ONLY",
         updatedAt: now
       });
     });
 
-    // 5. Consultant External: R on Drawings & Matrix, U on RFIs & Approvals
+    // 6. Consultant External: R on Drawings & Matrix, U on RFIs & Approvals
     modules.forEach(m => {
       policies.push({
         id: `rbac-consultant-${m.toLowerCase()}`,
@@ -845,6 +1171,49 @@ export class DesignMasterStore {
         canRead: true,
         canUpdate: m === "DRAWINGS" || m === "RFIS",
         canDelete: false,
+        canApprove: false,
+        canExport: false,
+        ticketAccessScope: "ASSIGNED_ONLY",
+        updatedAt: now
+      });
+    });
+
+    // 7. TPQA Auditor
+    modules.forEach(m => {
+      policies.push({
+        id: `rbac-tpqa-${m.toLowerCase()}`,
+        roleCode: "TPQA_AUDITOR",
+        roleName: "TPQA / Quality Auditor",
+        projectId: "ALL",
+        projectName: "All Development Projects",
+        module: m,
+        canCreate: false,
+        canRead: true,
+        canUpdate: false,
+        canDelete: false,
+        canApprove: false,
+        canExport: true,
+        ticketAccessScope: "ALL",
+        updatedAt: now
+      });
+    });
+
+    // 8. Viewer: Read-only
+    modules.forEach(m => {
+      policies.push({
+        id: `rbac-viewer-${m.toLowerCase()}`,
+        roleCode: "VIEWER",
+        roleName: "Executive Viewer",
+        projectId: "ALL",
+        projectName: "All Development Projects",
+        module: m,
+        canCreate: false,
+        canRead: true,
+        canUpdate: false,
+        canDelete: false,
+        canApprove: false,
+        canExport: true,
+        ticketAccessScope: "ALL",
         updatedAt: now
       });
     });
@@ -1083,7 +1452,8 @@ export class DesignMasterStore {
       rfis: [],
       auditLogs: [],
       rbacPolicies: this.buildDefaultRbacPolicies(),
-      userAccessList: []
+      userAccessList: [],
+      customRoles: []
     };
   }
 
@@ -1331,7 +1701,8 @@ export class DesignMasterStore {
       rfis: [],
       auditLogs,
       rbacPolicies: this.buildDefaultRbacPolicies(),
-      userAccessList: []
+      userAccessList: [],
+      customRoles: []
     };
   }
 

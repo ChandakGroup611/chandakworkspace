@@ -38,7 +38,7 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
   return (
     <div className="w-full h-full animate-in fade-in-50 duration-500">
       <main>
-        <TaskListViewClient initialTasks={tasks} userScope={userScope} />
+        <TaskListViewClient initialTasks={tasks} userScope={userScope} currentUserId={user?.id || userScope?.userId || null} />
       </main>
     </div>
   );

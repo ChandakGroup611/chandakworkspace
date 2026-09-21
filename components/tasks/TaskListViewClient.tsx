@@ -61,13 +61,18 @@ import { SavedFiltersDropdown } from "@/components/ui/SavedFiltersDropdown";
 type Task = any;
 
 interface TaskFilterPayload {
-  scope: "ALL" | "ASSIGNEE" | "ENROLLED";
-  query: string;
-  columnFilters: Record<string, string[]>;
-  kpiFilter: string | null;
-  selectedWorkspaceId: string | null;
-  selectedStatus: string;
-  selectedPriority: string;
+  scope?: "ALL" | "ASSIGNEE" | "ENROLLED";
+  hierarchyScope?: "all" | "my_dept" | "my_reports" | "assigned_me";
+  selectedDepartmentName?: string;
+  query?: string;
+  columnFilters?: Record<string, string[]>;
+  kpiFilter?: string | null;
+  selectedWorkspaceId?: string | null;
+  selectedStatus?: string;
+  selectedPriority?: string;
+  showEscalatedOnly?: boolean;
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 const getSubWorkspaceName = (t: Task) => {
@@ -225,7 +230,13 @@ const formatDate = (dateString: string | null | undefined): string => {
   }
 };
 
-export default function TaskListViewClient({ initialTasks, userScope }: { initialTasks: Task[]; userScope?: any }) {
+interface TaskListViewClientProps {
+  initialTasks: Task[];
+  userScope?: any;
+  currentUserId?: string | null;
+}
+
+export default function TaskListViewClient({ initialTasks, userScope, currentUserId: initialCurrentUserId }: TaskListViewClientProps) {
   const [viewMode, setViewMode] = useState<"list" | "board" | "timeline">("list");
   const [tasks, setTasks] = useState<Task[]>(initialTasks || []);
   const [scope, setScope] = useState<"ALL" | "ASSIGNEE" | "ENROLLED">("ALL");
@@ -260,7 +271,8 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
   };
   const [hoveredRowId, setHoveredRowId] = useState<string | null>(null);
   
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(initialCurrentUserId || userScope?.userId || null);
+  const effectiveUserId = userScope?.userId || currentUserId || initialCurrentUserId;
 
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   
@@ -297,20 +309,42 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
     activeSavedFilterId,
     saveCurrentFilter,
     applySavedFilter,
-    deleteSavedFilter
-  } = useSavedFilters<TaskFilterPayload>("chandak_tasks", currentUserId, (payload) => {
-    setScope(payload.scope);
-    setQuery(payload.query);
-    setColumnFilters(payload.columnFilters || {});
-    setKpiFilter(payload.kpiFilter);
-    setSelectedWorkspaceId(payload.selectedWorkspaceId || "");
-    setSelectedStatus(payload.selectedStatus || "");
-    setSelectedPriority(payload.selectedPriority || "");
+    deleteSavedFilter,
+    setActiveSavedFilterId
+  } = useSavedFilters<TaskFilterPayload>("chandak_tasks", effectiveUserId, (payload) => {
+    if (payload.scope) setScope(payload.scope);
+    if (payload.hierarchyScope) setHierarchyScope(payload.hierarchyScope);
+    if (payload.selectedDepartmentName !== undefined) setSelectedDepartmentName(payload.selectedDepartmentName);
+    if (payload.query !== undefined) setQuery(payload.query);
+    if (payload.columnFilters) setColumnFilters(payload.columnFilters);
+    if (payload.kpiFilter !== undefined) setKpiFilter(payload.kpiFilter);
+    if (payload.selectedWorkspaceId !== undefined) {
+      setSelectedWorkspaceId(payload.selectedWorkspaceId || null);
+      if (payload.selectedWorkspaceId) {
+        fetchTasksData(payload.selectedWorkspaceId);
+      }
+    }
+    if (payload.selectedStatus !== undefined) setSelectedStatus(payload.selectedStatus);
+    if (payload.selectedPriority !== undefined) setSelectedPriority(payload.selectedPriority);
+    if (payload.showEscalatedOnly !== undefined) setShowEscalatedOnly(Boolean(payload.showEscalatedOnly));
+    if (payload.dateFrom !== undefined) setDateFrom(payload.dateFrom);
+    if (payload.dateTo !== undefined) setDateTo(payload.dateTo);
   });
 
   const handleSaveCurrentFilter = () => {
     saveCurrentFilter({
-      scope, query, columnFilters, kpiFilter, selectedWorkspaceId, selectedStatus, selectedPriority
+      scope,
+      hierarchyScope,
+      selectedDepartmentName,
+      query,
+      columnFilters,
+      kpiFilter,
+      selectedWorkspaceId,
+      selectedStatus,
+      selectedPriority,
+      showEscalatedOnly,
+      dateFrom,
+      dateTo
     }, () => triggerToast("Filter saved successfully!"));
   };
 
@@ -318,22 +352,37 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
     applySavedFilter(
       f,
       (payload) => {
-        setScope(payload.scope);
-        setQuery(payload.query);
+        setScope(payload.scope || "ALL");
+        setHierarchyScope(payload.hierarchyScope || "all");
+        setSelectedDepartmentName(payload.selectedDepartmentName || "ALL");
+        setQuery(payload.query || "");
         setColumnFilters(payload.columnFilters || {});
-        setKpiFilter(payload.kpiFilter);
-        setSelectedWorkspaceId(payload.selectedWorkspaceId || "");
+        setKpiFilter(payload.kpiFilter ?? null);
+        setSelectedWorkspaceId(payload.selectedWorkspaceId || null);
         setSelectedStatus(payload.selectedStatus || "");
         setSelectedPriority(payload.selectedPriority || "");
+        setShowEscalatedOnly(Boolean(payload.showEscalatedOnly));
+        setDateFrom(payload.dateFrom || "");
+        setDateTo(payload.dateTo || "");
+
+        if (payload.selectedWorkspaceId !== undefined) {
+          fetchTasksData(payload.selectedWorkspaceId || null);
+        }
       },
       () => {
         setScope("ALL");
+        setHierarchyScope("all");
+        setSelectedDepartmentName("ALL");
         setQuery("");
         setColumnFilters({});
         setKpiFilter(null);
-        setSelectedWorkspaceId("");
+        setSelectedWorkspaceId(null);
         setSelectedStatus("");
         setSelectedPriority("");
+        setShowEscalatedOnly(false);
+        setDateFrom("");
+        setDateTo("");
+        fetchTasksData(null);
       }
     );
   };
@@ -496,7 +545,7 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
         const assigneeId = (Array.isArray(t.assignee) ? t.assignee[0]?.id : t.assignee?.id) || t.assigned_to;
         if (!subIds.includes(assigneeId) && !subIds.includes(t.created_by)) return false;
       } else if (hierarchyScope === "assigned_me") {
-        const myId = userScope?.userId || currentUserId;
+        const myId = effectiveUserId;
         const assigneeId = (Array.isArray(t.assignee) ? t.assignee[0]?.id : t.assignee?.id) || t.assigned_to;
         if (assigneeId !== myId && t.created_by !== myId) return false;
       }
@@ -507,11 +556,11 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
 
       if (scope === "ASSIGNEE") {
         const a = Array.isArray(t.assignee) ? t.assignee[0] : t.assignee;
-        if (a?.id !== currentUserId && t.assigned_to !== currentUserId) return false;
+        if (a?.id !== effectiveUserId && t.assigned_to !== effectiveUserId) return false;
       }
       if (scope === "ENROLLED") {
-        const isExecutor = t.executors?.some((e: any) => e.id === currentUserId);
-        const isReviewer = t.reviewers?.some((r: any) => r.id === currentUserId);
+        const isExecutor = t.executors?.some((e: any) => e.id === effectiveUserId);
+        const isReviewer = t.reviewers?.some((r: any) => r.id === effectiveUserId);
         if (!isExecutor && !isReviewer) return false;
       }
 
@@ -803,8 +852,8 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
     setDepartmentModalOpen(true);
   };
 
-  const isOwner = inlineTask?.assigned_to === currentUserId;
-  const isExecutive = inlineTask?.participants?.some((p: any) => p.user_id === currentUserId && p.participation_role === 'EXECUTOR');
+  const isOwner = inlineTask?.assigned_to === effectiveUserId;
+  const isExecutive = inlineTask?.participants?.some((p: any) => p.user_id === effectiveUserId && p.participation_role === 'EXECUTOR');
   const canChangeFields = isOwner || isSuperAdmin || isExecutive;
 
   const handleStatusSave = async () => {
@@ -891,26 +940,13 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
   };
 
   useEffect(() => {
-    async function whoami() {
-      try {
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        setCurrentUserId(user?.id || null);
-      } catch (e) {
-        setCurrentUserId(null);
-      }
-    }
-    whoami();
-
-    let wsId: string | null = null;
-
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      wsId = params.get("workspaceId");
-      setSelectedWorkspaceId(wsId || null);
+      const wsId = params.get("workspaceId");
+      if (wsId) {
+        setSelectedWorkspaceId(wsId);
+      }
     }
-    
-    fetchTasksData(wsId);
   }, []);
 
   const getExportCellValue = (col: any, t: any) => {
@@ -1311,7 +1347,25 @@ export default function TaskListViewClient({ initialTasks, userScope }: { initia
                 <Popover.Content align="end" sideOffset={8} className="z-50 w-80 p-4 rounded-2xl theme-card-structural  animate-in zoom-in-95 data-[state=closed]:zoom-out-95 outline-none space-y-4">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="text-sm font-bold text-foreground">Advanced Filters</h4>
-                    <AppButton variant="ghost" size="sm" onClick={() => { setSelectedStatus(""); setSelectedPriority(""); setShowEscalatedOnly(false); setDateFrom(""); setDateTo(""); setColumnFilters({}); setSelectedWorkspaceId(""); fetchTasksData(null); }} className="text-xs font-semibold text-muted hover:text-foreground flex items-center gap-1">
+                    <AppButton variant="ghost" size="sm" onClick={() => { 
+                      setSelectedStatus(""); 
+                      setSelectedPriority(""); 
+                      setShowEscalatedOnly(false); 
+                      setDateFrom(""); 
+                      setDateTo(""); 
+                      setColumnFilters({}); 
+                      setSelectedWorkspaceId(null); 
+                      setScope("ALL");
+                      setHierarchyScope("all");
+                      setSelectedDepartmentName("ALL");
+                      setKpiFilter(null);
+                      setQuery("");
+                      setActiveSavedFilterId(null);
+                      if (effectiveUserId) {
+                        localStorage.removeItem(`chandak_tasks_active_id_${effectiveUserId}`);
+                      }
+                      fetchTasksData(null); 
+                    }} className="text-xs font-semibold text-muted hover:text-foreground flex items-center gap-1">
                       <RotateCcw className="h-3 w-3" /> Reset
                     </AppButton>
                   </div>
