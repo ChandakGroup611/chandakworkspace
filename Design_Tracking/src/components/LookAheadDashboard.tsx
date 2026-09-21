@@ -47,12 +47,21 @@ export const LookAheadDashboard: React.FC = () => {
     return unsubscribe;
   }, []);
 
-  const lookAheads = storeState.lookAheads;
+  // Accessible Projects Scoped to Active User
+  const accessibleProjects = useMemo(() => {
+    return DesignMasterStore.getUserAccessibleProjects();
+  }, [storeState.projects, storeState.userAccessList]);
+
+  const accessibleProjectIds = useMemo(() => new Set(accessibleProjects.map(p => p.id)), [accessibleProjects]);
+
+  const lookAheads = useMemo(() => {
+    return storeState.lookAheads.filter(i => accessibleProjectIds.has(i.projectId));
+  }, [storeState.lookAheads, accessibleProjectIds]);
 
   // Name resolution maps
   const projectMap = useMemo(() => {
-    return new Map(storeState.projects.map(p => [p.id, p.name]));
-  }, [storeState.projects]);
+    return new Map(accessibleProjects.map(p => [p.id, p.name]));
+  }, [accessibleProjects]);
 
   const towerMap = useMemo(() => {
     return new Map(storeState.towers.map(t => [t.id, t.towerName]));
@@ -85,13 +94,8 @@ export const LookAheadDashboard: React.FC = () => {
 
   // Unique project names with look-ahead deliverables
   const uniqueProjectNames = useMemo(() => {
-    const set = new Set<string>();
-    for (const item of lookAheads) {
-      const pName = projectMap.get(item.projectId);
-      if (pName) set.add(pName);
-    }
-    return Array.from(set);
-  }, [lookAheads, projectMap]);
+    return accessibleProjects.map(p => p.name);
+  }, [accessibleProjects]);
 
   // Filtered items
   const filteredItems = useMemo(() => {
@@ -231,8 +235,8 @@ export const LookAheadDashboard: React.FC = () => {
             <button
               type="button"
               onClick={() => {
-                if (storeState.projects.length > 0) {
-                  const p = storeState.projects[0].id;
+                if (accessibleProjects.length > 0) {
+                  const p = accessibleProjects[0].id;
                   setNewProjectId(p);
                   const twrs = storeState.towers.filter(t => t.projectId === p);
                   if (twrs.length > 0) setNewTowerId(twrs[0].id);
@@ -688,7 +692,7 @@ export const LookAheadDashboard: React.FC = () => {
                     }}
                     className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-bold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                   >
-                    {storeState.projects.map(p => (
+                    {accessibleProjects.map(p => (
                       <option key={p.id} value={p.id}>{p.name}</option>
                     ))}
                   </select>

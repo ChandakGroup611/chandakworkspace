@@ -48,6 +48,19 @@ import { DataEntryFormsModal } from "../../Design_Tracking/src/components/DataEn
 import { DesignMasterStore } from "../../Design_Tracking/src/services/designMasterStore";
 import { DrawingItem, DrawingStatus, ConsultantPartner, GfcRelease } from "../../Design_Tracking/src/types";
 
+import { fetchDesignWorkspaceUsersAction } from "@/lib/actions/designTracking";
+
+interface DesignTrackingHostProps {
+  initialSlug?: string[];
+  currentUser?: {
+    id: string;
+    email: string;
+    fullName: string;
+    roleCode: string;
+    isAdmin: boolean;
+  };
+}
+
 type ActiveTabType = 
   | "MATRIX" 
   | "LOOK_AHEAD" 
@@ -65,9 +78,38 @@ type ActiveTabType =
   | "RBAC"
   | "MASTERS";
 
-export default function DesignTrackingHost({ initialSlug }: { initialSlug?: string[] }) {
+export default function DesignTrackingHost({ initialSlug, currentUser }: DesignTrackingHostProps) {
   const pathname = usePathname() || "/design";
   const router = useRouter();
+
+  // Set user context in master store
+  useEffect(() => {
+    if (currentUser) {
+      DesignMasterStore.setCurrentUser(
+        currentUser.id,
+        currentUser.roleCode || (currentUser.isAdmin ? "SUPER_ADMIN" : null)
+      );
+    }
+  }, [currentUser]);
+
+  // Hydrate user access list from database in background
+  useEffect(() => {
+    const hydrateAccess = async () => {
+      try {
+        const res = await fetchDesignWorkspaceUsersAction();
+        if (res.success && res.users) {
+          res.users.forEach(u => {
+            if (u.designAccess) {
+              DesignMasterStore.saveUserAccess(u.designAccess);
+            }
+          });
+        }
+      } catch (err) {
+        console.warn("Could not background hydrate design access:", err);
+      }
+    };
+    hydrateAccess();
+  }, []);
 
   // Compute active tab seamlessly from URL path and initialSlug
   const activeTab = useMemo<ActiveTabType>(() => {
@@ -117,8 +159,33 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
   const [storeState, setStoreState] = useState(() => DesignMasterStore.getState());
   const [isDataEntryOpen, setIsDataEntryOpen] = useState(false);
 
-  // Drawings, Consultants & Modals state
-  const drawings = storeState.drawings || [];
+  // Subscribe to DesignMasterStore for real-time live synchronization
+  useEffect(() => {
+    const unsubscribe = DesignMasterStore.subscribe(() => {
+      setStoreState({ ...DesignMasterStore.getState() });
+    });
+    return unsubscribe;
+  }, []);
+
+  // Accessible Projects Scoped to Active User
+  const accessibleProjects = useMemo(() => {
+    return DesignMasterStore.getUserAccessibleProjects(currentUser?.id);
+  }, [storeState.projects, storeState.userAccessList, currentUser?.id]);
+
+  const isRestrictedProjectScope = accessibleProjects.length < storeState.projects.length;
+
+  // Drawings filtered to Accessible Projects
+  const accessibleDrawings = useMemo(() => {
+    const allDrawings = storeState.drawings || [];
+    if (!isRestrictedProjectScope) return allDrawings;
+    const allowedNames = new Set(accessibleProjects.map(p => p.name.toLowerCase()));
+    const allowedIds = new Set(accessibleProjects.map(p => p.id.toLowerCase()));
+    return allDrawings.filter(d => 
+      allowedNames.has((d.project || "").toLowerCase()) ||
+      allowedIds.has((d.project || "").toLowerCase())
+    );
+  }, [storeState.drawings, accessibleProjects, isRestrictedProjectScope]);
+
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [selectedDrawingForReview, setSelectedDrawingForReview] = useState<DrawingItem | null>(null);
 
@@ -134,25 +201,21 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
     DesignMasterStore.deleteConsultant(id);
   };
 
-  // Subscribe to DesignMasterStore for real-time live synchronization
-  useEffect(() => {
-    const unsubscribe = DesignMasterStore.subscribe(() => {
-      setStoreState({ ...DesignMasterStore.getState() });
-    });
-    return unsubscribe;
-  }, []);
-
-  // Dynamic KPI Metrics derived on the fly from active masters
-  const totalProjects = storeState.projects.length;
-  const totalTowers = storeState.towers.length;
+  // Dynamic KPI Metrics derived on the fly from accessible masters
+  const totalProjects = accessibleProjects.length;
+  const accessibleProjectIds = useMemo(() => new Set(accessibleProjects.map(p => p.id)), [accessibleProjects]);
+  const totalTowers = useMemo(() => {
+    return storeState.towers.filter(t => accessibleProjectIds.has(t.projectId)).length;
+  }, [storeState.towers, accessibleProjectIds]);
   const totalWorkPackages = storeState.packages.length;
 
   const totalReceivedPackages = useMemo(() => {
     return Object.values(storeState.packageStatuses).filter(s => {
+      if (!accessibleProjectIds.has(s.projectId)) return false;
       const lower = s.status.toLowerCase();
       return lower.includes("received") || lower.includes("cleared") || lower.includes("done");
     }).length;
-  }, [storeState.packageStatuses]);
+  }, [storeState.packageStatuses, accessibleProjectIds]);
 
   const totalPossiblePackageCells = totalWorkPackages * totalTowers;
   const overallDeliveryRate = totalPossiblePackageCells > 0 
@@ -160,16 +223,16 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
     : 0;
 
   const count30 = useMemo(() => {
-    return storeState.lookAheads.filter(i => i.timeframe === "30_DAYS").length;
-  }, [storeState.lookAheads]);
+    return storeState.lookAheads.filter(i => accessibleProjectIds.has(i.projectId) && i.timeframe === "30_DAYS").length;
+  }, [storeState.lookAheads, accessibleProjectIds]);
 
   const count60 = useMemo(() => {
-    return storeState.lookAheads.filter(i => i.timeframe === "60_DAYS").length;
-  }, [storeState.lookAheads]);
+    return storeState.lookAheads.filter(i => accessibleProjectIds.has(i.projectId) && i.timeframe === "60_DAYS").length;
+  }, [storeState.lookAheads, accessibleProjectIds]);
 
-  // Derived GFC releases from active drawings
+  // Derived GFC releases from accessible drawings
   const gfcReleases = useMemo<GfcRelease[]>(() => {
-    return (storeState.drawings || [])
+    return accessibleDrawings
       .filter(d => d.status === "Approved (GFC)" || d.status === "Site Handed Over")
       .map((d, i) => ({
         id: `GFC-${d.code}-${i + 1}`,
@@ -185,7 +248,7 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
         handoverDate: d.approvedDate || new Date().toISOString().split("T")[0],
         status: "Active GFC" as const
       }));
-  }, [storeState.drawings]);
+  }, [accessibleDrawings]);
 
   const handleDrawingUploaded = (newDrawing: Omit<DrawingItem, "id">) => {
     const created: DrawingItem = {
@@ -209,9 +272,22 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
             <Compass className="h-5 w-5" />
           </div>
           <div className="min-w-0">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-              Design & Engineering Tracking
-            </h1>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+                Design & Engineering Tracking
+              </h1>
+              {isRestrictedProjectScope ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                  <Building2 className="h-3 w-3" />
+                  <span>Scoped: {accessibleProjects.map(p => p.name).join(", ")} ({accessibleProjects.length} Project{accessibleProjects.length > 1 ? "s" : ""})</span>
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                  <ShieldCheck className="h-3 w-3" />
+                  <span>Global Scope ({accessibleProjects.length} Projects)</span>
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -461,7 +537,7 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
       {/* Tab 5: Drawing Sheet Register */}
       {activeTab === "DRAWINGS" && (
         <DrawingRegister 
-          drawings={drawings}
+          drawings={accessibleDrawings}
           onOpenReviewModal={(drawing) => setSelectedDrawingForReview(drawing)}
           onOpenUploadModal={() => setIsUploadOpen(true)}
         />
@@ -470,7 +546,7 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
       {/* Tab 6: Approvals & Review Queue */}
       {activeTab === "APPROVALS" && (
         <ApprovalsReviewQueue 
-          drawings={drawings}
+          drawings={accessibleDrawings}
           onOpenReviewModal={(drawing) => setSelectedDrawingForReview(drawing)}
           onQuickStatusUpdate={handleStatusUpdated}
         />
@@ -479,7 +555,7 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
       {/* Tab 7: Revision History Logs */}
       {activeTab === "REVISIONS" && (
         <RevisionHistoryLogs 
-          drawings={drawings}
+          drawings={accessibleDrawings}
         />
       )}
 
@@ -505,7 +581,7 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
           onAddConsultant={handleConsultantAdded}
           onUpdateConsultant={handleConsultantUpdated}
           onDeleteConsultant={handleConsultantDeleted}
-          availableProjects={storeState.projects.map(p => p.name)}
+          availableProjects={accessibleProjects.map(p => p.name)}
           availableWorkPackages={storeState.packages.map(p => p.packageName)}
         />
       )}
@@ -518,7 +594,7 @@ export default function DesignTrackingHost({ initialSlug }: { initialSlug?: stri
       {/* Tab 13: Design Reports & Analytics */}
       {activeTab === "REPORTS" && (
         <DesignReportsAnalytics 
-          drawings={drawings}
+          drawings={accessibleDrawings}
           consultants={storeState.consultants}
         />
       )}

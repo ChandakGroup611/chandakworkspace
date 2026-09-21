@@ -1113,9 +1113,21 @@ export const DesignRbacGovernance: React.FC = () => {
                           )}
                         </td>
                         <td className="py-3 px-3">
-                          <span className="text-xs font-semibold text-foreground">
-                            {access?.projectAccessType === "SPECIFIC" ? `Specific (${access.assignedProjectIds?.length || 0} Projects)` : "Global"}
-                          </span>
+                          {access?.projectAccessType === "SPECIFIC" ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                              <Building2 className="h-3 w-3 shrink-0" />
+                              <span className="max-w-[180px] truncate" title={access.assignedProjectIds?.map(pid => projectMap.get(pid)?.name || pid).join(", ") || ""}>
+                                {access.assignedProjectIds && access.assignedProjectIds.length > 0
+                                  ? access.assignedProjectIds.map(pid => projectMap.get(pid)?.name || pid).join(", ")
+                                  : "No Projects Assigned"}
+                              </span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                              <ShieldCheck className="h-3 w-3 shrink-0" />
+                              <span>Global (All Projects)</span>
+                            </span>
+                          )}
                         </td>
                         <td className="py-3 px-3">
                           <button

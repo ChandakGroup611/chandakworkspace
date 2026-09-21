@@ -47,9 +47,26 @@ export function TransmittalManager() {
   const [copiesPerDrawing, setCopiesPerDrawing] = useState<number>(3);
   const [formError, setFormError] = useState("");
 
-  const projects = DesignMasterStore.getProjects();
-  const drawings = DesignMasterStore.getDrawings();
-  const transmittals = DesignMasterStore.getTransmittals();
+  const projects = useMemo(() => {
+    return DesignMasterStore.getUserAccessibleProjects();
+  }, []);
+
+  const accessibleProjectIds = useMemo(() => new Set(projects.map(p => p.id)), [projects]);
+
+  const transmittals = useMemo(() => {
+    const all = DesignMasterStore.getTransmittals();
+    return all.filter(t => 
+      accessibleProjectIds.has(t.projectId) ||
+      projects.some(p => p.name.toLowerCase() === (t.projectName || "").toLowerCase())
+    );
+  }, [accessibleProjectIds, projects]);
+
+  const drawings = useMemo(() => {
+    const all = DesignMasterStore.getDrawings();
+    return all.filter(d => 
+      projects.some(p => p.name.toLowerCase() === (d.project || "").toLowerCase() || p.id === d.project)
+    );
+  }, [projects]);
 
   const projectFilterOptions = useMemo(() => {
     return projects.map(p => ({

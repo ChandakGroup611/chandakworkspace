@@ -98,10 +98,17 @@ export const TenderDesignMatrix: React.FC = () => {
     return () => unsub();
   }, []);
 
-  // Compute dynamic project tower columns based on multi-selected projects
+  // Accessible Projects Scoped to Active User
+  const accessibleProjects = useMemo(() => {
+    return DesignMasterStore.getUserAccessibleProjects();
+  }, [storeState.projects, storeState.userAccessList]);
+
+  const accessibleProjectIds = useMemo(() => new Set(accessibleProjects.map(p => p.id)), [accessibleProjects]);
+
+  // Compute dynamic project tower columns based on multi-selected projects & accessible scope
   const visibleColumns = useMemo<MatrixColumn[]>(() => {
-    const projectMap = new Map(storeState.projects.map(p => [p.id, p.name]));
-    let towers = storeState.towers;
+    const projectMap = new Map(accessibleProjects.map(p => [p.id, p.name]));
+    let towers = storeState.towers.filter(t => accessibleProjectIds.has(t.projectId));
 
     if (selectedProjects.length > 0) {
       towers = towers.filter(t => selectedProjects.includes(t.projectId));
@@ -115,7 +122,7 @@ export const TenderDesignMatrix: React.FC = () => {
       towerName: t.towerName,
       towerType: t.towerType
     }));
-  }, [storeState.projects, storeState.towers, selectedProjects]);
+  }, [accessibleProjects, storeState.towers, selectedProjects, accessibleProjectIds]);
 
   // Unique disciplines across all packages
   const categories = useMemo(() => {
@@ -322,7 +329,9 @@ export const TenderDesignMatrix: React.FC = () => {
 
   // Open Batch Update Modal
   const handleOpenBatchModal = () => {
-    const pId = selectedProjects.length > 0 ? selectedProjects[0] : (storeState.projects[0]?.id || "");
+    const pId = selectedProjects.length > 0 
+      ? selectedProjects[0] 
+      : (accessibleProjects[0]?.id || "");
     setBatchProjectId(pId);
     const twrs = storeState.towers.filter(t => t.projectId === pId).map(t => t.id);
     setBatchSelectedTowers(twrs);
@@ -442,7 +451,7 @@ export const TenderDesignMatrix: React.FC = () => {
 
   // Multi-select Dropdown Options
   const projectOptions = useMemo<DropdownOption[]>(() => {
-    return storeState.projects.map(p => {
+    return accessibleProjects.map(p => {
       const towerCount = storeState.towers.filter(t => t.projectId === p.id).length;
       return {
         value: p.id,
@@ -451,7 +460,7 @@ export const TenderDesignMatrix: React.FC = () => {
         subtitle: `${towerCount} tower${towerCount === 1 ? "" : "s"}`
       };
     });
-  }, [storeState.projects, storeState.towers]);
+  }, [accessibleProjects, storeState.towers]);
 
   const disciplineOptions = useMemo<DropdownOption[]>(() => {
     return categories.map(cat => {
@@ -616,7 +625,7 @@ export const TenderDesignMatrix: React.FC = () => {
             selectedValues={selectedProjects}
             onChange={setSelectedProjects}
             colorTheme="blue"
-            placeholder={`All Projects (${storeState.projects.length})`}
+            placeholder={accessibleProjects.length === storeState.projects.length ? `All Projects (${accessibleProjects.length})` : `Assigned Projects (${accessibleProjects.length})`}
             searchPlaceholder="Search project name..."
           />
 
@@ -1265,7 +1274,7 @@ export const TenderDesignMatrix: React.FC = () => {
                   }}
                   className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-medium focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                 >
-                  {storeState.projects.map(proj => (
+                  {accessibleProjects.map(proj => (
                     <option key={proj.id} value={proj.id}>{proj.name}</option>
                   ))}
                 </select>

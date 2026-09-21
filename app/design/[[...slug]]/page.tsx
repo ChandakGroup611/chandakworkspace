@@ -46,5 +46,16 @@ export default async function DesignModulePage({ params }: PageProps) {
   const resolvedParams = await params;
   const slug = resolvedParams.slug || [];
 
-  return <DesignTrackingHost initialSlug={slug} />;
+  return (
+    <DesignTrackingHost 
+      initialSlug={slug}
+      currentUser={{
+        id: user.id,
+        email: user.email || "",
+        fullName: (user.user_metadata?.full_name as string) || user.email || "Personnel",
+        roleCode: (user.app_metadata?.role as string) || (allowed.isAdmin ? "SUPER_ADMIN" : "USER"),
+        isAdmin: !!allowed.isAdmin
+      }}
+    />
+  );
 }

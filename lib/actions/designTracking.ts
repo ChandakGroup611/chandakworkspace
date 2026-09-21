@@ -57,7 +57,8 @@ export async function fetchFullDesignTrackingState() {
       transmittalsRes,
       rfisRes,
       auditRes,
-      rbacRes
+      rbacRes,
+      userAccessRes
     ] = await Promise.all([
       supabase.from("design_projects").select("*").order("name"),
       supabase.from("design_towers").select("*"),
@@ -71,7 +72,8 @@ export async function fetchFullDesignTrackingState() {
       supabase.from("design_transmittals").select("*"),
       supabase.from("design_rfis").select("*"),
       supabase.from("design_matrix_audit_logs").select("*").order("timestamp", { ascending: false }).limit(100),
-      supabase.from("design_rbac_policies").select("*")
+      supabase.from("design_rbac_policies").select("*"),
+      supabase.from("design_user_access").select("*")
     ]);
 
     return {
@@ -89,7 +91,8 @@ export async function fetchFullDesignTrackingState() {
         transmittals: transmittalsRes.data || null,
         rfis: rfisRes.data || null,
         auditLogs: auditRes.data || null,
-        rbacPolicies: rbacRes.data || null
+        rbacPolicies: rbacRes.data || null,
+        userAccessList: userAccessRes.data || null
       }
     };
   } catch (error: any) {

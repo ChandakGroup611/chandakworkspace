@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { DesignMasterStore, MasterStoreState } from "../services/designMasterStore";
+import { ProjectMaster } from "../types/masterTypes";
 import { 
   Plus, 
   X, 
@@ -67,15 +68,20 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
   const [liaisonStatus, setLiaisonStatus] = useState<"Onboard" | "Fixed consultant" | "Not Onboard" | "Compliance Pending">("Onboard");
   const [liaisonRemarks, setLiaisonRemarks] = useState("");
 
+  // Accessible Projects Scoped to Active User
+  const accessibleProjects = useMemo(() => {
+    return DesignMasterStore.getUserAccessibleProjects();
+  }, [storeState.projects, storeState.userAccessList]);
+
   // Auto-select first project if available
   useEffect(() => {
-    if (storeState.projects.length > 0 && !pkgProjectId) {
-      const p = storeState.projects[0].id;
+    if (accessibleProjects.length > 0 && !pkgProjectId) {
+      const p = accessibleProjects[0].id;
       setPkgProjectId(p);
       setLaProjectId(p);
       setLiaisonProjectId(p);
     }
-  }, [storeState.projects, pkgProjectId]);
+  }, [accessibleProjects, pkgProjectId]);
 
   // Available towers for selected projects
   const pkgAvailableTowers = storeState.towers.filter(t => t.projectId === pkgProjectId);
@@ -236,7 +242,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                   className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
                 >
                   <option value="">Select Project</option>
-                  {storeState.projects.map(p => (
+                  {accessibleProjects.map((p: ProjectMaster) => (
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
                 </select>
@@ -380,7 +386,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                   className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
                 >
                   <option value="">Select Project</option>
-                  {storeState.projects.map(p => (
+                  {accessibleProjects.map((p: ProjectMaster) => (
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
                 </select>
@@ -467,7 +473,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                   className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
                 >
                   <option value="">Select Project</option>
-                  {storeState.projects.map(p => (
+                  {accessibleProjects.map((p: ProjectMaster) => (
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
                 </select>

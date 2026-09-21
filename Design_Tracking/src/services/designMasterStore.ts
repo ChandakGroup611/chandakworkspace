@@ -187,6 +187,106 @@ export interface MasterStoreState {
 export class DesignMasterStore {
   private static state: MasterStoreState | null = null;
   private static listeners: Set<() => void> = new Set();
+  private static currentUserId: string | null = null;
+  private static currentUserRole: string | null = null;
+
+  public static setCurrentUser(userId: string | null, roleCode: string | null = null) {
+    this.currentUserId = userId;
+    if (roleCode) this.currentUserRole = roleCode;
+  }
+
+  public static getCurrentUserId(): string | null {
+    return this.currentUserId;
+  }
+
+  public static getCurrentUserRole(): string | null {
+    return this.currentUserRole;
+  }
+
+  /**
+   * Resolves the list of projects accessible to a given user.
+   * If user has SPECIFIC / SELECTED_PROJECTS access, returns only assigned projects.
+   * If user has ALL / ALL_PROJECTS or is Admin, returns all master projects.
+   */
+  public static getUserAccessibleProjects(userId?: string | null): ProjectMaster[] {
+    const state = this.getState();
+    const allProjects = state.projects || [];
+    const uid = userId !== undefined ? userId : this.currentUserId;
+
+    if (!uid) {
+      return allProjects;
+    }
+
+    const currentRole = this.currentUserRole;
+    if (currentRole === "SUPER_ADMIN" || currentRole === "SUPER_ADMINISTRATOR" || currentRole === "DESIGN_ADMIN") {
+      return allProjects;
+    }
+
+    const access = (state.userAccessList || []).find(u => u.userId === uid);
+    if (!access) {
+      return allProjects;
+    }
+
+    if (access.designRole === "DESIGN_ADMIN" || access.designRole === "SUPER_ADMIN") {
+      return allProjects;
+    }
+
+    const accessType = (access.projectAccessType || "").toUpperCase();
+    if (accessType === "ALL" || accessType === "ALL_PROJECTS") {
+      return allProjects;
+    }
+
+    if (accessType === "SPECIFIC" || accessType === "SELECTED_PROJECTS") {
+      const assigned = access.assignedProjectIds || [];
+      if (assigned.length === 0) {
+        return [];
+      }
+      return allProjects.filter(p => {
+        return assigned.some(a => {
+          if (!a) return false;
+          const aLower = a.toLowerCase().trim();
+          return (
+            a === p.id ||
+            a === p.name ||
+            a === p.code ||
+            aLower === p.id.toLowerCase().trim() ||
+            aLower === p.name.toLowerCase().trim() ||
+            (p.code && aLower === p.code.toLowerCase().trim())
+          );
+        });
+      });
+    }
+
+    return allProjects;
+  }
+
+  /**
+   * Checks if a project (by ID, Name, or Code) is accessible to a user.
+   */
+  public static isProjectAccessible(projectIdOrName: string, userId?: string | null): boolean {
+    if (!projectIdOrName || projectIdOrName === "ALL") return true;
+    const accessible = this.getUserAccessibleProjects(userId);
+    const target = projectIdOrName.toLowerCase().trim();
+    return accessible.some(p => 
+      p.id.toLowerCase().trim() === target ||
+      p.name.toLowerCase().trim() === target ||
+      (p.code && p.code.toLowerCase().trim() === target)
+    );
+  }
+
+  /**
+   * Resolves towers accessible to the current user (optionally filtered by projectId)
+   */
+  public static getUserAccessibleTowers(userId?: string | null, projectId?: string): TowerMaster[] {
+    const accessibleProjects = this.getUserAccessibleProjects(userId);
+    const accessibleProjectIds = new Set(accessibleProjects.map(p => p.id));
+    const state = this.getState();
+    let towers = (state.towers || []).filter(t => accessibleProjectIds.has(t.projectId));
+    if (projectId && projectId !== "ALL") {
+      towers = towers.filter(t => t.projectId === projectId);
+    }
+    return towers;
+  }
 
   /**
    * Subscribe to store updates for reactive UI re-rendering

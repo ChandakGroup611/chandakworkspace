@@ -57,9 +57,27 @@ export function DesignRfiTracker() {
   const [resolvingRev, setResolvingRev] = useState("");
   const [replyError, setReplyError] = useState("");
 
-  const projects = DesignMasterStore.getProjects();
-  const drawings = DesignMasterStore.getDrawings();
-  const rfis = DesignMasterStore.getRfis();
+  const projects = useMemo(() => {
+    return DesignMasterStore.getUserAccessibleProjects();
+  }, []);
+
+  const accessibleProjectIds = useMemo(() => new Set(projects.map(p => p.id)), [projects]);
+
+  const rfis = useMemo(() => {
+    const all = DesignMasterStore.getRfis();
+    return all.filter(r => 
+      accessibleProjectIds.has(r.projectId) ||
+      projects.some(p => p.name.toLowerCase() === (r.projectName || "").toLowerCase())
+    );
+  }, [accessibleProjectIds, projects]);
+
+  const drawings = useMemo(() => {
+    const all = DesignMasterStore.getDrawings();
+    return all.filter(d => 
+      projects.some(p => p.name.toLowerCase() === (d.project || "").toLowerCase() || p.id === d.project)
+    );
+  }, [projects]);
+
   const consultants = DesignMasterStore.getConsultants();
 
   const projectFilterOptions = useMemo(() => {

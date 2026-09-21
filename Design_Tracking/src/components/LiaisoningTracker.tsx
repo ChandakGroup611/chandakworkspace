@@ -48,7 +48,9 @@ export const LiaisoningTracker: React.FC = () => {
     return unsubscribe;
   }, []);
 
-  const projects = storeState.projects;
+  const projects = useMemo(() => {
+    return DesignMasterStore.getUserAccessibleProjects();
+  }, [storeState.projects, storeState.userAccessList]);
   const towers = storeState.towers;
   const authorities = storeState.authorities;
   const statutoryClearances = storeState.statutoryClearances;

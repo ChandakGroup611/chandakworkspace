@@ -16,7 +16,7 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
   onClose,
   onDrawingUploaded
 }) => {
-  const projects = DesignMasterStore.getProjects();
+  const projects = DesignMasterStore.getUserAccessibleProjects();
   const [code, setCode] = useState("");
   const [title, setTitle] = useState("");
   const [discipline, setDiscipline] = useState<DesignDiscipline>("Architectural");
