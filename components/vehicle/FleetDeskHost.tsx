@@ -100,7 +100,13 @@ import {
   DriverRecord,
   TripRecord,
   MaintenanceRecord,
-  InsuranceVendorRecord
+  InsuranceVendorRecord,
+  PartAccessoryRecord,
+  fetchVehiclePartsList,
+  createVehiclePartAction,
+  updateVehiclePartAction,
+  deleteVehiclePartAction,
+  renewPartPolicyAction
 } from "@/lib/actions/vehicle";
 
 export const MAINTENANCE_CATEGORIES = [
@@ -220,9 +226,64 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   const [vendorFormWebsite, setVendorFormWebsite] = useState("");
   const [vendorFormDesc, setVendorFormDesc] = useState("");
 
+  // Parts & Accessories Data & Filter States
+  const [parts, setParts] = useState<PartAccessoryRecord[]>([]);
+  const [partsSearch, setPartsSearch] = useState("");
+  const [partsItemTypeFilter, setPartsItemTypeFilter] = useState("ALL");
+  const [partsExpiryFilter, setPartsExpiryFilter] = useState("ALL");
+
+  // Parts Modal States
+  const [isAddPartOpen, setIsAddPartOpen] = useState(false);
+  const [isEditPartOpen, setIsEditPartOpen] = useState(false);
+  const [selectedPartForEdit, setSelectedPartForEdit] = useState<PartAccessoryRecord | null>(null);
+  const [isRenewPartOpen, setIsRenewPartOpen] = useState(false);
+  const [selectedPartForRenew, setSelectedPartForRenew] = useState<PartAccessoryRecord | null>(null);
+
+  // Parts Form States
+  const [partFormName, setPartFormName] = useState("");
+  const [partFormItemType, setPartFormItemType] = useState("SPARE_PART");
+  const [partFormPartNumber, setPartFormPartNumber] = useState("");
+  const [partFormCategory, setPartFormCategory] = useState("Spare Parts");
+  const [partFormBrand, setPartFormBrand] = useState("");
+  const [partFormPurchaseAmount, setPartFormPurchaseAmount] = useState<number>(0);
+  const [partFormUnitPrice, setPartFormUnitPrice] = useState<number>(0);
+  const [partFormQuantity, setPartFormQuantity] = useState<number>(1);
+  const [partFormPurchaseDate, setPartFormPurchaseDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [partFormVendorName, setPartFormVendorName] = useState("");
+  const [partFormInvoiceNumber, setPartFormInvoiceNumber] = useState("");
+  const [partFormManufacturingDate, setPartFormManufacturingDate] = useState("");
+  const [partFormExpiryDate, setPartFormExpiryDate] = useState("");
+  const [partFormWarrantyType, setPartFormWarrantyType] = useState("WARRANTY");
+  const [partFormWarrantyMonths, setPartFormWarrantyMonths] = useState<number>(12);
+  const [partFormWarrantyExpiryDate, setPartFormWarrantyExpiryDate] = useState("");
+  const [partFormWarrantyTerms, setPartFormWarrantyTerms] = useState("");
+  const [partFormHasRenewal, setPartFormHasRenewal] = useState(false);
+  const [partFormRenewalType, setPartFormRenewalType] = useState("GPS_SIM_RECHARGE");
+  const [partFormRenewalDate, setPartFormRenewalDate] = useState("");
+  const [partFormRenewalCost, setPartFormRenewalCost] = useState<number>(0);
+  const [partFormRenewalVendor, setPartFormRenewalVendor] = useState("");
+  const [partFormRenewalPolicyNumber, setPartFormRenewalPolicyNumber] = useState("");
+  const [partFormRenewalReminderDays, setPartFormRenewalReminderDays] = useState<number>(30);
+  const [partFormStatus, setPartFormStatus] = useState("IN_STOCK");
+  const [partFormVehicleId, setPartFormVehicleId] = useState("UNASSIGNED_STOCK");
+  const [partFormAssignedVehicleReg, setPartFormAssignedVehicleReg] = useState("");
+  const [partFormInstallationDate, setPartFormInstallationDate] = useState("");
+  const [partFormInstalledOdometer, setPartFormInstalledOdometer] = useState<number | "">("");
+  const [partFormInstalledBy, setPartFormInstalledBy] = useState("");
+  const [partFormCondition, setPartFormCondition] = useState("NEW");
+  const [partFormSerialNumber, setPartFormSerialNumber] = useState("");
+  const [partFormNotes, setPartFormNotes] = useState("");
+
+  // Renew Modal Form States
+  const [renewModalDate, setRenewModalDate] = useState("");
+  const [renewModalCost, setRenewModalCost] = useState<number>(0);
+  const [renewModalVendor, setRenewModalVendor] = useState("");
+  const [renewModalPolicyNumber, setRenewModalPolicyNumber] = useState("");
+  const [renewModalNotes, setRenewModalNotes] = useState("");
+
   // Generic Delete Confirmation Dialog State
   const [deleteTarget, setDeleteTarget] = useState<{
-    type: "vehicle" | "driver" | "trip" | "maintenance" | "vendor";
+    type: "vehicle" | "driver" | "trip" | "maintenance" | "vendor" | "part";
     id: string;
     label: string;
   } | null>(null);
@@ -537,13 +598,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       if (!isSilent) setLoading(true);
       else setRefreshing(true);
 
-      const [statsRes, vehiclesRes, driversRes, tripsRes, maintRes, vendorsRes] = await Promise.all([
+      const [statsRes, vehiclesRes, driversRes, tripsRes, maintRes, vendorsRes, partsRes] = await Promise.all([
         fetchVehicleDashboardStats(),
         fetchVehiclesList({ pageSize: 100 }),
         fetchDriversList(),
         fetchTripsList(),
         fetchMaintenanceList(),
-        fetchInsuranceVendorsListAction()
+        fetchInsuranceVendorsListAction(),
+        fetchVehiclePartsList()
       ]);
 
       if (statsRes.success) setStats(statsRes.stats);
@@ -552,6 +614,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       if (tripsRes.success) setTrips(tripsRes.trips);
       if (maintRes.success) setMaintenance(maintRes.records);
       if (vendorsRes.success) setInsuranceVendors(vendorsRes.vendors);
+      if (partsRes.success && partsRes.parts) setParts(partsRes.parts);
 
       if (vehiclesRes.error && !isSilent) {
         setErrorBanner(vehiclesRes.error);
@@ -1343,6 +1406,216 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   };
 
   // ----------------------------------------------------------------------------
+  // CRUD Handlers: PARTS & ACCESSORIES (Dates, Expiries & Renewal Policies)
+  // ----------------------------------------------------------------------------
+
+  const openCreatePartModal = () => {
+    setSelectedPartForEdit(null);
+    setPartFormName("");
+    setPartFormItemType("SPARE_PART");
+    setPartFormPartNumber("");
+    setPartFormCategory("Spare Parts");
+    setPartFormBrand("");
+    setPartFormPurchaseAmount(0);
+    setPartFormUnitPrice(0);
+    setPartFormQuantity(1);
+    setPartFormPurchaseDate(new Date().toISOString().split("T")[0]);
+    setPartFormVendorName("");
+    setPartFormInvoiceNumber("");
+    setPartFormManufacturingDate("");
+    setPartFormExpiryDate("");
+    setPartFormWarrantyType("WARRANTY");
+    setPartFormWarrantyMonths(12);
+    const nextYr = new Date();
+    nextYr.setFullYear(nextYr.getFullYear() + 1);
+    setPartFormWarrantyExpiryDate(nextYr.toISOString().split("T")[0]);
+    setPartFormWarrantyTerms("Standard Manufacturer OEM Warranty");
+    setPartFormHasRenewal(false);
+    setPartFormRenewalType("GPS_SIM_RECHARGE");
+    setPartFormRenewalDate("");
+    setPartFormRenewalCost(0);
+    setPartFormRenewalVendor("");
+    setPartFormRenewalPolicyNumber("");
+    setPartFormRenewalReminderDays(30);
+    setPartFormStatus("IN_STOCK");
+    setPartFormVehicleId("UNASSIGNED_STOCK");
+    setPartFormAssignedVehicleReg("");
+    setPartFormInstallationDate("");
+    setPartFormInstalledOdometer("");
+    setPartFormInstalledBy("");
+    setPartFormCondition("NEW");
+    setPartFormSerialNumber("");
+    setPartFormNotes("");
+    setIsAddPartOpen(true);
+  };
+
+  const openEditPartModal = (part: PartAccessoryRecord) => {
+    setSelectedPartForEdit(part);
+    setPartFormName(part.name || "");
+    setPartFormItemType(part.item_type || "SPARE_PART");
+    setPartFormPartNumber(part.part_number || "");
+    setPartFormCategory(part.category || "Spare Parts");
+    setPartFormBrand(part.brand || "");
+    setPartFormPurchaseAmount(part.purchase_amount || 0);
+    setPartFormUnitPrice(part.unit_price || 0);
+    setPartFormQuantity(part.quantity || 1);
+    setPartFormPurchaseDate(part.purchase_date ? part.purchase_date.split("T")[0] : "");
+    setPartFormVendorName(part.vendor_name || "");
+    setPartFormInvoiceNumber(part.invoice_number || "");
+    setPartFormManufacturingDate(part.manufacturing_date ? part.manufacturing_date.split("T")[0] : "");
+    setPartFormExpiryDate(part.expiry_date ? part.expiry_date.split("T")[0] : "");
+    setPartFormWarrantyType(part.warranty_type || "WARRANTY");
+    setPartFormWarrantyMonths(part.warranty_months || 0);
+    setPartFormWarrantyExpiryDate(part.warranty_expiry_date ? part.warranty_expiry_date.split("T")[0] : "");
+    setPartFormWarrantyTerms(part.warranty_terms || "");
+    setPartFormHasRenewal(Boolean(part.has_renewal_policy));
+    setPartFormRenewalType(part.renewal_policy_type || "GPS_SIM_RECHARGE");
+    setPartFormRenewalDate(part.renewal_date ? part.renewal_date.split("T")[0] : "");
+    setPartFormRenewalCost(part.renewal_cost || 0);
+    setPartFormRenewalVendor(part.renewal_vendor || "");
+    setPartFormRenewalPolicyNumber(part.renewal_policy_number || "");
+    setPartFormRenewalReminderDays(part.renewal_reminder_days || 30);
+    setPartFormStatus(part.status || "IN_STOCK");
+    setPartFormVehicleId(part.vehicle_id || "UNASSIGNED_STOCK");
+    setPartFormAssignedVehicleReg(part.assigned_vehicle_reg || "");
+    setPartFormInstallationDate(part.installation_date ? part.installation_date.split("T")[0] : "");
+    setPartFormInstalledOdometer(part.installed_odometer_km ?? "");
+    setPartFormInstalledBy(part.installed_by || "");
+    setPartFormCondition(part.condition || "NEW");
+    setPartFormSerialNumber(part.serial_number || "");
+    setPartFormNotes(part.notes || "");
+    setIsEditPartOpen(true);
+  };
+
+  const handleSavePart = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!partFormName.trim()) {
+      triggerToast("Part / Accessory name is required.", true);
+      return;
+    }
+    if (!partFormBrand.trim()) {
+      triggerToast("Brand / Manufacturer is required.", true);
+      return;
+    }
+
+    setModalSubmitting(true);
+    try {
+      let assignedReg = partFormAssignedVehicleReg;
+      if (partFormVehicleId && partFormVehicleId !== "UNASSIGNED_STOCK") {
+        const matchedVeh = vehicles.find((v) => v.id === partFormVehicleId);
+        if (matchedVeh) assignedReg = matchedVeh.registration_number;
+      } else {
+        assignedReg = "";
+      }
+
+      const totalAmt = Number(partFormPurchaseAmount) || (Number(partFormUnitPrice) * Number(partFormQuantity)) || 0;
+
+      const payload = {
+        name: partFormName.trim(),
+        item_type: partFormItemType,
+        part_number: partFormPartNumber.trim() || undefined,
+        category: partFormCategory.trim() || "Spare Parts",
+        brand: partFormBrand.trim(),
+        purchase_amount: totalAmt,
+        unit_price: Number(partFormUnitPrice) || undefined,
+        quantity: Number(partFormQuantity) || 1,
+        purchase_date: partFormPurchaseDate || new Date().toISOString().split("T")[0],
+        vendor_name: partFormVendorName.trim() || "OEM / Direct Store",
+        invoice_number: partFormInvoiceNumber.trim() || undefined,
+        manufacturing_date: partFormManufacturingDate || undefined,
+        expiry_date: partFormExpiryDate || undefined,
+        warranty_type: partFormWarrantyType,
+        warranty_months: Number(partFormWarrantyMonths) || 0,
+        warranty_expiry_date: partFormWarrantyExpiryDate || undefined,
+        warranty_terms: partFormWarrantyTerms.trim() || undefined,
+        has_renewal_policy: partFormHasRenewal,
+        renewal_policy_type: partFormHasRenewal ? partFormRenewalType : undefined,
+        renewal_date: partFormHasRenewal ? partFormRenewalDate || undefined : undefined,
+        renewal_cost: partFormHasRenewal ? Number(partFormRenewalCost) || 0 : undefined,
+        renewal_vendor: partFormHasRenewal ? partFormRenewalVendor.trim() || undefined : undefined,
+        renewal_policy_number: partFormHasRenewal ? partFormRenewalPolicyNumber.trim() || undefined : undefined,
+        renewal_reminder_days: partFormHasRenewal ? Number(partFormRenewalReminderDays) || 30 : undefined,
+        status: partFormVehicleId && partFormVehicleId !== "UNASSIGNED_STOCK" ? "INSTALLED" : partFormStatus,
+        vehicle_id: partFormVehicleId || "UNASSIGNED_STOCK",
+        assigned_vehicle_reg: assignedReg || undefined,
+        installation_date: partFormInstallationDate || undefined,
+        installed_odometer_km: partFormInstalledOdometer !== "" ? Number(partFormInstalledOdometer) : undefined,
+        installed_by: partFormInstalledBy.trim() || undefined,
+        condition: partFormCondition,
+        serial_number: partFormSerialNumber.trim() || undefined,
+        notes: partFormNotes.trim() || undefined
+      };
+
+      let res;
+      if (selectedPartForEdit) {
+        res = await updateVehiclePartAction(selectedPartForEdit.id, payload);
+      } else {
+        res = await createVehiclePartAction(payload);
+      }
+
+      if (res.success) {
+        triggerToast(`Part '${payload.name}' saved successfully!`);
+        setIsAddPartOpen(false);
+        setIsEditPartOpen(false);
+        setSelectedPartForEdit(null);
+        loadAllData(true);
+      } else {
+        triggerToast(res.error || "Failed to save part record.", true);
+      }
+    } catch (err: any) {
+      triggerToast(err.message || "Failed to save part record.", true);
+    } finally {
+      setModalSubmitting(false);
+    }
+  };
+
+  const openRenewPartModal = (part: PartAccessoryRecord) => {
+    setSelectedPartForRenew(part);
+    const curDate = part.renewal_date ? new Date(part.renewal_date) : new Date();
+    const nextDate = new Date(curDate);
+    nextDate.setFullYear(nextDate.getFullYear() + 1);
+    setRenewModalDate(nextDate.toISOString().split("T")[0]);
+    setRenewModalCost(part.renewal_cost || 0);
+    setRenewModalVendor(part.renewal_vendor || part.vendor_name || "");
+    setRenewModalPolicyNumber(part.renewal_policy_number || "");
+    setRenewModalNotes("");
+    setIsRenewPartOpen(true);
+  };
+
+  const handleSaveRenewal = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPartForRenew) return;
+    if (!renewModalDate) {
+      triggerToast("New renewal date is required.", true);
+      return;
+    }
+
+    setModalSubmitting(true);
+    try {
+      const res = await renewPartPolicyAction(selectedPartForRenew.id, {
+        new_renewal_date: renewModalDate,
+        renewal_cost: Number(renewModalCost) || 0,
+        renewal_vendor: renewModalVendor.trim() || undefined,
+        policy_number: renewModalPolicyNumber.trim() || undefined,
+        notes: renewModalNotes.trim() || undefined
+      });
+
+      if (res.success) {
+        triggerToast(`Policy for '${selectedPartForRenew.name}' renewed until ${renewModalDate}!`);
+        setIsRenewPartOpen(false);
+        setSelectedPartForRenew(null);
+        loadAllData(true);
+      } else {
+        triggerToast(res.error || "Failed to renew policy.", true);
+      }
+    } catch (err: any) {
+      triggerToast(err.message || "Failed to renew policy.", true);
+    } finally {
+      setModalSubmitting(false);
+    }
+  };
+
+  // ----------------------------------------------------------------------------
   // Generic Delete Action Handler
   // ----------------------------------------------------------------------------
 
@@ -1360,6 +1633,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         res = await deleteTripAction(deleteTarget.id);
       } else if (deleteTarget.type === "vendor") {
         res = await deleteInsuranceVendorAction(deleteTarget.id);
+      } else if (deleteTarget.type === "part") {
+        res = await deleteVehiclePartAction(deleteTarget.id);
       } else {
         res = await deleteServiceRecordAction(deleteTarget.id);
       }
@@ -1427,6 +1702,69 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         m.service_center.toLowerCase().includes(q);
     });
   }, [maintenance, searchQuery]);
+
+  const filteredParts = useMemo(() => {
+    return parts.filter((p) => {
+      const q = partsSearch.toLowerCase().trim();
+      const matchesSearch =
+        !q ||
+        p.name.toLowerCase().includes(q) ||
+        (p.part_number && p.part_number.toLowerCase().includes(q)) ||
+        p.brand.toLowerCase().includes(q) ||
+        (p.serial_number && p.serial_number.toLowerCase().includes(q)) ||
+        (p.assigned_vehicle_reg && p.assigned_vehicle_reg.toLowerCase().includes(q)) ||
+        (p.vendor_name && p.vendor_name.toLowerCase().includes(q)) ||
+        (p.renewal_vendor && p.renewal_vendor.toLowerCase().includes(q));
+
+      const matchesType = partsItemTypeFilter === "ALL" || p.item_type === partsItemTypeFilter;
+
+      let matchesExpiry = true;
+      if (partsExpiryFilter === "ACTIVE_WARRANTY") {
+        matchesExpiry = (p.warranty_days_remaining ?? -1) > 0;
+      } else if (partsExpiryFilter === "EXPIRING_SOON") {
+        matchesExpiry =
+          (p.warranty_days_remaining !== null && p.warranty_days_remaining !== undefined && p.warranty_days_remaining >= 0 && p.warranty_days_remaining <= 30) ||
+          (p.expiry_days_remaining !== null && p.expiry_days_remaining !== undefined && p.expiry_days_remaining >= 0 && p.expiry_days_remaining <= 30);
+      } else if (partsExpiryFilter === "EXPIRED") {
+        matchesExpiry =
+          (p.warranty_days_remaining !== null && p.warranty_days_remaining !== undefined && p.warranty_days_remaining < 0) ||
+          (p.expiry_days_remaining !== null && p.expiry_days_remaining !== undefined && p.expiry_days_remaining < 0);
+      } else if (partsExpiryFilter === "RENEWAL_DUE") {
+        matchesExpiry = Boolean(p.has_renewal_policy && p.renewal_days_remaining !== null && p.renewal_days_remaining !== undefined && p.renewal_days_remaining <= 30);
+      } else if (partsExpiryFilter === "IN_STOCK") {
+        matchesExpiry = p.status === "IN_STOCK" || !p.vehicle_id || p.vehicle_id === "UNASSIGNED_STOCK";
+      } else if (partsExpiryFilter === "INSTALLED") {
+        matchesExpiry = p.status === "INSTALLED" || (Boolean(p.vehicle_id) && p.vehicle_id !== "UNASSIGNED_STOCK");
+      }
+
+      return matchesSearch && matchesType && matchesExpiry;
+    });
+  }, [parts, partsSearch, partsItemTypeFilter, partsExpiryFilter]);
+
+  const partsKpis = useMemo(() => {
+    const totalCount = parts.length;
+    const totalValuation = parts.reduce(
+      (sum, p) => sum + (Number(p.purchase_amount) || (Number(p.unit_price) * Number(p.quantity)) || 0),
+      0
+    );
+    const activeWarranties = parts.filter((p) => (p.warranty_days_remaining ?? -1) > 0).length;
+    const expiringSoon = parts.filter(
+      (p) =>
+        (p.warranty_days_remaining !== null && p.warranty_days_remaining !== undefined && p.warranty_days_remaining >= 0 && p.warranty_days_remaining <= 30) ||
+        (p.expiry_days_remaining !== null && p.expiry_days_remaining !== undefined && p.expiry_days_remaining >= 0 && p.expiry_days_remaining <= 30)
+    ).length;
+    const renewalsDue = parts.filter(
+      (p) => p.has_renewal_policy && p.renewal_days_remaining !== null && p.renewal_days_remaining !== undefined && p.renewal_days_remaining <= 30
+    ).length;
+    const installed = parts.filter(
+      (p) => p.status === "INSTALLED" || (Boolean(p.vehicle_id) && p.vehicle_id !== "UNASSIGNED_STOCK")
+    ).length;
+    const inStock = parts.filter(
+      (p) => p.status === "IN_STOCK" || !p.vehicle_id || p.vehicle_id === "UNASSIGNED_STOCK"
+    ).length;
+
+    return { totalCount, totalValuation, activeWarranties, expiringSoon, renewalsDue, installed, inStock };
+  }, [parts]);
 
   // Map of vehicleId to Vehicle for quick lookups
   const vehicleMap = useMemo(() => {
@@ -4115,61 +4453,528 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       )}
 
       {/* ---------------------------------------------------------------------- */}
-      {/* PARTS & CONSUMABLES TAB */}
+      {/* PARTS & CONSUMABLES TAB — ENHANCED DATES, EXPIRIES & RENEWAL POLICIES */}
       {/* ---------------------------------------------------------------------- */}
       {activeTab === "parts" && (
         <div className="space-y-6">
+          {/* Header Card */}
           <AppCard className="border-border shadow-xs">
             <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <AppCardTitle className="text-lg flex items-center gap-2">
                   <Package className="h-5 w-5 text-amber-500" />
-                  <span>Parts & Consumables Inventory Catalog</span>
+                  <span>Parts, Accessories & Consumables Master</span>
                 </AppCardTitle>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Standardized replacement parts, lubricants, and workshop consumable intervals
+                  Complete lifecycle tracking for purchase dates, DOM shelf-life, OEM warranty expirations, and recurring renewal policies
                 </p>
               </div>
-              <AppButton
-                variant="primary"
-                size="sm"
-                onClick={() => setIsAddMaintenanceOpen(true)}
-                className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs"
-              >
-                <Wrench className="h-4 w-4" />
-                <span>Log Replacement</span>
-              </AppButton>
+              <div className="flex items-center gap-2 self-stretch sm:self-auto">
+                <AppButton
+                  variant="outline"
+                  size="sm"
+                  onClick={() => loadAllData(true)}
+                  disabled={refreshing}
+                  className="text-xs h-9 font-medium gap-1.5"
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
+                  <span className="hidden sm:inline">Refresh</span>
+                </AppButton>
+                <AppButton
+                  variant="primary"
+                  size="sm"
+                  onClick={openCreatePartModal}
+                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs flex-1 sm:flex-none justify-center"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Register Part / Accessory</span>
+                </AppButton>
+              </div>
             </AppCardHeader>
-            <AppCardContent className="p-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {[
-                  { name: "Full Synthetic Engine Oil", code: "LUB-SYN-5W30", category: "Fluids", interval: "Every 10,000 km", status: "In Stock", stock: "45 Liters" },
-                  { name: "All-Season Radial Tyres (R16)", code: "TYR-215-60R16", category: "Tyres", interval: "Every 45,000 km", status: "In Stock", stock: "8 Units" },
-                  { name: "Ceramic Front Brake Pads", code: "BRK-PAD-OEM-F", category: "Braking", interval: "Every 20,000 km", status: "Low Stock", stock: "2 Sets" },
-                  { name: "High-Crank AGM Battery 65Ah", code: "BAT-AGM-12V65", category: "Electrical", interval: "Every 36 Months", status: "In Stock", stock: "4 Units" },
-                  { name: "OEM Engine Air Filter", code: "FLT-ENG-AIR-01", category: "Filters", interval: "Every 10,000 km", status: "In Stock", stock: "12 Units" },
-                  { name: "Heavy Duty Glycol Coolant", code: "CLT-GLY-5050", category: "Fluids", interval: "Every 40,000 km", status: "In Stock", stock: "30 Liters" }
-                ].map(part => (
-                  <div key={part.code} className="p-4 rounded-xl border border-border/70 bg-surface space-y-3 shadow-2xs hover:border-theme-btn-primary/40 transition-colors">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <span className="text-[10px] font-mono font-bold text-muted-foreground uppercase tracking-wider">{part.category}</span>
-                        <h4 className="text-sm font-bold text-foreground mt-0.5">{part.name}</h4>
-                        <span className="text-[11px] font-mono text-muted-foreground">{part.code}</span>
-                      </div>
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                        part.status === "In Stock" ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20" : "bg-amber-500/10 text-amber-600 border border-amber-500/20"
-                      }`}>
-                        {part.status}
-                      </span>
-                    </div>
-                    <div className="pt-2 border-t border-border/50 flex items-center justify-between text-xs text-muted-foreground">
-                      <span>Interval: <strong className="text-foreground">{part.interval}</strong></span>
-                      <span className="font-mono font-semibold text-foreground">{part.stock}</span>
-                    </div>
+
+            {/* KPI Summary Strip */}
+            <AppCardContent className="p-4 bg-slate-50/40 dark:bg-slate-900/30 border-b border-border/50">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                <div className="p-3 rounded-xl border border-border/60 bg-surface shadow-2xs">
+                  <div className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1.5">
+                    <Package className="h-3.5 w-3.5 text-blue-500" />
+                    <span>Total Inventory</span>
                   </div>
+                  <div className="mt-1 flex items-baseline gap-2">
+                    <span className="text-lg font-bold font-mono text-foreground">{partsKpis.totalCount}</span>
+                    <span className="text-[10px] text-muted-foreground">items</span>
+                  </div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5 font-medium">
+                    {partsKpis.installed} in fleet • {partsKpis.inStock} stock
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl border border-border/60 bg-surface shadow-2xs">
+                  <div className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1.5">
+                    <Receipt className="h-3.5 w-3.5 text-emerald-500" />
+                    <span>Total Valuation</span>
+                  </div>
+                  <div className="mt-1 flex items-baseline gap-1">
+                    <span className="text-lg font-bold font-mono text-emerald-600 dark:text-emerald-400">
+                      ₹{partsKpis.totalValuation.toLocaleString("en-IN")}
+                    </span>
+                  </div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5">Procurement asset value</div>
+                </div>
+
+                <div className="p-3 rounded-xl border border-border/60 bg-surface shadow-2xs">
+                  <div className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1.5">
+                    <ShieldCheck className="h-3.5 w-3.5 text-indigo-500" />
+                    <span>Active Warranties</span>
+                  </div>
+                  <div className="mt-1 flex items-baseline gap-2">
+                    <span className="text-lg font-bold font-mono text-indigo-600 dark:text-indigo-400">
+                      {partsKpis.activeWarranties}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">covered</span>
+                  </div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5">Valid OEM protection</div>
+                </div>
+
+                <div className="p-3 rounded-xl border border-border/60 bg-surface shadow-2xs">
+                  <div className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                    <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                    <span>Expiring Soon (≤30d)</span>
+                  </div>
+                  <div className="mt-1 flex items-baseline gap-2">
+                    <span className="text-lg font-bold font-mono text-amber-600 dark:text-amber-400">
+                      {partsKpis.expiringSoon}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">alerts</span>
+                  </div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5">Warranty & shelf-life</div>
+                </div>
+
+                <div className="p-3 rounded-xl border border-border/60 bg-surface shadow-2xs">
+                  <div className="text-[11px] font-semibold text-cyan-700 dark:text-cyan-400 flex items-center gap-1.5">
+                    <Zap className="h-3.5 w-3.5 text-cyan-500" />
+                    <span>Renewals Due</span>
+                  </div>
+                  <div className="mt-1 flex items-baseline gap-2">
+                    <span className="text-lg font-bold font-mono text-cyan-600 dark:text-cyan-400">
+                      {partsKpis.renewalsDue}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">due</span>
+                  </div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5">SIMs, AMC & Subscriptions</div>
+                </div>
+
+                <div className="p-3 rounded-xl border border-border/60 bg-surface shadow-2xs">
+                  <div className="text-[11px] font-semibold text-purple-700 dark:text-purple-400 flex items-center gap-1.5">
+                    <Wrench className="h-3.5 w-3.5 text-purple-500" />
+                    <span>Installed in Fleet</span>
+                  </div>
+                  <div className="mt-1 flex items-baseline gap-2">
+                    <span className="text-lg font-bold font-mono text-purple-600 dark:text-purple-400">
+                      {partsKpis.installed}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">units</span>
+                  </div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5">Active on vehicles</div>
+                </div>
+              </div>
+            </AppCardContent>
+
+            {/* Filter Bar & Tabs */}
+            <div className="p-4 border-b border-border/50 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+              <div className="flex flex-1 items-center gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <AppInput
+                    placeholder="Search by part name, brand, SKU/part #, serial/IMEI, vehicle plate..."
+                    value={partsSearch}
+                    onChange={(e) => setPartsSearch(e.target.value)}
+                    className="pl-9 text-xs h-9"
+                  />
+                  {partsSearch && (
+                    <button
+                      onClick={() => setPartsSearch("")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                <select
+                  value={partsItemTypeFilter}
+                  onChange={(e) => setPartsItemTypeFilter(e.target.value)}
+                  className="h-9 text-xs px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                >
+                  <option value="ALL">All Item Types</option>
+                  <option value="SPARE_PART">Spare Parts</option>
+                  <option value="ACCESSORY">Accessories</option>
+                  <option value="CONSUMABLE">Consumables & Fluids</option>
+                  <option value="TYRE">Tyres & Wheels</option>
+                  <option value="BATTERY">Batteries & Electrical</option>
+                  <option value="GPS_DEVICE">GPS & Telematics</option>
+                  <option value="DASHCAM">Dashcam & Vision</option>
+                  <option value="TOOL">Workshop Tools</option>
+                </select>
+              </div>
+
+              {/* Expiry / Lifecycle Filter Pills */}
+              <div className="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+                {[
+                  { id: "ALL", label: `All (${parts.length})` },
+                  { id: "ACTIVE_WARRANTY", label: `Active Warranty (${partsKpis.activeWarranties})` },
+                  { id: "EXPIRING_SOON", label: `Expiring Soon (${partsKpis.expiringSoon})` },
+                  { id: "RENEWAL_DUE", label: `Renewal Due (${partsKpis.renewalsDue})` },
+                  { id: "IN_STOCK", label: `In Stock (${partsKpis.inStock})` },
+                  { id: "INSTALLED", label: `Installed (${partsKpis.installed})` }
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setPartsExpiryFilter(tab.id)}
+                    className={`px-2.5 py-1 text-[11px] font-semibold rounded-lg shrink-0 transition-colors ${
+                      partsExpiryFilter === tab.id
+                        ? "bg-theme-btn-primary text-white shadow-2xs"
+                        : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
                 ))}
               </div>
+            </div>
+
+            {/* Inventory Table */}
+            <AppCardContent className="p-0">
+              <AppTableContainer className="rounded-none border-none">
+                <AppTable className="w-full text-left text-xs">
+                  <AppTableHeader className="bg-slate-50 dark:bg-slate-900/60 border-b border-border text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                    <AppTableRow>
+                      <AppTableHead className="p-3.5">Part & Identity</AppTableHead>
+                      <AppTableHead className="p-3.5">Procurement & Age</AppTableHead>
+                      <AppTableHead className="p-3.5">DOM & Shelf Expiry</AppTableHead>
+                      <AppTableHead className="p-3.5">OEM Warranty Status</AppTableHead>
+                      <AppTableHead className="p-3.5">Renewal Policy & Due Date</AppTableHead>
+                      <AppTableHead className="p-3.5">Assigned Vehicle / Stock</AppTableHead>
+                      <AppTableHead className="p-3.5 text-right">Actions</AppTableHead>
+                    </AppTableRow>
+                  </AppTableHeader>
+                  <AppTableBody className="divide-y divide-border/60">
+                    {filteredParts.length === 0 ? (
+                      <AppTableRow>
+                        <AppTableCell colSpan={7} className="text-center py-12 text-muted-foreground">
+                          <Package className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
+                          <p className="font-semibold text-sm text-foreground">No parts or accessories found</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {partsSearch || partsItemTypeFilter !== "ALL" || partsExpiryFilter !== "ALL"
+                              ? "Try adjusting your search terms or filter selection."
+                              : "Get started by registering spare parts, batteries, lubricants, or telematics accessories."}
+                          </p>
+                          <AppButton
+                            variant="primary"
+                            size="sm"
+                            onClick={openCreatePartModal}
+                            className="mt-3 bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs font-semibold gap-1.5"
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                            <span>Add New Part</span>
+                          </AppButton>
+                        </AppTableCell>
+                      </AppTableRow>
+                    ) : (
+                      filteredParts.map((part) => {
+                        const totalCost = Number(part.purchase_amount) || (Number(part.unit_price || 0) * Number(part.quantity || 1));
+
+                        // Render Warranty Countdown Badge
+                        const renderWarrantyCountdown = () => {
+                          const wDays = part.warranty_days_remaining;
+                          if (wDays === null || wDays === undefined) {
+                            return <span className="text-[11px] text-muted-foreground italic">No Warranty Set</span>;
+                          }
+                          if (wDays < 0) {
+                            return (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/25 inline-flex items-center gap-1">
+                                <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
+                                <span>Expired {Math.abs(wDays)}d ago</span>
+                              </span>
+                            );
+                          }
+                          if (wDays === 0) {
+                            return (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25 inline-flex items-center gap-1">
+                                <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                                <span>Expires Today</span>
+                              </span>
+                            );
+                          }
+                          if (wDays <= 30) {
+                            return (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25 inline-flex items-center gap-1">
+                                <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                                <span>Expires in {wDays}d</span>
+                              </span>
+                            );
+                          }
+                          return (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 inline-flex items-center gap-1">
+                              <ShieldCheck className="h-3 w-3" />
+                              <span>{wDays}d remaining</span>
+                            </span>
+                          );
+                        };
+
+                        // Render Shelf-Life Expiry Countdown Badge
+                        const renderShelfExpiryCountdown = () => {
+                          const eDays = part.expiry_days_remaining;
+                          if (!part.expiry_date) {
+                            return <span className="text-[11px] text-muted-foreground">—</span>;
+                          }
+                          if (eDays === null || eDays === undefined) return null;
+
+                          if (eDays < 0) {
+                            return (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/25 inline-flex items-center gap-1">
+                                <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
+                                <span>Expired {Math.abs(eDays)}d ago</span>
+                              </span>
+                            );
+                          }
+                          if (eDays === 0) {
+                            return (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25 inline-flex items-center gap-1">
+                                <span>Expires Today</span>
+                              </span>
+                            );
+                          }
+                          if (eDays <= 30) {
+                            return (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25 inline-flex items-center gap-1">
+                                <span>Expires in {eDays}d</span>
+                              </span>
+                            );
+                          }
+                          return (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 inline-flex items-center gap-1">
+                              <span>Expires in {eDays}d</span>
+                            </span>
+                          );
+                        };
+
+                        // Render Renewal Policy Badge
+                        const renderRenewalPolicyBadge = () => {
+                          if (!part.has_renewal_policy && !part.renewal_date) {
+                            return <span className="text-[11px] text-muted-foreground">One-time / No Policy</span>;
+                          }
+                          const rDays = part.renewal_days_remaining;
+
+                          return (
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-1.5">
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20">
+                                  {part.renewal_policy_type || "Recurring Renewal"}
+                                </span>
+                              </div>
+                              <div className="text-xs font-mono font-bold text-foreground">
+                                Due: {part.renewal_date || "—"}
+                              </div>
+                              {rDays !== null && rDays !== undefined && (
+                                <div>
+                                  {rDays < 0 ? (
+                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/25 inline-flex items-center gap-1">
+                                      <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
+                                      <span>Overdue {Math.abs(rDays)}d</span>
+                                    </span>
+                                  ) : rDays <= 30 ? (
+                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25 inline-flex items-center gap-1">
+                                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                                      <span>Due in {rDays}d</span>
+                                    </span>
+                                  ) : (
+                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20 inline-flex items-center gap-1">
+                                      <span>Due in {rDays}d</span>
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                              {part.renewal_cost ? (
+                                <div className="text-[10px] text-muted-foreground">
+                                  ₹{Number(part.renewal_cost).toLocaleString("en-IN")}/cycle
+                                </div>
+                              ) : null}
+                            </div>
+                          );
+                        };
+
+                        return (
+                          <AppTableRow key={part.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                            {/* Part & Identity */}
+                            <AppTableCell className="p-3.5">
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="font-bold text-foreground">{part.name}</span>
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
+                                    {part.brand}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                                  <span className="font-mono">{part.category}</span>
+                                  {part.part_number && (
+                                    <>
+                                      <span>•</span>
+                                      <span className="font-mono font-medium text-slate-800 dark:text-slate-200">
+                                        SKU: {part.part_number}
+                                      </span>
+                                    </>
+                                  )}
+                                </div>
+                                {part.serial_number && (
+                                  <div className="text-[10px] font-mono text-muted-foreground">
+                                    S/N: {part.serial_number}
+                                  </div>
+                                )}
+                              </div>
+                            </AppTableCell>
+
+                            {/* Procurement & Age */}
+                            <AppTableCell className="p-3.5">
+                              <div className="space-y-1">
+                                <div className="font-mono text-xs font-semibold text-foreground">
+                                  {part.purchase_date}
+                                </div>
+                                {part.days_since_purchase !== null && part.days_since_purchase !== undefined && (
+                                  <div className="text-[10px] text-muted-foreground font-medium">
+                                    Age: {part.days_since_purchase} days in fleet
+                                  </div>
+                                )}
+                                <div className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                                  ₹{totalCost.toLocaleString("en-IN")}
+                                  {part.quantity > 1 && (
+                                    <span className="text-[10px] text-muted-foreground font-normal ml-1">
+                                      ({part.quantity} pcs @ ₹{Number(part.unit_price || 0).toLocaleString("en-IN")})
+                                    </span>
+                                  )}
+                                </div>
+                                {part.vendor_name && (
+                                  <div className="text-[10px] text-muted-foreground truncate max-w-[140px]">
+                                    {part.vendor_name}
+                                  </div>
+                                )}
+                              </div>
+                            </AppTableCell>
+
+                            {/* DOM & Shelf Expiry */}
+                            <AppTableCell className="p-3.5">
+                              <div className="space-y-1">
+                                {part.manufacturing_date ? (
+                                  <div className="text-[11px] text-muted-foreground">
+                                    DOM: <span className="font-mono font-semibold text-foreground">{part.manufacturing_date}</span>
+                                  </div>
+                                ) : (
+                                  <div className="text-[11px] text-muted-foreground italic">No DOM Logged</div>
+                                )}
+                                {part.expiry_date && (
+                                  <div className="text-[11px] font-mono font-bold text-foreground">
+                                    Exp: {part.expiry_date}
+                                  </div>
+                                )}
+                                {renderShelfExpiryCountdown()}
+                              </div>
+                            </AppTableCell>
+
+                            {/* Warranty Status */}
+                            <AppTableCell className="p-3.5">
+                              <div className="space-y-1.5">
+                                <div className="text-xs font-medium text-foreground flex items-center gap-1">
+                                  <span>{part.warranty_months ? `${part.warranty_months} Months` : "No Term"}</span>
+                                  {part.warranty_type && (
+                                    <span className="text-[10px] text-muted-foreground font-mono">({part.warranty_type})</span>
+                                  )}
+                                </div>
+                                {part.warranty_expiry_date && (
+                                  <div className="text-[11px] font-mono text-muted-foreground">
+                                    Till: {part.warranty_expiry_date}
+                                  </div>
+                                )}
+                                {renderWarrantyCountdown()}
+                              </div>
+                            </AppTableCell>
+
+                            {/* Renewal Policy & Due Date */}
+                            <AppTableCell className="p-3.5">
+                              {renderRenewalPolicyBadge()}
+                            </AppTableCell>
+
+                            {/* Assigned Vehicle / Stock */}
+                            <AppTableCell className="p-3.5">
+                              {part.assigned_vehicle_reg || (part.vehicle_id && part.vehicle_id !== "UNASSIGNED_STOCK") ? (
+                                <div className="space-y-1.5">
+                                  <div>
+                                    {renderHsrpPlate(
+                                      part.assigned_vehicle_reg ||
+                                      vehicleMap.get(part.vehicle_id)?.registration_number ||
+                                      "ASSIGNED"
+                                    )}
+                                  </div>
+                                  {part.installation_date && (
+                                    <div className="text-[10px] text-muted-foreground">
+                                      Mounted: <span className="font-mono font-semibold">{part.installation_date}</span>
+                                    </div>
+                                  )}
+                                  {part.installed_odometer_km ? (
+                                    <div className="text-[10px] font-mono text-muted-foreground">
+                                      @ {part.installed_odometer_km.toLocaleString()} km
+                                    </div>
+                                  ) : null}
+                                </div>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 inline-flex items-center gap-1">
+                                  <Package className="h-3 w-3 text-slate-500" />
+                                  <span>Warehouse Stock</span>
+                                </span>
+                              )}
+                            </AppTableCell>
+
+                            {/* Actions */}
+                            <AppTableCell className="p-3.5 text-right">
+                              <div className="flex items-center justify-end gap-1.5">
+                                {part.has_renewal_policy && (
+                                  <AppButton
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => openRenewPartModal(part)}
+                                    title="Quick Renew Policy"
+                                    className="h-7 text-xs px-2 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-950/40 border-cyan-500/30"
+                                  >
+                                    <RotateCcw className="h-3 w-3 mr-1" />
+                                    <span>Renew</span>
+                                  </AppButton>
+                                )}
+                                <AppButton
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  onClick={() => openEditPartModal(part)}
+                                  title="Edit Part Details"
+                                  className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                >
+                                  <Edit2 className="h-3.5 w-3.5" />
+                                </AppButton>
+                                <AppButton
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  onClick={() => setDeleteTarget({ type: "part", id: part.id, label: `Part '${part.name}'` })}
+                                  title="Delete Part"
+                                  className="h-7 w-7 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </AppButton>
+                              </div>
+                            </AppTableCell>
+                          </AppTableRow>
+                        );
+                      })
+                    )}
+                  </AppTableBody>
+                </AppTable>
+              </AppTableContainer>
             </AppCardContent>
           </AppCard>
         </div>
@@ -6646,6 +7451,662 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 >
                   {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                   <span>{selectedVendorForEdit ? "Update Vendor" : "Save Insurance Vendor"}</span>
+                </AppButton>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------------------------- */}
+      {/* PARTS & ACCESSORIES MODAL (ADD / EDIT) */}
+      {/* ---------------------------------------------------------------------- */}
+      {(isAddPartOpen || isEditPartOpen) && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-surface border border-border w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-border bg-surface/50 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/25">
+                  <Package className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-foreground">
+                    {selectedPartForEdit ? "Edit Part / Accessory Record" : "Register Part, Accessory or Consumable"}
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Configure procurement dates, DOM shelf-life, OEM warranty limits, recurring renewals, and vehicle mounting
+                  </p>
+                </div>
+              </div>
+              <AppButton
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => {
+                  setIsAddPartOpen(false);
+                  setIsEditPartOpen(false);
+                  setSelectedPartForEdit(null);
+                }}
+              >
+                <X className="h-4 w-4" />
+              </AppButton>
+            </div>
+
+            {/* Modal Body */}
+            <form onSubmit={handleSavePart} className="p-5 space-y-6 overflow-y-auto flex-1 text-xs">
+              {/* Section 1: Item Identity & Type */}
+              <div className="space-y-3">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border">
+                  <Package className="h-3.5 w-3.5 text-theme-btn-primary" />
+                  <span>1. Item Identity & Classification</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div className="sm:col-span-2">
+                    <label className="font-semibold block mb-1">
+                      <span>Item / Part Name *</span>
+                    </label>
+                    <AppInput
+                      placeholder="e.g. Qubo 4K Dual Dashcam with Live GPS Telematics"
+                      value={partFormName}
+                      onChange={(e) => setPartFormName(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1">Item Category Type</label>
+                    <select
+                      value={partFormItemType}
+                      onChange={(e) => setPartFormItemType(e.target.value)}
+                      className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                    >
+                      <option value="SPARE_PART">Spare Part</option>
+                      <option value="ACCESSORY">Accessory / Gadget</option>
+                      <option value="CONSUMABLE">Consumable / Fluid / Lubricant</option>
+                      <option value="TYRE">Tyre / Wheel</option>
+                      <option value="BATTERY">Battery / Electrical</option>
+                      <option value="GPS_DEVICE">GPS & AIS-140 Tracker</option>
+                      <option value="DASHCAM">Dashcam & Camera</option>
+                      <option value="TOOL">Workshop Tool / Jack</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1">Brand / Manufacturer *</label>
+                    <AppInput
+                      placeholder="e.g. Exide, Bosch, Mobil, Qubo, Apollo"
+                      value={partFormBrand}
+                      onChange={(e) => setPartFormBrand(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1">Part Number / SKU</label>
+                    <AppInput
+                      placeholder="e.g. BAT-AGM-12V65 or QBO-4K-GPS"
+                      value={partFormPartNumber}
+                      onChange={(e) => setPartFormPartNumber(e.target.value)}
+                      className="font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1">Serial Number / IMEI</label>
+                    <AppInput
+                      placeholder="e.g. S/N 864920491029 or IMEI"
+                      value={partFormSerialNumber}
+                      onChange={(e) => setPartFormSerialNumber(e.target.value)}
+                      className="font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1">Condition</label>
+                    <select
+                      value={partFormCondition}
+                      onChange={(e) => setPartFormCondition(e.target.value)}
+                      className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                    >
+                      <option value="NEW">Brand New (OEM)</option>
+                      <option value="REFURBISHED">Refurbished / Serviced</option>
+                      <option value="USED">Used / Operational</option>
+                      <option value="REBUILT">Rebuilt / Overhauled</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1">Classification Sub-Group</label>
+                    <AppInput
+                      placeholder="e.g. Braking, Electrical, Lubricants, Telematics"
+                      value={partFormCategory}
+                      onChange={(e) => setPartFormCategory(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 2: Procurement & Financials */}
+              <div className="space-y-3">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border">
+                  <Receipt className="h-3.5 w-3.5 text-emerald-500" />
+                  <span>2. Procurement, Invoicing & Costs</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div>
+                    <label className="font-semibold block mb-1 flex items-center gap-1">
+                      <Calendar className="h-3 w-3 text-blue-500" />
+                      <span>Purchase Date *</span>
+                    </label>
+                    <AppInput
+                      type="date"
+                      value={partFormPurchaseDate}
+                      onChange={(e) => setPartFormPurchaseDate(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1">Unit Price (₹)</label>
+                    <AppInput
+                      type="number"
+                      min="0"
+                      step="any"
+                      placeholder="e.g. 4500"
+                      value={partFormUnitPrice || ""}
+                      onChange={(e) => {
+                        const unit = Number(e.target.value) || 0;
+                        setPartFormUnitPrice(unit);
+                        setPartFormPurchaseAmount(unit * (Number(partFormQuantity) || 1));
+                      }}
+                      className="font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1">Quantity</label>
+                    <AppInput
+                      type="number"
+                      min="1"
+                      placeholder="1"
+                      value={partFormQuantity}
+                      onChange={(e) => {
+                        const qty = Number(e.target.value) || 1;
+                        setPartFormQuantity(qty);
+                        setPartFormPurchaseAmount((Number(partFormUnitPrice) || 0) * qty);
+                      }}
+                      className="font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1">Total Purchase Amount (₹)</label>
+                    <AppInput
+                      type="number"
+                      min="0"
+                      step="any"
+                      placeholder="e.g. 4500"
+                      value={partFormPurchaseAmount || ""}
+                      onChange={(e) => setPartFormPurchaseAmount(Number(e.target.value) || 0)}
+                      className="font-mono font-bold text-emerald-600 dark:text-emerald-400"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="font-semibold block mb-1">Procurement Vendor / Supplier</label>
+                    <AppInput
+                      placeholder="e.g. Metro Auto Spares Pvt Ltd / Authorized Dealership"
+                      value={partFormVendorName}
+                      onChange={(e) => setPartFormVendorName(e.target.value)}
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="font-semibold block mb-1">Invoice / Bill Number</label>
+                    <AppInput
+                      placeholder="e.g. INV-2026-08912"
+                      value={partFormInvoiceNumber}
+                      onChange={(e) => setPartFormInvoiceNumber(e.target.value)}
+                      className="font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 3: Manufacturing DOM & Shelf-Life Expiry */}
+              <div className="space-y-3">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border">
+                  <Clock className="h-3.5 w-3.5 text-amber-500" />
+                  <span>3. Manufacturing Date (DOM) & Shelf-Life Expiry</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-semibold block mb-1 flex items-center gap-1">
+                      <span>Date of Manufacturing (DOM)</span>
+                      <span className="text-[10px] text-muted-foreground font-normal">(Shelf age evaluation)</span>
+                    </label>
+                    <AppInput
+                      type="date"
+                      value={partFormManufacturingDate}
+                      onChange={(e) => setPartFormManufacturingDate(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1 flex items-center gap-1">
+                      <span>Shelf-Life / Expiry Date</span>
+                      <span className="text-[10px] text-muted-foreground font-normal">(Fluids, oils, rubber components)</span>
+                    </label>
+                    <AppInput
+                      type="date"
+                      value={partFormExpiryDate}
+                      onChange={(e) => setPartFormExpiryDate(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 4: OEM Warranty Coverage & Period */}
+              <div className="space-y-3">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border">
+                  <ShieldCheck className="h-3.5 w-3.5 text-indigo-500" />
+                  <span>4. OEM Warranty Coverage & Lifecycle Countdown</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="font-semibold block mb-1">Warranty Type</label>
+                    <select
+                      value={partFormWarrantyType}
+                      onChange={(e) => setPartFormWarrantyType(e.target.value)}
+                      className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                    >
+                      <option value="WARRANTY">Standard OEM Warranty</option>
+                      <option value="EXTENDED_WARRANTY">Extended Warranty</option>
+                      <option value="GUARANTEE">Replacement Guarantee</option>
+                      <option value="LIFETIME">Lifetime Limited Warranty</option>
+                      <option value="NONE">No Warranty</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1 flex items-center justify-between">
+                      <span>Warranty Period (Months)</span>
+                      {partFormPurchaseDate && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (partFormPurchaseDate && partFormWarrantyMonths > 0) {
+                              const d = new Date(partFormPurchaseDate);
+                              d.setMonth(d.getMonth() + Number(partFormWarrantyMonths));
+                              setPartFormWarrantyExpiryDate(d.toISOString().split("T")[0]);
+                            }
+                          }}
+                          className="text-[10px] text-theme-btn-primary hover:underline font-semibold"
+                        >
+                          Auto-Calculate
+                        </button>
+                      )}
+                    </label>
+                    <AppInput
+                      type="number"
+                      min="0"
+                      placeholder="e.g. 12, 24, 36"
+                      value={partFormWarrantyMonths}
+                      onChange={(e) => {
+                        const m = Number(e.target.value) || 0;
+                        setPartFormWarrantyMonths(m);
+                        if (partFormPurchaseDate && m > 0) {
+                          const d = new Date(partFormPurchaseDate);
+                          d.setMonth(d.getMonth() + m);
+                          setPartFormWarrantyExpiryDate(d.toISOString().split("T")[0]);
+                        }
+                      }}
+                      className="font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1 flex items-center gap-1">
+                      <Calendar className="h-3 w-3 text-indigo-500" />
+                      <span>Warranty Expiry Date</span>
+                    </label>
+                    <AppInput
+                      type="date"
+                      value={partFormWarrantyExpiryDate}
+                      onChange={(e) => setPartFormWarrantyExpiryDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="sm:col-span-3">
+                    <label className="font-semibold block mb-1">Warranty Inclusions / Terms</label>
+                    <AppInput
+                      placeholder="e.g. Free replacement on manufacturing defects; covers internal sensor and camera sensor"
+                      value={partFormWarrantyTerms}
+                      onChange={(e) => setPartFormWarrantyTerms(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 5: Recurring Renewal Policy */}
+              <div className="space-y-3 p-3.5 rounded-xl border border-cyan-500/20 bg-cyan-500/5">
+                <div className="flex items-center justify-between">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-cyan-800 dark:text-cyan-300 flex items-center gap-1.5">
+                    <Zap className="h-3.5 w-3.5 text-cyan-500" />
+                    <span>5. Recurring Renewal Policy (GPS SIM / AMC / Subscriptions)</span>
+                  </div>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={partFormHasRenewal}
+                      onChange={(e) => setPartFormHasRenewal(e.target.checked)}
+                      className="rounded border-border text-theme-btn-primary focus:ring-theme-btn-primary h-4 w-4"
+                    >
+                    </input>
+                    <span className="text-xs font-semibold text-foreground">Has Renewal Policy</span>
+                  </label>
+                </div>
+
+                {partFormHasRenewal && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-2">
+                    <div>
+                      <label className="font-semibold block mb-1">Renewal Policy Type</label>
+                      <select
+                        value={partFormRenewalType}
+                        onChange={(e) => setPartFormRenewalType(e.target.value)}
+                        className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                      >
+                        <option value="GPS_SIM_RECHARGE">GPS M2M SIM Cellular Recharge</option>
+                        <option value="EXTENDED_AMC">Extended AMC Maintenance Contract</option>
+                        <option value="ANNUAL_CALIBRATION">Annual Statutory Calibration</option>
+                        <option value="SOFTWARE_LICENSE">Software / Cloud Telematics License</option>
+                        <option value="FASTAG_RECHARGE">FASTag Fleet Commercial Balance</option>
+                        <option value="OTHER_POLICY">Other Recurring Policy</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="font-semibold block mb-1 flex items-center gap-1 text-amber-700 dark:text-amber-400">
+                        <Calendar className="h-3 w-3 text-amber-500" />
+                        <span>Next Renewal Due Date *</span>
+                      </label>
+                      <AppInput
+                        type="date"
+                        value={partFormRenewalDate}
+                        onChange={(e) => setPartFormRenewalDate(e.target.value)}
+                        required={partFormHasRenewal}
+                      />
+                    </div>
+                    <div>
+                      <label className="font-semibold block mb-1">Renewal Cost (₹ / cycle)</label>
+                      <AppInput
+                        type="number"
+                        min="0"
+                        placeholder="e.g. 1200"
+                        value={partFormRenewalCost || ""}
+                        onChange={(e) => setPartFormRenewalCost(Number(e.target.value) || 0)}
+                        className="font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-semibold block mb-1">Renewal Provider / Telco</label>
+                      <AppInput
+                        placeholder="e.g. Airtel IoT Enterprise, MapmyIndia"
+                        value={partFormRenewalVendor}
+                        onChange={(e) => setPartFormRenewalVendor(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="font-semibold block mb-1">SIM / Policy / Account Number</label>
+                      <AppInput
+                        placeholder="e.g. SIM # 98200 48192 or ACC-9812"
+                        value={partFormRenewalPolicyNumber}
+                        onChange={(e) => setPartFormRenewalPolicyNumber(e.target.value)}
+                        className="font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-semibold block mb-1">Advance Alert Reminder (Days)</label>
+                      <AppInput
+                        type="number"
+                        min="1"
+                        placeholder="30"
+                        value={partFormRenewalReminderDays}
+                        onChange={(e) => setPartFormRenewalReminderDays(Number(e.target.value) || 30)}
+                        className="font-mono"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Section 6: Vehicle Assignment & Installation */}
+              <div className="space-y-3">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border">
+                  <Car className="h-3.5 w-3.5 text-blue-500" />
+                  <span>6. Vehicle Mounting & Installation Status</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="font-semibold block mb-1">Assigned Vehicle</label>
+                    <select
+                      value={partFormVehicleId}
+                      onChange={(e) => {
+                        const vehId = e.target.value;
+                        setPartFormVehicleId(vehId);
+                        if (vehId && vehId !== "UNASSIGNED_STOCK") {
+                          const matched = vehicles.find((v) => v.id === vehId);
+                          if (matched) {
+                            setPartFormAssignedVehicleReg(matched.registration_number);
+                            setPartFormStatus("INSTALLED");
+                            if (!partFormInstalledOdometer && matched.odometer_km) {
+                              setPartFormInstalledOdometer(matched.odometer_km);
+                            }
+                            if (!partFormInstallationDate) {
+                              setPartFormInstallationDate(new Date().toISOString().split("T")[0]);
+                            }
+                          }
+                        } else {
+                          setPartFormAssignedVehicleReg("");
+                          setPartFormStatus("IN_STOCK");
+                        }
+                      }}
+                      className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                    >
+                      <option value="UNASSIGNED_STOCK">Warehouse Stock (Unassigned)</option>
+                      {vehicles.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.registration_number} — {v.make} {v.model}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1">Installation Date</label>
+                    <AppInput
+                      type="date"
+                      value={partFormInstallationDate}
+                      onChange={(e) => setPartFormInstallationDate(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1">Installed Odometer (km)</label>
+                    <AppInput
+                      type="number"
+                      min="0"
+                      placeholder="e.g. 45200"
+                      value={partFormInstalledOdometer}
+                      onChange={(e) => setPartFormInstalledOdometer(e.target.value === "" ? "" : Number(e.target.value))}
+                      className="font-mono"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="font-semibold block mb-1">Installed By (Technician / Workshop)</label>
+                    <AppInput
+                      placeholder="e.g. Rajesh Kumar (Senior Auto Electrician) / Authorized Service"
+                      value={partFormInstalledBy}
+                      onChange={(e) => setPartFormInstalledBy(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1">Inventory Status</label>
+                    <select
+                      value={partFormStatus}
+                      onChange={(e) => setPartFormStatus(e.target.value)}
+                      className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                    >
+                      <option value="IN_STOCK">In Stock (Warehouse)</option>
+                      <option value="INSTALLED">Installed on Vehicle</option>
+                      <option value="RESERVED">Reserved for Job</option>
+                      <option value="DEFECTIVE">Defective / RMA Return</option>
+                      <option value="SCRAPPED">Scrapped / Disposed</option>
+                    </select>
+                  </div>
+                  <div className="sm:col-span-3">
+                    <label className="font-semibold block mb-1">Technical Notes / Location Details</label>
+                    <textarea
+                      rows={2}
+                      placeholder="e.g. Mounted behind rear-view mirror; wired to ignition accessory fuse with 12V direct hardwire kit."
+                      value={partFormNotes}
+                      onChange={(e) => setPartFormNotes(e.target.value)}
+                      className="w-full text-xs p-2.5 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="pt-4 border-t border-border flex items-center justify-end gap-2">
+                <AppButton
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setIsAddPartOpen(false);
+                    setIsEditPartOpen(false);
+                    setSelectedPartForEdit(null);
+                  }}
+                  disabled={modalSubmitting}
+                >
+                  Cancel
+                </AppButton>
+                <AppButton
+                  type="submit"
+                  variant="primary"
+                  size="sm"
+                  disabled={modalSubmitting}
+                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white font-semibold gap-1.5"
+                >
+                  {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                  <span>{selectedPartForEdit ? "Update Part Record" : "Save Part Record"}</span>
+                </AppButton>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------------------------- */}
+      {/* QUICK RENEW POLICY MODAL */}
+      {/* ---------------------------------------------------------------------- */}
+      {isRenewPartOpen && selectedPartForRenew && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-surface border border-border w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-5 border-b border-border bg-surface/50 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 flex items-center justify-center border border-cyan-500/25">
+                  <RotateCcw className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-foreground">
+                    Renew Policy / Subscription
+                  </h3>
+                  <p className="text-xs text-muted-foreground truncate max-w-[280px]">
+                    {selectedPartForRenew.name}
+                  </p>
+                </div>
+              </div>
+              <AppButton variant="ghost" size="icon-sm" onClick={() => setIsRenewPartOpen(false)}>
+                <X className="h-4 w-4" />
+              </AppButton>
+            </div>
+
+            <form onSubmit={handleSaveRenewal} className="p-5 space-y-4 overflow-y-auto flex-1 text-xs">
+              <div className="p-3 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/40 space-y-1.5">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Current Policy Details
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="text-muted-foreground">Type:</span>{" "}
+                    <span className="font-semibold text-foreground">{selectedPartForRenew.renewal_policy_type || "Standard"}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Current Due:</span>{" "}
+                    <span className="font-mono font-bold text-foreground">{selectedPartForRenew.renewal_date || "Not Set"}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="font-semibold block mb-1 flex items-center gap-1 text-cyan-700 dark:text-cyan-400">
+                  <Calendar className="h-3.5 w-3.5 text-cyan-500" />
+                  <span>New Extended Renewal Date *</span>
+                </label>
+                <AppInput
+                  type="date"
+                  value={renewModalDate}
+                  onChange={(e) => setRenewModalDate(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="font-semibold block mb-1">Renewal Cost (₹)</label>
+                  <AppInput
+                    type="number"
+                    min="0"
+                    placeholder="e.g. 1200"
+                    value={renewModalCost || ""}
+                    onChange={(e) => setRenewModalCost(Number(e.target.value) || 0)}
+                    className="font-mono font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="font-semibold block mb-1">Service Provider / Telco</label>
+                  <AppInput
+                    placeholder="e.g. Airtel IoT Enterprise"
+                    value={renewModalVendor}
+                    onChange={(e) => setRenewModalVendor(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-semibold block mb-1">New Policy / Invoice / Transaction #</label>
+                <AppInput
+                  placeholder="e.g. TXN-2026-94812"
+                  value={renewModalPolicyNumber}
+                  onChange={(e) => setRenewModalPolicyNumber(e.target.value)}
+                  className="font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="font-semibold block mb-1">Renewal Remarks</label>
+                <textarea
+                  rows={2}
+                  placeholder="e.g. Renewed for 12 months unlimited M2M 4G SIM connectivity."
+                  value={renewModalNotes}
+                  onChange={(e) => setRenewModalNotes(e.target.value)}
+                  className="w-full text-xs p-2.5 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                />
+              </div>
+
+              <div className="pt-3 border-t border-border flex items-center justify-end gap-2">
+                <AppButton
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsRenewPartOpen(false)}
+                  disabled={modalSubmitting}
+                >
+                  Cancel
+                </AppButton>
+                <AppButton
+                  type="submit"
+                  variant="primary"
+                  size="sm"
+                  disabled={modalSubmitting}
+                  className="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold gap-1.5"
+                >
+                  {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+                  <span>Confirm Policy Renewal</span>
                 </AppButton>
               </div>
             </form>

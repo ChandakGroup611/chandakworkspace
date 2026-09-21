@@ -120,6 +120,51 @@ export interface InsuranceVendorRecord {
   updated_at?: string;
 }
 
+export interface PartAccessoryRecord {
+  id: string;
+  vehicle_id: string;
+  assigned_vehicle_reg?: string | null;
+  item_type: string;
+  name: string;
+  part_number?: string | null;
+  category: string;
+  brand: string;
+  purchase_amount: number;
+  unit_price?: number | null;
+  quantity: number;
+  purchase_date: string;
+  vendor_name: string;
+  invoice_number?: string | null;
+  manufacturing_date?: string | null;
+  expiry_date?: string | null;
+  warranty_type: string;
+  warranty_months: number;
+  warranty_expiry_date?: string | null;
+  warranty_terms?: string | null;
+  has_renewal_policy: boolean;
+  renewal_policy_type?: string | null;
+  renewal_date?: string | null;
+  renewal_cost?: number | null;
+  renewal_vendor?: string | null;
+  renewal_policy_number?: string | null;
+  renewal_reminder_days?: number | null;
+  status: string;
+  installation_date?: string | null;
+  installed_odometer_km?: number | null;
+  installed_by?: string | null;
+  condition: string;
+  serial_number?: string | null;
+  notes?: string | null;
+  is_deleted?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  warranty_days_remaining?: number | null;
+  expiry_days_remaining?: number | null;
+  renewal_days_remaining?: number | null;
+  days_since_purchase?: number | null;
+  days_in_service?: number | null;
+}
+
 export interface DriverRecord {
   id: string;
   full_name: string;
@@ -2703,6 +2748,376 @@ export async function deleteInsuranceVendorAction(id: string): Promise<{
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err.message };
+  }
+}
+
+// ------------------------------------------------------------------------------
+// 9. Parts & Accessories Operations (with Dates, Warranty & Renewal Policy)
+// ------------------------------------------------------------------------------
+
+function computePartDayMetrics(part: any): PartAccessoryRecord {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+
+  const getDiffDays = (dateStr?: string | null): number | null => {
+    if (!dateStr) return null;
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return null;
+    d.setHours(0, 0, 0, 0);
+    return Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  };
+
+  const getElapsedDays = (dateStr?: string | null): number | null => {
+    if (!dateStr) return null;
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return null;
+    d.setHours(0, 0, 0, 0);
+    return Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+  };
+
+  const warrantyDays = getDiffDays(part.warranty_expiry_date);
+  const expiryDays = getDiffDays(part.expiry_date);
+  const renewalDays = getDiffDays(part.renewal_date);
+  const daysSincePurchase = getElapsedDays(part.purchase_date);
+  const daysInService = getElapsedDays(part.installation_date);
+
+  return {
+    ...part,
+    purchase_amount: Number(part.purchase_amount) || 0,
+    unit_price: part.unit_price !== undefined && part.unit_price !== null ? Number(part.unit_price) : Number(part.purchase_amount) || 0,
+    quantity: Number(part.quantity) || 1,
+    warranty_months: Number(part.warranty_months) || 0,
+    renewal_cost: part.renewal_cost !== undefined && part.renewal_cost !== null ? Number(part.renewal_cost) : 0,
+    has_renewal_policy: part.has_renewal_policy === true || Boolean(part.renewal_date || part.renewal_policy_type),
+    warranty_days_remaining: warrantyDays,
+    expiry_days_remaining: expiryDays,
+    renewal_days_remaining: renewalDays,
+    days_since_purchase: daysSincePurchase,
+    days_in_service: daysInService
+  };
+}
+
+export async function fetchVehiclePartsList(filters?: {
+  vehicleId?: string;
+  itemType?: string;
+  status?: string;
+  expiryFilter?: string;
+}): Promise<{
+  success: boolean;
+  parts: PartAccessoryRecord[];
+  error?: string;
+}> {
+  try {
+    let query = supabaseAdmin
+      .from("vehicle_parts")
+      .select("*")
+      .eq("is_deleted", false)
+      .order("created_at", { ascending: false });
+
+    if (filters?.vehicleId && filters.vehicleId !== "ALL") {
+      query = query.eq("vehicle_id", filters.vehicleId);
+    }
+    if (filters?.itemType && filters.itemType !== "ALL") {
+      query = query.eq("item_type", filters.itemType);
+    }
+    if (filters?.status && filters.status !== "ALL") {
+      query = query.eq("status", filters.status);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error("[vehicle-actions] fetchVehiclePartsList error:", error);
+      return { success: false, parts: [], error: error.message };
+    }
+
+    let parts = (data || []).map(computePartDayMetrics);
+
+    // Apply specific expiry/renewal filters if specified
+    if (filters?.expiryFilter && filters.expiryFilter !== "ALL") {
+      if (filters.expiryFilter === "ACTIVE_WARRANTY") {
+        parts = parts.filter(p => p.warranty_days_remaining !== null && p.warranty_days_remaining !== undefined && p.warranty_days_remaining > 0);
+      } else if (filters.expiryFilter === "EXPIRING_SOON") {
+        parts = parts.filter(p => 
+          (p.warranty_days_remaining !== null && p.warranty_days_remaining !== undefined && p.warranty_days_remaining >= 0 && p.warranty_days_remaining <= 30) ||
+          (p.expiry_days_remaining !== null && p.expiry_days_remaining !== undefined && p.expiry_days_remaining >= 0 && p.expiry_days_remaining <= 30) ||
+          (p.renewal_days_remaining !== null && p.renewal_days_remaining !== undefined && p.renewal_days_remaining >= 0 && p.renewal_days_remaining <= 30)
+        );
+      } else if (filters.expiryFilter === "EXPIRED") {
+        parts = parts.filter(p => 
+          (p.warranty_days_remaining !== null && p.warranty_days_remaining !== undefined && p.warranty_days_remaining < 0) ||
+          (p.expiry_days_remaining !== null && p.expiry_days_remaining !== undefined && p.expiry_days_remaining < 0)
+        );
+      } else if (filters.expiryFilter === "RENEWAL_DUE") {
+        parts = parts.filter(p => p.has_renewal_policy && p.renewal_days_remaining !== null && p.renewal_days_remaining !== undefined && p.renewal_days_remaining <= 30);
+      } else if (filters.expiryFilter === "IN_STOCK") {
+        parts = parts.filter(p => p.status === "IN_STOCK");
+      } else if (filters.expiryFilter === "INSTALLED") {
+        parts = parts.filter(p => p.status === "INSTALLED");
+      }
+    }
+
+    return { success: true, parts };
+  } catch (err: any) {
+    console.error("[vehicle-actions] fetchVehiclePartsList exception:", err);
+    return { success: false, parts: [], error: err.message || "Failed to fetch parts and accessories" };
+  }
+}
+
+export async function createVehiclePartAction(formData: {
+  name: string;
+  item_type?: string;
+  part_number?: string;
+  category: string;
+  brand: string;
+  purchase_amount?: number;
+  unit_price?: number;
+  quantity?: number;
+  purchase_date?: string;
+  vendor_name: string;
+  invoice_number?: string;
+  manufacturing_date?: string;
+  expiry_date?: string;
+  warranty_type?: string;
+  warranty_months?: number;
+  warranty_expiry_date?: string;
+  warranty_terms?: string;
+  has_renewal_policy?: boolean;
+  renewal_policy_type?: string;
+  renewal_date?: string;
+  renewal_cost?: number;
+  renewal_vendor?: string;
+  renewal_policy_number?: string;
+  renewal_reminder_days?: number;
+  status?: string;
+  vehicle_id?: string;
+  assigned_vehicle_reg?: string;
+  installation_date?: string;
+  installed_odometer_km?: number;
+  installed_by?: string;
+  condition?: string;
+  serial_number?: string;
+  notes?: string;
+}): Promise<{
+  success: boolean;
+  part?: PartAccessoryRecord;
+  error?: string;
+}> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    if (!formData.name || !formData.name.trim()) {
+      return { success: false, error: "Part / Accessory name is mandatory." };
+    }
+    if (!formData.category || !formData.category.trim()) {
+      return { success: false, error: "Category is mandatory." };
+    }
+    if (!formData.brand || !formData.brand.trim()) {
+      return { success: false, error: "Brand is mandatory." };
+    }
+    if (!formData.vendor_name || !formData.vendor_name.trim()) {
+      return { success: false, error: "Vendor / Supplier name is mandatory." };
+    }
+
+    // Auto calculate warranty expiry if not given but purchase_date and warranty_months are provided
+    let calculatedWarrantyExpiry = formData.warranty_expiry_date?.trim() || null;
+    if (!calculatedWarrantyExpiry && formData.purchase_date && Number(formData.warranty_months) > 0) {
+      const pDate = new Date(formData.purchase_date);
+      if (!isNaN(pDate.getTime())) {
+        pDate.setMonth(pDate.getMonth() + Number(formData.warranty_months));
+        calculatedWarrantyExpiry = pDate.toISOString().split("T")[0];
+      }
+    }
+
+    const payload = {
+      name: formData.name.trim(),
+      item_type: formData.item_type || "SPARE_PART",
+      part_number: formData.part_number?.trim() || null,
+      category: formData.category.trim(),
+      brand: formData.brand.trim(),
+      purchase_amount: Number(formData.purchase_amount) || 0,
+      unit_price: Number(formData.unit_price) || Number(formData.purchase_amount) || 0,
+      quantity: Number(formData.quantity) || 1,
+      purchase_date: formData.purchase_date || new Date().toISOString().split("T")[0],
+      vendor_name: formData.vendor_name.trim(),
+      invoice_number: formData.invoice_number?.trim() || null,
+      manufacturing_date: formData.manufacturing_date?.trim() || null,
+      expiry_date: formData.expiry_date?.trim() || null,
+      warranty_type: formData.warranty_type || "WARRANTY",
+      warranty_months: Number(formData.warranty_months) || 12,
+      warranty_expiry_date: calculatedWarrantyExpiry,
+      warranty_terms: formData.warranty_terms?.trim() || null,
+      has_renewal_policy: Boolean(formData.has_renewal_policy || formData.renewal_date),
+      renewal_policy_type: formData.renewal_policy_type?.trim() || null,
+      renewal_date: formData.renewal_date?.trim() || null,
+      renewal_cost: Number(formData.renewal_cost) || 0,
+      renewal_vendor: formData.renewal_vendor?.trim() || null,
+      renewal_policy_number: formData.renewal_policy_number?.trim() || null,
+      renewal_reminder_days: Number(formData.renewal_reminder_days) || 30,
+      status: formData.status || (formData.vehicle_id && formData.vehicle_id !== "UNASSIGNED_STOCK" ? "INSTALLED" : "IN_STOCK"),
+      vehicle_id: formData.vehicle_id || "UNASSIGNED_STOCK",
+      assigned_vehicle_reg: formData.assigned_vehicle_reg?.trim() || null,
+      installation_date: formData.installation_date?.trim() || null,
+      installed_odometer_km: formData.installed_odometer_km !== undefined ? Number(formData.installed_odometer_km) : null,
+      installed_by: formData.installed_by?.trim() || null,
+      condition: formData.condition || "NEW",
+      serial_number: formData.serial_number?.trim() || null,
+      notes: formData.notes?.trim() || null,
+      is_deleted: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    const { data, error } = await supabaseAdmin
+      .from("vehicle_parts")
+      .insert(payload)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("[vehicle-actions] createVehiclePartAction error:", error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, part: computePartDayMetrics(data) };
+  } catch (err: any) {
+    console.error("[vehicle-actions] createVehiclePartAction exception:", err);
+    return { success: false, error: err.message || "Failed to create part record" };
+  }
+}
+
+export async function updateVehiclePartAction(
+  id: string,
+  formData: Partial<PartAccessoryRecord>
+): Promise<{
+  success: boolean;
+  part?: PartAccessoryRecord;
+  error?: string;
+}> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    const updates: Record<string, any> = { updated_at: new Date().toISOString() };
+    if (formData.name !== undefined) updates.name = formData.name.trim();
+    if (formData.item_type !== undefined) updates.item_type = formData.item_type;
+    if (formData.part_number !== undefined) updates.part_number = formData.part_number ? formData.part_number.trim() : null;
+    if (formData.category !== undefined) updates.category = formData.category.trim();
+    if (formData.brand !== undefined) updates.brand = formData.brand.trim();
+    if (formData.purchase_amount !== undefined) updates.purchase_amount = Number(formData.purchase_amount);
+    if (formData.unit_price !== undefined) updates.unit_price = Number(formData.unit_price);
+    if (formData.quantity !== undefined) updates.quantity = Number(formData.quantity);
+    if (formData.purchase_date !== undefined) updates.purchase_date = formData.purchase_date;
+    if (formData.vendor_name !== undefined) updates.vendor_name = formData.vendor_name ? formData.vendor_name.trim() : null;
+    if (formData.invoice_number !== undefined) updates.invoice_number = formData.invoice_number ? formData.invoice_number.trim() : null;
+    if (formData.manufacturing_date !== undefined) updates.manufacturing_date = formData.manufacturing_date ? formData.manufacturing_date.trim() : null;
+    if (formData.expiry_date !== undefined) updates.expiry_date = formData.expiry_date ? formData.expiry_date.trim() : null;
+    if (formData.warranty_type !== undefined) updates.warranty_type = formData.warranty_type;
+    if (formData.warranty_months !== undefined) updates.warranty_months = Number(formData.warranty_months);
+    if (formData.warranty_expiry_date !== undefined) updates.warranty_expiry_date = formData.warranty_expiry_date ? formData.warranty_expiry_date.trim() : null;
+    if (formData.warranty_terms !== undefined) updates.warranty_terms = formData.warranty_terms ? formData.warranty_terms.trim() : null;
+    if (formData.has_renewal_policy !== undefined) updates.has_renewal_policy = Boolean(formData.has_renewal_policy);
+    if (formData.renewal_policy_type !== undefined) updates.renewal_policy_type = formData.renewal_policy_type ? formData.renewal_policy_type.trim() : null;
+    if (formData.renewal_date !== undefined) updates.renewal_date = formData.renewal_date ? formData.renewal_date.trim() : null;
+    if (formData.renewal_cost !== undefined) updates.renewal_cost = Number(formData.renewal_cost);
+    if (formData.renewal_vendor !== undefined) updates.renewal_vendor = formData.renewal_vendor ? formData.renewal_vendor.trim() : null;
+    if (formData.renewal_policy_number !== undefined) updates.renewal_policy_number = formData.renewal_policy_number ? formData.renewal_policy_number.trim() : null;
+    if (formData.renewal_reminder_days !== undefined) updates.renewal_reminder_days = Number(formData.renewal_reminder_days);
+    if (formData.status !== undefined) updates.status = formData.status;
+    if (formData.vehicle_id !== undefined) updates.vehicle_id = formData.vehicle_id;
+    if (formData.assigned_vehicle_reg !== undefined) updates.assigned_vehicle_reg = formData.assigned_vehicle_reg ? formData.assigned_vehicle_reg.trim() : null;
+    if (formData.installation_date !== undefined) updates.installation_date = formData.installation_date ? formData.installation_date.trim() : null;
+    if (formData.installed_odometer_km !== undefined) updates.installed_odometer_km = formData.installed_odometer_km !== null ? Number(formData.installed_odometer_km) : null;
+    if (formData.installed_by !== undefined) updates.installed_by = formData.installed_by ? formData.installed_by.trim() : null;
+    if (formData.condition !== undefined) updates.condition = formData.condition;
+    if (formData.serial_number !== undefined) updates.serial_number = formData.serial_number ? formData.serial_number.trim() : null;
+    if (formData.notes !== undefined) updates.notes = formData.notes ? formData.notes.trim() : null;
+
+    const { data, error } = await supabaseAdmin
+      .from("vehicle_parts")
+      .update(updates)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("[vehicle-actions] updateVehiclePartAction error:", error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, part: computePartDayMetrics(data) };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to update part record" };
+  }
+}
+
+export async function deleteVehiclePartAction(id: string): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    const { error } = await supabaseAdmin
+      .from("vehicle_parts")
+      .update({ is_deleted: true, updated_at: new Date().toISOString() })
+      .eq("id", id);
+
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
+export async function renewPartPolicyAction(
+  id: string,
+  renewalData: {
+    new_renewal_date: string;
+    renewal_cost?: number;
+    renewal_vendor?: string;
+    policy_number?: string;
+    notes?: string;
+  }
+): Promise<{
+  success: boolean;
+  part?: PartAccessoryRecord;
+  error?: string;
+}> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    if (!renewalData.new_renewal_date) {
+      return { success: false, error: "New Renewal Date is mandatory." };
+    }
+
+    const updates: Record<string, any> = {
+      renewal_date: renewalData.new_renewal_date,
+      has_renewal_policy: true,
+      updated_at: new Date().toISOString()
+    };
+
+    if (renewalData.renewal_cost !== undefined) updates.renewal_cost = Number(renewalData.renewal_cost);
+    if (renewalData.renewal_vendor !== undefined) updates.renewal_vendor = renewalData.renewal_vendor.trim();
+    if (renewalData.policy_number !== undefined) updates.renewal_policy_number = renewalData.policy_number.trim();
+    if (renewalData.notes) {
+      updates.notes = renewalData.notes.trim();
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from("vehicle_parts")
+      .update(updates)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) return { success: false, error: error.message };
+    return { success: true, part: computePartDayMetrics(data) };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to renew policy" };
   }
 }
 
