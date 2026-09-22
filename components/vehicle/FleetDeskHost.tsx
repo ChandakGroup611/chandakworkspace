@@ -62,6 +62,7 @@ import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/componen
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useFleetPermissions } from "@/hooks/useFleetPermissions";
 import FleetRbacGovernance from "./FleetRbacGovernance";
 import { 
   AppTableContainer, 
@@ -147,18 +148,28 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   const pathname = usePathname() || "/vehicle";
   const router = useRouter();
   const { hasPermission, roleCode } = usePermissions();
+  const {
+    effectiveFleetRole,
+    canReadModule,
+    canCreateModule,
+    canUpdateModule,
+    canDeleteModule,
+    canApproveModule,
+    canExportModule,
+    hasAnyFleetAccess
+  } = useFleetPermissions();
 
   const isSuperAdmin = useMemo(() => {
     return roleCode === "SUPER_ADMIN" || roleCode === "ROLE_ADMIN" || hasPermission("SUPER_ADMIN");
   }, [roleCode, hasPermission]);
 
-  const canCreateVehicle = isSuperAdmin || hasPermission("VEHICLES_CREATE") || hasPermission("VEHICLES_MANAGE");
-  const canEditVehicle = isSuperAdmin || hasPermission("VEHICLES_UPDATE") || hasPermission("VEHICLES_MANAGE") || hasPermission("VEHICLES_EDIT");
-  const canDeleteVehicle = isSuperAdmin || hasPermission("VEHICLES_DELETE") || hasPermission("VEHICLES_MANAGE");
-  const canManageDrivers = isSuperAdmin || hasPermission("DRIVERS_MANAGE");
-  const canDispatchTrips = isSuperAdmin || hasPermission("TRIPS_CREATE") || hasPermission("TRIPS_DISPATCH") || hasPermission("TRIPS_MANAGE");
-  const canManageMaintenance = isSuperAdmin || hasPermission("FLEET_MAINTENANCE_MANAGE");
-  const canViewReports = isSuperAdmin || hasPermission("FLEET_REPORTS_VIEW") || hasPermission("VEHICLES_MANAGE");
+  const canCreateVehicle = canCreateModule("VEHICLES") || canCreateModule("REGISTER");
+  const canEditVehicle = canUpdateModule("VEHICLES");
+  const canDeleteVehicle = canDeleteModule("VEHICLES");
+  const canManageDrivers = canCreateModule("DRIVERS") || canUpdateModule("DRIVERS");
+  const canDispatchTrips = canCreateModule("TRIPS") || canUpdateModule("TRIPS");
+  const canManageMaintenance = canCreateModule("MAINTENANCE") || canUpdateModule("MAINTENANCE");
+  const canViewReports = canReadModule("REPORTS");
 
   // Active sub-navigation tab based on URL
   const activeTab: string = useMemo(() => {
@@ -1884,6 +1895,25 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     );
   }
 
+  if (!hasAnyFleetAccess && !isSuperAdmin) {
+    return (
+      <div className="w-full min-h-[60vh] flex flex-col items-center justify-center p-8 space-y-4 text-center">
+        <div className="h-16 w-16 rounded-2xl bg-rose-500/10 text-rose-600 flex items-center justify-center border border-rose-500/20 shadow-sm">
+          <ShieldAlert className="h-8 w-8" />
+        </div>
+        <div className="space-y-1">
+          <h2 className="text-xl font-bold text-foreground">Fleet Desk Access Restricted</h2>
+          <p className="text-xs text-muted-foreground max-w-md mx-auto">
+            You do not currently have an assigned Fleet Role or access policies enabled for the Vehicle Desk. Please contact your System Administrator to request access.
+          </p>
+        </div>
+        <AppButton variant="primary" size="sm" onClick={() => router.push("/")}>
+          Return to Workspace
+        </AppButton>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full flex-1 flex flex-col space-y-6 min-w-0 animate-in fade-in duration-300">
       
@@ -1946,133 +1976,151 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <span>Sync</span>
               </AppButton>
 
-              <AppButton
-                variant={activeTab === "dashboard" ? "primary" : "secondary"}
-                size="sm"
-                onClick={() => router.push("/vehicle")}
-                className={`text-xs h-9 font-semibold transition-all ${
-                  activeTab === "dashboard"
-                    ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
-                    : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
-                }`}
-              >
-                <LayoutDashboard className={`h-4 w-4 mr-1.5 ${activeTab === "dashboard" ? "text-white" : "text-muted-foreground"}`} />
-                <span>Overview</span>
-              </AppButton>
+              {hasAnyFleetAccess && (
+                <AppButton
+                  variant={activeTab === "dashboard" ? "primary" : "secondary"}
+                  size="sm"
+                  onClick={() => router.push("/vehicle")}
+                  className={`text-xs h-9 font-semibold transition-all ${
+                    activeTab === "dashboard"
+                      ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
+                      : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
+                  }`}
+                >
+                  <LayoutDashboard className={`h-4 w-4 mr-1.5 ${activeTab === "dashboard" ? "text-white" : "text-muted-foreground"}`} />
+                  <span>Overview</span>
+                </AppButton>
+              )}
 
-              <AppButton
-                variant={activeTab === "inventory" ? "primary" : "secondary"}
-                size="sm"
-                onClick={() => router.push("/vehicle/inventory")}
-                className={`text-xs h-9 font-semibold transition-all ${
-                  activeTab === "inventory"
-                    ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
-                    : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
-                }`}
-              >
-                <Car className={`h-4 w-4 mr-1.5 ${activeTab === "inventory" ? "text-white" : "text-muted-foreground"}`} />
-                <span>Fleet ({stats.totalVehicles})</span>
-              </AppButton>
+              {canReadModule("VEHICLES") && (
+                <AppButton
+                  variant={activeTab === "inventory" ? "primary" : "secondary"}
+                  size="sm"
+                  onClick={() => router.push("/vehicle/inventory")}
+                  className={`text-xs h-9 font-semibold transition-all ${
+                    activeTab === "inventory"
+                      ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
+                      : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
+                  }`}
+                >
+                  <Car className={`h-4 w-4 mr-1.5 ${activeTab === "inventory" ? "text-white" : "text-muted-foreground"}`} />
+                  <span>Fleet ({stats.totalVehicles})</span>
+                </AppButton>
+              )}
 
-              <AppButton
-                variant={activeTab === "drivers" ? "primary" : "secondary"}
-                size="sm"
-                onClick={() => router.push("/vehicle/drivers")}
-                className={`text-xs h-9 font-semibold transition-all ${
-                  activeTab === "drivers"
-                    ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
-                    : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
-                }`}
-              >
-                <Users className={`h-4 w-4 mr-1.5 ${activeTab === "drivers" ? "text-white" : "text-muted-foreground"}`} />
-                <span>Drivers ({stats.activeDrivers})</span>
-              </AppButton>
+              {canReadModule("DRIVERS") && (
+                <AppButton
+                  variant={activeTab === "drivers" ? "primary" : "secondary"}
+                  size="sm"
+                  onClick={() => router.push("/vehicle/drivers")}
+                  className={`text-xs h-9 font-semibold transition-all ${
+                    activeTab === "drivers"
+                      ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
+                      : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
+                  }`}
+                >
+                  <Users className={`h-4 w-4 mr-1.5 ${activeTab === "drivers" ? "text-white" : "text-muted-foreground"}`} />
+                  <span>Drivers ({stats.activeDrivers})</span>
+                </AppButton>
+              )}
 
-              <AppButton
-                variant={activeTab === "trips" ? "primary" : "secondary"}
-                size="sm"
-                onClick={() => router.push("/vehicle/trips")}
-                className={`text-xs h-9 font-semibold transition-all ${
-                  activeTab === "trips"
-                    ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
-                    : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
-                }`}
-              >
-                <Calendar className={`h-4 w-4 mr-1.5 ${activeTab === "trips" ? "text-white" : "text-muted-foreground"}`} />
-                <span>Trips ({stats.activeTrips})</span>
-              </AppButton>
+              {canReadModule("TRIPS") && (
+                <AppButton
+                  variant={activeTab === "trips" ? "primary" : "secondary"}
+                  size="sm"
+                  onClick={() => router.push("/vehicle/trips")}
+                  className={`text-xs h-9 font-semibold transition-all ${
+                    activeTab === "trips"
+                      ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
+                      : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
+                  }`}
+                >
+                  <Calendar className={`h-4 w-4 mr-1.5 ${activeTab === "trips" ? "text-white" : "text-muted-foreground"}`} />
+                  <span>Trips ({stats.activeTrips})</span>
+                </AppButton>
+              )}
 
-              <AppButton
-                variant={activeTab === "maintenance" ? "primary" : "secondary"}
-                size="sm"
-                onClick={() => router.push("/vehicle/maintenance")}
-                className={`text-xs h-9 font-semibold transition-all ${
-                  activeTab === "maintenance"
-                    ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
-                    : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
-                }`}
-              >
-                <Wrench className={`h-4 w-4 mr-1.5 ${activeTab === "maintenance" ? "text-white" : "text-muted-foreground"}`} />
-                <span>Maintenance ({stats.inMaintenanceVehicles})</span>
-              </AppButton>
+              {canReadModule("MAINTENANCE") && (
+                <AppButton
+                  variant={activeTab === "maintenance" ? "primary" : "secondary"}
+                  size="sm"
+                  onClick={() => router.push("/vehicle/maintenance")}
+                  className={`text-xs h-9 font-semibold transition-all ${
+                    activeTab === "maintenance"
+                      ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
+                      : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
+                  }`}
+                >
+                  <Wrench className={`h-4 w-4 mr-1.5 ${activeTab === "maintenance" ? "text-white" : "text-muted-foreground"}`} />
+                  <span>Maintenance ({stats.inMaintenanceVehicles})</span>
+                </AppButton>
+              )}
 
-              <AppButton
-                variant={activeTab === "parts" ? "primary" : "secondary"}
-                size="sm"
-                onClick={() => router.push("/vehicle/parts")}
-                className={`text-xs h-9 font-semibold transition-all ${
-                  activeTab === "parts"
-                    ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
-                    : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
-                }`}
-              >
-                <Package className={`h-4 w-4 mr-1.5 ${activeTab === "parts" ? "text-white" : "text-amber-500"}`} />
-                <span>Parts & Spares ({parts.length})</span>
-              </AppButton>
+              {canReadModule("PARTS") && (
+                <AppButton
+                  variant={activeTab === "parts" ? "primary" : "secondary"}
+                  size="sm"
+                  onClick={() => router.push("/vehicle/parts")}
+                  className={`text-xs h-9 font-semibold transition-all ${
+                    activeTab === "parts"
+                      ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
+                      : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
+                  }`}
+                >
+                  <Package className={`h-4 w-4 mr-1.5 ${activeTab === "parts" ? "text-white" : "text-amber-500"}`} />
+                  <span>Parts & Spares ({parts.length})</span>
+                </AppButton>
+              )}
 
-              <AppButton
-                variant={activeTab === "vendors" ? "primary" : "secondary"}
-                size="sm"
-                onClick={() => router.push("/vehicle/vendors")}
-                className={`text-xs h-9 font-semibold transition-all ${
-                  activeTab === "vendors"
-                    ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
-                    : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
-                }`}
-              >
-                <ShieldCheck className={`h-4 w-4 mr-1.5 ${activeTab === "vendors" ? "text-white" : "text-blue-500"}`} />
-                <span>Insurance Vendors ({insuranceVendors.length})</span>
-              </AppButton>
+              {canReadModule("VENDORS") && (
+                <AppButton
+                  variant={activeTab === "vendors" ? "primary" : "secondary"}
+                  size="sm"
+                  onClick={() => router.push("/vehicle/vendors")}
+                  className={`text-xs h-9 font-semibold transition-all ${
+                    activeTab === "vendors"
+                      ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
+                      : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
+                  }`}
+                >
+                  <ShieldCheck className={`h-4 w-4 mr-1.5 ${activeTab === "vendors" ? "text-white" : "text-blue-500"}`} />
+                  <span>Insurance Vendors ({insuranceVendors.length})</span>
+                </AppButton>
+              )}
 
-              <AppButton
-                variant={activeTab === "alerts" ? "primary" : "secondary"}
-                size="sm"
-                onClick={() => router.push("/vehicle/alerts")}
-                className={`text-xs h-9 font-semibold transition-all ${
-                  activeTab === "alerts"
-                    ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
-                    : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
-                }`}
-              >
-                <ShieldAlert className={`h-4 w-4 mr-1.5 ${activeTab === "alerts" ? "text-white" : "text-amber-500"}`} />
-                <span>Alerts</span>
-              </AppButton>
+              {canReadModule("ALERTS") && (
+                <AppButton
+                  variant={activeTab === "alerts" ? "primary" : "secondary"}
+                  size="sm"
+                  onClick={() => router.push("/vehicle/alerts")}
+                  className={`text-xs h-9 font-semibold transition-all ${
+                    activeTab === "alerts"
+                      ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
+                      : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
+                  }`}
+                >
+                  <ShieldAlert className={`h-4 w-4 mr-1.5 ${activeTab === "alerts" ? "text-white" : "text-amber-500"}`} />
+                  <span>Alerts</span>
+                </AppButton>
+              )}
 
-              <AppButton
-                variant={activeTab === "travelers" ? "primary" : "secondary"}
-                size="sm"
-                onClick={() => router.push("/vehicle/travelers")}
-                className={`text-xs h-9 font-semibold transition-all ${
-                  activeTab === "travelers"
-                    ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
-                    : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
-                }`}
-              >
-                <UserCheck className={`h-4 w-4 mr-1.5 ${activeTab === "travelers" ? "text-white" : "text-indigo-500"}`} />
-                <span>Travelers</span>
-              </AppButton>
+              {canReadModule("TRAVELERS") && (
+                <AppButton
+                  variant={activeTab === "travelers" ? "primary" : "secondary"}
+                  size="sm"
+                  onClick={() => router.push("/vehicle/travelers")}
+                  className={`text-xs h-9 font-semibold transition-all ${
+                    activeTab === "travelers"
+                      ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
+                      : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
+                  }`}
+                >
+                  <UserCheck className={`h-4 w-4 mr-1.5 ${activeTab === "travelers" ? "text-white" : "text-indigo-500"}`} />
+                  <span>Travelers</span>
+                </AppButton>
+              )}
 
-              {canViewReports && (
+              {canReadModule("REPORTS") && (
                 <AppButton
                   variant={activeTab === "reports" ? "primary" : "secondary"}
                   size="sm"
@@ -2088,33 +2136,37 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 </AppButton>
               )}
 
-              <AppButton
-                variant={activeTab === "rbac" ? "primary" : "secondary"}
-                size="sm"
-                onClick={() => router.push("/vehicle/rbac")}
-                className={`text-xs h-9 font-semibold transition-all ${
-                  activeTab === "rbac"
-                    ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
-                    : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
-                }`}
-              >
-                <Shield className={`h-4 w-4 mr-1.5 ${activeTab === "rbac" ? "text-white" : "text-blue-500"}`} />
-                <span>RBAC Policies</span>
-              </AppButton>
+              {canReadModule("RBAC") && (
+                <AppButton
+                  variant={activeTab === "rbac" ? "primary" : "secondary"}
+                  size="sm"
+                  onClick={() => router.push("/vehicle/rbac")}
+                  className={`text-xs h-9 font-semibold transition-all ${
+                    activeTab === "rbac"
+                      ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
+                      : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
+                  }`}
+                >
+                  <Shield className={`h-4 w-4 mr-1.5 ${activeTab === "rbac" ? "text-white" : "text-blue-500"}`} />
+                  <span>RBAC Policies</span>
+                </AppButton>
+              )}
 
-              <AppButton
-                variant={activeTab === "settings" ? "primary" : "secondary"}
-                size="sm"
-                onClick={() => router.push("/vehicle/settings")}
-                className={`text-xs h-9 font-semibold transition-all ${
-                  activeTab === "settings"
-                    ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
-                    : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
-                }`}
-              >
-                <Settings className={`h-4 w-4 mr-1.5 ${activeTab === "settings" ? "text-white" : "text-muted-foreground"}`} />
-                <span>Settings</span>
-              </AppButton>
+              {canReadModule("SETTINGS") && (
+                <AppButton
+                  variant={activeTab === "settings" ? "primary" : "secondary"}
+                  size="sm"
+                  onClick={() => router.push("/vehicle/settings")}
+                  className={`text-xs h-9 font-semibold transition-all ${
+                    activeTab === "settings"
+                      ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
+                      : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
+                  }`}
+                >
+                  <Settings className={`h-4 w-4 mr-1.5 ${activeTab === "settings" ? "text-white" : "text-muted-foreground"}`} />
+                  <span>Settings</span>
+                </AppButton>
+              )}
 
               {/* Action trigger button tailored to active tab and RBAC capability */}
               {activeTab === "vendors" ? (

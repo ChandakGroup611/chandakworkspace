@@ -41,6 +41,8 @@ import {
   Key
 } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useFleetPermissions } from "@/hooks/useFleetPermissions";
+import { FleetFunctionalModule } from "@/types/vehicleRbacTypes";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { AppButton } from "@/components/ui/AppButton";
 import { useRenderLog } from "@/hooks/use-render-log";
@@ -54,11 +56,13 @@ interface NavItem {
   badge?: string;
   badgeColor?: string;
   permission?: string;
+  fleetModule?: FleetFunctionalModule;
   subItems?: {
     label: string;
     href: string;
     scopeParam?: string;
     permission?: string;
+    fleetModule?: FleetFunctionalModule;
   }[];
 }
 
@@ -157,30 +161,30 @@ const vehicleNavGroups: NavGroup[] = [
     label: "Fleet Operations",
     items: [
       { label: "Fleet Dashboard", href: "/vehicle", icon: LayoutDashboard },
-      { label: "Vehicle Inventory", href: "/vehicle/inventory", icon: Car },
-      { label: "Register Vehicle", href: "/vehicle/register", icon: PlusCircle },
-      { label: "Daily Trip Sheets", href: "/vehicle/trips", icon: Calendar },
-      { label: "Driver Roster", href: "/vehicle/drivers", icon: Users },
-      { label: "Traveler Allocations", href: "/vehicle/travelers", icon: UserCheck },
+      { label: "Vehicle Inventory", href: "/vehicle/inventory", icon: Car, fleetModule: "VEHICLES" },
+      { label: "Register Vehicle", href: "/vehicle/register", icon: PlusCircle, fleetModule: "REGISTER" },
+      { label: "Daily Trip Sheets", href: "/vehicle/trips", icon: Calendar, fleetModule: "TRIPS" },
+      { label: "Driver Roster", href: "/vehicle/drivers", icon: Users, fleetModule: "DRIVERS" },
+      { label: "Traveler Allocations", href: "/vehicle/travelers", icon: UserCheck, fleetModule: "TRAVELERS" },
     ]
   },
   {
     label: "Service & Assets",
     items: [
-      { label: "Maintenance & Job Cards", href: "/vehicle/maintenance", icon: Wrench },
-      { label: "Parts & Accessories", href: "/vehicle/parts", icon: Package },
-      { label: "Insurance Vendor Master", href: "/vehicle/vendors", icon: ShieldCheck },
-      { label: "Compliance & Alerts", href: "/vehicle/alerts", icon: ShieldAlert },
+      { label: "Maintenance & Job Cards", href: "/vehicle/maintenance", icon: Wrench, fleetModule: "MAINTENANCE" },
+      { label: "Parts & Accessories", href: "/vehicle/parts", icon: Package, fleetModule: "PARTS" },
+      { label: "Insurance Vendor Master", href: "/vehicle/vendors", icon: ShieldCheck, fleetModule: "VENDORS" },
+      { label: "Compliance & Alerts", href: "/vehicle/alerts", icon: ShieldAlert, fleetModule: "ALERTS" },
     ]
   },
   {
     label: "Analytics & System",
     items: [
-      { label: "Fleet Reports", href: "/vehicle/reports", icon: LineChart },
-      { label: "My Assigned Vehicles", href: "/vehicle/my-garage", icon: LifeBuoy },
-      { label: "Fleet Guidelines / SOPs", href: "/vehicle/learning", icon: BookOpen },
-      { label: "RBAC Access Policies", href: "/vehicle/rbac", icon: Key, permission: "USERS_VIEW" },
-      { label: "Fleet Settings", href: "/vehicle/settings", icon: Settings, permission: "SETTINGS_MANAGE" },
+      { label: "Fleet Reports", href: "/vehicle/reports", icon: LineChart, fleetModule: "REPORTS" },
+      { label: "My Assigned Vehicles", href: "/vehicle/my-garage", icon: LifeBuoy, fleetModule: "MY_GARAGE" },
+      { label: "Fleet Guidelines / SOPs", href: "/vehicle/learning", icon: BookOpen, fleetModule: "LEARNING" },
+      { label: "RBAC Access Policies", href: "/vehicle/rbac", icon: Key, fleetModule: "RBAC" },
+      { label: "Fleet Settings", href: "/vehicle/settings", icon: Settings, fleetModule: "SETTINGS" },
     ]
   }
 ];
@@ -262,6 +266,12 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
   const { theme } = useTheme();
   const { hasPermission, roleCode, loading: permsLoading } = usePermissions();
 
+  const { 
+    canReadModule, 
+    hasAnyFleetAccess, 
+    effectiveFleetRole 
+  } = useFleetPermissions();
+
   const isSuperAdmin = React.useMemo(() => {
     const code = (roleCode || "").toUpperCase();
     return ["SUPER_ADMIN", "ROLE_SUPER_ADMIN", "ADMIN_ROLE", "ROLE_ADMIN", "ADMIN"].includes(code) || hasPermission("SUPER_ADMIN");
@@ -270,6 +280,18 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
   const visibleNavTree = React.useMemo(() => {
     return navGroups.map(group => {
       const visibleItems = group.items.map(item => {
+        // Fleet Desk Module isolation: enforce Fleet RBAC policies strictly
+        if (activeModuleCode === "VEHICLE_DESK") {
+          if (item.fleetModule) {
+            const isAllowed = canReadModule(item.fleetModule);
+            if (!isAllowed) return null;
+          } else if (item.href === "/vehicle") {
+            if (!hasAnyFleetAccess) return null;
+          }
+          return item;
+        }
+
+        // Standard Task / Design Module Permission Filtering
         if (!item.subItems) {
           if (isSuperAdmin) return item;
           if (!item.permission) return item;
@@ -299,7 +321,7 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
       if (visibleItems.length === 0) return null;
       return { ...group, items: visibleItems };
     }).filter(Boolean) as NavGroup[];
-  }, [navGroups, isSuperAdmin, hasPermission, permsLoading]);
+  }, [navGroups, activeModuleCode, canReadModule, hasAnyFleetAccess, isSuperAdmin, hasPermission, permsLoading]);
 
   // When minimized, simply gliding mouse over sidebar gracefully expands it to reveal full module names and links temporarily
   const isCompact = isCompactState && !isHovered;
