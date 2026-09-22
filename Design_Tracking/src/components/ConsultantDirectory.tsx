@@ -83,7 +83,8 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
     setLeadContact("");
     setEmail("");
     setPhone("");
-    setSelectedExpertise([]);
+    // Default ALL work packages selected YES (user can untick whichever is not needed)
+    setSelectedExpertise([...availableWorkPackages]);
     setModalPackageSearch("");
     setCustomExpertiseInput("");
     setSelectedProjects([]);
@@ -810,18 +811,18 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
                   <label className="font-bold text-foreground flex items-center gap-1.5 text-xs">
                     <Layers className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                    <span>WORK PACKAGES (Assign Packages to Consultant) *</span>
+                    <span>WORK PACKAGES (All Selected by Default • Click to Untick / Remove) *</span>
                   </label>
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] font-semibold text-purple-600 dark:text-purple-400">
-                      {selectedExpertise.length} {selectedExpertise.length === 1 ? "package" : "packages"} selected
+                      {selectedExpertise.length} of {availableWorkPackages.length} selected
                     </span>
                     {availableWorkPackages.length > 0 && (
                       <div className="flex items-center gap-1.5 text-[11px]">
                         <button
                           type="button"
-                          onClick={() => setSelectedExpertise(Array.from(new Set([...selectedExpertise, ...availableWorkPackages])))}
-                          className="text-purple-600 hover:underline cursor-pointer font-medium"
+                          onClick={() => setSelectedExpertise([...availableWorkPackages])}
+                          className="px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 font-bold cursor-pointer transition-colors"
                         >
                           Select All
                         </button>
@@ -829,9 +830,9 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
                         <button
                           type="button"
                           onClick={() => setSelectedExpertise([])}
-                          className="text-muted-foreground hover:text-rose-500 cursor-pointer"
+                          className="px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 font-medium cursor-pointer transition-colors"
                         >
-                          Clear
+                          Clear All
                         </button>
                       </div>
                     )}
@@ -936,20 +937,41 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
 
               {/* 🏢 Multi-Selection: Project Tagging & Onboarding Lifecycle */}
               <div className="space-y-1.5 pt-1 border-t border-border">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
                   <label className="font-bold text-foreground flex items-center gap-1.5">
                     <Building className="h-3.5 w-3.5 text-blue-500" />
                     <span>Tag with Projects (Multi-Select):</span>
                   </label>
-                  {selectedProjects.length > 0 ? (
-                    <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
-                      ✓ Status: Onboard
-                    </span>
-                  ) : (
-                    <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30">
-                      ⚠️ Status: Not Onboard
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {availableProjects.length > 0 && (
+                      <div className="flex items-center gap-1.5 text-[11px]">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedProjects([...availableProjects])}
+                          className="text-blue-600 dark:text-blue-400 hover:underline cursor-pointer font-medium"
+                        >
+                          Select All
+                        </button>
+                        <span>•</span>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedProjects([])}
+                          className="text-muted-foreground hover:text-rose-500 cursor-pointer"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    )}
+                    {selectedProjects.length > 0 ? (
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
+                        ✓ Status: Onboard ({selectedProjects.length})
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30">
+                        ⚠️ Status: Not Onboard
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <p className="text-[11px] text-muted-foreground">
                   Once tagged to one or more development projects, consultant onboarding will automatically become <strong>Onboard</strong>.

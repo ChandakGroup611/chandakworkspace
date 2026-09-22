@@ -79,6 +79,7 @@ export interface VehicleRecord {
   insurance_vendor_id?: string | null;
   insurance_vendor?: string | null;
   puc_expiry_date?: string | null;
+  puc_certificate_number?: string | null;
   fitness_expiry_date?: string | null;
   has_roadside_assistance?: boolean;
   has_hsrp_plate?: boolean;
@@ -119,6 +120,60 @@ export interface InsuranceVendorRecord {
   created_at?: string;
   updated_at?: string;
 }
+
+export interface VehicleInsurancePolicyRecord {
+  id: string;
+  vehicle_id: string;
+  insurer_name: string;
+  insurance_vendor_id?: string | null;
+  policy_number: string;
+  policy_type: string;
+  idv: number;
+  premium_amount: number;
+  start_date: string;
+  end_date: string;
+  is_active: boolean;
+  has_roadside_assistance: boolean;
+  has_zero_depreciation?: boolean;
+  has_engine_protect?: boolean;
+  ncb_discount_percentage?: number;
+  policy_document_url?: string | null;
+  receipt_number?: string | null;
+  notes?: string | null;
+  renewed_by?: string | null;
+  is_deleted?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  daysRemaining?: number | null;
+  statusBadge?: "ACTIVE" | "EXPIRING_SOON" | "EXPIRED" | "UPCOMING";
+}
+
+export interface VehiclePucCertificateRecord {
+  id: string;
+  vehicle_id: string;
+  certificate_number: string;
+  valid_from: string;
+  valid_upto: string;
+  testing_center_name?: string | null;
+  testing_center_code?: string | null;
+  test_fee?: number;
+  receipt_number?: string | null;
+  emission_norm?: string | null;
+  carbon_monoxide_co?: number | null;
+  hydrocarbon_hc?: number | null;
+  smoke_density_k?: number | null;
+  test_result: string;
+  document_url?: string | null;
+  notes?: string | null;
+  renewed_by?: string | null;
+  is_active: boolean;
+  is_deleted?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  daysRemaining?: number | null;
+  statusBadge?: "ACTIVE" | "EXPIRING_SOON" | "EXPIRED" | "UPCOMING";
+}
+
 
 export interface PartAccessoryRecord {
   id: string;
@@ -3120,6 +3175,509 @@ export async function renewPartPolicyAction(
     return { success: false, error: err.message || "Failed to renew policy" };
   }
 }
+
+// ------------------------------------------------------------------------------
+// Fleet Vehicle Insurance Policy Renewal & Historical Audit Ledger Actions
+// ------------------------------------------------------------------------------
+
+/**
+ * Fetch complete historical and active insurance policies for a specific vehicle
+ */
+export async function fetchVehicleInsurancePoliciesAction(vehicleId: string): Promise<{
+  success: boolean;
+  policies: VehicleInsurancePolicyRecord[];
+  error?: string;
+}> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) {
+      return { success: false, policies: [], error: "Unauthenticated" };
+    }
+
+    if (!vehicleId) {
+      return { success: false, policies: [], error: "Vehicle ID is required" };
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from("insurance_policies")
+      .select("*")
+      .eq("vehicle_id", vehicleId)
+      .eq("is_deleted", false)
+      .order("end_date", { ascending: false })
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("[vehicle-actions] fetchVehicleInsurancePoliciesAction error:", error);
+      return { success: false, policies: [], error: error.message };
+    }
+
+    const rawPolicies = (data || []) as any[];
+    const enrichedPolicies: VehicleInsurancePolicyRecord[] = rawPolicies.map((p) => {
+      const daysRemaining = calculateDaysRemaining(p.end_date);
+      let statusBadge: "ACTIVE" | "EXPIRING_SOON" | "EXPIRED" | "UPCOMING" = "ACTIVE";
+
+      if (p.start_date && new Date(p.start_date) > new Date()) {
+        statusBadge = "UPCOMING";
+      } else if (daysRemaining !== null && daysRemaining < 0) {
+        statusBadge = "EXPIRED";
+      } else if (daysRemaining !== null && daysRemaining <= 30) {
+        statusBadge = "EXPIRING_SOON";
+      } else {
+        statusBadge = "ACTIVE";
+      }
+
+      return {
+        ...p,
+        idv: Number(p.idv) || 0,
+        premium_amount: Number(p.premium_amount) || 0,
+        ncb_discount_percentage: Number(p.ncb_discount_percentage) || 0,
+        has_roadside_assistance: !!p.has_roadside_assistance,
+        has_zero_depreciation: p.has_zero_depreciation ?? true,
+        has_engine_protect: !!p.has_engine_protect,
+        daysRemaining,
+        statusBadge
+      };
+    });
+
+    return { success: true, policies: enrichedPolicies };
+  } catch (err: any) {
+    console.error("[vehicle-actions] fetchVehicleInsurancePoliciesAction exception:", err);
+    return { success: false, policies: [], error: err.message || "Failed to fetch policy history" };
+  }
+}
+
+/**
+ * Renew vehicle insurance policy:
+ * 1. Deactivates previous active policies
+ * 2. Creates new policy record in insurance_policies (is_active = true)
+ * 3. Synchronizes latest pointers on the vehicles table
+ */
+export async function renewVehicleInsurancePolicyAction(
+  vehicleId: string,
+  renewalData: {
+    insurer_name: string;
+    insurance_vendor_id?: string | null;
+    policy_number: string;
+    policy_type?: string;
+    idv?: number;
+    premium_amount?: number;
+    start_date: string;
+    end_date: string;
+    has_roadside_assistance?: boolean;
+    has_zero_depreciation?: boolean;
+    has_engine_protect?: boolean;
+    ncb_discount_percentage?: number;
+    receipt_number?: string;
+    policy_document_url?: string;
+    notes?: string;
+  }
+): Promise<{
+  success: boolean;
+  policy?: VehicleInsurancePolicyRecord;
+  error?: string;
+}> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) {
+      return { success: false, error: "Unauthorized. Please sign in." };
+    }
+
+    if (!vehicleId) {
+      return { success: false, error: "Vehicle ID is required." };
+    }
+
+    if (!renewalData.policy_number?.trim()) {
+      return { success: false, error: "Policy Number is required." };
+    }
+
+    if (!renewalData.insurer_name?.trim()) {
+      return { success: false, error: "Insurance Provider / Vendor is required." };
+    }
+
+    if (!renewalData.start_date || !renewalData.end_date) {
+      return { success: false, error: "Policy Start Date and Expiry Date are required." };
+    }
+
+    // Step 1: Mark all previous policies for this vehicle as inactive
+    await supabaseAdmin
+      .from("insurance_policies")
+      .update({ is_active: false, updated_at: new Date().toISOString() })
+      .eq("vehicle_id", vehicleId)
+      .eq("is_active", true);
+
+    // Step 2: Insert the newly renewed policy
+    const newPolicyPayload = {
+      vehicle_id: vehicleId,
+      insurer_name: renewalData.insurer_name.trim(),
+      insurance_vendor_id: renewalData.insurance_vendor_id || null,
+      policy_number: renewalData.policy_number.trim(),
+      policy_type: renewalData.policy_type || "Comprehensive",
+      idv: Number(renewalData.idv) || 0,
+      premium_amount: Number(renewalData.premium_amount) || 0,
+      start_date: renewalData.start_date,
+      end_date: renewalData.end_date,
+      is_active: true,
+      has_roadside_assistance: renewalData.has_roadside_assistance ?? true,
+      has_zero_depreciation: renewalData.has_zero_depreciation ?? true,
+      has_engine_protect: renewalData.has_engine_protect ?? false,
+      ncb_discount_percentage: Number(renewalData.ncb_discount_percentage) || 0,
+      receipt_number: renewalData.receipt_number?.trim() || null,
+      policy_document_url: renewalData.policy_document_url?.trim() || null,
+      notes: renewalData.notes?.trim() || null,
+      renewed_by: user.user_metadata?.full_name || user.email || "System Admin",
+      is_deleted: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    const { data: insertedPolicy, error: insertError } = await supabaseAdmin
+      .from("insurance_policies")
+      .insert(newPolicyPayload)
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error("[vehicle-actions] renewVehicleInsurancePolicyAction insert error:", insertError);
+      return { success: false, error: insertError.message };
+    }
+
+    // Step 3: Synchronize vehicles table active pointers
+    const vehicleUpdates: Record<string, any> = {
+      insurance_policy_number: renewalData.policy_number.trim(),
+      insurance_expiry_date: renewalData.end_date,
+      insurance_vendor: renewalData.insurer_name.trim(),
+      insurance_vendor_id: renewalData.insurance_vendor_id || null,
+      has_roadside_assistance: renewalData.has_roadside_assistance ?? true,
+      updated_at: new Date().toISOString()
+    };
+
+    const { error: vehUpdateError } = await supabaseAdmin
+      .from("vehicles")
+      .update(vehicleUpdates)
+      .eq("id", vehicleId);
+
+    if (vehUpdateError) {
+      console.warn("[vehicle-actions] Sync to vehicles table warning:", vehUpdateError.message);
+    }
+
+    const daysRemaining = calculateDaysRemaining(insertedPolicy.end_date);
+    const enriched: VehicleInsurancePolicyRecord = {
+      ...insertedPolicy,
+      idv: Number(insertedPolicy.idv) || 0,
+      premium_amount: Number(insertedPolicy.premium_amount) || 0,
+      daysRemaining,
+      statusBadge: daysRemaining !== null && daysRemaining < 0 ? "EXPIRED" : (daysRemaining !== null && daysRemaining <= 30 ? "EXPIRING_SOON" : "ACTIVE")
+    };
+
+    return { success: true, policy: enriched };
+  } catch (err: any) {
+    console.error("[vehicle-actions] renewVehicleInsurancePolicyAction exception:", err);
+    return { success: false, error: err.message || "Failed to process policy renewal" };
+  }
+}
+
+/**
+ * Delete / void a policy record and automatically restore active pointer to latest valid policy
+ */
+export async function deleteVehicleInsurancePolicyAction(
+  policyId: string,
+  vehicleId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    // Soft delete the policy
+    const { error: delError } = await supabaseAdmin
+      .from("insurance_policies")
+      .update({ is_deleted: true, is_active: false, updated_at: new Date().toISOString() })
+      .eq("id", policyId);
+
+    if (delError) return { success: false, error: delError.message };
+
+    // Fetch the latest remaining policy for this vehicle
+    const { data: latestPolicies } = await supabaseAdmin
+      .from("insurance_policies")
+      .select("*")
+      .eq("vehicle_id", vehicleId)
+      .eq("is_deleted", false)
+      .order("end_date", { ascending: false })
+      .limit(1);
+
+    if (latestPolicies && latestPolicies.length > 0) {
+      const topPolicy = latestPolicies[0];
+      await supabaseAdmin
+        .from("insurance_policies")
+        .update({ is_active: true })
+        .eq("id", topPolicy.id);
+
+      await supabaseAdmin
+        .from("vehicles")
+        .update({
+          insurance_policy_number: topPolicy.policy_number,
+          insurance_expiry_date: topPolicy.end_date,
+          insurance_vendor: topPolicy.insurer_name,
+          insurance_vendor_id: topPolicy.insurance_vendor_id || null,
+          has_roadside_assistance: topPolicy.has_roadside_assistance ?? true,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", vehicleId);
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to delete policy" };
+  }
+}
+
+// ------------------------------------------------------------------------------
+// Fleet Vehicle PUC (Pollution Under Control) Renewal & Certificate Ledger Actions
+// ------------------------------------------------------------------------------
+
+/**
+ * Fetch complete historical and active PUC certificates for a specific vehicle
+ */
+export async function fetchVehiclePucCertificatesAction(vehicleId: string): Promise<{
+  success: boolean;
+  certificates: VehiclePucCertificateRecord[];
+  error?: string;
+}> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) {
+      return { success: false, certificates: [], error: "Unauthenticated" };
+    }
+
+    if (!vehicleId) {
+      return { success: false, certificates: [], error: "Vehicle ID is required" };
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from("puc_certificates")
+      .select("*")
+      .eq("vehicle_id", vehicleId)
+      .eq("is_deleted", false)
+      .order("valid_upto", { ascending: false })
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("[vehicle-actions] fetchVehiclePucCertificatesAction error:", error);
+      return { success: false, certificates: [], error: error.message };
+    }
+
+    const rawCerts = (data || []) as any[];
+    const enrichedCerts: VehiclePucCertificateRecord[] = rawCerts.map((c) => {
+      const daysRemaining = calculateDaysRemaining(c.valid_upto);
+      let statusBadge: "ACTIVE" | "EXPIRING_SOON" | "EXPIRED" | "UPCOMING" = "ACTIVE";
+
+      if (c.valid_from && new Date(c.valid_from) > new Date()) {
+        statusBadge = "UPCOMING";
+      } else if (daysRemaining !== null && daysRemaining < 0) {
+        statusBadge = "EXPIRED";
+      } else if (daysRemaining !== null && daysRemaining <= 30) {
+        statusBadge = "EXPIRING_SOON";
+      } else {
+        statusBadge = "ACTIVE";
+      }
+
+      return {
+        ...c,
+        test_fee: Number(c.test_fee) || 0,
+        carbon_monoxide_co: c.carbon_monoxide_co !== null && c.carbon_monoxide_co !== undefined ? Number(c.carbon_monoxide_co) : null,
+        hydrocarbon_hc: c.hydrocarbon_hc !== null && c.hydrocarbon_hc !== undefined ? Number(c.hydrocarbon_hc) : null,
+        smoke_density_k: c.smoke_density_k !== null && c.smoke_density_k !== undefined ? Number(c.smoke_density_k) : null,
+        test_result: c.test_result || "PASS",
+        daysRemaining,
+        statusBadge
+      };
+    });
+
+    return { success: true, certificates: enrichedCerts };
+  } catch (err: any) {
+    console.error("[vehicle-actions] fetchVehiclePucCertificatesAction exception:", err);
+    return { success: false, certificates: [], error: err.message || "Failed to fetch PUC certificates history" };
+  }
+}
+
+/**
+ * Renew vehicle PUC certificate:
+ * 1. Deactivates previous active PUC certificates
+ * 2. Creates new certificate in puc_certificates (is_active = true)
+ * 3. Synchronizes latest pointers on the vehicles table
+ */
+export async function renewVehiclePucCertificateAction(
+  vehicleId: string,
+  renewalData: {
+    certificate_number: string;
+    valid_from: string;
+    valid_upto: string;
+    testing_center_name?: string;
+    testing_center_code?: string;
+    test_fee?: number;
+    receipt_number?: string;
+    emission_norm?: string;
+    carbon_monoxide_co?: number;
+    hydrocarbon_hc?: number;
+    smoke_density_k?: number;
+    test_result?: string;
+    document_url?: string;
+    notes?: string;
+  }
+): Promise<{
+  success: boolean;
+  certificate?: VehiclePucCertificateRecord;
+  error?: string;
+}> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) {
+      return { success: false, error: "Unauthorized. Please sign in." };
+    }
+
+    if (!vehicleId) {
+      return { success: false, error: "Vehicle ID is required." };
+    }
+
+    if (!renewalData.certificate_number?.trim()) {
+      return { success: false, error: "PUC Certificate Number is required." };
+    }
+
+    if (!renewalData.valid_from || !renewalData.valid_upto) {
+      return { success: false, error: "Validity Start Date and Expiry Date are required." };
+    }
+
+    // Step 1: Mark previous active PUC certificates as inactive
+    await supabaseAdmin
+      .from("puc_certificates")
+      .update({ is_active: false, updated_at: new Date().toISOString() })
+      .eq("vehicle_id", vehicleId)
+      .eq("is_active", true);
+
+    // Step 2: Insert new PUC certificate
+    const newCertPayload = {
+      vehicle_id: vehicleId,
+      certificate_number: renewalData.certificate_number.trim(),
+      valid_from: renewalData.valid_from,
+      valid_upto: renewalData.valid_upto,
+      testing_center_name: renewalData.testing_center_name?.trim() || "Authorized RTO Emission Testing Center",
+      testing_center_code: renewalData.testing_center_code?.trim() || null,
+      test_fee: Number(renewalData.test_fee) || 150.00,
+      receipt_number: renewalData.receipt_number?.trim() || null,
+      emission_norm: renewalData.emission_norm || "BS-VI",
+      carbon_monoxide_co: renewalData.carbon_monoxide_co !== undefined ? Number(renewalData.carbon_monoxide_co) : 0.05,
+      hydrocarbon_hc: renewalData.hydrocarbon_hc !== undefined ? Number(renewalData.hydrocarbon_hc) : 45.0,
+      smoke_density_k: renewalData.smoke_density_k !== undefined ? Number(renewalData.smoke_density_k) : null,
+      test_result: renewalData.test_result || "PASS",
+      document_url: renewalData.document_url?.trim() || null,
+      notes: renewalData.notes?.trim() || null,
+      renewed_by: user.user_metadata?.full_name || user.email || "System Admin",
+      is_active: true,
+      is_deleted: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    const { data: insertedCert, error: insertError } = await supabaseAdmin
+      .from("puc_certificates")
+      .insert(newCertPayload)
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error("[vehicle-actions] renewVehiclePucCertificateAction insert error:", insertError);
+      return { success: false, error: insertError.message };
+    }
+
+    // Step 3: Synchronize vehicles table pointer
+    const { error: vehUpdateError } = await supabaseAdmin
+      .from("vehicles")
+      .update({
+        puc_expiry_date: renewalData.valid_upto,
+        puc_certificate_number: renewalData.certificate_number.trim(),
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", vehicleId);
+
+    if (vehUpdateError) {
+      console.warn("[vehicle-actions] Sync PUC to vehicles table warning:", vehUpdateError.message);
+    }
+
+    const daysRemaining = calculateDaysRemaining(insertedCert.valid_upto);
+    const enriched: VehiclePucCertificateRecord = {
+      ...insertedCert,
+      test_fee: Number(insertedCert.test_fee) || 0,
+      daysRemaining,
+      statusBadge: daysRemaining !== null && daysRemaining < 0 ? "EXPIRED" : (daysRemaining !== null && daysRemaining <= 30 ? "EXPIRING_SOON" : "ACTIVE")
+    };
+
+    return { success: true, certificate: enriched };
+  } catch (err: any) {
+    console.error("[vehicle-actions] renewVehiclePucCertificateAction exception:", err);
+    return { success: false, error: err.message || "Failed to renew PUC certificate" };
+  }
+}
+
+/**
+ * Delete / void a PUC certificate record and restore active pointer to latest remaining valid certificate
+ */
+export async function deleteVehiclePucCertificateAction(
+  pucId: string,
+  vehicleId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    // Soft delete certificate
+    const { error: delError } = await supabaseAdmin
+      .from("puc_certificates")
+      .update({ is_deleted: true, is_active: false, updated_at: new Date().toISOString() })
+      .eq("id", pucId);
+
+    if (delError) return { success: false, error: delError.message };
+
+    // Fetch latest remaining PUC certificate for this vehicle
+    const { data: latestCerts } = await supabaseAdmin
+      .from("puc_certificates")
+      .select("*")
+      .eq("vehicle_id", vehicleId)
+      .eq("is_deleted", false)
+      .order("valid_upto", { ascending: false })
+      .limit(1);
+
+    if (latestCerts && latestCerts.length > 0) {
+      const topCert = latestCerts[0];
+      await supabaseAdmin
+        .from("puc_certificates")
+        .update({ is_active: true })
+        .eq("id", topCert.id);
+
+      await supabaseAdmin
+        .from("vehicles")
+        .update({
+          puc_expiry_date: topCert.valid_upto,
+          puc_certificate_number: topCert.certificate_number,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", vehicleId);
+    } else {
+      await supabaseAdmin
+        .from("vehicles")
+        .update({
+          puc_expiry_date: null,
+          puc_certificate_number: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", vehicleId);
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to delete PUC certificate" };
+  }
+}
+
+
 
 
 

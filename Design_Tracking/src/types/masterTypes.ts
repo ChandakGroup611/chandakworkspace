@@ -7,6 +7,10 @@ export interface ProjectMaster {
   code: string;
   name: string;
   location: string;
+  isSubProject?: boolean;
+  parentProjectId?: string;
+  parentProjectName?: string;
+  subProjectName?: string;
   projectType?: "Residential High-Rise" | "Luxury Residential" | "Commercial Office" | "Mixed-Use Development" | "Township" | "SRA / Redevelopment" | "Hospitality" | "Infrastructure" | string;
   plotArea?: string;
   builtUpArea?: string;
@@ -16,7 +20,9 @@ export interface ProjectMaster {
   targetCompletionDate?: string;
   leadManager?: string;
   leadManagerEmail?: string;
-  taggedConsultants?: string[]; // Multi-selected consultant partner names / IDs
+  taggedConsultants?: string[]; // Multi-selected consultant partner names / IDs (Project-Level)
+  subProjectConsultants?: Record<string, string[]>; // Subproject/Tower ID -> Consultant names/IDs
+  subProjectCategories?: Record<string, string[]>; // Subproject/Tower ID -> Category names
   description?: string;
   createdAt: string;
 }
@@ -25,9 +31,12 @@ export interface TowerMaster {
   id: string;
   projectId: string;
   towerName: string;
+  subProjectCode?: string;
   towerType: "Sale" | "Society" | "Commercial" | "Rehab / SRA" | "PTC / Hostel" | "Plot / Infrastructure";
   totalFloors?: number;
   heightMeters?: number;
+  taggedConsultants?: string[]; // Sub-project level assigned consultants
+  taggedCategories?: string[]; // Sub-project level assigned discipline categories
   description?: string;
 }
 

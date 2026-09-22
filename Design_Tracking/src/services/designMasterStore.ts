@@ -376,6 +376,15 @@ export class DesignMasterStore {
     };
     state.projects.push(newProj);
 
+    // Ensure project has at least one default Tower Wing
+    const defaultTower: TowerMaster = {
+      id: `twr-${id}-wing-a`,
+      projectId: id,
+      towerName: "Wing A",
+      towerType: "Sale"
+    };
+    state.towers.push(defaultTower);
+
     // Sync tagged consultants' active projects
     if (newProj.taggedConsultants && newProj.taggedConsultants.length > 0) {
       newProj.taggedConsultants.forEach(cName => {
@@ -478,6 +487,23 @@ export class DesignMasterStore {
     const id = `twr-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
     const newTower: TowerMaster = { ...tower, id };
     state.towers.push(newTower);
+
+    // Sync tagged consultants' active projects
+    if (newTower.taggedConsultants && newTower.taggedConsultants.length > 0) {
+      const parentProj = state.projects.find(p => p.id === newTower.projectId);
+      const projLabel = parentProj ? `${parentProj.name} (${newTower.towerName})` : newTower.towerName;
+      newTower.taggedConsultants.forEach(cName => {
+        const c = state.consultants.find(cons => cons.name === cName || cons.id === cName);
+        if (c) {
+          if (!c.activeProjects) c.activeProjects = [];
+          if (!c.activeProjects.includes(projLabel)) {
+            c.activeProjects.push(projLabel);
+          }
+          c.onboardingStatus = "Onboard";
+        }
+      });
+    }
+
     this.notify();
     return newTower;
   }
@@ -487,6 +513,24 @@ export class DesignMasterStore {
     const idx = state.towers.findIndex(t => t.id === id);
     if (idx === -1) return null;
     state.towers[idx] = { ...state.towers[idx], ...updates };
+    const updatedTower = state.towers[idx];
+
+    // Sync tagged consultants' active projects
+    if (updates.taggedConsultants !== undefined) {
+      const parentProj = state.projects.find(p => p.id === updatedTower.projectId);
+      const projLabel = parentProj ? `${parentProj.name} (${updatedTower.towerName})` : updatedTower.towerName;
+      (updatedTower.taggedConsultants || []).forEach(cName => {
+        const c = state.consultants.find(cons => cons.name === cName || cons.id === cName);
+        if (c) {
+          if (!c.activeProjects) c.activeProjects = [];
+          if (!c.activeProjects.includes(projLabel)) {
+            c.activeProjects.push(projLabel);
+          }
+          c.onboardingStatus = "Onboard";
+        }
+      });
+    }
+
     this.notify();
     return state.towers[idx];
   }

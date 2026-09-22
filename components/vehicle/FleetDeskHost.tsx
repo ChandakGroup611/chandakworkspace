@@ -48,7 +48,9 @@ import {
   Receipt,
   ClipboardCheck,
   FileCheck,
-  Printer
+  Printer,
+  History,
+  Wind
 } from "lucide-react";
 import { 
   POPULAR_BRANDS, 
@@ -107,7 +109,15 @@ import {
   createVehiclePartAction,
   updateVehiclePartAction,
   deleteVehiclePartAction,
-  renewPartPolicyAction
+  renewPartPolicyAction,
+  VehicleInsurancePolicyRecord,
+  fetchVehicleInsurancePoliciesAction,
+  renewVehicleInsurancePolicyAction,
+  deleteVehicleInsurancePolicyAction,
+  VehiclePucCertificateRecord,
+  fetchVehiclePucCertificatesAction,
+  renewVehiclePucCertificateAction,
+  deleteVehiclePucCertificateAction
 } from "@/lib/actions/vehicle";
 
 export const MAINTENANCE_CATEGORIES = [
@@ -219,6 +229,13 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   const [vendorSearch, setVendorSearch] = useState("");
   const [vendorStatusFilter, setVendorStatusFilter] = useState("ALL");
 
+  // Universal Click-to-Inspect Record Inspector States
+  const [viewingVehicle, setViewingVehicle] = useState<VehicleRecord | null>(null);
+  const [viewingDriver, setViewingDriver] = useState<DriverRecord | null>(null);
+  const [viewingTrip, setViewingTrip] = useState<TripRecord | null>(null);
+  const [viewingPart, setViewingPart] = useState<PartAccessoryRecord | null>(null);
+  const [viewingVendor, setViewingVendor] = useState<InsuranceVendorRecord | null>(null);
+
   // Modal Dialog States
   const [isEditVehicleOpen, setIsEditVehicleOpen] = useState(false);
   const [selectedVehicleForEdit, setSelectedVehicleForEdit] = useState<VehicleRecord | null>(null);
@@ -254,6 +271,55 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   const [selectedPartForEdit, setSelectedPartForEdit] = useState<PartAccessoryRecord | null>(null);
   const [isRenewPartOpen, setIsRenewPartOpen] = useState(false);
   const [selectedPartForRenew, setSelectedPartForRenew] = useState<PartAccessoryRecord | null>(null);
+
+  // Vehicle Insurance Policy Renewal & History Modal States
+  const [isRenewPolicyModalOpen, setIsRenewPolicyModalOpen] = useState(false);
+  const [selectedVehicleForPolicyRenew, setSelectedVehicleForPolicyRenew] = useState<VehicleRecord | null>(null);
+
+  const [isPolicyHistoryModalOpen, setIsPolicyHistoryModalOpen] = useState(false);
+  const [selectedVehicleForPolicyHistory, setSelectedVehicleForPolicyHistory] = useState<VehicleRecord | null>(null);
+  const [vehiclePoliciesHistory, setVehiclePoliciesHistory] = useState<VehicleInsurancePolicyRecord[]>([]);
+  const [loadingPolicyHistory, setLoadingPolicyHistory] = useState(false);
+
+  // Policy Renewal Form States
+  const [renewPolicyNumber, setRenewPolicyNumber] = useState("");
+  const [renewPolicyVendorId, setRenewPolicyVendorId] = useState("");
+  const [renewPolicyVendorName, setRenewPolicyVendorName] = useState("");
+  const [renewPolicyType, setRenewPolicyType] = useState("Comprehensive");
+  const [renewPolicyIdv, setRenewPolicyIdv] = useState<number>(0);
+  const [renewPolicyPremium, setRenewPolicyPremium] = useState<number>(0);
+  const [renewPolicyStartDate, setRenewPolicyStartDate] = useState("");
+  const [renewPolicyEndDate, setRenewPolicyEndDate] = useState("");
+  const [renewPolicyNcb, setRenewPolicyNcb] = useState<number>(0);
+  const [renewPolicyHasRsa, setRenewPolicyHasRsa] = useState(true);
+  const [renewPolicyHasZeroDep, setRenewPolicyHasZeroDep] = useState(true);
+  const [renewPolicyHasEngineProtect, setRenewPolicyHasEngineProtect] = useState(false);
+  const [renewPolicyReceiptNo, setRenewPolicyReceiptNo] = useState("");
+  const [renewPolicyDocUrl, setRenewPolicyDocUrl] = useState("");
+  const [renewPolicyNotes, setRenewPolicyNotes] = useState("");
+
+  // Vehicle PUC Renewal & History Modal States
+  const [isRenewPucModalOpen, setIsRenewPucModalOpen] = useState(false);
+  const [selectedVehicleForPucRenew, setSelectedVehicleForPucRenew] = useState<VehicleRecord | null>(null);
+
+  const [isPucHistoryModalOpen, setIsPucHistoryModalOpen] = useState(false);
+  const [selectedVehicleForPucHistory, setSelectedVehicleForPucHistory] = useState<VehicleRecord | null>(null);
+  const [vehiclePucHistory, setVehiclePucHistory] = useState<VehiclePucCertificateRecord[]>([]);
+  const [loadingPucHistory, setLoadingPucHistory] = useState(false);
+
+  // PUC Renewal Form States
+  const [renewPucNumber, setRenewPucNumber] = useState("");
+  const [renewPucTestingCenter, setRenewPucTestingCenter] = useState("");
+  const [renewPucValidFrom, setRenewPucValidFrom] = useState("");
+  const [renewPucValidUpto, setRenewPucValidUpto] = useState("");
+  const [renewPucFee, setRenewPucFee] = useState<number>(150);
+  const [renewPucReceiptNo, setRenewPucReceiptNo] = useState("");
+  const [renewPucEmissionNorm, setRenewPucEmissionNorm] = useState("BS-VI");
+  const [renewPucCo, setRenewPucCo] = useState<number>(0.05);
+  const [renewPucHc, setRenewPucHc] = useState<number>(45.0);
+  const [renewPucSmokeDensity, setRenewPucSmokeDensity] = useState<number>(0.45);
+  const [renewPucDocUrl, setRenewPucDocUrl] = useState("");
+  const [renewPucNotes, setRenewPucNotes] = useState("");
 
   // Parts Form States
   const [partFormName, setPartFormName] = useState("");
@@ -1628,6 +1694,272 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       triggerToast(err.message || "Failed to renew policy.", true);
     } finally {
       setModalSubmitting(false);
+    }
+  };
+
+  // ----------------------------------------------------------------------------
+  // Vehicle Insurance Policy Renewal & History Handlers
+  // ----------------------------------------------------------------------------
+
+  const handleOpenVehiclePolicyRenewModal = (veh: VehicleRecord) => {
+    setSelectedVehicleForPolicyRenew(veh);
+    
+    // Auto-calculate continuous cycle dates:
+    // Start Date: Old expiry date + 1 day (or today if unset)
+    let startDateStr = new Date().toISOString().split("T")[0];
+    if (veh.insurance_expiry_date) {
+      const oldExp = new Date(veh.insurance_expiry_date);
+      if (!isNaN(oldExp.getTime())) {
+        const nextDay = new Date(oldExp);
+        nextDay.setDate(nextDay.getDate() + 1);
+        startDateStr = nextDay.toISOString().split("T")[0];
+      }
+    }
+    
+    // End Date: Start Date + 1 Year - 1 Day
+    const st = new Date(startDateStr);
+    const end = new Date(st);
+    end.setFullYear(end.getFullYear() + 1);
+    end.setDate(end.getDate() - 1);
+    const endDateStr = end.toISOString().split("T")[0];
+
+    setRenewPolicyStartDate(startDateStr);
+    setRenewPolicyEndDate(endDateStr);
+    setRenewPolicyVendorId(veh.insurance_vendor_id || "");
+    setRenewPolicyVendorName(veh.insurance_vendor || "");
+    setRenewPolicyNumber("");
+    setRenewPolicyType("Comprehensive");
+    setRenewPolicyIdv(650000);
+    setRenewPolicyPremium(16500);
+    setRenewPolicyNcb(20);
+    setRenewPolicyHasRsa(veh.has_roadside_assistance !== undefined ? veh.has_roadside_assistance : true);
+    setRenewPolicyHasZeroDep(true);
+    setRenewPolicyHasEngineProtect(false);
+    setRenewPolicyReceiptNo("");
+    setRenewPolicyDocUrl("");
+    setRenewPolicyNotes(`Annual policy renewal for ${veh.registration_number}.`);
+    setIsRenewPolicyModalOpen(true);
+  };
+
+  const handleOpenVehiclePolicyHistoryModal = async (veh: VehicleRecord) => {
+    setSelectedVehicleForPolicyHistory(veh);
+    setIsPolicyHistoryModalOpen(true);
+    setLoadingPolicyHistory(true);
+    try {
+      const res = await fetchVehicleInsurancePoliciesAction(veh.id);
+      if (res.success) {
+        setVehiclePoliciesHistory(res.policies);
+      } else {
+        triggerToast(res.error || "Failed to load policy history", true);
+        setVehiclePoliciesHistory([]);
+      }
+    } catch (err: any) {
+      triggerToast(err.message || "Failed to load policy history", true);
+      setVehiclePoliciesHistory([]);
+    } finally {
+      setLoadingPolicyHistory(false);
+    }
+  };
+
+  const handleSaveVehiclePolicyRenewal = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedVehicleForPolicyRenew) return;
+
+    if (!renewPolicyNumber.trim()) {
+      triggerToast("New policy number is required.", true);
+      return;
+    }
+    if (!renewPolicyVendorName.trim()) {
+      triggerToast("Insurance provider / vendor is required.", true);
+      return;
+    }
+    if (!renewPolicyStartDate || !renewPolicyEndDate) {
+      triggerToast("Policy start and end dates are required.", true);
+      return;
+    }
+
+    setModalSubmitting(true);
+    try {
+      const res = await renewVehicleInsurancePolicyAction(selectedVehicleForPolicyRenew.id, {
+        policy_number: renewPolicyNumber.trim(),
+        insurer_name: renewPolicyVendorName.trim(),
+        insurance_vendor_id: renewPolicyVendorId || undefined,
+        policy_type: renewPolicyType,
+        idv: Number(renewPolicyIdv) || 0,
+        premium_amount: Number(renewPolicyPremium) || 0,
+        start_date: renewPolicyStartDate,
+        end_date: renewPolicyEndDate,
+        has_roadside_assistance: renewPolicyHasRsa,
+        has_zero_depreciation: renewPolicyHasZeroDep,
+        has_engine_protect: renewPolicyHasEngineProtect,
+        ncb_discount_percentage: Number(renewPolicyNcb) || 0,
+        receipt_number: renewPolicyReceiptNo.trim() || undefined,
+        policy_document_url: renewPolicyDocUrl.trim() || undefined,
+        notes: renewPolicyNotes.trim() || undefined
+      });
+
+      if (res.success) {
+        triggerToast(`Policy #${renewPolicyNumber} successfully renewed until ${renewPolicyEndDate}!`);
+        setIsRenewPolicyModalOpen(false);
+        setSelectedVehicleForPolicyRenew(null);
+        loadAllData(true);
+        if (selectedVehicleForPolicyHistory?.id === selectedVehicleForPolicyRenew.id) {
+          handleOpenVehiclePolicyHistoryModal(selectedVehicleForPolicyRenew);
+        }
+      } else {
+        triggerToast(res.error || "Failed to renew policy.", true);
+      }
+    } catch (err: any) {
+      triggerToast(err.message || "Failed to renew policy.", true);
+    } finally {
+      setModalSubmitting(false);
+    }
+  };
+
+  const handleDeletePolicyHistoryRecord = async (policyId: string) => {
+    if (!selectedVehicleForPolicyHistory) return;
+    if (!confirm("Are you sure you want to void this policy record?")) return;
+
+    try {
+      const res = await deleteVehicleInsurancePolicyAction(policyId, selectedVehicleForPolicyHistory.id);
+      if (res.success) {
+        triggerToast("Policy record removed.");
+        handleOpenVehiclePolicyHistoryModal(selectedVehicleForPolicyHistory);
+        loadAllData(true);
+      } else {
+        triggerToast(res.error || "Failed to remove policy record.", true);
+      }
+    } catch (err: any) {
+      triggerToast(err.message || "Failed to remove policy record.", true);
+    }
+  };
+
+  // ----------------------------------------------------------------------------
+  // Vehicle PUC (Pollution Under Control) Renewal & History Handlers
+  // ----------------------------------------------------------------------------
+
+  const handleOpenVehiclePucRenewModal = (veh: VehicleRecord) => {
+    setSelectedVehicleForPucRenew(veh);
+
+    // Auto-calculate continuous cycle dates:
+    // Start Date: Old expiry date + 1 day (or today if unset)
+    let startDateStr = new Date().toISOString().split("T")[0];
+    if (veh.puc_expiry_date) {
+      const oldExp = new Date(veh.puc_expiry_date);
+      if (!isNaN(oldExp.getTime())) {
+        const nextDay = new Date(oldExp);
+        nextDay.setDate(nextDay.getDate() + 1);
+        startDateStr = nextDay.toISOString().split("T")[0];
+      }
+    }
+
+    // End Date: Start Date + 1 Year - 1 Day
+    const st = new Date(startDateStr);
+    const end = new Date(st);
+    end.setFullYear(end.getFullYear() + 1);
+    end.setDate(end.getDate() - 1);
+    const endDateStr = end.toISOString().split("T")[0];
+
+    setRenewPucValidFrom(startDateStr);
+    setRenewPucValidUpto(endDateStr);
+    setRenewPucNumber(veh.puc_certificate_number ? `${veh.puc_certificate_number}-REN` : "");
+    setRenewPucTestingCenter("Authorized RTO Emission Testing Center");
+    const isDiesel = /diesel/i.test(veh.fuel_type || "");
+    const isCng = /cng|lpg/i.test(veh.fuel_type || "");
+    setRenewPucFee(isDiesel ? 200 : isCng ? 180 : 150);
+    setRenewPucEmissionNorm("BS-VI");
+    setRenewPucCo(0.05);
+    setRenewPucHc(45.0);
+    setRenewPucSmokeDensity(isDiesel ? 0.45 : 0.10);
+    setRenewPucReceiptNo("");
+    setRenewPucDocUrl("");
+    setRenewPucNotes(`Statutory emission inspection & PUC certificate renewed for ${veh.registration_number}.`);
+    setIsRenewPucModalOpen(true);
+  };
+
+  const handleOpenVehiclePucHistoryModal = async (veh: VehicleRecord) => {
+    setSelectedVehicleForPucHistory(veh);
+    setIsPucHistoryModalOpen(true);
+    setLoadingPucHistory(true);
+    try {
+      const res = await fetchVehiclePucCertificatesAction(veh.id);
+      if (res.success) {
+        setVehiclePucHistory(res.certificates);
+      } else {
+        triggerToast(res.error || "Failed to load PUC history", true);
+        setVehiclePucHistory([]);
+      }
+    } catch (err: any) {
+      triggerToast(err.message || "Failed to load PUC history", true);
+      setVehiclePucHistory([]);
+    } finally {
+      setLoadingPucHistory(false);
+    }
+  };
+
+  const handleSaveVehiclePucRenewal = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedVehicleForPucRenew) return;
+
+    if (!renewPucNumber.trim()) {
+      triggerToast("PUC Certificate number is required.", true);
+      return;
+    }
+    if (!renewPucValidFrom || !renewPucValidUpto) {
+      triggerToast("Validity start and expiry dates are required.", true);
+      return;
+    }
+
+    setModalSubmitting(true);
+    try {
+      const res = await renewVehiclePucCertificateAction(selectedVehicleForPucRenew.id, {
+        certificate_number: renewPucNumber.trim(),
+        valid_from: renewPucValidFrom,
+        valid_upto: renewPucValidUpto,
+        testing_center_name: renewPucTestingCenter.trim() || undefined,
+        test_fee: Number(renewPucFee) || 150,
+        emission_norm: renewPucEmissionNorm,
+        carbon_monoxide_co: Number(renewPucCo) || 0.05,
+        hydrocarbon_hc: Number(renewPucHc) || 45.0,
+        smoke_density_k: Number(renewPucSmokeDensity) || undefined,
+        receipt_number: renewPucReceiptNo.trim() || undefined,
+        document_url: renewPucDocUrl.trim() || undefined,
+        notes: renewPucNotes.trim() || undefined
+      });
+
+      if (res.success) {
+        triggerToast(`PUC Certificate #${renewPucNumber} successfully issued until ${renewPucValidUpto}!`);
+        setIsRenewPucModalOpen(false);
+        setSelectedVehicleForPucRenew(null);
+        loadAllData(true);
+        if (selectedVehicleForPucHistory?.id === selectedVehicleForPucRenew.id) {
+          handleOpenVehiclePucHistoryModal(selectedVehicleForPucRenew);
+        }
+      } else {
+        triggerToast(res.error || "Failed to renew PUC certificate.", true);
+      }
+    } catch (err: any) {
+      triggerToast(err.message || "Failed to renew PUC certificate.", true);
+    } finally {
+      setModalSubmitting(false);
+    }
+  };
+
+  const handleDeletePucHistoryRecord = async (pucId: string) => {
+    if (!selectedVehicleForPucHistory) return;
+    if (!confirm("Are you sure you want to void this PUC certificate record?")) return;
+
+    try {
+      const res = await deleteVehiclePucCertificateAction(pucId, selectedVehicleForPucHistory.id);
+      if (res.success) {
+        triggerToast("PUC certificate record removed.");
+        handleOpenVehiclePucHistoryModal(selectedVehicleForPucHistory);
+        loadAllData(true);
+      } else {
+        triggerToast(res.error || "Failed to remove PUC record.", true);
+      }
+    } catch (err: any) {
+      triggerToast(err.message || "Failed to remove PUC record.", true);
     }
   };
 
@@ -3299,11 +3631,15 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 ) : (
                   <div className="divide-y divide-border/60">
                     {trips.slice(0, 5).map(trp => (
-                      <div key={trp.id} className="p-3.5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-xs">
+                      <div 
+                        key={trp.id} 
+                        onClick={() => setViewingTrip(trp)}
+                        className="p-3.5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-xs cursor-pointer group"
+                      >
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
                             {renderHsrpPlate(trp.vehicle_reg)}
-                            <span className="text-foreground font-semibold">{trp.traveler_name}</span>
+                            <span className="text-foreground font-semibold group-hover:text-theme-btn-primary transition-colors">{trp.traveler_name}</span>
                           </div>
                           <div className="text-muted-foreground text-[11px] flex items-center gap-1">
                             <span>{trp.origin}</span>
@@ -3328,7 +3664,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                               variant="outline"
                               size="icon-sm"
                               title="Start Route"
-                              onClick={() => handleUpdateTripStatus(trp.id, "IN_PROGRESS")}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleUpdateTripStatus(trp.id, "IN_PROGRESS");
+                              }}
                               className="h-7 w-7 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
                             >
                               <Play className="h-3.5 w-3.5" />
@@ -3339,7 +3678,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                               variant="outline"
                               size="icon-sm"
                               title="Complete Trip"
-                              onClick={() => handleUpdateTripStatus(trp.id, "COMPLETED")}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleUpdateTripStatus(trp.id, "COMPLETED");
+                              }}
                               className="h-7 w-7 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40"
                             >
                               <Check className="h-3.5 w-3.5" />
@@ -3389,11 +3731,15 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 ) : (
                   <div className="divide-y divide-border/60">
                     {vehicles.slice(0, 5).map(veh => (
-                      <div key={veh.id} className="p-3.5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-xs">
+                      <div 
+                        key={veh.id} 
+                        onClick={() => setViewingVehicle(veh)}
+                        className="p-3.5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-xs cursor-pointer group"
+                      >
                         <div>
                           <div className="flex items-center gap-2">
                             {renderHsrpPlate(veh.registration_number)}
-                            <span className="font-semibold text-foreground">{veh.make} {veh.model}</span>
+                            <span className="font-semibold text-foreground group-hover:text-theme-btn-primary transition-colors">{veh.make} {veh.model}</span>
                             {veh.variant && veh.variant !== "Standard" && (
                               <span className="text-[10px] text-muted-foreground">({veh.variant})</span>
                             )}
@@ -3416,8 +3762,35 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             <AppButton
                               variant="outline"
                               size="icon-sm"
+                              title="Renew Policy"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenVehiclePolicyRenewModal(veh);
+                              }}
+                              className="h-7 w-7 text-cyan-600 hover:text-cyan-700 hover:border-cyan-500 hover:bg-cyan-50 dark:hover:bg-cyan-950/40 shadow-2xs"
+                            >
+                              <RotateCcw className="h-3.5 w-3.5" />
+                            </AppButton>
+                            <AppButton
+                              variant="outline"
+                              size="icon-sm"
+                              title="Policy History & Ledger"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenVehiclePolicyHistoryModal(veh);
+                              }}
+                              className="h-7 w-7 text-indigo-600 hover:text-indigo-700 hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 shadow-2xs"
+                            >
+                              <History className="h-3.5 w-3.5" />
+                            </AppButton>
+                            <AppButton
+                              variant="outline"
+                              size="icon-sm"
                               title="Edit Vehicle"
-                              onClick={() => openEditVehicleModal(veh)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEditVehicleModal(veh);
+                              }}
                               className="h-7 w-7 hover:border-theme-btn-primary hover:text-theme-btn-primary"
                             >
                               <Edit2 className="h-3.5 w-3.5 text-muted-foreground" />
@@ -3426,11 +3799,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                               variant="outline"
                               size="icon-sm"
                               title="Delete Vehicle"
-                              onClick={() => setDeleteTarget({
-                                type: "vehicle",
-                                id: veh.id,
-                                label: `Vehicle ${veh.registration_number} (${veh.make} ${veh.model})`
-                              })}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteTarget({
+                                  type: "vehicle",
+                                  id: veh.id,
+                                  label: `Vehicle ${veh.registration_number} (${veh.make} ${veh.model})`
+                                });
+                              }}
                               className="h-7 w-7 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
@@ -3533,7 +3909,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     </AppTableRow>
                   ) : (
                     filteredVehicles.map((veh) => (
-                      <AppTableRow key={veh.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                      <AppTableRow 
+                        key={veh.id} 
+                        onClick={() => setViewingVehicle(veh)}
+                        className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
+                      >
                         {/* 1. Vehicle Name & Regn No */}
                         <AppTableCell className="p-3.5">
                           {renderHsrpPlate(veh.registration_number)}
@@ -3661,12 +4041,41 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         {/* 9. Actions */}
                         <AppTableCell className="p-3.5 text-right">
                           <div className="flex items-center justify-end gap-1.5">
+                            <AppButton
+                              variant="outline"
+                              size="sm"
+                              title="Renew Insurance Policy"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenVehiclePolicyRenewModal(veh);
+                              }}
+                              className="h-7 px-2 text-xs gap-1 font-semibold text-cyan-600 dark:text-cyan-400 border-cyan-500/30 hover:border-cyan-500 hover:bg-cyan-50 dark:hover:bg-cyan-950/30 shadow-2xs"
+                            >
+                              <RotateCcw className="h-3 w-3" />
+                              <span>Renew</span>
+                            </AppButton>
+                            <AppButton
+                              variant="outline"
+                              size="sm"
+                              title="View Policy History & Audit Ledger"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenVehiclePolicyHistoryModal(veh);
+                              }}
+                              className="h-7 px-2 text-xs gap-1 font-semibold text-indigo-600 dark:text-indigo-400 border-indigo-500/30 hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 shadow-2xs"
+                            >
+                              <History className="h-3 w-3" />
+                              <span>History</span>
+                            </AppButton>
                             {canEditVehicle && (
                               <AppButton
                                 variant="outline"
                                 size="sm"
                                 title="Edit Vehicle"
-                                onClick={() => openEditVehicleModal(veh)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openEditVehicleModal(veh);
+                                }}
                                 className="h-7 px-2.5 text-xs gap-1 font-semibold hover:border-theme-btn-primary hover:text-theme-btn-primary shadow-2xs"
                               >
                                 <Edit2 className="h-3 w-3 text-muted-foreground" />
@@ -3678,11 +4087,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                 variant="outline"
                                 size="sm"
                                 title="Delete Vehicle"
-                                onClick={() => setDeleteTarget({
-                                  type: "vehicle",
-                                  id: veh.id,
-                                  label: `Vehicle ${veh.registration_number} (${veh.make} ${veh.model})`
-                                })}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeleteTarget({
+                                    type: "vehicle",
+                                    id: veh.id,
+                                    label: `Vehicle ${veh.registration_number} (${veh.make} ${veh.model})`
+                                  });
+                                }}
                                 className="h-7 px-2.5 text-xs gap-1 font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900 shadow-2xs"
                               >
                                 <Trash2 className="h-3 w-3" />
@@ -3757,7 +4169,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     filteredDrivers.map((drv) => {
                       const assignedVeh = drv.assigned_vehicle_id ? vehicleMap.get(drv.assigned_vehicle_id) : null;
                       return (
-                        <AppTableRow key={drv.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                        <AppTableRow 
+                          key={drv.id} 
+                          onClick={() => setViewingDriver(drv)}
+                          className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
+                        >
                           <AppTableCell className="p-3.5 font-semibold text-foreground">
                             {drv.full_name}
                           </AppTableCell>
@@ -3802,7 +4218,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                     variant="outline"
                                     size="icon-sm"
                                     title="Edit Driver"
-                                    onClick={() => openEditDriverModal(drv)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openEditDriverModal(drv);
+                                    }}
                                     className="h-7 w-7"
                                   >
                                     <Edit2 className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
@@ -3811,11 +4230,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                     variant="outline"
                                     size="icon-sm"
                                     title="Delete Driver"
-                                    onClick={() => setDeleteTarget({
-                                      type: "driver",
-                                      id: drv.id,
-                                      label: `Driver ${drv.full_name}`
-                                    })}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setDeleteTarget({
+                                        type: "driver",
+                                        id: drv.id,
+                                        label: `Driver ${drv.full_name}`
+                                      });
+                                    }}
                                     className="h-7 w-7 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900"
                                   >
                                     <Trash2 className="h-3.5 w-3.5" />
@@ -3889,20 +4311,21 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     </AppTableRow>
                   ) : (
                     filteredTrips.map((trp) => (
-                      <AppTableRow key={trp.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                      <AppTableRow 
+                        key={trp.id} 
+                        onClick={() => setViewingTrip(trp)}
+                        className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
+                      >
                         <AppTableCell className="p-3.5 font-mono text-muted-foreground">{trp.plan_date}</AppTableCell>
                         <AppTableCell className="p-3.5 font-bold text-foreground">
                           {renderHsrpPlate(trp.vehicle_reg)}
                         </AppTableCell>
-                        <AppTableCell className="p-3.5 text-muted-foreground">{trp.driver_name}</AppTableCell>
-                        <AppTableCell className="p-3.5">
-                          <div className="font-semibold text-foreground">{trp.traveler_name}</div>
-                          <div className="text-[10px] text-muted-foreground">{trp.purpose}</div>
-                        </AppTableCell>
                         <AppTableCell className="p-3.5 text-muted-foreground">
-                          {trp.origin} ➔ <span className="text-foreground font-medium">{trp.destination}</span>
+                          <div className="font-medium text-foreground">{trp.driver_name}</div>
                         </AppTableCell>
-                        <AppTableCell className="p-3.5 text-muted-foreground font-mono">{trp.planned_start_time} - {trp.planned_end_time}</AppTableCell>
+                        <AppTableCell className="p-3.5 text-muted-foreground font-mono text-xs">
+                          {trp.planned_start_time} - {trp.planned_end_time}
+                        </AppTableCell>
                         <AppTableCell className="p-3.5 text-center">
                           <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase inline-block ${
                             trp.status === "IN_PROGRESS"
@@ -3918,12 +4341,15 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         </AppTableCell>
                         <AppTableCell className="p-3.5 text-right">
                           <div className="flex items-center justify-end gap-1.5">
-                            {trp.status === "PLANNED" && (
+                            {canDispatchTrips && trp.status === "PLANNED" && (
                               <>
                                 <AppButton
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => handleUpdateTripStatus(trp.id, "IN_PROGRESS")}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleUpdateTripStatus(trp.id, "IN_PROGRESS");
+                                  }}
                                   className="h-7 text-xs px-2 text-emerald-600 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
                                 >
                                   <Play className="h-3 w-3 mr-1" />
@@ -3932,37 +4358,51 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                 <AppButton
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => handleUpdateTripStatus(trp.id, "CANCELLED")}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleUpdateTripStatus(trp.id, "CANCELLED");
+                                  }}
                                   className="h-7 text-xs px-2 text-muted-foreground hover:text-rose-600"
                                 >
                                   Cancel
                                 </AppButton>
                               </>
                             )}
-                            {trp.status === "IN_PROGRESS" && (
+                            {canDispatchTrips && trp.status === "IN_PROGRESS" && (
                               <AppButton
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleUpdateTripStatus(trp.id, "COMPLETED")}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleUpdateTripStatus(trp.id, "COMPLETED");
+                                }}
                                 className="h-7 text-xs px-2 text-blue-600 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/40"
                               >
                                 <Check className="h-3 w-3 mr-1" />
                                 Complete
                               </AppButton>
                             )}
-                            <AppButton
-                              variant="outline"
-                              size="icon-sm"
-                              title="Delete Trip"
-                              onClick={() => setDeleteTarget({
-                                type: "trip",
-                                id: trp.id,
-                                label: `Trip for ${trp.traveler_name}`
-                              })}
-                              className="h-7 w-7 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </AppButton>
+                            {canDispatchTrips && (
+                              <AppButton
+                                variant="outline"
+                                size="icon-sm"
+                                title="Delete Trip"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeleteTarget({
+                                    type: "trip",
+                                    id: trp.id,
+                                    label: `Trip for ${trp.traveler_name}`
+                                  });
+                                }}
+                                className="h-7 w-7 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </AppButton>
+                            )}
+                            {!canDispatchTrips && (
+                              <span className="text-[11px] text-muted-foreground italic">Read-only</span>
+                            )}
                           </div>
                         </AppTableCell>
                       </AppTableRow>
@@ -4038,7 +4478,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       const partsCount = Array.isArray(partsData?.parts_items) ? partsData.parts_items.length : 0;
 
                       return (
-                        <AppTableRow key={m.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                        <AppTableRow 
+                          key={m.id} 
+                          onClick={() => setSelectedMaintenanceForView(m)}
+                          className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
+                        >
                           <AppTableCell className="p-3.5">
                             <div className="font-mono text-xs text-foreground font-semibold">{m.service_date}</div>
                             {invoiceNo ? (
@@ -4113,7 +4557,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                 variant="outline"
                                 size="sm"
                                 title="View Detailed Job Card & Invoice"
-                                onClick={() => setSelectedMaintenanceForView(m)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedMaintenanceForView(m);
+                                }}
                                 className="h-7 px-2 text-xs text-primary border-primary/30 hover:bg-primary/10 gap-1 font-medium"
                               >
                                 <Eye className="h-3.5 w-3.5" />
@@ -4124,11 +4571,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                   variant="outline"
                                   size="icon-sm"
                                   title="Delete Record"
-                                  onClick={() => setDeleteTarget({
-                                    type: "maintenance",
-                                    id: m.id,
-                                    label: `Service record for ${m.vehicle_reg}`
-                                  })}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setDeleteTarget({
+                                      type: "maintenance",
+                                      id: m.id,
+                                      label: `Service record for ${m.vehicle_reg}`
+                                    });
+                                  }}
                                   className="h-7 w-7 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900"
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
@@ -4210,7 +4660,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       </AppTableRow>
                     ) : (
                       filteredTrips.map((trp) => (
-                        <AppTableRow key={trp.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                        <AppTableRow 
+                          key={trp.id} 
+                          onClick={() => setViewingTrip(trp)}
+                          className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
+                        >
                           <AppTableCell className="p-3.5">
                             <div className="font-semibold text-foreground">{trp.traveler_name}</div>
                             <div className="text-[11px] text-muted-foreground mt-0.5">{trp.purpose || "Official Corporate Transit"}</div>
@@ -4251,7 +4705,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                   <AppButton
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => handleUpdateTripStatus(trp.id, "IN_PROGRESS")}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleUpdateTripStatus(trp.id, "IN_PROGRESS");
+                                    }}
                                     className="h-7 text-xs px-2 text-emerald-600 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
                                   >
                                     <Play className="h-3 w-3 mr-1" />
@@ -4260,7 +4717,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                   <AppButton
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => handleUpdateTripStatus(trp.id, "CANCELLED")}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleUpdateTripStatus(trp.id, "CANCELLED");
+                                    }}
                                     className="h-7 text-xs px-2 text-muted-foreground hover:text-rose-600"
                                   >
                                     Cancel
@@ -4271,7 +4731,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                 <AppButton
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => handleUpdateTripStatus(trp.id, "COMPLETED")}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleUpdateTripStatus(trp.id, "COMPLETED");
+                                  }}
                                   className="h-7 text-xs px-2 text-blue-600 border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/40"
                                 >
                                   <Check className="h-3 w-3 mr-1" />
@@ -4283,11 +4746,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                   variant="outline"
                                   size="icon-sm"
                                   title="Delete Trip"
-                                  onClick={() => setDeleteTarget({
-                                    type: "trip",
-                                    id: trp.id,
-                                    label: `Trip for ${trp.traveler_name}`
-                                  })}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setDeleteTarget({
+                                      type: "trip",
+                                      id: trp.id,
+                                      label: `Trip for ${trp.traveler_name}`
+                                    });
+                                  }}
                                   className="h-7 w-7 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900"
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
@@ -4396,7 +4862,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       </AppTableRow>
                     ) : (
                       complianceAlerts.map((item) => (
-                        <AppTableRow key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                        <AppTableRow 
+                          key={item.id} 
+                          onClick={() => {
+                            if (item.vehicle) setViewingVehicle(item.vehicle);
+                            else if (item.driver) setViewingDriver(item.driver);
+                          }}
+                          className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
+                        >
                           <AppTableCell className="p-3.5">
                             <div className="font-bold text-foreground">{item.title}</div>
                             <div className="text-[11px] text-muted-foreground">{item.subtitle}</div>
@@ -4434,27 +4907,95 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             </span>
                           </AppTableCell>
                           <AppTableCell className="p-3.5 text-right">
-                            {item.vehicle ? (
-                              <AppButton
-                                variant="outline"
-                                size="sm"
-                                onClick={() => openEditVehicleModal(item.vehicle!)}
-                                className="h-7 text-xs px-2.5"
-                              >
-                                <Edit2 className="h-3 w-3 mr-1" />
-                                Renew Vehicle
-                              </AppButton>
-                            ) : item.driver ? (
-                              <AppButton
-                                variant="outline"
-                                size="sm"
-                                onClick={() => openEditDriverModal(item.driver!)}
-                                className="h-7 text-xs px-2.5"
-                              >
-                                <Edit2 className="h-3 w-3 mr-1" />
-                                Renew Driver
-                              </AppButton>
-                            ) : null}
+                            <div className="flex items-center justify-end gap-1.5">
+                              {item.vehicle ? (
+                                <>
+                                  {item.docType === "Insurance Policy" && (
+                                    <>
+                                      <AppButton
+                                        variant="primary"
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleOpenVehiclePolicyRenewModal(item.vehicle!);
+                                        }}
+                                        className="h-7 text-xs px-2.5 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold gap-1 shadow-2xs"
+                                      >
+                                        <RotateCcw className="h-3 w-3" />
+                                        <span>Renew Policy</span>
+                                      </AppButton>
+                                      <AppButton
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleOpenVehiclePolicyHistoryModal(item.vehicle!);
+                                        }}
+                                        className="h-7 text-xs px-2 text-indigo-600 dark:text-indigo-400 border-indigo-500/30 hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 gap-1 font-semibold shadow-2xs"
+                                        title="View Historical Policies"
+                                      >
+                                        <History className="h-3 w-3" />
+                                        <span>History</span>
+                                      </AppButton>
+                                    </>
+                                  )}
+                                  {item.docType === "PUC Certificate" && (
+                                    <>
+                                      <AppButton
+                                        variant="primary"
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleOpenVehiclePucRenewModal(item.vehicle!);
+                                        }}
+                                        className="h-7 text-xs px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold gap-1 shadow-2xs"
+                                      >
+                                        <Wind className="h-3 w-3" />
+                                        <span>Renew PUC</span>
+                                      </AppButton>
+                                      <AppButton
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleOpenVehiclePucHistoryModal(item.vehicle!);
+                                        }}
+                                        className="h-7 text-xs px-2 text-teal-600 dark:text-teal-400 border-teal-500/30 hover:border-teal-500 hover:bg-teal-50 dark:hover:bg-teal-950/30 gap-1 font-semibold shadow-2xs"
+                                        title="View Historical PUC Certificates"
+                                      >
+                                        <History className="h-3 w-3" />
+                                        <span>History</span>
+                                      </AppButton>
+                                    </>
+                                  )}
+                                  <AppButton
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openEditVehicleModal(item.vehicle!);
+                                    }}
+                                    className="h-7 text-xs px-2.5"
+                                  >
+                                    <Edit2 className="h-3 w-3 mr-1" />
+                                    Edit Vehicle
+                                  </AppButton>
+                                </>
+                              ) : item.driver ? (
+                                <AppButton
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openEditDriverModal(item.driver!);
+                                  }}
+                                  className="h-7 text-xs px-2.5"
+                                >
+                                  <Edit2 className="h-3 w-3 mr-1" />
+                                  Renew Driver
+                                </AppButton>
+                              ) : null}
+                            </div>
                           </AppTableCell>
                         </AppTableRow>
                       ))
@@ -4938,7 +5479,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         };
 
                         return (
-                          <AppTableRow key={part.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                          <AppTableRow 
+                            key={part.id} 
+                            onClick={() => setViewingPart(part)}
+                            className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
+                          >
                             {/* Part & Identity */}
                             <AppTableCell className="p-3.5">
                               <div className="space-y-1">
@@ -5073,7 +5618,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                   <AppButton
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => openRenewPartModal(part)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openRenewPartModal(part);
+                                    }}
                                     title="Quick Renew Policy"
                                     className="h-7 text-xs px-2 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-950/40 border-cyan-500/30"
                                   >
@@ -5084,7 +5632,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                 <AppButton
                                   variant="ghost"
                                   size="icon-sm"
-                                  onClick={() => openEditPartModal(part)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openEditPartModal(part);
+                                  }}
                                   title="Edit Part Details"
                                   className="h-7 w-7 text-muted-foreground hover:text-foreground"
                                 >
@@ -5093,7 +5644,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                 <AppButton
                                   variant="ghost"
                                   size="icon-sm"
-                                  onClick={() => setDeleteTarget({ type: "part", id: part.id, label: `Part '${part.name}'` })}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setDeleteTarget({ type: "part", id: part.id, label: `Part '${part.name}'` });
+                                  }}
                                   title="Delete Part"
                                   className="h-7 w-7 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
                                 >
@@ -5344,7 +5898,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           ).length;
 
                           return (
-                            <AppTableRow key={vendor.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                            <AppTableRow 
+                              key={vendor.id} 
+                              onClick={() => setViewingVendor(vendor)}
+                              className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
+                            >
                               {/* Vendor / Underwriter */}
                               <AppTableCell className="p-3.5">
                                 <div className="font-bold text-foreground text-sm flex items-center gap-1.5">
@@ -5371,14 +5929,22 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                   <div className="font-semibold text-foreground">{vendor.contact_person || "—"}</div>
                                   {vendor.contact_number && (
                                     <div className="text-[11px] font-mono text-blue-600 dark:text-blue-400">
-                                      <a href={`tel:${vendor.contact_number}`} className="hover:underline">
+                                      <a 
+                                        href={`tel:${vendor.contact_number}`} 
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="hover:underline"
+                                      >
                                         {vendor.contact_number}
                                       </a>
                                     </div>
                                   )}
                                   {vendor.email && (
                                     <div className="text-[10px] text-muted-foreground">
-                                      <a href={`mailto:${vendor.email}`} className="hover:underline">
+                                      <a 
+                                        href={`mailto:${vendor.email}`} 
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="hover:underline"
+                                      >
                                         {vendor.email}
                                       </a>
                                     </div>
@@ -5405,6 +5971,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                     href={vendor.website.startsWith("http") ? vendor.website : `https://${vendor.website}`}
                                     target="_blank"
                                     rel="noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
                                     className="text-theme-btn-primary hover:underline font-mono text-[11px] inline-flex items-center gap-1"
                                   >
                                     <span>{vendor.website.replace(/^https?:\/\//, "").replace(/\/$/, "")}</span>
@@ -5444,7 +6011,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                     type="button"
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => openEditVendorModal(vendor)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openEditVendorModal(vendor);
+                                    }}
                                     className="h-7 px-2 text-xs gap-1 font-semibold hover:border-theme-btn-primary"
                                   >
                                     <Edit2 className="h-3 w-3" />
@@ -5454,11 +6024,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                     type="button"
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => setDeleteTarget({
-                                      type: "vendor",
-                                      id: vendor.id,
-                                      label: `Insurance Vendor '${vendor.name}'`
-                                    })}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setDeleteTarget({
+                                        type: "vendor",
+                                        id: vendor.id,
+                                        label: `Insurance Vendor '${vendor.name}'`
+                                      });
+                                    }}
                                     className="h-7 px-2 text-xs gap-1 font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900"
                                   >
                                     <Trash2 className="h-3 w-3" />
@@ -5507,7 +6080,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             <AppCardContent className="p-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {vehicles.slice(0, 6).map(veh => (
-                  <div key={veh.id} className="p-4 rounded-xl border border-border/70 bg-surface space-y-3 shadow-2xs hover:border-theme-btn-primary/40 transition-colors">
+                  <div 
+                    key={veh.id} 
+                    onClick={() => setViewingVehicle(veh)}
+                    className="p-4 rounded-xl border border-border/70 bg-surface space-y-3 shadow-2xs hover:border-theme-btn-primary/40 transition-colors cursor-pointer"
+                  >
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <div className="font-mono font-bold text-sm text-slate-900 dark:text-slate-100 inline-block px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 tracking-wider shadow-2xs">
@@ -5541,7 +6118,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         <AppButton
                           variant="outline"
                           size="sm"
-                          onClick={() => openEditVehicleModal(veh)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEditVehicleModal(veh);
+                          }}
                           className="h-6 px-2 text-[11px] gap-1 hover:border-theme-btn-primary hover:text-theme-btn-primary"
                         >
                           <Edit2 className="h-3 w-3" />
@@ -5552,11 +6132,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         <AppButton
                           variant="outline"
                           size="sm"
-                          onClick={() => setDeleteTarget({
-                            type: "vehicle",
-                            id: veh.id,
-                            label: `Vehicle ${veh.registration_number} (${veh.make} ${veh.model})`
-                          })}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteTarget({
+                              type: "vehicle",
+                              id: veh.id,
+                              label: `Vehicle ${veh.registration_number} (${veh.make} ${veh.model})`
+                            });
+                          }}
                           className="h-6 px-2 text-[11px] gap-1 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900"
                         >
                           <Trash2 className="h-3 w-3" />
@@ -8608,6 +9191,2109 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 </AppButton>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------------------------- */}
+      {/* VEHICLE INSURANCE POLICY RENEWAL MODAL */}
+      {/* ---------------------------------------------------------------------- */}
+      {isRenewPolicyModalOpen && selectedVehicleForPolicyRenew && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-surface border border-border w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+            {/* Header */}
+            <div className="p-5 border-b border-border bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-transparent flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-11 w-11 rounded-xl bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 flex items-center justify-center border border-cyan-500/25 shadow-xs">
+                  <ShieldCheck className="h-6 w-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-bold text-foreground">
+                      Renew Vehicle Insurance Policy
+                    </h3>
+                    <span className="px-2 py-0.5 rounded-md font-mono text-[10px] font-bold bg-theme-btn-primary/10 text-theme-btn-primary border border-theme-btn-primary/20">
+                      {selectedVehicleForPolicyRenew.registration_number}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {selectedVehicleForPolicyRenew.make} {selectedVehicleForPolicyRenew.model} ({selectedVehicleForPolicyRenew.variant || "Standard"}) • Archive previous policy & issue renewal
+                  </p>
+                </div>
+              </div>
+              <AppButton variant="ghost" size="icon-sm" onClick={() => setIsRenewPolicyModalOpen(false)}>
+                <X className="h-4 w-4" />
+              </AppButton>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSaveVehiclePolicyRenewal} className="p-6 space-y-4 overflow-y-auto flex-1 text-xs">
+              {/* Current Active Policy Banner */}
+              <div className="p-3.5 rounded-xl border border-cyan-500/20 bg-cyan-50/50 dark:bg-cyan-950/20 flex flex-wrap items-center justify-between gap-2">
+                <div className="space-y-0.5">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-cyan-700 dark:text-cyan-400 flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    <span>Current Active Policy Info</span>
+                  </div>
+                  <div className="text-xs font-semibold text-foreground">
+                    {selectedVehicleForPolicyRenew.insurance_policy_number || "No Policy Number on File"} 
+                    <span className="text-muted-foreground font-normal"> ({selectedVehicleForPolicyRenew.insurance_vendor || "Vendor Not Assigned"})</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Expires:</span>
+                  <span className="font-mono font-bold text-foreground">
+                    {selectedVehicleForPolicyRenew.insurance_expiry_date ? String(selectedVehicleForPolicyRenew.insurance_expiry_date).split("T")[0] : "Expired / Unset"}
+                  </span>
+                  {renderExpiryBadge(selectedVehicleForPolicyRenew.insurance_expire_days ?? calculateDaysRemaining(selectedVehicleForPolicyRenew.insurance_expiry_date))}
+                </div>
+              </div>
+
+              {/* Vendor & Policy Number */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="font-semibold block mb-1 flex items-center gap-1 text-foreground">
+                    <Building2 className="h-3.5 w-3.5 text-theme-btn-primary" />
+                    <span>Insurance Provider / Vendor *</span>
+                  </label>
+                  <select
+                    value={renewPolicyVendorId}
+                    onChange={(e) => {
+                      const vId = e.target.value;
+                      setRenewPolicyVendorId(vId);
+                      const matched = insuranceVendors.find(v => v.id === vId);
+                      if (matched) {
+                        setRenewPolicyVendorName(matched.name);
+                      }
+                    }}
+                    className="w-full text-xs p-2.5 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                  >
+                    <option value="">-- Select from Insurance Masters --</option>
+                    {insuranceVendors.map(v => (
+                      <option key={v.id} value={v.id}>
+                        {v.name} {v.toll_free_number ? `(Toll-Free: ${v.toll_free_number})` : ""}
+                      </option>
+                    ))}
+                  </select>
+                  {(!renewPolicyVendorId || !insuranceVendors.some(v => v.id === renewPolicyVendorId)) && (
+                    <AppInput
+                      placeholder="Or enter custom insurance provider name..."
+                      value={renewPolicyVendorName}
+                      onChange={(e) => setRenewPolicyVendorName(e.target.value)}
+                      className="mt-1.5"
+                      required
+                    />
+                  )}
+                </div>
+
+                <div>
+                  <label className="font-semibold block mb-1 flex items-center gap-1 text-foreground">
+                    <Hash className="h-3.5 w-3.5 text-theme-btn-primary" />
+                    <span>New Policy / Cover Note # *</span>
+                  </label>
+                  <AppInput
+                    placeholder="e.g. 2311/61984210/00/000"
+                    value={renewPolicyNumber}
+                    onChange={(e) => setRenewPolicyNumber(e.target.value)}
+                    required
+                    className="font-mono uppercase"
+                  />
+                  <span className="text-[10px] text-muted-foreground mt-0.5 block">Official policy or e-cover note number</span>
+                </div>
+              </div>
+
+              {/* Policy Type & Financials */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="font-semibold block mb-1">Policy Type</label>
+                  <select
+                    value={renewPolicyType}
+                    onChange={(e) => setRenewPolicyType(e.target.value)}
+                    className="w-full text-xs p-2.5 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                  >
+                    <option value="Comprehensive">Comprehensive Package</option>
+                    <option value="Zero Depreciation">Zero Depreciation (Bumper-to-Bumper)</option>
+                    <option value="Third-Party Liability">Third-Party Liability Only</option>
+                    <option value="Commercial Fleet">Commercial Fleet Transit</option>
+                    <option value="Own Damage (Stand-alone)">Own Damage (Stand-alone)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-semibold block mb-1">IDV (Insured Declared Value ₹)</label>
+                  <AppInput
+                    type="number"
+                    min="0"
+                    placeholder="e.g. 850000"
+                    value={renewPolicyIdv || ""}
+                    onChange={(e) => setRenewPolicyIdv(Number(e.target.value) || 0)}
+                    className="font-mono font-semibold"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-semibold block mb-1">Annual Premium Amount (₹) *</label>
+                  <AppInput
+                    type="number"
+                    min="0"
+                    placeholder="e.g. 18500"
+                    value={renewPolicyPremium || ""}
+                    onChange={(e) => setRenewPolicyPremium(Number(e.target.value) || 0)}
+                    required
+                    className="font-mono font-bold text-cyan-600 dark:text-cyan-400"
+                  />
+                </div>
+              </div>
+
+              {/* Policy Validity Dates */}
+              <div className="p-3.5 rounded-xl border border-border bg-slate-50/60 dark:bg-slate-900/40 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                    <Calendar className="h-3.5 w-3.5 text-cyan-500" />
+                    <span>Policy Validity Period (1-Year Cycle)</span>
+                  </label>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const st = renewPolicyStartDate ? new Date(renewPolicyStartDate) : new Date();
+                        const end = new Date(st);
+                        end.setFullYear(end.getFullYear() + 1);
+                        end.setDate(end.getDate() - 1);
+                        setRenewPolicyEndDate(end.toISOString().split("T")[0]);
+                      }}
+                      className="px-2 py-0.5 rounded text-[10px] font-semibold bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/20 transition-colors"
+                    >
+                      +1 Year (Auto)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const st = renewPolicyStartDate ? new Date(renewPolicyStartDate) : new Date();
+                        const end = new Date(st);
+                        end.setFullYear(end.getFullYear() + 3);
+                        end.setDate(end.getDate() - 1);
+                        setRenewPolicyEndDate(end.toISOString().split("T")[0]);
+                      }}
+                      className="px-2 py-0.5 rounded text-[10px] font-semibold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 transition-colors"
+                    >
+                      +3 Years (Long-Term)
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold block mb-1">Effective Start Date *</label>
+                    <AppInput
+                      type="date"
+                      value={renewPolicyStartDate}
+                      onChange={(e) => setRenewPolicyStartDate(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold block mb-1">Policy Expiration Date *</label>
+                    <AppInput
+                      type="date"
+                      value={renewPolicyEndDate}
+                      onChange={(e) => setRenewPolicyEndDate(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Add-on Coverage & Discounts */}
+              <div className="p-3.5 rounded-xl border border-border bg-surface space-y-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Add-on Covers & NCB Benefits
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <label className="flex items-center gap-2 p-2 rounded-lg border border-border hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={renewPolicyHasRsa}
+                      onChange={(e) => setRenewPolicyHasRsa(e.target.checked)}
+                      className="rounded text-theme-btn-primary focus:ring-theme-btn-primary"
+                    />
+                    <span className="text-xs font-medium">Roadside Assistance (RSA)</span>
+                  </label>
+                  <label className="flex items-center gap-2 p-2 rounded-lg border border-border hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={renewPolicyHasZeroDep}
+                      onChange={(e) => setRenewPolicyHasZeroDep(e.target.checked)}
+                      className="rounded text-theme-btn-primary focus:ring-theme-btn-primary"
+                    />
+                    <span className="text-xs font-medium">Zero Depreciation (Nil-Dep)</span>
+                  </label>
+                  <label className="flex items-center gap-2 p-2 rounded-lg border border-border hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={renewPolicyHasEngineProtect}
+                      onChange={(e) => setRenewPolicyHasEngineProtect(e.target.checked)}
+                      className="rounded text-theme-btn-primary focus:ring-theme-btn-primary"
+                    />
+                    <span className="text-xs font-medium">Engine & Gearbox Protector</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Reference, Receipt & Notes */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="font-semibold block mb-1">Receipt / Payment Reference #</label>
+                  <AppInput
+                    placeholder="e.g. REC-2026-CHANDAK-9921"
+                    value={renewPolicyReceiptNo}
+                    onChange={(e) => setRenewPolicyReceiptNo(e.target.value)}
+                    className="font-mono text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="font-semibold block mb-1">Policy Document Link / Storage URL</label>
+                  <AppInput
+                    placeholder="https://... or doc vault reference"
+                    value={renewPolicyDocUrl}
+                    onChange={(e) => setRenewPolicyDocUrl(e.target.value)}
+                    className="text-xs"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-semibold block mb-1">Renewal Notes & Audit Remarks</label>
+                <textarea
+                  rows={2}
+                  placeholder="e.g. Renewed via Bajaj Allianz corporate fleet brokerage with 25% NCB."
+                  value={renewPolicyNotes}
+                  onChange={(e) => setRenewPolicyNotes(e.target.value)}
+                  className="w-full text-xs p-2.5 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                />
+              </div>
+
+              {/* Modal Footer Actions */}
+              <div className="pt-3 border-t border-border flex items-center justify-between">
+                <AppButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setIsRenewPolicyModalOpen(false);
+                    if (selectedVehicleForPolicyRenew) {
+                      handleOpenVehiclePolicyHistoryModal(selectedVehicleForPolicyRenew);
+                    }
+                  }}
+                  className="text-indigo-600 dark:text-indigo-400 gap-1.5"
+                >
+                  <History className="h-3.5 w-3.5" />
+                  <span>View All Past Cycles</span>
+                </AppButton>
+
+                <div className="flex items-center gap-2">
+                  <AppButton
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsRenewPolicyModalOpen(false)}
+                    disabled={modalSubmitting}
+                  >
+                    Cancel
+                  </AppButton>
+                  <AppButton
+                    type="submit"
+                    variant="primary"
+                    size="sm"
+                    disabled={modalSubmitting}
+                    className="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold gap-1.5 shadow-md"
+                  >
+                    {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="h-3.5 w-3.5" />}
+                    <span>Confirm & Archive Renewal</span>
+                  </AppButton>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------------------------- */}
+      {/* VEHICLE POLICY HISTORY & AUDIT LEDGER MODAL */}
+      {/* ---------------------------------------------------------------------- */}
+      {isPolicyHistoryModalOpen && selectedVehicleForPolicyHistory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-surface border border-border w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-border bg-gradient-to-r from-indigo-500/10 via-cyan-500/10 to-transparent flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-11 w-11 rounded-xl bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-500/25 shadow-xs">
+                  <History className="h-6 w-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-bold text-foreground">
+                      Vehicle Policy Ledger & Historical Tracks
+                    </h3>
+                    <span className="px-2.5 py-0.5 rounded-md font-mono text-xs font-bold bg-theme-btn-primary text-white">
+                      {selectedVehicleForPolicyHistory.registration_number}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {selectedVehicleForPolicyHistory.make} {selectedVehicleForPolicyHistory.model} • Complete chronological ledger of insurance policies & renewals
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <AppButton
+                  variant="primary"
+                  size="sm"
+                  onClick={() => {
+                    setIsPolicyHistoryModalOpen(false);
+                    handleOpenVehiclePolicyRenewModal(selectedVehicleForPolicyHistory);
+                  }}
+                  className="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold gap-1.5 shadow-xs"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  <span>Renew New Policy</span>
+                </AppButton>
+                <AppButton variant="ghost" size="icon-sm" onClick={() => setIsPolicyHistoryModalOpen(false)}>
+                  <X className="h-4 w-4" />
+                </AppButton>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-5 overflow-y-auto flex-1">
+              {/* Summary Metric Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <div className="p-3.5 rounded-xl border border-border bg-surface shadow-2xs space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Active Status</span>
+                  <div className="flex items-center gap-1.5">
+                    {renderExpiryBadge(selectedVehicleForPolicyHistory.insurance_expire_days ?? calculateDaysRemaining(selectedVehicleForPolicyHistory.insurance_expiry_date))}
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-border bg-surface shadow-2xs space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Active Insurer</span>
+                  <div className="text-xs font-bold truncate text-foreground" title={selectedVehicleForPolicyHistory.insurance_vendor || "Not Configured"}>
+                    {selectedVehicleForPolicyHistory.insurance_vendor || "—"}
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-border bg-surface shadow-2xs space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total Cycles Tracked</span>
+                  <div className="text-sm font-extrabold font-mono text-indigo-600 dark:text-indigo-400">
+                    {vehiclePoliciesHistory.length} Policy {vehiclePoliciesHistory.length === 1 ? "Record" : "Records"}
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-border bg-surface shadow-2xs space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Cumulative Premium Paid</span>
+                  <div className="text-sm font-extrabold font-mono text-emerald-600 dark:text-emerald-400">
+                    ₹{vehiclePoliciesHistory.reduce((acc, p) => acc + (p.premium_amount || 0), 0).toLocaleString("en-IN")}
+                  </div>
+                </div>
+              </div>
+
+              {/* History Timeline / Table */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+                    <Sparkles className="h-3.5 w-3.5 text-indigo-500" />
+                    <span>Chronological Policy History Ledger</span>
+                  </h4>
+                  <span className="text-[11px] text-muted-foreground">
+                    Sorted from newest to oldest policy cycle
+                  </span>
+                </div>
+
+                {loadingPolicyHistory ? (
+                  <div className="py-12 flex flex-col items-center justify-center gap-3">
+                    <ChandakLoader size="md" />
+                    <span className="text-xs text-muted-foreground font-medium">Loading vehicle policy history...</span>
+                  </div>
+                ) : vehiclePoliciesHistory.length === 0 ? (
+                  <div className="py-12 text-center rounded-xl border border-dashed border-border bg-slate-50/50 dark:bg-slate-900/30 p-6 space-y-3">
+                    <div className="h-12 w-12 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto">
+                      <Shield className="h-6 w-6" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-bold text-foreground">No Historical Policy Records Found</p>
+                      <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                        This vehicle does not have any archived policy cycles yet. Click below to issue the first tracked renewal policy.
+                      </p>
+                    </div>
+                    <AppButton
+                      variant="primary"
+                      size="sm"
+                      onClick={() => {
+                        setIsPolicyHistoryModalOpen(false);
+                        handleOpenVehiclePolicyRenewModal(selectedVehicleForPolicyHistory);
+                      }}
+                      className="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold gap-1.5"
+                    >
+                      <RotateCcw className="h-3.5 w-3.5" />
+                      <span>Create Renewal Policy</span>
+                    </AppButton>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {vehiclePoliciesHistory.map((policy, idx) => (
+                      <div
+                        key={policy.id}
+                        className={`p-4 rounded-xl border transition-all ${
+                          policy.is_active
+                            ? "border-emerald-500/40 bg-emerald-50/30 dark:bg-emerald-950/15 shadow-sm ring-1 ring-emerald-500/20"
+                            : "border-border bg-surface hover:border-slate-300 dark:hover:border-slate-700"
+                        }`}
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
+                          <div className="flex items-center gap-2.5">
+                            <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 ${
+                              policy.is_active
+                                ? "bg-emerald-500 text-white shadow-xs"
+                                : "bg-slate-100 dark:bg-slate-800 text-muted-foreground border border-border"
+                            }`}>
+                              {policy.is_active ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+                              <span>{policy.is_active ? "Current Active Policy" : `Archived Cycle #${vehiclePoliciesHistory.length - idx}`}</span>
+                            </span>
+
+                            <span className="font-mono text-xs font-extrabold text-foreground">
+                              {policy.policy_number}
+                            </span>
+                            <span className="text-xs text-muted-foreground">•</span>
+                            <span className="text-xs font-semibold text-foreground">
+                              {policy.insurer_name}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-md border border-emerald-500/20">
+                              ₹{Number(policy.premium_amount || 0).toLocaleString("en-IN")} Premium
+                            </span>
+                            <AppButton
+                              variant="ghost"
+                              size="icon-sm"
+                              title="Void / Delete Policy Record"
+                              onClick={() => handleDeletePolicyHistoryRecord(policy.id)}
+                              className="h-6 w-6 text-muted-foreground hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </AppButton>
+                          </div>
+                        </div>
+
+                        {/* Policy Metrics Grid */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs pt-2 border-t border-border/60">
+                          <div>
+                            <span className="text-[10px] uppercase font-bold text-muted-foreground block">Validity Tenure</span>
+                            <span className="font-mono font-medium text-foreground">
+                              {String(policy.start_date).split("T")[0]} → {String(policy.end_date).split("T")[0]}
+                            </span>
+                          </div>
+
+                          <div>
+                            <span className="text-[10px] uppercase font-bold text-muted-foreground block">Policy Type & IDV</span>
+                            <span className="text-foreground">
+                              {policy.policy_type} {policy.idv ? `(IDV ₹${Number(policy.idv).toLocaleString("en-IN")})` : ""}
+                            </span>
+                          </div>
+
+                          <div>
+                            <span className="text-[10px] uppercase font-bold text-muted-foreground block">Add-on Coverages</span>
+                            <div className="flex flex-wrap gap-1 mt-0.5">
+                              {policy.has_roadside_assistance && (
+                                <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-blue-500/10 text-blue-600 border border-blue-500/20">RSA</span>
+                              )}
+                              {policy.has_zero_depreciation && (
+                                <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-purple-500/10 text-purple-600 border border-purple-500/20">Zero-Dep</span>
+                              )}
+                              {policy.has_engine_protect && (
+                                <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20">Engine</span>
+                              )}
+                              {policy.ncb_discount_percentage ? (
+                                <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">NCB {policy.ncb_discount_percentage}%</span>
+                              ) : null}
+                            </div>
+                          </div>
+
+                          <div>
+                            <span className="text-[10px] uppercase font-bold text-muted-foreground block">Receipt & Auditor</span>
+                            <span className="text-muted-foreground text-[11px] block truncate">
+                              {policy.receipt_number ? `Ref: ${policy.receipt_number}` : "No Receipt Ref"} • by {policy.renewed_by || "Admin"}
+                            </span>
+                          </div>
+                        </div>
+
+                        {policy.notes && (
+                          <div className="mt-2 text-[11px] text-muted-foreground bg-slate-50/80 dark:bg-slate-900/60 p-2 rounded-lg border border-border/40">
+                            <strong>Remarks:</strong> {policy.notes}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-border bg-surface/50 flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">
+                Enterprise compliance tracks are permanently archived for motor insurance audits & renewals.
+              </span>
+              <AppButton
+                variant="outline"
+                size="sm"
+                onClick={() => setIsPolicyHistoryModalOpen(false)}
+              >
+                Close Ledger
+              </AppButton>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------------------------- */}
+      {/* VEHICLE PUC RENEWAL MODAL */}
+      {/* ---------------------------------------------------------------------- */}
+      {isRenewPucModalOpen && selectedVehicleForPucRenew && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-surface border border-border w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+            {/* Header */}
+            <div className="p-5 border-b border-border bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-transparent flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-11 w-11 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/25 shadow-xs">
+                  <Wind className="h-6 w-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-bold text-foreground">
+                      Renew Vehicle PUC (Pollution Under Control)
+                    </h3>
+                    <span className="px-2 py-0.5 rounded-md font-mono text-[10px] font-bold bg-theme-btn-primary/10 text-theme-btn-primary border border-theme-btn-primary/20">
+                      {selectedVehicleForPucRenew.registration_number}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {selectedVehicleForPucRenew.make} {selectedVehicleForPucRenew.model} ({selectedVehicleForPucRenew.fuel_type || "Petrol"}) • Record statutory emission test & certificate
+                  </p>
+                </div>
+              </div>
+              <AppButton variant="ghost" size="icon-sm" onClick={() => setIsRenewPucModalOpen(false)}>
+                <X className="h-4 w-4" />
+              </AppButton>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSaveVehiclePucRenewal} className="p-6 space-y-4 overflow-y-auto flex-1 text-xs">
+              {/* Current PUC Info Banner */}
+              <div className="p-3.5 rounded-xl border border-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-950/20 flex flex-wrap items-center justify-between gap-2">
+                <div className="space-y-0.5">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    <span>Current Active PUC Info</span>
+                  </div>
+                  <div className="text-xs font-semibold text-foreground">
+                    {selectedVehicleForPucRenew.puc_certificate_number || "No PUC Number on File"} 
+                    <span className="text-muted-foreground font-normal"> ({selectedVehicleForPucRenew.fuel_type || "Standard Fuel"})</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Expires:</span>
+                  <span className="font-mono font-bold text-foreground">
+                    {selectedVehicleForPucRenew.puc_expiry_date ? String(selectedVehicleForPucRenew.puc_expiry_date).split("T")[0] : "Expired / Unset"}
+                  </span>
+                  {renderExpiryBadge(selectedVehicleForPucRenew.puc_expire_days ?? calculateDaysRemaining(selectedVehicleForPucRenew.puc_expiry_date))}
+                </div>
+              </div>
+
+              {/* Certificate Number & Testing Center */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="font-semibold block mb-1 flex items-center gap-1 text-foreground">
+                    <Hash className="h-3.5 w-3.5 text-emerald-500" />
+                    <span>New PUC Certificate Number *</span>
+                  </label>
+                  <AppInput
+                    placeholder="e.g. MH02-PUC-2026-99214"
+                    value={renewPucNumber}
+                    onChange={(e) => setRenewPucNumber(e.target.value)}
+                    required
+                    className="font-mono uppercase"
+                  />
+                  <span className="text-[10px] text-muted-foreground mt-0.5 block">Official RTO Parivahan PUC barcode / number</span>
+                </div>
+
+                <div>
+                  <label className="font-semibold block mb-1 flex items-center gap-1 text-foreground">
+                    <Building2 className="h-3.5 w-3.5 text-emerald-500" />
+                    <span>Testing Center / Station Name</span>
+                  </label>
+                  <AppInput
+                    placeholder="e.g. HPCL RTO Emission Testing Center, Andheri West"
+                    value={renewPucTestingCenter}
+                    onChange={(e) => setRenewPucTestingCenter(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Validity Dates */}
+              <div className="p-3.5 rounded-xl border border-border bg-slate-50/60 dark:bg-slate-900/40 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                    <Calendar className="h-3.5 w-3.5 text-emerald-500" />
+                    <span>PUC Validity Period</span>
+                  </label>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const st = renewPucValidFrom ? new Date(renewPucValidFrom) : new Date();
+                        const end = new Date(st);
+                        end.setMonth(end.getMonth() + 6);
+                        end.setDate(end.getDate() - 1);
+                        setRenewPucValidUpto(end.toISOString().split("T")[0]);
+                      }}
+                      className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+                    >
+                      +6 Months (Standard)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const st = renewPucValidFrom ? new Date(renewPucValidFrom) : new Date();
+                        const end = new Date(st);
+                        end.setFullYear(end.getFullYear() + 1);
+                        end.setDate(end.getDate() - 1);
+                        setRenewPucValidUpto(end.toISOString().split("T")[0]);
+                      }}
+                      className="px-2 py-0.5 rounded text-[10px] font-semibold bg-teal-500/10 text-teal-600 dark:text-teal-400 hover:bg-teal-500/20 transition-colors"
+                    >
+                      +1 Year (BS-VI / BS-IV)
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold block mb-1">Effective Test Date (Valid From) *</label>
+                    <AppInput
+                      type="date"
+                      value={renewPucValidFrom}
+                      onChange={(e) => setRenewPucValidFrom(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold block mb-1">Certificate Expiry Date (Valid Upto) *</label>
+                    <AppInput
+                      type="date"
+                      value={renewPucValidUpto}
+                      onChange={(e) => setRenewPucValidUpto(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Emission Norms & Test Readings */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="font-semibold block mb-1">Emission Norm</label>
+                  <select
+                    value={renewPucEmissionNorm}
+                    onChange={(e) => setRenewPucEmissionNorm(e.target.value)}
+                    className="w-full text-xs p-2.5 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                  >
+                    <option value="BS-VI">Bharat Stage VI (BS-VI)</option>
+                    <option value="BS-IV">Bharat Stage IV (BS-IV)</option>
+                    <option value="BS-III">Bharat Stage III (BS-III)</option>
+                    <option value="CNG/LPG">CNG / Dual Fuel Statutory</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-semibold block mb-1">CO % (Carbon Monoxide)</label>
+                  <AppInput
+                    type="number"
+                    step="0.001"
+                    min="0"
+                    placeholder="e.g. 0.05"
+                    value={renewPucCo !== undefined ? renewPucCo : ""}
+                    onChange={(e) => setRenewPucCo(Number(e.target.value))}
+                    className="font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-semibold block mb-1">HC (Hydrocarbon ppm)</label>
+                  <AppInput
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    placeholder="e.g. 45"
+                    value={renewPucHc !== undefined ? renewPucHc : ""}
+                    onChange={(e) => setRenewPucHc(Number(e.target.value))}
+                    className="font-mono"
+                  />
+                </div>
+              </div>
+
+              {/* Fees, Receipt & Notes */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="font-semibold block mb-1">Test Fee Paid (₹) *</label>
+                  <AppInput
+                    type="number"
+                    min="0"
+                    placeholder="e.g. 150"
+                    value={renewPucFee || ""}
+                    onChange={(e) => setRenewPucFee(Number(e.target.value) || 0)}
+                    required
+                    className="font-mono font-bold text-emerald-600 dark:text-emerald-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-semibold block mb-1">Receipt / Transaction #</label>
+                  <AppInput
+                    placeholder="e.g. REC-PUC-99120"
+                    value={renewPucReceiptNo}
+                    onChange={(e) => setRenewPucReceiptNo(e.target.value)}
+                    className="font-mono text-xs"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-semibold block mb-1">Certificate PDF / Image URL</label>
+                  <AppInput
+                    placeholder="https://... or vault ref"
+                    value={renewPucDocUrl}
+                    onChange={(e) => setRenewPucDocUrl(e.target.value)}
+                    className="text-xs"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-semibold block mb-1">Inspection Notes & Station Remarks</label>
+                <textarea
+                  rows={2}
+                  placeholder="e.g. Tested at authorized HPCL machine; Passed all idle emission parameters."
+                  value={renewPucNotes}
+                  onChange={(e) => setRenewPucNotes(e.target.value)}
+                  className="w-full text-xs p-2.5 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                />
+              </div>
+
+              {/* Modal Footer Actions */}
+              <div className="pt-3 border-t border-border flex items-center justify-between">
+                <AppButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setIsRenewPucModalOpen(false);
+                    if (selectedVehicleForPucRenew) {
+                      handleOpenVehiclePucHistoryModal(selectedVehicleForPucRenew);
+                    }
+                  }}
+                  className="text-teal-600 dark:text-teal-400 gap-1.5"
+                >
+                  <History className="h-3.5 w-3.5" />
+                  <span>View All Past PUC Cycles</span>
+                </AppButton>
+
+                <div className="flex items-center gap-2">
+                  <AppButton
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsRenewPucModalOpen(false)}
+                    disabled={modalSubmitting}
+                  >
+                    Cancel
+                  </AppButton>
+                  <AppButton
+                    type="submit"
+                    variant="primary"
+                    size="sm"
+                    disabled={modalSubmitting}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold gap-1.5 shadow-md"
+                  >
+                    {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Wind className="h-3.5 w-3.5" />}
+                    <span>Confirm & Archive PUC</span>
+                  </AppButton>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------------------------- */}
+      {/* VEHICLE PUC HISTORY & AUDIT LEDGER MODAL */}
+      {/* ---------------------------------------------------------------------- */}
+      {isPucHistoryModalOpen && selectedVehicleForPucHistory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-surface border border-border w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-border bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-transparent flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-11 w-11 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/25 shadow-xs">
+                  <Wind className="h-6 w-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-bold text-foreground">
+                      PUC Certificates Ledger & Emission Audit Tracks
+                    </h3>
+                    <span className="px-2.5 py-0.5 rounded-md font-mono text-xs font-bold bg-theme-btn-primary text-white">
+                      {selectedVehicleForPucHistory.registration_number}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {selectedVehicleForPucHistory.make} {selectedVehicleForPucHistory.model} ({selectedVehicleForPucHistory.fuel_type || "Petrol"}) • Complete historical ledger of emission test certificates
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <AppButton
+                  variant="primary"
+                  size="sm"
+                  onClick={() => {
+                    setIsPucHistoryModalOpen(false);
+                    handleOpenVehiclePucRenewModal(selectedVehicleForPucHistory);
+                  }}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold gap-1.5 shadow-xs"
+                >
+                  <Wind className="h-3.5 w-3.5" />
+                  <span>Renew New PUC</span>
+                </AppButton>
+                <AppButton variant="ghost" size="icon-sm" onClick={() => setIsPucHistoryModalOpen(false)}>
+                  <X className="h-4 w-4" />
+                </AppButton>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-5 overflow-y-auto flex-1">
+              {/* Summary Metric Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <div className="p-3.5 rounded-xl border border-border bg-surface shadow-2xs space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Active PUC Status</span>
+                  <div className="flex items-center gap-1.5">
+                    {renderExpiryBadge(selectedVehicleForPucHistory.puc_expire_days ?? calculateDaysRemaining(selectedVehicleForPucHistory.puc_expiry_date))}
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-border bg-surface shadow-2xs space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Fuel & Norm</span>
+                  <div className="text-xs font-bold truncate text-foreground">
+                    {selectedVehicleForPucHistory.fuel_type || "Petrol"} • BS-VI
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-border bg-surface shadow-2xs space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total Tests Tracked</span>
+                  <div className="text-sm font-extrabold font-mono text-emerald-600 dark:text-emerald-400">
+                    {vehiclePucHistory.length} Certificate {vehiclePucHistory.length === 1 ? "Record" : "Records"}
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-border bg-surface shadow-2xs space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Cumulative Test Fees</span>
+                  <div className="text-sm font-extrabold font-mono text-teal-600 dark:text-teal-400">
+                    ₹{vehiclePucHistory.reduce((acc, c) => acc + (c.test_fee || 0), 0).toLocaleString("en-IN")}
+                  </div>
+                </div>
+              </div>
+
+              {/* History Timeline / Table */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+                    <Sparkles className="h-3.5 w-3.5 text-emerald-500" />
+                    <span>Chronological PUC Emission History Ledger</span>
+                  </h4>
+                  <span className="text-[11px] text-muted-foreground">
+                    Sorted from newest to oldest inspection cycle
+                  </span>
+                </div>
+
+                {loadingPucHistory ? (
+                  <div className="py-12 flex flex-col items-center justify-center gap-3">
+                    <ChandakLoader size="md" />
+                    <span className="text-xs text-muted-foreground font-medium">Loading vehicle PUC history...</span>
+                  </div>
+                ) : vehiclePucHistory.length === 0 ? (
+                  <div className="py-12 text-center rounded-xl border border-dashed border-border bg-slate-50/50 dark:bg-slate-900/30 p-6 space-y-3">
+                    <div className="h-12 w-12 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto">
+                      <Wind className="h-6 w-6" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-bold text-foreground">No Historical PUC Records Found</p>
+                      <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                        This vehicle does not have any archived PUC certificates yet. Click below to issue the first tracked PUC certificate.
+                      </p>
+                    </div>
+                    <AppButton
+                      variant="primary"
+                      size="sm"
+                      onClick={() => {
+                        setIsPucHistoryModalOpen(false);
+                        handleOpenVehiclePucRenewModal(selectedVehicleForPucHistory);
+                      }}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold gap-1.5"
+                    >
+                      <Wind className="h-3.5 w-3.5" />
+                      <span>Record PUC Certificate</span>
+                    </AppButton>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {vehiclePucHistory.map((cert, idx) => (
+                      <div
+                        key={cert.id}
+                        className={`p-4 rounded-xl border transition-all ${
+                          cert.is_active
+                            ? "border-emerald-500/40 bg-emerald-50/30 dark:bg-emerald-950/15 shadow-sm ring-1 ring-emerald-500/20"
+                            : "border-border bg-surface hover:border-slate-300 dark:hover:border-slate-700"
+                        }`}
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
+                          <div className="flex items-center gap-2.5">
+                            <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 ${
+                              cert.is_active
+                                ? "bg-emerald-500 text-white shadow-xs"
+                                : "bg-slate-100 dark:bg-slate-800 text-muted-foreground border border-border"
+                            }`}>
+                              {cert.is_active ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+                              <span>{cert.is_active ? "Current Active PUC" : `Archived Certificate #${vehiclePucHistory.length - idx}`}</span>
+                            </span>
+
+                            <span className="font-mono text-xs font-extrabold text-foreground">
+                              {cert.certificate_number}
+                            </span>
+                            <span className="text-xs text-muted-foreground">•</span>
+                            <span className="text-xs font-semibold text-foreground">
+                              {cert.testing_center_name || "RTO Testing Center"}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-md border border-emerald-500/20">
+                              ₹{Number(cert.test_fee || 0).toLocaleString("en-IN")} Fee Paid
+                            </span>
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                              {cert.test_result || "PASS"}
+                            </span>
+                            <AppButton
+                              variant="ghost"
+                              size="icon-sm"
+                              title="Void / Delete Certificate Record"
+                              onClick={() => handleDeletePucHistoryRecord(cert.id)}
+                              className="h-6 w-6 text-muted-foreground hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </AppButton>
+                          </div>
+                        </div>
+
+                        {/* PUC Details Grid */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs pt-2 border-t border-border/60">
+                          <div>
+                            <span className="text-[10px] uppercase font-bold text-muted-foreground block">Validity Range</span>
+                            <span className="font-mono font-medium text-foreground">
+                              {String(cert.valid_from).split("T")[0]} → {String(cert.valid_upto).split("T")[0]}
+                            </span>
+                          </div>
+
+                          <div>
+                            <span className="text-[10px] uppercase font-bold text-muted-foreground block">Norm & CO %</span>
+                            <span className="text-foreground">
+                              {cert.emission_norm || "BS-VI"} • CO: {cert.carbon_monoxide_co !== null && cert.carbon_monoxide_co !== undefined ? `${cert.carbon_monoxide_co}%` : "—"}
+                            </span>
+                          </div>
+
+                          <div>
+                            <span className="text-[10px] uppercase font-bold text-muted-foreground block">HC & Smoke Readings</span>
+                            <span className="text-foreground">
+                              HC: {cert.hydrocarbon_hc !== null && cert.hydrocarbon_hc !== undefined ? `${cert.hydrocarbon_hc} ppm` : "—"} 
+                              {cert.smoke_density_k ? ` • K: ${cert.smoke_density_k}` : ""}
+                            </span>
+                          </div>
+
+                          <div>
+                            <span className="text-[10px] uppercase font-bold text-muted-foreground block">Receipt & Inspector</span>
+                            <span className="text-muted-foreground text-[11px] block truncate">
+                              {cert.receipt_number ? `Ref: ${cert.receipt_number}` : "No Receipt Ref"} • by {cert.renewed_by || "Admin"}
+                            </span>
+                          </div>
+                        </div>
+
+                        {cert.notes && (
+                          <div className="mt-2 text-[11px] text-muted-foreground bg-slate-50/80 dark:bg-slate-900/60 p-2 rounded-lg border border-border/40">
+                            <strong>Remarks:</strong> {cert.notes}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-border bg-surface/50 flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">
+                Enterprise PUC test records are archived permanently for statutory emission compliance & fleet audits.
+              </span>
+              <AppButton
+                variant="outline"
+                size="sm"
+                onClick={() => setIsPucHistoryModalOpen(false)}
+              >
+                Close Ledger
+              </AppButton>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------------------------- */}
+      {/* 1. VIEW VEHICLE INSPECTOR MODAL */}
+      {/* ---------------------------------------------------------------------- */}
+      {viewingVehicle && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-200">
+          <div className="bg-surface border border-border w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-border bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-theme-btn-primary/15 text-theme-btn-primary flex items-center justify-center border border-theme-btn-primary/25 shrink-0 shadow-xs">
+                  <Car className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-base font-bold text-foreground">
+                      {viewingVehicle.make} {viewingVehicle.model} {viewingVehicle.variant ? `(${viewingVehicle.variant})` : ""}
+                    </h3>
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                      viewingVehicle.status === "IN_STOCK"
+                        ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
+                        : viewingVehicle.status === "IN_SERVICE"
+                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                        : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                    }`}>
+                      {viewingVehicle.status === "IN_STOCK" ? "Available / In Stock" : viewingVehicle.status === "IN_SERVICE" ? "Active in Service" : viewingVehicle.status}
+                    </span>
+                  </div>
+                  <div className="mt-1">
+                    {renderHsrpPlate(viewingVehicle.registration_number)}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {canEditVehicle && (
+                  <AppButton
+                    variant="primary"
+                    size="sm"
+                    onClick={() => {
+                      const v = viewingVehicle;
+                      setViewingVehicle(null);
+                      openEditVehicleModal(v);
+                    }}
+                    className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-8 font-semibold gap-1.5 shadow-xs"
+                  >
+                    <Edit2 className="h-3.5 w-3.5" />
+                    <span>Edit Vehicle</span>
+                  </AppButton>
+                )}
+                <AppButton
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setViewingVehicle(null)}
+                >
+                  <X className="h-4 w-4" />
+                </AppButton>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 space-y-5 overflow-y-auto flex-1 text-xs">
+              {/* Primary Specs & Identity */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="p-3 rounded-xl border border-border/70 bg-slate-50/50 dark:bg-slate-900/40 space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Category / Body</span>
+                  <div className="font-semibold text-foreground text-sm">{viewingVehicle.category || "Standard"}</div>
+                </div>
+                <div className="p-3 rounded-xl border border-border/70 bg-slate-50/50 dark:bg-slate-900/40 space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Fuel / Powertrain</span>
+                  <div className="font-semibold text-foreground text-sm flex items-center gap-1.5">
+                    <Fuel className="h-3.5 w-3.5 text-amber-500" />
+                    <span>{viewingVehicle.fuel_type || "Petrol"}</span>
+                  </div>
+                </div>
+                <div className="p-3 rounded-xl border border-border/70 bg-slate-50/50 dark:bg-slate-900/40 space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Current Odometer</span>
+                  <div className="font-mono font-bold text-foreground text-sm">
+                    {viewingVehicle.odometer_km ? `${viewingVehicle.odometer_km.toLocaleString()} km` : "0 km"}
+                  </div>
+                </div>
+                <div className="p-3 rounded-xl border border-border/70 bg-slate-50/50 dark:bg-slate-900/40 space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Assigned Chauffeur</span>
+                  <div className="font-semibold text-foreground text-sm truncate">
+                    {viewingVehicle.assignedDriver?.full_name || "Unassigned Pool"}
+                  </div>
+                </div>
+              </div>
+
+              {/* Technical Specifications */}
+              <div className="p-4 rounded-xl border border-border bg-surface space-y-3">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <Gauge className="h-4 w-4 text-theme-btn-primary" />
+                  <span>Technical & Powertrain Details</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                  <div>
+                    <span className="text-muted-foreground block text-[11px]">Chassis / VIN:</span>
+                    <span className="font-mono font-semibold text-foreground">{viewingVehicle.vin_chassis_number || "—"}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-[11px]">Engine Number:</span>
+                    <span className="font-mono font-semibold text-foreground">{viewingVehicle.engine_number || "—"}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-[11px]">Paint Color:</span>
+                    <span className="font-semibold text-foreground">{viewingVehicle.paint_color || "—"}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-[11px]">Registration Date:</span>
+                    <span className="font-mono font-semibold text-foreground">{viewingVehicle.registration_date || "—"}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Statutory Compliance: Insurance & PUC Snapshots */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Insurance Policy Card */}
+                <div className="p-4 rounded-xl border border-cyan-500/20 bg-cyan-500/5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-cyan-800 dark:text-cyan-300 flex items-center gap-1.5">
+                      <ShieldCheck className="h-4 w-4 text-cyan-600" />
+                      <span>Motor Insurance Policy</span>
+                    </div>
+                    {viewingVehicle.insurance_expiry_date && (() => {
+                      const days = calculateDaysRemaining(viewingVehicle.insurance_expiry_date);
+                      if (days === null) return null;
+                      return days < 0 ? (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/25">
+                          Expired {Math.abs(days)}d ago
+                        </span>
+                      ) : days <= 30 ? (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25">
+                          Expires in {days}d
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25">
+                          Valid ({days}d)
+                        </span>
+                      );
+                    })()}
+                  </div>
+                  <div className="space-y-1.5 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Underwriter:</span>
+                      <span className="font-semibold text-foreground">{viewingVehicle.insurance_vendor || "—"}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Policy Number:</span>
+                      <span className="font-mono font-bold text-foreground">{viewingVehicle.insurance_policy_number || "—"}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Expiry Date:</span>
+                      <span className="font-mono font-bold text-foreground">{viewingVehicle.insurance_expiry_date || "—"}</span>
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t border-cyan-500/20 flex items-center justify-end gap-2">
+                    <AppButton
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const v = viewingVehicle;
+                        setViewingVehicle(null);
+                        handleOpenVehiclePolicyHistoryModal(v);
+                      }}
+                      className="h-7 text-xs px-2.5 text-cyan-700 dark:text-cyan-300 border-cyan-500/30 gap-1"
+                    >
+                      <History className="h-3 w-3" />
+                      <span>History</span>
+                    </AppButton>
+                    <AppButton
+                      variant="primary"
+                      size="sm"
+                      onClick={() => {
+                        const v = viewingVehicle;
+                        setViewingVehicle(null);
+                        handleOpenVehiclePolicyRenewModal(v);
+                      }}
+                      className="h-7 text-xs px-2.5 bg-cyan-600 hover:bg-cyan-700 text-white gap-1 shadow-2xs font-semibold"
+                    >
+                      <RotateCcw className="h-3 w-3" />
+                      <span>Renew Policy</span>
+                    </AppButton>
+                  </div>
+                </div>
+
+                {/* PUC Certificate Card */}
+                <div className="p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                      <Wind className="h-4 w-4 text-emerald-600" />
+                      <span>Pollution Under Control (PUC)</span>
+                    </div>
+                    {viewingVehicle.puc_expiry_date && (() => {
+                      const days = calculateDaysRemaining(viewingVehicle.puc_expiry_date);
+                      if (days === null) return null;
+                      return days < 0 ? (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/25">
+                          Expired {Math.abs(days)}d ago
+                        </span>
+                      ) : days <= 30 ? (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25">
+                          Expires in {days}d
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25">
+                          Valid ({days}d)
+                        </span>
+                      );
+                    })()}
+                  </div>
+                  <div className="space-y-1.5 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Certificate #:</span>
+                      <span className="font-mono font-bold text-foreground">{viewingVehicle.puc_certificate_number || "—"}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Expiry Date:</span>
+                      <span className="font-mono font-bold text-foreground">{viewingVehicle.puc_expiry_date || "—"}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Fitness Expiry:</span>
+                      <span className="font-mono font-bold text-foreground">{viewingVehicle.fitness_expiry_date || "—"}</span>
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t border-emerald-500/20 flex items-center justify-end gap-2">
+                    <AppButton
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const v = viewingVehicle;
+                        setViewingVehicle(null);
+                        handleOpenVehiclePucHistoryModal(v);
+                      }}
+                      className="h-7 text-xs px-2.5 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 gap-1"
+                    >
+                      <History className="h-3 w-3" />
+                      <span>History</span>
+                    </AppButton>
+                    <AppButton
+                      variant="primary"
+                      size="sm"
+                      onClick={() => {
+                        const v = viewingVehicle;
+                        setViewingVehicle(null);
+                        handleOpenVehiclePucRenewModal(v);
+                      }}
+                      className="h-7 text-xs px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white gap-1 shadow-2xs font-semibold"
+                    >
+                      <Wind className="h-3 w-3" />
+                      <span>Renew PUC</span>
+                    </AppButton>
+                  </div>
+                </div>
+              </div>
+
+              {/* RTO & Statutory Compliance */}
+              <div className="p-4 rounded-xl border border-border bg-surface space-y-3">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <Building2 className="h-4 w-4 text-blue-500" />
+                  <span>RTO Registration Details</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                  <div>
+                    <span className="text-muted-foreground block text-[11px]">RTO Office:</span>
+                    <span className="font-semibold text-foreground">{viewingVehicle.rto_office || "—"}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-[11px]">Registered Owner:</span>
+                    <span className="font-semibold text-foreground">{viewingVehicle.registered_owner || "—"}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-[11px]">RTO Registered Mobile:</span>
+                    <span className="font-mono font-semibold text-foreground">{viewingVehicle.rto_rmn || "—"}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-border bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">
+                Vehicle ID: <strong className="font-mono text-foreground">{viewingVehicle.id}</strong>
+              </span>
+              <div className="flex items-center gap-2">
+                {canEditVehicle && (
+                  <AppButton
+                    variant="primary"
+                    size="sm"
+                    onClick={() => {
+                      const v = viewingVehicle;
+                      setViewingVehicle(null);
+                      openEditVehicleModal(v);
+                    }}
+                    className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 px-3 font-semibold gap-1.5 shadow-xs"
+                  >
+                    <Edit2 className="h-3.5 w-3.5" />
+                    <span>Edit Vehicle</span>
+                  </AppButton>
+                )}
+                <AppButton
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setViewingVehicle(null)}
+                  className="text-xs h-9 px-4 font-semibold"
+                >
+                  Close
+                </AppButton>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------------------------- */}
+      {/* 2. VIEW DRIVER INSPECTOR MODAL */}
+      {/* ---------------------------------------------------------------------- */}
+      {viewingDriver && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-200">
+          <div className="bg-surface border border-border w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-border bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-500/25 shrink-0 shadow-xs">
+                  <Users className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-base font-bold text-foreground">{viewingDriver.full_name}</h3>
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                      viewingDriver.is_active
+                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                        : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                    }`}>
+                      {viewingDriver.is_active ? "Active" : "Inactive"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {viewingDriver.experience_years ? `${viewingDriver.experience_years} Yrs Experience • ` : ""}
+                    Commercial Fleet Chauffeur
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {canManageDrivers && (
+                  <AppButton
+                    variant="primary"
+                    size="sm"
+                    onClick={() => {
+                      const d = viewingDriver;
+                      setViewingDriver(null);
+                      openEditDriverModal(d);
+                    }}
+                    className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-8 font-semibold gap-1.5 shadow-xs"
+                  >
+                    <Edit2 className="h-3.5 w-3.5" />
+                    <span>Edit Driver</span>
+                  </AppButton>
+                )}
+                <AppButton
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setViewingDriver(null)}
+                >
+                  <X className="h-4 w-4" />
+                </AppButton>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 space-y-4 overflow-y-auto flex-1 text-xs">
+              {/* Contact & Profile */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3.5 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/40 space-y-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                    <Phone className="h-3.5 w-3.5 text-blue-500" />
+                    <span>Primary Contact</span>
+                  </span>
+                  <div className="text-sm font-bold text-foreground">
+                    <a href={`tel:${viewingDriver.phone}`} className="hover:underline text-theme-btn-primary font-mono">
+                      {viewingDriver.phone || "—"}
+                    </a>
+                  </div>
+                  {viewingDriver.emergency_contact && (
+                    <div className="text-[11px] text-muted-foreground pt-1 border-t border-border">
+                      Emergency Contact: <span className="font-mono text-foreground font-semibold">{viewingDriver.emergency_contact}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/40 space-y-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                    <Car className="h-3.5 w-3.5 text-purple-500" />
+                    <span>Assigned Fleet Vehicle</span>
+                  </span>
+                  <div>
+                    {(() => {
+                      const assignedVeh = vehicles.find(v => v.id === viewingDriver.assigned_vehicle_id || v.assignedDriver?.id === viewingDriver.id);
+                      return assignedVeh ? (
+                        <div className="space-y-1">
+                          <div>{renderHsrpPlate(assignedVeh.registration_number)}</div>
+                          <div className="text-[11px] text-muted-foreground font-medium">{assignedVeh.make} {assignedVeh.model}</div>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground italic">No primary vehicle assigned (Pool Driver)</span>
+                      );
+                    })()}
+                  </div>
+                </div>
+              </div>
+
+              {/* Driving License & Statutory Compliance */}
+              <div className="p-4 rounded-xl border border-border bg-surface space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                    <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                    <span>Commercial Driving License (DL)</span>
+                  </div>
+                  {viewingDriver.license_expiry_date && (() => {
+                    const days = calculateDaysRemaining(viewingDriver.license_expiry_date);
+                    if (days === null) return null;
+                    return days < 0 ? (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/25">
+                        Expired {Math.abs(days)}d ago
+                      </span>
+                    ) : days <= 30 ? (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25">
+                        Expires in {days}d
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25">
+                        Valid ({days}d remaining)
+                      </span>
+                    );
+                  })()}
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <span className="text-muted-foreground block text-[11px]">DL Number:</span>
+                    <span className="font-mono font-bold text-foreground">{viewingDriver.license_number || "—"}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-[11px]">DL Expiry Date:</span>
+                    <span className="font-mono font-bold text-foreground">{viewingDriver.license_expiry_date || "—"}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-border bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">
+                Driver Record ID: <strong className="font-mono text-foreground">{viewingDriver.id}</strong>
+              </span>
+              <div className="flex items-center gap-2">
+                {canManageDrivers && (
+                  <AppButton
+                    variant="primary"
+                    size="sm"
+                    onClick={() => {
+                      const d = viewingDriver;
+                      setViewingDriver(null);
+                      openEditDriverModal(d);
+                    }}
+                    className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 px-3 font-semibold gap-1.5 shadow-xs"
+                  >
+                    <Edit2 className="h-3.5 w-3.5" />
+                    <span>Edit Driver</span>
+                  </AppButton>
+                )}
+                <AppButton
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setViewingDriver(null)}
+                  className="text-xs h-9 px-4 font-semibold"
+                >
+                  Close
+                </AppButton>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------------------------- */}
+      {/* 3. VIEW TRIP / TRAVELER INSPECTOR MODAL */}
+      {/* ---------------------------------------------------------------------- */}
+      {viewingTrip && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-200">
+          <div className="bg-surface border border-border w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-border bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-500/25 shrink-0 shadow-xs">
+                  <UserCheck className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-base font-bold text-foreground">{viewingTrip.traveler_name}</h3>
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                      viewingTrip.status === "IN_PROGRESS"
+                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                        : viewingTrip.status === "COMPLETED"
+                        ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
+                        : viewingTrip.status === "CANCELLED"
+                        ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+                    }`}>
+                      {viewingTrip.status}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {viewingTrip.purpose || "Official Corporate Transit / Dispatch"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <AppButton
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setViewingTrip(null)}
+                >
+                  <X className="h-4 w-4" />
+                </AppButton>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 space-y-4 overflow-y-auto flex-1 text-xs">
+              {/* Journey Route Details */}
+              <div className="p-4 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/40 space-y-3">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Transit Route & Itinerary
+                </div>
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  <span className="text-foreground">{viewingTrip.origin}</span>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <span className="text-theme-btn-primary font-bold">{viewingTrip.destination}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border text-xs">
+                  <div>
+                    <span className="text-muted-foreground block text-[11px]">Departure Timing:</span>
+                    <span className="font-mono font-semibold text-foreground">{viewingTrip.planned_start_time || "—"}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-[11px]">Expected Return:</span>
+                    <span className="font-mono font-semibold text-foreground">{viewingTrip.planned_end_time || "—"}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Asset & Chauffeur Allocation */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3.5 rounded-xl border border-border bg-surface space-y-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Dispatched Vehicle</span>
+                  <div>{renderHsrpPlate(viewingTrip.vehicle_reg)}</div>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-border bg-surface space-y-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Assigned Chauffeur</span>
+                  <div className="text-sm font-bold text-foreground">{viewingTrip.driver_name || "—"}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer Controls */}
+            <div className="p-4 border-t border-border bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                {canDispatchTrips && viewingTrip.status === "PLANNED" && (
+                  <AppButton
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const id = viewingTrip.id;
+                      setViewingTrip(null);
+                      handleUpdateTripStatus(id, "IN_PROGRESS");
+                    }}
+                    className="h-8 text-xs text-emerald-600 border-emerald-300 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 gap-1 font-semibold"
+                  >
+                    <Play className="h-3.5 w-3.5" />
+                    <span>Start Movement</span>
+                  </AppButton>
+                )}
+                {canDispatchTrips && viewingTrip.status === "IN_PROGRESS" && (
+                  <AppButton
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const id = viewingTrip.id;
+                      setViewingTrip(null);
+                      handleUpdateTripStatus(id, "COMPLETED");
+                    }}
+                    className="h-8 text-xs text-blue-600 border-blue-300 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/40 gap-1 font-semibold"
+                  >
+                    <Check className="h-3.5 w-3.5" />
+                    <span>Complete Movement</span>
+                  </AppButton>
+                )}
+              </div>
+
+              <AppButton
+                variant="outline"
+                size="sm"
+                onClick={() => setViewingTrip(null)}
+                className="text-xs h-9 px-4 font-semibold"
+              >
+                Close
+              </AppButton>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------------------------- */}
+      {/* 4. VIEW PART / ACCESSORY INSPECTOR MODAL */}
+      {/* ---------------------------------------------------------------------- */}
+      {viewingPart && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-200">
+          <div className="bg-surface border border-border w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-border bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/25 shrink-0 shadow-xs">
+                  <Package className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-base font-bold text-foreground">{viewingPart.name}</h3>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
+                      {viewingPart.brand}
+                    </span>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 font-mono">
+                      {viewingPart.category}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {viewingPart.part_number ? `SKU / Part #: ${viewingPart.part_number} • ` : ""}
+                    {viewingPart.serial_number ? `S/N: ${viewingPart.serial_number} • ` : ""}
+                    Asset Lifecycle Master
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <AppButton
+                  variant="primary"
+                  size="sm"
+                  onClick={() => {
+                    const p = viewingPart;
+                    setViewingPart(null);
+                    openEditPartModal(p);
+                  }}
+                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-8 font-semibold gap-1.5 shadow-xs"
+                >
+                  <Edit2 className="h-3.5 w-3.5" />
+                  <span>Edit Part</span>
+                </AppButton>
+                <AppButton
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setViewingPart(null)}
+                >
+                  <X className="h-4 w-4" />
+                </AppButton>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 space-y-5 overflow-y-auto flex-1 text-xs">
+              {/* Procurement & Valuation */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="p-3 rounded-xl border border-border/70 bg-slate-50/50 dark:bg-slate-900/40 space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Purchase Date</span>
+                  <div className="font-mono font-bold text-foreground text-sm">{viewingPart.purchase_date || "—"}</div>
+                </div>
+                <div className="p-3 rounded-xl border border-border/70 bg-slate-50/50 dark:bg-slate-900/40 space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Quantity</span>
+                  <div className="font-mono font-bold text-foreground text-sm">{viewingPart.quantity} units</div>
+                </div>
+                <div className="p-3 rounded-xl border border-border/70 bg-slate-50/50 dark:bg-slate-900/40 space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Unit Price</span>
+                  <div className="font-mono font-bold text-foreground text-sm">₹{Number(viewingPart.unit_price || 0).toLocaleString("en-IN")}</div>
+                </div>
+                <div className="p-3 rounded-xl border border-border/70 bg-slate-50/50 dark:bg-slate-900/40 space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total Valuation</span>
+                  <div className="font-mono font-bold text-emerald-600 dark:text-emerald-400 text-sm">
+                    ₹{(Number(viewingPart.quantity || 1) * Number(viewingPart.unit_price || 0)).toLocaleString("en-IN")}
+                  </div>
+                </div>
+              </div>
+
+              {/* Warranty & Shelf Expiry Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* OEM Warranty Card */}
+                <div className="p-4 rounded-xl border border-indigo-500/20 bg-indigo-500/5 space-y-2">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-indigo-800 dark:text-indigo-300 flex items-center gap-1.5">
+                    <ShieldCheck className="h-4 w-4 text-indigo-600" />
+                    <span>OEM Warranty Terms</span>
+                  </div>
+                  <div className="space-y-1 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Coverage Term:</span>
+                      <span className="font-semibold text-foreground">
+                        {viewingPart.warranty_months ? `${viewingPart.warranty_months} Months (${viewingPart.warranty_type || "Standard"})` : "No Term"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Warranty Expiry:</span>
+                      <span className="font-mono font-bold text-foreground">{viewingPart.warranty_expiry_date || "—"}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* DOM & Shelf Life */}
+                <div className="p-4 rounded-xl border border-border bg-surface space-y-2">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                    <Clock className="h-4 w-4 text-slate-500" />
+                    <span>Manufacturing & Shelf Life</span>
+                  </div>
+                  <div className="space-y-1 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">DOM (Mfg Date):</span>
+                      <span className="font-mono font-semibold text-foreground">{viewingPart.manufacturing_date || "—"}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Shelf Expiry:</span>
+                      <span className="font-mono font-bold text-foreground">{viewingPart.expiry_date || "—"}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Recurring Renewal Policy */}
+              {viewingPart.has_renewal_policy && (
+                <div className="p-4 rounded-xl border border-purple-500/20 bg-purple-500/5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-purple-800 dark:text-purple-300 flex items-center gap-1.5">
+                      <Zap className="h-4 w-4 text-purple-600" />
+                      <span>Recurring Renewal Policy ({viewingPart.renewal_policy_type || "Standard"})</span>
+                    </div>
+                    <AppButton
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const p = viewingPart;
+                        setViewingPart(null);
+                        openRenewPartModal(p);
+                      }}
+                      className="h-7 text-xs px-2.5 text-purple-700 dark:text-purple-300 border-purple-500/30 hover:bg-purple-100 dark:hover:bg-purple-950/40 gap-1 font-semibold"
+                    >
+                      <RotateCcw className="h-3 w-3" />
+                      <span>Renew Policy</span>
+                    </AppButton>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <span className="text-muted-foreground">Renewal Due Date: </span>
+                      <span className="font-mono font-bold text-foreground">{viewingPart.renewal_date || "—"}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Renewal Cost: </span>
+                      <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                        {viewingPart.renewal_cost ? `₹${Number(viewingPart.renewal_cost).toLocaleString("en-IN")}/cycle` : "—"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Assignment & Vehicle Mount */}
+              <div className="p-4 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/40 space-y-2">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Asset Assignment & Mounting State
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <div>
+                    {viewingPart.assigned_vehicle_reg ? (
+                      <div className="flex items-center gap-2">
+                        <span>Mounted on:</span>
+                        {renderHsrpPlate(viewingPart.assigned_vehicle_reg)}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">Status: In Warehouse Inventory</span>
+                    )}
+                  </div>
+                  {viewingPart.installation_date && (
+                    <div className="text-muted-foreground">
+                      Installed Date: <span className="font-mono font-semibold text-foreground">{viewingPart.installation_date}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-border bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">
+                Part ID: <strong className="font-mono text-foreground">{viewingPart.id}</strong>
+              </span>
+              <div className="flex items-center gap-2">
+                <AppButton
+                  variant="primary"
+                  size="sm"
+                  onClick={() => {
+                    const p = viewingPart;
+                    setViewingPart(null);
+                    openEditPartModal(p);
+                  }}
+                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 px-3 font-semibold gap-1.5 shadow-xs"
+                >
+                  <Edit2 className="h-3.5 w-3.5" />
+                  <span>Edit Part</span>
+                </AppButton>
+                <AppButton
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setViewingPart(null)}
+                  className="text-xs h-9 px-4 font-semibold"
+                >
+                  Close
+                </AppButton>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------------------------- */}
+      {/* 5. VIEW INSURANCE VENDOR INSPECTOR MODAL */}
+      {/* ---------------------------------------------------------------------- */}
+      {viewingVendor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-200">
+          <div className="bg-surface border border-border w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-border bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-500/25 shrink-0 shadow-xs">
+                  <ShieldCheck className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-base font-bold text-foreground">{viewingVendor.name}</h3>
+                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700">
+                      {viewingVendor.code}
+                    </span>
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                      viewingVendor.is_active !== false
+                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700"
+                    }`}>
+                      {viewingVendor.is_active !== false ? "Active Underwriter" : "Disabled"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Authorized Fleet Motor Insurance Underwriter & Policy Desk
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <AppButton
+                  variant="primary"
+                  size="sm"
+                  onClick={() => {
+                    const vn = viewingVendor;
+                    setViewingVendor(null);
+                    openEditVendorModal(vn);
+                  }}
+                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-8 font-semibold gap-1.5 shadow-xs"
+                >
+                  <Edit2 className="h-3.5 w-3.5" />
+                  <span>Edit Vendor</span>
+                </AppButton>
+                <AppButton
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setViewingVendor(null)}
+                >
+                  <X className="h-4 w-4" />
+                </AppButton>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 space-y-4 overflow-y-auto flex-1 text-xs">
+              {/* 24x7 Roadside Assistance Banner */}
+              {viewingVendor.support_toll_free && (
+                <div className="p-3.5 rounded-xl border border-amber-500/30 bg-amber-500/10 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0" />
+                    <div>
+                      <div className="text-[11px] font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
+                        24x7 Emergency Roadside Assistance (RSA)
+                      </div>
+                      <div className="font-mono font-bold text-base text-foreground mt-0.5">
+                        {viewingVendor.support_toll_free}
+                      </div>
+                    </div>
+                  </div>
+                  <a
+                    href={`tel:${viewingVendor.support_toll_free}`}
+                    className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs shadow-2xs inline-flex items-center gap-1 shrink-0"
+                  >
+                    <Phone className="h-3 w-3" />
+                    <span>Call Helpline</span>
+                  </a>
+                </div>
+              )}
+
+              {/* Contact Person & Claims Desk */}
+              <div className="p-4 rounded-xl border border-border bg-surface space-y-3">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <Users className="h-4 w-4 text-blue-500" />
+                  <span>Account Manager & Claims Support</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  <div>
+                    <span className="text-muted-foreground block text-[11px]">Contact Person:</span>
+                    <span className="font-semibold text-foreground">{viewingVendor.contact_person || "—"}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-[11px]">Direct Phone:</span>
+                    {viewingVendor.contact_number ? (
+                      <a href={`tel:${viewingVendor.contact_number}`} className="font-mono font-bold text-blue-600 dark:text-blue-400 hover:underline">
+                        {viewingVendor.contact_number}
+                      </a>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-[11px]">Official Email:</span>
+                    {viewingVendor.email ? (
+                      <a href={`mailto:${viewingVendor.email}`} className="font-mono text-foreground hover:underline">
+                        {viewingVendor.email}
+                      </a>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Claim Portal & Description */}
+              <div className="p-4 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/40 space-y-2 text-xs">
+                {viewingVendor.website && (
+                  <div>
+                    <span className="text-muted-foreground block text-[11px]">Claims Portal / Website:</span>
+                    <a
+                      href={viewingVendor.website.startsWith("http") ? viewingVendor.website : `https://${viewingVendor.website}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-theme-btn-primary hover:underline font-mono text-xs inline-flex items-center gap-1 font-semibold"
+                    >
+                      <span>{viewingVendor.website}</span>
+                      <span>↗</span>
+                    </a>
+                  </div>
+                )}
+                {viewingVendor.description && (
+                  <div className="pt-2 border-t border-border">
+                    <span className="text-muted-foreground block text-[11px]">Underwriter Description:</span>
+                    <p className="text-foreground mt-0.5">{viewingVendor.description}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Insured Fleet Summary */}
+              {(() => {
+                const coveredVehs = vehicles.filter(
+                  v => v.insurance_vendor_id === viewingVendor.id || (v.insurance_vendor && v.insurance_vendor.toLowerCase() === viewingVendor.name.toLowerCase())
+                );
+                return (
+                  <div className="p-4 rounded-xl border border-border bg-surface space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                        <Car className="h-4 w-4 text-purple-500" />
+                        <span>Insured Fleet Portfolio</span>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20">
+                        {coveredVehs.length} {coveredVehs.length === 1 ? "Vehicle" : "Vehicles"}
+                      </span>
+                    </div>
+                    {coveredVehs.length > 0 ? (
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {coveredVehs.map(v => (
+                          <div key={v.id}>
+                            {renderHsrpPlate(v.registration_number)}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground italic text-xs">No vehicles currently linked to this underwriter.</p>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-border bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">
+                Vendor Code: <strong className="font-mono text-foreground">{viewingVendor.code}</strong>
+              </span>
+              <div className="flex items-center gap-2">
+                <AppButton
+                  variant="primary"
+                  size="sm"
+                  onClick={() => {
+                    const vn = viewingVendor;
+                    setViewingVendor(null);
+                    openEditVendorModal(vn);
+                  }}
+                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 px-3 font-semibold gap-1.5 shadow-xs"
+                >
+                  <Edit2 className="h-3.5 w-3.5" />
+                  <span>Edit Vendor</span>
+                </AppButton>
+                <AppButton
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setViewingVendor(null)}
+                  className="text-xs h-9 px-4 font-semibold"
+                >
+                  Close
+                </AppButton>
+              </div>
+            </div>
           </div>
         </div>
       )}

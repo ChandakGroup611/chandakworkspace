@@ -34,7 +34,8 @@ import {
   Send,
   AlertCircle,
   Filter,
-  MessageSquare
+  MessageSquare,
+  Plus
 } from "lucide-react";
 
 interface MatrixColumn {
@@ -82,6 +83,7 @@ export const TenderDesignMatrix: React.FC = () => {
   const [batchActualDate, setBatchActualDate] = useState<string>("");
   const [batchConsultantName, setBatchConsultantName] = useState<string>("");
   const [batchRemarks, setBatchRemarks] = useState<string>("");
+  const [batchTowerSearch, setBatchTowerSearch] = useState<string>("");
 
   // Audit Logs History Drawer State
   const [isAuditDrawerOpen, setIsAuditDrawerOpen] = useState(false);
@@ -327,14 +329,45 @@ export const TenderDesignMatrix: React.FC = () => {
     setActiveCell(null);
   };
 
+  // Related Wings and Sub-Projects computed line item-wise for selected Batch Project
+  const batchRelatedTowers = useMemo(() => {
+    if (!batchProjectId) return [];
+    const currentProject = storeState.projects.find(p => p.id === batchProjectId);
+    const directTowers = storeState.towers.filter(t => t.projectId === batchProjectId).map(t => ({
+      ...t,
+      parentProjectName: currentProject?.name || "Main Project",
+      isSubProjectTower: !!currentProject?.isSubProject,
+      subProjectName: currentProject?.isSubProject ? currentProject.name : undefined
+    }));
+
+    // Find any child subprojects belonging to this parent project
+    const childSubProjects = storeState.projects.filter(p => p.parentProjectId === batchProjectId);
+    const childTowers = childSubProjects.flatMap(sp => 
+      storeState.towers.filter(t => t.projectId === sp.id).map(t => ({
+        ...t,
+        parentProjectName: sp.name,
+        isSubProjectTower: true,
+        subProjectName: sp.name
+      }))
+    );
+
+    return [...directTowers, ...childTowers];
+  }, [batchProjectId, storeState.projects, storeState.towers]);
+
   // Open Batch Update Modal
   const handleOpenBatchModal = () => {
     const pId = selectedProjects.length > 0 
       ? selectedProjects[0] 
       : (accessibleProjects[0]?.id || "");
     setBatchProjectId(pId);
-    const twrs = storeState.towers.filter(t => t.projectId === pId).map(t => t.id);
-    setBatchSelectedTowers(twrs);
+    
+    // Select all related towers & subproject towers line item-wise by default
+    const directTowers = storeState.towers.filter(t => t.projectId === pId).map(t => t.id);
+    const childSubProjects = storeState.projects.filter(p => p.parentProjectId === pId);
+    const childTowers = childSubProjects.flatMap(sp => storeState.towers.filter(t => t.projectId === sp.id).map(t => t.id));
+    const allTwrIds = [...directTowers, ...childTowers];
+
+    setBatchSelectedTowers(allTwrIds);
     setBatchDiscipline(selectedDisciplines.length > 0 ? selectedDisciplines[0] : "ALL");
     setBatchStatus("Received");
     const today = new Date().toISOString().split("T")[0];
@@ -342,13 +375,14 @@ export const TenderDesignMatrix: React.FC = () => {
     setBatchActualDate(today);
     setBatchConsultantName("");
     setBatchRemarks("");
+    setBatchTowerSearch("");
     setIsBatchModalOpen(true);
   };
 
   // Execute Batch Update with Mandatory Dates
   const handleExecuteBatchUpdate = async () => {
     if (!batchProjectId || batchSelectedTowers.length === 0) {
-      alert("Please select at least one Tower Wing to update.");
+      alert("Please select at least one Wing / Sub-Project line item to update.");
       return;
     }
 
@@ -380,9 +414,11 @@ export const TenderDesignMatrix: React.FC = () => {
     }> = [];
 
     batchSelectedTowers.forEach(twrId => {
+      const twr = storeState.towers.find(t => t.id === twrId);
+      const effectiveProjectId = twr ? twr.projectId : batchProjectId;
       targetPkgs.forEach(pkg => {
         updates.push({
-          projectId: batchProjectId,
+          projectId: effectiveProjectId,
           towerId: twrId,
           packageId: pkg.id,
           status: batchStatus,
@@ -396,7 +432,7 @@ export const TenderDesignMatrix: React.FC = () => {
     });
 
     DesignMasterStore.bulkRecordPackageStatus(updates, "Senior Design Manager");
-    alert(`⚡ Batch Updated ${updates.length} cells successfully with mandatory dates & audit logging!`);
+    alert(`⚡ Batch Updated ${updates.length} cells successfully across ${batchSelectedTowers.length} line items with mandatory dates & audit logging!`);
     setIsBatchModalOpen(false);
   };
 
@@ -1262,20 +1298,25 @@ export const TenderDesignMatrix: React.FC = () => {
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                   <Building className="h-3.5 w-3.5 text-blue-500" />
-                  <span>Target Project</span>
+                  <span>Target Project / Development</span>
                 </label>
                 <select
                   value={batchProjectId}
                   onChange={e => {
                     const pId = e.target.value;
                     setBatchProjectId(pId);
-                    const twrs = storeState.towers.filter(t => t.projectId === pId).map(t => t.id);
-                    setBatchSelectedTowers(twrs);
+                    const directTowers = storeState.towers.filter(t => t.projectId === pId).map(t => t.id);
+                    const childSubProjects = storeState.projects.filter(p => p.parentProjectId === pId);
+                    const childTowers = childSubProjects.flatMap(sp => storeState.towers.filter(t => t.projectId === sp.id).map(t => t.id));
+                    const allTwrIds = [...directTowers, ...childTowers];
+                    setBatchSelectedTowers(allTwrIds);
                   }}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-medium focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                 >
                   {accessibleProjects.map(proj => (
-                    <option key={proj.id} value={proj.id}>{proj.name}</option>
+                    <option key={proj.id} value={proj.id}>
+                      {proj.isSubProject ? `🏙️ ${proj.name} (Sub-Project)` : `🏢 ${proj.name}`}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -1298,62 +1339,190 @@ export const TenderDesignMatrix: React.FC = () => {
               </div>
             </div>
 
-            {/* Tower Wings Selection */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                  <Layers className="h-3.5 w-3.5 text-purple-500" />
-                  <span>Target Wings</span>
-                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-muted text-foreground border border-border font-mono font-bold">
-                    {batchSelectedTowers.length} of {storeState.towers.filter(t => t.projectId === batchProjectId).length}
-                  </span>
+            {/* Zero-Packages Warning and Auto-Load helper */}
+            {storeState.packages.length === 0 && (
+              <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-800 dark:text-blue-300 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Info className="h-4 w-4 shrink-0 text-blue-500" />
+                  <span>No Work Packages loaded. Load the standard template to populate all 65+ packages.</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    DesignMasterStore.loadEyReferenceTemplate();
+                    setTimeout(() => {
+                      const updatedState = DesignMasterStore.getState();
+                      const directTowers = updatedState.towers.filter(t => t.projectId === batchProjectId).map(t => t.id);
+                      const childSubProjects = updatedState.projects.filter(p => p.parentProjectId === batchProjectId);
+                      const childTowers = childSubProjects.flatMap(sp => updatedState.towers.filter(t => t.projectId === sp.id).map(t => t.id));
+                      const allTwrIds = [...directTowers, ...childTowers];
+                      if (allTwrIds.length > 0) setBatchSelectedTowers(allTwrIds);
+                    }, 50);
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] shadow-xs cursor-pointer flex items-center gap-1 shrink-0"
+                >
+                  <Zap className="h-3 w-3" />
+                  <span>Load Standard Template</span>
+                </button>
+              </div>
+            )}
+
+            {/* Target Wings & Sub-Projects Line Item-Wise Selection */}
+            <div className="space-y-2 pt-2 border-t border-border">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                  <Layers className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                  <span>Target Wings & Sub-Projects (Line Item Selection)</span>
                 </label>
                 <div className="flex items-center gap-2 text-[11px]">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const all = storeState.towers.filter(t => t.projectId === batchProjectId).map(t => t.id);
-                      setBatchSelectedTowers(all);
-                    }}
-                    className="text-teal-600 dark:text-teal-400 hover:underline font-semibold cursor-pointer"
-                  >
-                    Select All
-                  </button>
-                  <span className="text-muted-foreground/40">•</span>
-                  <button
-                    type="button"
-                    onClick={() => setBatchSelectedTowers([])}
-                    className="text-muted-foreground hover:text-rose-500 hover:underline cursor-pointer"
-                  >
-                    Clear
-                  </button>
+                  <span className="font-semibold text-teal-600 dark:text-teal-400">
+                    {batchSelectedTowers.length} of {batchRelatedTowers.length} selected
+                  </span>
+                  {batchRelatedTowers.length > 0 && (
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setBatchSelectedTowers(batchRelatedTowers.map(t => t.id))}
+                        className="px-2 py-0.5 rounded-md bg-teal-500/10 text-teal-600 dark:text-teal-400 hover:bg-teal-500/20 font-bold cursor-pointer transition-colors"
+                      >
+                        Select All
+                      </button>
+                      <span>•</span>
+                      <button
+                        type="button"
+                        onClick={() => setBatchSelectedTowers([])}
+                        className="px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 font-medium cursor-pointer transition-colors"
+                      >
+                        Clear All
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-1.5 p-2.5 rounded-xl bg-muted/20 border border-border max-h-28 overflow-y-auto custom-scrollbar">
-                {storeState.towers.filter(t => t.projectId === batchProjectId).map(twr => {
-                  const isChecked = batchSelectedTowers.includes(twr.id);
-                  return (
-                    <button
-                      key={twr.id}
-                      type="button"
-                      onClick={() => {
-                        setBatchSelectedTowers(prev => 
-                          isChecked ? prev.filter(id => id !== twr.id) : [...prev, twr.id]
-                        );
-                      }}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer select-none ${
-                        isChecked 
-                          ? "bg-teal-600 text-white shadow-xs" 
-                          : "bg-surface border border-border text-muted-foreground hover:text-foreground hover:bg-muted"
-                      }`}
-                    >
-                      {isChecked ? <CheckSquare className="h-3.5 w-3.5 text-white" /> : <Square className="h-3.5 w-3.5 text-muted-foreground/60" />}
-                      <span>{twr.towerName}</span>
-                    </button>
-                  );
-                })}
-              </div>
+              {batchRelatedTowers.length > 3 && (
+                <div className="relative">
+                  <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                  <input
+                    type="text"
+                    value={batchTowerSearch}
+                    onChange={e => setBatchTowerSearch(e.target.value)}
+                    placeholder="Filter wings / sub-projects..."
+                    aria-label="Filter wings or sub-projects"
+                    className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+              )}
+
+              {batchRelatedTowers.length === 0 ? (
+                <div className="w-full p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500" />
+                    <span>No Wings or Sub-Projects configured for this project yet.</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newTwr = DesignMasterStore.addTower({
+                        projectId: batchProjectId,
+                        towerName: "Wing A",
+                        towerType: "Sale"
+                      });
+                      setBatchSelectedTowers([newTwr.id]);
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] shadow-xs cursor-pointer flex items-center gap-1 shrink-0"
+                  >
+                    <Plus className="h-3 w-3" />
+                    <span>Quick Add &ldquo;Wing A&rdquo;</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-1.5 max-h-48 overflow-y-auto custom-scrollbar p-1">
+                  {batchRelatedTowers
+                    .filter(twr => !batchTowerSearch.trim() || twr.towerName.toLowerCase().includes(batchTowerSearch.toLowerCase()) || (twr.subProjectName && twr.subProjectName.toLowerCase().includes(batchTowerSearch.toLowerCase())))
+                    .map(twr => {
+                      const isChecked = batchSelectedTowers.includes(twr.id);
+                      return (
+                        <div
+                          key={twr.id}
+                          onClick={() => {
+                            setBatchSelectedTowers(prev => 
+                              isChecked ? prev.filter(id => id !== twr.id) : [...prev, twr.id]
+                            );
+                          }}
+                          className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 select-none ${
+                            isChecked 
+                              ? "bg-teal-500/10 border-teal-500/40 text-foreground ring-1 ring-teal-500/30 shadow-2xs" 
+                              : "bg-surface border-border text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className={`h-4.5 w-4.5 rounded-md flex items-center justify-center border transition-colors shrink-0 ${
+                              isChecked ? "bg-teal-600 text-white border-teal-600" : "border-border bg-background"
+                            }`}>
+                              {isChecked ? <Check className="h-3 w-3 stroke-[3]" /> : null}
+                            </div>
+
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-bold text-xs text-foreground">{twr.towerName}</span>
+                                {twr.isSubProjectTower && (
+                                  <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/20">
+                                    🏙️ {twr.subProjectName || "Sub-Project"}
+                                  </span>
+                                )}
+                                <span className="px-1.5 py-0.2 rounded text-[10px] font-medium bg-muted text-muted-foreground border border-border">
+                                  {twr.towerType || "Sale"}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
+                                {twr.taggedConsultants && twr.taggedConsultants.length > 0 ? (
+                                  <span>Assigned: <strong className="text-foreground">{twr.taggedConsultants.slice(0, 2).join(", ")}{twr.taggedConsultants.length > 2 ? ` +${twr.taggedConsultants.length - 2}` : ""}</strong></span>
+                                ) : (
+                                  <span>Inherits project consultants</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="shrink-0 flex items-center gap-2">
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md transition-colors ${
+                              isChecked 
+                                ? "bg-teal-600/20 text-teal-700 dark:text-teal-300 border border-teal-500/30" 
+                                : "bg-muted text-muted-foreground border border-border"
+                            }`}>
+                              {isChecked ? "Included" : "Excluded"}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
+            </div>
+
+            {/* Optional Consultant Partner Assignment */}
+            <div className="space-y-1.5 pt-1">
+              <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <ShieldCheck className="h-3.5 w-3.5 text-purple-500" />
+                  <span>Assign Consultant Partner</span>
+                </span>
+                <span className="text-[10px] text-muted-foreground">Optional</span>
+              </label>
+              <select
+                value={batchConsultantName}
+                onChange={e => setBatchConsultantName(e.target.value)}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-medium focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+              >
+                <option value="">-- Retain Existing / Default Consultant Partner --</option>
+                {storeState.consultants.map(c => (
+                  <option key={c.id} value={c.name}>
+                    {c.name} ({c.category})
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Mandatory Dates Grid (Planned & Actual) */}

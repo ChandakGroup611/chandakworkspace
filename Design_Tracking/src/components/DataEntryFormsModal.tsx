@@ -83,10 +83,29 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
     }
   }, [accessibleProjects, pkgProjectId]);
 
-  // Available towers for selected projects
-  const pkgAvailableTowers = storeState.towers.filter(t => t.projectId === pkgProjectId);
-  const laAvailableTowers = storeState.towers.filter(t => t.projectId === laProjectId);
-  const liaisonAvailableTowers = storeState.towers.filter(t => t.projectId === liaisonProjectId);
+  // Available towers for selected projects including child sub-project wings
+  const getAvailableTowersWithSubProjects = (pId: string) => {
+    if (!pId) return [];
+    const currProj = storeState.projects.find(p => p.id === pId);
+    const directTowers = storeState.towers.filter(t => t.projectId === pId).map(t => ({
+      ...t,
+      displayLabel: currProj?.isSubProject ? `${t.towerName} (${t.towerType}) [🏙️ ${currProj.name}]` : `${t.towerName} (${t.towerType})`
+    }));
+
+    const childSubProjects = storeState.projects.filter(p => p.parentProjectId === pId);
+    const childTowers = childSubProjects.flatMap(sp => 
+      storeState.towers.filter(t => t.projectId === sp.id).map(t => ({
+        ...t,
+        displayLabel: `${t.towerName} (${t.towerType}) [🏙️ ${sp.name}]`
+      }))
+    );
+
+    return [...directTowers, ...childTowers];
+  };
+
+  const pkgAvailableTowers = useMemo(() => getAvailableTowersWithSubProjects(pkgProjectId), [pkgProjectId, storeState.towers, storeState.projects]);
+  const laAvailableTowers = useMemo(() => getAvailableTowersWithSubProjects(laProjectId), [laProjectId, storeState.towers, storeState.projects]);
+  const liaisonAvailableTowers = useMemo(() => getAvailableTowersWithSubProjects(liaisonProjectId), [liaisonProjectId, storeState.towers, storeState.projects]);
 
   if (!isOpen) return null;
 
@@ -105,10 +124,12 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
       return;
     }
 
+    const selTower = storeState.towers.find(t => t.id === pkgTowerId);
+    const effectiveProjectId = selTower ? selTower.projectId : pkgProjectId;
     const selConsultant = storeState.consultants.find(c => c.id === pkgConsultantId);
 
     DesignMasterStore.recordPackageStatus(
-      pkgProjectId,
+      effectiveProjectId,
       pkgTowerId,
       pkgId,
       pkgStatus,
@@ -132,8 +153,11 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
       return;
     }
 
+    const selTower = storeState.towers.find(t => t.id === laTowerId);
+    const effectiveProjectId = selTower ? selTower.projectId : laProjectId;
+
     DesignMasterStore.addLookAhead({
-      projectId: laProjectId,
+      projectId: effectiveProjectId,
       towerId: laTowerId,
       deliverableDescription: laDescription.trim(),
       timeframe: laTimeframe,
@@ -153,8 +177,11 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
       return;
     }
 
+    const selTower = storeState.towers.find(t => t.id === liaisonTowerId);
+    const effectiveProjectId = selTower ? selTower.projectId : liaisonProjectId;
+
     DesignMasterStore.recordStatutoryClearance(
-      liaisonProjectId,
+      effectiveProjectId,
       liaisonTowerId,
       liaisonAuthorityId,
       liaisonStatus,
@@ -243,22 +270,40 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                 >
                   <option value="">Select Project</option>
                   {accessibleProjects.map((p: ProjectMaster) => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
+                    <option key={p.id} value={p.id}>{p.isSubProject ? `🏙️ ${p.name} (Sub-Project)` : `🏢 ${p.name}`}</option>
                   ))}
                 </select>
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-foreground">Tower / Wing *</label>
+                <div className="flex items-center justify-between">
+                  <label className="font-bold text-foreground">Tower / Wing *</label>
+                  {pkgProjectId && pkgAvailableTowers.length === 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newTwr = DesignMasterStore.addTower({
+                          projectId: pkgProjectId,
+                          towerName: "Wing A",
+                          towerType: "Sale"
+                        });
+                        setPkgTowerId(newTwr.id);
+                      }}
+                      className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold hover:underline cursor-pointer"
+                    >
+                      + Quick Add Wing A
+                    </button>
+                  )}
+                </div>
                 <select
                   required
                   value={pkgTowerId}
                   onChange={e => setPkgTowerId(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
                 >
-                  <option value="">Select Wing</option>
+                  <option value="">{pkgAvailableTowers.length === 0 ? "No Wings (Click + Quick Add above)" : "Select Wing"}</option>
                   {pkgAvailableTowers.map(t => (
-                    <option key={t.id} value={t.id}>{t.towerName}</option>
+                    <option key={t.id} value={t.id}>{t.displayLabel}</option>
                   ))}
                 </select>
               </div>
@@ -387,22 +432,40 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                 >
                   <option value="">Select Project</option>
                   {accessibleProjects.map((p: ProjectMaster) => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
+                    <option key={p.id} value={p.id}>{p.isSubProject ? `🏙️ ${p.name} (Sub-Project)` : `🏢 ${p.name}`}</option>
                   ))}
                 </select>
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-foreground">Tower / Wing *</label>
+                <div className="flex items-center justify-between">
+                  <label className="font-bold text-foreground">Tower / Wing *</label>
+                  {laProjectId && laAvailableTowers.length === 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newTwr = DesignMasterStore.addTower({
+                          projectId: laProjectId,
+                          towerName: "Wing A",
+                          towerType: "Sale"
+                        });
+                        setLaTowerId(newTwr.id);
+                      }}
+                      className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold hover:underline cursor-pointer"
+                    >
+                      + Quick Add Wing A
+                    </button>
+                  )}
+                </div>
                 <select
                   required
                   value={laTowerId}
                   onChange={e => setLaTowerId(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
                 >
-                  <option value="">Select Wing</option>
+                  <option value="">{laAvailableTowers.length === 0 ? "No Wings (Click + Quick Add above)" : "Select Wing"}</option>
                   {laAvailableTowers.map(t => (
-                    <option key={t.id} value={t.id}>{t.towerName}</option>
+                    <option key={t.id} value={t.id}>{t.displayLabel}</option>
                   ))}
                 </select>
               </div>
@@ -474,22 +537,40 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                 >
                   <option value="">Select Project</option>
                   {accessibleProjects.map((p: ProjectMaster) => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
+                    <option key={p.id} value={p.id}>{p.isSubProject ? `🏙️ ${p.name} (Sub-Project)` : `🏢 ${p.name}`}</option>
                   ))}
                 </select>
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-foreground">Tower / Wing *</label>
+                <div className="flex items-center justify-between">
+                  <label className="font-bold text-foreground">Tower / Wing *</label>
+                  {liaisonProjectId && liaisonAvailableTowers.length === 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newTwr = DesignMasterStore.addTower({
+                          projectId: liaisonProjectId,
+                          towerName: "Wing A",
+                          towerType: "Sale"
+                        });
+                        setLiaisonTowerId(newTwr.id);
+                      }}
+                      className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold hover:underline cursor-pointer"
+                    >
+                      + Quick Add Wing A
+                    </button>
+                  )}
+                </div>
                 <select
                   required
                   value={liaisonTowerId}
                   onChange={e => setLiaisonTowerId(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
                 >
-                  <option value="">Select Wing</option>
+                  <option value="">{liaisonAvailableTowers.length === 0 ? "No Wings (Click + Quick Add above)" : "Select Wing"}</option>
                   {liaisonAvailableTowers.map(t => (
-                    <option key={t.id} value={t.id}>{t.towerName}</option>
+                    <option key={t.id} value={t.id}>{t.displayLabel}</option>
                   ))}
                 </select>
               </div>

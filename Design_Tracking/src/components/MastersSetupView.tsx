@@ -13,6 +13,7 @@ import {
 } from "../types/masterTypes";
 import { 
   Building2, 
+  Building,
   Layers, 
   ShieldCheck, 
   Plus, 
@@ -22,10 +23,14 @@ import {
   Upload, 
   Sparkles, 
   CheckCircle2, 
+  Check,
   X,
   SlidersHorizontal,
   Settings,
-  AlertTriangle
+  AlertTriangle,
+  Edit2,
+  Search,
+  Tag
 } from "lucide-react";
 import { DesignRbacGovernance } from "./DesignRbacGovernance";
 
@@ -46,7 +51,6 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
     }
   }, [initialSubTab]);
 
-  // Subscribe to real-time store changes
   useEffect(() => {
     const unsubscribe = DesignMasterStore.subscribe(() => {
       setStoreState({ ...DesignMasterStore.getState() });
@@ -73,8 +77,41 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
   const [newProjectLeadManagerEmail, setNewProjectLeadManagerEmail] = useState("");
   const [newProjectDescription, setNewProjectDescription] = useState("");
   const [selectedTaggedConsultants, setSelectedTaggedConsultants] = useState<string[]>([]);
+  const [selectedTaggedCategories, setSelectedTaggedCategories] = useState<string[]>([]);
   const [projectConsultantSearch, setProjectConsultantSearch] = useState("");
   const [customProjectConsultantInput, setCustomProjectConsultantInput] = useState("");
+
+  // Sub-Project & Scope Hierarchy State
+  const [isSubProject, setIsSubProject] = useState(false);
+  const [parentProjectId, setParentProjectId] = useState("");
+  const [subProjectScopeLevel, setSubProjectScopeLevel] = useState<"PROJECT" | "SUBPROJECT">("PROJECT");
+
+  // Form states: New / Edit Tower (Sub-Project Wing)
+  const [isNewTowerModalOpen, setIsNewTowerModalOpen] = useState(false);
+  const [isEditTowerModalOpen, setIsEditTowerModalOpen] = useState(false);
+  const [editingTower, setEditingTower] = useState<TowerMaster | null>(null);
+  const [selectedProjectIdForTower, setSelectedProjectIdForTower] = useState("");
+  const [newTowerName, setNewTowerName] = useState("");
+  const [newTowerType, setNewTowerType] = useState<TowerMaster["towerType"]>("Sale");
+  const [newTowerTaggedConsultants, setNewTowerTaggedConsultants] = useState<string[]>([]);
+  const [newTowerTaggedCategories, setNewTowerTaggedCategories] = useState<string[]>([]);
+  const [towerConsultantSearch, setTowerConsultantSearch] = useState("");
+
+  // Form states: Work Package (Add & Edit)
+  const [isNewPackageModalOpen, setIsNewPackageModalOpen] = useState(false);
+  const [isEditPackageModalOpen, setIsEditPackageModalOpen] = useState(false);
+  const [editingPackage, setEditingPackage] = useState<WorkPackageMaster | null>(null);
+  const [newPackageName, setNewPackageName] = useState("");
+  const [newPackageCode, setNewPackageCode] = useState("");
+  const [newPackageDiscipline, setNewPackageDiscipline] = useState("Civil & RCC");
+  const [newPackageDescription, setNewPackageDescription] = useState("");
+  const [packageSearchQuery, setPackageSearchQuery] = useState("");
+  const [selectedDisciplineFilter, setSelectedDisciplineFilter] = useState("ALL");
+
+  // Form states: New Authority
+  const [isNewAuthorityModalOpen, setIsNewAuthorityModalOpen] = useState(false);
+  const [newAuthorityName, setNewAuthorityName] = useState("");
+  const [newAuthorityScope, setNewAuthorityScope] = useState("");
 
   const PROJECT_TYPE_OPTIONS = [
     "Residential High-Rise",
@@ -95,28 +132,6 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
     "Finishing & Handover",
     "Completed"
   ];
-
-  // Form states: New Tower
-  const [isNewTowerModalOpen, setIsNewTowerModalOpen] = useState(false);
-  const [selectedProjectIdForTower, setSelectedProjectIdForTower] = useState("");
-  const [newTowerName, setNewTowerName] = useState("");
-  const [newTowerType, setNewTowerType] = useState<TowerMaster["towerType"]>("Sale");
-
-  // Form states: Work Package (Add & Edit)
-  const [isNewPackageModalOpen, setIsNewPackageModalOpen] = useState(false);
-  const [isEditPackageModalOpen, setIsEditPackageModalOpen] = useState(false);
-  const [editingPackage, setEditingPackage] = useState<WorkPackageMaster | null>(null);
-  const [newPackageName, setNewPackageName] = useState("");
-  const [newPackageCode, setNewPackageCode] = useState("");
-  const [newPackageDiscipline, setNewPackageDiscipline] = useState("Civil & RCC");
-  const [newPackageDescription, setNewPackageDescription] = useState("");
-  const [packageSearchQuery, setPackageSearchQuery] = useState("");
-  const [selectedDisciplineFilter, setSelectedDisciplineFilter] = useState("ALL");
-
-  // Form states: New Authority
-  const [isNewAuthorityModalOpen, setIsNewAuthorityModalOpen] = useState(false);
-  const [newAuthorityName, setNewAuthorityName] = useState("");
-  const [newAuthorityScope, setNewAuthorityScope] = useState("");
 
   const DISCIPLINE_OPTIONS = [
     "Civil & RCC",
@@ -147,9 +162,14 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
     setNewProjectLeadManager("");
     setNewProjectLeadManagerEmail("");
     setNewProjectDescription("");
-    setSelectedTaggedConsultants([]);
+    // Default ALL consultants and ALL categories allowed/selected (user can remove non-applicable ones)
+    setSelectedTaggedConsultants(storeState.consultants.map(c => c.name));
+    setSelectedTaggedCategories([...DISCIPLINE_OPTIONS]);
     setProjectConsultantSearch("");
     setCustomProjectConsultantInput("");
+    setIsSubProject(false);
+    setParentProjectId("");
+    setSubProjectScopeLevel("PROJECT");
     setIsNewProjectModalOpen(true);
   };
 
@@ -168,15 +188,37 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
     setNewProjectLeadManager(proj.leadManager || "");
     setNewProjectLeadManagerEmail(proj.leadManagerEmail || "");
     setNewProjectDescription(proj.description || "");
-    setSelectedTaggedConsultants(proj.taggedConsultants || []);
+    setSelectedTaggedConsultants(proj.taggedConsultants && proj.taggedConsultants.length > 0 ? proj.taggedConsultants : storeState.consultants.map(c => c.name));
+    setSelectedTaggedCategories(proj.subProjectCategories?.default || [...DISCIPLINE_OPTIONS]);
     setProjectConsultantSearch("");
     setCustomProjectConsultantInput("");
+    setIsSubProject(!!proj.isSubProject);
+    setParentProjectId(proj.parentProjectId || "");
+    setSubProjectScopeLevel(proj.isSubProject ? "SUBPROJECT" : "PROJECT");
     setIsEditProjectModalOpen(true);
   };
 
   const handleToggleProjectConsultant = (consName: string) => {
     setSelectedTaggedConsultants(prev => 
       prev.includes(consName) ? prev.filter(c => c !== consName) : [...prev, consName]
+    );
+  };
+
+  const handleToggleProjectCategory = (catName: string) => {
+    setSelectedTaggedCategories(prev => 
+      prev.includes(catName) ? prev.filter(c => c !== catName) : [...prev, catName]
+    );
+  };
+
+  const handleToggleTowerConsultant = (consName: string) => {
+    setNewTowerTaggedConsultants(prev =>
+      prev.includes(consName) ? prev.filter(c => c !== consName) : [...prev, consName]
+    );
+  };
+
+  const handleToggleTowerCategory = (catName: string) => {
+    setNewTowerTaggedCategories(prev =>
+      prev.includes(catName) ? prev.filter(c => c !== catName) : [...prev, catName]
     );
   };
 
@@ -195,6 +237,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
     e.preventDefault();
     if (!newProjectName.trim()) return;
 
+    const parentProj = parentProjectId ? storeState.projects.find(p => p.id === parentProjectId) : null;
     const code = newProjectCode.trim() || `CDK-${newProjectName.slice(0, 3).toUpperCase()}`;
     DesignMasterStore.addProject({
       name: newProjectName.trim(),
@@ -210,7 +253,11 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
       leadManager: newProjectLeadManager.trim() || undefined,
       leadManagerEmail: newProjectLeadManagerEmail.trim() || undefined,
       description: newProjectDescription.trim() || undefined,
-      taggedConsultants: selectedTaggedConsultants
+      taggedConsultants: selectedTaggedConsultants,
+      isSubProject,
+      parentProjectId: isSubProject ? parentProjectId : undefined,
+      parentProjectName: isSubProject && parentProj ? parentProj.name : undefined,
+      subProjectCategories: { default: selectedTaggedCategories }
     });
 
     setIsNewProjectModalOpen(false);
@@ -220,6 +267,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
     e.preventDefault();
     if (!editingProject || !newProjectName.trim()) return;
 
+    const parentProj = parentProjectId ? storeState.projects.find(p => p.id === parentProjectId) : null;
     DesignMasterStore.updateProject(editingProject.id, {
       name: newProjectName.trim(),
       code: newProjectCode.trim() || editingProject.code,
@@ -234,11 +282,37 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
       leadManager: newProjectLeadManager.trim() || undefined,
       leadManagerEmail: newProjectLeadManagerEmail.trim() || undefined,
       description: newProjectDescription.trim() || undefined,
-      taggedConsultants: selectedTaggedConsultants
+      taggedConsultants: selectedTaggedConsultants,
+      isSubProject,
+      parentProjectId: isSubProject ? parentProjectId : undefined,
+      parentProjectName: isSubProject && parentProj ? parentProj.name : undefined,
+      subProjectCategories: { default: selectedTaggedCategories }
     });
 
     setIsEditProjectModalOpen(false);
     setEditingProject(null);
+  };
+
+  const handleOpenAddTower = (projectId: string) => {
+    setSelectedProjectIdForTower(projectId);
+    setEditingTower(null);
+    setNewTowerName("");
+    setNewTowerType("Sale");
+    setNewTowerTaggedConsultants(storeState.consultants.map(c => c.name));
+    setNewTowerTaggedCategories([...DISCIPLINE_OPTIONS]);
+    setTowerConsultantSearch("");
+    setIsNewTowerModalOpen(true);
+  };
+
+  const handleOpenEditTower = (twr: TowerMaster) => {
+    setEditingTower(twr);
+    setSelectedProjectIdForTower(twr.projectId);
+    setNewTowerName(twr.towerName);
+    setNewTowerType(twr.towerType);
+    setNewTowerTaggedConsultants(twr.taggedConsultants && twr.taggedConsultants.length > 0 ? twr.taggedConsultants : storeState.consultants.map(c => c.name));
+    setNewTowerTaggedCategories(twr.taggedCategories && twr.taggedCategories.length > 0 ? twr.taggedCategories : [...DISCIPLINE_OPTIONS]);
+    setTowerConsultantSearch("");
+    setIsEditTowerModalOpen(true);
   };
 
   const handleCreateTower = (e: React.FormEvent) => {
@@ -248,11 +322,28 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
     DesignMasterStore.addTower({
       projectId: selectedProjectIdForTower,
       towerName: newTowerName.trim(),
-      towerType: newTowerType
+      towerType: newTowerType,
+      taggedConsultants: newTowerTaggedConsultants,
+      taggedCategories: newTowerTaggedCategories
     });
 
     setNewTowerName("");
     setIsNewTowerModalOpen(false);
+  };
+
+  const handleUpdateTower = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTower || !newTowerName.trim()) return;
+
+    DesignMasterStore.updateTower(editingTower.id, {
+      towerName: newTowerName.trim(),
+      towerType: newTowerType,
+      taggedConsultants: newTowerTaggedConsultants,
+      taggedCategories: newTowerTaggedCategories
+    });
+
+    setEditingTower(null);
+    setIsEditTowerModalOpen(false);
   };
 
   const handleOpenAddPackage = () => {
@@ -451,6 +542,16 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                             <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 whitespace-nowrap">
                               {proj.code}
                             </span>
+                            {proj.isSubProject ? (
+                              <span className="text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-500/15 px-2 py-0.5 rounded border border-amber-500/30 whitespace-nowrap flex items-center gap-1">
+                                <Building className="h-2.5 w-2.5" />
+                                <span>Sub-Project {proj.parentProjectName ? `(Parent: ${proj.parentProjectName})` : ""}</span>
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 bg-slate-500/10 px-2 py-0.5 rounded border border-slate-500/20 whitespace-nowrap">
+                                Main Project
+                              </span>
+                            )}
                             {proj.projectType && (
                               <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20 whitespace-nowrap">
                                 {proj.projectType}
@@ -532,7 +633,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                         )}
                       </div>
 
-                      {/* 🤝 Tagged Consultants Section */}
+                      {/* 🤝 Tagged Consultants Section (Project-Level) */}
                       <div className="space-y-1.5 pt-1 border-t border-border">
                         <span className="text-[11px] font-bold text-muted-foreground flex items-center justify-between">
                           <span className="flex items-center gap-1">
@@ -571,23 +672,44 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                         </div>
                       </div>
 
-                      {/* Towers / Wings list */}
+                      {/* Sub-Project Wings / Towers list */}
                       <div className="space-y-1.5 pt-1 border-t border-border">
-                        <span className="text-[11px] font-bold text-muted-foreground block">
-                          Wings / Towers ({projTowers.length}):
+                        <span className="text-[11px] font-bold text-muted-foreground flex items-center justify-between">
+                          <span>Sub-Projects / Tower Wings ({projTowers.length}):</span>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenAddTower(proj.id)}
+                            className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer font-semibold"
+                          >
+                            + Add Sub-Project Wing
+                          </button>
                         </span>
                         <div className="flex flex-wrap gap-1.5">
                           {projTowers.map(twr => (
                             <span 
                               key={twr.id}
-                              className="text-[10px] font-bold px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-foreground border border-border flex items-center gap-1.5 group whitespace-nowrap"
+                              className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-foreground border border-border flex items-center gap-1.5 group whitespace-nowrap shadow-2xs"
                             >
                               <span>{twr.towerName}</span>
-                              <span className="text-[9px] text-muted-foreground">({twr.towerType})</span>
+                              <span className="text-[9px] text-muted-foreground font-normal">({twr.towerType})</span>
+                              {twr.taggedConsultants && twr.taggedConsultants.length > 0 && (
+                                <span className="text-[9px] px-1 py-0.2 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 font-mono">
+                                  {twr.taggedConsultants.length} cons
+                                </span>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEditTower(twr)}
+                                className="text-muted-foreground hover:text-purple-600 dark:hover:text-purple-400 ml-0.5 cursor-pointer p-0.5"
+                                title="Edit wing consultants & categories"
+                              >
+                                <Edit2 className="h-2.5 w-2.5" />
+                              </button>
                               <button
                                 type="button"
                                 onClick={() => DesignMasterStore.deleteTower(twr.id)}
-                                className="text-muted-foreground hover:text-rose-500 ml-0.5 cursor-pointer"
+                                className="text-muted-foreground hover:text-rose-500 ml-0.5 cursor-pointer p-0.5"
+                                title="Delete wing"
                               >
                                 <X className="h-2.5 w-2.5" />
                               </button>
@@ -600,14 +722,11 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                     <div className="pt-3 border-t border-border flex items-center justify-between">
                       <button
                         type="button"
-                        onClick={() => {
-                          setSelectedProjectIdForTower(proj.id);
-                          setIsNewTowerModalOpen(true);
-                        }}
+                        onClick={() => handleOpenAddTower(proj.id)}
                         className="text-xs text-emerald-600 dark:text-emerald-400 font-bold inline-flex items-center gap-1 hover:underline cursor-pointer whitespace-nowrap"
                       >
                         <Plus className="h-3 w-3" />
-                        <span>Add Wing / Tower</span>
+                        <span>Add Wing / Sub-Project</span>
                       </button>
 
                       <button
@@ -993,15 +1112,90 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
             </div>
 
             <form onSubmit={handleCreateProject} className="space-y-3.5 text-xs">
+              {/* Project Hierarchy: Main vs Sub-Project */}
+              <div className="p-3 rounded-xl border border-border bg-muted/20 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <label className="font-bold text-foreground flex items-center gap-1.5 text-xs">
+                    <Building className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>Project Hierarchy & Governance Level</span>
+                  </label>
+                  <span className="text-[11px] font-semibold text-purple-600 dark:text-purple-400">
+                    {isSubProject ? "🏙️ Sub-Project Level Governance" : "🏢 Main Project Level Governance"}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { setIsSubProject(false); setParentProjectId(""); setSubProjectScopeLevel("PROJECT"); }}
+                    className={`px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer border text-left flex items-center gap-2 transition-all ${
+                      !isSubProject
+                        ? "bg-emerald-600 text-white border-emerald-600 shadow-2xs font-bold"
+                        : "bg-surface text-muted-foreground border-border hover:text-foreground"
+                    }`}
+                  >
+                    <Building2 className="h-4 w-4 shrink-0" />
+                    <div>
+                      <div className="font-bold text-xs">Main Master Project</div>
+                      <div className="text-[10px] opacity-80 font-normal">Standalone master development</div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setIsSubProject(true); setSubProjectScopeLevel("SUBPROJECT"); }}
+                    className={`px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer border text-left flex items-center gap-2 transition-all ${
+                      isSubProject
+                        ? "bg-purple-600 text-white border-purple-600 shadow-2xs font-bold"
+                        : "bg-surface text-muted-foreground border-border hover:text-foreground"
+                    }`}
+                  >
+                    <Layers className="h-4 w-4 shrink-0" />
+                    <div>
+                      <div className="font-bold text-xs">Sub-Project / Phase</div>
+                      <div className="text-[10px] opacity-80 font-normal">Tied to Parent Master Development</div>
+                    </div>
+                  </button>
+                </div>
+
+                {isSubProject && (
+                  <div className="space-y-1.5 pt-1.5 border-t border-border animate-in fade-in duration-150">
+                    <label className="font-bold text-foreground flex items-center justify-between text-[11px]">
+                      <span>Select Parent Development Project *</span>
+                      <span className="text-purple-600 dark:text-purple-400 font-semibold text-[10px]">Sub-Project Level Governance</span>
+                    </label>
+                    <select
+                      value={parentProjectId}
+                      onChange={e => setParentProjectId(e.target.value)}
+                      required={isSubProject}
+                      className="w-full px-3 py-2 rounded-xl border border-purple-500/40 bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-purple-500 cursor-pointer"
+                    >
+                      <option value="">-- Choose Parent Master Project --</option>
+                      {storeState.projects
+                        .filter(p => !p.isSubProject)
+                        .map(p => (
+                          <option key={p.id} value={p.id}>
+                            {p.name} ({p.code})
+                          </option>
+                        ))}
+                    </select>
+                    <p className="text-[10px] text-muted-foreground">
+                      All consultants and their discipline categories are loaded and defaulted at Sub-Project level below.
+                    </p>
+                  </div>
+                )}
+              </div>
+
               {/* Row 1: Name & Code */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="sm:col-span-2 space-y-1">
-                  <label className="font-bold text-foreground">Project Name *</label>
+                  <label className="font-bold text-foreground">{isSubProject ? "Sub-Project Name *" : "Project Name *"}</label>
                   <input
                     type="text"
                     required
                     value={newProjectName}
                     onChange={e => setNewProjectName(e.target.value)}
+                    placeholder={isSubProject ? "e.g., Chandak Trees - Phase 2 (Tower C & D)" : "e.g., Chandak Trees"}
                     className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
                   />
                 </div>
@@ -1011,6 +1205,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                     type="text"
                     value={newProjectCode}
                     onChange={e => setNewProjectCode(e.target.value)}
+                    placeholder="e.g., CDK-TRS"
                     className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
                   />
                 </div>
@@ -1050,6 +1245,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                     type="text"
                     value={newProjectPlotArea}
                     onChange={e => setNewProjectPlotArea(e.target.value)}
+                    placeholder="e.g., 4.5 Acres"
                     className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                   />
                 </div>
@@ -1059,6 +1255,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                     type="text"
                     value={newProjectBUA}
                     onChange={e => setNewProjectBUA(e.target.value)}
+                    placeholder="e.g., 850,000 sq.ft."
                     className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                   />
                 </div>
@@ -1072,6 +1269,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                     type="text"
                     value={newProjectBudget}
                     onChange={e => setNewProjectBudget(e.target.value)}
+                    placeholder="e.g., ₹240 Cr"
                     className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                   />
                 </div>
@@ -1081,6 +1279,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                     type="text"
                     value={newProjectRera}
                     onChange={e => setNewProjectRera(e.target.value)}
+                    placeholder="P51800000000"
                     className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
                   />
                 </div>
@@ -1140,27 +1339,28 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                   rows={2}
                   value={newProjectDescription}
                   onChange={e => setNewProjectDescription(e.target.value)}
+                  placeholder="Architectural summary and scope details..."
                   className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                 />
               </div>
 
-              {/* 🤝 Row 8: TAGGED CONSULTANTS (Multi-Selection) */}
+              {/* 🤝 Row 8: TAGGED CONSULTANTS (Default All Allowed • Click to Untick) */}
               <div className="space-y-2 pt-2 border-t border-border">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
                   <label className="font-bold text-foreground flex items-center gap-1.5 text-xs">
                     <ShieldCheck className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                    <span>TAGGED CONSULTANTS (Assign Consultant Partners to Project) *</span>
+                    <span>TAGGED CONSULTANTS (Default All Allowed • Click to Untick / Remove) *</span>
                   </label>
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] font-semibold text-purple-600 dark:text-purple-400">
-                      {selectedTaggedConsultants.length} {selectedTaggedConsultants.length === 1 ? "consultant" : "consultants"} tagged
+                      {selectedTaggedConsultants.length} of {storeState.consultants.length} tagged
                     </span>
                     {storeState.consultants.length > 0 && (
                       <div className="flex items-center gap-1.5 text-[11px]">
                         <button
                           type="button"
                           onClick={() => setSelectedTaggedConsultants(storeState.consultants.map(c => c.name))}
-                          className="text-purple-600 hover:underline cursor-pointer font-medium"
+                          className="px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 font-bold cursor-pointer transition-colors"
                         >
                           Select All
                         </button>
@@ -1168,9 +1368,9 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                         <button
                           type="button"
                           onClick={() => setSelectedTaggedConsultants([])}
-                          className="text-muted-foreground hover:text-rose-500 cursor-pointer"
+                          className="px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 font-medium cursor-pointer transition-colors"
                         >
-                          Clear
+                          Clear All
                         </button>
                       </div>
                     )}
@@ -1183,13 +1383,14 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                       type="text"
                       value={projectConsultantSearch}
                       onChange={e => setProjectConsultantSearch(e.target.value)}
+                      placeholder="Filter consultants list..."
                       aria-label="Filter consultants list"
                       className="w-full px-3 py-1 text-xs rounded-lg border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                     />
                   </div>
                 )}
 
-                {/* Available Consultants List or Empty State */}
+                {/* Available Consultants List */}
                 {storeState.consultants.length === 0 ? (
                   <div className="p-3 rounded-xl border border-dashed border-border bg-muted/20 text-xs space-y-1">
                     <p className="text-muted-foreground font-medium">
@@ -1216,7 +1417,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                                 : "bg-surface text-muted-foreground border-border hover:text-foreground hover:border-purple-500/40"
                             }`}
                           >
-                            {isSelected ? <CheckCircle2 className="h-3 w-3" /> : <Plus className="h-3 w-3 text-muted-foreground" />}
+                            {isSelected ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5 text-muted-foreground" />}
                             <span>{cons.name}</span>
                             <span className={`text-[9px] px-1 py-0.2 rounded ${isSelected ? "bg-white/20 text-white" : "bg-muted text-muted-foreground"}`}>
                               {cons.category}
@@ -1231,7 +1432,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                 {selectedTaggedConsultants.length > 0 && (
                   <div className="space-y-1 pt-1">
                     <span className="text-[11px] font-bold text-muted-foreground block">
-                      Currently Assigned ({selectedTaggedConsultants.length}):
+                      Currently Assigned ({selectedTaggedConsultants.length}) — click 'x' to untick:
                     </span>
                     <div className="flex flex-wrap gap-1.5">
                       {selectedTaggedConsultants.map(tag => (
@@ -1261,6 +1462,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                     value={customProjectConsultantInput}
                     onChange={e => setCustomProjectConsultantInput(e.target.value)}
                     onKeyDown={handleAddCustomProjectConsultant}
+                    placeholder="Type custom consultant name and press Enter / Add Tag..."
                     aria-label="Add custom consultant tag"
                     className="flex-1 px-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                   />
@@ -1271,6 +1473,59 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                   >
                     Add Tag
                   </button>
+                </div>
+              </div>
+
+              {/* 🧩 Row 9: DISCIPLINE CATEGORIES (All Selected by Default • Click to Untick / Remove) */}
+              <div className="space-y-2 pt-2 border-t border-border">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                  <label className="font-bold text-foreground flex items-center gap-1.5 text-xs">
+                    <Layers className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>DISCIPLINE CATEGORIES (All Pre-Selected by Default • Click to Untick) *</span>
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                      {selectedTaggedCategories.length} of {DISCIPLINE_OPTIONS.length} active
+                    </span>
+                    <div className="flex items-center gap-1.5 text-[11px]">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTaggedCategories([...DISCIPLINE_OPTIONS])}
+                        className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 font-bold cursor-pointer transition-colors"
+                      >
+                        Select All
+                      </button>
+                      <span>•</span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTaggedCategories([])}
+                        className="px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 font-medium cursor-pointer transition-colors"
+                      >
+                        Clear All
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5 p-2.5 rounded-xl border border-border bg-muted/20">
+                  {DISCIPLINE_OPTIONS.map(disc => {
+                    const isSelected = selectedTaggedCategories.includes(disc);
+                    return (
+                      <button
+                        key={disc}
+                        type="button"
+                        onClick={() => handleToggleProjectCategory(disc)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-all border flex items-center gap-1.5 ${
+                          isSelected
+                            ? "bg-emerald-600 text-white border-emerald-600 shadow-2xs font-bold"
+                            : "bg-surface text-muted-foreground border-border hover:text-foreground hover:border-emerald-500/40"
+                        }`}
+                      >
+                        {isSelected ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5 text-muted-foreground" />}
+                        <span>{disc}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -1308,10 +1563,81 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
             </div>
 
             <form onSubmit={handleUpdateProject} className="space-y-3.5 text-xs">
+              {/* Project Hierarchy: Main vs Sub-Project */}
+              <div className="p-3 rounded-xl border border-border bg-muted/20 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <label className="font-bold text-foreground flex items-center gap-1.5 text-xs">
+                    <Building className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>Project Hierarchy & Governance Level</span>
+                  </label>
+                  <span className="text-[11px] font-semibold text-purple-600 dark:text-purple-400">
+                    {isSubProject ? "🏙️ Sub-Project Level Governance" : "🏢 Main Project Level Governance"}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { setIsSubProject(false); setParentProjectId(""); setSubProjectScopeLevel("PROJECT"); }}
+                    className={`px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer border text-left flex items-center gap-2 transition-all ${
+                      !isSubProject
+                        ? "bg-emerald-600 text-white border-emerald-600 shadow-2xs font-bold"
+                        : "bg-surface text-muted-foreground border-border hover:text-foreground"
+                    }`}
+                  >
+                    <Building2 className="h-4 w-4 shrink-0" />
+                    <div>
+                      <div className="font-bold text-xs">Main Master Project</div>
+                      <div className="text-[10px] opacity-80 font-normal">Standalone master development</div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setIsSubProject(true); setSubProjectScopeLevel("SUBPROJECT"); }}
+                    className={`px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer border text-left flex items-center gap-2 transition-all ${
+                      isSubProject
+                        ? "bg-purple-600 text-white border-purple-600 shadow-2xs font-bold"
+                        : "bg-surface text-muted-foreground border-border hover:text-foreground"
+                    }`}
+                  >
+                    <Layers className="h-4 w-4 shrink-0" />
+                    <div>
+                      <div className="font-bold text-xs">Sub-Project / Phase</div>
+                      <div className="text-[10px] opacity-80 font-normal">Tied to Parent Master Development</div>
+                    </div>
+                  </button>
+                </div>
+
+                {isSubProject && (
+                  <div className="space-y-1.5 pt-1.5 border-t border-border animate-in fade-in duration-150">
+                    <label className="font-bold text-foreground flex items-center justify-between text-[11px]">
+                      <span>Select Parent Development Project *</span>
+                      <span className="text-purple-600 dark:text-purple-400 font-semibold text-[10px]">Sub-Project Level Governance</span>
+                    </label>
+                    <select
+                      value={parentProjectId}
+                      onChange={e => setParentProjectId(e.target.value)}
+                      required={isSubProject}
+                      className="w-full px-3 py-2 rounded-xl border border-purple-500/40 bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-purple-500 cursor-pointer"
+                    >
+                      <option value="">-- Choose Parent Master Project --</option>
+                      {storeState.projects
+                        .filter(p => !p.isSubProject && p.id !== editingProject.id)
+                        .map(p => (
+                          <option key={p.id} value={p.id}>
+                            {p.name} ({p.code})
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+
               {/* Row 1: Name & Code */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="sm:col-span-2 space-y-1">
-                  <label className="font-bold text-foreground">Project Name *</label>
+                  <label className="font-bold text-foreground">{isSubProject ? "Sub-Project Name *" : "Project Name *"}</label>
                   <input
                     type="text"
                     required
@@ -1459,23 +1785,23 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                 />
               </div>
 
-              {/* 🤝 Row 8: TAGGED CONSULTANTS (Multi-Selection) */}
+              {/* 🤝 Row 8: TAGGED CONSULTANTS (Multi-Selection with Select All / Clear All & Untick) */}
               <div className="space-y-2 pt-2 border-t border-border">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
                   <label className="font-bold text-foreground flex items-center gap-1.5 text-xs">
                     <ShieldCheck className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                    <span>TAGGED CONSULTANTS (Assign Consultant Partners to Project) *</span>
+                    <span>TAGGED CONSULTANTS (Default All Allowed • Click to Untick / Remove) *</span>
                   </label>
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] font-semibold text-purple-600 dark:text-purple-400">
-                      {selectedTaggedConsultants.length} {selectedTaggedConsultants.length === 1 ? "consultant" : "consultants"} tagged
+                      {selectedTaggedConsultants.length} of {storeState.consultants.length} tagged
                     </span>
                     {storeState.consultants.length > 0 && (
                       <div className="flex items-center gap-1.5 text-[11px]">
                         <button
                           type="button"
                           onClick={() => setSelectedTaggedConsultants(storeState.consultants.map(c => c.name))}
-                          className="text-purple-600 hover:underline cursor-pointer font-medium"
+                          className="px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 font-bold cursor-pointer transition-colors"
                         >
                           Select All
                         </button>
@@ -1483,9 +1809,9 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                         <button
                           type="button"
                           onClick={() => setSelectedTaggedConsultants([])}
-                          className="text-muted-foreground hover:text-rose-500 cursor-pointer"
+                          className="px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 font-medium cursor-pointer transition-colors"
                         >
-                          Clear
+                          Clear All
                         </button>
                       </div>
                     )}
@@ -1498,13 +1824,14 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                       type="text"
                       value={projectConsultantSearch}
                       onChange={e => setProjectConsultantSearch(e.target.value)}
+                      placeholder="Filter consultants list..."
                       aria-label="Filter consultants list"
                       className="w-full px-3 py-1 text-xs rounded-lg border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                     />
                   </div>
                 )}
 
-                {/* Available Consultants List or Empty State */}
+                {/* Available Consultants List */}
                 {storeState.consultants.length === 0 ? (
                   <div className="p-3 rounded-xl border border-dashed border-border bg-muted/20 text-xs space-y-1">
                     <p className="text-muted-foreground font-medium">
@@ -1531,7 +1858,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                                 : "bg-surface text-muted-foreground border-border hover:text-foreground hover:border-purple-500/40"
                             }`}
                           >
-                            {isSelected ? <CheckCircle2 className="h-3 w-3" /> : <Plus className="h-3 w-3 text-muted-foreground" />}
+                            {isSelected ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5 text-muted-foreground" />}
                             <span>{cons.name}</span>
                             <span className={`text-[9px] px-1 py-0.2 rounded ${isSelected ? "bg-white/20 text-white" : "bg-muted text-muted-foreground"}`}>
                               {cons.category}
@@ -1546,7 +1873,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                 {selectedTaggedConsultants.length > 0 && (
                   <div className="space-y-1 pt-1">
                     <span className="text-[11px] font-bold text-muted-foreground block">
-                      Currently Assigned ({selectedTaggedConsultants.length}):
+                      Currently Assigned ({selectedTaggedConsultants.length}) — click 'x' to untick:
                     </span>
                     <div className="flex flex-wrap gap-1.5">
                       {selectedTaggedConsultants.map(tag => (
@@ -1576,6 +1903,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                     value={customProjectConsultantInput}
                     onChange={e => setCustomProjectConsultantInput(e.target.value)}
                     onKeyDown={handleAddCustomProjectConsultant}
+                    placeholder="Type custom consultant name and press Enter / Add Tag..."
                     aria-label="Add custom consultant tag"
                     className="flex-1 px-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                   />
@@ -1586,6 +1914,59 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                   >
                     Add Tag
                   </button>
+                </div>
+              </div>
+
+              {/* 🧩 Row 9: DISCIPLINE CATEGORIES (All Selected by Default • Click to Untick / Remove) */}
+              <div className="space-y-2 pt-2 border-t border-border">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                  <label className="font-bold text-foreground flex items-center gap-1.5 text-xs">
+                    <Layers className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>DISCIPLINE CATEGORIES (All Pre-Selected by Default • Click to Untick) *</span>
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                      {selectedTaggedCategories.length} of {DISCIPLINE_OPTIONS.length} active
+                    </span>
+                    <div className="flex items-center gap-1.5 text-[11px]">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTaggedCategories([...DISCIPLINE_OPTIONS])}
+                        className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 font-bold cursor-pointer transition-colors"
+                      >
+                        Select All
+                      </button>
+                      <span>•</span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTaggedCategories([])}
+                        className="px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 font-medium cursor-pointer transition-colors"
+                      >
+                        Clear All
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5 p-2.5 rounded-xl border border-border bg-muted/20">
+                  {DISCIPLINE_OPTIONS.map(disc => {
+                    const isSelected = selectedTaggedCategories.includes(disc);
+                    return (
+                      <button
+                        key={disc}
+                        type="button"
+                        onClick={() => handleToggleProjectCategory(disc)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-all border flex items-center gap-1.5 ${
+                          isSelected
+                            ? "bg-emerald-600 text-white border-emerald-600 shadow-2xs font-bold"
+                            : "bg-surface text-muted-foreground border-border hover:text-foreground hover:border-emerald-500/40"
+                        }`}
+                      >
+                        {isSelected ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5 text-muted-foreground" />}
+                        <span>{disc}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -1603,51 +1984,376 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
         </div>
       )}
 
-      {/* Modal: New Tower */}
+      {/* Modal: New Tower (Sub-Project Wing) */}
       {isNewTowerModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-          <div className="bg-surface border border-border w-full max-w-md rounded-2xl shadow-2xl p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h4 className="text-sm font-bold text-foreground">Add Wing / Tower to Project</h4>
-              <button type="button" onClick={() => setIsNewTowerModalOpen(false)} className="text-muted-foreground hover:text-foreground">
+          <div className="bg-surface border border-border w-full max-w-xl rounded-2xl shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20">
+                  <Building className="h-4 w-4" />
+                </div>
+                <div>
+                  <h4 className="text-base font-bold text-foreground">Add Sub-Project Wing / Tower</h4>
+                  <p className="text-[11px] text-muted-foreground">Configure wing parameters and subproject-level consultant & category assignments</p>
+                </div>
+              </div>
+              <button type="button" onClick={() => setIsNewTowerModalOpen(false)} className="text-muted-foreground hover:text-foreground cursor-pointer">
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateTower} className="space-y-3 text-xs">
-              <div className="space-y-1">
-                <label className="font-bold text-foreground">Tower / Wing Name *</label>
-                <input
-                  type="text"
-                  required
-                  value={newTowerName}
-                  onChange={e => setNewTowerName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
-                />
+            <form onSubmit={handleCreateTower} className="space-y-3.5 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground">Tower / Wing Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newTowerName}
+                    onChange={e => setNewTowerName(e.target.value)}
+                    placeholder="e.g., Tower A - Iris"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground">Tower Type</label>
+                  <select
+                    value={newTowerType}
+                    onChange={e => setNewTowerType(e.target.value as any)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  >
+                    <option value="Sale">Sale Tower</option>
+                    <option value="Society">Society Wing</option>
+                    <option value="Commercial">Commercial</option>
+                    <option value="Rehab / SRA">Rehab / SRA</option>
+                    <option value="PTC / Hostel">PTC / Hostel</option>
+                    <option value="Plot / Infrastructure">Plot / Infrastructure</option>
+                  </select>
+                </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="font-bold text-foreground">Tower Type</label>
-                <select
-                  value={newTowerType}
-                  onChange={e => setNewTowerType(e.target.value as any)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
-                >
-                  <option value="Sale">Sale Tower</option>
-                  <option value="Society">Society Wing</option>
-                  <option value="Commercial">Commercial</option>
-                  <option value="Rehab / SRA">Rehab / SRA</option>
-                  <option value="PTC / Hostel">PTC / Hostel</option>
-                  <option value="Plot / Infrastructure">Plot / Infrastructure</option>
-                </select>
+              {/* Sub-Project Tagged Consultants */}
+              <div className="space-y-2 pt-2 border-t border-border">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                  <label className="font-bold text-foreground flex items-center gap-1.5 text-xs">
+                    <ShieldCheck className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                    <span>Sub-Project Tagged Consultants (All Allowed by Default)</span>
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-semibold text-purple-600 dark:text-purple-400">
+                      {newTowerTaggedConsultants.length} of {storeState.consultants.length} tagged
+                    </span>
+                    {storeState.consultants.length > 0 && (
+                      <div className="flex items-center gap-1.5 text-[11px]">
+                        <button
+                          type="button"
+                          onClick={() => setNewTowerTaggedConsultants(storeState.consultants.map(c => c.name))}
+                          className="px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 font-bold cursor-pointer transition-colors"
+                        >
+                          Select All
+                        </button>
+                        <span>•</span>
+                        <button
+                          type="button"
+                          onClick={() => setNewTowerTaggedConsultants([])}
+                          className="px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 font-medium cursor-pointer transition-colors"
+                        >
+                          Clear All
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {storeState.consultants.length > 4 && (
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={towerConsultantSearch}
+                      onChange={e => setTowerConsultantSearch(e.target.value)}
+                      placeholder="Filter consultants..."
+                      aria-label="Filter tower consultants"
+                      className="w-full px-3 py-1 text-xs rounded-lg border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                    />
+                  </div>
+                )}
+
+                <div className="flex flex-wrap gap-1.5 p-2.5 rounded-xl border border-border bg-muted/20 max-h-32 overflow-y-auto custom-scrollbar">
+                  {storeState.consultants
+                    .filter(c => !towerConsultantSearch.trim() || c.name.toLowerCase().includes(towerConsultantSearch.toLowerCase()) || c.category.toLowerCase().includes(towerConsultantSearch.toLowerCase()))
+                    .map(cons => {
+                      const isSelected = newTowerTaggedConsultants.includes(cons.name);
+                      return (
+                        <button
+                          key={cons.id}
+                          type="button"
+                          onClick={() => handleToggleTowerConsultant(cons.name)}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-all border flex items-center gap-1.5 ${
+                            isSelected
+                              ? "bg-purple-600 text-white border-purple-600 shadow-2xs font-bold"
+                              : "bg-surface text-muted-foreground border-border hover:text-foreground hover:border-purple-500/40"
+                          }`}
+                        >
+                          {isSelected ? <CheckCircle2 className="h-3 w-3" /> : <Plus className="h-3 w-3 text-muted-foreground" />}
+                          <span>{cons.name}</span>
+                          <span className={`text-[9px] px-1 py-0.2 rounded ${isSelected ? "bg-white/20 text-white" : "bg-muted text-muted-foreground"}`}>
+                            {cons.category}
+                          </span>
+                        </button>
+                      );
+                    })}
+                </div>
+              </div>
+
+              {/* Sub-Project Tagged Categories */}
+              <div className="space-y-2 pt-2 border-t border-border">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                  <label className="font-bold text-foreground flex items-center gap-1.5 text-xs">
+                    <Layers className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>Sub-Project Discipline Categories (All Selected by Default)</span>
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                      {newTowerTaggedCategories.length} of {DISCIPLINE_OPTIONS.length} active
+                    </span>
+                    <div className="flex items-center gap-1.5 text-[11px]">
+                      <button
+                        type="button"
+                        onClick={() => setNewTowerTaggedCategories([...DISCIPLINE_OPTIONS])}
+                        className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 font-bold cursor-pointer transition-colors"
+                      >
+                        Select All
+                      </button>
+                      <span>•</span>
+                      <button
+                        type="button"
+                        onClick={() => setNewTowerTaggedCategories([])}
+                        className="px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 font-medium cursor-pointer transition-colors"
+                      >
+                        Clear All
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5 p-2.5 rounded-xl border border-border bg-muted/20">
+                  {DISCIPLINE_OPTIONS.map(disc => {
+                    const isSelected = newTowerTaggedCategories.includes(disc);
+                    return (
+                      <button
+                        key={disc}
+                        type="button"
+                        onClick={() => handleToggleTowerCategory(disc)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-all border flex items-center gap-1.5 ${
+                          isSelected
+                            ? "bg-emerald-600 text-white border-emerald-600 shadow-2xs font-bold"
+                            : "bg-surface text-muted-foreground border-border hover:text-foreground hover:border-emerald-500/40"
+                        }`}
+                      >
+                        {isSelected ? <CheckCircle2 className="h-3 w-3" /> : <Plus className="h-3 w-3 text-muted-foreground" />}
+                        <span>{disc}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
                 <button type="button" onClick={() => setIsNewTowerModalOpen(false)} className="px-4 py-1.5 rounded-xl border border-border bg-background text-foreground hover:bg-muted transition-colors cursor-pointer">
                   Cancel
                 </button>
-                <button type="submit" className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer transition-all shadow-md">
-                  Add Tower
+                <button type="submit" className="px-5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer transition-all shadow-md">
+                  Add Sub-Project Wing
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Edit Tower (Sub-Project Wing) */}
+      {isEditTowerModalOpen && editingTower && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="bg-surface border border-border w-full max-w-xl rounded-2xl shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20">
+                  <Building className="h-4 w-4" />
+                </div>
+                <div>
+                  <h4 className="text-base font-bold text-foreground">Edit Sub-Project Wing: {editingTower.towerName}</h4>
+                  <p className="text-[11px] text-muted-foreground">Update wing parameters and subproject-level consultant & category assignments</p>
+                </div>
+              </div>
+              <button type="button" onClick={() => setIsEditTowerModalOpen(false)} className="text-muted-foreground hover:text-foreground cursor-pointer">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateTower} className="space-y-3.5 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground">Tower / Wing Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newTowerName}
+                    onChange={e => setNewTowerName(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-foreground">Tower Type</label>
+                  <select
+                    value={newTowerType}
+                    onChange={e => setNewTowerType(e.target.value as any)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  >
+                    <option value="Sale">Sale Tower</option>
+                    <option value="Society">Society Wing</option>
+                    <option value="Commercial">Commercial</option>
+                    <option value="Rehab / SRA">Rehab / SRA</option>
+                    <option value="PTC / Hostel">PTC / Hostel</option>
+                    <option value="Plot / Infrastructure">Plot / Infrastructure</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Sub-Project Tagged Consultants */}
+              <div className="space-y-2 pt-2 border-t border-border">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                  <label className="font-bold text-foreground flex items-center gap-1.5 text-xs">
+                    <ShieldCheck className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                    <span>Sub-Project Tagged Consultants</span>
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-semibold text-purple-600 dark:text-purple-400">
+                      {newTowerTaggedConsultants.length} of {storeState.consultants.length} tagged
+                    </span>
+                    {storeState.consultants.length > 0 && (
+                      <div className="flex items-center gap-1.5 text-[11px]">
+                        <button
+                          type="button"
+                          onClick={() => setNewTowerTaggedConsultants(storeState.consultants.map(c => c.name))}
+                          className="px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 font-bold cursor-pointer transition-colors"
+                        >
+                          Select All
+                        </button>
+                        <span>•</span>
+                        <button
+                          type="button"
+                          onClick={() => setNewTowerTaggedConsultants([])}
+                          className="px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 font-medium cursor-pointer transition-colors"
+                        >
+                          Clear All
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {storeState.consultants.length > 4 && (
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={towerConsultantSearch}
+                      onChange={e => setTowerConsultantSearch(e.target.value)}
+                      placeholder="Filter consultants..."
+                      aria-label="Filter tower consultants"
+                      className="w-full px-3 py-1 text-xs rounded-lg border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                    />
+                  </div>
+                )}
+
+                <div className="flex flex-wrap gap-1.5 p-2.5 rounded-xl border border-border bg-muted/20 max-h-32 overflow-y-auto custom-scrollbar">
+                  {storeState.consultants
+                    .filter(c => !towerConsultantSearch.trim() || c.name.toLowerCase().includes(towerConsultantSearch.toLowerCase()) || c.category.toLowerCase().includes(towerConsultantSearch.toLowerCase()))
+                    .map(cons => {
+                      const isSelected = newTowerTaggedConsultants.includes(cons.name);
+                      return (
+                        <button
+                          key={cons.id}
+                          type="button"
+                          onClick={() => handleToggleTowerConsultant(cons.name)}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-all border flex items-center gap-1.5 ${
+                            isSelected
+                              ? "bg-purple-600 text-white border-purple-600 shadow-2xs font-bold"
+                              : "bg-surface text-muted-foreground border-border hover:text-foreground hover:border-purple-500/40"
+                          }`}
+                        >
+                          {isSelected ? <CheckCircle2 className="h-3 w-3" /> : <Plus className="h-3 w-3 text-muted-foreground" />}
+                          <span>{cons.name}</span>
+                          <span className={`text-[9px] px-1 py-0.2 rounded ${isSelected ? "bg-white/20 text-white" : "bg-muted text-muted-foreground"}`}>
+                            {cons.category}
+                          </span>
+                        </button>
+                      );
+                    })}
+                </div>
+              </div>
+
+              {/* Sub-Project Tagged Categories */}
+              <div className="space-y-2 pt-2 border-t border-border">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                  <label className="font-bold text-foreground flex items-center gap-1.5 text-xs">
+                    <Layers className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>Sub-Project Discipline Categories</span>
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                      {newTowerTaggedCategories.length} of {DISCIPLINE_OPTIONS.length} active
+                    </span>
+                    <div className="flex items-center gap-1.5 text-[11px]">
+                      <button
+                        type="button"
+                        onClick={() => setNewTowerTaggedCategories([...DISCIPLINE_OPTIONS])}
+                        className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 font-bold cursor-pointer transition-colors"
+                      >
+                        Select All
+                      </button>
+                      <span>•</span>
+                      <button
+                        type="button"
+                        onClick={() => setNewTowerTaggedCategories([])}
+                        className="px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 font-medium cursor-pointer transition-colors"
+                      >
+                        Clear All
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5 p-2.5 rounded-xl border border-border bg-muted/20">
+                  {DISCIPLINE_OPTIONS.map(disc => {
+                    const isSelected = newTowerTaggedCategories.includes(disc);
+                    return (
+                      <button
+                        key={disc}
+                        type="button"
+                        onClick={() => handleToggleTowerCategory(disc)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-all border flex items-center gap-1.5 ${
+                          isSelected
+                            ? "bg-emerald-600 text-white border-emerald-600 shadow-2xs font-bold"
+                            : "bg-surface text-muted-foreground border-border hover:text-foreground hover:border-emerald-500/40"
+                        }`}
+                      >
+                        {isSelected ? <CheckCircle2 className="h-3 w-3" /> : <Plus className="h-3 w-3 text-muted-foreground" />}
+                        <span>{disc}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
+                <button type="button" onClick={() => setIsEditTowerModalOpen(false)} className="px-4 py-1.5 rounded-xl border border-border bg-background text-foreground hover:bg-muted transition-colors cursor-pointer">
+                  Cancel
+                </button>
+                <button type="submit" className="px-5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer transition-all shadow-md">
+                  Update Sub-Project Wing
                 </button>
               </div>
             </form>
