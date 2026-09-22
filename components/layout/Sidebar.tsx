@@ -169,6 +169,7 @@ const vehicleNavGroups: NavGroup[] = [
     items: [
       { label: "Maintenance & Job Cards", href: "/vehicle/maintenance", icon: Wrench },
       { label: "Parts & Accessories", href: "/vehicle/parts", icon: Package },
+      { label: "Insurance Vendor Master", href: "/vehicle/vendors", icon: ShieldCheck },
       { label: "Compliance & Alerts", href: "/vehicle/alerts", icon: ShieldAlert },
     ]
   },

@@ -167,10 +167,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     if (pathname.includes("/trips")) return "trips";
     if (pathname.includes("/drivers")) return "drivers";
     if (pathname.includes("/maintenance")) return "maintenance";
+    if (pathname.includes("/parts")) return "parts";
+    if (pathname.includes("/vendors") || pathname.includes("/insurance-vendors")) return "vendors";
     if (pathname.includes("/travelers")) return "travelers";
     if (pathname.includes("/alerts")) return "alerts";
     if (pathname.includes("/reports")) return "reports";
-    if (pathname.includes("/parts")) return "parts";
     if (pathname.includes("/my-garage")) return "my-garage";
     if (pathname.includes("/learning")) return "learning";
     if (pathname.includes("/settings")) return "settings";
@@ -202,6 +203,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   // Filtering and search
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("ALL");
+
+  // Insurance Vendors Filter & Search States
+  const [vendorSearch, setVendorSearch] = useState("");
+  const [vendorStatusFilter, setVendorStatusFilter] = useState("ALL");
 
   // Modal Dialog States
   const [isEditVehicleOpen, setIsEditVehicleOpen] = useState(false);
@@ -2026,6 +2031,20 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               </AppButton>
 
               <AppButton
+                variant={activeTab === "vendors" ? "primary" : "secondary"}
+                size="sm"
+                onClick={() => router.push("/vehicle/vendors")}
+                className={`text-xs h-9 font-semibold transition-all ${
+                  activeTab === "vendors"
+                    ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
+                    : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
+                }`}
+              >
+                <ShieldCheck className={`h-4 w-4 mr-1.5 ${activeTab === "vendors" ? "text-white" : "text-blue-500"}`} />
+                <span>Insurance Vendors ({insuranceVendors.length})</span>
+              </AppButton>
+
+              <AppButton
                 variant={activeTab === "alerts" ? "primary" : "secondary"}
                 size="sm"
                 onClick={() => router.push("/vehicle/alerts")}
@@ -2098,7 +2117,17 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               </AppButton>
 
               {/* Action trigger button tailored to active tab and RBAC capability */}
-              {activeTab === "parts" ? (
+              {activeTab === "vendors" ? (
+                <AppButton
+                  variant="primary"
+                  size="sm"
+                  onClick={openCreateVendorModal}
+                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Add Insurance Vendor</span>
+                </AppButton>
+              ) : activeTab === "parts" ? (
                 <AppButton
                   variant="primary"
                   size="sm"
@@ -5023,6 +5052,371 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           </AppTableRow>
                         );
                       })
+                    )}
+                  </AppTableBody>
+                </AppTable>
+              </AppTableContainer>
+            </AppCardContent>
+          </AppCard>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------------------------- */}
+      {/* INSURANCE VENDORS MASTER TAB */}
+      {/* ---------------------------------------------------------------------- */}
+      {activeTab === "vendors" && (
+        <div className="space-y-6">
+          <AppCard className="border-border shadow-xs">
+            <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <AppCardTitle className="text-lg flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5 text-blue-500" />
+                  <span>Fleet Insurance Vendors Master</span>
+                </AppCardTitle>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Authorized motor insurance companies, underwriters, policy administrators, and 24x7 emergency helpline directory
+                </p>
+              </div>
+              <div className="flex items-center gap-2 self-stretch sm:self-auto">
+                <AppButton
+                  variant="outline"
+                  size="sm"
+                  onClick={() => loadAllData(true)}
+                  disabled={refreshing}
+                  className="text-xs h-9 font-medium gap-1.5"
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
+                  <span className="hidden sm:inline">Refresh</span>
+                </AppButton>
+                <AppButton
+                  variant="primary"
+                  size="sm"
+                  onClick={openCreateVendorModal}
+                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs flex-1 sm:flex-none justify-center"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Add Insurance Vendor</span>
+                </AppButton>
+              </div>
+            </AppCardHeader>
+
+            {/* KPI Summary Strip */}
+            <AppCardContent className="p-4 bg-slate-50/40 dark:bg-slate-900/30 border-b border-border/50">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="p-3 rounded-xl border border-border/60 bg-surface shadow-2xs">
+                  <div className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1.5">
+                    <Building2 className="h-3.5 w-3.5 text-blue-500" />
+                    <span>Total Underwriters</span>
+                  </div>
+                  <div className="mt-1 flex items-baseline gap-2">
+                    <span className="text-lg font-bold font-mono text-foreground">{insuranceVendors.length}</span>
+                    <span className="text-[10px] text-muted-foreground">registered</span>
+                  </div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5">
+                    Active insurance vendors
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl border border-border/60 bg-surface shadow-2xs">
+                  <div className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1.5">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                    <span>Active Underwriters</span>
+                  </div>
+                  <div className="mt-1 flex items-baseline gap-1">
+                    <span className="text-lg font-bold font-mono text-emerald-600 dark:text-emerald-400">
+                      {insuranceVendors.filter(v => v.is_active !== false).length}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">active</span>
+                  </div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5">Approved for new policies</div>
+                </div>
+
+                <div className="p-3 rounded-xl border border-border/60 bg-surface shadow-2xs">
+                  <div className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1.5">
+                    <Phone className="h-3.5 w-3.5 text-amber-500" />
+                    <span>24x7 Toll-Free Support</span>
+                  </div>
+                  <div className="mt-1 flex items-baseline gap-2">
+                    <span className="text-lg font-bold font-mono text-amber-600 dark:text-amber-400">
+                      {insuranceVendors.filter(v => v.support_toll_free).length}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">helplines</span>
+                  </div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5">Pan-India roadside emergency</div>
+                </div>
+
+                <div className="p-3 rounded-xl border border-border/60 bg-surface shadow-2xs">
+                  <div className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1.5">
+                    <Car className="h-3.5 w-3.5 text-purple-500" />
+                    <span>Covered Fleet Vehicles</span>
+                  </div>
+                  <div className="mt-1 flex items-baseline gap-2">
+                    <span className="text-lg font-bold font-mono text-purple-600 dark:text-purple-400">
+                      {vehicles.filter(v => v.insurance_vendor_id || v.insurance_vendor).length}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">vehicles</span>
+                  </div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5">Linked to active policies</div>
+                </div>
+              </div>
+            </AppCardContent>
+
+            {/* Filter Bar */}
+            <div className="p-4 border-b border-border/50 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <AppInput
+                  placeholder="Search by vendor name, code, contact person, phone, email, toll-free..."
+                  value={vendorSearch}
+                  onChange={(e) => setVendorSearch(e.target.value)}
+                  className="pl-9 text-xs h-9"
+                />
+                {vendorSearch && (
+                  <button
+                    onClick={() => setVendorSearch("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <select
+                  value={vendorStatusFilter}
+                  onChange={(e) => setVendorStatusFilter(e.target.value)}
+                  className="h-9 text-xs px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                >
+                  <option value="ALL">All Statuses ({insuranceVendors.length})</option>
+                  <option value="ACTIVE">Active Only ({insuranceVendors.filter(v => v.is_active !== false).length})</option>
+                  <option value="DISABLED">Disabled ({insuranceVendors.filter(v => v.is_active === false).length})</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Vendors Table */}
+            <AppCardContent className="p-0 overflow-x-auto">
+              <AppTableContainer className="rounded-none border-none">
+                <AppTable className="w-full text-left text-xs">
+                  <AppTableHeader className="bg-slate-50 dark:bg-slate-900/60 border-b border-border text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                    <AppTableRow>
+                      <AppTableHead className="p-3.5">Vendor / Underwriter</AppTableHead>
+                      <AppTableHead className="p-3.5">Code</AppTableHead>
+                      <AppTableHead className="p-3.5">Contact Person & Direct Details</AppTableHead>
+                      <AppTableHead className="p-3.5">24x7 Toll-Free RSA Helpline</AppTableHead>
+                      <AppTableHead className="p-3.5">Claim Portal / Website</AppTableHead>
+                      <AppTableHead className="p-3.5 text-center">Insured Vehicles</AppTableHead>
+                      <AppTableHead className="p-3.5 text-center">Status</AppTableHead>
+                      <AppTableHead className="p-3.5 text-right">Actions</AppTableHead>
+                    </AppTableRow>
+                  </AppTableHeader>
+                  <AppTableBody className="divide-y divide-border/60">
+                    {insuranceVendors
+                      .filter((v) => {
+                        const q = vendorSearch.toLowerCase().trim();
+                        const matchesSearch =
+                          !q ||
+                          (v.name && v.name.toLowerCase().includes(q)) ||
+                          (v.code && v.code.toLowerCase().includes(q)) ||
+                          (v.contact_person && v.contact_person.toLowerCase().includes(q)) ||
+                          (v.contact_number && v.contact_number.toLowerCase().includes(q)) ||
+                          (v.email && v.email.toLowerCase().includes(q)) ||
+                          (v.support_toll_free && v.support_toll_free.toLowerCase().includes(q));
+
+                        const matchesStatus =
+                          vendorStatusFilter === "ALL" ||
+                          (vendorStatusFilter === "ACTIVE" && v.is_active !== false) ||
+                          (vendorStatusFilter === "DISABLED" && v.is_active === false);
+
+                        return matchesSearch && matchesStatus;
+                      })
+                      .length === 0 ? (
+                      <AppTableRow>
+                        <AppTableCell colSpan={8} className="text-center py-12 text-muted-foreground">
+                          {vendorSearch || vendorStatusFilter !== "ALL" ? (
+                            <div className="space-y-2">
+                              <p className="font-semibold text-foreground">No matching insurance vendors found.</p>
+                              <p className="text-xs text-muted-foreground">Try adjusting your search or status filter.</p>
+                              <AppButton
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setVendorSearch("");
+                                  setVendorStatusFilter("ALL");
+                                }}
+                                className="text-xs mt-2"
+                              >
+                                Clear Filters
+                              </AppButton>
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              <p className="font-semibold text-foreground">No insurance vendors registered yet.</p>
+                              <p className="text-xs text-muted-foreground">Click "Add Insurance Vendor" above to register an underwriter.</p>
+                              <AppButton
+                                variant="primary"
+                                size="sm"
+                                onClick={openCreateVendorModal}
+                                className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs mt-2"
+                              >
+                                <Plus className="h-3.5 w-3.5 mr-1" />
+                                <span>Add Insurance Vendor</span>
+                              </AppButton>
+                            </div>
+                          )}
+                        </AppTableCell>
+                      </AppTableRow>
+                    ) : (
+                      insuranceVendors
+                        .filter((v) => {
+                          const q = vendorSearch.toLowerCase().trim();
+                          const matchesSearch =
+                            !q ||
+                            (v.name && v.name.toLowerCase().includes(q)) ||
+                            (v.code && v.code.toLowerCase().includes(q)) ||
+                            (v.contact_person && v.contact_person.toLowerCase().includes(q)) ||
+                            (v.contact_number && v.contact_number.toLowerCase().includes(q)) ||
+                            (v.email && v.email.toLowerCase().includes(q)) ||
+                            (v.support_toll_free && v.support_toll_free.toLowerCase().includes(q));
+
+                          const matchesStatus =
+                            vendorStatusFilter === "ALL" ||
+                            (vendorStatusFilter === "ACTIVE" && v.is_active !== false) ||
+                            (vendorStatusFilter === "DISABLED" && v.is_active === false);
+
+                          return matchesSearch && matchesStatus;
+                        })
+                        .map((vendor) => {
+                          const linkedVehiclesCount = vehicles.filter(
+                            (v) => v.insurance_vendor_id === vendor.id || (v.insurance_vendor && v.insurance_vendor.toLowerCase() === vendor.name.toLowerCase())
+                          ).length;
+
+                          return (
+                            <AppTableRow key={vendor.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                              {/* Vendor / Underwriter */}
+                              <AppTableCell className="p-3.5">
+                                <div className="font-bold text-foreground text-sm flex items-center gap-1.5">
+                                  <ShieldCheck className="h-4 w-4 text-blue-500 shrink-0" />
+                                  <span>{vendor.name}</span>
+                                </div>
+                                {vendor.description && (
+                                  <div className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1 max-w-[280px]">
+                                    {vendor.description}
+                                  </div>
+                                )}
+                              </AppTableCell>
+
+                              {/* Code */}
+                              <AppTableCell className="p-3.5">
+                                <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700">
+                                  {vendor.code}
+                                </span>
+                              </AppTableCell>
+
+                              {/* Contact Person */}
+                              <AppTableCell className="p-3.5">
+                                <div className="space-y-0.5">
+                                  <div className="font-semibold text-foreground">{vendor.contact_person || "—"}</div>
+                                  {vendor.contact_number && (
+                                    <div className="text-[11px] font-mono text-blue-600 dark:text-blue-400">
+                                      <a href={`tel:${vendor.contact_number}`} className="hover:underline">
+                                        {vendor.contact_number}
+                                      </a>
+                                    </div>
+                                  )}
+                                  {vendor.email && (
+                                    <div className="text-[10px] text-muted-foreground">
+                                      <a href={`mailto:${vendor.email}`} className="hover:underline">
+                                        {vendor.email}
+                                      </a>
+                                    </div>
+                                  )}
+                                </div>
+                              </AppTableCell>
+
+                              {/* 24x7 Toll-Free Support */}
+                              <AppTableCell className="p-3.5">
+                                {vendor.support_toll_free ? (
+                                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 font-mono font-bold text-xs">
+                                    <Phone className="h-3 w-3" />
+                                    <span>{vendor.support_toll_free}</span>
+                                  </div>
+                                ) : (
+                                  <span className="text-muted-foreground">—</span>
+                                )}
+                              </AppTableCell>
+
+                              {/* Official Website / Claim Portal */}
+                              <AppTableCell className="p-3.5">
+                                {vendor.website ? (
+                                  <a
+                                    href={vendor.website.startsWith("http") ? vendor.website : `https://${vendor.website}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-theme-btn-primary hover:underline font-mono text-[11px] inline-flex items-center gap-1"
+                                  >
+                                    <span>{vendor.website.replace(/^https?:\/\//, "").replace(/\/$/, "")}</span>
+                                    <span className="text-[10px]">↗</span>
+                                  </a>
+                                ) : (
+                                  <span className="text-muted-foreground">—</span>
+                                )}
+                              </AppTableCell>
+
+                              {/* Covered Vehicles */}
+                              <AppTableCell className="p-3.5 text-center">
+                                <span className={`px-2 py-0.5 rounded-full text-[11px] font-mono font-bold inline-block ${
+                                  linkedVehiclesCount > 0
+                                  ? "bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/25"
+                                  : "bg-slate-100 dark:bg-slate-800 text-muted-foreground"
+                                }`}>
+                                  {linkedVehiclesCount} {linkedVehiclesCount === 1 ? "vehicle" : "vehicles"}
+                                </span>
+                              </AppTableCell>
+
+                              {/* Status */}
+                              <AppTableCell className="p-3.5 text-center">
+                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase inline-block ${
+                                  vendor.is_active !== false
+                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                                    : "bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700"
+                                }`}>
+                                  {vendor.is_active !== false ? "Active" : "Disabled"}
+                                </span>
+                              </AppTableCell>
+
+                              {/* Actions */}
+                              <AppTableCell className="p-3.5 text-right">
+                                <div className="flex items-center justify-end gap-1.5">
+                                  <AppButton
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => openEditVendorModal(vendor)}
+                                    className="h-7 px-2 text-xs gap-1 font-semibold hover:border-theme-btn-primary"
+                                  >
+                                    <Edit2 className="h-3 w-3" />
+                                    <span>Edit</span>
+                                  </AppButton>
+                                  <AppButton
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setDeleteTarget({
+                                      type: "vendor",
+                                      id: vendor.id,
+                                      label: `Insurance Vendor '${vendor.name}'`
+                                    })}
+                                    className="h-7 px-2 text-xs gap-1 font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                    <span>Delete</span>
+                                  </AppButton>
+                                </div>
+                              </AppTableCell>
+                            </AppTableRow>
+                          );
+                        })
                     )}
                   </AppTableBody>
                 </AppTable>
