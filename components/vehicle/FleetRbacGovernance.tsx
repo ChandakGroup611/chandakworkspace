@@ -41,7 +41,8 @@ import {
 import { 
   FleetMasterStore, 
   FleetMasterStoreState,
-  STANDARD_FLEET_ROLES
+  STANDARD_FLEET_ROLES,
+  DEFAULT_FLEET_POLICIES
 } from "./services/fleetMasterStore";
 import { 
   FleetWorkspaceUser, 
@@ -356,6 +357,214 @@ export default function FleetRbacGovernance() {
     }
   };
 
+  // Real-time Permission Toggle handler (instant effect, no refresh / no relogin)
+  const handleTogglePermission = (
+    moduleCode: FleetFunctionalModule,
+    field: "canRead" | "canCreate" | "canUpdate" | "canDelete" | "canApprove" | "canExport"
+  ) => {
+    const currentPolicies = [...FleetMasterStore.getRbacPolicies()];
+    const existingIdx = currentPolicies.findIndex(
+      p => p.roleCode === selectedRoleDef.code && p.module === moduleCode
+    );
+
+    let updatedPolicies: FleetRbacPolicy[];
+
+    if (existingIdx >= 0) {
+      const existing = currentPolicies[existingIdx];
+      const updatedPolicy: FleetRbacPolicy = {
+        ...existing,
+        [field]: !existing[field]
+      };
+      updatedPolicies = [
+        ...currentPolicies.slice(0, existingIdx),
+        updatedPolicy,
+        ...currentPolicies.slice(existingIdx + 1)
+      ];
+    } else {
+      const defaultPolicy = DEFAULT_MODULE_PERMS[moduleCode];
+      const newPolicy: FleetRbacPolicy = {
+        id: `pol-${selectedRoleDef.code.toLowerCase()}-${moduleCode.toLowerCase()}`,
+        roleCode: selectedRoleDef.code,
+        module: moduleCode,
+        canRead: defaultPolicy.canRead,
+        canCreate: defaultPolicy.canCreate,
+        canUpdate: defaultPolicy.canUpdate,
+        canDelete: defaultPolicy.canDelete,
+        canApprove: defaultPolicy.canApprove,
+        canExport: defaultPolicy.canExport,
+        movementAccessScope: selectedRoleDef.movementAccessScope || "ALL",
+        [field]: !defaultPolicy[field]
+      };
+      updatedPolicies = [...currentPolicies, newPolicy];
+    }
+
+    // Immediately update reactive state & local storage (zero refresh / zero relogin needed)
+    setPolicyRecords(updatedPolicies);
+    FleetMasterStore.saveRbacPolicies(updatedPolicies);
+
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("fleet-rbac-policy-updated", {
+        detail: { roleCode: selectedRoleDef.code, moduleCode, field, policies: updatedPolicies }
+      }));
+    }
+  };
+
+  // Real-time Movement Scope Change handler (instant effect)
+  const handleChangeMovementScope = (
+    moduleCode: FleetFunctionalModule,
+    scope: FleetMovementAccessScope
+  ) => {
+    const currentPolicies = [...FleetMasterStore.getRbacPolicies()];
+    const existingIdx = currentPolicies.findIndex(
+      p => p.roleCode === selectedRoleDef.code && p.module === moduleCode
+    );
+
+    let updatedPolicies: FleetRbacPolicy[];
+
+    if (existingIdx >= 0) {
+      const existing = currentPolicies[existingIdx];
+      const updatedPolicy: FleetRbacPolicy = {
+        ...existing,
+        movementAccessScope: scope
+      };
+      updatedPolicies = [
+        ...currentPolicies.slice(0, existingIdx),
+        updatedPolicy,
+        ...currentPolicies.slice(existingIdx + 1)
+      ];
+    } else {
+      const defaultPolicy = DEFAULT_MODULE_PERMS[moduleCode];
+      const newPolicy: FleetRbacPolicy = {
+        id: `pol-${selectedRoleDef.code.toLowerCase()}-${moduleCode.toLowerCase()}`,
+        roleCode: selectedRoleDef.code,
+        module: moduleCode,
+        canRead: defaultPolicy.canRead,
+        canCreate: defaultPolicy.canCreate,
+        canUpdate: defaultPolicy.canUpdate,
+        canDelete: defaultPolicy.canDelete,
+        canApprove: defaultPolicy.canApprove,
+        canExport: defaultPolicy.canExport,
+        movementAccessScope: scope
+      };
+      updatedPolicies = [...currentPolicies, newPolicy];
+    }
+
+    setPolicyRecords(updatedPolicies);
+    FleetMasterStore.saveRbacPolicies(updatedPolicies);
+
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("fleet-rbac-policy-updated", {
+        detail: { roleCode: selectedRoleDef.code, moduleCode, scope, policies: updatedPolicies }
+      }));
+    }
+  };
+
+  // Quick batch actions for selected role
+  const handleGrantAllForRole = () => {
+    const currentPolicies = [...FleetMasterStore.getRbacPolicies()];
+    const modulesToUpdate = new Set<FleetFunctionalModule>(FLEET_MODULE_LIST.map(m => m.code));
+    
+    // Update existing or insert missing for all modules
+    const updated = currentPolicies.map(p => {
+      if (p.roleCode === selectedRoleDef.code) {
+        modulesToUpdate.delete(p.module as FleetFunctionalModule);
+        return {
+          ...p,
+          canRead: true,
+          canCreate: true,
+          canUpdate: true,
+          canDelete: true,
+          canApprove: true,
+          canExport: true,
+          movementAccessScope: "ALL" as FleetMovementAccessScope
+        };
+      }
+      return p;
+    });
+
+    modulesToUpdate.forEach(modCode => {
+      updated.push({
+        id: `pol-${selectedRoleDef.code.toLowerCase()}-${modCode.toLowerCase()}`,
+        roleCode: selectedRoleDef.code,
+        module: modCode,
+        canRead: true,
+        canCreate: true,
+        canUpdate: true,
+        canDelete: true,
+        canApprove: true,
+        canExport: true,
+        movementAccessScope: "ALL"
+      });
+    });
+
+    setPolicyRecords(updated);
+    FleetMasterStore.saveRbacPolicies(updated);
+    setFeedbackMessage({
+      type: "success",
+      text: `Granted Full CRUD permissions to ${selectedRoleDef.label}. Applied in real-time!`
+    });
+    setTimeout(() => setFeedbackMessage(null), 3000);
+  };
+
+  const handleSetReadOnlyForRole = () => {
+    const currentPolicies = [...FleetMasterStore.getRbacPolicies()];
+    const modulesToUpdate = new Set<FleetFunctionalModule>(FLEET_MODULE_LIST.map(m => m.code));
+
+    const updated = currentPolicies.map(p => {
+      if (p.roleCode === selectedRoleDef.code) {
+        modulesToUpdate.delete(p.module as FleetFunctionalModule);
+        return {
+          ...p,
+          canRead: true,
+          canCreate: false,
+          canUpdate: false,
+          canDelete: false,
+          canApprove: false,
+          canExport: true,
+          movementAccessScope: "ALL" as FleetMovementAccessScope
+        };
+      }
+      return p;
+    });
+
+    modulesToUpdate.forEach(modCode => {
+      updated.push({
+        id: `pol-${selectedRoleDef.code.toLowerCase()}-${modCode.toLowerCase()}`,
+        roleCode: selectedRoleDef.code,
+        module: modCode,
+        canRead: true,
+        canCreate: false,
+        canUpdate: false,
+        canDelete: false,
+        canApprove: false,
+        canExport: true,
+        movementAccessScope: "ALL"
+      });
+    });
+
+    setPolicyRecords(updated);
+    FleetMasterStore.saveRbacPolicies(updated);
+    setFeedbackMessage({
+      type: "success",
+      text: `Set ${selectedRoleDef.label} permissions to Read-Only. Applied in real-time!`
+    });
+    setTimeout(() => setFeedbackMessage(null), 3000);
+  };
+
+  const handleResetRoleDefaults = () => {
+    const defaultRolePolicies = DEFAULT_FLEET_POLICIES.filter(p => p.roleCode === selectedRoleDef.code);
+    const otherPolicies = FleetMasterStore.getRbacPolicies().filter(p => p.roleCode !== selectedRoleDef.code);
+    const updated = [...otherPolicies, ...defaultRolePolicies];
+
+    setPolicyRecords(updated);
+    FleetMasterStore.saveRbacPolicies(updated);
+    setFeedbackMessage({
+      type: "success",
+      text: `Reset ${selectedRoleDef.label} to default system matrix template. Applied in real-time!`
+    });
+    setTimeout(() => setFeedbackMessage(null), 3000);
+  };
+
   // Selected User Object for Drawer
   const activeDrawerUser = useMemo(() => {
     return mergedUsers.find(u => u.id === drawerUserId);
@@ -534,18 +743,55 @@ export default function FleetRbacGovernance() {
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${selectedRoleDef.badgeColor}`}>
                       {selectedRoleDef.code}
                     </span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                      <Sparkles className="h-3 w-3" />
+                      <span>Live Reactive</span>
+                    </span>
                   </div>
                   <p className="text-xs text-muted-foreground max-w-xl">
                     {selectedRoleDef.description}
                   </p>
                 </div>
+
+                {/* Quick Role Actions */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={handleGrantAllForRole}
+                    className="text-[11px] font-bold px-2.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/20 transition-all cursor-pointer shadow-2xs"
+                    title="Grant all CRUD and approval permissions to this role"
+                  >
+                    Grant All (Full)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSetReadOnlyForRole}
+                    className="text-[11px] font-bold px-2.5 py-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/25 hover:bg-blue-500/20 transition-all cursor-pointer shadow-2xs"
+                    title="Set view only permissions for this role"
+                  >
+                    Set Read Only
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleResetRoleDefaults}
+                    className="text-[11px] font-medium px-2.5 py-1.5 rounded-lg bg-surface text-muted-foreground border border-border hover:bg-surface/80 hover:text-foreground transition-all cursor-pointer"
+                    title="Reset this role to standard defaults"
+                  >
+                    Reset Defaults
+                  </button>
+                </div>
               </div>
 
               {/* Module Permissions Table */}
               <div className="space-y-3">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                  <span>Module Permissions & Movement Scopes</span>
-                </h3>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                    <span>Module Permissions & Movement Scopes</span>
+                  </h3>
+                  <span className="text-[11px] text-muted-foreground italic">
+                    Click any cell to tick/untick. Changes take effect immediately.
+                  </span>
+                </div>
 
                 <div className="overflow-x-auto rounded-xl border border-border/60">
                   <table className="w-full text-xs text-left">
@@ -580,28 +826,117 @@ export default function FleetRbacGovernance() {
                               <ModIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                               <span>{mod.label}</span>
                             </td>
-                            <td className="py-3 px-3 text-center">
-                              {policy.canRead ? <Check className="h-4 w-4 text-emerald-500 mx-auto" /> : <X className="h-4 w-4 text-muted-foreground/40 mx-auto" />}
+
+                            {/* View / Read */}
+                            <td className="py-2.5 px-3 text-center">
+                              <button
+                                type="button"
+                                onClick={() => handleTogglePermission(mod.code, "canRead")}
+                                title={`Click to ${policy.canRead ? "revoke" : "grant"} View access on ${mod.label}`}
+                                className={`h-7 w-7 rounded-lg mx-auto flex items-center justify-center transition-all cursor-pointer ${
+                                  policy.canRead
+                                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 hover:scale-105 active:scale-95 shadow-2xs"
+                                    : "bg-surface/80 text-muted-foreground/35 border border-border/60 hover:bg-surface hover:text-muted-foreground hover:border-border hover:scale-105 active:scale-95"
+                                }`}
+                              >
+                                {policy.canRead ? <Check className="h-4 w-4 stroke-[2.5]" /> : <X className="h-3.5 w-3.5" />}
+                              </button>
                             </td>
-                            <td className="py-3 px-3 text-center">
-                              {policy.canCreate ? <Check className="h-4 w-4 text-emerald-500 mx-auto" /> : <X className="h-4 w-4 text-muted-foreground/40 mx-auto" />}
+
+                            {/* Create */}
+                            <td className="py-2.5 px-3 text-center">
+                              <button
+                                type="button"
+                                onClick={() => handleTogglePermission(mod.code, "canCreate")}
+                                title={`Click to ${policy.canCreate ? "revoke" : "grant"} Create access on ${mod.label}`}
+                                className={`h-7 w-7 rounded-lg mx-auto flex items-center justify-center transition-all cursor-pointer ${
+                                  policy.canCreate
+                                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 hover:scale-105 active:scale-95 shadow-2xs"
+                                    : "bg-surface/80 text-muted-foreground/35 border border-border/60 hover:bg-surface hover:text-muted-foreground hover:border-border hover:scale-105 active:scale-95"
+                                }`}
+                              >
+                                {policy.canCreate ? <Check className="h-4 w-4 stroke-[2.5]" /> : <X className="h-3.5 w-3.5" />}
+                              </button>
                             </td>
-                            <td className="py-3 px-3 text-center">
-                              {policy.canUpdate ? <Check className="h-4 w-4 text-emerald-500 mx-auto" /> : <X className="h-4 w-4 text-muted-foreground/40 mx-auto" />}
+
+                            {/* Edit / Update */}
+                            <td className="py-2.5 px-3 text-center">
+                              <button
+                                type="button"
+                                onClick={() => handleTogglePermission(mod.code, "canUpdate")}
+                                title={`Click to ${policy.canUpdate ? "revoke" : "grant"} Edit access on ${mod.label}`}
+                                className={`h-7 w-7 rounded-lg mx-auto flex items-center justify-center transition-all cursor-pointer ${
+                                  policy.canUpdate
+                                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 hover:scale-105 active:scale-95 shadow-2xs"
+                                    : "bg-surface/80 text-muted-foreground/35 border border-border/60 hover:bg-surface hover:text-muted-foreground hover:border-border hover:scale-105 active:scale-95"
+                                }`}
+                              >
+                                {policy.canUpdate ? <Check className="h-4 w-4 stroke-[2.5]" /> : <X className="h-3.5 w-3.5" />}
+                              </button>
                             </td>
-                            <td className="py-3 px-3 text-center">
-                              {policy.canDelete ? <Check className="h-4 w-4 text-emerald-500 mx-auto" /> : <X className="h-4 w-4 text-muted-foreground/40 mx-auto" />}
+
+                            {/* Delete */}
+                            <td className="py-2.5 px-3 text-center">
+                              <button
+                                type="button"
+                                onClick={() => handleTogglePermission(mod.code, "canDelete")}
+                                title={`Click to ${policy.canDelete ? "revoke" : "grant"} Delete access on ${mod.label}`}
+                                className={`h-7 w-7 rounded-lg mx-auto flex items-center justify-center transition-all cursor-pointer ${
+                                  policy.canDelete
+                                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 hover:scale-105 active:scale-95 shadow-2xs"
+                                    : "bg-surface/80 text-muted-foreground/35 border border-border/60 hover:bg-surface hover:text-muted-foreground hover:border-border hover:scale-105 active:scale-95"
+                                }`}
+                              >
+                                {policy.canDelete ? <Check className="h-4 w-4 stroke-[2.5]" /> : <X className="h-3.5 w-3.5" />}
+                              </button>
                             </td>
-                            <td className="py-3 px-3 text-center">
-                              {policy.canApprove ? <Check className="h-4 w-4 text-emerald-500 mx-auto" /> : <X className="h-4 w-4 text-muted-foreground/40 mx-auto" />}
+
+                            {/* Approve */}
+                            <td className="py-2.5 px-3 text-center">
+                              <button
+                                type="button"
+                                onClick={() => handleTogglePermission(mod.code, "canApprove")}
+                                title={`Click to ${policy.canApprove ? "revoke" : "grant"} Approval access on ${mod.label}`}
+                                className={`h-7 w-7 rounded-lg mx-auto flex items-center justify-center transition-all cursor-pointer ${
+                                  policy.canApprove
+                                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 hover:scale-105 active:scale-95 shadow-2xs"
+                                    : "bg-surface/80 text-muted-foreground/35 border border-border/60 hover:bg-surface hover:text-muted-foreground hover:border-border hover:scale-105 active:scale-95"
+                                }`}
+                              >
+                                {policy.canApprove ? <Check className="h-4 w-4 stroke-[2.5]" /> : <X className="h-3.5 w-3.5" />}
+                              </button>
                             </td>
-                            <td className="py-3 px-3 text-center">
-                              {policy.canExport ? <Check className="h-4 w-4 text-emerald-500 mx-auto" /> : <X className="h-4 w-4 text-muted-foreground/40 mx-auto" />}
+
+                            {/* Export */}
+                            <td className="py-2.5 px-3 text-center">
+                              <button
+                                type="button"
+                                onClick={() => handleTogglePermission(mod.code, "canExport")}
+                                title={`Click to ${policy.canExport ? "revoke" : "grant"} Export access on ${mod.label}`}
+                                className={`h-7 w-7 rounded-lg mx-auto flex items-center justify-center transition-all cursor-pointer ${
+                                  policy.canExport
+                                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 hover:scale-105 active:scale-95 shadow-2xs"
+                                    : "bg-surface/80 text-muted-foreground/35 border border-border/60 hover:bg-surface hover:text-muted-foreground hover:border-border hover:scale-105 active:scale-95"
+                                }`}
+                              >
+                                {policy.canExport ? <Check className="h-4 w-4 stroke-[2.5]" /> : <X className="h-3.5 w-3.5" />}
+                              </button>
                             </td>
-                            <td className="py-3 px-4">
-                              <span className="text-[11px] font-medium text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                                {MOVEMENT_SCOPE_OPTIONS.find(o => o.value === policy.movementAccessScope)?.label || policy.movementAccessScope}
-                              </span>
+
+                            {/* Movement Scope Dropdown */}
+                            <td className="py-2.5 px-4">
+                              <select
+                                value={policy.movementAccessScope || "ALL"}
+                                onChange={e => handleChangeMovementScope(mod.code, e.target.value as FleetMovementAccessScope)}
+                                className="text-xs font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/15 border border-amber-500/30 rounded-lg px-2.5 py-1 outline-none cursor-pointer transition-all w-full max-w-[190px]"
+                                title="Change movement access scope"
+                              >
+                                {MOVEMENT_SCOPE_OPTIONS.map(opt => (
+                                  <option key={opt.value} value={opt.value} className="bg-card text-foreground">
+                                    {opt.label}
+                                  </option>
+                                ))}
+                              </select>
                             </td>
                           </tr>
                         );
