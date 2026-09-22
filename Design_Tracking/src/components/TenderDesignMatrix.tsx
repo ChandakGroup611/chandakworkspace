@@ -477,10 +477,11 @@ export const TenderDesignMatrix: React.FC = () => {
     if (!auditSearchQuery.trim()) return logs;
     const q = auditSearchQuery.toLowerCase();
     return logs.filter(l => 
-      l.projectName.toLowerCase().includes(q) ||
-      l.packageName.toLowerCase().includes(q) ||
-      l.newStatus.toLowerCase().includes(q) ||
-      l.changedBy.toLowerCase().includes(q) ||
+      (l.projectName && l.projectName.toLowerCase().includes(q)) ||
+      (l.packageName && l.packageName.toLowerCase().includes(q)) ||
+      (l.newStatus && l.newStatus.toLowerCase().includes(q)) ||
+      (l.entityName && l.entityName.toLowerCase().includes(q)) ||
+      (l.changedBy && l.changedBy.toLowerCase().includes(q)) ||
       (l.remarks && l.remarks.toLowerCase().includes(q))
     );
   }, [storeState.auditLogs, auditSearchQuery]);

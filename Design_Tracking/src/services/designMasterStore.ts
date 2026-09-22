@@ -16,6 +16,8 @@ import {
   LookAheadEntry,
   StatutoryClearanceEntry,
   MatrixAuditLog,
+  ForeignKeyDependencyItem,
+  EntityDependencyReport,
   DesignRbacPolicy,
   DesignUserAccessRecord,
   DesignWorkspaceUser,
@@ -359,14 +361,438 @@ export class DesignMasterStore {
   }
 
   // ============================================================================
-  // Master Management: Projects & Towers (CRUD)
+  // Foreign Key Dependency & Referential Integrity Analysis
+  // ============================================================================
+
+  public static logAudit(logData: Partial<MatrixAuditLog>): MatrixAuditLog {
+    const state = this.getState();
+    if (!state.auditLogs) state.auditLogs = [];
+
+    const newLog: MatrixAuditLog = {
+      id: logData.id || `aud-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+      entryKey: logData.entryKey,
+      action: logData.action || "STATUS_CHANGE",
+      entityType: logData.entityType,
+      entityId: logData.entityId,
+      entityName: logData.entityName,
+      projectId: logData.projectId,
+      projectName: logData.projectName,
+      towerId: logData.towerId,
+      towerName: logData.towerName,
+      packageId: logData.packageId,
+      packageName: logData.packageName,
+      disciplineName: logData.disciplineName,
+      previousStatus: logData.previousStatus,
+      newStatus: logData.newStatus,
+      previousPlannedDate: logData.previousPlannedDate,
+      newPlannedDate: logData.newPlannedDate,
+      previousActualDate: logData.previousActualDate,
+      newActualDate: logData.newActualDate,
+      consultantId: logData.consultantId,
+      consultantName: logData.consultantName,
+      previousValue: logData.previousValue,
+      newValue: logData.newValue,
+      impactSummary: logData.impactSummary,
+      foreignKeyDependencies: logData.foreignKeyDependencies,
+      changedBy: logData.changedBy || "Design Manager",
+      changedByEmail: logData.changedByEmail || "design.manager@chandakgroup.com",
+      timestamp: logData.timestamp || new Date().toISOString(),
+      remarks: logData.remarks,
+      reason: logData.reason,
+      mailSent: !!logData.mailSent,
+      mailRecipientCount: logData.mailRecipientCount || 0,
+      mailSubject: logData.mailSubject
+    };
+
+    state.auditLogs.unshift(newLog);
+    if (state.auditLogs.length > 5000) {
+      state.auditLogs = state.auditLogs.slice(0, 5000);
+    }
+    return newLog;
+  }
+
+  /**
+   * Evaluates all inbound foreign key references for a given entity before deletion or update
+   */
+  public static getEntityDependencies(
+    entityType: "PROJECT" | "SUB_PROJECT" | "TOWER" | "PACKAGE" | "CONSULTANT" | "AUTHORITY",
+    entityId: string
+  ): EntityDependencyReport {
+    const state = this.getState();
+    const dependencies: ForeignKeyDependencyItem[] = [];
+
+    if (entityType === "PROJECT" || entityType === "SUB_PROJECT") {
+      const proj = state.projects.find(p => p.id === entityId);
+      const projName = proj?.name || entityId;
+
+      // 1. Child Sub-Projects
+      const childSubProjects = state.projects.filter(p => p.parentProjectId === entityId);
+      if (childSubProjects.length > 0) {
+        dependencies.push({
+          foreignKeyField: "parentProjectId",
+          referencedEntityType: "Child Sub-Projects / Phases",
+          count: childSubProjects.length,
+          previewItems: childSubProjects.map(p => p.name),
+          canCascade: true
+        });
+      }
+
+      // 2. Tower Wings
+      const towers = state.towers.filter(t => t.projectId === entityId);
+      if (towers.length > 0) {
+        dependencies.push({
+          foreignKeyField: "projectId",
+          referencedEntityType: "Tower Wings",
+          count: towers.length,
+          previewItems: towers.map(t => t.towerName),
+          canCascade: true
+        });
+      }
+
+      // 3. Matrix Status Cells
+      const matrixKeys = Object.keys(state.packageStatuses).filter(k => k.startsWith(`${entityId}__`));
+      if (matrixKeys.length > 0) {
+        dependencies.push({
+          foreignKeyField: "projectId",
+          referencedEntityType: "Matrix Status Transaction Cells",
+          count: matrixKeys.length,
+          previewItems: matrixKeys.slice(0, 4),
+          canCascade: true
+        });
+      }
+
+      // 4. Look-Ahead Milestones
+      const lookAheads = state.lookAheads.filter(la => la.projectId === entityId);
+      if (lookAheads.length > 0) {
+        dependencies.push({
+          foreignKeyField: "projectId",
+          referencedEntityType: "Look-Ahead Milestones",
+          count: lookAheads.length,
+          previewItems: lookAheads.map(la => la.deliverableDescription).slice(0, 3),
+          canCascade: true
+        });
+      }
+
+      // 5. Statutory Clearances
+      const statutoryKeys = Object.keys(state.statutoryClearances).filter(k => k.startsWith(`${entityId}__`));
+      if (statutoryKeys.length > 0) {
+        dependencies.push({
+          foreignKeyField: "projectId",
+          referencedEntityType: "Statutory Authority NOC Records",
+          count: statutoryKeys.length,
+          previewItems: statutoryKeys.slice(0, 3),
+          canCascade: true
+        });
+      }
+
+      // 6. Drawings
+      const drawings = (state.drawings || []).filter(d => d.project === projName || d.project === entityId);
+      if (drawings.length > 0) {
+        dependencies.push({
+          foreignKeyField: "project",
+          referencedEntityType: "Drawing Register CAD/PDF Files",
+          count: drawings.length,
+          previewItems: drawings.map(d => `${d.code} (${d.title})`).slice(0, 3),
+          canCascade: true
+        });
+      }
+
+      // 7. Transmittals
+      const transmittals = (state.transmittals || []).filter(t => t.projectId === entityId || t.projectName === projName);
+      if (transmittals.length > 0) {
+        dependencies.push({
+          foreignKeyField: "projectId",
+          referencedEntityType: "Drawing Transmittals",
+          count: transmittals.length,
+          previewItems: transmittals.map(t => t.transmittalNumber).slice(0, 3),
+          canCascade: true
+        });
+      }
+
+      // 8. RFIs
+      const rfis = (state.rfis || []).filter(r => r.projectId === entityId || r.projectName === projName);
+      if (rfis.length > 0) {
+        dependencies.push({
+          foreignKeyField: "projectId",
+          referencedEntityType: "Design RFI Queries",
+          count: rfis.length,
+          previewItems: rfis.map(r => r.rfiNumber).slice(0, 3),
+          canCascade: true
+        });
+      }
+
+      // 9. Consultant Partner Tags
+      const taggedCons = (state.consultants || []).filter(c => c.activeProjects?.includes(projName));
+      if (taggedCons.length > 0) {
+        dependencies.push({
+          foreignKeyField: "activeProjects",
+          referencedEntityType: "Tagged Consultant Partners",
+          count: taggedCons.length,
+          previewItems: taggedCons.map(c => c.name).slice(0, 3),
+          canCascade: false
+        });
+      }
+
+      const totalDependent = dependencies.reduce((acc, d) => acc + d.count, 0);
+      return {
+        entityType,
+        entityId,
+        entityName: projName,
+        totalDependentRecords: totalDependent,
+        dependencies,
+        isReferencedByOtherRecords: totalDependent > 0
+      };
+    }
+
+    if (entityType === "TOWER") {
+      const twr = state.towers.find(t => t.id === entityId);
+      const twrName = twr?.towerName || entityId;
+
+      // 1. Matrix Status Cells
+      const matrixKeys = Object.keys(state.packageStatuses).filter(k => k.includes(`__${entityId}__`));
+      if (matrixKeys.length > 0) {
+        dependencies.push({
+          foreignKeyField: "towerId",
+          referencedEntityType: "Matrix Status Cells",
+          count: matrixKeys.length,
+          previewItems: matrixKeys.slice(0, 4),
+          canCascade: true
+        });
+      }
+
+      // 2. Look-Aheads
+      const lookAheads = state.lookAheads.filter(la => la.towerId === entityId);
+      if (lookAheads.length > 0) {
+        dependencies.push({
+          foreignKeyField: "towerId",
+          referencedEntityType: "Look-Ahead Milestones",
+          count: lookAheads.length,
+          previewItems: lookAheads.map(la => la.deliverableDescription).slice(0, 3),
+          canCascade: true
+        });
+      }
+
+      // 3. Statutory Clearances
+      const statutoryKeys = Object.keys(state.statutoryClearances).filter(k => k.includes(`__${entityId}__`));
+      if (statutoryKeys.length > 0) {
+        dependencies.push({
+          foreignKeyField: "towerId",
+          referencedEntityType: "Statutory Authority Clearances",
+          count: statutoryKeys.length,
+          previewItems: statutoryKeys.slice(0, 3),
+          canCascade: true
+        });
+      }
+
+      // 4. Drawings
+      const drawings = (state.drawings || []).filter(d => (d as any).towerId === entityId || (d as any).tower === twrName);
+      if (drawings.length > 0) {
+        dependencies.push({
+          foreignKeyField: "towerId",
+          referencedEntityType: "Drawing Register",
+          count: drawings.length,
+          previewItems: drawings.map(d => d.code).slice(0, 3),
+          canCascade: true
+        });
+      }
+
+      const totalDependent = dependencies.reduce((acc, d) => acc + d.count, 0);
+      return {
+        entityType,
+        entityId,
+        entityName: twrName,
+        totalDependentRecords: totalDependent,
+        dependencies,
+        isReferencedByOtherRecords: totalDependent > 0
+      };
+    }
+
+    if (entityType === "PACKAGE") {
+      const pkg = state.packages.find(p => p.id === entityId);
+      const pkgName = pkg?.packageName || entityId;
+
+      // 1. Matrix Status Cells
+      const matrixKeys = Object.keys(state.packageStatuses).filter(k => k.endsWith(`__${entityId}`));
+      if (matrixKeys.length > 0) {
+        dependencies.push({
+          foreignKeyField: "packageId",
+          referencedEntityType: "Matrix Status Cells",
+          count: matrixKeys.length,
+          previewItems: matrixKeys.slice(0, 4),
+          canCascade: true
+        });
+      }
+
+      // 2. Drawings by Discipline / Package
+      if (pkg?.disciplineName) {
+        const drawings = (state.drawings || []).filter(d => d.discipline === pkg.disciplineName);
+        if (drawings.length > 0) {
+          dependencies.push({
+            foreignKeyField: "discipline",
+            referencedEntityType: "Discipline Drawings",
+            count: drawings.length,
+            previewItems: drawings.map(d => d.code).slice(0, 3),
+            canCascade: false
+          });
+        }
+      }
+
+      // 3. Consultant Expertise
+      const consWithPkg = (state.consultants || []).filter(c => c.expertise?.includes(pkgName));
+      if (consWithPkg.length > 0) {
+        dependencies.push({
+          foreignKeyField: "expertise",
+          referencedEntityType: "Consultants Tagged with Expertise",
+          count: consWithPkg.length,
+          previewItems: consWithPkg.map(c => c.name).slice(0, 3),
+          canCascade: false
+        });
+      }
+
+      const totalDependent = dependencies.reduce((acc, d) => acc + d.count, 0);
+      return {
+        entityType,
+        entityId,
+        entityName: pkgName,
+        totalDependentRecords: totalDependent,
+        dependencies,
+        isReferencedByOtherRecords: totalDependent > 0
+      };
+    }
+
+    if (entityType === "CONSULTANT") {
+      const cons = state.consultants.find(c => c.id === entityId || c.name === entityId);
+      const consName = cons?.name || entityId;
+
+      // 1. Tagged Projects
+      const projects = state.projects.filter(p => p.taggedConsultants?.includes(consName) || p.taggedConsultants?.includes(entityId));
+      if (projects.length > 0) {
+        dependencies.push({
+          foreignKeyField: "taggedConsultants",
+          referencedEntityType: "Assigned Development Projects",
+          count: projects.length,
+          previewItems: projects.map(p => p.name).slice(0, 3),
+          canCascade: false
+        });
+      }
+
+      // 2. Tagged Towers
+      const towers = state.towers.filter(t => t.taggedConsultants?.includes(consName) || t.taggedConsultants?.includes(entityId));
+      if (towers.length > 0) {
+        dependencies.push({
+          foreignKeyField: "taggedConsultants",
+          referencedEntityType: "Assigned Tower Wings",
+          count: towers.length,
+          previewItems: towers.map(t => t.towerName).slice(0, 3),
+          canCascade: false
+        });
+      }
+
+      // 3. Matrix Status Assignments
+      const matrixEntries = Object.values(state.packageStatuses).filter(ps => ps.consultantId === entityId || ps.consultantName === consName);
+      if (matrixEntries.length > 0) {
+        dependencies.push({
+          foreignKeyField: "consultantId",
+          referencedEntityType: "Matrix Status Assignments",
+          count: matrixEntries.length,
+          previewItems: matrixEntries.map(m => m.id).slice(0, 3),
+          canCascade: false
+        });
+      }
+
+      // 4. Drawings Submitted
+      const drawings = (state.drawings || []).filter(d => d.consultant === consName || d.consultant === entityId);
+      if (drawings.length > 0) {
+        dependencies.push({
+          foreignKeyField: "consultant",
+          referencedEntityType: "Submitted Drawings",
+          count: drawings.length,
+          previewItems: drawings.map(d => d.code).slice(0, 3),
+          canCascade: false
+        });
+      }
+
+      // 5. Transmittals
+      const transmittals = (state.transmittals || []).filter(t => t.recipientAgency === consName || t.recipientAgency?.includes(consName));
+      if (transmittals.length > 0) {
+        dependencies.push({
+          foreignKeyField: "recipientAgency",
+          referencedEntityType: "Transmittals",
+          count: transmittals.length,
+          previewItems: transmittals.map(t => t.transmittalNumber).slice(0, 3),
+          canCascade: false
+        });
+      }
+
+      // 6. RFIs
+      const rfis = (state.rfis || []).filter(r => r.assignedConsultant === consName);
+      if (rfis.length > 0) {
+        dependencies.push({
+          foreignKeyField: "assignedConsultant",
+          referencedEntityType: "Assigned RFIs",
+          count: rfis.length,
+          previewItems: rfis.map(r => r.rfiNumber).slice(0, 3),
+          canCascade: false
+        });
+      }
+
+      const totalDependent = dependencies.reduce((acc, d) => acc + d.count, 0);
+      return {
+        entityType,
+        entityId,
+        entityName: consName,
+        totalDependentRecords: totalDependent,
+        dependencies,
+        isReferencedByOtherRecords: totalDependent > 0
+      };
+    }
+
+    if (entityType === "AUTHORITY") {
+      const auth = state.authorities.find(a => a.id === entityId);
+      const authName = auth?.authorityName || entityId;
+
+      // 1. Statutory Clearances
+      const clearances = Object.keys(state.statutoryClearances).filter(k => k.endsWith(`__${entityId}`));
+      if (clearances.length > 0) {
+        dependencies.push({
+          foreignKeyField: "authorityId",
+          referencedEntityType: "Statutory Authority Clearances",
+          count: clearances.length,
+          previewItems: clearances.slice(0, 3),
+          canCascade: true
+        });
+      }
+
+      const totalDependent = dependencies.reduce((acc, d) => acc + d.count, 0);
+      return {
+        entityType,
+        entityId,
+        entityName: authName,
+        totalDependentRecords: totalDependent,
+        dependencies,
+        isReferencedByOtherRecords: totalDependent > 0
+      };
+    }
+
+    return {
+      entityType,
+      entityId,
+      entityName: entityId,
+      totalDependentRecords: 0,
+      dependencies: [],
+      isReferencedByOtherRecords: false
+    };
+  }
+
+  // ============================================================================
+  // Master Management: Projects & Towers (CRUD) with Foreign Key Audit Tracking
   // ============================================================================
 
   public static getProjects(): ProjectMaster[] {
     return this.getState().projects;
   }
 
-  public static addProject(proj: Omit<ProjectMaster, "id" | "createdAt">): ProjectMaster {
+  public static addProject(proj: Omit<ProjectMaster, "id" | "createdAt">, createdBy = "Design Lead"): ProjectMaster {
     const state = this.getState();
     const id = `prj-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
     const newProj: ProjectMaster = {
@@ -399,11 +825,30 @@ export class DesignMasterStore {
       });
     }
 
+    // Log Audit Trail for Project Creation
+    this.logAudit({
+      action: "CREATE",
+      entityType: newProj.isSubProject ? "SUB_PROJECT" : "PROJECT",
+      entityId: id,
+      entityName: newProj.name,
+      projectId: id,
+      projectName: newProj.name,
+      newValue: newProj,
+      impactSummary: `Initialized new ${newProj.isSubProject ? "Sub-Project" : "Project"} with default Wing A and ${newProj.taggedConsultants?.length || 0} tagged consultants`,
+      changedBy: createdBy,
+      remarks: `Created ${newProj.name} (${newProj.code})`
+    });
+
     this.notify();
     return newProj;
   }
 
-  public static updateProject(id: string, updates: Partial<Omit<ProjectMaster, "id">>): ProjectMaster | null {
+  public static updateProject(
+    id: string,
+    updates: Partial<Omit<ProjectMaster, "id">>,
+    changedBy = "Design Lead",
+    reason?: string
+  ): ProjectMaster | null {
     const state = this.getState();
     const idx = state.projects.findIndex(p => p.id === id);
     if (idx === -1) return null;
@@ -443,17 +888,58 @@ export class DesignMasterStore {
       });
     }
 
+    // Foreign Key propagation if Project Name changed
+    if (updates.name && updates.name !== oldProj.name) {
+      // 1. Update child sub-projects parentProjectName
+      state.projects.forEach(p => {
+        if (p.parentProjectId === id) {
+          p.parentProjectName = updates.name;
+        }
+      });
+      // 2. Update drawings referencing old project name
+      (state.drawings || []).forEach(d => {
+        if (d.project === oldProj.name) d.project = updates.name!;
+      });
+      // 3. Update transmittals referencing old project name
+      (state.transmittals || []).forEach(t => {
+        if (t.projectId === id || t.projectName === oldProj.name) t.projectName = updates.name!;
+      });
+      // 4. Update RFIs referencing old project name
+      (state.rfis || []).forEach(r => {
+        if (r.projectId === id || r.projectName === oldProj.name) r.projectName = updates.name!;
+      });
+    }
+
+    // Log Audit Trail for Project Update
+    this.logAudit({
+      action: "UPDATE",
+      entityType: updatedProj.isSubProject ? "SUB_PROJECT" : "PROJECT",
+      entityId: id,
+      entityName: updatedProj.name,
+      projectId: id,
+      projectName: updatedProj.name,
+      previousValue: oldProj,
+      newValue: updatedProj,
+      impactSummary: `Updated project parameters and synchronized foreign key references across transactions`,
+      changedBy,
+      reason,
+      remarks: reason || `Updated parameters for ${updatedProj.name}`
+    });
+
     this.notify();
     return state.projects[idx];
   }
 
-  public static deleteProject(id: string): void {
+  public static deleteProject(id: string, reason?: string, deletedBy = "Design Lead"): EntityDependencyReport {
     const state = this.getState();
     const proj = state.projects.find(p => p.id === id);
+    const depReport = this.getEntityDependencies(proj?.isSubProject ? "SUB_PROJECT" : "PROJECT", id);
+
+    // 1. Remove project & towers
     state.projects = state.projects.filter(p => p.id !== id);
     state.towers = state.towers.filter(t => t.projectId !== id);
 
-    // Untag from consultants
+    // 2. Untag from consultants
     if (proj) {
       state.consultants.forEach(c => {
         if (c.activeProjects) {
@@ -465,7 +951,7 @@ export class DesignMasterStore {
       });
     }
 
-    // Cleanup orphaned statuses and look-aheads
+    // 3. Cascade cleanup orphaned matrix statuses, clearances, and look-aheads
     Object.keys(state.packageStatuses).forEach(k => {
       if (k.startsWith(`${id}__`)) delete state.packageStatuses[k];
     });
@@ -473,7 +959,34 @@ export class DesignMasterStore {
       if (k.startsWith(`${id}__`)) delete state.statutoryClearances[k];
     });
     state.lookAheads = state.lookAheads.filter(la => la.projectId !== id);
+
+    // 4. Clean up child sub-projects
+    state.projects.forEach(p => {
+      if (p.parentProjectId === id) {
+        p.parentProjectId = undefined;
+        p.parentProjectName = undefined;
+      }
+    });
+
+    // 5. Log comprehensive CASCADE_DELETE Audit Trail
+    this.logAudit({
+      action: "CASCADE_DELETE",
+      entityType: proj?.isSubProject ? "SUB_PROJECT" : "PROJECT",
+      entityId: id,
+      entityName: proj?.name || "Development Project",
+      projectId: id,
+      projectName: proj?.name || "Development Project",
+      previousValue: proj,
+      newValue: null,
+      impactSummary: `Cascaded & removed ${depReport.totalDependentRecords} foreign key dependent records (${depReport.dependencies.map((d: ForeignKeyDependencyItem) => `${d.count} ${d.referencedEntityType}`).join(", ") || "No dependencies"})`,
+      foreignKeyDependencies: depReport.dependencies,
+      changedBy: deletedBy,
+      reason,
+      remarks: reason || `Deleted project "${proj?.name}" and cascaded all foreign key dependencies.`
+    });
+
     this.notify();
+    return depReport;
   }
 
   public static getTowers(projectId?: string): TowerMaster[] {
@@ -482,7 +995,7 @@ export class DesignMasterStore {
     return state.towers.filter(t => t.projectId === projectId);
   }
 
-  public static addTower(tower: Omit<TowerMaster, "id">): TowerMaster {
+  public static addTower(tower: Omit<TowerMaster, "id">, createdBy = "Design Lead"): TowerMaster {
     const state = this.getState();
     const id = `twr-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
     const newTower: TowerMaster = { ...tower, id };
@@ -504,14 +1017,36 @@ export class DesignMasterStore {
       });
     }
 
+    const parentProj = state.projects.find(p => p.id === newTower.projectId);
+    this.logAudit({
+      action: "CREATE",
+      entityType: "TOWER",
+      entityId: id,
+      entityName: newTower.towerName,
+      projectId: newTower.projectId,
+      projectName: parentProj?.name,
+      towerId: id,
+      towerName: newTower.towerName,
+      newValue: newTower,
+      impactSummary: `Created Wing "${newTower.towerName}" (${newTower.towerType}) under ${parentProj?.name || "Project"}`,
+      changedBy: createdBy
+    });
+
     this.notify();
     return newTower;
   }
 
-  public static updateTower(id: string, updates: Partial<Omit<TowerMaster, "id">>): TowerMaster | null {
+  public static updateTower(
+    id: string,
+    updates: Partial<Omit<TowerMaster, "id">>,
+    changedBy = "Design Lead",
+    reason?: string
+  ): TowerMaster | null {
     const state = this.getState();
     const idx = state.towers.findIndex(t => t.id === id);
     if (idx === -1) return null;
+
+    const oldTower = { ...state.towers[idx] };
     state.towers[idx] = { ...state.towers[idx], ...updates };
     const updatedTower = state.towers[idx];
 
@@ -531,30 +1066,91 @@ export class DesignMasterStore {
       });
     }
 
+    const parentProj = state.projects.find(p => p.id === updatedTower.projectId);
+    this.logAudit({
+      action: "UPDATE",
+      entityType: "TOWER",
+      entityId: id,
+      entityName: updatedTower.towerName,
+      projectId: updatedTower.projectId,
+      projectName: parentProj?.name,
+      towerId: id,
+      towerName: updatedTower.towerName,
+      previousValue: oldTower,
+      newValue: updatedTower,
+      impactSummary: `Updated Wing "${updatedTower.towerName}" parameters`,
+      changedBy,
+      reason
+    });
+
     this.notify();
     return state.towers[idx];
   }
 
-  public static deleteTower(id: string): void {
+  public static deleteTower(id: string, reason?: string, deletedBy = "Design Lead"): EntityDependencyReport {
     const state = this.getState();
+    const twr = state.towers.find(t => t.id === id);
+    const depReport = this.getEntityDependencies("TOWER", id);
+    const parentProj = twr ? state.projects.find(p => p.id === twr.projectId) : null;
+
+    // 1. Remove tower
     state.towers = state.towers.filter(t => t.id !== id);
+
+    // 2. Cascade cleanup matrix cells, look-aheads, statutory clearances referencing towerId
+    Object.keys(state.packageStatuses).forEach(k => {
+      if (k.includes(`__${id}__`)) delete state.packageStatuses[k];
+    });
+    Object.keys(state.statutoryClearances).forEach(k => {
+      if (k.includes(`__${id}__`)) delete state.statutoryClearances[k];
+    });
     state.lookAheads = state.lookAheads.filter(la => la.towerId !== id);
+
+    // 3. Log Audit Trail
+    this.logAudit({
+      action: "CASCADE_DELETE",
+      entityType: "TOWER",
+      entityId: id,
+      entityName: twr?.towerName || "Wing",
+      projectId: twr?.projectId,
+      projectName: parentProj?.name,
+      towerId: id,
+      towerName: twr?.towerName,
+      previousValue: twr,
+      newValue: null,
+      impactSummary: `Cascaded & removed ${depReport.totalDependentRecords} records attached to Wing "${twr?.towerName}"`,
+      foreignKeyDependencies: depReport.dependencies,
+      changedBy: deletedBy,
+      reason
+    });
+
     this.notify();
+    return depReport;
   }
 
   // ============================================================================
-  // Master Management: Disciplines & Work Packages (CRUD)
+  // Master Management: Disciplines & Work Packages (CRUD) with Audit Tracking
   // ============================================================================
 
   public static getDisciplines(): DisciplineMaster[] {
     return this.getState().disciplines;
   }
 
-  public static addDiscipline(name: string, code: string, icon = "📁"): DisciplineMaster {
+  public static addDiscipline(name: string, code: string, icon = "📁", createdBy = "Design Lead"): DisciplineMaster {
     const state = this.getState();
     const id = `disc-${Date.now().toString(36)}`;
     const newDisc: DisciplineMaster = { id, name, code, icon };
     state.disciplines.push(newDisc);
+
+    this.logAudit({
+      action: "CREATE",
+      entityType: "PACKAGE",
+      entityId: id,
+      entityName: name,
+      newValue: newDisc,
+      impactSummary: `Created Discipline "${name}" (${code})`,
+      changedBy: createdBy
+    });
+
     this.notify();
     return newDisc;
   }
@@ -565,70 +1161,179 @@ export class DesignMasterStore {
     return state.packages.filter(p => p.disciplineName === disciplineName);
   }
 
-  public static addPackage(pkg: Omit<WorkPackageMaster, "id">): WorkPackageMaster {
+  public static addPackage(pkg: Omit<WorkPackageMaster, "id">, createdBy = "Design Lead"): WorkPackageMaster {
     const state = this.getState();
     const id = `pkg-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
     const newPkg: WorkPackageMaster = { ...pkg, id };
     state.packages.push(newPkg);
+
+    this.logAudit({
+      action: "CREATE",
+      entityType: "PACKAGE",
+      entityId: id,
+      entityName: newPkg.packageName,
+      packageId: id,
+      packageName: newPkg.packageName,
+      disciplineName: newPkg.disciplineName,
+      newValue: newPkg,
+      impactSummary: `Created Work Package "${newPkg.packageName}" under [${newPkg.disciplineName}]`,
+      changedBy: createdBy
+    });
+
     this.notify();
     return newPkg;
   }
 
-  public static updatePackage(id: string, updates: Partial<Omit<WorkPackageMaster, "id">>): WorkPackageMaster | null {
+  public static updatePackage(
+    id: string,
+    updates: Partial<Omit<WorkPackageMaster, "id">>,
+    changedBy = "Design Lead",
+    reason?: string
+  ): WorkPackageMaster | null {
     const state = this.getState();
     const idx = state.packages.findIndex(p => p.id === id);
     if (idx === -1) return null;
+
+    const oldPkg = { ...state.packages[idx] };
     state.packages[idx] = { ...state.packages[idx], ...updates };
+    const updatedPkg = state.packages[idx];
+
+    this.logAudit({
+      action: "UPDATE",
+      entityType: "PACKAGE",
+      entityId: id,
+      entityName: updatedPkg.packageName,
+      packageId: id,
+      packageName: updatedPkg.packageName,
+      disciplineName: updatedPkg.disciplineName,
+      previousValue: oldPkg,
+      newValue: updatedPkg,
+      impactSummary: `Updated Work Package "${updatedPkg.packageName}"`,
+      changedBy,
+      reason
+    });
+
     this.notify();
     return state.packages[idx];
   }
 
-  public static deletePackage(id: string): void {
+  public static deletePackage(id: string, reason?: string, deletedBy = "Design Lead"): EntityDependencyReport {
     const state = this.getState();
+    const pkg = state.packages.find(p => p.id === id);
+    const depReport = this.getEntityDependencies("PACKAGE", id);
+
     state.packages = state.packages.filter(p => p.id !== id);
     Object.keys(state.packageStatuses).forEach(k => {
       if (k.endsWith(`__${id}`)) delete state.packageStatuses[k];
     });
+
+    this.logAudit({
+      action: "CASCADE_DELETE",
+      entityType: "PACKAGE",
+      entityId: id,
+      entityName: pkg?.packageName || "Work Package",
+      packageId: id,
+      packageName: pkg?.packageName,
+      disciplineName: pkg?.disciplineName,
+      previousValue: pkg,
+      newValue: null,
+      impactSummary: `Cascaded & removed ${depReport.totalDependentRecords} records referencing package "${pkg?.packageName}"`,
+      foreignKeyDependencies: depReport.dependencies,
+      changedBy: deletedBy,
+      reason
+    });
+
     this.notify();
+    return depReport;
   }
 
   // ============================================================================
-  // Master Management: Statutory Authorities (CRUD)
+  // Master Management: Statutory Authorities (CRUD) with Audit Tracking
   // ============================================================================
 
   public static getAuthorities(): StatutoryAuthorityMaster[] {
     return this.getState().authorities;
   }
 
-  public static addAuthority(auth: Omit<StatutoryAuthorityMaster, "id">): StatutoryAuthorityMaster {
+  public static addAuthority(auth: Omit<StatutoryAuthorityMaster, "id">, createdBy = "Design Lead"): StatutoryAuthorityMaster {
     const state = this.getState();
     const id = `auth-${Date.now().toString(36)}`;
     const newAuth: StatutoryAuthorityMaster = { ...auth, id };
     state.authorities.push(newAuth);
+
+    this.logAudit({
+      action: "CREATE",
+      entityType: "AUTHORITY",
+      entityId: id,
+      entityName: newAuth.authorityName,
+      newValue: newAuth,
+      impactSummary: `Created Statutory Authority "${newAuth.authorityName}" (${newAuth.category})`,
+      changedBy: createdBy
+    });
+
     this.notify();
     return newAuth;
   }
 
-  public static updateAuthority(id: string, updates: Partial<Omit<StatutoryAuthorityMaster, "id">>): StatutoryAuthorityMaster | null {
+  public static updateAuthority(
+    id: string,
+    updates: Partial<Omit<StatutoryAuthorityMaster, "id">>,
+    changedBy = "Design Lead",
+    reason?: string
+  ): StatutoryAuthorityMaster | null {
     const state = this.getState();
     const idx = state.authorities.findIndex(a => a.id === id);
     if (idx === -1) return null;
+
+    const oldAuth = { ...state.authorities[idx] };
     state.authorities[idx] = { ...state.authorities[idx], ...updates };
+    const updatedAuth = state.authorities[idx];
+
+    this.logAudit({
+      action: "UPDATE",
+      entityType: "AUTHORITY",
+      entityId: id,
+      entityName: updatedAuth.authorityName,
+      previousValue: oldAuth,
+      newValue: updatedAuth,
+      impactSummary: `Updated Statutory Authority "${updatedAuth.authorityName}"`,
+      changedBy,
+      reason
+    });
+
     this.notify();
     return state.authorities[idx];
   }
 
-  public static deleteAuthority(id: string): void {
+  public static deleteAuthority(id: string, reason?: string, deletedBy = "Design Lead"): EntityDependencyReport {
     const state = this.getState();
+    const auth = state.authorities.find(a => a.id === id);
+    const depReport = this.getEntityDependencies("AUTHORITY", id);
+
     state.authorities = state.authorities.filter(a => a.id !== id);
     Object.keys(state.statutoryClearances).forEach(k => {
       if (k.endsWith(`__${id}`)) delete state.statutoryClearances[k];
     });
+
+    this.logAudit({
+      action: "CASCADE_DELETE",
+      entityType: "AUTHORITY",
+      entityId: id,
+      entityName: auth?.authorityName || "Statutory Authority",
+      previousValue: auth,
+      newValue: null,
+      impactSummary: `Cascaded & removed ${depReport.totalDependentRecords} clearances attached to "${auth?.authorityName}"`,
+      foreignKeyDependencies: depReport.dependencies,
+      changedBy: deletedBy,
+      reason
+    });
+
     this.notify();
+    return depReport;
   }
 
   // ============================================================================
-  // Master Management: Consultants Directory (CRUD) with Multi-Expertise & Onboarding
+  // Master Management: Consultants Directory (CRUD) with Foreign Key Audit Tracking
   // ============================================================================
 
   public static getConsultants(): ConsultantPartner[] {
@@ -637,7 +1342,10 @@ export class DesignMasterStore {
     return state.consultants;
   }
 
-  public static addConsultant(c: Omit<ConsultantPartner, "id" | "onboardingStatus"> & { onboardingStatus?: "Onboard" | "Not Onboard" }): ConsultantPartner {
+  public static addConsultant(
+    c: Omit<ConsultantPartner, "id" | "onboardingStatus"> & { onboardingStatus?: "Onboard" | "Not Onboard" },
+    createdBy = "Design Lead"
+  ): ConsultantPartner {
     const state = this.getState();
     const id = `cst-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
     const activeProjects = c.activeProjects || [];
@@ -657,17 +1365,36 @@ export class DesignMasterStore {
     
     if (!state.consultants) state.consultants = [];
     state.consultants.unshift(newC);
+
+    this.logAudit({
+      action: "CREATE",
+      entityType: "CONSULTANT",
+      entityId: id,
+      entityName: newC.name,
+      consultantId: id,
+      consultantName: newC.name,
+      newValue: newC,
+      impactSummary: `Registered Consultant Partner "${newC.name}" (${newC.category}) with ${newC.expertise?.length || 0} packages and status "${onboardingStatus}"`,
+      changedBy: createdBy
+    });
+
     this.notify();
     return newC;
   }
 
-  public static updateConsultant(id: string, updates: Partial<Omit<ConsultantPartner, "id">>): ConsultantPartner | null {
+  public static updateConsultant(
+    id: string,
+    updates: Partial<Omit<ConsultantPartner, "id">>,
+    changedBy = "Design Lead",
+    reason?: string
+  ): ConsultantPartner | null {
     const state = this.getState();
     if (!state.consultants) return null;
     const idx = state.consultants.findIndex(c => c.id === id);
     if (idx === -1) return null;
 
     const current = state.consultants[idx];
+    const oldConsultant = { ...current };
     const newActiveProjects = updates.activeProjects !== undefined ? updates.activeProjects : current.activeProjects;
     const newOnboardingStatus: "Onboard" | "Not Onboard" = (newActiveProjects && newActiveProjects.length > 0) ? "Onboard" : "Not Onboard";
 
@@ -677,15 +1404,95 @@ export class DesignMasterStore {
       activeProjects: newActiveProjects,
       onboardingStatus: newOnboardingStatus
     };
+    const updatedCons = state.consultants[idx];
+
+    // Foreign Key propagation if Consultant Name changed
+    if (updates.name && updates.name !== oldConsultant.name) {
+      // 1. Projects taggedConsultants
+      state.projects.forEach(p => {
+        if (p.taggedConsultants?.includes(oldConsultant.name)) {
+          p.taggedConsultants = p.taggedConsultants.map(cn => cn === oldConsultant.name ? updates.name! : cn);
+        }
+      });
+      // 2. Towers taggedConsultants
+      state.towers.forEach(t => {
+        if (t.taggedConsultants?.includes(oldConsultant.name)) {
+          t.taggedConsultants = t.taggedConsultants.map(cn => cn === oldConsultant.name ? updates.name! : cn);
+        }
+      });
+      // 3. Matrix consultantName
+      Object.values(state.packageStatuses).forEach(ps => {
+        if (ps.consultantName === oldConsultant.name) {
+          ps.consultantName = updates.name;
+        }
+      });
+      // 4. Drawings consultant
+      (state.drawings || []).forEach(d => {
+        if (d.consultant === oldConsultant.name) d.consultant = updates.name!;
+      });
+    }
+
+    this.logAudit({
+      action: "UPDATE",
+      entityType: "CONSULTANT",
+      entityId: id,
+      entityName: updatedCons.name,
+      consultantId: id,
+      consultantName: updatedCons.name,
+      previousValue: oldConsultant,
+      newValue: updatedCons,
+      impactSummary: `Updated consultant profile and synchronized foreign key references across projects and drawings`,
+      changedBy,
+      reason
+    });
+
     this.notify();
     return state.consultants[idx];
   }
 
-  public static deleteConsultant(id: string): void {
+  public static deleteConsultant(id: string, reason?: string, deletedBy = "Design Lead"): EntityDependencyReport {
     const state = this.getState();
-    if (!state.consultants) return;
+    if (!state.consultants) return { entityType: "CONSULTANT", entityId: id, entityName: id, totalDependentRecords: 0, dependencies: [], isReferencedByOtherRecords: false };
+    
+    const cons = state.consultants.find(c => c.id === id);
+    const depReport = this.getEntityDependencies("CONSULTANT", id);
+    const consName = cons?.name || id;
+
+    // 1. Untag from projects
+    state.projects.forEach(p => {
+      if (p.taggedConsultants) {
+        p.taggedConsultants = p.taggedConsultants.filter(c => c !== consName && c !== id);
+      }
+    });
+
+    // 2. Untag from towers
+    state.towers.forEach(t => {
+      if (t.taggedConsultants) {
+        t.taggedConsultants = t.taggedConsultants.filter(c => c !== consName && c !== id);
+      }
+    });
+
+    // 3. Remove consultant record
     state.consultants = state.consultants.filter(c => c.id !== id);
+
+    // 4. Log Audit Trail
+    this.logAudit({
+      action: "CASCADE_DELETE",
+      entityType: "CONSULTANT",
+      entityId: id,
+      entityName: consName,
+      consultantId: id,
+      consultantName: consName,
+      previousValue: cons,
+      newValue: null,
+      impactSummary: `Untagged consultant from ${depReport.totalDependentRecords} referencing projects/towers and deleted profile`,
+      foreignKeyDependencies: depReport.dependencies,
+      changedBy: deletedBy,
+      reason
+    });
+
     this.notify();
+    return depReport;
   }
 
   // ============================================================================
@@ -864,6 +1671,8 @@ export class DesignMasterStore {
     projectId?: string;
     packageId?: string;
     entryKey?: string;
+    action?: string;
+    entityType?: string;
   }): MatrixAuditLog[] {
     const state = this.getState();
     let logs = state.auditLogs || [];
@@ -875,6 +1684,12 @@ export class DesignMasterStore {
     }
     if (filters?.packageId && filters.packageId !== "ALL") {
       logs = logs.filter(l => l.packageId === filters.packageId);
+    }
+    if (filters?.action && filters.action !== "ALL") {
+      logs = logs.filter(l => l.action === filters.action);
+    }
+    if (filters?.entityType && filters.entityType !== "ALL") {
+      logs = logs.filter(l => l.entityType === filters.entityType);
     }
     return logs;
   }

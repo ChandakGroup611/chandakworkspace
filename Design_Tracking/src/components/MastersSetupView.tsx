@@ -9,7 +9,8 @@ import {
   ProjectMaster, 
   TowerMaster, 
   WorkPackageMaster, 
-  StatutoryAuthorityMaster 
+  StatutoryAuthorityMaster,
+  EntityDependencyReport
 } from "../types/masterTypes";
 import { 
   Building2, 
@@ -33,6 +34,7 @@ import {
   Tag
 } from "lucide-react";
 import { DesignRbacGovernance } from "./DesignRbacGovernance";
+import { DeleteDependencyModal } from "./DeleteDependencyModal";
 
 type MasterSubTab = "PROJECTS" | "PACKAGES" | "AUTHORITIES" | "RBAC" | "TEMPLATES";
 
@@ -43,6 +45,30 @@ interface MastersSetupViewProps {
 export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTab = "PROJECTS" }) => {
   const [storeState, setStoreState] = useState<MasterStoreState>(DesignMasterStore.getState());
   const [activeSubTab, setActiveSubTab] = useState<MasterSubTab>(initialSubTab);
+
+  // Foreign Key Dependency Delete Modal State
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteModalReport, setDeleteModalReport] = useState<EntityDependencyReport | null>(null);
+  const [activeDeleteExecutor, setActiveDeleteExecutor] = useState<((reason: string) => void) | null>(null);
+
+  const handleTriggerDelete = (
+    entityType: "PROJECT" | "SUB_PROJECT" | "TOWER" | "PACKAGE" | "CONSULTANT" | "AUTHORITY",
+    entityId: string,
+    executor: (reason: string) => void
+  ) => {
+    const report = DesignMasterStore.getEntityDependencies(entityType, entityId);
+    setDeleteModalReport(report);
+    setActiveDeleteExecutor(() => executor);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleExecuteDelete = (reason: string) => {
+    if (activeDeleteExecutor) {
+      activeDeleteExecutor(reason);
+    }
+    setIsDeleteModalOpen(false);
+    setActiveDeleteExecutor(null);
+  };
 
   // Sync activeSubTab if initialSubTab prop changes
   useEffect(() => {
@@ -580,13 +606,11 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                           </button>
                           <button
                             type="button"
-                            onClick={() => {
-                              if (confirm(`Delete project "${proj.name}" and all its associated wings?`)) {
-                                DesignMasterStore.deleteProject(proj.id);
-                              }
-                            }}
+                            onClick={() => handleTriggerDelete(proj.isSubProject ? "SUB_PROJECT" : "PROJECT", proj.id, (reason) => {
+                              DesignMasterStore.deleteProject(proj.id, reason, "Design Lead");
+                            })}
                             className="h-7 w-7 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 flex items-center justify-center transition-colors cursor-pointer"
-                            title="Delete project"
+                            title="Delete project & inspect foreign key dependencies"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
@@ -707,9 +731,11 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                               </button>
                               <button
                                 type="button"
-                                onClick={() => DesignMasterStore.deleteTower(twr.id)}
+                                onClick={() => handleTriggerDelete("TOWER", twr.id, (reason) => {
+                                  DesignMasterStore.deleteTower(twr.id, reason, "Design Lead");
+                                })}
                                 className="text-muted-foreground hover:text-rose-500 ml-0.5 cursor-pointer p-0.5"
-                                title="Delete wing"
+                                title="Delete wing & inspect foreign key dependencies"
                               >
                                 <X className="h-2.5 w-2.5" />
                               </button>
@@ -903,13 +929,11 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                               </button>
                               <button
                                 type="button"
-                                onClick={() => {
-                                  if (confirm(`Delete work package "${pkg.packageName}" from master?`)) {
-                                    DesignMasterStore.deletePackage(pkg.id);
-                                  }
-                                }}
+                                onClick={() => handleTriggerDelete("PACKAGE", pkg.id, (reason) => {
+                                  DesignMasterStore.deletePackage(pkg.id, reason, "Design Lead");
+                                })}
                                 className="h-7 w-7 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 inline-flex items-center justify-center transition-colors cursor-pointer"
-                                title="Delete work package"
+                                title="Delete work package & inspect foreign key dependencies"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                               </button>
@@ -957,6 +981,16 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                     </h4>
                     <p className="text-[11px] text-muted-foreground mt-0.5">{auth.scope}</p>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => handleTriggerDelete("AUTHORITY", auth.id, (reason) => {
+                      DesignMasterStore.deleteAuthority(auth.id, reason, "Design Lead");
+                    })}
+                    className="h-7 w-7 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                    title="Delete authority & inspect foreign key dependencies"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               </div>
             ))}
@@ -2548,6 +2582,18 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
           </div>
         </div>
       )}
+
+      {/* Foreign Key Dependency Guard Deletion Modal */}
+      <DeleteDependencyModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setActiveDeleteExecutor(null);
+          setDeleteModalReport(null);
+        }}
+        dependencyReport={deleteModalReport}
+        onConfirmDelete={handleExecuteDelete}
+      />
     </div>
   );
 };

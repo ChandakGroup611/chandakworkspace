@@ -96,28 +96,59 @@ export interface PackageStatusEntry {
   updatedBy?: string;
 }
 
-// Audit Trail Entry for Design Matrix & Package status mutations
+// ==============================================================================
+// Foreign Key Dependency & Referential Integrity Tracking
+// ==============================================================================
+
+export interface ForeignKeyDependencyItem {
+  foreignKeyField: string; // e.g. "projectId", "towerId", "packageId", "consultantId", "authorityId"
+  referencedEntityType: string; // e.g. "Sub-Project", "Tower / Wing", "Matrix Status Cell", "Look-Ahead Milestone", "Statutory Clearance", "Drawing Register", "Transmittal", "RFI"
+  count: number;
+  previewItems: string[];
+  canCascade: boolean;
+}
+
+export interface EntityDependencyReport {
+  entityType: "PROJECT" | "SUB_PROJECT" | "TOWER" | "PACKAGE" | "CONSULTANT" | "AUTHORITY";
+  entityId: string;
+  entityName: string;
+  totalDependentRecords: number;
+  dependencies: ForeignKeyDependencyItem[];
+  isReferencedByOtherRecords: boolean;
+}
+
+// Audit Trail Entry for Design Matrix, Masters, and Transactional CRUD & Foreign Key Cascades
 export interface MatrixAuditLog {
   id: string;
-  entryKey: string; // `${projectId}__${towerId}__${packageId}`
-  projectId: string;
-  projectName: string;
-  towerId: string;
-  towerName: string;
-  packageId: string;
-  packageName: string;
+  entryKey?: string; // `${projectId}__${towerId}__${packageId}` or `${entityType}__${entityId}`
+  action?: "CREATE" | "UPDATE" | "DELETE" | "CASCADE_DELETE" | "STATUS_CHANGE";
+  entityType?: "PROJECT" | "SUB_PROJECT" | "TOWER" | "PACKAGE" | "CONSULTANT" | "AUTHORITY" | "MATRIX_CELL" | "LOOK_AHEAD" | "LIAISON" | "DRAWING" | "TRANSMITTAL" | "RFI";
+  entityId?: string;
+  entityName?: string;
+  projectId?: string;
+  projectName?: string;
+  towerId?: string;
+  towerName?: string;
+  packageId?: string;
+  packageName?: string;
   disciplineName?: string;
   previousStatus?: string;
-  newStatus: string;
+  newStatus?: string;
   previousPlannedDate?: string;
-  newPlannedDate: string;
+  newPlannedDate?: string;
   previousActualDate?: string;
-  newActualDate: string;
+  newActualDate?: string;
+  consultantId?: string;
   consultantName?: string;
+  previousValue?: any;
+  newValue?: any;
+  impactSummary?: string;
+  foreignKeyDependencies?: ForeignKeyDependencyItem[];
   changedBy: string;
   changedByEmail?: string;
   timestamp: string;
   remarks?: string;
+  reason?: string;
   mailSent: boolean;
   mailRecipientCount?: number;
   mailSubject?: string;

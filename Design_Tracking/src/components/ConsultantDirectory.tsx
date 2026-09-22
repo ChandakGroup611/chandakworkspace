@@ -25,12 +25,15 @@ import {
   Sparkles, 
   ShieldCheck 
 } from "lucide-react";
+import { DeleteDependencyModal } from "./DeleteDependencyModal";
+import { DesignMasterStore } from "../services/designMasterStore";
+import { EntityDependencyReport } from "../types/masterTypes";
 
 interface ConsultantDirectoryProps {
   consultants: ConsultantPartner[];
   onAddConsultant?: (consultant: Omit<ConsultantPartner, "id">) => void;
   onUpdateConsultant?: (id: string, updates: Partial<ConsultantPartner>) => void;
-  onDeleteConsultant?: (id: string) => void;
+  onDeleteConsultant?: (id: string, reason?: string) => void;
   availableProjects?: string[];
   availableWorkPackages?: string[];
 }
@@ -52,6 +55,11 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
   // Modal states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingConsultant, setEditingConsultant] = useState<ConsultantPartner | null>(null);
+
+  // Foreign Key Dependency Delete Modal State
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteModalReport, setDeleteModalReport] = useState<EntityDependencyReport | null>(null);
+  const [consultantToDeleteId, setConsultantToDeleteId] = useState<string | null>(null);
 
   // Form State for Add / Edit
   const [name, setName] = useState("");
@@ -189,6 +197,25 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
 
     setIsAddModalOpen(false);
     setEditingConsultant(null);
+  };
+
+  const handleTriggerDeleteConsultant = (c: ConsultantPartner) => {
+    const report = DesignMasterStore.getEntityDependencies("CONSULTANT", c.id);
+    setDeleteModalReport(report);
+    setConsultantToDeleteId(c.id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDeleteConsultant = (reason: string) => {
+    if (consultantToDeleteId) {
+      if (onDeleteConsultant) {
+        onDeleteConsultant(consultantToDeleteId, reason);
+      } else {
+        DesignMasterStore.deleteConsultant(consultantToDeleteId, reason, "Design Lead");
+      }
+      setIsDeleteModalOpen(false);
+      setConsultantToDeleteId(null);
+    }
   };
 
   // Filtered Consultants
@@ -605,20 +632,14 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
                     </button>
 
                     {/* Delete Button */}
-                    {onDeleteConsultant && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (confirm(`Remove consultant "${c.name}" from directory?`)) {
-                            onDeleteConsultant(c.id);
-                          }
-                        }}
-                        className="h-7 w-7 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 flex items-center justify-center transition-colors cursor-pointer"
-                        title="Delete consultant"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleTriggerDeleteConsultant(c)}
+                      className="h-7 w-7 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 flex items-center justify-center transition-colors cursor-pointer"
+                      title="Delete consultant & inspect foreign key dependencies"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
                   </div>
                 </div>
 
@@ -1046,6 +1067,17 @@ export const ConsultantDirectory: React.FC<ConsultantDirectoryProps> = ({
           </div>
         </div>
       )}
+
+      {/* Foreign Key Dependency Guard Deletion Modal */}
+      <DeleteDependencyModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setConsultantToDeleteId(null);
+        }}
+        dependencyReport={deleteModalReport}
+        onConfirmDelete={handleConfirmDeleteConsultant}
+      />
     </div>
   );
 };
