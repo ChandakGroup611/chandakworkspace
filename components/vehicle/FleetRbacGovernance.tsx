@@ -503,16 +503,9 @@ export default function FleetRbacGovernance() {
                     }`}
                   >
                     <div className="flex flex-col min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-foreground truncate">
-                          {role.label}
-                        </span>
-                        {role.isSystem && (
-                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-bold uppercase">
-                            System
-                          </span>
-                        )}
-                      </div>
+                      <span className="text-xs font-bold text-foreground truncate">
+                        {role.label}
+                      </span>
                       <span className="text-[10px] text-muted-foreground font-mono mt-0.5">
                         {role.code}
                       </span>
@@ -556,7 +549,7 @@ export default function FleetRbacGovernance() {
 
                 <div className="overflow-x-auto rounded-xl border border-border/60">
                   <table className="w-full text-xs text-left">
-                    <thead className="bg-muted/40 text-muted-foreground uppercase font-bold text-[10px] tracking-wider border-b border-border/50">
+                    <thead className="bg-surface/80 text-muted-foreground uppercase font-bold text-[10px] tracking-wider border-b border-border/50">
                       <tr>
                         <th className="py-3 px-4">Module</th>
                         <th className="py-3 px-3 text-center">View</th>
@@ -582,7 +575,7 @@ export default function FleetRbacGovernance() {
                         };
 
                         return (
-                          <tr key={mod.code} className="hover:bg-muted/20 transition-colors">
+                          <tr key={mod.code} className="hover:bg-surface/50 transition-colors">
                             <td className="py-3 px-4 flex items-center gap-2 text-foreground font-semibold">
                               <ModIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                               <span>{mod.label}</span>
@@ -668,7 +661,7 @@ export default function FleetRbacGovernance() {
           {/* Personnel Table */}
           <div className="overflow-x-auto rounded-2xl border border-border bg-card">
             <table className="w-full text-xs text-left">
-              <thead className="bg-muted/40 text-muted-foreground uppercase font-bold text-[10px] tracking-wider border-b border-border/50">
+              <thead className="bg-surface/80 text-muted-foreground uppercase font-bold text-[10px] tracking-wider border-b border-border/50">
                 <tr>
                   <th className="py-3.5 px-4">Personnel</th>
                   <th className="py-3.5 px-4">Department & Designation</th>
@@ -696,7 +689,7 @@ export default function FleetRbacGovernance() {
                     const roleDef = roleMap.get(assignedRoleCode);
 
                     return (
-                      <tr key={user.id} className="hover:bg-muted/20 transition-colors">
+                      <tr key={user.id} className="hover:bg-surface/50 transition-colors">
                         <td className="py-3.5 px-4">
                           <div className="flex items-center gap-3">
                             <div className="h-8 w-8 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold flex items-center justify-center border border-amber-500/20 text-xs shrink-0">
@@ -732,17 +725,17 @@ export default function FleetRbacGovernance() {
                             className={`px-2.5 py-1 rounded-full text-[10px] font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
                               user.hasModuleAccess
                                 ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20"
-                                : "bg-muted text-muted-foreground border-border hover:bg-muted/80"
+                                : "bg-surface text-muted-foreground border-border hover:bg-surface/80"
                             }`}
                           >
-                            <span className={`h-1.5 w-1.5 rounded-full ${user.hasModuleAccess ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground"}`} />
+                            <span className={`h-1.5 w-1.5 rounded-full ${user.hasModuleAccess ? "bg-emerald-500 animate-pulse" : "bg-slate-400"}`} />
                             <span>{user.hasModuleAccess ? "Access Active" : "Disabled"}</span>
                           </button>
                         </td>
 
                         <td className="py-3.5 px-4">
                           {user.hasModuleAccess ? (
-                            <span className={`text-[10px] px-2.5 py-1 rounded-lg font-bold border inline-flex items-center gap-1.5 ${roleDef?.badgeColor || 'bg-muted text-muted-foreground'}`}>
+                            <span className={`text-[10px] px-2.5 py-1 rounded-lg font-bold border inline-flex items-center gap-1.5 ${roleDef?.badgeColor || 'bg-surface text-muted-foreground border-border'}`}>
                               <ShieldCheck className="h-3 w-3" />
                               <span>{roleDef?.label || assignedRoleCode}</span>
                             </span>
@@ -788,7 +781,7 @@ export default function FleetRbacGovernance() {
 
             <div className="overflow-x-auto rounded-xl border border-border/60">
               <table className="w-full text-xs text-left">
-                <thead className="bg-muted/40 text-muted-foreground uppercase font-bold text-[10px] tracking-wider border-b border-border/50">
+                <thead className="bg-surface/80 text-muted-foreground uppercase font-bold text-[10px] tracking-wider border-b border-border/50">
                   <tr>
                     <th className="py-3 px-4">Fleet Role</th>
                     {FLEET_MODULE_LIST.map(m => (
@@ -798,7 +791,7 @@ export default function FleetRbacGovernance() {
                 </thead>
                 <tbody className="divide-y divide-border/40 font-medium">
                   {allRoles.map(role => (
-                    <tr key={role.code} className="hover:bg-muted/20 transition-colors">
+                    <tr key={role.code} className="hover:bg-surface/50 transition-colors">
                       <td className="py-3 px-4 font-bold text-foreground flex items-center gap-2">
                         <span className={`text-[10px] px-2 py-0.5 rounded font-bold border ${role.badgeColor}`}>
                           {role.label}
