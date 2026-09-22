@@ -252,3 +252,66 @@ export async function toggleUserFleetModuleAccessAction(userId: string, enable: 
     return { success: false, error: err.message || "Failed to toggle module access" };
   }
 }
+
+/**
+ * Fetch the current authenticated user's own fleet access record
+ */
+export async function fetchMyFleetAccessAction(): Promise<{
+  success: boolean;
+  fleetAccess?: FleetUserAccessRecord | null;
+  globalRoleCode?: string;
+  isSuperAdmin?: boolean;
+  error?: string;
+}> {
+  try {
+    const { user } = await getCachedUser();
+    if (!user) {
+      return { success: false, error: "Unauthenticated" };
+    }
+
+    const [profileRes, fleetAccessRes] = await Promise.all([
+      supabaseAdmin
+        .from("user_master")
+        .select("role:roles(code)")
+        .eq("id", user.id)
+        .single(),
+      supabaseAdmin
+        .from("fleet_user_access")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle()
+    ]);
+
+    const globalRoleCode = (profileRes.data?.role as any)?.code || "";
+    const isSuperAdmin = ["SUPER_ADMIN", "ROLE_ADMIN", "ADMIN_ROLE", "ADMIN"].includes(globalRoleCode.toUpperCase());
+
+    let fleetAccess: FleetUserAccessRecord | null = null;
+    if (fleetAccessRes.data) {
+      const row = fleetAccessRes.data;
+      fleetAccess = {
+        id: row.id,
+        userId: row.user_id,
+        fleetRole: row.fleet_role,
+        scopeType: row.scope_type || "ALL_VEHICLES",
+        assignedVehicleIds: row.assigned_vehicle_ids || [],
+        canManageVehicles: !!row.can_manage_vehicles,
+        canManageDrivers: !!row.can_manage_drivers,
+        canDispatchTrips: !!row.can_dispatch_trips,
+        canManageMaintenance: !!row.can_manage_maintenance,
+        canViewReports: !!row.can_view_reports,
+        canManageSettings: !!row.can_manage_settings,
+        updatedAt: row.updated_at
+      };
+    }
+
+    return {
+      success: true,
+      fleetAccess,
+      globalRoleCode,
+      isSuperAdmin
+    };
+  } catch (err: any) {
+    console.error("fetchMyFleetAccessAction error:", err);
+    return { success: false, error: err.message || "Failed to fetch user fleet access" };
+  }
+}
