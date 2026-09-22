@@ -8,8 +8,10 @@ import { AppBadge } from "@/components/ui/AppBadge";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Calendar, Plus, Save, Trash2, MapPin, Clock, Edit2 } from "lucide-react";
+import { Calendar, Plus, Save, Trash2, MapPin, Clock, Edit2, Shield } from "lucide-react";
 import { toast } from "react-toastify";
+import { usePermissions } from "@/hooks/usePermissions";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 
 // Mock data for UI demonstration since DB tables might not exist locally
 const initialHolidays = [
@@ -24,6 +26,13 @@ const initialWorkingHours = [
 ];
 
 export default function HolidayCalendar() {
+  const { hasPermission, roleCode, loading: permsLoading } = usePermissions();
+  const isSuperAdmin = roleCode === "SUPER_ADMIN";
+  const canView = isSuperAdmin || hasPermission("SLA_VIEW");
+  const canCreate = isSuperAdmin || hasPermission("SLA_CREATE") || hasPermission("SLA_MANAGE");
+  const canUpdate = isSuperAdmin || hasPermission("SLA_UPDATE") || hasPermission("SLA_MANAGE");
+  const canDelete = isSuperAdmin || hasPermission("SLA_DELETE") || hasPermission("SLA_MANAGE");
+
   const [holidays, setHolidays] = useState(initialHolidays);
   const [workingHours, setWorkingHours] = useState(initialWorkingHours);
   const [activeTab, setActiveTab] = useState<"holidays" | "working_hours">("holidays");
@@ -36,6 +45,10 @@ export default function HolidayCalendar() {
   const [scheduleForm, setScheduleForm] = useState({ name: "", timezone: "UTC", schedule: "" });
 
   const handleAddHoliday = () => {
+    if (!canCreate) {
+      toast.error("You do not have permission to add holidays.");
+      return;
+    }
     if (!newHoliday.name || !newHoliday.date) {
       toast.warning("Please enter holiday name and date.");
       return;
@@ -46,17 +59,29 @@ export default function HolidayCalendar() {
   };
 
   const handleDeleteHoliday = (id: string) => {
+    if (!canDelete) {
+      toast.error("You do not have permission to delete holidays.");
+      return;
+    }
     setHolidays(holidays.filter(h => h.id !== id));
     toast.success("Holiday removed.");
   };
 
   const handleOpenEditSchedule = (wh: any) => {
+    if (!canUpdate) {
+      toast.error("You do not have permission to edit working hours schedule.");
+      return;
+    }
     setEditingWorkingHours(wh);
     setScheduleForm({ name: wh.name, timezone: wh.timezone, schedule: wh.schedule });
     setShowScheduleModal(true);
   };
 
   const handleOpenCreateSchedule = () => {
+    if (!canCreate) {
+      toast.error("You do not have permission to create working hours profile.");
+      return;
+    }
     setEditingWorkingHours(null);
     setScheduleForm({ name: "", timezone: "UTC", schedule: "Mon-Fri: 09:00 - 18:00" });
     setShowScheduleModal(true);
@@ -64,6 +89,14 @@ export default function HolidayCalendar() {
 
   const handleSaveSchedule = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!editingWorkingHours && !canCreate) {
+      toast.error("You do not have permission to create working hours profile.");
+      return;
+    }
+    if (editingWorkingHours && !canUpdate) {
+      toast.error("You do not have permission to update working hours profile.");
+      return;
+    }
     if (!scheduleForm.name.trim() || !scheduleForm.schedule.trim()) {
       toast.warning("Please fill in the profile name and schedule.");
       return;
@@ -81,9 +114,35 @@ export default function HolidayCalendar() {
   };
 
   const handleDeleteWorkingHours = (id: string) => {
+    if (!canDelete) {
+      toast.error("You do not have permission to delete working hours profiles.");
+      return;
+    }
     setWorkingHours(workingHours.filter(wh => wh.id !== id));
     toast.success("Working hours profile deleted.");
   };
+
+  if (permsLoading) {
+    return (
+      <div className="h-[80vh] flex items-center justify-center">
+        <ChandakLoader size="lg" title="Loading Schedules..." subtitle="Fetching working hours & holidays" />
+      </div>
+    );
+  }
+
+  if (!canView) {
+    return (
+      <PageContainer strict={true}>
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <Shield className="w-16 h-16 text-danger mb-4 opacity-80" />
+          <h2 className="text-xl font-bold">Access Restricted</h2>
+          <p className="text-sm text-muted mt-2 max-w-md">
+            You do not have the required permissions (SLA_VIEW) to access SLA schedules and holidays.
+          </p>
+        </div>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer strict={true}>
@@ -122,33 +181,35 @@ export default function HolidayCalendar() {
         {activeTab === "holidays" ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-1 space-y-4">
-              <AppCard>
-                <div className="p-6">
-                  <h3 className="font-bold text-lg mb-4">Add Holiday</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-bold text-muted uppercase">Holiday Name</label>
-                      <AppInput value={newHoliday.name} onChange={e => setNewHoliday({...newHoliday, name: e.target.value})} placeholder="e.g. Thanksgiving" />
+              {canCreate && (
+                <AppCard>
+                  <div className="p-6">
+                    <h3 className="font-bold text-lg mb-4">Add Holiday</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-sm font-bold text-muted uppercase">Holiday Name</label>
+                        <AppInput value={newHoliday.name} onChange={e => setNewHoliday({...newHoliday, name: e.target.value})} placeholder="e.g. Thanksgiving" />
+                      </div>
+                      <div>
+                        <label className="text-sm font-bold text-muted uppercase">Date</label>
+                        <AppInput type="date" value={newHoliday.date} onChange={e => setNewHoliday({...newHoliday, date: e.target.value})} />
+                      </div>
+                      <div>
+                        <label className="text-sm font-bold text-muted uppercase">Region / Office</label>
+                        <select className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-theme-btn-primary" value={newHoliday.region} onChange={e => setNewHoliday({...newHoliday, region: e.target.value})}>
+                          <option>Global</option>
+                          <option>US Region</option>
+                          <option>EMEA Region</option>
+                          <option>APAC Region</option>
+                        </select>
+                      </div>
+                      <AppButton variant="primary" className="w-full mt-2" onClick={handleAddHoliday} leftIcon={<Plus className="w-4 h-4"/>}>
+                        Add to Calendar
+                      </AppButton>
                     </div>
-                    <div>
-                      <label className="text-sm font-bold text-muted uppercase">Date</label>
-                      <AppInput type="date" value={newHoliday.date} onChange={e => setNewHoliday({...newHoliday, date: e.target.value})} />
-                    </div>
-                    <div>
-                      <label className="text-sm font-bold text-muted uppercase">Region / Office</label>
-                      <select className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-theme-btn-primary" value={newHoliday.region} onChange={e => setNewHoliday({...newHoliday, region: e.target.value})}>
-                        <option>Global</option>
-                        <option>US Region</option>
-                        <option>EMEA Region</option>
-                        <option>APAC Region</option>
-                      </select>
-                    </div>
-                    <AppButton variant="primary" className="w-full mt-2" onClick={handleAddHoliday} leftIcon={<Plus className="w-4 h-4"/>}>
-                      Add to Calendar
-                    </AppButton>
                   </div>
-                </div>
-              </AppCard>
+                </AppCard>
+              )}
               
               <AppCard className="bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-900/30">
                 <div className="p-4 space-y-2">
@@ -160,7 +221,7 @@ export default function HolidayCalendar() {
               </AppCard>
             </div>
             
-            <div className="lg:col-span-2">
+            <div className={canCreate ? "lg:col-span-2" : "lg:col-span-3"}>
               <AppCard>
                 <div className="p-4 border-b border-border bg-surface dark:bg-surface/[0.02]">
                   <h3 className="font-bold text-sm">Upcoming Holidays (2026)</h3>
@@ -176,9 +237,11 @@ export default function HolidayCalendar() {
                           <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {holiday.region}</span>
                         </div>
                       </div>
-                      <AppButton variant="outline" size="sm" className="text-danger hover:bg-red-50" onClick={() => handleDeleteHoliday(holiday.id)}>
-                        <Trash2 className="w-4 h-4" />
-                      </AppButton>
+                      {canDelete && (
+                        <AppButton variant="outline" size="sm" className="text-danger hover:bg-red-50" onClick={() => handleDeleteHoliday(holiday.id)}>
+                          <Trash2 className="w-4 h-4" />
+                        </AppButton>
+                      )}
                     </div>
                   ))}
                   {holidays.length === 0 && (
@@ -209,26 +272,34 @@ export default function HolidayCalendar() {
                       {wh.schedule}
                     </div>
                   </div>
-                  <div className="mt-4 flex gap-2">
-                    <AppButton variant="outline" size="sm" onClick={() => handleOpenEditSchedule(wh)} leftIcon={<Edit2 className="w-3.5 h-3.5" />}>
-                      Edit Schedule
-                    </AppButton>
-                    <AppButton variant="outline" size="sm" className="text-danger hover:bg-red-50" onClick={() => handleDeleteWorkingHours(wh.id)}>
-                      Delete
-                    </AppButton>
-                  </div>
+                  {(canUpdate || canDelete) && (
+                    <div className="mt-4 flex gap-2">
+                      {canUpdate && (
+                        <AppButton variant="outline" size="sm" onClick={() => handleOpenEditSchedule(wh)} leftIcon={<Edit2 className="w-3.5 h-3.5" />}>
+                          Edit Schedule
+                        </AppButton>
+                      )}
+                      {canDelete && (
+                        <AppButton variant="outline" size="sm" className="text-danger hover:bg-red-50" onClick={() => handleDeleteWorkingHours(wh.id)}>
+                          Delete
+                        </AppButton>
+                      )}
+                    </div>
+                  )}
                 </div>
               </AppCard>
             ))}
-            <AppCard 
-              onClick={handleOpenCreateSchedule}
-              className="border-dashed border-2 flex items-center justify-center min-h-[200px] cursor-pointer hover:bg-surface dark:hover:bg-surface/[0.02] transition-colors"
-            >
-              <div className="text-center">
-                <Plus className="w-8 h-8 text-muted mx-auto mb-2" />
-                <span className="font-bold text-muted">Create Working Hours Profile</span>
-              </div>
-            </AppCard>
+            {canCreate && (
+              <AppCard 
+                onClick={handleOpenCreateSchedule}
+                className="border-dashed border-2 flex items-center justify-center min-h-[200px] cursor-pointer hover:bg-surface dark:hover:bg-surface/[0.02] transition-colors"
+              >
+                <div className="text-center">
+                  <Plus className="w-8 h-8 text-muted mx-auto mb-2" />
+                  <span className="font-bold text-muted">Create Working Hours Profile</span>
+                </div>
+              </AppCard>
+            )}
           </div>
         )}
       </div>

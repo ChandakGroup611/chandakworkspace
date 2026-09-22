@@ -250,6 +250,19 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
   const managedDepts = userScope?.managedDepartments || [];
   const canDelete = isSuperAdmin || hasPermission("TASKS_DELETE");
   const canUpdate = isSuperAdmin || hasPermission("TASKS_UPDATE");
+  const canCreate = isSuperAdmin || hasPermission("TASKS_CREATE");
+
+  const canUpdateRow = (t: Task) => {
+    if (isSuperAdmin) return true;
+    if (!effectiveUserId) return false;
+    return t.assigned_to === effectiveUserId || t.owner_id === effectiveUserId || t.participants?.some((p: any) => p.user_id === effectiveUserId && p.participation_role === 'EXECUTOR');
+  };
+
+  const canDeleteRow = (t: Task) => {
+    if (isSuperAdmin) return true;
+    if (!effectiveUserId) return false;
+    return (t.assigned_to === effectiveUserId || t.owner_id === effectiveUserId) && canDelete;
+  };
 
   const [dynamicFields, setDynamicFields] = useState<UIFieldDefinition[]>([]);
 
@@ -1115,20 +1128,22 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
             <ReportKPIBar kpis={kpis} variant="compact" className="mb-0" />
             <div className="hidden sm:block h-8 w-[1px] bg-border mx-1 shrink-0"></div>
             
-            <AppButton size="sm" onClick={() => {
-              let initialWs = selectedWorkspaceId || "";
-              let initialSubWs = "";
-              const selectedWsObj = allWorkspaces.find(w => w.id === selectedWorkspaceId);
-              if (selectedWsObj && selectedWsObj.parent_workspace_id) {
-                initialWs = selectedWsObj.parent_workspace_id;
-                initialSubWs = selectedWsObj.id;
-              }
-              setCreationWorkspaceId(initialWs);
-              setCreationSubWorkspaceId(initialSubWs);
-              setShowWorkspaceSelector(true);
-            }} leftIcon={<Plus className="h-4 w-4" />} className="h-10 px-5 rounded-xl font-bold bg-foreground text-background hover:bg-foreground/90 dark:bg-primary dark:text-primary-foreground shadow-[0_4px_14px_0_rgba(0,0,0,0.1)] dark:shadow-[0_4px_14px_0_rgba(0,182,212,0.3)] transition-all active:scale-[0.98] shrink-0 w-full sm:w-auto justify-center">
-              New Task
-            </AppButton>
+            {canCreate && (
+              <AppButton size="sm" onClick={() => {
+                let initialWs = selectedWorkspaceId || "";
+                let initialSubWs = "";
+                const selectedWsObj = allWorkspaces.find(w => w.id === selectedWorkspaceId);
+                if (selectedWsObj && selectedWsObj.parent_workspace_id) {
+                  initialWs = selectedWsObj.parent_workspace_id;
+                  initialSubWs = selectedWsObj.id;
+                }
+                setCreationWorkspaceId(initialWs);
+                setCreationSubWorkspaceId(initialSubWs);
+                setShowWorkspaceSelector(true);
+              }} leftIcon={<Plus className="h-4 w-4" />} className="h-10 px-5 rounded-xl font-bold bg-foreground text-background hover:bg-foreground/90 dark:bg-primary dark:text-primary-foreground shadow-[0_4px_14px_0_rgba(0,0,0,0.1)] dark:shadow-[0_4px_14px_0_rgba(0,182,212,0.3)] transition-all active:scale-[0.98] shrink-0 w-full sm:w-auto justify-center">
+                New Task
+              </AppButton>
+            )}
           </div>
         </header>
 
@@ -1569,7 +1584,7 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                                 <Eye className="h-3.5 w-3.5 text-theme-icon" />
                                 <span>View</span>
                               </Link>
-                              {canUpdate && (
+                              {canUpdateRow(task) && (
                                 <Link
                                   href={`/tasks/${task.id}`}
                                   className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-warning hover:bg-elevated transition-colors w-full"
@@ -1579,7 +1594,7 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                                   <span>Edit</span>
                                 </Link>
                               )}
-                              {canDelete && (
+                              {canDeleteRow(task) && (
                                 <button
                                   type="button"
                                   onClick={(e) => {
@@ -1780,15 +1795,15 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                                   <Popover.Trigger asChild>
                                     <AppButton variant="secondary" 
                                       onClick={(e) => { e.stopPropagation(); }}
-                                      className={`${canUpdate ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'} transition-opacity focus:outline-none max-w-full`} 
-                                      title={canUpdate ? "Update Department" : "Department"}
+                                      className={`${canUpdateRow(task) ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'} transition-opacity focus:outline-none max-w-full`} 
+                                      title={canUpdateRow(task) ? "Update Department" : "Department"}
                                     >
-                                      <AppBadge variant="neutral" className={`max-w-full truncate block ${canUpdate ? "border-dashed" : ""}`}>
+                                      <AppBadge variant="neutral" className={`max-w-full truncate block ${canUpdateRow(task) ? "border-dashed" : ""}`}>
                                         {task.department?.name || '—'}
                                       </AppBadge>
                                     </AppButton>
                                   </Popover.Trigger>
-                                  {canUpdate && (
+                                  {canUpdateRow(task) && (
                                     <Popover.Portal>
                                       <Popover.Content align="center" sideOffset={4} className="z-[100] w-48 p-2 theme-card-structural dark:bg-[#0B0F19] border-border rounded-xl  flex flex-col gap-1 outline-none animate-in zoom-in-95" onClick={(e) => e.stopPropagation()}>
                                         <div className="text-[10px] font-bold text-muted uppercase tracking-wider px-2 py-1 mb-1 border-b border-border/50">Update Department</div>
@@ -1837,15 +1852,15 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                                     <Popover.Trigger asChild>
                                       <AppButton variant="secondary" 
                                         onClick={(e) => { e.stopPropagation(); }}
-                                        className={`${canUpdate ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'} transition-opacity focus:outline-none max-w-full truncate px-2`} 
-                                        title={canUpdate ? "Update Status" : "Status"}
+                                        className={`${canUpdateRow(task) ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'} transition-opacity focus:outline-none max-w-full truncate px-2`} 
+                                        title={canUpdateRow(task) ? "Update Status" : "Status"}
                                       >
-                                        <AppBadge variant={task.status?.status_color ? "custom" : "neutral"} customColor={task.status?.status_color || null} className={cn(canUpdate ? "border-dashed" : "", "max-w-full truncate block")} isOutline={true} title={task.status?.name || ''}>
+                                        <AppBadge variant={task.status?.status_color ? "custom" : "neutral"} customColor={task.status?.status_color || null} className={cn(canUpdateRow(task) ? "border-dashed" : "", "max-w-full truncate block")} isOutline={true} title={task.status?.name || ''}>
                                           {task.status?.name || '—'}
                                         </AppBadge>
                                       </AppButton>
                                     </Popover.Trigger>
-                                  {canUpdate && (
+                                  {canUpdateRow(task) && (
                                     <Popover.Portal>
                                       <Popover.Content align="center" sideOffset={4} className="z-[100] w-48 p-2 theme-card-structural dark:bg-[#0B0F19] border-border rounded-xl  flex flex-col gap-1 outline-none animate-in zoom-in-95" onClick={(e) => e.stopPropagation()}>
                                         <div className="flex items-center justify-between px-2 py-1 mb-1 border-b border-border/50">
@@ -2021,7 +2036,7 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                                 >
                                   <Eye className="h-[15px] w-[15px]" />
                                 </Link>
-                                {canUpdate && (
+                                {canUpdateRow(task) && (
                                   <Link 
                                     href={`/tasks/${task.id}`}
                                     className="text-warning hover:text-warning transition-colors active:scale-95"
@@ -2030,7 +2045,7 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                                     <Edit2 className="h-[15px] w-[15px]" />
                                   </Link>
                                 )}
-                                {canDelete && (
+                                {canDeleteRow(task) && (
                                   <AppButton variant="secondary" 
                                     onClick={(e) => handleDeleteTask(e, task.id)}
                                     disabled={deleteLoadingId === task.id}
@@ -2111,9 +2126,14 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
       <TaskBoardView 
         tasks={filtered} 
         statuses={masterStatuses} 
+        canUpdateTask={canUpdateRow}
         onStatusChange={async (taskId, newStatusId) => {
           const t = filtered.find(x => x.id === taskId) || tasks.find(x => x.id === taskId);
           if (!t) return;
+          if (!canUpdateRow(t)) {
+            toast.error("You are not authorized to update this task.");
+            return;
+          }
           setInlineTask(t);
           setInlineNewStatus(newStatusId);
           setInlineRemark("");

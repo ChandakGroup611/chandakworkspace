@@ -45,11 +45,13 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
 
   const isSuperAdmin = user ? await hasPermission(user.id, "SUPER_ADMIN") : false;
   const isTaskAssigneeOrOwner = user ? (task.assigned_to === user.id || task.owner_id === user.id) : false;
+  const isExecutor = user ? (task.task_assignees?.some((a: any) => a.id === user.id)) : false;
   const canManageClosedTask = isSuperAdmin || isTaskAssigneeOrOwner;
 
   const isClosed = task.status?.is_closed === true;
   const isFrozen = isClosed && !canManageClosedTask;
   const effectiveReadOnly = isViewMode || isFrozen;
+  const canEditTitle = !effectiveReadOnly && (isSuperAdmin || isTaskAssigneeOrOwner || isExecutor);
 
   return (
     <div className="space-y-6 pb-6 pt-2">
@@ -81,10 +83,10 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
         </div>
         
         <div>
-          {effectiveReadOnly ? (
+          {effectiveReadOnly || !canEditTitle ? (
             <h1 className="text-2xl font-bold text-foreground break-words whitespace-normal w-full">{task.title || task.subject}</h1>
           ) : (
-            <EditableTaskTitle task={task} asHeading={true} />
+            <EditableTaskTitle task={task} asHeading={true} readOnly={effectiveReadOnly || !canEditTitle} />
           )}
         </div>
       </AppCard>

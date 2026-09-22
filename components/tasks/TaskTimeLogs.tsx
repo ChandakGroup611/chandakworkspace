@@ -7,14 +7,18 @@ import { AppButton } from "@/components/ui/AppButton";
 import { Clock, Plus, Loader2 } from "lucide-react";
 import { logTaskTime, getTaskDetails } from "@/lib/actions/tasks";
 import { useTheme } from "@/components/theme/ThemeProvider";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export default function TaskTimeLogs({ taskId, onLogAdded }: { taskId: string; onLogAdded?: () => void }) {
   const { theme } = useTheme();
   const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
+  const { roleCode, userId } = usePermissions();
+  const isSuperAdmin = roleCode === "SUPER_ADMIN";
   
   const [logs, setLogs] = useState<any[]>([]);
   const [estimatedHours, setEstimatedHours] = useState<number>(0);
   const [loading, setLoading] = useState(true);
+  const [taskData, setTaskData] = useState<any>(null);
   
   const [hours, setHours] = useState("");
   const [description, setDescription] = useState("");
@@ -24,6 +28,7 @@ export default function TaskTimeLogs({ taskId, onLogAdded }: { taskId: string; o
     async function load() {
       try {
         const details = await getTaskDetails(taskId);
+        setTaskData(details);
         setEstimatedHours(details?.estimated_hours || 0);
         setLogs(details?.custom_fields?.time_logs || []);
       } catch (e) {
@@ -35,8 +40,18 @@ export default function TaskTimeLogs({ taskId, onLogAdded }: { taskId: string; o
     load();
   }, [taskId]);
 
+  const canLogTime = isSuperAdmin || (taskData && userId && (
+    taskData.assigned_to === userId || 
+    taskData.owner_id === userId || 
+    taskData.participants?.some((p: any) => p.user_id === userId && p.participation_role === 'EXECUTOR')
+  ));
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canLogTime) {
+      toast.error("You are not authorized to log time on this task.");
+      return;
+    }
     if (!hours || isNaN(Number(hours))) return;
     
     setIsSubmitting(true);
@@ -85,33 +100,35 @@ export default function TaskTimeLogs({ taskId, onLogAdded }: { taskId: string; o
       </div>
 
       {/* Log Form */}
-      <form onSubmit={handleSubmit} className={`p-4 rounded-xl theme-card-structural`}>
-        <h4 className="text-xs font-bold uppercase tracking-wider text-muted mb-3 flex items-center gap-2">
-          <Clock className="h-4 w-4" /> Log New Time
-        </h4>
-        <div className="flex gap-2 mb-3">
-          <AppInput 
-            type="number" 
-            step="0.1" 
-            min="0"
-            required 
-            placeholder="Hours" 
-            value={hours} 
-            onChange={e => setHours(e.target.value)} 
-            className={`w-24 ${"bg-surface"}`}
-          />
-          <AppInput 
-            required 
-            placeholder="What did you work on?" 
-            value={description} 
-            onChange={e => setDescription(e.target.value)} 
-            className={`flex-1 ${"bg-surface"}`}
-          />
-        </div>
-        <AppButton type="submit" disabled={isSubmitting} className="w-full bg-success hover:bg-success text-white border-0 h-9">
-          {isSubmitting ? <Loader2 className="animate-spin h-4 w-4" /> : <><Plus className="h-4 w-4 mr-1" /> Save Log</>}
-        </AppButton>
-      </form>
+      {canLogTime && (
+        <form onSubmit={handleSubmit} className={`p-4 rounded-xl theme-card-structural`}>
+          <h4 className="text-xs font-bold uppercase tracking-wider text-muted mb-3 flex items-center gap-2">
+            <Clock className="h-4 w-4" /> Log New Time
+          </h4>
+          <div className="flex gap-2 mb-3">
+            <AppInput 
+              type="number" 
+              step="0.1" 
+              min="0"
+              required 
+              placeholder="Hours" 
+              value={hours} 
+              onChange={e => setHours(e.target.value)} 
+              className={`w-24 ${"bg-surface"}`}
+            />
+            <AppInput 
+              required 
+              placeholder="What did you work on?" 
+              value={description} 
+              onChange={e => setDescription(e.target.value)} 
+              className={`flex-1 ${"bg-surface"}`}
+            />
+          </div>
+          <AppButton type="submit" disabled={isSubmitting} className="w-full bg-success hover:bg-success text-white border-0 h-9">
+            {isSubmitting ? <Loader2 className="animate-spin h-4 w-4" /> : <><Plus className="h-4 w-4 mr-1" /> Save Log</>}
+          </AppButton>
+        </form>
+      )}
 
       {/* Log History */}
       <div className="space-y-3">
@@ -133,4 +150,3 @@ export default function TaskTimeLogs({ taskId, onLogAdded }: { taskId: string; o
     </div>
   );
 }
-

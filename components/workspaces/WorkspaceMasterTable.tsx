@@ -238,13 +238,13 @@ export function WorkspaceMasterTable({
     const statusColor = getStatusColor(node);
 
     const isWorkspaceOwner = node.owner_id === userId || node.created_by === userId || node.workspace_owner_id === userId;
-    const isTaskOwner = node.created_by === userId || node.owner_user_id === userId || node.assigned_to === userId || node.assignee_id === userId;
+    const isTaskOwner = node.created_by === userId || node.owner_user_id === userId || node.assigned_to === userId || node.assignee_id === userId || (node.task_assignees && node.task_assignees.some((a: any) => a.id === userId));
 
-    const canCreateWs = roleCode === 'SUPER_ADMIN' || hasPermission('WORKSPACES_CREATE') || hasPermission('WORKSPACES_MANAGE') || isWorkspaceOwner;
-    const canCreateTsk = roleCode === 'SUPER_ADMIN' || hasPermission('TASKS_CREATE') || hasPermission('TASKS_MANAGE') || isWorkspaceOwner || isTaskOwner;
-    const canEditNode = roleCode === 'SUPER_ADMIN' || (isWorkspaceType ? (hasPermission('WORKSPACES_UPDATE') || hasPermission('WORKSPACES_MANAGE') || isWorkspaceOwner) : (hasPermission('TASKS_UPDATE') || hasPermission('TASKS_MANAGE') || hasPermission('TASKS_EDIT') || isTaskOwner));
-    const canShare = isWorkspaceType && (roleCode === 'SUPER_ADMIN' || hasPermission('WORKSPACES_UPDATE') || hasPermission('WORKSPACES_MANAGE') || isWorkspaceOwner);
-    const canDelete = roleCode === 'SUPER_ADMIN' || (isWorkspaceType ? (hasPermission('WORKSPACES_DELETE') || hasPermission('WORKSPACES_MANAGE') || isWorkspaceOwner) : (hasPermission('TASKS_DELETE') || hasPermission('TASKS_MANAGE') || isTaskOwner));
+    const canCreateWs = roleCode === 'SUPER_ADMIN' || isWorkspaceOwner || hasPermission('WORKSPACES_CREATE') || hasPermission('WORKSPACES_MANAGE');
+    const canCreateTsk = roleCode === 'SUPER_ADMIN' || isWorkspaceOwner || isTaskOwner || hasPermission('TASKS_CREATE') || hasPermission('TASKS_MANAGE');
+    const canEditNode = roleCode === 'SUPER_ADMIN' || (isWorkspaceType ? (isWorkspaceOwner || hasPermission('WORKSPACES_UPDATE') || hasPermission('WORKSPACES_MANAGE')) : (isTaskOwner || (isWorkspaceOwner && hasPermission('TASKS_MANAGE'))));
+    const canShare = isWorkspaceType && (roleCode === 'SUPER_ADMIN' || isWorkspaceOwner || hasPermission('WORKSPACES_UPDATE') || hasPermission('WORKSPACES_MANAGE'));
+    const canDelete = roleCode === 'SUPER_ADMIN' || (isWorkspaceType ? (isWorkspaceOwner || hasPermission('WORKSPACES_DELETE') || hasPermission('WORKSPACES_MANAGE')) : ((isTaskOwner || isWorkspaceOwner) && hasPermission('TASKS_DELETE')));
 
     const isMenuOpen = activeMenu === node.id;
 
@@ -606,13 +606,13 @@ export function WorkspaceMasterTable({
     const isMenuOpen = activeMenu === menuKey;
 
     const isWorkspaceOwner = node.owner_id === userId || node.created_by === userId || node.workspace_owner_id === userId;
-    const isTaskOwner = node.created_by === userId || node.owner_user_id === userId || node.assigned_to === userId || node.assignee_id === userId;
+    const isTaskOwner = node.created_by === userId || node.owner_user_id === userId || node.assigned_to === userId || node.assignee_id === userId || (node.task_assignees && node.task_assignees.some((a: any) => a.id === userId));
 
-    const canCreateWs = roleCode === 'SUPER_ADMIN' || hasPermission('WORKSPACES_CREATE') || hasPermission('WORKSPACES_MANAGE') || isWorkspaceOwner;
-    const canCreateTsk = roleCode === 'SUPER_ADMIN' || hasPermission('TASKS_CREATE') || hasPermission('TASKS_MANAGE') || isWorkspaceOwner || isTaskOwner;
-    const canEditNode = roleCode === 'SUPER_ADMIN' || (isWorkspaceType ? (hasPermission('WORKSPACES_UPDATE') || hasPermission('WORKSPACES_MANAGE') || isWorkspaceOwner) : (hasPermission('TASKS_UPDATE') || hasPermission('TASKS_MANAGE') || hasPermission('TASKS_EDIT') || isTaskOwner));
-    const canShare = isWorkspaceType && (roleCode === 'SUPER_ADMIN' || hasPermission('WORKSPACES_UPDATE') || hasPermission('WORKSPACES_MANAGE') || isWorkspaceOwner);
-    const canDelete = roleCode === 'SUPER_ADMIN' || (isWorkspaceType ? (hasPermission('WORKSPACES_DELETE') || hasPermission('WORKSPACES_MANAGE') || isWorkspaceOwner) : (hasPermission('TASKS_DELETE') || hasPermission('TASKS_MANAGE') || isTaskOwner));
+    const canCreateWs = roleCode === 'SUPER_ADMIN' || isWorkspaceOwner || hasPermission('WORKSPACES_CREATE') || hasPermission('WORKSPACES_MANAGE');
+    const canCreateTsk = roleCode === 'SUPER_ADMIN' || isWorkspaceOwner || isTaskOwner || hasPermission('TASKS_CREATE') || hasPermission('TASKS_MANAGE');
+    const canEditNode = roleCode === 'SUPER_ADMIN' || (isWorkspaceType ? (isWorkspaceOwner || hasPermission('WORKSPACES_UPDATE') || hasPermission('WORKSPACES_MANAGE')) : (isTaskOwner || (isWorkspaceOwner && hasPermission('TASKS_MANAGE'))));
+    const canShare = isWorkspaceType && (roleCode === 'SUPER_ADMIN' || isWorkspaceOwner || hasPermission('WORKSPACES_UPDATE') || hasPermission('WORKSPACES_MANAGE'));
+    const canDelete = roleCode === 'SUPER_ADMIN' || (isWorkspaceType ? (isWorkspaceOwner || hasPermission('WORKSPACES_DELETE') || hasPermission('WORKSPACES_MANAGE')) : ((isTaskOwner || isWorkspaceOwner) && hasPermission('TASKS_DELETE')));
 
     return (
       <div 

@@ -7,10 +7,15 @@ import { AppButton } from "@/components/ui/AppButton";
 import { Plus, GripVertical, Calendar, Edit2, Check, X, Filter } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { createClient } from "@/utils/supabase/client";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspaceId: string, currentUser?: any, onNewSprint?: () => void }) {
   const { theme } = useTheme();
   const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
+  const { hasPermission, roleCode, userId } = usePermissions();
+  const isSuperAdmin = roleCode === "SUPER_ADMIN";
+  const effectiveUserId = userId || currentUser?.id;
+  const canManageSprints = isSuperAdmin || hasPermission("WORKSPACES_MANAGE") || currentUser?.isWorkspaceOwner;
 
   const [sprints, setSprints] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
@@ -28,6 +33,12 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
   const [editSprintStart, setEditSprintStart] = useState("");
   const [editSprintEnd, setEditSprintEnd] = useState("");
   const [isUpdatingSprint, setIsUpdatingSprint] = useState(false);
+
+  const canMoveTask = (t: any) => {
+    if (isSuperAdmin || canManageSprints) return true;
+    if (!effectiveUserId) return false;
+    return t.owner_id === effectiveUserId || t.assigned_to === effectiveUserId || t.assignees?.some((a: any) => a.user_id === effectiveUserId);
+  };
 
   useEffect(() => {
     async function load() {
@@ -48,6 +59,12 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
     const taskId = e.dataTransfer.getData("taskId");
     if (!taskId) return;
 
+    const taskToMove = tasks.find(t => t.id === taskId);
+    if (!taskToMove || !canMoveTask(taskToMove)) {
+      toast.error("You do not have permission to move this task.");
+      return;
+    }
+
     // Optimistic update
     setTasks(prev => prev.map(t => t.id === taskId ? { ...t, sprint_id: targetSprintId } : t));
 
@@ -57,6 +74,11 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
   };
 
   const handleDragStart = (e: React.DragEvent, taskId: string) => {
+    const taskToMove = tasks.find(t => t.id === taskId);
+    if (!taskToMove || !canMoveTask(taskToMove)) {
+      e.preventDefault();
+      return;
+    }
     e.dataTransfer.setData("taskId", taskId);
   };
 
@@ -137,13 +159,15 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
             <option value="CREATED">Created By Me</option>
             <option value="OVERDUE">Overdue Tasks</option>
           </select>
-          <AppButton variant="primary" size="sm" onClick={() => setIsCreatingSprint(true)}>
-            <Plus className="h-3 w-3 mr-1" /> New Sprint
-          </AppButton>
+          {canManageSprints && (
+            <AppButton variant="primary" size="sm" onClick={() => setIsCreatingSprint(true)}>
+              <Plus className="h-3 w-3 mr-1" /> New Sprint
+            </AppButton>
+          )}
         </div>
       </div>
 
-      {isCreatingSprint && (
+      {canManageSprints && isCreatingSprint && (
         <form onSubmit={handleCreateSprint} className={`p-4 rounded-xl border flex gap-4 items-end bg-theme-btn-primary/10/50 border-indigo-100`}>
           <div className="space-y-1.5 flex-1">
             <label className="text-sm font-bold text-muted uppercase tracking-wider">Sprint Name</label>
@@ -174,29 +198,32 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
         >
           <div className="p-3 border-b font-bold text-sm">Product Backlog</div>
           <div className="p-2 space-y-2 overflow-y-auto flex-1">
-            {filteredTasks.filter(t => !t.sprint_id).map(t => (
-              <div 
-                key={t.id} 
-                draggable 
-                onDragStart={(e) => handleDragStart(e, t.id)}
-                className={`p-3 rounded-lg border-smooth cursor-grab active:cursor-grabbing flex gap-2 theme-card-structural shadow-sm`}
-              >
-                <GripVertical className="h-4 w-4 text-muted mt-0.5 shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <div className="text-xs font-bold break-words whitespace-normal leading-snug" title={t.title || t.subject}>{t.title || t.subject}</div>
-                  <div 
-                    className="text-[10px] font-bold mt-1 px-1.5 py-0.5 rounded inline-block"
-                    style={t.priority?.priority_color ? { 
-                      color: t.priority.priority_color, 
-                      backgroundColor: `${t.priority.priority_color}1A`, 
-                      border: `1px solid ${t.priority.priority_color}33` 
-                    } : {}}
-                  >
-                    {t.priority?.priority_name || 'Standard'}
+            {filteredTasks.filter(t => !t.sprint_id).map(t => {
+              const draggable = canMoveTask(t);
+              return (
+                <div 
+                  key={t.id} 
+                  draggable={draggable} 
+                  onDragStart={(e) => handleDragStart(e, t.id)}
+                  className={`p-3 rounded-lg border-smooth ${draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'} flex gap-2 theme-card-structural shadow-sm`}
+                >
+                  {draggable && <GripVertical className="h-4 w-4 text-muted mt-0.5 shrink-0" />}
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-bold break-words whitespace-normal leading-snug" title={t.title || t.subject}>{t.title || t.subject}</div>
+                    <div 
+                      className="text-[10px] font-bold mt-1 px-1.5 py-0.5 rounded inline-block"
+                      style={t.priority?.priority_color ? { 
+                        color: t.priority.priority_color, 
+                        backgroundColor: `${t.priority.priority_color}1A`, 
+                        border: `1px solid ${t.priority.priority_color}33` 
+                      } : {}}
+                    >
+                      {t.priority?.priority_name || 'Standard'}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {filteredTasks.filter(t => !t.sprint_id).length === 0 && (
               <div className="p-4 text-center text-xs text-muted border border-dashed rounded-lg">Backlog is empty</div>
             )}
@@ -212,7 +239,7 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
             onDrop={(e) => handleDrop(e, sprint.id)}
           >
             <div className="p-3 border-b border-theme-btn-primary/20 group relative">
-              {editingSprintId === sprint.id ? (
+              {canManageSprints && editingSprintId === sprint.id ? (
                 <div className="space-y-2">
                   <input 
                     type="text" 
@@ -244,18 +271,20 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
                 <>
                   <div className="flex justify-between items-start">
                     <div className="font-bold text-sm text-theme-icon dark:text-theme-icon">{sprint.name}</div>
-                    <AppButton variant="secondary" 
-                      onClick={() => {
-                        setEditingSprintId(sprint.id);
-                        setEditSprintName(sprint.name);
-                        setEditSprintStart(sprint.start_date?.substring(0, 10) || "");
-                        setEditSprintEnd(sprint.end_date?.substring(0, 10) || "");
-                      }} 
-                      className={`opacity-0 group-hover:opacity-100 p-1 rounded transition-all text-muted hover:theme-input-structural hover:text-theme-icon`}
-                      title="Edit Sprint"
-                    >
-                      <Edit2 className="h-3.5 w-3.5" />
-                    </AppButton>
+                    {canManageSprints && (
+                      <AppButton variant="secondary" 
+                        onClick={() => {
+                          setEditingSprintId(sprint.id);
+                          setEditSprintName(sprint.name);
+                          setEditSprintStart(sprint.start_date?.substring(0, 10) || "");
+                          setEditSprintEnd(sprint.end_date?.substring(0, 10) || "");
+                        }} 
+                        className={`opacity-0 group-hover:opacity-100 p-1 rounded transition-all text-muted hover:theme-input-structural hover:text-theme-icon`}
+                        title="Edit Sprint"
+                      >
+                        <Edit2 className="h-3.5 w-3.5" />
+                      </AppButton>
+                    )}
                   </div>
                   <div className="text-[10px] text-muted mt-0.5">
                     {sprint.start_date ? new Date(sprint.start_date).toLocaleDateString() : '?'} - {sprint.end_date ? new Date(sprint.end_date).toLocaleDateString() : '?'}
@@ -264,29 +293,32 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
               )}
             </div>
             <div className="p-2 space-y-2 overflow-y-auto flex-1">
-              {filteredTasks.filter(t => t.sprint_id === sprint.id).map(t => (
-                <div 
-                  key={t.id} 
-                  draggable 
-                  onDragStart={(e) => handleDragStart(e, t.id)}
-                  className={`p-3 rounded-lg border-smooth cursor-grab active:cursor-grabbing flex gap-2 theme-card-structural shadow-sm`}
-                >
-                  <GripVertical className="h-4 w-4 text-muted mt-0.5 shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <div className="text-xs font-bold break-words whitespace-normal leading-snug" title={t.title || t.subject}>{t.title || t.subject}</div>
-                    <div 
-                      className="text-[10px] font-bold mt-1 px-1.5 py-0.5 rounded inline-block"
-                      style={t.priority?.priority_color ? { 
-                        color: t.priority.priority_color, 
-                        backgroundColor: `${t.priority.priority_color}1A`, 
-                        border: `1px solid ${t.priority.priority_color}33` 
-                      } : {}}
-                    >
-                      {t.priority?.priority_name || 'Standard'}
+              {filteredTasks.filter(t => t.sprint_id === sprint.id).map(t => {
+                const draggable = canMoveTask(t);
+                return (
+                  <div 
+                    key={t.id} 
+                    draggable={draggable} 
+                    onDragStart={(e) => handleDragStart(e, t.id)}
+                    className={`p-3 rounded-lg border-smooth ${draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'} flex gap-2 theme-card-structural shadow-sm`}
+                  >
+                    {draggable && <GripVertical className="h-4 w-4 text-muted mt-0.5 shrink-0" />}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-bold break-words whitespace-normal leading-snug" title={t.title || t.subject}>{t.title || t.subject}</div>
+                      <div 
+                        className="text-[10px] font-bold mt-1 px-1.5 py-0.5 rounded inline-block"
+                        style={t.priority?.priority_color ? { 
+                          color: t.priority.priority_color, 
+                          backgroundColor: `${t.priority.priority_color}1A`, 
+                          border: `1px solid ${t.priority.priority_color}33` 
+                        } : {}}
+                      >
+                        {t.priority?.priority_name || 'Standard'}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               {filteredTasks.filter(t => t.sprint_id === sprint.id).length === 0 && (
                 <div className="p-4 text-center text-xs text-muted border border-dashed rounded-lg">Drag tasks here</div>
               )}

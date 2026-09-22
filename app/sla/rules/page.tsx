@@ -9,10 +9,18 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { fetchSLARules, saveSLARule, deleteSLARule } from "@/lib/actions/sla";
 import { toast } from "react-toastify";
-import { Loader2, Plus, Save, Trash2, ShieldAlert, Clock, Play } from "lucide-react";
+import { Loader2, Plus, Save, Trash2, ShieldAlert, Clock, Play, Shield } from "lucide-react";
 import ChandakLoader from "@/components/ui/ChandakLoader";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export default function SLARuleBuilder() {
+  const { hasPermission, roleCode, loading: permsLoading } = usePermissions();
+  const isSuperAdmin = roleCode === "SUPER_ADMIN";
+  const canView = isSuperAdmin || hasPermission("SLA_VIEW");
+  const canCreate = isSuperAdmin || hasPermission("SLA_CREATE") || hasPermission("SLA_MANAGE");
+  const canUpdate = isSuperAdmin || hasPermission("SLA_UPDATE") || hasPermission("SLA_MANAGE");
+  const canDelete = isSuperAdmin || hasPermission("SLA_DELETE") || hasPermission("SLA_MANAGE");
+
   const [rules, setRules] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -45,6 +53,10 @@ export default function SLARuleBuilder() {
   };
 
   const handleEdit = (rule: any) => {
+    if (!canUpdate) {
+      toast.error("You do not have permission to edit SLA rules.");
+      return;
+    }
     setEditingId(rule.id);
     setForm({
       id: rule.id,
@@ -58,6 +70,10 @@ export default function SLARuleBuilder() {
   };
 
   const handleCreateNew = () => {
+    if (!canCreate) {
+      toast.error("You do not have permission to create SLA rules.");
+      return;
+    }
     setEditingId("new");
     setForm({
       id: "",
@@ -71,6 +87,14 @@ export default function SLARuleBuilder() {
   };
 
   const handleSave = async () => {
+    if (!form.id && !canCreate) {
+      toast.error("You do not have permission to create SLA rules.");
+      return;
+    }
+    if (form.id && !canUpdate) {
+      toast.error("You do not have permission to update SLA rules.");
+      return;
+    }
     if (!form.name || !form.code) {
       toast.error("Name and Code are required");
       return;
@@ -89,6 +113,10 @@ export default function SLARuleBuilder() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!canDelete) {
+      toast.error("You do not have permission to delete SLA rules.");
+      return;
+    }
     if (!confirm("Are you sure you want to delete this SLA Policy? Active trackers using this policy will be impacted.")) return;
     try {
       await deleteSLARule(id);
@@ -99,11 +127,25 @@ export default function SLARuleBuilder() {
     }
   };
 
-  if (loading) {
+  if (loading || permsLoading) {
     return (
       <div className="h-[80vh] flex items-center justify-center">
         <ChandakLoader size="lg" title="Loading SLA Policies..." subtitle="Fetching governance rules" />
       </div>
+    );
+  }
+
+  if (!canView) {
+    return (
+      <PageContainer strict={true}>
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <Shield className="w-16 h-16 text-danger mb-4 opacity-80" />
+          <h2 className="text-xl font-bold">Access Restricted</h2>
+          <p className="text-sm text-muted mt-2 max-w-md">
+            You do not have the required permissions (SLA_VIEW) to access SLA policy configuration.
+          </p>
+        </div>
+      </PageContainer>
     );
   }
 
@@ -114,9 +156,11 @@ export default function SLARuleBuilder() {
         description="Configure target response and resolution windows for operational governance."
         badge={<AppBadge variant="warning">Governance Engine</AppBadge>}
         actions={
-          <AppButton variant="primary" onClick={handleCreateNew} leftIcon={<Plus className="w-4 h-4" />}>
-            Create Policy
-          </AppButton>
+          canCreate ? (
+            <AppButton variant="primary" onClick={handleCreateNew} leftIcon={<Plus className="w-4 h-4" />}>
+              Create Policy
+            </AppButton>
+          ) : undefined
         }
       />
 
@@ -198,10 +242,14 @@ export default function SLARuleBuilder() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <AppButton size="sm" variant="outline" onClick={() => handleEdit(rule)}>Edit</AppButton>
-                    <AppButton size="sm" variant="outline" className="text-danger hover:bg-red-50" onClick={() => handleDelete(rule.id)}>
-                      <Trash2 className="w-4 h-4" />
-                    </AppButton>
+                    {canUpdate && (
+                      <AppButton size="sm" variant="outline" onClick={() => handleEdit(rule)}>Edit</AppButton>
+                    )}
+                    {canDelete && (
+                      <AppButton size="sm" variant="outline" className="text-danger hover:bg-red-50" onClick={() => handleDelete(rule.id)}>
+                        <Trash2 className="w-4 h-4" />
+                      </AppButton>
+                    )}
                   </div>
                 </div>
               )}

@@ -765,7 +765,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
               Delete
             </AppButton>
           )}
-          {!isViewMode && (requirement.approval_status === 'Approved' || requirement.approval_status === 'In Progress') && (
+          {!isViewMode && (requirement.approval_status === 'Approved' || requirement.approval_status === 'In Progress') && (isSuperAdmin || hasPermission('TASKS_CREATE') || requirement.creator_id === currentUserId || requirement.current_assignee_id === currentUserId) && (
             <AppButton variant="primary" size="sm" leftIcon={<FilePlus className="h-4 w-4"/>} onClick={() => setShowWorkspaceSelector(true)}>
               Assign Task
             </AppButton>

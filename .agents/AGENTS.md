@@ -29,9 +29,17 @@ NEVER deploy a change without first checking its global impact.
   3. The CVE / vulnerability details (if applicable) and risk impact.
   4. Explicitly ask the user for confirmation before executing `npm install` or changing dependencies in `package.json`.
 
+## Strict UI-to-Backend RBAC & Ownership Symmetry
+
+- **Zero Permissive Fallbacks**: Never use loose composite variables (e.g. `canEditCore`, `hasGenericPerm`) to control buttons that perform specific ownership-restricted mutations.
+- **Strict Matrix Mirroring**: Every UI mutation trigger (Edit buttons, status dropdowns, date pickers, delete actions, modals) MUST strictly mirror the exact server-side authorization check (e.g. only Primary Assignee or Super Admin can edit Primary Assignee/Executors).
+- **No Reliance on Backend-Only Rejection**: If a user does not have permission to execute an action on the backend, the corresponding UI trigger / button MUST be hidden or disabled. Spectators, reviewers, and standard users (`ROLE_AGENT`) must NEVER see edit triggers for entities they do not own.
+
 ## Automated Vulnerability & Security Verification
 
 - As part of mandatory self-verification, always verify dependency security health by running `npm audit`.
 - Keep automated security mechanisms active (Dependabot daily monitoring, daily scheduled CI security scans, and pre-deployment safety gates in `scripts/deploy.js`).
 - Never allow high or critical vulnerabilities into production code.
+
+
 

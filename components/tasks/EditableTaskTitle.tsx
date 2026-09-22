@@ -7,12 +7,20 @@ import { updateTask } from '@/lib/actions/tasks';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 
-export function EditableTaskTitle({ task, asHeading = false }: { task: any, asHeading?: boolean }) {
+import { usePermissions } from '@/hooks/usePermissions';
+
+export function EditableTaskTitle({ task, asHeading = false, readOnly = false }: { task: any, asHeading?: boolean, readOnly?: boolean }) {
   const [isEditing, setIsEditing] = useState(false);
-  const [title, setTitle] = useState(task.subject || task.title || "");
+  const [title, setTitle] = useState(task?.subject || task?.title || "");
   const [isSaving, setIsSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const { hasPermission, roleCode, userId } = usePermissions();
+
+  const isSuperAdmin = roleCode === "SUPER_ADMIN" || hasPermission("SUPER_ADMIN");
+  const isTaskAssignee = userId ? (task?.assigned_to === userId || task?.owner_id === userId) : false;
+  const isExecutor = userId ? (task?.task_assignees?.some((a: any) => a.id === userId)) : false;
+  const canEdit = !readOnly && (isSuperAdmin || isTaskAssignee || isExecutor);
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -42,7 +50,7 @@ export function EditableTaskTitle({ task, asHeading = false }: { task: any, asHe
     setIsEditing(false);
   };
 
-  if (isEditing) {
+  if (isEditing && canEdit) {
     return (
       <div className="flex items-center gap-2 font-normal w-full max-w-xl mt-1">
         <input
@@ -77,19 +85,21 @@ export function EditableTaskTitle({ task, asHeading = false }: { task: any, asHe
   return (
     <div className="group flex items-start gap-2 relative w-full">
       <TitleWrapper className={titleClasses}>{title}</TitleWrapper>
-      <AppButton 
-        variant="ghost"
-        size="icon-sm"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          setIsEditing(true);
-        }}
-        className="opacity-70 md:opacity-0 md:group-hover:opacity-100 transition-opacity p-1.5 hover:bg-surface/50 rounded-lg text-muted hover:text-foreground shrink-0 cursor-pointer"
-        title="Edit Task Title"
-      >
-        <Edit2 className="h-4 w-4" />
-      </AppButton>
+      {canEdit && (
+        <AppButton 
+          variant="ghost"
+          size="icon-sm"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsEditing(true);
+          }}
+          className="opacity-70 md:opacity-0 md:group-hover:opacity-100 transition-opacity p-1.5 hover:bg-surface/50 rounded-lg text-muted hover:text-foreground shrink-0 cursor-pointer"
+          title="Edit Task Title"
+        >
+          <Edit2 className="h-4 w-4" />
+        </AppButton>
+      )}
     </div>
   );
 }

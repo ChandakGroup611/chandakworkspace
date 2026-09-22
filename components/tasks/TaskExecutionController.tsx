@@ -126,7 +126,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
 
   const router = useRouter();
-  const { hasPermission, roleCode } = usePermissions();
+  const { hasPermission, roleCode, userId } = usePermissions();
   const canDelete = !readOnly && hasPermission("TASKS_DELETE");
   const [task, setTask] = useState<any>(initialTask || null);
   const [statuses, setStatuses] = useState<any[]>(initialStatuses || []);
@@ -866,28 +866,43 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
   const targetStatusObj = statuses.find(s => (s.code || s.status_code || s.id) === targetStatusId);
   const isEffectivelyFrozen = isFrozen ? (pendingStatus ? !targetStatusObj?.is_closed : true) : false;
   
-  const isSuperAdmin = task.currentUserIsSuperAdmin || hasPermission("SUPER_ADMIN");
-  const isTaskAssignee = task.assigned_to === task.currentUserId || task.owner_id === task.currentUserId || task.isTaskAssignee;
-  const isExecutor = task.task_assignees?.some((a: any) => a.id === task.currentUserId) || false;
-  const isWatcherOrReviewer = task.task_watchers?.some((w: any) => w.id === task.currentUserId) || false;
-  const isCreatorOnly = task.created_by === task.currentUserId && !isTaskAssignee && !isExecutor && !isSuperAdmin;
-  const hasTaskUpdatePerm = hasPermission("TASKS_UPDATE") || hasPermission("TASKS_MANAGE") || hasPermission("TASKS_EDIT") || hasPermission("WORKSPACES_MANAGE");
+  const currentUid = userId || task.currentUserId;
+  const isSuperAdmin = task.currentUserIsSuperAdmin || hasPermission("SUPER_ADMIN") || roleCode === "SUPER_ADMIN";
+  const isTaskAssignee = (currentUid && ((task.assigned_to && task.assigned_to === currentUid) || (task.owner_id && task.owner_id === currentUid))) || task.isTaskAssignee;
+  const isExecutor = currentUid ? (task.task_assignees?.some((a: any) => a.id === currentUid) || false) : false;
+  const isWatcherOrReviewer = currentUid ? (task.task_watchers?.some((w: any) => w.id === currentUid) || task.task_reviewers?.some((r: any) => r.id === currentUid) || false) : false;
+  const isTaskCreator = (currentUid && task.created_by && task.created_by === currentUid) || task.isTaskCreator;
+  const isCreatorOnly = isTaskCreator && !isTaskAssignee && !isExecutor && !isSuperAdmin;
 
-  // Reopen/Bypass freeze is for Super Admin, Task Assignee (Task Owner), or users with TASKS_UPDATE / WORKSPACES_MANAGE
-  const canBypassFreeze = isSuperAdmin || isTaskAssignee || hasTaskUpdatePerm;
+  // Reopen/Bypass freeze is strictly for Super Admin or Primary Assignee (Task Owner)
+  const canBypassFreeze = isSuperAdmin || isTaskAssignee;
   const effectivelyFrozenForUser = isEffectivelyFrozen && !canBypassFreeze;
-  const canEditDates = !readOnly && !effectivelyFrozenForUser && (isSuperAdmin || isTaskAssignee || hasTaskUpdatePerm);
+
+  // 1. Assignees & Executors Edit: Strictly Super Admin or Primary Assignee
+  const canEditAssignees = !readOnly && !effectivelyFrozenForUser && (isSuperAdmin || isTaskAssignee);
+
+  // 2. Watchers Edit: Strictly Super Admin, Primary Assignee, or Task Creator
+  const canEditWatchers = !readOnly && !effectivelyFrozenForUser && (isSuperAdmin || isTaskAssignee || isTaskCreator);
+
+  // 3. Schedule / Dates / Duration Edit: Strictly Super Admin or Primary Assignee
+  const canEditDates = !readOnly && !effectivelyFrozenForUser && (isSuperAdmin || isTaskAssignee);
   
-  // Roles: Owner is Assignee / SuperAdmin / Workspace Manager / TASKS_UPDATE
-  const isOwner = task.currentUserCanAct || canBypassFreeze || isTaskAssignee;
-  
-  // Anyone with TASKS_UPDATE / WORKSPACES_MANAGE, or Assignee, or Executor, or SuperAdmin can edit core properties
-  const canEditCore = !readOnly && !effectivelyFrozenForUser && (hasTaskUpdatePerm || isOwner || isExecutor || isSuperAdmin);
+  // 4. Status / Department / Directive Transitions: Super Admin, Primary Assignee, or Assigned Executors
+  const isOwnerOrExecutor = isSuperAdmin || isTaskAssignee || isExecutor;
+  const canEditCore = !readOnly && !effectivelyFrozenForUser && isOwnerOrExecutor;
   const canEditAux = canEditCore;
-  const canDeleteTask = !readOnly && (isSuperAdmin || isTaskAssignee || hasPermission("TASKS_DELETE") || hasPermission("TASKS_MANAGE")) && canDelete;
+
+  // 5. Roles: Owner is Primary Assignee / SuperAdmin
+  const isOwner = isSuperAdmin || isTaskAssignee;
+
+  // 6. Transfer Task: Strictly Super Admin or Primary Assignee
+  const canTransferTask = !readOnly && !effectivelyFrozenForUser && (isSuperAdmin || isTaskAssignee);
+
+  // 7. Delete Task: Super Admin, Primary Assignee, or explicit TASKS_DELETE permission holder
+  const canDeleteTask = !readOnly && !effectivelyFrozenForUser && (isSuperAdmin || isTaskAssignee || hasPermission("TASKS_DELETE")) && canDelete;
   
-  // Reviewers, Watchers, Executives, Assignee, and Creator (tracking progress) can add remarks
-  const canAddRemark = !readOnly && ((canEditAux || isWatcherOrReviewer || isOwner || isExecutor || isCreatorOnly) && !effectivelyFrozenForUser);
+  // 8. Reviewers, Watchers, Executives, Assignee, and Creator (tracking progress) can add remarks
+  const canAddRemark = !readOnly && !effectivelyFrozenForUser && (isSuperAdmin || isTaskAssignee || isExecutor || isWatcherOrReviewer || isTaskCreator);
   // Filter inherited workspace members to remove anyone explicitly assigned
   const explicitExecutors = [...(task.task_assignees || [])];
   
@@ -1148,7 +1163,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                   <span className="text-[11px] font-bold uppercase tracking-wider text-muted flex items-center gap-1.5">
                     <ShieldCheck className="w-3.5 h-3.5 text-theme-icon" /> <span className="text-theme-icon font-bold">Primary Assignee</span>
                   </span>
-                  { !readOnly && canEditCore && !effectivelyFrozenForUser && (
+                  { canEditAssignees && (
                     <AppButton 
                       variant="secondary" 
                       onClick={() => openAssigneeModal('primary')}
@@ -1201,7 +1216,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                       {pendingAssignees ? pendingAssignees.length : explicitExecutors.length}
                     </span>
                   </span>
-                  { !readOnly && canEditCore && !effectivelyFrozenForUser && (
+                  { canEditAssignees && (
                     <AppButton 
                       variant="secondary" 
                       onClick={() => openAssigneeModal('executors')}
@@ -1235,7 +1250,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                       {pendingWatchers ? pendingWatchers.length : explicitWatchers.length}
                     </span>
                   </span>
-                  { !readOnly && canEditCore && !effectivelyFrozenForUser && (
+                  { canEditWatchers && (
                     <AppButton 
                       variant="secondary" 
                       onClick={() => openAssigneeModal('watchers')}
@@ -1406,7 +1421,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 </AppButton>
               )}
 
-              { !readOnly && (isOwner || isExecutor || task.currentUserIsSuperAdmin) && (
+              { canTransferTask && (
                 <AppButton 
                   variant="outline" 
                   size="sm" 
@@ -2026,42 +2041,48 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
 
             {/* Modal Tabs */}
             <div className="flex border-b border-border bg-surface px-6 pt-3 gap-2">
-              <AppButton
-                type="button"
-                variant="ghost"
-                onClick={() => setAssigneeModalTab('primary')}
-                className={`theme-tab-standard rounded-t-xl border-b-2 ${ assigneeModalTab === 'primary' ? 'border-theme-btn-primary text-theme-btn-primary font-bold bg-theme-btn-primary/10' : 'border-transparent text-muted hover:text-foreground' }`}
-              >
-                <ShieldCheck className="w-4 h-4" />
-                <span>Primary Assignee</span>
-                {selectedPrimaryAssignee && (
-                  <span className="w-2 h-2 rounded-full bg-theme-btn-primary" />
-                )}
-              </AppButton>
-              <AppButton
-                type="button"
-                variant="ghost"
-                onClick={() => setAssigneeModalTab('executors')}
-                className={`theme-tab-standard rounded-t-xl border-b-2 ${ assigneeModalTab === 'executors' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10' : 'border-transparent text-muted hover:text-foreground' }`}
-              >
-                <Users className="w-4 h-4" />
-                <span>Executors</span>
-                <span className="text-[10px] px-1.5 py-0.2 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-full font-bold">
-                  {selectedExecutors.length}
-                </span>
-              </AppButton>
-              <AppButton
-                type="button"
-                variant="ghost"
-                onClick={() => setAssigneeModalTab('watchers')}
-                className={`theme-tab-standard rounded-t-xl border-b-2 ${ assigneeModalTab === 'watchers' ? 'border-amber-500 text-amber-600 dark:text-amber-400 font-bold bg-amber-500/10' : 'border-transparent text-muted hover:text-foreground' }`}
-              >
-                <Eye className="w-4 h-4" />
-                <span>Watchers (Team)</span>
-                <span className="text-[10px] px-1.5 py-0.2 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-full font-bold">
-                  {selectedWatchers.length}
-                </span>
-              </AppButton>
+              {canEditAssignees && (
+                <>
+                  <AppButton
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setAssigneeModalTab('primary')}
+                    className={`theme-tab-standard rounded-t-xl border-b-2 ${ assigneeModalTab === 'primary' ? 'border-theme-btn-primary text-theme-btn-primary font-bold bg-theme-btn-primary/10' : 'border-transparent text-muted hover:text-foreground' }`}
+                  >
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>Primary Assignee</span>
+                    {selectedPrimaryAssignee && (
+                      <span className="w-2 h-2 rounded-full bg-theme-btn-primary" />
+                    )}
+                  </AppButton>
+                  <AppButton
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setAssigneeModalTab('executors')}
+                    className={`theme-tab-standard rounded-t-xl border-b-2 ${ assigneeModalTab === 'executors' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10' : 'border-transparent text-muted hover:text-foreground' }`}
+                  >
+                    <Users className="w-4 h-4" />
+                    <span>Executors</span>
+                    <span className="text-[10px] px-1.5 py-0.2 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-full font-bold">
+                      {selectedExecutors.length}
+                    </span>
+                  </AppButton>
+                </>
+              )}
+              {canEditWatchers && (
+                <AppButton
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setAssigneeModalTab('watchers')}
+                  className={`theme-tab-standard rounded-t-xl border-b-2 ${ assigneeModalTab === 'watchers' ? 'border-amber-500 text-amber-600 dark:text-amber-400 font-bold bg-amber-500/10' : 'border-transparent text-muted hover:text-foreground' }`}
+                >
+                  <Eye className="w-4 h-4" />
+                  <span>Watchers (Team)</span>
+                  <span className="text-[10px] px-1.5 py-0.2 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-full font-bold">
+                    {selectedWatchers.length}
+                  </span>
+                </AppButton>
+              )}
             </div>
 
             {/* Search Input */}

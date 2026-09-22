@@ -29,9 +29,10 @@ interface TaskBoardViewProps {
   statuses: any[];
   onStatusChange: (taskId: string, newStatusId: string) => Promise<void>;
   onTaskClick: (task: any) => void;
+  canUpdateTask?: (task: any) => boolean;
 }
 
-export default function TaskBoardView({ tasks, statuses, onStatusChange, onTaskClick }: TaskBoardViewProps) {
+export default function TaskBoardView({ tasks, statuses, onStatusChange, onTaskClick, canUpdateTask }: TaskBoardViewProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
 
   // Group tasks by status ID
@@ -115,6 +116,7 @@ export default function TaskBoardView({ tasks, statuses, onStatusChange, onTaskC
             key={col.id} 
             column={col} 
             onTaskClick={onTaskClick}
+            canUpdateTask={canUpdateTask}
           />
         ))}
 
@@ -130,7 +132,7 @@ export default function TaskBoardView({ tasks, statuses, onStatusChange, onTaskC
   );
 }
 
-function BoardColumn({ column, onTaskClick }: { column: any, onTaskClick: (task: any) => void }) {
+function BoardColumn({ column, onTaskClick, canUpdateTask }: { column: any, onTaskClick: (task: any) => void, canUpdateTask?: (task: any) => boolean }) {
   const { setNodeRef } = useSortable({
     id: column.id,
     data: {
@@ -164,6 +166,7 @@ function BoardColumn({ column, onTaskClick }: { column: any, onTaskClick: (task:
               key={task.id} 
               task={task} 
               onClick={() => onTaskClick(task)}
+              canUpdateTask={canUpdateTask}
             />
           ))}
         </SortableContext>
@@ -178,7 +181,8 @@ function BoardColumn({ column, onTaskClick }: { column: any, onTaskClick: (task:
   );
 }
 
-function SortableTaskCard({ task, onClick }: { task: any, onClick: () => void }) {
+function SortableTaskCard({ task, onClick, canUpdateTask }: { task: any, onClick: () => void, canUpdateTask?: (task: any) => boolean }) {
+  const isDraggable = canUpdateTask ? canUpdateTask(task) : true;
   const {
     attributes,
     listeners,
@@ -188,6 +192,7 @@ function SortableTaskCard({ task, onClick }: { task: any, onClick: () => void })
     isDragging,
   } = useSortable({ 
     id: task.id,
+    disabled: !isDraggable,
     data: {
       type: "Task",
       task,
@@ -214,14 +219,14 @@ function SortableTaskCard({ task, onClick }: { task: any, onClick: () => void })
       ref={setNodeRef}
       style={style}
       {...attributes}
-      {...listeners}
+      {...(isDraggable ? listeners : {})}
       onClick={(e) => {
         // Only trigger click if we aren't dragging
         if (!isDragging) {
            onClick();
         }
       }}
-      className="cursor-grab active:cursor-grabbing"
+      className={isDraggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"}
     >
       <TaskCard task={task} />
     </div>

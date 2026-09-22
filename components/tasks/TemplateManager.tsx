@@ -15,6 +15,7 @@ export default function TemplateManager({ workspaceId, onClose }: { workspaceId:
   const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
   const { hasPermission, roleCode } = usePermissions();
   const canDelete = roleCode === "SUPER_ADMIN" || hasPermission("TASKS_DELETE");
+  const canCreate = roleCode === "SUPER_ADMIN" || hasPermission("WORKSPACES_MANAGE") || hasPermission("TASKS_CREATE");
 
   const [templates, setTemplates] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -38,6 +39,10 @@ export default function TemplateManager({ workspaceId, onClose }: { workspaceId:
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canCreate) {
+      toast.error("You do not have permission to create task templates.");
+      return;
+    }
     if (!templateName || !subject) return;
     try {
       setIsSubmitting(true);
@@ -87,9 +92,11 @@ export default function TemplateManager({ workspaceId, onClose }: { workspaceId:
           {!isCreating && (
             <div className="flex justify-between items-center">
               <p className="text-sm text-muted">Standardize your team's workflow by creating reusable task blueprints.</p>
-              <AppButton onClick={() => setIsCreating(true)} variant="primary" className="bg-theme-btn-primary hover:opacity-90">
-                <Plus className="h-4 w-4 mr-1" /> New Template
-              </AppButton>
+              {canCreate && (
+                <AppButton onClick={() => setIsCreating(true)} variant="primary" className="bg-theme-btn-primary hover:opacity-90">
+                  <Plus className="h-4 w-4 mr-1" /> New Template
+                </AppButton>
+              )}
             </div>
           )}
 
