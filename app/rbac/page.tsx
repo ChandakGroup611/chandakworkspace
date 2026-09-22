@@ -2,11 +2,11 @@ import React from "react";
 import { redirect } from "next/navigation";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { getUserAllowedModules } from "@/lib/actions/module-switcher";
-import MultiModuleRbacHost from "@/components/rbac/MultiModuleRbacHost";
+import IAMGovernanceCockpit from "@/components/iam/IAMGovernanceCockpit";
 
 export const metadata = {
-  title: "RBAC Access Policies | Chandak Workspace",
-  description: "Enterprise Role-Based Access Control, Project-Wise Governance, and Granular CRUD Policies."
+  title: "Workspace RBAC Access Policies | Chandak Workspace",
+  description: "Enterprise Role-Based Access Control, Workspace Permissions, and IAM Governance."
 };
 
 export const dynamic = "force-dynamic";
@@ -25,14 +25,21 @@ export default async function RbacPage() {
     redirect("/select-module");
   }
 
-  const initialActiveModule = allowed.activeModuleCode || allowed.defaultModule?.code || "TASK_WORKFLOW";
+  const activeModuleCode = allowed.activeModuleCode || allowed.defaultModule?.code || "TASK_WORKFLOW";
+
+  // Dedicated module routing - strict module isolation
+  if (activeModuleCode === "VEHICLE_DESK") {
+    redirect("/vehicle/rbac");
+  }
+
+  if (activeModuleCode === "DESIGN_TRACKING") {
+    redirect("/design/rbac");
+  }
 
   return (
     <div className="w-full flex-1 flex flex-col min-w-0">
-      <MultiModuleRbacHost 
-        initialActiveModule={initialActiveModule}
-        userModulesData={allowed}
-      />
+      <IAMGovernanceCockpit />
     </div>
   );
 }
+
