@@ -13,12 +13,18 @@ export type FleetRoleCode =
 
 export type FleetFunctionalModule = 
   | "VEHICLES"
+  | "REGISTER"
   | "DRIVERS"
   | "TRIPS"
+  | "TRAVELERS"
   | "MAINTENANCE"
   | "PARTS"
+  | "VENDORS"
   | "ALERTS"
   | "REPORTS"
+  | "MY_GARAGE"
+  | "LEARNING"
+  | "RBAC"
   | "SETTINGS";
 
 export type FleetMovementAccessScope = 

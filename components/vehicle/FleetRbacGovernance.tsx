@@ -31,12 +31,15 @@ import {
   Download,
   Shield,
   Plus,
+  PlusCircle,
   Play,
   Target,
   Wrench,
   Package,
   Calendar,
-  LineChart
+  LineChart,
+  LifeBuoy,
+  BookOpen
 } from "lucide-react";
 import { 
   FleetMasterStore, 
@@ -87,13 +90,19 @@ const MOVEMENT_SCOPE_OPTIONS: Array<{ value: FleetMovementAccessScope; label: st
 
 const FLEET_MODULE_LIST: Array<{ code: FleetFunctionalModule; label: string; icon: any }> = [
   { code: "VEHICLES", label: "Vehicle Inventory", icon: Car },
-  { code: "DRIVERS", label: "Chauffeur / Driver Pool", icon: Users },
-  { code: "TRIPS", label: "Daily Trip Movements", icon: Calendar },
+  { code: "REGISTER", label: "Register Vehicle", icon: PlusCircle },
+  { code: "DRIVERS", label: "Chauffeur & Driver Roster", icon: Users },
+  { code: "TRIPS", label: "Daily Trip Movements & Dispatch", icon: Calendar },
+  { code: "TRAVELERS", label: "Traveler & Dept Allocations", icon: UserCheck },
   { code: "MAINTENANCE", label: "Maintenance & Job Cards", icon: Wrench },
   { code: "PARTS", label: "Parts & Accessories", icon: Package },
-  { code: "ALERTS", label: "Compliance & Alerts", icon: ShieldAlert },
+  { code: "VENDORS", label: "Insurance Vendor Master", icon: ShieldCheck },
+  { code: "ALERTS", label: "Statutory Compliance & Alerts", icon: ShieldAlert },
   { code: "REPORTS", label: "Fleet Reports & Analytics", icon: LineChart },
-  { code: "SETTINGS", label: "Fleet Settings & Masters", icon: Settings }
+  { code: "MY_GARAGE", label: "My Assigned Vehicles (Garage)", icon: LifeBuoy },
+  { code: "LEARNING", label: "Fleet Guidelines / SOPs", icon: BookOpen },
+  { code: "RBAC", label: "RBAC Access Policies", icon: Key },
+  { code: "SETTINGS", label: "Fleet System Settings", icon: Settings }
 ];
 
 interface ModulePermRow {
@@ -109,12 +118,18 @@ interface ModulePermRow {
 
 const DEFAULT_MODULE_PERMS: Record<FleetFunctionalModule, ModulePermRow> = {
   VEHICLES: { module: "VEHICLES", canCreate: true, canRead: true, canUpdate: true, canDelete: false, canApprove: false, canExport: true, movementAccessScope: "ALL" },
+  REGISTER: { module: "REGISTER", canCreate: true, canRead: true, canUpdate: true, canDelete: false, canApprove: false, canExport: true, movementAccessScope: "ALL" },
   DRIVERS: { module: "DRIVERS", canCreate: true, canRead: true, canUpdate: true, canDelete: false, canApprove: false, canExport: true, movementAccessScope: "ALL" },
   TRIPS: { module: "TRIPS", canCreate: true, canRead: true, canUpdate: true, canDelete: false, canApprove: true, canExport: true, movementAccessScope: "ALL" },
+  TRAVELERS: { module: "TRAVELERS", canCreate: true, canRead: true, canUpdate: true, canDelete: false, canApprove: true, canExport: true, movementAccessScope: "ALL" },
   MAINTENANCE: { module: "MAINTENANCE", canCreate: true, canRead: true, canUpdate: true, canDelete: false, canApprove: false, canExport: true, movementAccessScope: "ALL" },
   PARTS: { module: "PARTS", canCreate: true, canRead: true, canUpdate: true, canDelete: false, canApprove: false, canExport: true, movementAccessScope: "ALL" },
+  VENDORS: { module: "VENDORS", canCreate: true, canRead: true, canUpdate: true, canDelete: false, canApprove: false, canExport: true, movementAccessScope: "ALL" },
   ALERTS: { module: "ALERTS", canCreate: false, canRead: true, canUpdate: true, canDelete: false, canApprove: false, canExport: true, movementAccessScope: "ALL" },
   REPORTS: { module: "REPORTS", canCreate: false, canRead: true, canUpdate: false, canDelete: false, canApprove: false, canExport: true, movementAccessScope: "ALL" },
+  MY_GARAGE: { module: "MY_GARAGE", canCreate: true, canRead: true, canUpdate: true, canDelete: false, canApprove: false, canExport: true, movementAccessScope: "ALL" },
+  LEARNING: { module: "LEARNING", canCreate: false, canRead: true, canUpdate: false, canDelete: false, canApprove: false, canExport: false, movementAccessScope: "ALL" },
+  RBAC: { module: "RBAC", canCreate: false, canRead: true, canUpdate: false, canDelete: false, canApprove: false, canExport: false, movementAccessScope: "ALL" },
   SETTINGS: { module: "SETTINGS", canCreate: false, canRead: false, canUpdate: false, canDelete: false, canApprove: false, canExport: false, movementAccessScope: "NONE" }
 };
 
@@ -569,6 +584,31 @@ export default function FleetRbacGovernance() {
   const activeDrawerUser = useMemo(() => {
     return mergedUsers.find(u => u.id === drawerUserId);
   }, [mergedUsers, drawerUserId]);
+
+  // Selected User Object & Policy for Simulator
+  const activeSimUser = useMemo(() => {
+    return mergedUsers.find(u => u.id === simUserId);
+  }, [mergedUsers, simUserId]);
+
+  const activeSimRoleCode = activeSimUser?.fleetAccess?.fleetRole || "TRAVELER";
+  const activeSimRoleDef = useMemo(() => {
+    return roleMap.get(activeSimRoleCode);
+  }, [roleMap, activeSimRoleCode]);
+
+  const activeSimPolicy = useMemo(() => {
+    return policyRecords.find(p => p.roleCode === activeSimRoleCode && p.module === simModule) || {
+      id: "sim-fallback",
+      roleCode: activeSimRoleCode,
+      module: simModule,
+      canRead: activeSimRoleCode === "FLEET_ADMIN" || activeSimRoleCode === "FLEET_VIEWER",
+      canCreate: activeSimRoleCode === "FLEET_ADMIN",
+      canUpdate: activeSimRoleCode === "FLEET_ADMIN",
+      canDelete: activeSimRoleCode === "FLEET_ADMIN",
+      canApprove: activeSimRoleCode === "FLEET_ADMIN",
+      canExport: activeSimRoleCode === "FLEET_ADMIN",
+      movementAccessScope: (activeSimRoleDef?.movementAccessScope || "ALL") as FleetMovementAccessScope
+    };
+  }, [policyRecords, activeSimRoleCode, simModule, activeSimRoleDef]);
 
   return (
     <div className="w-full space-y-6 pb-16 animate-in fade-in duration-300">
@@ -1201,27 +1241,66 @@ export default function FleetRbacGovernance() {
           </div>
 
           {/* Simulation Output */}
-          {simUserId && (
-            <div className="p-4 rounded-xl bg-purple-500/5 border border-purple-500/20 space-y-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
-                Evaluation Results
-              </span>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-                <div className="p-2.5 rounded-lg bg-card border border-border">
-                  <span className="text-[10px] text-muted-foreground uppercase font-bold block">View / Read</span>
-                  <span className="text-sm font-bold text-emerald-500">ALLOWED</span>
+          {activeSimUser && (
+            <div className="p-5 rounded-2xl bg-purple-500/5 border border-purple-500/20 space-y-4 animate-in fade-in">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-purple-500/15 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
+                    Simulation Evaluation:
+                  </span>
+                  <span className="text-xs font-bold text-foreground">{activeSimUser.fullName}</span>
                 </div>
-                <div className="p-2.5 rounded-lg bg-card border border-border">
-                  <span className="text-[10px] text-muted-foreground uppercase font-bold block">Create / Book</span>
-                  <span className="text-sm font-bold text-emerald-500">ALLOWED</span>
+                <div className="flex items-center gap-2">
+                  <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold border ${activeSimRoleDef?.badgeColor || 'bg-surface text-muted-foreground border-border'}`}>
+                    {activeSimRoleDef?.label || activeSimRoleCode}
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold border border-purple-500/20">
+                    Scope: {activeSimPolicy.movementAccessScope || "ALL"}
+                  </span>
                 </div>
-                <div className="p-2.5 rounded-lg bg-card border border-border">
-                  <span className="text-[10px] text-muted-foreground uppercase font-bold block">Update / Dispatch</span>
-                  <span className="text-sm font-bold text-muted-foreground">DENIED</span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 text-center">
+                <div className={`p-3 rounded-xl border ${activeSimPolicy.canRead ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-surface/60 border-border/60'}`}>
+                  <span className="text-[10px] text-muted-foreground uppercase font-bold block mb-1">View / Read</span>
+                  <span className={`text-xs font-bold ${activeSimPolicy.canRead ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground/60'}`}>
+                    {activeSimPolicy.canRead ? 'ALLOWED' : 'DENIED'}
+                  </span>
                 </div>
-                <div className="p-2.5 rounded-lg bg-card border border-border">
-                  <span className="text-[10px] text-muted-foreground uppercase font-bold block">Export Logs</span>
-                  <span className="text-sm font-bold text-muted-foreground">DENIED</span>
+
+                <div className={`p-3 rounded-xl border ${activeSimPolicy.canCreate ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-surface/60 border-border/60'}`}>
+                  <span className="text-[10px] text-muted-foreground uppercase font-bold block mb-1">Create / Add</span>
+                  <span className={`text-xs font-bold ${activeSimPolicy.canCreate ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground/60'}`}>
+                    {activeSimPolicy.canCreate ? 'ALLOWED' : 'DENIED'}
+                  </span>
+                </div>
+
+                <div className={`p-3 rounded-xl border ${activeSimPolicy.canUpdate ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-surface/60 border-border/60'}`}>
+                  <span className="text-[10px] text-muted-foreground uppercase font-bold block mb-1">Update / Edit</span>
+                  <span className={`text-xs font-bold ${activeSimPolicy.canUpdate ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground/60'}`}>
+                    {activeSimPolicy.canUpdate ? 'ALLOWED' : 'DENIED'}
+                  </span>
+                </div>
+
+                <div className={`p-3 rounded-xl border ${activeSimPolicy.canDelete ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-surface/60 border-border/60'}`}>
+                  <span className="text-[10px] text-muted-foreground uppercase font-bold block mb-1">Delete / Remove</span>
+                  <span className={`text-xs font-bold ${activeSimPolicy.canDelete ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground/60'}`}>
+                    {activeSimPolicy.canDelete ? 'ALLOWED' : 'DENIED'}
+                  </span>
+                </div>
+
+                <div className={`p-3 rounded-xl border ${activeSimPolicy.canApprove ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-surface/60 border-border/60'}`}>
+                  <span className="text-[10px] text-muted-foreground uppercase font-bold block mb-1">Approve</span>
+                  <span className={`text-xs font-bold ${activeSimPolicy.canApprove ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground/60'}`}>
+                    {activeSimPolicy.canApprove ? 'ALLOWED' : 'DENIED'}
+                  </span>
+                </div>
+
+                <div className={`p-3 rounded-xl border ${activeSimPolicy.canExport ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-surface/60 border-border/60'}`}>
+                  <span className="text-[10px] text-muted-foreground uppercase font-bold block mb-1">Export Logs</span>
+                  <span className={`text-xs font-bold ${activeSimPolicy.canExport ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground/60'}`}>
+                    {activeSimPolicy.canExport ? 'ALLOWED' : 'DENIED'}
+                  </span>
                 </div>
               </div>
             </div>
