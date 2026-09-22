@@ -25,6 +25,8 @@
     --tab-inactive-bg: #131921;
     --tab-inactive-text: #cccccc;
     --heading-text: #ffffff;
+    --selection-bg: #0284c7;
+    --selection-text: #ffffff;
   }
   
   [data-theme="amazon"] body {

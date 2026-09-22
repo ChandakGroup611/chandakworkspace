@@ -24,6 +24,8 @@
     --success: #00ff00;
     --warning: #ffff00;
     --danger: #ff0044;
+    --selection-bg: #c026d3;
+    --selection-text: #ffffff;
   }
   
   [data-theme="cyberpunk"] body {

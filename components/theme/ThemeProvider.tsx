@@ -204,27 +204,43 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (aColor === "theme-default") {
       document.documentElement.style.removeProperty("--accent-primary");
       document.documentElement.style.removeProperty("--accent-secondary");
+      document.documentElement.style.removeProperty("--selection-bg");
+      document.documentElement.style.removeProperty("--selection-text");
     } else if (aColor === "blue") {
       document.documentElement.style.setProperty("--accent-primary", "#3b82f6");
       document.documentElement.style.setProperty("--accent-secondary", "#60a5fa");
+      document.documentElement.style.setProperty("--selection-bg", "#2563eb");
+      document.documentElement.style.setProperty("--selection-text", "#ffffff");
     } else if (aColor === "emerald") {
       document.documentElement.style.setProperty("--accent-primary", "#10b981");
       document.documentElement.style.setProperty("--accent-secondary", "#34d399");
+      document.documentElement.style.setProperty("--selection-bg", "#059669");
+      document.documentElement.style.setProperty("--selection-text", "#ffffff");
     } else if (aColor === "rose") {
       document.documentElement.style.setProperty("--accent-primary", "#f43f5e");
       document.documentElement.style.setProperty("--accent-secondary", "#fb7185");
+      document.documentElement.style.setProperty("--selection-bg", "#e11d48");
+      document.documentElement.style.setProperty("--selection-text", "#ffffff");
     } else if (aColor === "amber") {
       document.documentElement.style.setProperty("--accent-primary", "#f59e0b");
       document.documentElement.style.setProperty("--accent-secondary", "#fbbf24");
+      document.documentElement.style.setProperty("--selection-bg", "#d97706");
+      document.documentElement.style.setProperty("--selection-text", "#ffffff");
     } else if (aColor === "purple") {
       document.documentElement.style.setProperty("--accent-primary", "#8b5cf6");
       document.documentElement.style.setProperty("--accent-secondary", "#a78bfa");
+      document.documentElement.style.setProperty("--selection-bg", "#7c3aed");
+      document.documentElement.style.setProperty("--selection-text", "#ffffff");
     } else if (aColor === "slate") {
       document.documentElement.style.setProperty("--accent-primary", "#64748b");
       document.documentElement.style.setProperty("--accent-secondary", "#94a3b8");
+      document.documentElement.style.setProperty("--selection-bg", "#334155");
+      document.documentElement.style.setProperty("--selection-text", "#ffffff");
     } else if (aColor.startsWith("#")) {
       document.documentElement.style.setProperty("--accent-primary", aColor);
       document.documentElement.style.setProperty("--accent-secondary", aColor);
+      document.documentElement.style.setProperty("--selection-bg", "#2563eb");
+      document.documentElement.style.setProperty("--selection-text", "#ffffff");
     }
   };
 

@@ -46,6 +46,8 @@
   --color-theme-tab-inactive-text: var(--tab-inactive-text);
   --color-theme-heading: var(--heading-text);
   --color-theme-icon: var(--icon-color);
+  --color-selection-bg: var(--selection-bg);
+  --color-selection-text: var(--selection-text);
 
 }
 
@@ -75,15 +77,49 @@
     color: var(--color-foreground) !important;
   }
 
-  /* Premium Global Text Selection */
+  /* Universal High-Contrast Text Selection Across All Elements & Fields */
   ::selection {
-    background-color: var(--color-accent);
-    color: #ffffff;
+    background-color: var(--selection-bg, #2563eb) !important;
+    color: var(--selection-text, #ffffff) !important;
+    -webkit-text-fill-color: var(--selection-text, #ffffff) !important;
   }
 
   ::-moz-selection {
-    background-color: var(--color-accent);
-    color: #ffffff;
+    background-color: var(--selection-bg, #2563eb) !important;
+    color: var(--selection-text, #ffffff) !important;
+  }
+
+  *::selection {
+    background-color: var(--selection-bg, #2563eb) !important;
+    color: var(--selection-text, #ffffff) !important;
+    -webkit-text-fill-color: var(--selection-text, #ffffff) !important;
+  }
+
+  *::-moz-selection {
+    background-color: var(--selection-bg, #2563eb) !important;
+    color: var(--selection-text, #ffffff) !important;
+  }
+
+  /* Universal Field & Form Controls Selection Guarantee (Inputs, Textareas, Modals) */
+  input::selection,
+  textarea::selection,
+  select::selection,
+  [contenteditable]::selection,
+  .theme-input-structural::selection,
+  .theme-data-value::selection {
+    background-color: var(--selection-bg, #2563eb) !important;
+    color: var(--selection-text, #ffffff) !important;
+    -webkit-text-fill-color: var(--selection-text, #ffffff) !important;
+  }
+
+  input::-moz-selection,
+  textarea::-moz-selection,
+  select::-moz-selection,
+  [contenteditable]::-moz-selection,
+  .theme-input-structural::-moz-selection,
+  .theme-data-value::-moz-selection {
+    background-color: var(--selection-bg, #2563eb) !important;
+    color: var(--selection-text, #ffffff) !important;
   }
 
   body {

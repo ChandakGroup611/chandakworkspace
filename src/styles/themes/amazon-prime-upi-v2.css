@@ -25,6 +25,8 @@
     --tab-inactive-bg: #ffffff;
     --tab-inactive-text: #565959;
     --heading-text: #0f1111;
+    --selection-bg: #0066c0;
+    --selection-text: #ffffff;
   }
   
   [data-theme="amazon-prime-upi"] body {

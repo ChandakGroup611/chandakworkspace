@@ -30,6 +30,8 @@
     --tab-inactive-bg: #ffffff;
     --tab-inactive-text: #475569;
     --heading-text: #0f172a;
+    --selection-bg: #4f46e5;
+    --selection-text: #ffffff;
   }
   
   [data-theme="pure-white"] body {
