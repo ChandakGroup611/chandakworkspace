@@ -202,8 +202,7 @@ export const DeleteDependencyModal: React.FC<DeleteDependencyModalProps> = ({
               rows={2}
               value={deleteReason}
               onChange={e => setDeleteReason(e.target.value)}
-              placeholder={`State why "${entityName}" is being removed (e.g. Scope revised, merged with Phase 2, obsolete package)...`}
-              className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-rose-500 placeholder:text-muted-foreground"
+              className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-rose-500"
             />
           </div>
 

@@ -358,7 +358,6 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                     type="text"
                     value={packageSearchQuery}
                     onChange={e => setPackageSearchQuery(e.target.value)}
-                    placeholder="Search work packages..."
                     className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-teal-500"
                   />
                 </div>
@@ -566,7 +565,6 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                   required
                   value={newPackageName}
                   onChange={e => setNewPackageName(e.target.value)}
-                  placeholder="e.g. RCC Core, HVAC, Facade ACP..."
                   className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-teal-500"
                 />
               </div>
@@ -591,7 +589,6 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                     type="text"
                     value={newPackageCode}
                     onChange={e => setNewPackageCode(e.target.value)}
-                    placeholder="PKG-01"
                     className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-teal-500"
                   />
                 </div>
@@ -603,7 +600,6 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                   rows={2}
                   value={newPackageDescription}
                   onChange={e => setNewPackageDescription(e.target.value)}
-                  placeholder="Engineering deliverable scope..."
                   className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-teal-500"
                 />
               </div>

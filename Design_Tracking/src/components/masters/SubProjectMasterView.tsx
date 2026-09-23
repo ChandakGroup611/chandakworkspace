@@ -327,7 +327,6 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search wings, codes, parent projects..."
               className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
             />
             {searchQuery && (
@@ -634,7 +633,6 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
                         type="text"
                         value={subProjectName}
                         onChange={e => setSubProjectName(e.target.value)}
-                        placeholder="e.g. Tower 1, Wing A, Phase 1 Commercial..."
                         required
                         className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
                       />
@@ -647,7 +645,6 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
                         type="text"
                         value={subProjectCode}
                         onChange={e => setSubProjectCode(e.target.value.toUpperCase())}
-                        placeholder="e.g. T1, W-A"
                         className="w-full px-3 py-2 text-xs font-mono font-bold rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
                       />
                     </div>
@@ -678,7 +675,6 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
                         type="number"
                         value={totalFloors}
                         onChange={e => setTotalFloors(e.target.value)}
-                        placeholder="e.g. 38"
                         className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
                       />
                     </div>
@@ -691,7 +687,6 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
                         type="number"
                         value={heightMeters}
                         onChange={e => setHeightMeters(e.target.value)}
-                        placeholder="e.g. 120"
                         className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
                       />
                     </div>
@@ -719,7 +714,6 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
                         type="text"
                         value={description}
                         onChange={e => setDescription(e.target.value)}
-                        placeholder="e.g. 3B + G + 38 Storeys residential tower with podium"
                         className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
                       />
                     </div>
@@ -769,7 +763,6 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
                         type="text"
                         value={consultantSearch}
                         onChange={e => setConsultantSearch(e.target.value)}
-                        placeholder="Search consultants..."
                         className="w-full pl-7 pr-3 py-1 text-xs rounded-lg border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
                       />
                     </div>
@@ -847,7 +840,6 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
                         type="text"
                         value={categorySearch}
                         onChange={e => setCategorySearch(e.target.value)}
-                        placeholder="Search categories..."
                         className="w-full pl-7 pr-3 py-1 text-xs rounded-lg border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-blue-500"
                       />
                     </div>

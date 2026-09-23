@@ -295,7 +295,6 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search consultants by firm, contact, category..."
               className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
             />
             {searchQuery && (
@@ -557,7 +556,6 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                     type="text"
                     value={name}
                     onChange={e => setName(e.target.value)}
-                    placeholder="e.g. JW Consultants, Enersave MEP..."
                     required
                     className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
                   />
@@ -571,7 +569,6 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                     type="text"
                     value={leadContact}
                     onChange={e => setLeadContact(e.target.value)}
-                    placeholder="e.g. Ar. Sanjay Puri / Er. Rajesh Patel"
                     required
                     className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
                   />
@@ -588,7 +585,6 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                     type="email"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
-                    placeholder="official.contact@consultant.com"
                     required
                     className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
                   />
@@ -602,7 +598,6 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                     type="tel"
                     value={phone}
                     onChange={e => setPhone(e.target.value)}
-                    placeholder="+91 22 2840 0000"
                     className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
                   />
                 </div>
@@ -682,7 +677,6 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                     type="text"
                     value={categorySearchQuery}
                     onChange={e => setCategorySearchQuery(e.target.value)}
-                    placeholder="Search discipline categories..."
                     className="w-full pl-7 pr-3 py-1 text-xs rounded-lg border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
                   />
                 </div>

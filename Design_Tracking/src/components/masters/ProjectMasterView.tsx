@@ -383,7 +383,6 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search projects by name, code, RERA, location..."
               className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
             />
             {searchQuery && (
@@ -703,7 +702,6 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                         type="text"
                         value={projectName}
                         onChange={e => setProjectName(e.target.value)}
-                        placeholder="e.g. Chandak Green Horizon, Chandak Stella..."
                         required
                         className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                       />
@@ -716,7 +714,6 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                         type="text"
                         value={projectCode}
                         onChange={e => setProjectCode(e.target.value.toUpperCase())}
-                        placeholder="e.g. CDK-STEL"
                         className="w-full px-3 py-2 text-xs font-mono font-bold rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                       />
                     </div>
@@ -732,7 +729,6 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                         type="text"
                         value={location}
                         onChange={e => setLocation(e.target.value)}
-                        placeholder="e.g. Goregaon West, Mumbai"
                         className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                       />
                     </div>
@@ -778,7 +774,6 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                         type="text"
                         value={builtUpArea}
                         onChange={e => setBuiltUpArea(e.target.value)}
-                        placeholder="e.g. 450,000 sq.ft"
                         className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                       />
                     </div>
@@ -790,7 +785,6 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                         type="text"
                         value={plotArea}
                         onChange={e => setPlotArea(e.target.value)}
-                        placeholder="e.g. 3.5 Acres"
                         className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                       />
                     </div>
@@ -802,7 +796,6 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                         type="text"
                         value={estimatedBudget}
                         onChange={e => setEstimatedBudget(e.target.value)}
-                        placeholder="e.g. ₹180 Cr"
                         className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                       />
                     </div>
@@ -814,7 +807,6 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                         type="text"
                         value={reraNumber}
                         onChange={e => setReraNumber(e.target.value)}
-                        placeholder="P518000XXXXX"
                         className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                       />
                     </div>
@@ -841,7 +833,6 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                         type="text"
                         value={leadManager}
                         onChange={e => setLeadManager(e.target.value)}
-                        placeholder="e.g. Rajesh Sharma"
                         className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                       />
                     </div>
@@ -853,7 +844,6 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                         type="email"
                         value={leadManagerEmail}
                         onChange={e => setLeadManagerEmail(e.target.value)}
-                        placeholder="manager@chandakgroup.com"
                         className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                       />
                     </div>
@@ -867,7 +857,6 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                     <textarea
                       value={description}
                       onChange={e => setDescription(e.target.value)}
-                      placeholder="High-level project development overview..."
                       rows={2}
                       className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                     />
@@ -917,7 +906,6 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                         type="text"
                         value={consultantSearch}
                         onChange={e => setConsultantSearch(e.target.value)}
-                        placeholder="Search consultant firms..."
                         className="w-full pl-7 pr-3 py-1 text-xs rounded-lg border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
                       />
                     </div>
@@ -996,7 +984,6 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                         type="text"
                         value={categorySearch}
                         onChange={e => setCategorySearch(e.target.value)}
-                        placeholder="Search categories..."
                         className="w-full pl-7 pr-3 py-1 text-xs rounded-lg border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-blue-500"
                       />
                     </div>

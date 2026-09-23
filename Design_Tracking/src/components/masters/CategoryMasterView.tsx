@@ -216,7 +216,6 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Search categories by name, code, description..."
             className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
           />
           {searchQuery && (
@@ -376,7 +375,6 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
                   type="text"
                   value={name}
                   onChange={e => setName(e.target.value)}
-                  placeholder="e.g. Façade & Glazing, Structural, MEPF..."
                   required
                   className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
                 />
@@ -391,7 +389,6 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
                   type="text"
                   value={code}
                   onChange={e => setCode(e.target.value.toUpperCase())}
-                  placeholder="e.g. FACD, STR, MEP, ARCH..."
                   maxLength={6}
                   className="w-full px-3 py-2 text-xs font-mono font-bold rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
                 />
@@ -452,7 +449,6 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
                 <textarea
                   value={description}
                   onChange={e => setDescription(e.target.value)}
-                  placeholder="Brief description of work scopes covered under this category..."
                   rows={2}
                   className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
                 />
