@@ -21,6 +21,7 @@ export interface ProjectMaster {
   leadManager?: string;
   leadManagerEmail?: string;
   taggedConsultants?: string[]; // Multi-selected consultant partner names / IDs (Project-Level)
+  taggedCategories?: string[]; // Multi-selected discipline / category names (Project-Level)
   subProjectConsultants?: Record<string, string[]>; // Subproject/Tower ID -> Consultant names/IDs
   subProjectCategories?: Record<string, string[]>; // Subproject/Tower ID -> Category names
   description?: string;
@@ -30,22 +31,32 @@ export interface ProjectMaster {
 export interface TowerMaster {
   id: string;
   projectId: string;
+  projectName?: string;
   towerName: string;
   subProjectCode?: string;
   towerType: "Sale" | "Society" | "Commercial" | "Rehab / SRA" | "PTC / Hostel" | "Plot / Infrastructure";
   totalFloors?: number;
   heightMeters?: number;
+  targetCompletionDate?: string;
   taggedConsultants?: string[]; // Sub-project level assigned consultants
   taggedCategories?: string[]; // Sub-project level assigned discipline categories
   description?: string;
+  createdAt?: string;
 }
+
+export type SubProjectMaster = TowerMaster;
 
 export interface DisciplineMaster {
   id: string;
   name: string;
   code: string;
+  description?: string;
+  color?: string;
   icon?: string;
+  createdAt?: string;
 }
+
+export type CategoryMaster = DisciplineMaster;
 
 export interface WorkPackageMaster {
   id: string;
@@ -68,6 +79,7 @@ export interface ConsultantMaster {
   id: string;
   firmName: string;
   discipline: string;
+  categories?: string[]; // Multi-selected mapped categories from Category Master
   expertise: string[]; // Work package tags (multi-selection)
   contactPerson?: string;
   email?: string;
@@ -77,6 +89,7 @@ export interface ConsultantMaster {
   rating?: number;
   totalDrawingsSubmitted?: number;
   averageTatDays?: number;
+  createdAt?: string;
 }
 
 // Live Transaction Entry (Filled by user)
@@ -109,7 +122,7 @@ export interface ForeignKeyDependencyItem {
 }
 
 export interface EntityDependencyReport {
-  entityType: "PROJECT" | "SUB_PROJECT" | "TOWER" | "PACKAGE" | "CONSULTANT" | "AUTHORITY";
+  entityType: "PROJECT" | "SUB_PROJECT" | "TOWER" | "PACKAGE" | "CONSULTANT" | "AUTHORITY" | "CATEGORY";
   entityId: string;
   entityName: string;
   totalDependentRecords: number;
@@ -122,7 +135,7 @@ export interface MatrixAuditLog {
   id: string;
   entryKey?: string; // `${projectId}__${towerId}__${packageId}` or `${entityType}__${entityId}`
   action?: "CREATE" | "UPDATE" | "DELETE" | "CASCADE_DELETE" | "STATUS_CHANGE";
-  entityType?: "PROJECT" | "SUB_PROJECT" | "TOWER" | "PACKAGE" | "CONSULTANT" | "AUTHORITY" | "MATRIX_CELL" | "LOOK_AHEAD" | "LIAISON" | "DRAWING" | "TRANSMITTAL" | "RFI";
+  entityType?: "PROJECT" | "SUB_PROJECT" | "TOWER" | "PACKAGE" | "CONSULTANT" | "AUTHORITY" | "CATEGORY" | "MATRIX_CELL" | "LOOK_AHEAD" | "LIAISON" | "DRAWING" | "TRANSMITTAL" | "RFI";
   entityId?: string;
   entityName?: string;
   projectId?: string;

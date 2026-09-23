@@ -74,6 +74,9 @@ type ActiveTabType =
   | "RFIS"
   | "CONSULTANTS" 
   | "PACKAGES"
+  | "CATEGORIES"
+  | "SUB_PROJECTS"
+  | "PROJECTS"
   | "REPORTS" 
   | "RBAC"
   | "MASTERS";
@@ -117,6 +120,9 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
     const currentPath = (pathname || "/design").toLowerCase();
     const combined = `${currentPath}/${slugStr}`;
 
+    if (combined.includes("category") || combined.includes("categories") || combined.includes("discipline")) return "CATEGORIES";
+    if (combined.includes("sub-project") || combined.includes("subproject") || combined.includes("wing")) return "SUB_PROJECTS";
+    if (combined.includes("project-master") || combined.includes("projects-master")) return "PROJECTS";
     if (combined.includes("rbac") || combined.includes("access") || combined.includes("policy") || combined.includes("permission") || combined.includes("governance")) return "RBAC";
     if (combined.includes("package") || combined.includes("work-package") || combined.includes("workpackage")) return "PACKAGES";
     if (combined.includes("master") || combined.includes("setting")) return "MASTERS";
@@ -148,6 +154,9 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
       RFIS: "/design/rfis",
       CONSULTANTS: "/design/consultants",
       PACKAGES: "/design/packages",
+      CATEGORIES: "/design/categories",
+      SUB_PROJECTS: "/design/sub-projects",
+      PROJECTS: "/design/projects",
       REPORTS: "/design/reports",
       RBAC: "/design/rbac",
       MASTERS: "/design/masters"
@@ -591,6 +600,21 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
         <MastersSetupView initialSubTab="PACKAGES" />
       )}
 
+      {/* Direct Project Master View */}
+      {activeTab === "PROJECTS" && (
+        <MastersSetupView initialSubTab="PROJECTS" />
+      )}
+
+      {/* Direct Sub-Project Master View */}
+      {activeTab === "SUB_PROJECTS" && (
+        <MastersSetupView initialSubTab="SUB_PROJECTS" />
+      )}
+
+      {/* Direct Category Master View */}
+      {activeTab === "CATEGORIES" && (
+        <MastersSetupView initialSubTab="CATEGORIES" />
+      )}
+
       {/* Tab 13: Design Reports & Analytics */}
       {activeTab === "REPORTS" && (
         <DesignReportsAnalytics 
@@ -606,7 +630,7 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
 
       {/* Tab 15: Masters Setup View */}
       {activeTab === "MASTERS" && (
-        <MastersSetupView />
+        <MastersSetupView initialSubTab="PROJECTS" />
       )}
 
       {/* Quick Data Entry Modal */}

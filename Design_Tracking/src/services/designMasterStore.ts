@@ -8,7 +8,9 @@
 import { 
   ProjectMaster, 
   TowerMaster, 
+  SubProjectMaster,
   DisciplineMaster, 
+  CategoryMaster,
   WorkPackageMaster, 
   StatutoryAuthorityMaster, 
   ConsultantMaster,
@@ -44,6 +46,22 @@ import {
 } from "../data/eyTenderData";
 
 const STORAGE_KEY = "CHANDAK_DESIGN_MASTER_STORE_V4";
+
+export const DEFAULT_DESIGN_CATEGORIES: CategoryMaster[] = [
+  { id: "cat-arch", name: "Architectural", code: "ARCH", icon: "🏛️", color: "purple", description: "Master planning, floor plans, elevations, sections & 3D visualization" },
+  { id: "cat-str", name: "Structural", code: "STR", icon: "🏗️", color: "blue", description: "Substructure, superstructure, RCC frames, steel detailing & PT slabs" },
+  { id: "cat-mep", name: "MEPF Services", code: "MEP", icon: "⚡", color: "amber", description: "HVAC, plumbing, electrical distribution, fire fighting & ELV" },
+  { id: "cat-civ", name: "Civil & RCC", code: "CIV", icon: "🧱", color: "slate", description: "Earthwork, excavation, RCC core, masonry & basic shell works" },
+  { id: "cat-facd", name: "Façade & Glazing", code: "FACD", icon: "🏢", color: "teal", description: "Curtain walls, aluminum composite panels, railings & fenestration" },
+  { id: "cat-land", name: "Landscape & Infrastructure", code: "LAND", icon: "🌳", color: "emerald", description: "Hardscape, softscape, storm water drainage, external paving & lighting" },
+  { id: "cat-int", name: "Interior & Fitouts", code: "INT", icon: "🛋️", color: "rose", description: "Lobbies, clubhouse interiors, show flats, common areas & finishes" },
+  { id: "cat-geo", name: "Geotechnical & Soil", code: "GEO", icon: "⛰️", color: "amber", description: "Soil investigations, piling designs, slope stability & shoring systems" },
+  { id: "cat-fire", name: "Fire & Life Safety", code: "FIRE", icon: "🔥", color: "rose", description: "Hydrant systems, sprinklers, smoke management & statutory fire compliance" },
+  { id: "cat-env", name: "Environmental & Green", code: "ENV", icon: "🌱", color: "emerald", description: "IGBC/LEED rating, solar integration, STP/WTP, rainwater harvesting" },
+  { id: "cat-traf", name: "Traffic & Parking", code: "TRAF", icon: "🚗", color: "blue", description: "Vehicular circulation, ramp slope design, automated puzzle/stack parking" },
+  { id: "cat-bim", name: "BIM Coordination", code: "BIM", icon: "💻", color: "indigo", description: "3D clash detection, LOD 300/400 models, asset tagging & 4D simulation" },
+  { id: "cat-spec", name: "Specialist Studies", code: "SPEC", icon: "🔬", color: "purple", description: "Wind tunnel analysis, acoustic studies, thermal comfort & lighting simulation" }
+];
 
 export const STANDARD_DESIGN_ROLES: DesignRoleDefinition[] = [
   {
@@ -324,7 +342,9 @@ export class DesignMasterStore {
           // Migration check for collections
           if (!parsed.projects || !Array.isArray(parsed.projects)) parsed.projects = [];
           if (!parsed.towers || !Array.isArray(parsed.towers)) parsed.towers = [];
-          if (!parsed.disciplines || !Array.isArray(parsed.disciplines)) parsed.disciplines = [];
+          if (!parsed.disciplines || !Array.isArray(parsed.disciplines) || parsed.disciplines.length === 0) {
+            parsed.disciplines = [...DEFAULT_DESIGN_CATEGORIES];
+          }
           if (!parsed.packages || !Array.isArray(parsed.packages)) parsed.packages = [];
           if (!parsed.authorities || !Array.isArray(parsed.authorities)) parsed.authorities = [];
           if (!parsed.drawings || !Array.isArray(parsed.drawings)) parsed.drawings = [];
@@ -415,7 +435,7 @@ export class DesignMasterStore {
    * Evaluates all inbound foreign key references for a given entity before deletion or update
    */
   public static getEntityDependencies(
-    entityType: "PROJECT" | "SUB_PROJECT" | "TOWER" | "PACKAGE" | "CONSULTANT" | "AUTHORITY",
+    entityType: EntityDependencyReport["entityType"],
     entityId: string
   ): EntityDependencyReport {
     const state = this.getState();
@@ -768,6 +788,81 @@ export class DesignMasterStore {
         entityType,
         entityId,
         entityName: authName,
+        totalDependentRecords: totalDependent,
+        dependencies,
+        isReferencedByOtherRecords: totalDependent > 0
+      };
+    }
+
+    if (entityType === "CATEGORY") {
+      const cat = state.disciplines.find(d => d.id === entityId || d.name === entityId);
+      const catName = cat?.name || entityId;
+
+      // 1. Work Packages
+      const pkgs = state.packages.filter(p => p.disciplineName === catName || p.disciplineId === entityId);
+      if (pkgs.length > 0) {
+        dependencies.push({
+          foreignKeyField: "disciplineName",
+          referencedEntityType: "Work Packages",
+          count: pkgs.length,
+          previewItems: pkgs.map(p => p.packageName).slice(0, 3),
+          canCascade: true
+        });
+      }
+
+      // 2. Consultants
+      const consultants = state.consultants.filter(c => (c.categories && c.categories.includes(catName)) || c.category === catName);
+      if (consultants.length > 0) {
+        dependencies.push({
+          foreignKeyField: "categories",
+          referencedEntityType: "Tagged Consultant Partners",
+          count: consultants.length,
+          previewItems: consultants.map(c => c.name).slice(0, 3),
+          canCascade: false
+        });
+      }
+
+      // 3. Projects
+      const projects = state.projects.filter(p => p.taggedCategories?.includes(catName));
+      if (projects.length > 0) {
+        dependencies.push({
+          foreignKeyField: "taggedCategories",
+          referencedEntityType: "Tagged Projects",
+          count: projects.length,
+          previewItems: projects.map(p => p.name).slice(0, 3),
+          canCascade: false
+        });
+      }
+
+      // 4. Tower Wings / Sub-Projects
+      const towers = state.towers.filter(t => t.taggedCategories?.includes(catName));
+      if (towers.length > 0) {
+        dependencies.push({
+          foreignKeyField: "taggedCategories",
+          referencedEntityType: "Tagged Sub-Project Wings",
+          count: towers.length,
+          previewItems: towers.map(t => t.towerName).slice(0, 3),
+          canCascade: false
+        });
+      }
+
+      // 5. Drawings
+      const drawings = (state.drawings || []).filter(d => d.discipline === catName);
+      if (drawings.length > 0) {
+        dependencies.push({
+          foreignKeyField: "discipline",
+          referencedEntityType: "Drawing Sheets",
+          count: drawings.length,
+          previewItems: drawings.map(d => d.code).slice(0, 3),
+          canCascade: false
+        });
+      }
+
+      const totalDependent = dependencies.reduce((acc, d) => acc + d.count, 0);
+      return {
+        entityType,
+        entityId,
+        entityName: catName,
         totalDependentRecords: totalDependent,
         dependencies,
         isReferencedByOtherRecords: totalDependent > 0
@@ -1128,31 +1223,221 @@ export class DesignMasterStore {
   }
 
   // ============================================================================
-  // Master Management: Disciplines & Work Packages (CRUD) with Audit Tracking
+  // Master Management: Categories & Disciplines (CRUD) with Audit Tracking
   // ============================================================================
 
-  public static getDisciplines(): DisciplineMaster[] {
-    return this.getState().disciplines;
+  public static getCategories(): CategoryMaster[] {
+    const state = this.getState();
+    if (!state.disciplines || state.disciplines.length === 0) {
+      state.disciplines = [...DEFAULT_DESIGN_CATEGORIES];
+    }
+    return state.disciplines;
   }
 
-  public static addDiscipline(name: string, code: string, icon = "📁", createdBy = "Design Lead"): DisciplineMaster {
+  public static getDisciplines(): DisciplineMaster[] {
+    return this.getCategories();
+  }
+
+  public static addCategory(
+    category: Omit<CategoryMaster, "id" | "createdAt">,
+    createdBy = "Design Lead"
+  ): CategoryMaster {
     const state = this.getState();
-    const id = `disc-${Date.now().toString(36)}`;
-    const newDisc: DisciplineMaster = { id, name, code, icon };
-    state.disciplines.push(newDisc);
+    const id = `cat-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+    const newCategory: CategoryMaster = {
+      ...category,
+      id,
+      code: category.code?.trim().toUpperCase() || category.name.slice(0, 4).toUpperCase(),
+      createdAt: new Date().toISOString()
+    };
+
+    if (!state.disciplines) state.disciplines = [];
+    state.disciplines.push(newCategory);
 
     this.logAudit({
       action: "CREATE",
-      entityType: "PACKAGE",
+      entityType: "CATEGORY",
       entityId: id,
-      entityName: name,
-      newValue: newDisc,
-      impactSummary: `Created Discipline "${name}" (${code})`,
+      entityName: newCategory.name,
+      newValue: newCategory,
+      impactSummary: `Created Category / Discipline "${newCategory.name}" (${newCategory.code})`,
       changedBy: createdBy
     });
 
     this.notify();
-    return newDisc;
+    return newCategory;
+  }
+
+  public static addDiscipline(name: string, code: string, icon = "📁", createdBy = "Design Lead"): DisciplineMaster {
+    return this.addCategory({ name, code, icon }, createdBy);
+  }
+
+  public static updateCategory(
+    id: string,
+    updates: Partial<Omit<CategoryMaster, "id">>,
+    changedBy = "Design Lead",
+    reason?: string
+  ): CategoryMaster | null {
+    const state = this.getState();
+    const idx = state.disciplines.findIndex(d => d.id === id);
+    if (idx === -1) return null;
+
+    const oldCat = { ...state.disciplines[idx] };
+    state.disciplines[idx] = { ...state.disciplines[idx], ...updates };
+    const updatedCat = state.disciplines[idx];
+
+    // If category name changed, propagate to work packages, consultants, drawings
+    if (updates.name && updates.name !== oldCat.name) {
+      state.packages.forEach(p => {
+        if (p.disciplineName === oldCat.name || p.disciplineId === id) {
+          p.disciplineName = updates.name!;
+        }
+      });
+      state.consultants.forEach(c => {
+        if (c.categories && c.categories.includes(oldCat.name)) {
+          c.categories = c.categories.map(cat => cat === oldCat.name ? updates.name! : cat);
+        }
+        if (c.category === oldCat.name) {
+          c.category = updates.name!;
+        }
+      });
+      state.projects.forEach(p => {
+        if (p.taggedCategories?.includes(oldCat.name)) {
+          p.taggedCategories = p.taggedCategories.map(cat => cat === oldCat.name ? updates.name! : cat);
+        }
+      });
+      state.towers.forEach(t => {
+        if (t.taggedCategories?.includes(oldCat.name)) {
+          t.taggedCategories = t.taggedCategories.map(cat => cat === oldCat.name ? updates.name! : cat);
+        }
+      });
+      (state.drawings || []).forEach(d => {
+        if (d.discipline === oldCat.name) {
+          d.discipline = updates.name! as any;
+        }
+      });
+    }
+
+    this.logAudit({
+      action: "UPDATE",
+      entityType: "CATEGORY",
+      entityId: id,
+      entityName: updatedCat.name,
+      previousValue: oldCat,
+      newValue: updatedCat,
+      impactSummary: `Updated Category / Discipline "${updatedCat.name}" parameters`,
+      changedBy,
+      reason
+    });
+
+    this.notify();
+    return state.disciplines[idx];
+  }
+
+  public static deleteCategory(id: string, reason?: string, deletedBy = "Design Lead"): EntityDependencyReport {
+    const state = this.getState();
+    const cat = state.disciplines.find(d => d.id === id);
+    const depReport = this.getEntityDependencies("CATEGORY", id);
+    const catName = cat?.name || id;
+
+    // 1. Remove category
+    state.disciplines = state.disciplines.filter(d => d.id !== id);
+
+    // 2. Untag from consultants
+    state.consultants.forEach(c => {
+      if (c.categories) {
+        c.categories = c.categories.filter(ct => ct !== catName && ct !== id);
+      }
+    });
+
+    // 3. Untag from projects & towers
+    state.projects.forEach(p => {
+      if (p.taggedCategories) {
+        p.taggedCategories = p.taggedCategories.filter(ct => ct !== catName && ct !== id);
+      }
+    });
+    state.towers.forEach(t => {
+      if (t.taggedCategories) {
+        t.taggedCategories = t.taggedCategories.filter(ct => ct !== catName && ct !== id);
+      }
+    });
+
+    // 4. Log Audit Trail
+    this.logAudit({
+      action: "CASCADE_DELETE",
+      entityType: "CATEGORY",
+      entityId: id,
+      entityName: catName,
+      previousValue: cat,
+      newValue: null,
+      impactSummary: `Removed Category "${catName}" and untagged from ${depReport.totalDependentRecords} referencing records`,
+      foreignKeyDependencies: depReport.dependencies,
+      changedBy: deletedBy,
+      reason
+    });
+
+    this.notify();
+    return depReport;
+  }
+
+  /**
+   * Resolves all unique Categories associated with a list of consultant partner names
+   */
+  public static getCategoriesForConsultants(consultantNamesOrIds: string[]): string[] {
+    const state = this.getState();
+    const categoriesSet = new Set<string>();
+
+    if (!consultantNamesOrIds || consultantNamesOrIds.length === 0) return [];
+
+    consultantNamesOrIds.forEach(cIdentifier => {
+      const c = state.consultants.find(cons => cons.name === cIdentifier || cons.id === cIdentifier);
+      if (c) {
+        if (c.categories && Array.isArray(c.categories)) {
+          c.categories.forEach(cat => { if (cat) categoriesSet.add(cat); });
+        }
+        if (c.category && typeof c.category === "string") {
+          categoriesSet.add(c.category);
+        }
+      }
+    });
+
+    return Array.from(categoriesSet);
+  }
+
+  // ============================================================================
+  // Sub-Project Master Methods (Clean Sub-Project / Tower Alias Methods)
+  // ============================================================================
+
+  public static getSubProjects(projectId?: string): SubProjectMaster[] {
+    const state = this.getState();
+    let twrs = state.towers || [];
+    if (projectId && projectId !== "ALL") {
+      twrs = twrs.filter(t => t.projectId === projectId);
+    }
+    return twrs.map(t => {
+      const parent = state.projects.find(p => p.id === t.projectId);
+      return {
+        ...t,
+        projectName: parent ? parent.name : undefined
+      };
+    });
+  }
+
+  public static addSubProject(subProject: Omit<SubProjectMaster, "id">, createdBy = "Design Lead"): SubProjectMaster {
+    return this.addTower(subProject, createdBy);
+  }
+
+  public static updateSubProject(
+    id: string,
+    updates: Partial<Omit<SubProjectMaster, "id">>,
+    changedBy = "Design Lead",
+    reason?: string
+  ): SubProjectMaster | null {
+    return this.updateTower(id, updates, changedBy, reason);
+  }
+
+  public static deleteSubProject(id: string, reason?: string, deletedBy = "Design Lead"): EntityDependencyReport {
+    return this.deleteTower(id, reason, deletedBy);
   }
 
   public static getPackages(disciplineName?: string): WorkPackageMaster[] {
@@ -1343,17 +1628,23 @@ export class DesignMasterStore {
   }
 
   public static addConsultant(
-    c: Omit<ConsultantPartner, "id" | "onboardingStatus"> & { onboardingStatus?: "Onboard" | "Not Onboard" },
+    c: Omit<ConsultantPartner, "id" | "onboardingStatus"> & { onboardingStatus?: "Onboard" | "Not Onboard"; categories?: string[] },
     createdBy = "Design Lead"
   ): ConsultantPartner {
     const state = this.getState();
     const id = `cst-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
     const activeProjects = c.activeProjects || [];
     const onboardingStatus: "Onboard" | "Not Onboard" = activeProjects.length > 0 ? "Onboard" : "Not Onboard";
+    const categories = c.categories && c.categories.length > 0 
+      ? c.categories 
+      : (c.category ? [c.category as string] : ["Architectural"]);
+    const primaryCategory = categories[0] || (c.category as string) || "Architectural";
 
     const newC: ConsultantPartner = {
       ...c,
       id,
+      category: primaryCategory,
+      categories,
       expertise: c.expertise || [],
       activeProjects,
       onboardingStatus,
@@ -1374,7 +1665,7 @@ export class DesignMasterStore {
       consultantId: id,
       consultantName: newC.name,
       newValue: newC,
-      impactSummary: `Registered Consultant Partner "${newC.name}" (${newC.category}) with ${newC.expertise?.length || 0} packages and status "${onboardingStatus}"`,
+      impactSummary: `Registered Consultant Partner "${newC.name}" with ${categories.length} mapped categories and status "${onboardingStatus}"`,
       changedBy: createdBy
     });
 
@@ -1397,10 +1688,17 @@ export class DesignMasterStore {
     const oldConsultant = { ...current };
     const newActiveProjects = updates.activeProjects !== undefined ? updates.activeProjects : current.activeProjects;
     const newOnboardingStatus: "Onboard" | "Not Onboard" = (newActiveProjects && newActiveProjects.length > 0) ? "Onboard" : "Not Onboard";
+    
+    let newCategories = updates.categories !== undefined ? updates.categories : (current.categories || (current.category ? [current.category as string] : ["Architectural"]));
+    let primaryCategory = updates.category !== undefined 
+      ? updates.category 
+      : (newCategories && newCategories.length > 0 ? newCategories[0] : current.category);
 
     state.consultants[idx] = {
       ...current,
       ...updates,
+      category: primaryCategory,
+      categories: newCategories,
       activeProjects: newActiveProjects,
       onboardingStatus: newOnboardingStatus
     };
@@ -2399,7 +2697,7 @@ export class DesignMasterStore {
     return {
       projects: [],
       towers: [],
-      disciplines: [],
+      disciplines: [...DEFAULT_DESIGN_CATEGORIES],
       packages: [],
       authorities: [],
       consultants: [],

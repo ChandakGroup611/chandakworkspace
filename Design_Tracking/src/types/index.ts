@@ -66,7 +66,8 @@ export interface GfcRelease {
 export interface ConsultantPartner {
   id: string;
   name: string;
-  category: DesignDiscipline;
+  category: DesignDiscipline | string;
+  categories?: string[]; // Multi-selected mapped categories from Category Master
   expertise: string[]; // Multi-selected work package expertise tags
   leadContact: string;
   email: string;

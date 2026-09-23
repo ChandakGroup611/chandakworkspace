@@ -15,14 +15,16 @@ import {
   ShieldCheck, 
   FileText, 
   ArrowRight,
-  Info
+  Info,
+  Tag
 } from "lucide-react";
 import { EntityDependencyReport } from "../types/masterTypes";
 
-interface DeleteDependencyModalProps {
+export interface DeleteDependencyModalProps {
   isOpen: boolean;
   onClose: () => void;
-  dependencyReport: EntityDependencyReport | null;
+  dependencyReport?: EntityDependencyReport | null;
+  report?: EntityDependencyReport | null;
   onConfirmDelete: (reason: string) => void;
   isSubmitting?: boolean;
 }
@@ -31,14 +33,16 @@ export const DeleteDependencyModal: React.FC<DeleteDependencyModalProps> = ({
   isOpen,
   onClose,
   dependencyReport,
+  report,
   onConfirmDelete,
   isSubmitting = false
 }) => {
   const [deleteReason, setDeleteReason] = useState("");
+  const activeReport = dependencyReport || report;
 
-  if (!isOpen || !dependencyReport) return null;
+  if (!isOpen || !activeReport) return null;
 
-  const { entityType, entityName, totalDependentRecords, dependencies, isReferencedByOtherRecords } = dependencyReport;
+  const { entityType, entityName, totalDependentRecords, dependencies, isReferencedByOtherRecords } = activeReport;
 
   const getEntityIcon = () => {
     switch (entityType) {
@@ -54,6 +58,8 @@ export const DeleteDependencyModal: React.FC<DeleteDependencyModalProps> = ({
         return <Users className="h-5 w-5 text-purple-600 dark:text-purple-400" />;
       case "AUTHORITY":
         return <ShieldCheck className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />;
+      case "CATEGORY":
+        return <Tag className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />;
       default:
         return <Trash2 className="h-5 w-5 text-rose-600 dark:text-rose-400" />;
     }
@@ -73,6 +79,8 @@ export const DeleteDependencyModal: React.FC<DeleteDependencyModalProps> = ({
         return "Consultant Partner";
       case "AUTHORITY":
         return "Statutory Authority";
+      case "CATEGORY":
+        return "Category / Discipline";
       default:
         return entityType;
     }
