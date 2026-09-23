@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "react-toastify";
 import { DesignMasterStore, MasterStoreState } from "../services/designMasterStore";
 import { exportTenderMatrixToExcel } from "../services/excelExportService";
@@ -50,6 +51,7 @@ interface MatrixColumn {
 
 export const TenderDesignMatrix: React.FC = () => {
   const [storeState, setStoreState] = useState<MasterStoreState>(DesignMasterStore.getState());
+  const [mounted, setMounted] = useState(false);
   
   // Multi-Selection Dropdown Filter Dimensions
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
@@ -71,8 +73,13 @@ export const TenderDesignMatrix: React.FC = () => {
   const [cellPlannedDate, setCellPlannedDate] = useState<string>("");
   const [cellActualDate, setCellActualDate] = useState<string>("");
   const [cellConsultantId, setCellConsultantId] = useState<string>("");
+  const [isReassigningConsultant, setIsReassigningConsultant] = useState(false);
   const [cellRemarks, setCellRemarks] = useState<string>("");
   const [cellFormError, setCellFormError] = useState<string>("");
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Batch Update Modal State
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
@@ -272,17 +279,103 @@ export const TenderDesignMatrix: React.FC = () => {
     );
   };
 
+  // Auto-resolve assigned consultant partner for active deliverable cell
+  const resolvedCellConsultant = useMemo(() => {
+    if (!activeCell) return null;
+    const { pkg, col, entry } = activeCell;
+
+    // 1. If explicitly selected or recorded on entry
+    if (cellConsultantId) {
+      const found = storeState.consultants.find(c => c.id === cellConsultantId);
+      if (found) return found;
+    }
+    if (entry?.consultantId) {
+      const found = storeState.consultants.find(c => c.id === entry.consultantId);
+      if (found) return found;
+    }
+    if (entry?.consultantName) {
+      const found = storeState.consultants.find(c => c.name.toLowerCase() === entry.consultantName?.toLowerCase());
+      if (found) return found;
+    }
+
+    // 2. Project or Tower level tagged consultants matching package discipline category
+    const proj = storeState.projects.find(p => p.id === col.projectId);
+    const twr = storeState.towers.find(t => t.id === col.towerId);
+    const taggedNames = [
+      ...(twr?.taggedConsultants || []),
+      ...(proj?.taggedConsultants || [])
+    ];
+
+    if (taggedNames.length > 0) {
+      const matched = storeState.consultants.find(c => {
+        const matchesProj = taggedNames.some(tn => tn.toLowerCase() === c.name.toLowerCase() || tn === c.id);
+        const matchesCat = (c.categories || []).some(cat => cat.toLowerCase() === pkg.disciplineName.toLowerCase()) ||
+                           (c.category && (c.category as string).toLowerCase() === pkg.disciplineName.toLowerCase());
+        return matchesProj && matchesCat;
+      });
+      if (matched) return matched;
+
+      const anyTagged = storeState.consultants.find(c => 
+        taggedNames.some(tn => tn.toLowerCase() === c.name.toLowerCase() || tn === c.id)
+      );
+      if (anyTagged) return anyTagged;
+    }
+
+    // 3. Match consultant whose activeProjects includes project name and matches discipline category
+    const activeProjMatch = storeState.consultants.find(c =>
+      (c.activeProjects || []).some(ap => ap.toLowerCase() === (col.projectName || "").toLowerCase()) &&
+      ((c.categories || []).some(cat => cat.toLowerCase() === pkg.disciplineName.toLowerCase()) ||
+       (c.category && (c.category as string).toLowerCase() === pkg.disciplineName.toLowerCase()))
+    );
+    if (activeProjMatch) return activeProjMatch;
+
+    // 4. Default to first consultant registered under this discipline category
+    const categoryMatch = storeState.consultants.find(c =>
+      (c.categories || []).some(cat => cat.toLowerCase() === pkg.disciplineName.toLowerCase()) ||
+      (c.category && (c.category as string).toLowerCase() === pkg.disciplineName.toLowerCase())
+    );
+    return categoryMatch || null;
+  }, [activeCell, cellConsultantId, storeState.consultants, storeState.projects, storeState.towers]);
+
   // Open Cell Inspector Modal
   const handleOpenInspector = (pkg: WorkPackageMaster, col: MatrixColumn) => {
     const entry = storeState.packageStatuses[`${col.projectId}__${col.towerId}__${pkg.id}`];
     setActiveCell({ pkg, col, entry });
     setInspectorTab("EDIT");
+    setIsReassigningConsultant(false);
+
+    // Auto-resolve assigned consultant partner if not explicitly recorded
+    let initialConsultantId = entry?.consultantId || "";
+    if (!initialConsultantId) {
+      const proj = storeState.projects.find(p => p.id === col.projectId);
+      const twr = storeState.towers.find(t => t.id === col.towerId);
+      const taggedNames = [
+        ...(twr?.taggedConsultants || []),
+        ...(proj?.taggedConsultants || [])
+      ];
+      const matched = storeState.consultants.find(c => {
+        const matchesProj = taggedNames.some(tn => tn.toLowerCase() === c.name.toLowerCase() || tn === c.id);
+        const matchesCat = (c.categories || []).some(cat => cat.toLowerCase() === pkg.disciplineName.toLowerCase()) ||
+                           (c.category && (c.category as string).toLowerCase() === pkg.disciplineName.toLowerCase());
+        return matchesProj && matchesCat;
+      }) || storeState.consultants.find(c =>
+        (c.activeProjects || []).some(ap => ap.toLowerCase() === (col.projectName || "").toLowerCase()) &&
+        ((c.categories || []).some(cat => cat.toLowerCase() === pkg.disciplineName.toLowerCase()) ||
+         (c.category && (c.category as string).toLowerCase() === pkg.disciplineName.toLowerCase()))
+      ) || storeState.consultants.find(c =>
+        (c.categories || []).some(cat => cat.toLowerCase() === pkg.disciplineName.toLowerCase()) ||
+        (c.category && (c.category as string).toLowerCase() === pkg.disciplineName.toLowerCase())
+      );
+      if (matched) {
+        initialConsultantId = matched.id;
+      }
+    }
 
     const today = new Date().toISOString().split("T")[0];
     setCellStatus(entry?.status || "Received");
     setCellPlannedDate(entry?.plannedDate || today);
     setCellActualDate(entry?.actualDate || (entry?.status === "Received" ? today : "-"));
-    setCellConsultantId(entry?.consultantId || "");
+    setCellConsultantId(initialConsultantId);
     setCellRemarks(entry?.remarks || "");
     setCellFormError("");
   };
@@ -303,7 +396,8 @@ export const TenderDesignMatrix: React.FC = () => {
     }
 
     const { pkg, col } = activeCell;
-    const selectedConsultant = storeState.consultants.find(c => c.id === cellConsultantId);
+    const effectiveConsultantId = cellConsultantId || resolvedCellConsultant?.id || "";
+    const selectedConsultant = storeState.consultants.find(c => c.id === effectiveConsultantId) || resolvedCellConsultant;
 
     // 1. Record status and create local audit log
     DesignMasterStore.recordPackageStatus(
@@ -314,7 +408,7 @@ export const TenderDesignMatrix: React.FC = () => {
       cellPlannedDate.trim(),
       cellActualDate.trim(),
       cellPlannedDate.trim(),
-      cellConsultantId || undefined,
+      effectiveConsultantId || undefined,
       selectedConsultant?.name || undefined,
       cellRemarks.trim() || undefined,
       "Senior Design Manager"
@@ -891,61 +985,78 @@ export const TenderDesignMatrix: React.FC = () => {
       </div>
 
       {/* 🔍 Interactive Cell Status Inspector Modal with Mandatory Dates & Audit Trail Tab */}
-      {activeCell && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-          <div className="bg-surface border border-border w-full max-w-lg rounded-2xl shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
-            <div className="flex items-start justify-between border-b border-border pb-3">
-              <div className="space-y-0.5">
-                <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+      {activeCell && mounted && createPortal(
+        <div 
+          className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 backdrop-blur-xs p-3 sm:p-5 md:p-6 animate-in fade-in duration-150"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setActiveCell(null);
+          }}
+        >
+          <div 
+            className="bg-surface border border-border w-full max-w-2xl lg:max-w-3xl max-h-[92vh] flex flex-col min-h-0 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Fixed Header */}
+            <div className="p-5 sm:p-6 border-b border-border bg-slate-50/50 dark:bg-slate-900/50 shrink-0 flex items-start justify-between">
+              <div className="space-y-1 min-w-0">
+                <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
                   <Edit2 className="h-3 w-3" />
                   <span>Deliverable Inspector</span>
                 </span>
-                <h4 className="text-base font-bold text-foreground">
+                <h4 className="text-base sm:text-lg font-bold text-foreground truncate">
                   {activeCell.pkg.packageName}
                 </h4>
-                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                  <Building className="h-3.5 w-3.5 text-blue-500" />
-                  <span className="font-semibold text-foreground">{activeCell.col.projectName}</span>
+                <p className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
+                  <span className="flex items-center gap-1 font-semibold text-foreground">
+                    <Building className="h-3.5 w-3.5 text-blue-500" />
+                    <span>{activeCell.col.projectName}</span>
+                  </span>
                   <span>•</span>
-                  <span>Wing: <strong>{activeCell.col.towerName}</strong></span>
+                  <span>Wing: <strong className="text-foreground">{activeCell.col.towerName}</strong></span>
+                  <span>•</span>
+                  <span className="px-2 py-0.2 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-semibold border border-emerald-500/20 text-[10px]">
+                    {activeCell.pkg.disciplineName}
+                  </span>
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setActiveCell(null)}
-                className="h-8 w-8 rounded-lg hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                className="h-8 w-8 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer shrink-0"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            {/* Segmented Tab: Edit vs. Audit Trail */}
-            <div className="p-1 rounded-xl bg-muted/40 border border-border flex items-center gap-1 text-xs">
-              <button
-                type="button"
-                onClick={() => setInspectorTab("EDIT")}
-                className={`flex-1 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                  inspectorTab === "EDIT" ? "bg-surface text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Edit2 className="h-3.5 w-3.5" />
-                <span>Edit Status & Mandatory Dates</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setInspectorTab("AUDIT")}
-                className={`flex-1 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                  inspectorTab === "AUDIT" ? "bg-surface text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <History className="h-3.5 w-3.5 text-purple-500" />
-                <span>Audit Trail & Mail History</span>
-              </button>
+            {/* Fixed Segmented Tab: Edit vs. Audit Trail */}
+            <div className="px-6 pt-4 pb-2 border-b border-border/60 bg-surface shrink-0">
+              <div className="p-1 rounded-xl bg-muted/40 border border-border flex items-center gap-1 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setInspectorTab("EDIT")}
+                  className={`flex-1 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                    inspectorTab === "EDIT" ? "bg-surface text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Edit2 className="h-3.5 w-3.5" />
+                  <span>Edit Status & Mandatory Dates</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInspectorTab("AUDIT")}
+                  className={`flex-1 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                    inspectorTab === "AUDIT" ? "bg-surface text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <History className="h-3.5 w-3.5 text-purple-500" />
+                  <span>Audit Trail & Mail History</span>
+                </button>
+              </div>
             </div>
 
-            {/* Tab 1: Edit Form */}
+            {/* Scrollable Body: Tab 1 (Edit Form) */}
             {inspectorTab === "EDIT" && (
-              <form onSubmit={handleSaveCell} className="space-y-4 text-xs">
+              <form id="deliverable-inspector-form" onSubmit={handleSaveCell} className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-6 space-y-5 text-xs">
                 {cellFormError && (
                   <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center gap-2">
                     <AlertCircle className="h-4 w-4 shrink-0" />
@@ -954,51 +1065,53 @@ export const TenderDesignMatrix: React.FC = () => {
                 )}
 
                 {/* Status Selector */}
-                <div>
-                  <label className="block font-bold text-foreground mb-1.5">Deliverable Status *</label>
-                  <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-foreground block">
+                    Deliverable Status <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                     <button
                       type="button"
                       onClick={() => setCellStatus("Received")}
-                      className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                      className={`p-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                         cellStatus === "Received"
-                          ? "border-emerald-500 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-500"
+                          ? "border-emerald-500 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-500 shadow-2xs"
                           : "border-border text-muted-foreground hover:bg-muted"
                       }`}
                     >
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                       <span>Received</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setCellStatus("In progress")}
-                      className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                      className={`p-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                         cellStatus === "In progress"
-                          ? "border-amber-500 bg-amber-500/20 text-amber-700 dark:text-amber-300 ring-1 ring-amber-500"
+                          ? "border-amber-500 bg-amber-500/20 text-amber-700 dark:text-amber-300 ring-1 ring-amber-500 shadow-2xs"
                           : "border-border text-muted-foreground hover:bg-muted"
                       }`}
                     >
-                      <Clock className="h-3.5 w-3.5 text-amber-500" />
+                      <Clock className="h-4 w-4 text-amber-500" />
                       <span>In Progress</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setCellStatus("Pending")}
-                      className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                      className={`p-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                         cellStatus === "Pending"
-                          ? "border-rose-500 bg-rose-500/20 text-rose-700 dark:text-rose-300 ring-1 ring-rose-500"
+                          ? "border-rose-500 bg-rose-500/20 text-rose-700 dark:text-rose-300 ring-1 ring-rose-500 shadow-2xs"
                           : "border-border text-muted-foreground hover:bg-muted"
                       }`}
                     >
-                      <AlertTriangle className="h-3.5 w-3.5 text-rose-500" />
+                      <AlertTriangle className="h-4 w-4 text-rose-500" />
                       <span>Pending</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setCellStatus("NA")}
-                      className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                      className={`p-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                         cellStatus === "NA"
-                          ? "border-slate-500 bg-slate-500/20 text-foreground ring-1 ring-slate-500"
+                          ? "border-slate-500 bg-slate-500/20 text-foreground ring-1 ring-slate-500 shadow-2xs"
                           : "border-border text-muted-foreground hover:bg-muted"
                       }`}
                     >
@@ -1007,26 +1120,26 @@ export const TenderDesignMatrix: React.FC = () => {
                   </div>
                 </div>
 
-                {/* 📅 Mandatory Planned & Actual Dates */}
-                <div className="grid grid-cols-2 gap-3 p-3.5 rounded-xl bg-muted/20 border border-border">
-                  <div>
-                    <label className="block font-bold text-foreground mb-1 flex items-center gap-1">
+                {/* Mandatory Planned & Actual Dates */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-border">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
                       <Calendar className="h-3.5 w-3.5 text-blue-500" />
-                      <span>Planned Date * (Mandatory)</span>
+                      <span>Planned Date <span className="text-rose-500">* (Mandatory)</span></span>
                     </label>
                     <input
                       type="date"
                       required
                       value={cellPlannedDate}
                       onChange={e => setCellPlannedDate(e.target.value)}
-                      className="w-full px-3 py-1.5 rounded-xl border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
+                      className="w-full px-3.5 py-2 rounded-xl border border-border bg-background text-foreground font-mono text-xs focus:outline-hidden focus:ring-1 focus:ring-primary"
                     />
                   </div>
 
-                  <div>
-                    <label className="block font-bold text-foreground mb-1 flex items-center gap-1">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
                       <Clock className="h-3.5 w-3.5 text-emerald-500" />
-                      <span>Actual Date * (Mandatory)</span>
+                      <span>Actual Date <span className="text-rose-500">* (Mandatory)</span></span>
                     </label>
                     <input
                       type="text"
@@ -1034,71 +1147,113 @@ export const TenderDesignMatrix: React.FC = () => {
                       value={cellActualDate}
                       onChange={e => setCellActualDate(e.target.value)}
                       aria-label="Actual date"
-                      className="w-full px-3 py-1.5 rounded-xl border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
+                      placeholder="YYYY-MM-DD or '-'"
+                      className="w-full px-3.5 py-2 rounded-xl border border-border bg-background text-foreground font-mono text-xs focus:outline-hidden focus:ring-1 focus:ring-primary"
                     />
                   </div>
                 </div>
 
-                {/* Assigned Consultant */}
-                <div>
-                  <label className="block font-bold text-foreground mb-1 flex items-center gap-1">
-                    <Users className="h-3.5 w-3.5 text-purple-500" />
-                    <span>Assign Consultant Partner</span>
-                  </label>
-                  <select
-                    value={cellConsultantId}
-                    onChange={e => setCellConsultantId(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
-                  >
-                    <option value="">Select Consultant</option>
-                    {storeState.consultants.map(c => (
-                      <option key={c.id} value={c.id}>
-                        {c.name} ({c.category}) - {c.onboardingStatus}
-                      </option>
-                    ))}
-                  </select>
+                {/* Designated Consultant Partner (Auto-Resolved for this Project & Package) */}
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                      <Users className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                      <span>Designated Consultant Partner</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setIsReassigningConsultant(!isReassigningConsultant)}
+                      className="text-[11px] font-bold text-purple-600 dark:text-purple-400 hover:underline cursor-pointer flex items-center gap-1"
+                    >
+                      {isReassigningConsultant ? "Keep Designated Partner" : "Change / Reassign"}
+                    </button>
+                  </div>
+
+                  {/* Highlighted Established Consultant Partner Card */}
+                  {resolvedCellConsultant ? (
+                    <div className="p-4 rounded-2xl bg-purple-500/10 border border-purple-500/25 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="h-10 w-10 rounded-xl bg-purple-600 text-white flex items-center justify-center font-black text-sm shrink-0 shadow-xs">
+                          {resolvedCellConsultant.name?.charAt(0) || "C"}
+                        </div>
+                        <div className="min-w-0 space-y-0.5">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-bold text-foreground truncate">
+                              {resolvedCellConsultant.name}
+                            </span>
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/30">
+                              {resolvedCellConsultant.category || activeCell.pkg.disciplineName}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground flex items-center gap-2 flex-wrap">
+                            <span>Lead: <strong className="text-foreground">{resolvedCellConsultant.leadContact || "Lead Consultant"}</strong></span>
+                            {resolvedCellConsultant.email && <span>• {resolvedCellConsultant.email}</span>}
+                            {resolvedCellConsultant.phone && <span>• {resolvedCellConsultant.phone}</span>}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="shrink-0">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                          <CheckCircle2 className="h-3 w-3" />
+                          <span>Assigned for {activeCell.col.projectName}</span>
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-3.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-border text-xs text-muted-foreground flex items-center justify-between">
+                      <span>No specific consultant tagged for this package.</span>
+                      <button
+                        type="button"
+                        onClick={() => setIsReassigningConsultant(true)}
+                        className="text-purple-600 dark:text-purple-400 font-bold hover:underline cursor-pointer"
+                      >
+                        + Assign Partner
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Optional Reassignment Dropdown */}
+                  {isReassigningConsultant && (
+                    <div className="p-3.5 rounded-xl bg-muted/30 border border-border animate-in fade-in duration-150 space-y-1.5">
+                      <label className="text-[11px] font-bold text-foreground">
+                        Select New Consultant Partner from Consultant Master:
+                      </label>
+                      <select
+                        value={cellConsultantId}
+                        onChange={e => setCellConsultantId(e.target.value)}
+                        className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-purple-500 cursor-pointer"
+                      >
+                        <option value="">-- Retain Default / None --</option>
+                        {storeState.consultants.map(c => (
+                          <option key={c.id} value={c.id}>
+                            {c.name} ({c.category}) - {c.onboardingStatus}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 </div>
 
-                {/* Remarks */}
-                <div>
-                  <label className="block font-bold text-foreground mb-1">Audit Remarks / Delivery Reason</label>
+                {/* Audit Remarks */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-foreground block">
+                    Audit Remarks / Delivery Notes
+                  </label>
                   <input
                     type="text"
                     value={cellRemarks}
                     onChange={e => setCellRemarks(e.target.value)}
-                    aria-label="Audit remarks or delivery reason"
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                    placeholder="Enter inspection remarks, drawing revision notes, or handover status..."
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-xs focus:outline-hidden focus:ring-1 focus:ring-primary"
                   />
-                </div>
-
-                <div className="flex items-center justify-between pt-3 border-t border-border">
-                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                    <Mail className="h-3 w-3 text-teal-600" />
-                    <span>Audit email will be queued on save</span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setActiveCell(null)}
-                      className="px-4 py-2 rounded-xl border border-border bg-background text-foreground text-xs font-semibold cursor-pointer hover:bg-muted transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md cursor-pointer transition-all active:scale-95"
-                    >
-                      Save & Log Audit Trail
-                    </button>
-                  </div>
                 </div>
               </form>
             )}
 
-            {/* Tab 2: Cell Audit Trail History */}
+            {/* Scrollable Body: Tab 2 (Audit Trail History) */}
             {inspectorTab === "AUDIT" && (
-              <div className="space-y-3">
+              <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-6 space-y-4 text-xs">
                 <div className="flex items-center justify-between">
                   <h5 className="text-xs font-bold text-foreground uppercase tracking-wider">
                     Change Audit History for this Deliverable
@@ -1108,7 +1263,7 @@ export const TenderDesignMatrix: React.FC = () => {
                   </span>
                 </div>
 
-                <div className="space-y-2.5 max-h-72 overflow-y-auto custom-scrollbar p-1">
+                <div className="space-y-2.5">
                   {DesignMasterStore.getAuditLogs({ entryKey: `${activeCell.col.projectId}__${activeCell.col.towerId}__${activeCell.pkg.id}` }).length === 0 ? (
                     <div className="p-8 text-center rounded-xl border border-dashed border-border text-muted-foreground text-xs">
                       No prior audit history recorded for this cell yet.
@@ -1150,17 +1305,61 @@ export const TenderDesignMatrix: React.FC = () => {
                 </div>
               </div>
             )}
+
+            {/* Fixed Action Footer */}
+            <div className="p-4 sm:p-5 border-t border-border bg-slate-50/50 dark:bg-slate-900/50 shrink-0 flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <Mail className="h-3.5 w-3.5 text-teal-600" />
+                <span>Audit email notification will be dispatched on save</span>
+              </div>
+
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setActiveCell(null)}
+                  className="px-4 py-2 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-semibold cursor-pointer transition-colors"
+                >
+                  Cancel
+                </button>
+                {inspectorTab === "EDIT" ? (
+                  <button
+                    type="submit"
+                    form="deliverable-inspector-form"
+                    className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md cursor-pointer transition-all active:scale-95"
+                  >
+                    Save & Log Audit Trail
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setActiveCell(null)}
+                    className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-md cursor-pointer transition-all"
+                  >
+                    Done
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* 📜 Audit Trail & Mail Logs Drawer / Modal */}
-      {isAuditDrawerOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-          <div className="bg-surface border border-border w-full max-w-3xl rounded-3xl shadow-2xl p-6 sm:p-7 space-y-5 max-h-[90vh] overflow-y-auto custom-scrollbar">
-            <div className="flex items-start justify-between border-b border-border pb-4">
+      {isAuditDrawerOpen && mounted && createPortal(
+        <div 
+          className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 backdrop-blur-xs p-4 animate-in fade-in duration-150"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsAuditDrawerOpen(false);
+          }}
+        >
+          <div 
+            className="bg-surface border border-border w-full max-w-3xl max-h-[90vh] flex flex-col min-h-0 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-5 sm:p-6 border-b border-border bg-slate-50/50 dark:bg-slate-900/50 shrink-0 flex items-start justify-between">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-2xl bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center border border-purple-500/25">
+                <div className="h-10 w-10 rounded-2xl bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center border border-purple-500/25 shrink-0">
                   <History className="h-5 w-5" />
                 </div>
                 <div>
@@ -1175,26 +1374,28 @@ export const TenderDesignMatrix: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsAuditDrawerOpen(false)}
-                className="h-8 w-8 rounded-xl hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                className="h-8 w-8 rounded-xl hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer shrink-0"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
             {/* Audit Search */}
-            <div className="relative">
-              <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <input
-                type="text"
-                value={auditSearchQuery}
-                onChange={e => setAuditSearchQuery(e.target.value)}
-                aria-label="Search audit trail by project, package, or user"
-                className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
-              />
+            <div className="p-4 border-b border-border/60 bg-surface shrink-0">
+              <div className="relative">
+                <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={auditSearchQuery}
+                  onChange={e => setAuditSearchQuery(e.target.value)}
+                  placeholder="Search audit trail by project, package, or user..."
+                  className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                />
+              </div>
             </div>
 
             {/* Audit List */}
-            <div className="space-y-3 max-h-96 overflow-y-auto custom-scrollbar p-1">
+            <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-6 space-y-3 text-xs">
               {filteredAuditLogs.length === 0 ? (
                 <div className="p-12 text-center rounded-2xl border border-dashed border-border text-muted-foreground text-xs">
                   No audit logs match your search.
@@ -1203,7 +1404,7 @@ export const TenderDesignMatrix: React.FC = () => {
                 filteredAuditLogs.map(log => (
                   <div key={log.id} className="p-4 rounded-2xl border border-border bg-surface shadow-2xs space-y-2.5 text-xs hover:border-purple-500/30 transition-all">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-bold text-foreground text-sm">{log.projectName}</span>
                         <span className="text-[10px] px-2 py-0.5 rounded-md bg-muted text-foreground border border-border font-mono">
                           {log.towerName}
@@ -1241,7 +1442,7 @@ export const TenderDesignMatrix: React.FC = () => {
                     </div>
 
                     {log.remarks && (
-                      <div className="text-[11px] text-muted-foreground italic">
+                      <div className="text-[11px] text-muted-foreground italic bg-muted/30 p-2 rounded-lg">
                         &ldquo;{log.remarks}&rdquo;
                       </div>
                     )}
@@ -1260,27 +1461,36 @@ export const TenderDesignMatrix: React.FC = () => {
               )}
             </div>
 
-            <div className="flex items-center justify-end pt-3 border-t border-border">
+            <div className="p-4 sm:p-5 border-t border-border bg-slate-50/50 dark:bg-slate-900/50 shrink-0 flex items-center justify-end">
               <button
                 type="button"
                 onClick={() => setIsAuditDrawerOpen(false)}
-                className="px-5 py-2 rounded-xl bg-background border border-border text-foreground font-bold text-xs hover:bg-muted transition-colors cursor-pointer"
+                className="px-5 py-2 rounded-xl bg-surface border border-border text-foreground font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 Close Audit Ledger
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ⚡ Batch Update Modal */}
-      {isBatchModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-          <div className="bg-surface border border-border w-full max-w-xl rounded-2xl shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
+      {isBatchModalOpen && mounted && createPortal(
+        <div 
+          className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 backdrop-blur-xs p-4 animate-in fade-in duration-150"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsBatchModalOpen(false);
+          }}
+        >
+          <div 
+            className="bg-surface border border-border w-full max-w-2xl max-h-[90vh] flex flex-col min-h-0 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-border pb-3.5">
+            <div className="p-5 sm:p-6 border-b border-border bg-slate-50/50 dark:bg-slate-900/50 shrink-0 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center border border-teal-500/20">
+                <div className="h-9 w-9 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center border border-teal-500/20 shrink-0">
                   <Zap className="h-4 w-4" />
                 </div>
                 <h4 className="text-base font-bold text-foreground">
@@ -1290,329 +1500,331 @@ export const TenderDesignMatrix: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsBatchModalOpen(false)}
-                className="h-8 w-8 rounded-lg hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                className="h-8 w-8 rounded-xl hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer shrink-0"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            {/* Project and Discipline Selection (2-Column Grid) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                  <Building className="h-3.5 w-3.5 text-blue-500" />
-                  <span>Target Project / Development</span>
+            <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-6 space-y-4 text-xs">
+              {/* Project and Discipline Selection (2-Column Grid) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                    <Building className="h-3.5 w-3.5 text-blue-500" />
+                    <span>Target Project / Development</span>
+                  </label>
+                  <select
+                    value={batchProjectId}
+                    onChange={e => {
+                      const pId = e.target.value;
+                      setBatchProjectId(pId);
+                      const directTowers = storeState.towers.filter(t => t.projectId === pId).map(t => t.id);
+                      const childSubProjects = storeState.projects.filter(p => p.parentProjectId === pId);
+                      const childTowers = childSubProjects.flatMap(sp => storeState.towers.filter(t => t.projectId === sp.id).map(t => t.id));
+                      const allTwrIds = [...directTowers, ...childTowers];
+                      setBatchSelectedTowers(allTwrIds);
+                    }}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                  >
+                    {accessibleProjects.map(proj => (
+                      <option key={proj.id} value={proj.id}>
+                        {proj.isSubProject ? `🏙️ ${proj.name} (Sub-Project)` : `🏢 ${proj.name}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                    <SlidersHorizontal className="h-3.5 w-3.5 text-emerald-500" />
+                    <span>Discipline Scope</span>
+                  </label>
+                  <select
+                    value={batchDiscipline}
+                    onChange={e => setBatchDiscipline(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-medium focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                  >
+                    <option value="ALL">All Disciplines ({storeState.packages.length} Packages)</option>
+                    {categories.map(cat => (
+                      <option key={cat} value={cat}>{cat} ({storeState.packages.filter(p => p.disciplineName === cat).length} Packages)</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Zero-Packages Warning and Auto-Load helper */}
+              {storeState.packages.length === 0 && (
+                <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-800 dark:text-blue-300 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Info className="h-4 w-4 shrink-0 text-blue-500" />
+                    <span>No Work Packages loaded. Load the standard template to populate all 65+ packages.</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      DesignMasterStore.loadEyReferenceTemplate();
+                      setTimeout(() => {
+                        const updatedState = DesignMasterStore.getState();
+                        const directTowers = updatedState.towers.filter(t => t.projectId === batchProjectId).map(t => t.id);
+                        const childSubProjects = updatedState.projects.filter(p => p.parentProjectId === batchProjectId);
+                        const childTowers = childSubProjects.flatMap(sp => updatedState.towers.filter(t => t.projectId === sp.id).map(t => t.id));
+                        const allTwrIds = [...directTowers, ...childTowers];
+                        if (allTwrIds.length > 0) setBatchSelectedTowers(allTwrIds);
+                      }, 50);
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] shadow-xs cursor-pointer flex items-center gap-1 shrink-0"
+                  >
+                    <Zap className="h-3 w-3" />
+                    <span>Load Standard Template</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Target Wings & Sub-Projects Line Item-Wise Selection */}
+              <div className="space-y-2 pt-2 border-t border-border">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                  <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                    <Layers className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                    <span>Target Wings & Sub-Projects (Line Item Selection)</span>
+                  </label>
+                  <div className="flex items-center gap-2 text-[11px]">
+                    <span className="font-semibold text-teal-600 dark:text-teal-400">
+                      {batchSelectedTowers.length} of {batchRelatedTowers.length} selected
+                    </span>
+                    {batchRelatedTowers.length > 0 && (
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setBatchSelectedTowers(batchRelatedTowers.map(t => t.id))}
+                          className="px-2 py-0.5 rounded-md bg-teal-500/10 text-teal-600 dark:text-teal-400 hover:bg-teal-500/20 font-bold cursor-pointer transition-colors"
+                        >
+                          Select All
+                        </button>
+                        <span>•</span>
+                        <button
+                          type="button"
+                          onClick={() => setBatchSelectedTowers([])}
+                          className="px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 font-medium cursor-pointer transition-colors"
+                        >
+                          Clear All
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {batchRelatedTowers.length > 3 && (
+                  <div className="relative">
+                    <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                    <input
+                      type="text"
+                      value={batchTowerSearch}
+                      onChange={e => setBatchTowerSearch(e.target.value)}
+                      placeholder="Filter wings / sub-projects..."
+                      aria-label="Filter wings or sub-projects"
+                      className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                    />
+                  </div>
+                )}
+
+                {batchRelatedTowers.length === 0 ? (
+                  <div className="w-full p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500" />
+                      <span>No Wings or Sub-Projects configured for this project yet.</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newTwr = DesignMasterStore.addTower({
+                          projectId: batchProjectId,
+                          towerName: "Wing A",
+                          towerType: "Sale"
+                        });
+                        setBatchSelectedTowers([newTwr.id]);
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] shadow-xs cursor-pointer flex items-center gap-1 shrink-0"
+                    >
+                      <Plus className="h-3 w-3" />
+                      <span>Quick Add &ldquo;Wing A&rdquo;</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-1.5 max-h-48 overflow-y-auto custom-scrollbar p-1">
+                    {batchRelatedTowers
+                      .filter(twr => !batchTowerSearch.trim() || twr.towerName.toLowerCase().includes(batchTowerSearch.toLowerCase()) || (twr.subProjectName && twr.subProjectName.toLowerCase().includes(batchTowerSearch.toLowerCase())))
+                      .map(twr => {
+                        const isChecked = batchSelectedTowers.includes(twr.id);
+                        return (
+                          <div
+                            key={twr.id}
+                            onClick={() => {
+                              setBatchSelectedTowers(prev => 
+                                isChecked ? prev.filter(id => id !== twr.id) : [...prev, twr.id]
+                              );
+                            }}
+                            className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 select-none ${
+                              isChecked 
+                                ? "bg-teal-500/10 border-teal-500/40 text-foreground ring-1 ring-teal-500/30 shadow-2xs" 
+                                : "bg-surface border-border text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className={`h-4.5 w-4.5 rounded-md flex items-center justify-center border transition-colors shrink-0 ${
+                                isChecked ? "bg-teal-600 text-white border-teal-600" : "border-border bg-background"
+                              }`}>
+                                {isChecked ? <Check className="h-3 w-3 stroke-[3]" /> : null}
+                              </div>
+
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="font-bold text-xs text-foreground">{twr.towerName}</span>
+                                  {twr.isSubProjectTower && (
+                                    <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/20">
+                                      🏙️ {twr.subProjectName || "Sub-Project"}
+                                    </span>
+                                  )}
+                                  <span className="px-1.5 py-0.2 rounded text-[10px] font-medium bg-muted text-muted-foreground border border-border">
+                                    {twr.towerType || "Sale"}
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
+                                  {twr.taggedConsultants && twr.taggedConsultants.length > 0 ? (
+                                    <span>Assigned: <strong className="text-foreground">{twr.taggedConsultants.slice(0, 2).join(", ")}{twr.taggedConsultants.length > 2 ? ` +${twr.taggedConsultants.length - 2}` : ""}</strong></span>
+                                  ) : (
+                                    <span>Inherits project consultants</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="shrink-0 flex items-center gap-2">
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md transition-colors ${
+                                isChecked 
+                                  ? "bg-teal-600/20 text-teal-700 dark:text-teal-300 border border-teal-500/30" 
+                                  : "bg-muted text-muted-foreground border border-border"
+                              }`}>
+                                {isChecked ? "Included" : "Excluded"}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
+              </div>
+
+              {/* Optional Consultant Partner Assignment */}
+              <div className="space-y-1.5 pt-1">
+                <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <ShieldCheck className="h-3.5 w-3.5 text-purple-500" />
+                    <span>Assign Consultant Partner</span>
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">Optional</span>
                 </label>
                 <select
-                  value={batchProjectId}
-                  onChange={e => {
-                    const pId = e.target.value;
-                    setBatchProjectId(pId);
-                    const directTowers = storeState.towers.filter(t => t.projectId === pId).map(t => t.id);
-                    const childSubProjects = storeState.projects.filter(p => p.parentProjectId === pId);
-                    const childTowers = childSubProjects.flatMap(sp => storeState.towers.filter(t => t.projectId === sp.id).map(t => t.id));
-                    const allTwrIds = [...directTowers, ...childTowers];
-                    setBatchSelectedTowers(allTwrIds);
-                  }}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                  value={batchConsultantName}
+                  onChange={e => setBatchConsultantName(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-medium focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                 >
-                  {accessibleProjects.map(proj => (
-                    <option key={proj.id} value={proj.id}>
-                      {proj.isSubProject ? `🏙️ ${proj.name} (Sub-Project)` : `🏢 ${proj.name}`}
+                  <option value="">-- Retain Existing / Default Consultant Partner --</option>
+                  {storeState.consultants.map(c => (
+                    <option key={c.id} value={c.name}>
+                      {c.name} ({c.category})
                     </option>
                   ))}
                 </select>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                  <SlidersHorizontal className="h-3.5 w-3.5 text-emerald-500" />
-                  <span>Discipline Scope</span>
-                </label>
-                <select
-                  value={batchDiscipline}
-                  onChange={e => setBatchDiscipline(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-medium focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
-                >
-                  <option value="ALL">All Disciplines ({storeState.packages.length} Packages)</option>
-                  {categories.map(cat => (
-                    <option key={cat} value={cat}>{cat} ({storeState.packages.filter(p => p.disciplineName === cat).length} Packages)</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Zero-Packages Warning and Auto-Load helper */}
-            {storeState.packages.length === 0 && (
-              <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-800 dark:text-blue-300 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <Info className="h-4 w-4 shrink-0 text-blue-500" />
-                  <span>No Work Packages loaded. Load the standard template to populate all 65+ packages.</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    DesignMasterStore.loadEyReferenceTemplate();
-                    setTimeout(() => {
-                      const updatedState = DesignMasterStore.getState();
-                      const directTowers = updatedState.towers.filter(t => t.projectId === batchProjectId).map(t => t.id);
-                      const childSubProjects = updatedState.projects.filter(p => p.parentProjectId === batchProjectId);
-                      const childTowers = childSubProjects.flatMap(sp => updatedState.towers.filter(t => t.projectId === sp.id).map(t => t.id));
-                      const allTwrIds = [...directTowers, ...childTowers];
-                      if (allTwrIds.length > 0) setBatchSelectedTowers(allTwrIds);
-                    }, 50);
-                  }}
-                  className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] shadow-xs cursor-pointer flex items-center gap-1 shrink-0"
-                >
-                  <Zap className="h-3 w-3" />
-                  <span>Load Standard Template</span>
-                </button>
-              </div>
-            )}
-
-            {/* Target Wings & Sub-Projects Line Item-Wise Selection */}
-            <div className="space-y-2 pt-2 border-t border-border">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
-                <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                  <Layers className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                  <span>Target Wings & Sub-Projects (Line Item Selection)</span>
-                </label>
-                <div className="flex items-center gap-2 text-[11px]">
-                  <span className="font-semibold text-teal-600 dark:text-teal-400">
-                    {batchSelectedTowers.length} of {batchRelatedTowers.length} selected
-                  </span>
-                  {batchRelatedTowers.length > 0 && (
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => setBatchSelectedTowers(batchRelatedTowers.map(t => t.id))}
-                        className="px-2 py-0.5 rounded-md bg-teal-500/10 text-teal-600 dark:text-teal-400 hover:bg-teal-500/20 font-bold cursor-pointer transition-colors"
-                      >
-                        Select All
-                      </button>
-                      <span>•</span>
-                      <button
-                        type="button"
-                        onClick={() => setBatchSelectedTowers([])}
-                        className="px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 font-medium cursor-pointer transition-colors"
-                      >
-                        Clear All
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {batchRelatedTowers.length > 3 && (
-                <div className="relative">
-                  <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+              {/* Mandatory Dates Grid (Planned & Actual) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                    <Calendar className="h-3.5 w-3.5 text-blue-500" />
+                    <span>Planned Date <span className="text-rose-500">*</span></span>
+                  </label>
                   <input
-                    type="text"
-                    value={batchTowerSearch}
-                    onChange={e => setBatchTowerSearch(e.target.value)}
-                    placeholder="Filter wings / sub-projects..."
-                    aria-label="Filter wings or sub-projects"
-                    className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                    type="date"
+                    required
+                    value={batchPlannedDate}
+                    onChange={e => setBatchPlannedDate(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
                   />
                 </div>
-              )}
 
-              {batchRelatedTowers.length === 0 ? (
-                <div className="w-full p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500" />
-                    <span>No Wings or Sub-Projects configured for this project yet.</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const newTwr = DesignMasterStore.addTower({
-                        projectId: batchProjectId,
-                        towerName: "Wing A",
-                        towerType: "Sale"
-                      });
-                      setBatchSelectedTowers([newTwr.id]);
-                    }}
-                    className="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] shadow-xs cursor-pointer flex items-center gap-1 shrink-0"
-                  >
-                    <Plus className="h-3 w-3" />
-                    <span>Quick Add &ldquo;Wing A&rdquo;</span>
-                  </button>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                    <Calendar className="h-3.5 w-3.5 text-emerald-500" />
+                    <span>Actual Date <span className="text-rose-500">*</span></span>
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={batchActualDate}
+                    onChange={e => setBatchActualDate(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  />
                 </div>
-              ) : (
-                <div className="space-y-1.5 max-h-48 overflow-y-auto custom-scrollbar p-1">
-                  {batchRelatedTowers
-                    .filter(twr => !batchTowerSearch.trim() || twr.towerName.toLowerCase().includes(batchTowerSearch.toLowerCase()) || (twr.subProjectName && twr.subProjectName.toLowerCase().includes(batchTowerSearch.toLowerCase())))
-                    .map(twr => {
-                      const isChecked = batchSelectedTowers.includes(twr.id);
-                      return (
-                        <div
-                          key={twr.id}
-                          onClick={() => {
-                            setBatchSelectedTowers(prev => 
-                              isChecked ? prev.filter(id => id !== twr.id) : [...prev, twr.id]
-                            );
-                          }}
-                          className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 select-none ${
-                            isChecked 
-                              ? "bg-teal-500/10 border-teal-500/40 text-foreground ring-1 ring-teal-500/30 shadow-2xs" 
-                              : "bg-surface border-border text-muted-foreground hover:bg-muted/40 hover:text-foreground"
-                          }`}
-                        >
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <div className={`h-4.5 w-4.5 rounded-md flex items-center justify-center border transition-colors shrink-0 ${
-                              isChecked ? "bg-teal-600 text-white border-teal-600" : "border-border bg-background"
-                            }`}>
-                              {isChecked ? <Check className="h-3 w-3 stroke-[3]" /> : null}
-                            </div>
+              </div>
 
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="font-bold text-xs text-foreground">{twr.towerName}</span>
-                                {twr.isSubProjectTower && (
-                                  <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/20">
-                                    🏙️ {twr.subProjectName || "Sub-Project"}
-                                  </span>
-                                )}
-                                <span className="px-1.5 py-0.2 rounded text-[10px] font-medium bg-muted text-muted-foreground border border-border">
-                                  {twr.towerType || "Sale"}
-                                </span>
-                              </div>
-
-                              <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
-                                {twr.taggedConsultants && twr.taggedConsultants.length > 0 ? (
-                                  <span>Assigned: <strong className="text-foreground">{twr.taggedConsultants.slice(0, 2).join(", ")}{twr.taggedConsultants.length > 2 ? ` +${twr.taggedConsultants.length - 2}` : ""}</strong></span>
-                                ) : (
-                                  <span>Inherits project consultants</span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="shrink-0 flex items-center gap-2">
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md transition-colors ${
-                              isChecked 
-                                ? "bg-teal-600/20 text-teal-700 dark:text-teal-300 border border-teal-500/30" 
-                                : "bg-muted text-muted-foreground border border-border"
-                            }`}>
-                              {isChecked ? "Included" : "Excluded"}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                </div>
-              )}
-            </div>
-
-            {/* Optional Consultant Partner Assignment */}
-            <div className="space-y-1.5 pt-1">
-              <label className="text-xs font-semibold text-foreground flex items-center justify-between">
-                <span className="flex items-center gap-1.5">
-                  <ShieldCheck className="h-3.5 w-3.5 text-purple-500" />
-                  <span>Assign Consultant Partner</span>
-                </span>
-                <span className="text-[10px] text-muted-foreground">Optional</span>
-              </label>
-              <select
-                value={batchConsultantName}
-                onChange={e => setBatchConsultantName(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-medium focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
-              >
-                <option value="">-- Retain Existing / Default Consultant Partner --</option>
-                {storeState.consultants.map(c => (
-                  <option key={c.id} value={c.name}>
-                    {c.name} ({c.category})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Mandatory Dates Grid (Planned & Actual) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Status Selector */}
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                  <Calendar className="h-3.5 w-3.5 text-blue-500" />
-                  <span>Planned Date <span className="text-rose-500">*</span></span>
+                  <CheckCircle2 className="h-3.5 w-3.5 text-amber-500" />
+                  <span>New Status</span>
                 </label>
-                <input
-                  type="date"
-                  required
-                  value={batchPlannedDate}
-                  onChange={e => setBatchPlannedDate(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
-                />
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {[
+                    { id: "Received", label: "Received", dotColor: "#10b981", activeClass: "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-500/40 font-bold" },
+                    { id: "In progress", label: "In Progress", dotColor: "#f59e0b", activeClass: "border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-300 ring-1 ring-amber-500/40 font-bold" },
+                    { id: "Pending", label: "Pending", dotColor: "#f43f5e", activeClass: "border-rose-500 bg-rose-500/10 text-rose-700 dark:text-rose-400 ring-1 ring-rose-500/40 font-bold" },
+                    { id: "Target Date", label: "Target Date", dotColor: "#0ea5e9", activeClass: "border-sky-500 bg-sky-500/10 text-sky-700 dark:text-sky-300 ring-1 ring-sky-500/40 font-bold" },
+                  ].map(st => {
+                    const isSelected = batchStatus === st.id;
+                    return (
+                      <button
+                        key={st.id}
+                        type="button"
+                        onClick={() => setBatchStatus(st.id as PackageStatusEntry["status"])}
+                        className={`p-2 rounded-xl text-xs border transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                          isSelected
+                            ? st.activeClass
+                            : "border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+                        }`}
+                      >
+                        <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: st.dotColor }} />
+                        <span>{st.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
+              {/* Remarks / Audit Notes Field */}
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                  <Calendar className="h-3.5 w-3.5 text-emerald-500" />
-                  <span>Actual Date <span className="text-rose-500">*</span></span>
+                  <MessageSquare className="h-3.5 w-3.5 text-slate-500" />
+                  <span>Remark / Notes</span>
                 </label>
-                <input
-                  type="date"
-                  required
-                  value={batchActualDate}
-                  onChange={e => setBatchActualDate(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
+                <textarea
+                  rows={2}
+                  value={batchRemarks}
+                  onChange={e => setBatchRemarks(e.target.value)}
+                  aria-label="Batch remarks or justification"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary resize-none"
                 />
               </div>
-            </div>
-
-            {/* Status Selector */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                <CheckCircle2 className="h-3.5 w-3.5 text-amber-500" />
-                <span>New Status</span>
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {[
-                  { id: "Received", label: "Received", dotColor: "#10b981", activeClass: "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-500/40 font-bold" },
-                  { id: "In progress", label: "In Progress", dotColor: "#f59e0b", activeClass: "border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-300 ring-1 ring-amber-500/40 font-bold" },
-                  { id: "Pending", label: "Pending", dotColor: "#f43f5e", activeClass: "border-rose-500 bg-rose-500/10 text-rose-700 dark:text-rose-400 ring-1 ring-rose-500/40 font-bold" },
-                  { id: "Target Date", label: "Target Date", dotColor: "#0ea5e9", activeClass: "border-sky-500 bg-sky-500/10 text-sky-700 dark:text-sky-300 ring-1 ring-sky-500/40 font-bold" },
-                ].map(st => {
-                  const isSelected = batchStatus === st.id;
-                  return (
-                    <button
-                      key={st.id}
-                      type="button"
-                      onClick={() => setBatchStatus(st.id as PackageStatusEntry["status"])}
-                      className={`p-2 rounded-xl text-xs border transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                        isSelected
-                          ? st.activeClass
-                          : "border-border text-muted-foreground hover:text-foreground hover:bg-muted"
-                      }`}
-                    >
-                      <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: st.dotColor }} />
-                      <span>{st.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Remarks / Audit Notes Field */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                <MessageSquare className="h-3.5 w-3.5 text-slate-500" />
-                <span>Remark / Notes</span>
-              </label>
-              <textarea
-                rows={2}
-                value={batchRemarks}
-                onChange={e => setBatchRemarks(e.target.value)}
-                aria-label="Batch remarks or justification"
-                className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary resize-none"
-              />
             </div>
 
             {/* Actions */}
-            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-border">
+            <div className="p-4 sm:p-5 border-t border-border bg-slate-50/50 dark:bg-slate-900/50 shrink-0 flex items-center justify-end gap-2.5">
               <button
                 type="button"
                 onClick={() => setIsBatchModalOpen(false)}
-                className="px-4 py-2 rounded-xl border border-border bg-background text-foreground text-xs font-semibold hover:bg-muted transition-colors cursor-pointer"
+                className="px-4 py-2 rounded-xl border border-border bg-surface text-foreground text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 Cancel
               </button>
@@ -1626,7 +1838,8 @@ export const TenderDesignMatrix: React.FC = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
