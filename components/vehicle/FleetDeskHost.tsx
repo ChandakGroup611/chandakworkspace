@@ -2371,6 +2371,602 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     };
   }, [vehicles, maintenance]);
 
+  // Upcoming service & license expiry helpers for module-specific KPIs
+  const servicesDueCount = useMemo(() => {
+    const now = new Date();
+    const thirtyDaysLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    return maintenance.filter(m => {
+      if (!m.next_service_due_date) return false;
+      const d = new Date(m.next_service_due_date);
+      return !isNaN(d.getTime()) && d <= thirtyDaysLater;
+    }).length;
+  }, [maintenance]);
+
+  const expiringLicensesCount = useMemo(() => {
+    const now = new Date();
+    const sixtyDaysLater = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000);
+    return drivers.filter(d => {
+      if (!d.license_expiry_date) return false;
+      const exp = new Date(d.license_expiry_date);
+      return !isNaN(exp.getTime()) && exp <= sixtyDaysLater;
+    }).length;
+  }, [drivers]);
+
+  const expiringInsuranceCount = useMemo(() => {
+    const now = new Date();
+    const thirtyDaysLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    return vehicles.filter(v => {
+      if (!v.insurance_expiry_date) return false;
+      const exp = new Date(v.insurance_expiry_date);
+      return !isNaN(exp.getTime()) && exp <= thirtyDaysLater;
+    }).length;
+  }, [vehicles]);
+
+  // Dedicated dynamic metadata & KPI metrics per module
+  const moduleMeta = useMemo(() => {
+    switch (activeTab) {
+      case "maintenance":
+        return {
+          category: "Service & Assets",
+          badge: "Service Bills & Job Cards",
+          badgeColor: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+          icon: Wrench,
+          iconBg: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/25",
+          title: "Workshop Job Cards & Service Bills",
+          description: "Dedicated workshop billing, invoice records, labor & tax accounting, and scheduled service tracking",
+          actionBtn: canManageMaintenance ? (
+            <AppButton
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                resetMaintenanceForm();
+                setIsAddMaintenanceOpen(true);
+              }}
+              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Log Service Job Card</span>
+            </AppButton>
+          ) : null,
+          kpis: [
+            {
+              title: "Total Service Spend",
+              value: "₹" + fleetReportsData.totalMaintenanceSpend.toLocaleString("en-IN"),
+              subtext: "Aggregate workshop bills",
+              icon: Receipt,
+              iconColor: "text-emerald-500",
+              iconBg: "bg-emerald-500/10 border-emerald-500/20"
+            },
+            {
+              title: "Logged Job Cards",
+              value: maintenance.length,
+              subtext: "Service records on file",
+              icon: FileText,
+              iconColor: "text-blue-500",
+              iconBg: "bg-blue-500/10 border-blue-500/20"
+            },
+            {
+              title: "Vehicles in Workshop",
+              value: stats.inMaintenanceVehicles,
+              subtext: "Currently undergoing service",
+              icon: Wrench,
+              iconColor: "text-amber-500",
+              iconBg: "bg-amber-500/10 border-amber-500/20"
+            },
+            {
+              title: "Services Due (≤30d)",
+              value: servicesDueCount,
+              subtext: "Upcoming service deadlines",
+              icon: Calendar,
+              iconColor: "text-indigo-500",
+              iconBg: "bg-indigo-500/10 border-indigo-500/20"
+            }
+          ]
+        };
+
+      case "parts":
+        return {
+          category: "Service & Assets",
+          badge: "Parts & Accessories Master",
+          badgeColor: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+          icon: Package,
+          iconBg: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/25",
+          title: "Parts, Accessories & Consumables Master",
+          description: "Spare parts inventory, OEM part numbers, shelf-life, warranty tracking & asset valuation",
+          actionBtn: (
+            <AppButton
+              variant="primary"
+              size="sm"
+              onClick={openCreatePartModal}
+              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Register Part / Accessory</span>
+            </AppButton>
+          ),
+          kpis: [
+            {
+              title: "Total Catalog Items",
+              value: partsKpis.totalCount,
+              subtext: partsKpis.installed + " fitted • " + partsKpis.inStock + " in stock",
+              icon: Package,
+              iconColor: "text-blue-500",
+              iconBg: "bg-blue-500/10 border-blue-500/20"
+            },
+            {
+              title: "Inventory Valuation",
+              value: "₹" + partsKpis.totalValuation.toLocaleString("en-IN"),
+              subtext: "Procurement asset value",
+              icon: Receipt,
+              iconColor: "text-emerald-500",
+              iconBg: "bg-emerald-500/10 border-emerald-500/20"
+            },
+            {
+              title: "Active OEM Warranties",
+              value: partsKpis.activeWarranties,
+              subtext: "Valid warranty protection",
+              icon: ShieldCheck,
+              iconColor: "text-indigo-500",
+              iconBg: "bg-indigo-500/10 border-indigo-500/20"
+            },
+            {
+              title: "Low Stock / Expiries",
+              value: partsKpis.expiringSoon,
+              subtext: "Reorder / renewal required",
+              icon: AlertTriangle,
+              iconColor: "text-amber-500",
+              iconBg: "bg-amber-500/10 border-amber-500/20"
+            }
+          ]
+        };
+
+      case "trips":
+        return {
+          category: "Fleet Operations",
+          badge: "Trip Logistics",
+          badgeColor: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
+          icon: Calendar,
+          iconBg: "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/25",
+          title: "Daily Trip Dispatch & Log Sheets",
+          description: "Vehicle route dispatching, passenger manifests, odometer tracking & trip completion logs",
+          actionBtn: canDispatchTrips ? (
+            <AppButton
+              variant="primary"
+              size="sm"
+              onClick={() => setIsDispatchTripOpen(true)}
+              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Dispatch Trip</span>
+            </AppButton>
+          ) : null,
+          kpis: [
+            {
+              title: "Total Logged Trips",
+              value: trips.length,
+              subtext: "All trip sheets",
+              icon: Calendar,
+              iconColor: "text-purple-500",
+              iconBg: "bg-purple-500/10 border-purple-500/20"
+            },
+            {
+              title: "Active En-Route",
+              value: stats.activeTrips,
+              subtext: "Currently on road",
+              icon: MapPin,
+              iconColor: "text-emerald-500",
+              iconBg: "bg-emerald-500/10 border-emerald-500/20"
+            },
+            {
+              title: "Completed Trips",
+              value: trips.filter(t => t.status === "COMPLETED").length,
+              subtext: "Safely completed",
+              icon: CheckCircle2,
+              iconColor: "text-blue-500",
+              iconBg: "bg-blue-500/10 border-blue-500/20"
+            },
+            {
+              title: "Pending / Scheduled",
+              value: trips.filter(t => t.status === "SCHEDULED" || t.status === "PLANNED" || t.status === "DISPATCHED").length,
+              subtext: "Awaiting departure",
+              icon: Clock,
+              iconColor: "text-amber-500",
+              iconBg: "bg-amber-500/10 border-amber-500/20"
+            }
+          ]
+        };
+
+      case "drivers":
+        return {
+          category: "Fleet Operations",
+          badge: "Driver Roster",
+          badgeColor: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20",
+          icon: Users,
+          iconBg: "bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border-cyan-500/25",
+          title: "Driver Roster & Commercial Licensing",
+          description: "Driver profiles, commercial license validity, assigned vehicles & duty status tracking",
+          actionBtn: canManageDrivers ? (
+            <AppButton
+              variant="primary"
+              size="sm"
+              onClick={() => setIsAddDriverOpen(true)}
+              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add Driver</span>
+            </AppButton>
+          ) : null,
+          kpis: [
+            {
+              title: "Total Drivers",
+              value: drivers.length,
+              subtext: "Registered drivers",
+              icon: Users,
+              iconColor: "text-cyan-500",
+              iconBg: "bg-cyan-500/10 border-cyan-500/20"
+            },
+            {
+              title: "Drivers On Duty",
+              value: drivers.filter(d => d.is_active).length,
+              subtext: "Active duty roster",
+              icon: CheckCircle2,
+              iconColor: "text-emerald-500",
+              iconBg: "bg-emerald-500/10 border-emerald-500/20"
+            },
+            {
+              title: "Available / Standby",
+              value: drivers.filter(d => !d.is_active).length,
+              subtext: "Ready for assignment",
+              icon: Clock,
+              iconColor: "text-blue-500",
+              iconBg: "bg-blue-500/10 border-blue-500/20"
+            },
+            {
+              title: "Expiring Licenses (≤60d)",
+              value: expiringLicensesCount,
+              subtext: "License renewal required",
+              icon: AlertTriangle,
+              iconColor: "text-amber-500",
+              iconBg: "bg-amber-500/10 border-amber-500/20"
+            }
+          ]
+        };
+
+      case "vendors":
+        return {
+          category: "Service & Assets",
+          badge: "Insurance & Workshop Vendors",
+          badgeColor: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20",
+          icon: ShieldCheck,
+          iconBg: "bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border-indigo-500/25",
+          title: "Insurance & Workshop Vendor Master",
+          description: "Authorized service centers, cashless garage networks & insurance policy providers",
+          actionBtn: (
+            <AppButton
+              variant="primary"
+              size="sm"
+              onClick={openCreateVendorModal}
+              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add Insurance Vendor</span>
+            </AppButton>
+          ),
+          kpis: [
+            {
+              title: "Total Vendors",
+              value: insuranceVendors.length,
+              subtext: "Registered partners",
+              icon: ShieldCheck,
+              iconColor: "text-indigo-500",
+              iconBg: "bg-indigo-500/10 border-indigo-500/20"
+            },
+            {
+              title: "Active Vendors",
+              value: insuranceVendors.filter(v => v.is_active !== false).length,
+              subtext: "Approved partners",
+              icon: Building2,
+              iconColor: "text-emerald-500",
+              iconBg: "bg-emerald-500/10 border-emerald-500/20"
+            },
+            {
+              title: "24x7 Emergency Support",
+              value: insuranceVendors.filter(v => v.support_toll_free || v.toll_free_number).length,
+              subtext: "Helpline availability",
+              icon: Phone,
+              iconColor: "text-blue-500",
+              iconBg: "bg-blue-500/10 border-blue-500/20"
+            },
+            {
+              title: "Expiring Policies (≤30d)",
+              value: expiringInsuranceCount,
+              subtext: "Policy renewal required",
+              icon: AlertTriangle,
+              iconColor: "text-amber-500",
+              iconBg: "bg-amber-500/10 border-amber-500/20"
+            }
+          ]
+        };
+
+      case "alerts":
+        return {
+          category: "Service & Assets",
+          badge: "Compliance Radar",
+          badgeColor: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20",
+          icon: ShieldAlert,
+          iconBg: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/25",
+          title: "Fleet Compliance & Renewal Alerts",
+          description: "Automated expiry monitoring for insurance policies, PUC, fitness certificates & periodic services",
+          actionBtn: null,
+          kpis: [
+            {
+              title: "Critical Expiries (≤7d)",
+              value: complianceAlerts.filter(a => a.daysRemaining <= 7).length,
+              subtext: "Expiring within 7 days",
+              icon: ShieldAlert,
+              iconColor: "text-rose-500",
+              iconBg: "bg-rose-500/10 border-rose-500/20"
+            },
+            {
+              title: "PUC Renewals",
+              value: complianceAlerts.filter(a => a.docType.includes("PUC") || a.docType.includes("Pollution")).length,
+              subtext: "Pollution certificates",
+              icon: FileText,
+              iconColor: "text-amber-500",
+              iconBg: "bg-amber-500/10 border-amber-500/20"
+            },
+            {
+              title: "Insurance Renewals",
+              value: complianceAlerts.filter(a => a.docType.includes("Insurance")).length,
+              subtext: "Policy expirations",
+              icon: ShieldCheck,
+              iconColor: "text-blue-500",
+              iconBg: "bg-blue-500/10 border-blue-500/20"
+            },
+            {
+              title: "Driver Licenses",
+              value: complianceAlerts.filter(a => a.docType.includes("License")).length,
+              subtext: "License renewals",
+              icon: Users,
+              iconColor: "text-purple-500",
+              iconBg: "bg-purple-500/10 border-purple-500/20"
+            }
+          ]
+        };
+
+      case "reports":
+        return {
+          category: "Analytics & Intelligence",
+          badge: "Executive Reports",
+          badgeColor: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+          icon: LineChart,
+          iconBg: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25",
+          title: "Fleet Analytics & Expense Reports",
+          description: "Financial breakdown, maintenance expenditures, fuel consumption & vehicle utilization analysis",
+          actionBtn: null,
+          kpis: [
+            {
+              title: "Total Fleet Cost",
+              value: "₹" + (fleetReportsData.totalMaintenanceSpend + (fleetReportsData.totalOdometerKm * 8)).toLocaleString("en-IN"),
+              subtext: "Operations & maintenance",
+              icon: Receipt,
+              iconColor: "text-emerald-500",
+              iconBg: "bg-emerald-500/10 border-emerald-500/20"
+            },
+            {
+              title: "Total Service Spend",
+              value: "₹" + fleetReportsData.totalMaintenanceSpend.toLocaleString("en-IN"),
+              subtext: "Workshop invoices",
+              icon: Wrench,
+              iconColor: "text-amber-500",
+              iconBg: "bg-amber-500/10 border-amber-500/20"
+            },
+            {
+              title: "Total Km Logged",
+              value: fleetReportsData.totalOdometerKm.toLocaleString("en-IN") + " km",
+              subtext: "Across all fleet units",
+              icon: MapPin,
+              iconColor: "text-blue-500",
+              iconBg: "bg-blue-500/10 border-blue-500/20"
+            },
+            {
+              title: "Average Mileage",
+              value: fleetReportsData.avgOdometer.toLocaleString("en-IN") + " km",
+              subtext: "Mean odometer reading",
+              icon: Car,
+              iconColor: "text-purple-500",
+              iconBg: "bg-purple-500/10 border-purple-500/20"
+            }
+          ]
+        };
+
+      case "travelers":
+        return {
+          category: "Fleet Operations",
+          badge: "Employee Commute",
+          badgeColor: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20",
+          icon: UserCheck,
+          iconBg: "bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border-indigo-500/25",
+          title: "Traveler & Commute Allocations",
+          description: "Employee commute assignments, regular traveler directories & route allocations",
+          actionBtn: canDispatchTrips ? (
+            <AppButton
+              variant="primary"
+              size="sm"
+              onClick={() => setIsDispatchTripOpen(true)}
+              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Dispatch Trip</span>
+            </AppButton>
+          ) : null,
+          kpis: [
+            {
+              title: "Total Fleet Master",
+              value: stats.totalVehicles,
+              subtext: "Registered vehicles",
+              icon: Car,
+              iconColor: "text-emerald-500",
+              iconBg: "bg-emerald-500/10 border-emerald-500/20"
+            },
+            {
+              title: "En-Route Vehicles",
+              value: stats.onRouteVehicles,
+              subtext: "Currently on active transit",
+              icon: MapPin,
+              iconColor: "text-blue-500",
+              iconBg: "bg-blue-500/10 border-blue-500/20"
+            },
+            {
+              title: "Available at Depot",
+              value: stats.availableVehicles,
+              subtext: "Ready for dispatch",
+              icon: CheckCircle2,
+              iconColor: "text-indigo-500",
+              iconBg: "bg-indigo-500/10 border-indigo-500/20"
+            },
+            {
+              title: "In Workshop / Service",
+              value: stats.inMaintenanceVehicles,
+              subtext: "Under maintenance",
+              icon: Wrench,
+              iconColor: "text-amber-500",
+              iconBg: "bg-amber-500/10 border-amber-500/20"
+            }
+          ]
+        };
+
+      case "inventory":
+        return {
+          category: "Fleet Operations",
+          badge: "Vehicle Registry",
+          badgeColor: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+          icon: Car,
+          iconBg: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25",
+          title: "Vehicle Inventory & Fleet Registry",
+          description: "Central vehicle master, technical specifications, registration documents & operational statuses",
+          actionBtn: canCreateVehicle ? (
+            <AppButton
+              variant="primary"
+              size="sm"
+              onClick={() => router.push("/vehicle/register")}
+              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add Vehicle</span>
+            </AppButton>
+          ) : null,
+          kpis: [
+            {
+              title: "Total Fleet Master",
+              value: stats.totalVehicles,
+              subtext: "Registered company vehicles",
+              icon: Car,
+              iconColor: "text-theme-btn-primary",
+              iconBg: "bg-theme-btn-primary/10 border-theme-btn-primary/20"
+            },
+            {
+              title: "En-Route Vehicles",
+              value: stats.onRouteVehicles,
+              subtext: "Currently on active transit",
+              icon: MapPin,
+              iconColor: "text-emerald-500",
+              iconBg: "bg-emerald-500/10 border-emerald-500/20"
+            },
+            {
+              title: "Available at Depot",
+              value: stats.availableVehicles,
+              subtext: "Ready for dispatch",
+              icon: CheckCircle2,
+              iconColor: "text-indigo-500",
+              iconBg: "bg-indigo-500/10 border-indigo-500/20"
+            },
+            {
+              title: "In Workshop / Service",
+              value: stats.inMaintenanceVehicles,
+              subtext: "Under maintenance",
+              icon: Wrench,
+              iconColor: "text-amber-500",
+              iconBg: "bg-amber-500/10 border-amber-500/20"
+            }
+          ]
+        };
+
+      default:
+        return {
+          category: "Fleet Operations",
+          badge: "Fleet Operations Desk",
+          badgeColor: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+          icon: LayoutDashboard,
+          iconBg: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25",
+          title: "Enterprise Fleet Management Desk",
+          description: "Central fleet master, real-time driver allocation, trip dispatch & maintenance records",
+          actionBtn: canCreateVehicle ? (
+            <AppButton
+              variant="primary"
+              size="sm"
+              onClick={() => router.push("/vehicle/register")}
+              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add Vehicle</span>
+            </AppButton>
+          ) : null,
+          kpis: [
+            {
+              title: "Total Fleet Master",
+              value: stats.totalVehicles,
+              subtext: "Registered company vehicles",
+              icon: Car,
+              iconColor: "text-theme-btn-primary",
+              iconBg: "bg-theme-btn-primary/10 border-theme-btn-primary/20"
+            },
+            {
+              title: "En-Route Vehicles",
+              value: stats.onRouteVehicles,
+              subtext: "Currently on active transit",
+              icon: MapPin,
+              iconColor: "text-emerald-500",
+              iconBg: "bg-emerald-500/10 border-emerald-500/20"
+            },
+            {
+              title: "Available at Depot",
+              value: stats.availableVehicles,
+              subtext: "Ready for dispatch",
+              icon: CheckCircle2,
+              iconColor: "text-indigo-500",
+              iconBg: "bg-indigo-500/10 border-indigo-500/20"
+            },
+            {
+              title: "In Workshop / Service",
+              value: stats.inMaintenanceVehicles,
+              subtext: "Under maintenance",
+              icon: Wrench,
+              iconColor: "text-amber-500",
+              iconBg: "bg-amber-500/10 border-amber-500/20"
+            }
+          ]
+        };
+    }
+  }, [
+    activeTab, 
+    stats, 
+    fleetReportsData, 
+    maintenance.length, 
+    servicesDueCount, 
+    partsKpis, 
+    trips, 
+    drivers, 
+    expiringLicensesCount, 
+    insuranceVendors, 
+    expiringInsuranceCount, 
+    complianceAlerts, 
+    canManageMaintenance, 
+    canDispatchTrips, 
+    canManageDrivers, 
+    canCreateVehicle
+  ]);
+
   if (loading) {
     return (
       <div className="w-full min-h-[60vh] flex flex-col items-center justify-center p-8 space-y-4">
@@ -2436,343 +3032,62 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/50 pb-6">
             <div>
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/25">
-                  <Car className="h-5 w-5" />
+                <div className={`h-11 w-11 rounded-xl flex items-center justify-center border shadow-2xs ${moduleMeta.iconBg}`}>
+                  <moduleMeta.icon className="h-5 w-5" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                    Vehicle Module
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${moduleMeta.badgeColor}`}>
+                      {moduleMeta.badge}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground font-medium hidden sm:inline">• {moduleMeta.category}</span>
+                  </div>
+                  <h1 className="text-2xl font-bold tracking-tight text-foreground mt-0.5">
+                    {moduleMeta.title}
                   </h1>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Central fleet master, real-time driver allocation, trip dispatch & maintenance records
+                    {moduleMeta.description}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
               <AppButton
                 variant="secondary"
                 size="sm"
                 onClick={() => loadAllData(true)}
                 disabled={refreshing}
-                className="text-xs h-9"
-                title="Refresh fleet data"
+                className="text-xs h-9 font-medium"
+                title="Refresh module data"
               >
                 <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${refreshing ? "animate-spin" : ""}`} />
                 <span>Sync</span>
               </AppButton>
 
-              {hasAnyFleetAccess && (
-                <AppButton
-                  variant={activeTab === "dashboard" ? "primary" : "secondary"}
-                  size="sm"
-                  onClick={() => router.push("/vehicle")}
-                  className={`text-xs h-9 font-semibold transition-all ${
-                    activeTab === "dashboard"
-                      ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
-                      : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
-                  }`}
-                >
-                  <LayoutDashboard className={`h-4 w-4 mr-1.5 ${activeTab === "dashboard" ? "text-white" : "text-muted-foreground"}`} />
-                  <span>Overview</span>
-                </AppButton>
-              )}
-
-              {canReadModule("VEHICLES") && (
-                <AppButton
-                  variant={activeTab === "inventory" ? "primary" : "secondary"}
-                  size="sm"
-                  onClick={() => router.push("/vehicle/inventory")}
-                  className={`text-xs h-9 font-semibold transition-all ${
-                    activeTab === "inventory"
-                      ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
-                      : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
-                  }`}
-                >
-                  <Car className={`h-4 w-4 mr-1.5 ${activeTab === "inventory" ? "text-white" : "text-muted-foreground"}`} />
-                  <span>Fleet ({stats.totalVehicles})</span>
-                </AppButton>
-              )}
-
-              {canReadModule("DRIVERS") && (
-                <AppButton
-                  variant={activeTab === "drivers" ? "primary" : "secondary"}
-                  size="sm"
-                  onClick={() => router.push("/vehicle/drivers")}
-                  className={`text-xs h-9 font-semibold transition-all ${
-                    activeTab === "drivers"
-                      ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
-                      : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
-                  }`}
-                >
-                  <Users className={`h-4 w-4 mr-1.5 ${activeTab === "drivers" ? "text-white" : "text-muted-foreground"}`} />
-                  <span>Drivers ({stats.activeDrivers})</span>
-                </AppButton>
-              )}
-
-              {canReadModule("TRIPS") && (
-                <AppButton
-                  variant={activeTab === "trips" ? "primary" : "secondary"}
-                  size="sm"
-                  onClick={() => router.push("/vehicle/trips")}
-                  className={`text-xs h-9 font-semibold transition-all ${
-                    activeTab === "trips"
-                      ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
-                      : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
-                  }`}
-                >
-                  <Calendar className={`h-4 w-4 mr-1.5 ${activeTab === "trips" ? "text-white" : "text-muted-foreground"}`} />
-                  <span>Trips ({stats.activeTrips})</span>
-                </AppButton>
-              )}
-
-              {canReadModule("MAINTENANCE") && (
-                <AppButton
-                  variant={activeTab === "maintenance" ? "primary" : "secondary"}
-                  size="sm"
-                  onClick={() => router.push("/vehicle/maintenance")}
-                  className={`text-xs h-9 font-semibold transition-all ${
-                    activeTab === "maintenance"
-                      ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
-                      : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
-                  }`}
-                >
-                  <Wrench className={`h-4 w-4 mr-1.5 ${activeTab === "maintenance" ? "text-white" : "text-muted-foreground"}`} />
-                  <span>Maintenance ({stats.inMaintenanceVehicles})</span>
-                </AppButton>
-              )}
-
-              {canReadModule("PARTS") && (
-                <AppButton
-                  variant={activeTab === "parts" ? "primary" : "secondary"}
-                  size="sm"
-                  onClick={() => router.push("/vehicle/parts")}
-                  className={`text-xs h-9 font-semibold transition-all ${
-                    activeTab === "parts"
-                      ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
-                      : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
-                  }`}
-                >
-                  <Package className={`h-4 w-4 mr-1.5 ${activeTab === "parts" ? "text-white" : "text-amber-500"}`} />
-                  <span>Parts & Spares ({parts.length})</span>
-                </AppButton>
-              )}
-
-              {canReadModule("VENDORS") && (
-                <AppButton
-                  variant={activeTab === "vendors" ? "primary" : "secondary"}
-                  size="sm"
-                  onClick={() => router.push("/vehicle/vendors")}
-                  className={`text-xs h-9 font-semibold transition-all ${
-                    activeTab === "vendors"
-                      ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
-                      : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
-                  }`}
-                >
-                  <ShieldCheck className={`h-4 w-4 mr-1.5 ${activeTab === "vendors" ? "text-white" : "text-blue-500"}`} />
-                  <span>Insurance Vendors ({insuranceVendors.length})</span>
-                </AppButton>
-              )}
-
-              {canReadModule("ALERTS") && (
-                <AppButton
-                  variant={activeTab === "alerts" ? "primary" : "secondary"}
-                  size="sm"
-                  onClick={() => router.push("/vehicle/alerts")}
-                  className={`text-xs h-9 font-semibold transition-all ${
-                    activeTab === "alerts"
-                      ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
-                      : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
-                  }`}
-                >
-                  <ShieldAlert className={`h-4 w-4 mr-1.5 ${activeTab === "alerts" ? "text-white" : "text-amber-500"}`} />
-                  <span>Alerts</span>
-                </AppButton>
-              )}
-
-              {canReadModule("TRAVELERS") && (
-                <AppButton
-                  variant={activeTab === "travelers" ? "primary" : "secondary"}
-                  size="sm"
-                  onClick={() => router.push("/vehicle/travelers")}
-                  className={`text-xs h-9 font-semibold transition-all ${
-                    activeTab === "travelers"
-                      ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
-                      : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
-                  }`}
-                >
-                  <UserCheck className={`h-4 w-4 mr-1.5 ${activeTab === "travelers" ? "text-white" : "text-indigo-500"}`} />
-                  <span>Travelers</span>
-                </AppButton>
-              )}
-
-              {canReadModule("REPORTS") && (
-                <AppButton
-                  variant={activeTab === "reports" ? "primary" : "secondary"}
-                  size="sm"
-                  onClick={() => router.push("/vehicle/reports")}
-                  className={`text-xs h-9 font-semibold transition-all ${
-                    activeTab === "reports"
-                      ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
-                      : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
-                  }`}
-                >
-                  <LineChart className={`h-4 w-4 mr-1.5 ${activeTab === "reports" ? "text-white" : "text-emerald-500"}`} />
-                  <span>Reports</span>
-                </AppButton>
-              )}
-
-              {canReadModule("RBAC") && (
-                <AppButton
-                  variant={activeTab === "rbac" ? "primary" : "secondary"}
-                  size="sm"
-                  onClick={() => router.push("/vehicle/rbac")}
-                  className={`text-xs h-9 font-semibold transition-all ${
-                    activeTab === "rbac"
-                      ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
-                      : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
-                  }`}
-                >
-                  <Shield className={`h-4 w-4 mr-1.5 ${activeTab === "rbac" ? "text-white" : "text-blue-500"}`} />
-                  <span>RBAC Policies</span>
-                </AppButton>
-              )}
-
-              {canReadModule("SETTINGS") && (
-                <AppButton
-                  variant={activeTab === "settings" ? "primary" : "secondary"}
-                  size="sm"
-                  onClick={() => router.push("/vehicle/settings")}
-                  className={`text-xs h-9 font-semibold transition-all ${
-                    activeTab === "settings"
-                      ? "bg-theme-btn-primary text-white font-bold shadow-xs border-transparent ring-1 ring-theme-btn-primary/30"
-                      : "bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 border-border"
-                  }`}
-                >
-                  <Settings className={`h-4 w-4 mr-1.5 ${activeTab === "settings" ? "text-white" : "text-muted-foreground"}`} />
-                  <span>Settings</span>
-                </AppButton>
-              )}
-
-              {/* Action trigger button tailored to active tab and RBAC capability */}
-              {activeTab === "vendors" ? (
-                <AppButton
-                  variant="primary"
-                  size="sm"
-                  onClick={openCreateVendorModal}
-                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>Add Insurance Vendor</span>
-                </AppButton>
-              ) : activeTab === "parts" ? (
-                <AppButton
-                  variant="primary"
-                  size="sm"
-                  onClick={openCreatePartModal}
-                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>Register Part</span>
-                </AppButton>
-              ) : activeTab === "drivers" && canManageDrivers ? (
-                <AppButton
-                  variant="primary"
-                  size="sm"
-                  onClick={() => setIsAddDriverOpen(true)}
-                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>Add Driver</span>
-                </AppButton>
-              ) : (activeTab === "trips" || activeTab === "travelers") && canDispatchTrips ? (
-                <AppButton
-                  variant="primary"
-                  size="sm"
-                  onClick={() => setIsDispatchTripOpen(true)}
-                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>Dispatch Trip</span>
-                </AppButton>
-              ) : activeTab === "maintenance" && canManageMaintenance ? (
-                <AppButton
-                  variant="primary"
-                  size="sm"
-                  onClick={() => setIsAddMaintenanceOpen(true)}
-                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>Log Maintenance</span>
-                </AppButton>
-              ) : canCreateVehicle ? (
-                <AppButton
-                  variant="primary"
-                  size="sm"
-                  onClick={() => router.push("/vehicle/register")}
-                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>Add Vehicle</span>
-                </AppButton>
-              ) : null}
+              {moduleMeta.actionBtn}
             </div>
           </div>
 
-          {/* KPI Cards */}
+          {/* Dynamic Module KPI Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <AppCard className="border-border shadow-xs">
-              <AppCardContent className="p-4 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-semibold text-muted-foreground">Total Fleet Master</p>
-                  <h3 className="text-2xl font-bold mt-1 text-foreground">{stats.totalVehicles}</h3>
-                  <span className="text-[10px] text-muted-foreground">Registered company vehicles</span>
-                </div>
-                <div className="h-10 w-10 rounded-xl bg-theme-btn-primary/10 text-theme-btn-primary flex items-center justify-center border border-theme-btn-primary/20">
-                  <Car className="h-5 w-5" />
-                </div>
-              </AppCardContent>
-            </AppCard>
-
-            <AppCard className="border-border shadow-xs">
-              <AppCardContent className="p-4 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-semibold text-muted-foreground">En-Route Vehicles</p>
-                  <h3 className="text-2xl font-bold mt-1 text-emerald-600 dark:text-emerald-400">{stats.onRouteVehicles}</h3>
-                  <span className="text-[10px] text-muted-foreground">Currently on active transit</span>
-                </div>
-                <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center border border-emerald-500/20">
-                  <MapPin className="h-5 w-5" />
-                </div>
-              </AppCardContent>
-            </AppCard>
-
-            <AppCard className="border-border shadow-xs">
-              <AppCardContent className="p-4 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-semibold text-muted-foreground">Available at Depot</p>
-                  <h3 className="text-2xl font-bold mt-1 text-foreground">{stats.availableVehicles}</h3>
-                  <span className="text-[10px] text-muted-foreground">Ready for dispatch</span>
-                </div>
-                <div className="h-10 w-10 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center border border-indigo-500/20">
-                  <CheckCircle2 className="h-5 w-5" />
-                </div>
-              </AppCardContent>
-            </AppCard>
-
-            <AppCard className="border-border shadow-xs">
-              <AppCardContent className="p-4 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-semibold text-muted-foreground">In Workshop / Service</p>
-                  <h3 className="text-2xl font-bold mt-1 text-amber-600 dark:text-amber-400">{stats.inMaintenanceVehicles}</h3>
-                  <span className="text-[10px] text-muted-foreground">Under maintenance</span>
-                </div>
-                <div className="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center border border-amber-500/20">
-                  <Wrench className="h-5 w-5" />
-                </div>
-              </AppCardContent>
-            </AppCard>
+            {moduleMeta.kpis.map((kpi, idx) => {
+              const IconComp = kpi.icon;
+              return (
+                <AppCard key={idx} className="border-border shadow-xs">
+                  <AppCardContent className="p-4 flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-semibold text-muted-foreground">{kpi.title}</p>
+                      <h3 className="text-2xl font-bold mt-1 text-foreground">{kpi.value}</h3>
+                      <span className="text-[10px] text-muted-foreground">{kpi.subtext}</span>
+                    </div>
+                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center border ${kpi.iconBg} ${kpi.iconColor}`}>
+                      <IconComp className="h-5 w-5" />
+                    </div>
+                  </AppCardContent>
+                </AppCard>
+              );
+            })}
           </div>
         </>
       )}
@@ -5334,129 +5649,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       {/* ---------------------------------------------------------------------- */}
       {activeTab === "parts" && (
         <div className="space-y-6">
-          {/* Header Card */}
-          <AppCard className="border-border shadow-xs">
-            <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <AppCardTitle className="text-lg flex items-center gap-2">
-                  <Package className="h-5 w-5 text-amber-500" />
-                  <span>Parts, Accessories & Consumables Master</span>
-                </AppCardTitle>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Complete lifecycle tracking for purchase dates, DOM shelf-life, OEM warranty expirations, and recurring renewal policies
-                </p>
-              </div>
-              <div className="flex items-center gap-2 self-stretch sm:self-auto">
-                <AppButton
-                  variant="outline"
-                  size="sm"
-                  onClick={() => loadAllData(true)}
-                  disabled={refreshing}
-                  className="text-xs h-9 font-medium gap-1.5"
-                >
-                  <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
-                  <span className="hidden sm:inline">Refresh</span>
-                </AppButton>
-                <AppButton
-                  variant="primary"
-                  size="sm"
-                  onClick={openCreatePartModal}
-                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs flex-1 sm:flex-none justify-center"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>Register Part / Accessory</span>
-                </AppButton>
-              </div>
-            </AppCardHeader>
-
-            {/* KPI Summary Strip */}
-            <AppCardContent className="p-4 bg-slate-50/40 dark:bg-slate-900/30 border-b border-border/50">
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                <div className="p-3 rounded-xl border border-border/60 bg-surface shadow-2xs">
-                  <div className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1.5">
-                    <Package className="h-3.5 w-3.5 text-blue-500" />
-                    <span>Total Inventory</span>
-                  </div>
-                  <div className="mt-1 flex items-baseline gap-2">
-                    <span className="text-lg font-bold font-mono text-foreground">{partsKpis.totalCount}</span>
-                    <span className="text-[10px] text-muted-foreground">items</span>
-                  </div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5 font-medium">
-                    {partsKpis.installed} in fleet • {partsKpis.inStock} stock
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-xl border border-border/60 bg-surface shadow-2xs">
-                  <div className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1.5">
-                    <Receipt className="h-3.5 w-3.5 text-emerald-500" />
-                    <span>Total Valuation</span>
-                  </div>
-                  <div className="mt-1 flex items-baseline gap-1">
-                    <span className="text-lg font-bold font-mono text-emerald-600 dark:text-emerald-400">
-                      ₹{partsKpis.totalValuation.toLocaleString("en-IN")}
-                    </span>
-                  </div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5">Procurement asset value</div>
-                </div>
-
-                <div className="p-3 rounded-xl border border-border/60 bg-surface shadow-2xs">
-                  <div className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1.5">
-                    <ShieldCheck className="h-3.5 w-3.5 text-indigo-500" />
-                    <span>Active Warranties</span>
-                  </div>
-                  <div className="mt-1 flex items-baseline gap-2">
-                    <span className="text-lg font-bold font-mono text-indigo-600 dark:text-indigo-400">
-                      {partsKpis.activeWarranties}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground">covered</span>
-                  </div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5">Valid OEM protection</div>
-                </div>
-
-                <div className="p-3 rounded-xl border border-border/60 bg-surface shadow-2xs">
-                  <div className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
-                    <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
-                    <span>Expiring Soon (≤30d)</span>
-                  </div>
-                  <div className="mt-1 flex items-baseline gap-2">
-                    <span className="text-lg font-bold font-mono text-amber-600 dark:text-amber-400">
-                      {partsKpis.expiringSoon}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground">alerts</span>
-                  </div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5">Warranty & shelf-life</div>
-                </div>
-
-                <div className="p-3 rounded-xl border border-border/60 bg-surface shadow-2xs">
-                  <div className="text-[11px] font-semibold text-cyan-700 dark:text-cyan-400 flex items-center gap-1.5">
-                    <Zap className="h-3.5 w-3.5 text-cyan-500" />
-                    <span>Renewals Due</span>
-                  </div>
-                  <div className="mt-1 flex items-baseline gap-2">
-                    <span className="text-lg font-bold font-mono text-cyan-600 dark:text-cyan-400">
-                      {partsKpis.renewalsDue}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground">due</span>
-                  </div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5">SIMs, AMC & Subscriptions</div>
-                </div>
-
-                <div className="p-3 rounded-xl border border-border/60 bg-surface shadow-2xs">
-                  <div className="text-[11px] font-semibold text-purple-700 dark:text-purple-400 flex items-center gap-1.5">
-                    <Wrench className="h-3.5 w-3.5 text-purple-500" />
-                    <span>Installed in Fleet</span>
-                  </div>
-                  <div className="mt-1 flex items-baseline gap-2">
-                    <span className="text-lg font-bold font-mono text-purple-600 dark:text-purple-400">
-                      {partsKpis.installed}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground">units</span>
-                  </div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5">Active on vehicles</div>
-                </div>
-              </div>
-            </AppCardContent>
-
+          <AppCard className="border-border shadow-xs overflow-hidden">
             {/* Filter Bar & Tabs */}
             <div className="p-4 border-b border-border/50 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
               <div className="flex flex-1 items-center gap-2">
@@ -5872,104 +6065,9 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
       {/* ---------------------------------------------------------------------- */}
       {/* INSURANCE VENDORS MASTER TAB */}
-      {/* ---------------------------------------------------------------------- */}
       {activeTab === "vendors" && (
         <div className="space-y-6">
-          <AppCard className="border-border shadow-xs">
-            <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <AppCardTitle className="text-lg flex items-center gap-2">
-                  <ShieldCheck className="h-5 w-5 text-blue-500" />
-                  <span>Fleet Insurance Vendors Master</span>
-                </AppCardTitle>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Authorized motor insurance companies, underwriters, policy administrators, and 24x7 emergency helpline directory
-                </p>
-              </div>
-              <div className="flex items-center gap-2 self-stretch sm:self-auto">
-                <AppButton
-                  variant="outline"
-                  size="sm"
-                  onClick={() => loadAllData(true)}
-                  disabled={refreshing}
-                  className="text-xs h-9 font-medium gap-1.5"
-                >
-                  <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
-                  <span className="hidden sm:inline">Refresh</span>
-                </AppButton>
-                <AppButton
-                  variant="primary"
-                  size="sm"
-                  onClick={openCreateVendorModal}
-                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs flex-1 sm:flex-none justify-center"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>Add Insurance Vendor</span>
-                </AppButton>
-              </div>
-            </AppCardHeader>
-
-            {/* KPI Summary Strip */}
-            <AppCardContent className="p-4 bg-slate-50/40 dark:bg-slate-900/30 border-b border-border/50">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-3 rounded-xl border border-border/60 bg-surface shadow-2xs">
-                  <div className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1.5">
-                    <Building2 className="h-3.5 w-3.5 text-blue-500" />
-                    <span>Total Underwriters</span>
-                  </div>
-                  <div className="mt-1 flex items-baseline gap-2">
-                    <span className="text-lg font-bold font-mono text-foreground">{insuranceVendors.length}</span>
-                    <span className="text-[10px] text-muted-foreground">registered</span>
-                  </div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5">
-                    Active insurance vendors
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-xl border border-border/60 bg-surface shadow-2xs">
-                  <div className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                    <span>Active Underwriters</span>
-                  </div>
-                  <div className="mt-1 flex items-baseline gap-1">
-                    <span className="text-lg font-bold font-mono text-emerald-600 dark:text-emerald-400">
-                      {insuranceVendors.filter(v => v.is_active !== false).length}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground">active</span>
-                  </div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5">Approved for new policies</div>
-                </div>
-
-                <div className="p-3 rounded-xl border border-border/60 bg-surface shadow-2xs">
-                  <div className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1.5">
-                    <Phone className="h-3.5 w-3.5 text-amber-500" />
-                    <span>24x7 Toll-Free Support</span>
-                  </div>
-                  <div className="mt-1 flex items-baseline gap-2">
-                    <span className="text-lg font-bold font-mono text-amber-600 dark:text-amber-400">
-                      {insuranceVendors.filter(v => v.support_toll_free).length}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground">helplines</span>
-                  </div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5">Pan-India roadside emergency</div>
-                </div>
-
-                <div className="p-3 rounded-xl border border-border/60 bg-surface shadow-2xs">
-                  <div className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1.5">
-                    <Car className="h-3.5 w-3.5 text-purple-500" />
-                    <span>Covered Fleet Vehicles</span>
-                  </div>
-                  <div className="mt-1 flex items-baseline gap-2">
-                    <span className="text-lg font-bold font-mono text-purple-600 dark:text-purple-400">
-                      {vehicles.filter(v => v.insurance_vendor_id || v.insurance_vendor).length}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground">vehicles</span>
-                  </div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5">Linked to active policies</div>
-                </div>
-              </div>
-            </AppCardContent>
-
+          <AppCard className="border-border shadow-xs overflow-hidden">
             {/* Filter Bar */}
             <div className="p-4 border-b border-border/50 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
               <div className="relative flex-1">
