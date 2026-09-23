@@ -3226,7 +3226,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   </label>
                   <div className="flex gap-2">
                     <AppInput 
-                      placeholder="e.g. MH02FE4281" 
                       value={newVehiclePlate} 
                       onChange={(e) => {
                         setNewVehiclePlate(e.target.value.toUpperCase());
@@ -3339,7 +3338,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       <span>RTO Passing Office / Authority *</span>
                     </label>
                     <AppInput 
-                      placeholder="e.g. MH-02 (Mumbai West / Andheri RTO)" 
                       value={newVehicleRtoOffice} 
                       onChange={(e) => setNewVehicleRtoOffice(e.target.value)} 
                       className="text-xs font-semibold bg-surface shadow-2xs"
@@ -3464,7 +3462,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     </span>
                   </div>
                   <AppInput 
-                    placeholder="e.g. Toyota, Maruti Suzuki, Tata" 
                     value={newVehicleMake} 
                     onChange={(e) => setNewVehicleMake(e.target.value)} 
                     list="fleet-popular-makes-form"
@@ -3518,7 +3515,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <span className="text-[10px] text-muted-foreground">Popular models for selected brand</span>
                   </div>
                   <AppInput 
-                    placeholder="e.g. Innova Hycross, Fortuner, Swift" 
                     value={newVehicleModel} 
                     onChange={(e) => {
                       const val = e.target.value;
@@ -3583,7 +3579,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div>
                   <label className="text-xs font-semibold text-foreground block mb-1.5">Variant / Trim</label>
                   <AppInput 
-                    placeholder="e.g. ZX (O) Hybrid, 2.8 4x4 AT" 
                     value={newVehicleVariant} 
                     onChange={(e) => setNewVehicleVariant(e.target.value)} 
                   />
@@ -3639,7 +3634,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       className="h-9 w-10 rounded border border-border cursor-pointer p-0.5 bg-surface"
                     />
                     <AppInput 
-                      placeholder="e.g. Pearl White / #1e293b" 
                       value={newVehicleColor} 
                       onChange={(e) => setNewVehicleColor(e.target.value)} 
                       className="flex-1"
@@ -3721,7 +3715,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <span>Registered Owner Name *</span>
                   </label>
                   <AppInput 
-                    placeholder="e.g. Chandak Realtors Pvt. Ltd. / Saroj Landmark Realty LLP" 
                     value={newVehicleOwner} 
                     onChange={(e) => setNewVehicleOwner(e.target.value)} 
                     required
@@ -3733,7 +3726,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <span>RTO RMN (Registered Mobile Number) *</span>
                   </label>
                   <AppInput 
-                    placeholder="Enter owner's 10-digit mobile number" 
                     value={newVehicleRtoRmn} 
                     onChange={(e) => setNewVehicleRtoRmn(e.target.value)} 
                     required
@@ -3752,7 +3744,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <span>Chassis Number (VIN) *</span>
                   </label>
                   <AppInput 
-                    placeholder="e.g. MBJAAA41VPA012345" 
                     value={newVehicleVin} 
                     onChange={(e) => setNewVehicleVin(e.target.value.toUpperCase())} 
                     className="font-mono uppercase text-xs"
@@ -3765,7 +3756,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <span>Engine Number *</span>
                   </label>
                   <AppInput 
-                    placeholder="e.g. 2GD1234567" 
                     value={newVehicleEngine} 
                     onChange={(e) => setNewVehicleEngine(e.target.value.toUpperCase())} 
                     className="font-mono uppercase text-xs"
@@ -3853,7 +3843,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <span>Insurance Policy Number</span>
                   </label>
                   <AppInput 
-                    placeholder="e.g. 2311/61284792/00/000" 
                     value={newVehicleInsurancePolicy} 
                     onChange={(e) => setNewVehicleInsurancePolicy(e.target.value)} 
                   />
@@ -3986,8 +3975,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   </label>
                   <AppInput 
                     type="number"
-                    min="0"
-                    placeholder="0" 
+                    min="0" 
                     value={newVehicleOdometer} 
                     onChange={(e) => setNewVehicleOdometer(Number(e.target.value))} 
                   />
@@ -3998,7 +3986,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div>
                   <label className="text-xs font-semibold text-foreground block mb-1.5">Fleet Nickname / Asset Tag</label>
                   <AppInput 
-                    placeholder="e.g. Stella Site VIP Chauffeur Car" 
                     value={newVehicleNickname} 
                     onChange={(e) => setNewVehicleNickname(e.target.value)} 
                   />
@@ -7081,8 +7068,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <label className="font-semibold block mb-1">Registered Owner / Corporate Entity *</label>
                     <AppInput 
                       value={editVehicleOwner} 
-                      onChange={(e) => setEditVehicleOwner(e.target.value)} 
-                      placeholder="e.g. Saroj Landmark Realty LLP / Chandak Realtors Pvt. Ltd."
+                      onChange={(e) => setEditVehicleOwner(e.target.value)}
                       required
                     />
                   </div>
@@ -7093,8 +7079,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     </label>
                     <AppInput 
                       value={editVehicleRtoRmn} 
-                      onChange={(e) => setEditVehicleRtoRmn(e.target.value)} 
-                      placeholder="Enter owner's 10-digit mobile number"
+                      onChange={(e) => setEditVehicleRtoRmn(e.target.value)}
                       required
                     />
                   </div>
@@ -7110,7 +7095,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       value={editVehicleVin} 
                       onChange={(e) => setEditVehicleVin(e.target.value.toUpperCase())} 
                       className="font-mono uppercase text-xs"
-                      placeholder="e.g. MBJAAA41VPA012345"
                       required
                     />
                   </div>
@@ -7123,7 +7107,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       value={editVehicleEngine} 
                       onChange={(e) => setEditVehicleEngine(e.target.value.toUpperCase())} 
                       className="font-mono uppercase text-xs"
-                      placeholder="e.g. 2GD1234567"
                       required
                     />
                   </div>
@@ -7137,8 +7120,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     </label>
                     <AppInput 
                       value={editVehicleRtoOffice} 
-                      onChange={(e) => setEditVehicleRtoOffice(e.target.value)} 
-                      placeholder="e.g. MH-02 Mumbai Andheri RTO"
+                      onChange={(e) => setEditVehicleRtoOffice(e.target.value)}
                     />
                   </div>
                   <div>
@@ -7206,8 +7188,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     </label>
                     <AppInput 
                       value={editVehicleInsurancePolicy} 
-                      onChange={(e) => setEditVehicleInsurancePolicy(e.target.value)} 
-                      placeholder="e.g. 2311/61284792/00/000"
+                      onChange={(e) => setEditVehicleInsurancePolicy(e.target.value)}
                     />
                   </div>
                   <div>
@@ -7428,7 +7409,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div>
                   <label className="font-semibold block mb-1">Full Name *</label>
                   <AppInput 
-                    placeholder="e.g. Ramesh Kumar" 
                     value={newDriverName} 
                     onChange={(e) => setNewDriverName(e.target.value)} 
                     required
@@ -7437,7 +7417,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div>
                   <label className="font-semibold block mb-1">Phone Number *</label>
                   <AppInput 
-                    placeholder="e.g. +91 98200 12345" 
                     value={newDriverPhone} 
                     onChange={(e) => setNewDriverPhone(e.target.value)} 
                     required
@@ -7449,7 +7428,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div>
                   <label className="font-semibold block mb-1">Driving License Number *</label>
                   <AppInput 
-                    placeholder="e.g. MH02 20190012345" 
                     value={newDriverLicense} 
                     onChange={(e) => setNewDriverLicense(e.target.value)} 
                     required
@@ -7469,8 +7447,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div>
                   <label className="font-semibold block mb-1">Driving Experience (Years)</label>
                   <AppInput 
-                    type="number"
-                    placeholder="3" 
+                    type="number" 
                     value={newDriverExperience} 
                     onChange={(e) => setNewDriverExperience(Number(e.target.value))} 
                   />
@@ -7478,7 +7455,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div>
                   <label className="font-semibold block mb-1">Emergency Contact</label>
                   <AppInput 
-                    placeholder="e.g. Wife: 98111 22222" 
                     value={newDriverEmergency} 
                     onChange={(e) => setNewDriverEmergency(e.target.value)} 
                   />
@@ -7700,7 +7676,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div>
                 <label className="font-semibold block mb-1">Traveler / Department *</label>
                 <AppInput 
-                  placeholder="e.g. Anand Mohta (Legal Team)" 
                   value={newTripTraveler} 
                   onChange={(e) => setNewTripTraveler(e.target.value)} 
                   required
@@ -7710,7 +7685,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div>
                 <label className="font-semibold block mb-1">Purpose of Trip *</label>
                 <AppInput 
-                  placeholder="e.g. Site inspection & consultant review" 
                   value={newTripPurpose} 
                   onChange={(e) => setNewTripPurpose(e.target.value)} 
                   required
@@ -7720,8 +7694,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="font-semibold block mb-1">Origin *</label>
-                  <AppInput 
-                    placeholder="e.g. Head Office, Andheri"
+                  <AppInput
                     value={newTripOrigin} 
                     onChange={(e) => setNewTripOrigin(e.target.value)} 
                     required
@@ -7730,7 +7703,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div>
                   <label className="font-semibold block mb-1">Destination *</label>
                   <AppInput 
-                    placeholder="e.g. Stella Site, Goregaon" 
                     value={newTripDestination} 
                     onChange={(e) => setNewTripDestination(e.target.value)} 
                     required
@@ -9103,7 +9075,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <span className="text-[10px] text-muted-foreground font-normal">(Short identifier)</span>
                   </label>
                   <AppInput
-                    placeholder="e.g. ICICI, TATA-AIG, HDFC-ERGO"
                     value={vendorFormCode}
                     onChange={(e) => setVendorFormCode(e.target.value.toUpperCase())}
                     className="font-mono uppercase font-bold"
@@ -9114,7 +9085,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <span>Company / Vendor Name *</span>
                   </label>
                   <AppInput
-                    placeholder="e.g. ICICI Lombard General Insurance Co."
                     value={vendorFormName}
                     onChange={(e) => setVendorFormName(e.target.value)}
                     required
@@ -9126,7 +9096,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div>
                   <label className="font-semibold block mb-1">Contact Person</label>
                   <AppInput
-                    placeholder="e.g. Ramesh Sharma (Key Account Mgr)"
                     value={vendorFormContactPerson}
                     onChange={(e) => setVendorFormContactPerson(e.target.value)}
                   />
@@ -9137,7 +9106,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <span>Contact Number / Mobile</span>
                   </label>
                   <AppInput
-                    placeholder="e.g. +91 98200 12345"
                     value={vendorFormContactNumber}
                     onChange={(e) => setVendorFormContactNumber(e.target.value)}
                   />
@@ -9149,7 +9117,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <label className="font-semibold block mb-1">Official Email</label>
                   <AppInput
                     type="email"
-                    placeholder="e.g. corporate.fleet@icicilombard.com"
                     value={vendorFormEmail}
                     onChange={(e) => setVendorFormEmail(e.target.value)}
                   />
@@ -9160,7 +9127,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <span>24x7 Toll-Free RSA / Support</span>
                   </label>
                   <AppInput
-                    placeholder="e.g. 1800 2666 / 1800 102 1800"
                     value={vendorFormSupportTollFree}
                     onChange={(e) => setVendorFormSupportTollFree(e.target.value)}
                   />
@@ -9170,7 +9136,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div>
                 <label className="font-semibold block mb-1">Portal / Claim Website URL</label>
                 <AppInput
-                  placeholder="e.g. https://www.icicilombard.com"
                   value={vendorFormWebsite}
                   onChange={(e) => setVendorFormWebsite(e.target.value)}
                 />
@@ -9180,7 +9145,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <label className="font-semibold block mb-1">Policy Coverage Remarks / Notes</label>
                 <textarea
                   rows={2}
-                  placeholder="e.g. Zero-depreciation corporate comprehensive policy with engine protect and 24x7 pan-India roadside towing."
                   value={vendorFormDesc}
                   onChange={(e) => setVendorFormDesc(e.target.value)}
                   className="w-full text-xs p-2.5 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
@@ -9261,7 +9225,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       <span>Item / Part Name *</span>
                     </label>
                     <AppInput
-                      placeholder="e.g. Qubo 4K Dual Dashcam with Live GPS Telematics"
                       value={partFormName}
                       onChange={(e) => setPartFormName(e.target.value)}
                       required
@@ -9287,7 +9250,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <div>
                     <label className="font-semibold block mb-1">Brand / Manufacturer *</label>
                     <AppInput
-                      placeholder="e.g. Exide, Bosch, Mobil, Qubo, Apollo"
                       value={partFormBrand}
                       onChange={(e) => setPartFormBrand(e.target.value)}
                       required
@@ -9296,7 +9258,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <div>
                     <label className="font-semibold block mb-1">Part Number / SKU</label>
                     <AppInput
-                      placeholder="e.g. BAT-AGM-12V65 or QBO-4K-GPS"
                       value={partFormPartNumber}
                       onChange={(e) => setPartFormPartNumber(e.target.value)}
                       className="font-mono"
@@ -9305,7 +9266,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <div>
                     <label className="font-semibold block mb-1">Serial Number / IMEI</label>
                     <AppInput
-                      placeholder="e.g. S/N 864920491029 or IMEI"
                       value={partFormSerialNumber}
                       onChange={(e) => setPartFormSerialNumber(e.target.value)}
                       className="font-mono"
@@ -9327,7 +9287,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <div>
                     <label className="font-semibold block mb-1">Classification Sub-Group</label>
                     <AppInput
-                      placeholder="e.g. Braking, Electrical, Lubricants, Telematics"
                       value={partFormCategory}
                       onChange={(e) => setPartFormCategory(e.target.value)}
                     />
@@ -9360,7 +9319,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       type="number"
                       min="0"
                       step="any"
-                      placeholder="e.g. 4500"
                       value={partFormUnitPrice || ""}
                       onChange={(e) => {
                         const unit = Number(e.target.value) || 0;
@@ -9375,7 +9333,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <AppInput
                       type="number"
                       min="1"
-                      placeholder="1"
                       value={partFormQuantity}
                       onChange={(e) => {
                         const qty = Number(e.target.value) || 1;
@@ -9391,7 +9348,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       type="number"
                       min="0"
                       step="any"
-                      placeholder="e.g. 4500"
                       value={partFormPurchaseAmount || ""}
                       onChange={(e) => setPartFormPurchaseAmount(Number(e.target.value) || 0)}
                       className="font-mono font-bold text-emerald-600 dark:text-emerald-400"
@@ -9400,7 +9356,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <div className="sm:col-span-2">
                     <label className="font-semibold block mb-1">Procurement Vendor / Supplier</label>
                     <AppInput
-                      placeholder="e.g. Metro Auto Spares Pvt Ltd / Authorized Dealership"
                       value={partFormVendorName}
                       onChange={(e) => setPartFormVendorName(e.target.value)}
                     />
@@ -9408,7 +9363,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <div className="sm:col-span-2">
                     <label className="font-semibold block mb-1">Invoice / Bill Number</label>
                     <AppInput
-                      placeholder="e.g. INV-2026-08912"
                       value={partFormInvoiceNumber}
                       onChange={(e) => setPartFormInvoiceNumber(e.target.value)}
                       className="font-mono"
@@ -9492,7 +9446,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <AppInput
                       type="number"
                       min="0"
-                      placeholder="e.g. 12, 24, 36"
                       value={partFormWarrantyMonths}
                       onChange={(e) => {
                         const m = Number(e.target.value) || 0;
@@ -9520,7 +9473,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <div className="sm:col-span-3">
                     <label className="font-semibold block mb-1">Warranty Inclusions / Terms</label>
                     <AppInput
-                      placeholder="e.g. Free replacement on manufacturing defects; covers internal sensor and camera sensor"
                       value={partFormWarrantyTerms}
                       onChange={(e) => setPartFormWarrantyTerms(e.target.value)}
                     />
@@ -9581,7 +9533,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       <AppInput
                         type="number"
                         min="0"
-                        placeholder="e.g. 1200"
                         value={partFormRenewalCost || ""}
                         onChange={(e) => setPartFormRenewalCost(Number(e.target.value) || 0)}
                         className="font-mono"
@@ -9590,7 +9541,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <div>
                       <label className="font-semibold block mb-1">Renewal Provider / Telco</label>
                       <AppInput
-                        placeholder="e.g. Airtel IoT Enterprise, MapmyIndia"
                         value={partFormRenewalVendor}
                         onChange={(e) => setPartFormRenewalVendor(e.target.value)}
                       />
@@ -9598,7 +9548,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <div>
                       <label className="font-semibold block mb-1">SIM / Policy / Account Number</label>
                       <AppInput
-                        placeholder="e.g. SIM # 98200 48192 or ACC-9812"
                         value={partFormRenewalPolicyNumber}
                         onChange={(e) => setPartFormRenewalPolicyNumber(e.target.value)}
                         className="font-mono"
@@ -9609,7 +9558,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       <AppInput
                         type="number"
                         min="1"
-                        placeholder="30"
                         value={partFormRenewalReminderDays}
                         onChange={(e) => setPartFormRenewalReminderDays(Number(e.target.value) || 30)}
                         className="font-mono"
@@ -9673,7 +9621,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <AppInput
                       type="number"
                       min="0"
-                      placeholder="e.g. 45200"
                       value={partFormInstalledOdometer}
                       onChange={(e) => setPartFormInstalledOdometer(e.target.value === "" ? "" : Number(e.target.value))}
                       className="font-mono"
@@ -9682,7 +9629,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <div className="sm:col-span-2">
                     <label className="font-semibold block mb-1">Installed By (Technician / Workshop)</label>
                     <AppInput
-                      placeholder="e.g. Rajesh Kumar (Senior Auto Electrician) / Authorized Service"
                       value={partFormInstalledBy}
                       onChange={(e) => setPartFormInstalledBy(e.target.value)}
                     />
@@ -9705,7 +9651,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <label className="font-semibold block mb-1">Technical Notes / Location Details</label>
                     <textarea
                       rows={2}
-                      placeholder="e.g. Mounted behind rear-view mirror; wired to ignition accessory fuse with 12V direct hardwire kit."
                       value={partFormNotes}
                       onChange={(e) => setPartFormNotes(e.target.value)}
                       className="w-full text-xs p-2.5 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
@@ -9806,7 +9751,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <AppInput
                     type="number"
                     min="0"
-                    placeholder="e.g. 1200"
                     value={renewModalCost || ""}
                     onChange={(e) => setRenewModalCost(Number(e.target.value) || 0)}
                     className="font-mono font-bold"
@@ -9815,7 +9759,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div>
                   <label className="font-semibold block mb-1">Service Provider / Telco</label>
                   <AppInput
-                    placeholder="e.g. Airtel IoT Enterprise"
                     value={renewModalVendor}
                     onChange={(e) => setRenewModalVendor(e.target.value)}
                   />
@@ -9825,7 +9768,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div>
                 <label className="font-semibold block mb-1">New Policy / Invoice / Transaction #</label>
                 <AppInput
-                  placeholder="e.g. TXN-2026-94812"
                   value={renewModalPolicyNumber}
                   onChange={(e) => setRenewModalPolicyNumber(e.target.value)}
                   className="font-mono"
@@ -9836,7 +9778,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <label className="font-semibold block mb-1">Renewal Remarks</label>
                 <textarea
                   rows={2}
-                  placeholder="e.g. Renewed for 12 months unlimited M2M 4G SIM connectivity."
                   value={renewModalNotes}
                   onChange={(e) => setRenewModalNotes(e.target.value)}
                   className="w-full text-xs p-2.5 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
@@ -9951,7 +9892,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   </select>
                   {(!renewPolicyVendorId || !insuranceVendors.some(v => v.id === renewPolicyVendorId)) && (
                     <AppInput
-                      placeholder="Or enter custom insurance provider name..."
                       value={renewPolicyVendorName}
                       onChange={(e) => setRenewPolicyVendorName(e.target.value)}
                       className="mt-1.5"
@@ -9966,7 +9906,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <span>New Policy / Cover Note # *</span>
                   </label>
                   <AppInput
-                    placeholder="e.g. 2311/61984210/00/000"
                     value={renewPolicyNumber}
                     onChange={(e) => setRenewPolicyNumber(e.target.value)}
                     required
@@ -9998,7 +9937,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <AppInput
                     type="number"
                     min="0"
-                    placeholder="e.g. 850000"
                     value={renewPolicyIdv || ""}
                     onChange={(e) => setRenewPolicyIdv(Number(e.target.value) || 0)}
                     className="font-mono font-semibold"
@@ -10010,7 +9948,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <AppInput
                     type="number"
                     min="0"
-                    placeholder="e.g. 18500"
                     value={renewPolicyPremium || ""}
                     onChange={(e) => setRenewPolicyPremium(Number(e.target.value) || 0)}
                     required
@@ -10119,7 +10056,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div>
                   <label className="font-semibold block mb-1">Receipt / Payment Reference #</label>
                   <AppInput
-                    placeholder="e.g. REC-2026-CHANDAK-9921"
                     value={renewPolicyReceiptNo}
                     onChange={(e) => setRenewPolicyReceiptNo(e.target.value)}
                     className="font-mono text-xs"
@@ -10128,7 +10064,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div>
                   <label className="font-semibold block mb-1">Policy Document Link / Storage URL</label>
                   <AppInput
-                    placeholder="https://... or doc vault reference"
                     value={renewPolicyDocUrl}
                     onChange={(e) => setRenewPolicyDocUrl(e.target.value)}
                     className="text-xs"
@@ -10140,7 +10075,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <label className="font-semibold block mb-1">Renewal Notes & Audit Remarks</label>
                 <textarea
                   rows={2}
-                  placeholder="e.g. Renewed via Bajaj Allianz corporate fleet brokerage with 25% NCB."
                   value={renewPolicyNotes}
                   onChange={(e) => setRenewPolicyNotes(e.target.value)}
                   className="w-full text-xs p-2.5 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
@@ -10492,7 +10426,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <span>New PUC Certificate Number *</span>
                   </label>
                   <AppInput
-                    placeholder="e.g. MH02-PUC-2026-99214"
                     value={renewPucNumber}
                     onChange={(e) => setRenewPucNumber(e.target.value)}
                     required
@@ -10507,7 +10440,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <span>Testing Center / Station Name</span>
                   </label>
                   <AppInput
-                    placeholder="e.g. HPCL RTO Emission Testing Center, Andheri West"
                     value={renewPucTestingCenter}
                     onChange={(e) => setRenewPucTestingCenter(e.target.value)}
                   />
@@ -10595,7 +10527,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     type="number"
                     step="0.001"
                     min="0"
-                    placeholder="e.g. 0.05"
                     value={renewPucCo !== undefined ? renewPucCo : ""}
                     onChange={(e) => setRenewPucCo(Number(e.target.value))}
                     className="font-mono"
@@ -10608,7 +10539,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     type="number"
                     step="0.1"
                     min="0"
-                    placeholder="e.g. 45"
                     value={renewPucHc !== undefined ? renewPucHc : ""}
                     onChange={(e) => setRenewPucHc(Number(e.target.value))}
                     className="font-mono"
@@ -10623,7 +10553,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <AppInput
                     type="number"
                     min="0"
-                    placeholder="e.g. 150"
                     value={renewPucFee || ""}
                     onChange={(e) => setRenewPucFee(Number(e.target.value) || 0)}
                     required
@@ -10634,7 +10563,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div>
                   <label className="font-semibold block mb-1">Receipt / Transaction #</label>
                   <AppInput
-                    placeholder="e.g. REC-PUC-99120"
                     value={renewPucReceiptNo}
                     onChange={(e) => setRenewPucReceiptNo(e.target.value)}
                     className="font-mono text-xs"
@@ -10644,7 +10572,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div>
                   <label className="font-semibold block mb-1">Certificate PDF / Image URL</label>
                   <AppInput
-                    placeholder="https://... or vault ref"
                     value={renewPucDocUrl}
                     onChange={(e) => setRenewPucDocUrl(e.target.value)}
                     className="text-xs"
@@ -10656,7 +10583,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <label className="font-semibold block mb-1">Inspection Notes & Station Remarks</label>
                 <textarea
                   rows={2}
-                  placeholder="e.g. Tested at authorized HPCL machine; Passed all idle emission parameters."
                   value={renewPucNotes}
                   onChange={(e) => setRenewPucNotes(e.target.value)}
                   className="w-full text-xs p-2.5 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
