@@ -71,8 +71,8 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
     setPhone("");
     setTatDays("3.0");
     setRating("4.8");
-    // Default select all categories or first 2
-    setSelectedCategories(categories.slice(0, 2).map(c => c.name));
+    // Start with empty categories - user selects required mapped categories explicitly
+    setSelectedCategories([]);
     setCategorySearchQuery("");
     setFormError("");
     setIsModalOpen(true);
@@ -517,8 +517,8 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
 
       {/* Add / Edit Consultant Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="relative w-full max-w-xl rounded-2xl bg-surface border border-border shadow-2xl p-6 space-y-4 animate-in zoom-in-95 duration-150 my-8">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+          <div className="relative w-full max-w-4xl xl:max-w-5xl rounded-3xl bg-surface border border-border shadow-2xl p-6 sm:p-8 space-y-5 animate-in zoom-in-95 duration-150 my-8">
             {/* Header */}
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center gap-2">
@@ -637,14 +637,14 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
               </div>
 
               {/* 🎯 CATEGORY MASTER MAPPING SECTION */}
-              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-border space-y-2.5">
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-border space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="flex items-center gap-1.5">
                     <Tag className="h-3.5 w-3.5 text-purple-500" />
                     <label className="text-xs font-bold text-foreground">
                       Map Categories from Category Master <span className="text-rose-500">*</span>
                     </label>
-                    <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold">
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold">
                       {selectedCategories.length} Selected
                     </span>
                   </div>
@@ -654,7 +654,7 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                     <button
                       type="button"
                       onClick={handleSelectAllCategories}
-                      className="px-2 py-0.8 rounded text-[10px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 transition-colors cursor-pointer inline-flex items-center gap-1"
+                      className="px-2 py-1 rounded-lg text-[10px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 transition-colors cursor-pointer inline-flex items-center gap-1"
                     >
                       <CheckSquare className="h-3 w-3" />
                       <span>Select All</span>
@@ -662,7 +662,7 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                     <button
                       type="button"
                       onClick={handleRemoveAllCategories}
-                      className="px-2 py-0.8 rounded text-[10px] font-bold bg-slate-500/10 text-slate-600 dark:text-slate-400 hover:bg-slate-500/20 transition-colors cursor-pointer inline-flex items-center gap-1"
+                      className="px-2 py-1 rounded-lg text-[10px] font-bold bg-slate-500/10 text-slate-600 dark:text-slate-400 hover:bg-slate-500/20 transition-colors cursor-pointer inline-flex items-center gap-1"
                     >
                       <Square className="h-3 w-3" />
                       <span>Remove All</span>
@@ -677,12 +677,12 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                     type="text"
                     value={categorySearchQuery}
                     onChange={e => setCategorySearchQuery(e.target.value)}
-                    className="w-full pl-7 pr-3 py-1 text-xs rounded-lg border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
+                    className="w-full pl-7 pr-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
                   />
                 </div>
 
                 {/* Interactive Category Chips Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-44 overflow-y-auto custom-scrollbar p-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-56 overflow-y-auto custom-scrollbar p-1">
                   {filteredModalCategories.map(cat => {
                     const isSelected = selectedCategories.includes(cat.name);
                     return (

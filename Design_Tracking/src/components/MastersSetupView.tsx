@@ -548,18 +548,23 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
 
       {/* Modal: New Package */}
       {isNewPackageModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-          <div className="bg-surface border border-border w-full max-w-md rounded-2xl shadow-2xl p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h4 className="text-sm font-bold text-foreground">Create New Work Package</h4>
-              <button type="button" onClick={() => setIsNewPackageModalOpen(false)} className="text-muted-foreground hover:text-foreground cursor-pointer">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 sm:p-6 animate-in fade-in duration-150">
+          <div className="bg-surface border border-border w-full max-w-xl sm:max-w-2xl rounded-3xl shadow-2xl p-6 sm:p-8 space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center">
+                  <Layers className="h-4 w-4" />
+                </div>
+                <h4 className="text-base font-bold text-foreground">Create New Work Package</h4>
+              </div>
+              <button type="button" onClick={() => setIsNewPackageModalOpen(false)} className="h-7 w-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-muted-foreground flex items-center justify-center cursor-pointer">
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <form onSubmit={handleCreatePackage} className="space-y-3 text-xs">
+            <form onSubmit={handleCreatePackage} className="space-y-4 text-xs">
               <div className="space-y-1">
-                <label className="font-bold text-foreground">Package Name / Title *</label>
+                <label className="font-bold text-foreground">Package Name / Title <span className="text-rose-500">*</span></label>
                 <input
                   type="text"
                   required
@@ -569,9 +574,9 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="font-bold text-foreground">Discipline Category *</label>
+                  <label className="font-bold text-foreground">Discipline Category <span className="text-rose-500">*</span></label>
                   <select
                     value={newPackageDiscipline}
                     onChange={e => setNewPackageDiscipline(e.target.value)}
@@ -605,7 +610,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
-                <button type="button" onClick={() => setIsNewPackageModalOpen(false)} className="px-4 py-1.5 rounded-xl border border-border bg-background text-foreground hover:bg-muted transition-colors cursor-pointer">
+                <button type="button" onClick={() => setIsNewPackageModalOpen(false)} className="px-4 py-1.5 rounded-xl border border-border bg-background text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer font-semibold">
                   Cancel
                 </button>
                 <button type="submit" className="px-4 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold cursor-pointer transition-all shadow-md">
@@ -619,18 +624,23 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
 
       {/* Modal: Edit Package */}
       {isEditPackageModalOpen && editingPackage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-          <div className="bg-surface border border-border w-full max-w-md rounded-2xl shadow-2xl p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h4 className="text-sm font-bold text-foreground">Edit Work Package</h4>
-              <button type="button" onClick={() => setIsEditPackageModalOpen(false)} className="text-muted-foreground hover:text-foreground cursor-pointer">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 sm:p-6 animate-in fade-in duration-150">
+          <div className="bg-surface border border-border w-full max-w-xl sm:max-w-2xl rounded-3xl shadow-2xl p-6 sm:p-8 space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center">
+                  <Layers className="h-4 w-4" />
+                </div>
+                <h4 className="text-base font-bold text-foreground">Edit Work Package</h4>
+              </div>
+              <button type="button" onClick={() => setIsEditPackageModalOpen(false)} className="h-7 w-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-muted-foreground flex items-center justify-center cursor-pointer">
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <form onSubmit={handleUpdatePackage} className="space-y-3 text-xs">
+            <form onSubmit={handleUpdatePackage} className="space-y-4 text-xs">
               <div className="space-y-1">
-                <label className="font-bold text-foreground">Package Name / Title *</label>
+                <label className="font-bold text-foreground">Package Name / Title <span className="text-rose-500">*</span></label>
                 <input
                   type="text"
                   required
@@ -640,9 +650,9 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="font-bold text-foreground">Discipline Category *</label>
+                  <label className="font-bold text-foreground">Discipline Category <span className="text-rose-500">*</span></label>
                   <select
                     value={newPackageDiscipline}
                     onChange={e => setNewPackageDiscipline(e.target.value)}
@@ -676,7 +686,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
-                <button type="button" onClick={() => setIsEditPackageModalOpen(false)} className="px-4 py-1.5 rounded-xl border border-border bg-background text-foreground hover:bg-muted transition-colors cursor-pointer">
+                <button type="button" onClick={() => setIsEditPackageModalOpen(false)} className="px-4 py-1.5 rounded-xl border border-border bg-background text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer font-semibold">
                   Cancel
                 </button>
                 <button type="submit" className="px-4 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold cursor-pointer transition-all shadow-md">
@@ -690,18 +700,23 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
 
       {/* Modal: New Authority */}
       {isNewAuthorityModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-          <div className="bg-surface border border-border w-full max-w-md rounded-2xl shadow-2xl p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h4 className="text-sm font-bold text-foreground">Add Statutory Authority</h4>
-              <button type="button" onClick={() => setIsNewAuthorityModalOpen(false)} className="text-muted-foreground hover:text-foreground">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 sm:p-6 animate-in fade-in duration-150">
+          <div className="bg-surface border border-border w-full max-w-xl sm:max-w-2xl rounded-3xl shadow-2xl p-6 sm:p-8 space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+                  <ShieldCheck className="h-4 w-4" />
+                </div>
+                <h4 className="text-base font-bold text-foreground">Add Statutory Authority</h4>
+              </div>
+              <button type="button" onClick={() => setIsNewAuthorityModalOpen(false)} className="h-7 w-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-muted-foreground flex items-center justify-center cursor-pointer">
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateAuthority} className="space-y-3 text-xs">
+            <form onSubmit={handleCreateAuthority} className="space-y-4 text-xs">
               <div className="space-y-1">
-                <label className="font-bold text-foreground">Authority / Body Name *</label>
+                <label className="font-bold text-foreground">Authority / Body Name <span className="text-rose-500">*</span></label>
                 <input
                   type="text"
                   required
@@ -722,7 +737,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
-                <button type="button" onClick={() => setIsNewAuthorityModalOpen(false)} className="px-4 py-1.5 rounded-xl border border-border bg-background text-foreground hover:bg-muted transition-colors cursor-pointer">
+                <button type="button" onClick={() => setIsNewAuthorityModalOpen(false)} className="px-4 py-1.5 rounded-xl border border-border bg-background text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer font-semibold">
                   Cancel
                 </button>
                 <button type="submit" className="px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold cursor-pointer transition-all shadow-md">

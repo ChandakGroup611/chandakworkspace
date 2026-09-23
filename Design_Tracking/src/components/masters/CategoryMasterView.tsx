@@ -337,8 +337,8 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
 
       {/* Add / Edit Category Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="relative w-full max-w-md rounded-2xl bg-surface border border-border shadow-2xl p-6 space-y-4 animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+          <div className="relative w-full max-w-2xl sm:max-w-3xl rounded-3xl bg-surface border border-border shadow-2xl p-6 sm:p-8 space-y-5 animate-in zoom-in-95 duration-150 my-8">
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center gap-2">
@@ -366,32 +366,33 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Category Name */}
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-foreground">
-                  Category / Discipline Name <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  required
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
-                />
-              </div>
+              {/* Category Name & Code in 2 columns */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="sm:col-span-2 space-y-1">
+                  <label className="text-xs font-bold text-foreground">
+                    Category / Discipline Name <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
+                  />
+                </div>
 
-              {/* Category Code */}
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-foreground">
-                  Discipline Code (Short)
-                </label>
-                <input
-                  type="text"
-                  value={code}
-                  onChange={e => setCode(e.target.value.toUpperCase())}
-                  maxLength={6}
-                  className="w-full px-3 py-2 text-xs font-mono font-bold rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
-                />
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-foreground">
+                    Discipline Code
+                  </label>
+                  <input
+                    type="text"
+                    value={code}
+                    onChange={e => setCode(e.target.value.toUpperCase())}
+                    maxLength={6}
+                    className="w-full px-3 py-2 text-xs font-mono font-bold rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
+                  />
+                </div>
               </div>
 
               {/* Icon Selector */}

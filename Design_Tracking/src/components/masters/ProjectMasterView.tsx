@@ -88,6 +88,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [consultantSearch, setConsultantSearch] = useState("");
   const [categorySearch, setCategorySearch] = useState("");
+  const [showAllMasterCategories, setShowAllMasterCategories] = useState(false);
   const [formTab, setFormTab] = useState<"SPECS" | "CONSULTANTS_CATEGORIES">("SPECS");
   const [formError, setFormError] = useState("");
 
@@ -111,9 +112,10 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
     setLeadManager("");
     setLeadManagerEmail("");
     setDescription("");
-    // Default: all available consultants selected
-    setSelectedConsultants(consultants.map(c => c.name));
-    setSelectedCategories(categories.map(c => c.name));
+    // Start with empty selections - user chooses consultants, which then populate categories
+    setSelectedConsultants([]);
+    setSelectedCategories([]);
+    setShowAllMasterCategories(false);
     setConsultantSearch("");
     setCategorySearch("");
     setFormTab("SPECS");
@@ -137,17 +139,12 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
     setLeadManagerEmail(p.leadManagerEmail || "");
     setDescription(p.description || "");
     
-    // Tagged consultants
-    const taggedCons = p.taggedConsultants && p.taggedConsultants.length > 0 
-      ? p.taggedConsultants 
-      : consultants.map(c => c.name);
+    const taggedCons = p.taggedConsultants || [];
     setSelectedConsultants(taggedCons);
 
-    // Tagged categories
-    const taggedCats = p.taggedCategories && p.taggedCategories.length > 0
-      ? p.taggedCategories
-      : (p.subProjectCategories?.default || categories.map(c => c.name));
+    const taggedCats = p.taggedCategories || p.subProjectCategories?.default || [];
     setSelectedCategories(taggedCats);
+    setShowAllMasterCategories(false);
 
     setConsultantSearch("");
     setCategorySearch("");
@@ -159,33 +156,38 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
   // Consultant selection helpers
   const handleToggleConsultant = (consName: string) => {
     const isAdding = !selectedConsultants.includes(consName);
-    const updated = isAdding 
+    const updatedCons = isAdding 
       ? [...selectedConsultants, consName] 
       : selectedConsultants.filter(c => c !== consName);
-    setSelectedConsultants(updated);
+    setSelectedConsultants(updatedCons);
 
-    // When consultant is selected, auto-surface / merge their mapped categories
     if (isAdding) {
-      const consMaster = consultants.find(c => c.name === consName);
-      if (consMaster) {
-        const consCats = consMaster.categories || (consMaster.category ? [consMaster.category as string] : []);
-        setSelectedCategories(prev => {
-          const merged = new Set([...prev, ...consCats]);
-          return Array.from(merged);
-        });
+      // Auto-surface mapped categories from this selected consultant
+      const addedCats = DesignMasterStore.getCategoriesForConsultants([consName]);
+      setSelectedCategories(prev => Array.from(new Set([...prev, ...addedCats])));
+    } else {
+      // Remove categories that belonged exclusively to the removed consultant
+      if (updatedCons.length === 0 && !showAllMasterCategories) {
+        setSelectedCategories([]);
+      } else {
+        const remainingCats = new Set(DesignMasterStore.getCategoriesForConsultants(updatedCons));
+        setSelectedCategories(prev => prev.filter(cat => remainingCats.has(cat)));
       }
     }
   };
 
   const handleSelectAllConsultants = () => {
-    setSelectedConsultants(consultants.map(c => c.name));
-    // Also include all consultant categories
-    const allConsCats = DesignMasterStore.getCategoriesForConsultants(consultants.map(c => c.name));
-    setSelectedCategories(prev => Array.from(new Set([...prev, ...allConsCats])));
+    const allConsNames = consultants.map(c => c.name);
+    setSelectedConsultants(allConsNames);
+    const allMappedCats = DesignMasterStore.getCategoriesForConsultants(allConsNames);
+    setSelectedCategories(allMappedCats);
   };
 
   const handleRemoveAllConsultants = () => {
     setSelectedConsultants([]);
+    if (!showAllMasterCategories) {
+      setSelectedCategories([]);
+    }
   };
 
   // Category selection helpers
@@ -195,8 +197,8 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
     );
   };
 
-  const handleSelectAllCategories = () => {
-    setSelectedCategories(categories.map(c => c.name));
+  const handleSelectAllCategories = (targetCategories: string[]) => {
+    setSelectedCategories(Array.from(new Set(targetCategories)));
   };
 
   const handleRemoveAllCategories = () => {
@@ -300,13 +302,29 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
     );
   }, [consultants, consultantSearch]);
 
+  // Categories derived from selected consultants
+  const consultantMappedCategories = useMemo(() => {
+    if (selectedConsultants.length === 0) return [];
+    return DesignMasterStore.getCategoriesForConsultants(selectedConsultants);
+  }, [selectedConsultants, consultants]);
+
+  const availableCategoriesList = useMemo(() => {
+    if (showAllMasterCategories) {
+      return categories;
+    }
+    if (selectedConsultants.length === 0) {
+      return [];
+    }
+    return categories.filter(c => consultantMappedCategories.includes(c.name));
+  }, [showAllMasterCategories, selectedConsultants, consultantMappedCategories, categories]);
+
   const filteredModalCategories = useMemo(() => {
-    if (!categorySearch.trim()) return categories;
+    if (!categorySearch.trim()) return availableCategoriesList;
     const q = categorySearch.toLowerCase();
-    return categories.filter(c => 
+    return availableCategoriesList.filter(c => 
       c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q)
     );
-  }, [categories, categorySearch]);
+  }, [availableCategoriesList, categorySearch]);
 
   return (
     <div className="space-y-4 animate-in fade-in duration-150">
@@ -634,21 +652,26 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
       {/* Add / Edit Project Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="relative w-full max-w-2xl rounded-2xl bg-surface border border-border shadow-2xl p-6 space-y-4 animate-in zoom-in-95 duration-150 my-8 max-h-[90vh] flex flex-col justify-between">
+          <div className="relative w-full max-w-5xl xl:max-w-6xl rounded-3xl bg-surface border border-border shadow-2xl p-6 sm:p-8 space-y-5 animate-in zoom-in-95 duration-150 my-6 max-h-[92vh] flex flex-col justify-between">
             {/* Header */}
             <div className="flex items-center justify-between pb-3 border-b border-border">
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                  <Building2 className="h-4 w-4" />
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20 shrink-0">
+                  <Building2 className="h-5 w-5" />
                 </div>
-                <h3 className="text-base font-bold text-foreground">
-                  {editingProject ? "Edit Project Master" : "Create New Project Master"}
-                </h3>
+                <div>
+                  <h3 className="text-base sm:text-lg font-bold text-foreground">
+                    {editingProject ? "Edit Project Master" : "Create New Project Master"}
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Configure specifications, map consultant partners, and define discipline scopes
+                  </p>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="h-7 w-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-muted-foreground flex items-center justify-center cursor-pointer"
+                className="h-8 w-8 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-muted-foreground flex items-center justify-center cursor-pointer transition-colors"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -659,9 +682,9 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
               <button
                 type="button"
                 onClick={() => setFormTab("SPECS")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                   formTab === "SPECS"
-                    ? "bg-emerald-600 text-white shadow-2xs"
+                    ? "bg-emerald-600 text-white shadow-xs"
                     : "text-muted-foreground hover:text-foreground bg-muted/40"
                 }`}
               >
@@ -671,9 +694,9 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
               <button
                 type="button"
                 onClick={() => setFormTab("CONSULTANTS_CATEGORIES")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                   formTab === "CONSULTANTS_CATEGORIES"
-                    ? "bg-emerald-600 text-white shadow-2xs"
+                    ? "bg-emerald-600 text-white shadow-xs"
                     : "text-muted-foreground hover:text-foreground bg-muted/40"
                 }`}
               >
@@ -683,7 +706,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
             </div>
 
             {formError && (
-              <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs flex items-center gap-2">
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 <span>{formError}</span>
               </div>
@@ -691,7 +714,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
 
             <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-4">
               {formTab === "SPECS" && (
-                <div className="space-y-3.5">
+                <div className="space-y-4">
                   {/* Project Name & Code */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="sm:col-span-2 space-y-1">
@@ -864,156 +887,214 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                 </div>
               )}
 
-              {/* 🤝 CONSULTANT & CATEGORY MAPPING SECTION */}
+              {/* 🤝 CONSULTANT & CATEGORY MAPPING SECTION (2-COLUMN WIDE GRID) */}
               {formTab === "CONSULTANTS_CATEGORIES" && (
-                <div className="space-y-4">
-                  {/* Step 1: Consultants Mapping */}
-                  <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-border space-y-2.5">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5">
-                        <Users className="h-3.5 w-3.5 text-purple-500" />
-                        <label className="text-xs font-bold text-foreground">
-                          Map Consultant Partners to Project
-                        </label>
-                        <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold">
-                          {selectedConsultants.length} of {consultants.length} Selected
-                        </span>
-                      </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {/* Column 1: Consultants Mapping */}
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-border space-y-3 flex flex-col justify-between">
+                    <div className="space-y-2.5">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5">
+                          <Users className="h-4 w-4 text-purple-500" />
+                          <label className="text-xs font-bold text-foreground">
+                            Map Consultant Partners
+                          </label>
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold">
+                            {selectedConsultants.length} of {consultants.length} Selected
+                          </span>
+                        </div>
 
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={handleSelectAllConsultants}
-                          className="px-2 py-0.8 rounded text-[10px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 transition-colors cursor-pointer inline-flex items-center gap-1"
-                        >
-                          <CheckSquare className="h-3 w-3" />
-                          <span>Select All</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleRemoveAllConsultants}
-                          className="px-2 py-0.8 rounded text-[10px] font-bold bg-slate-500/10 text-slate-600 dark:text-slate-400 hover:bg-slate-500/20 transition-colors cursor-pointer inline-flex items-center gap-1"
-                        >
-                          <Square className="h-3 w-3" />
-                          <span>Remove All</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="relative">
-                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-                      <input
-                        type="text"
-                        value={consultantSearch}
-                        onChange={e => setConsultantSearch(e.target.value)}
-                        className="w-full pl-7 pr-3 py-1 text-xs rounded-lg border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
-                      />
-                    </div>
-
-                    {/* Consultant Selection Cards */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-40 overflow-y-auto custom-scrollbar p-1">
-                      {filteredModalConsultants.map(c => {
-                        const isSelected = selectedConsultants.includes(c.name);
-                        const cCats = c.categories || (c.category ? [c.category as string] : []);
-                        return (
+                        <div className="flex items-center gap-1.5">
                           <button
-                            key={c.id}
                             type="button"
-                            onClick={() => handleToggleConsultant(c.name)}
-                            className={`p-2 rounded-xl text-left text-xs border transition-all cursor-pointer flex items-center justify-between gap-2 ${
-                              isSelected
-                                ? "bg-purple-50 dark:bg-purple-950/40 border-purple-500/60 text-purple-900 dark:text-purple-100 font-bold shadow-2xs"
-                                : "bg-background border-border text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-                            }`}
+                            onClick={handleSelectAllConsultants}
+                            className="px-2 py-1 rounded-lg text-[10px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 transition-colors cursor-pointer inline-flex items-center gap-1"
                           >
-                            <div className="min-w-0">
-                              <div className="truncate font-semibold">{c.name}</div>
-                              <div className="text-[10px] text-muted-foreground truncate font-normal">
-                                {cCats.join(", ") || "General"}
-                              </div>
-                            </div>
-                            <div className={`h-4 w-4 rounded-md flex items-center justify-center shrink-0 border ${
-                              isSelected
-                                ? "bg-purple-600 border-purple-600 text-white"
-                                : "border-border bg-background"
-                            }`}>
-                              {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
-                            </div>
+                            <CheckSquare className="h-3 w-3" />
+                            <span>Select All</span>
                           </button>
-                        );
-                      })}
+                          <button
+                            type="button"
+                            onClick={handleRemoveAllConsultants}
+                            className="px-2 py-1 rounded-lg text-[10px] font-bold bg-slate-500/10 text-slate-600 dark:text-slate-400 hover:bg-slate-500/20 transition-colors cursor-pointer inline-flex items-center gap-1"
+                          >
+                            <Square className="h-3 w-3" />
+                            <span>Remove All</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="relative">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                        <input
+                          type="text"
+                          value={consultantSearch}
+                          onChange={e => setConsultantSearch(e.target.value)}
+                          className="w-full pl-7 pr-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
+                        />
+                      </div>
+
+                      {/* Consultant Selection List */}
+                      <div className="space-y-1.5 max-h-72 overflow-y-auto custom-scrollbar pr-1">
+                        {filteredModalConsultants.length === 0 ? (
+                          <div className="p-4 text-center text-xs text-muted-foreground italic">
+                            No consultants found matching search.
+                          </div>
+                        ) : (
+                          filteredModalConsultants.map(c => {
+                            const isSelected = selectedConsultants.includes(c.name);
+                            const cCats = c.categories || (c.category ? [c.category as string] : []);
+                            return (
+                              <button
+                                key={c.id}
+                                type="button"
+                                onClick={() => handleToggleConsultant(c.name)}
+                                className={`w-full p-2.5 rounded-xl text-left text-xs border transition-all cursor-pointer flex items-center justify-between gap-2 ${
+                                  isSelected
+                                    ? "bg-purple-50 dark:bg-purple-950/40 border-purple-500/60 text-purple-900 dark:text-purple-100 font-bold shadow-2xs"
+                                    : "bg-background border-border text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                                }`}
+                              >
+                                <div className="min-w-0">
+                                  <div className="truncate font-semibold text-foreground">{c.name}</div>
+                                  <div className="text-[10px] text-muted-foreground truncate font-normal mt-0.5">
+                                    {cCats.length > 0 ? cCats.join(" • ") : "No categories defined"}
+                                  </div>
+                                </div>
+                                <div className={`h-4 w-4 rounded flex items-center justify-center shrink-0 border ${
+                                  isSelected
+                                    ? "bg-purple-600 border-purple-600 text-white"
+                                    : "border-border bg-background"
+                                }`}>
+                                  {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
+                                </div>
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
                     </div>
                   </div>
 
-                  {/* Step 2: Discipline Categories Scope Mapping */}
-                  <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-border space-y-2.5">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5">
-                        <Tag className="h-3.5 w-3.5 text-blue-500" />
-                        <label className="text-xs font-bold text-foreground">
-                          Project Category Scope (Auto-populated from Consultants)
-                        </label>
-                        <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-blue-500/10 text-blue-700 dark:text-blue-300 font-bold">
-                          {selectedCategories.length} Categories
-                        </span>
+                  {/* Column 2: Discipline Categories Scope Mapping */}
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-border space-y-3 flex flex-col justify-between">
+                    <div className="space-y-2.5">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5">
+                          <Tag className="h-4 w-4 text-blue-500" />
+                          <label className="text-xs font-bold text-foreground">
+                            Discipline Categories Scope
+                          </label>
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-700 dark:text-blue-300 font-bold">
+                            {selectedCategories.length} of {availableCategoriesList.length} Selected
+                          </span>
+                        </div>
+
+                        {availableCategoriesList.length > 0 && (
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleSelectAllCategories(availableCategoriesList.map(c => c.name))}
+                              className="px-2 py-1 rounded-lg text-[10px] font-bold bg-blue-500/10 text-blue-700 dark:text-blue-300 hover:bg-blue-500/20 transition-colors cursor-pointer inline-flex items-center gap-1"
+                            >
+                              <CheckSquare className="h-3 w-3" />
+                              <span>Select All</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleRemoveAllCategories}
+                              className="px-2 py-1 rounded-lg text-[10px] font-bold bg-slate-500/10 text-slate-600 dark:text-slate-400 hover:bg-slate-500/20 transition-colors cursor-pointer inline-flex items-center gap-1"
+                            >
+                              <Square className="h-3 w-3" />
+                              <span>Remove All</span>
+                            </button>
+                          </div>
+                        )}
                       </div>
 
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={handleSelectAllCategories}
-                          className="px-2 py-0.8 rounded text-[10px] font-bold bg-blue-500/10 text-blue-700 dark:text-blue-300 hover:bg-blue-500/20 transition-colors cursor-pointer inline-flex items-center gap-1"
-                        >
-                          <CheckSquare className="h-3 w-3" />
-                          <span>Select All</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleRemoveAllCategories}
-                          className="px-2 py-0.8 rounded text-[10px] font-bold bg-slate-500/10 text-slate-600 dark:text-slate-400 hover:bg-slate-500/20 transition-colors cursor-pointer inline-flex items-center gap-1"
-                        >
-                          <Square className="h-3 w-3" />
-                          <span>Remove All</span>
-                        </button>
-                      </div>
-                    </div>
+                      {availableCategoriesList.length > 0 && (
+                        <div className="relative">
+                          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                          <input
+                            type="text"
+                            value={categorySearch}
+                            onChange={e => setCategorySearch(e.target.value)}
+                            className="w-full pl-7 pr-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+                          />
+                        </div>
+                      )}
 
-                    <div className="relative">
-                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-                      <input
-                        type="text"
-                        value={categorySearch}
-                        onChange={e => setCategorySearch(e.target.value)}
-                        className="w-full pl-7 pr-3 py-1 text-xs rounded-lg border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-blue-500"
-                      />
-                    </div>
-
-                    {/* Category Selection Pills Grid */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 max-h-36 overflow-y-auto custom-scrollbar p-1">
-                      {filteredModalCategories.map(cat => {
-                        const isSelected = selectedCategories.includes(cat.name);
-                        return (
+                      {/* Empty State when no consultants selected */}
+                      {selectedConsultants.length === 0 && !showAllMasterCategories ? (
+                        <div className="p-8 rounded-2xl border border-dashed border-border bg-background/50 text-center space-y-2.5 my-4">
+                          <div className="h-10 w-10 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto">
+                            <Tag className="h-5 w-5" />
+                          </div>
+                          <h4 className="text-xs font-bold text-foreground">No Consultants Selected Yet</h4>
+                          <p className="text-[11px] text-muted-foreground max-w-xs mx-auto leading-relaxed">
+                            Select one or more consultant partners on the left to auto-load their mapped categories here.
+                          </p>
                           <button
-                            key={cat.id}
                             type="button"
-                            onClick={() => handleToggleCategory(cat.name)}
-                            className={`p-1.5 rounded-lg text-left text-xs border transition-all cursor-pointer flex items-center justify-between gap-1.5 ${
-                              isSelected
-                                ? "bg-blue-50 dark:bg-blue-950/40 border-blue-500/60 text-blue-900 dark:text-blue-100 font-bold"
-                                : "bg-background border-border text-muted-foreground hover:text-foreground"
-                            }`}
+                            onClick={() => setShowAllMasterCategories(true)}
+                            className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold hover:underline cursor-pointer pt-1 inline-block"
                           >
-                            <span className="truncate">{cat.icon || "📁"} {cat.name}</span>
-                            <div className={`h-3.5 w-3.5 rounded flex items-center justify-center shrink-0 border ${
-                              isSelected
-                                ? "bg-blue-600 border-blue-600 text-white"
-                                : "border-border bg-background"
-                            }`}>
-                              {isSelected && <Check className="h-2.5 w-2.5 stroke-[3]" />}
-                            </div>
+                            Or browse all {categories.length} Category Master disciplines →
                           </button>
-                        );
-                      })}
+                        </div>
+                      ) : (
+                        <div className="space-y-1.5 max-h-72 overflow-y-auto custom-scrollbar pr-1">
+                          {filteredModalCategories.length === 0 ? (
+                            <div className="p-4 text-center text-xs text-muted-foreground italic">
+                              No categories found matching search.
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                              {filteredModalCategories.map(cat => {
+                                const isSelected = selectedCategories.includes(cat.name);
+                                return (
+                                  <button
+                                    key={cat.id}
+                                    type="button"
+                                    onClick={() => handleToggleCategory(cat.name)}
+                                    className={`p-2 rounded-xl text-left text-xs border transition-all cursor-pointer flex items-center justify-between gap-2 ${
+                                      isSelected
+                                        ? "bg-blue-50 dark:bg-blue-950/40 border-blue-500/60 text-blue-900 dark:text-blue-100 font-bold shadow-2xs"
+                                        : "bg-background border-border text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-1.5 min-w-0">
+                                      <span className="text-sm shrink-0">{cat.icon || "📁"}</span>
+                                      <span className="truncate font-semibold">{cat.name}</span>
+                                    </div>
+                                    <div className={`h-4 w-4 rounded flex items-center justify-center shrink-0 border ${
+                                      isSelected
+                                        ? "bg-blue-600 border-blue-600 text-white"
+                                        : "border-border bg-background"
+                                    }`}>
+                                      {isSelected && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Mode Toggle Footer */}
+                    <div className="pt-2 border-t border-border flex items-center justify-between text-[11px]">
+                      <span className="text-muted-foreground">
+                        {showAllMasterCategories ? "Viewing all Master categories" : "Filtered by selected consultants"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowAllMasterCategories(!showAllMasterCategories)}
+                        className="text-blue-600 dark:text-blue-400 font-semibold hover:underline cursor-pointer"
+                      >
+                        {showAllMasterCategories ? "Filter by selected consultants" : "View all master categories"}
+                      </button>
                     </div>
                   </div>
                 </div>
