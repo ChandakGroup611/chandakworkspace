@@ -2638,6 +2638,24 @@ export async function createServiceRecordAction(formData: {
       return { success: false, error: "Vehicle, service description, and authorized service center are required" };
     }
 
+    const performerName = (user.user_metadata?.full_name as string) || (user.user_metadata?.name as string) || user.email?.split("@")[0] || "Fleet Manager";
+    const performerEmail = user.email || "";
+    const currentIso = new Date().toISOString();
+
+    const partsData = typeof formData.parts_replaced === "object" && formData.parts_replaced !== null
+      ? { ...formData.parts_replaced }
+      : {};
+
+    const initialAuditTrail = Array.isArray(partsData.audit_trail) ? [...partsData.audit_trail] : [];
+    initialAuditTrail.push({
+      action: "CREATED",
+      timestamp: currentIso,
+      performer_name: performerName,
+      performer_email: performerEmail,
+      note: `Job Card created for ₹${Number(formData.cost || 0).toLocaleString("en-IN")} at ${formData.service_center.trim()}`
+    });
+    partsData.audit_trail = initialAuditTrail;
+
     const newService = {
       id: `srv-${Date.now().toString(36)}`,
       vehicle_id: formData.vehicle_id,
@@ -2649,7 +2667,7 @@ export async function createServiceRecordAction(formData: {
       next_service_due_date: formData.next_service_due_date || null,
       next_service_due_odometer: formData.next_service_due_odometer ? Number(formData.next_service_due_odometer) : null,
       technician_name: formData.technician_name ? formData.technician_name.trim() : null,
-      parts_replaced: formData.parts_replaced || null
+      parts_replaced: partsData
     };
 
     const { data: inserted, error } = await supabaseAdmin
@@ -2683,7 +2701,211 @@ export async function createServiceRecordAction(formData: {
         .eq("id", formData.vehicle_id);
     }
 
+    // Insert into vehicle_specification_history as audit trail
+    try {
+      const invoiceNo = partsData.invoice_number || `#${newService.id.slice(-6)}`;
+      await supabaseAdmin
+        .from("vehicle_specification_history")
+        .insert({
+          vehicle_id: formData.vehicle_id,
+          changed_by: user.id || "authenticated_user",
+          changed_by_name: performerName,
+          changed_by_email: performerEmail,
+          change_summary: `Logged Workshop Job Card ${invoiceNo}: ${formData.service_type.trim()} (₹${Number(formData.cost || 0).toLocaleString("en-IN")}) at ${formData.service_center.trim()}`,
+          old_data: {},
+          new_data: {
+            service_id: newService.id,
+            service_type: formData.service_type.trim(),
+            service_center: formData.service_center.trim(),
+            cost: Number(formData.cost) || 0,
+            odometer_km: Number(formData.odometer_km) || 0,
+            service_date: newService.service_date,
+            invoice_number: partsData.invoice_number || null
+          },
+          changed_fields: ["service_records.created"]
+        });
+    } catch (auditErr) {
+      console.warn("[vehicle-actions] Service audit history insert error (non-fatal):", auditErr);
+    }
+
     return { success: true, record: inserted as MaintenanceRecord };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
+export async function updateServiceRecordAction(
+  id: string,
+  formData: {
+    vehicle_id?: string;
+    service_type?: string;
+    service_center?: string;
+    service_date?: string;
+    odometer_km?: number;
+    cost?: number;
+    next_service_due_date?: string;
+    next_service_due_odometer?: number;
+    technician_name?: string;
+    parts_replaced?: any;
+    post_service_status?: string;
+  }
+): Promise<{
+  success: boolean;
+  record?: MaintenanceRecord;
+  error?: string;
+}> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    const canManageMaint = await hasPermission(user.id, "FLEET_MAINTENANCE_MANAGE");
+    if (!canManageMaint) {
+      return { success: false, error: "Access Denied: You lack permission to update maintenance records." };
+    }
+
+    if (!id) return { success: false, error: "Service record ID is required." };
+
+    // Fetch existing record
+    const { data: existing, error: fetchErr } = await supabaseAdmin
+      .from("service_records")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (fetchErr || !existing) {
+      return { success: false, error: fetchErr?.message || "Service record not found." };
+    }
+
+    const performerName = (user.user_metadata?.full_name as string) || (user.user_metadata?.name as string) || user.email?.split("@")[0] || "Fleet Manager";
+    const performerEmail = user.email || "";
+    const currentIso = new Date().toISOString();
+
+    const existingParts = typeof existing.parts_replaced === "object" && existing.parts_replaced !== null
+      ? { ...existing.parts_replaced }
+      : {};
+
+    const incomingParts = typeof formData.parts_replaced === "object" && formData.parts_replaced !== null
+      ? { ...formData.parts_replaced }
+      : existingParts;
+
+    const changedFields: string[] = [];
+    const changeSummaries: string[] = [];
+
+    if (formData.service_type !== undefined && formData.service_type.trim() !== existing.service_type) {
+      changedFields.push("service_type");
+      changeSummaries.push(`Scope: "${formData.service_type.trim()}"`);
+    }
+    if (formData.service_center !== undefined && formData.service_center.trim() !== existing.service_center) {
+      changedFields.push("service_center");
+      changeSummaries.push(`Workshop: "${formData.service_center.trim()}"`);
+    }
+    if (formData.service_date !== undefined && formData.service_date !== existing.service_date) {
+      changedFields.push("service_date");
+      changeSummaries.push(`Date: ${formData.service_date}`);
+    }
+    if (formData.cost !== undefined && Number(formData.cost) !== Number(existing.cost)) {
+      changedFields.push("cost");
+      changeSummaries.push(`Bill Amount: ₹${Number(existing.cost).toLocaleString("en-IN")} → ₹${Number(formData.cost).toLocaleString("en-IN")}`);
+    }
+    if (formData.odometer_km !== undefined && Number(formData.odometer_km) !== Number(existing.odometer_km)) {
+      changedFields.push("odometer_km");
+      changeSummaries.push(`Odometer: ${existing.odometer_km} km → ${formData.odometer_km} km`);
+    }
+    if (formData.next_service_due_date !== undefined && formData.next_service_due_date !== existing.next_service_due_date) {
+      changedFields.push("next_service_due_date");
+      changeSummaries.push(`Next Due: ${formData.next_service_due_date || "Cleared"}`);
+    }
+    if (formData.next_service_due_odometer !== undefined && Number(formData.next_service_due_odometer) !== Number(existing.next_service_due_odometer)) {
+      changedFields.push("next_service_due_odometer");
+      changeSummaries.push(`Next Due Odo: ${formData.next_service_due_odometer} km`);
+    }
+    if (formData.technician_name !== undefined && (formData.technician_name?.trim() || "") !== (existing.technician_name || "")) {
+      changedFields.push("technician_name");
+      changeSummaries.push(`Technician: "${formData.technician_name?.trim() || ""}"`);
+    }
+
+    const auditTrail = Array.isArray(existingParts.audit_trail) ? [...existingParts.audit_trail] : [];
+    const changeSummaryText = changeSummaries.length > 0
+      ? changeSummaries.join(" • ")
+      : "Service record details verified and re-saved.";
+
+    auditTrail.push({
+      action: "UPDATED",
+      timestamp: currentIso,
+      performer_name: performerName,
+      performer_email: performerEmail,
+      summary: changeSummaryText,
+      changes: changedFields
+    });
+    incomingParts.audit_trail = auditTrail;
+
+    const updateData: Record<string, any> = {
+      parts_replaced: incomingParts
+    };
+    if (formData.vehicle_id !== undefined) updateData.vehicle_id = formData.vehicle_id;
+    if (formData.service_type !== undefined) updateData.service_type = formData.service_type.trim();
+    if (formData.service_center !== undefined) updateData.service_center = formData.service_center.trim();
+    if (formData.service_date !== undefined) updateData.service_date = formData.service_date;
+    if (formData.cost !== undefined) updateData.cost = Number(formData.cost) || 0.0;
+    if (formData.odometer_km !== undefined) updateData.odometer_km = Number(formData.odometer_km) || 0;
+    if (formData.next_service_due_date !== undefined) updateData.next_service_due_date = formData.next_service_due_date || null;
+    if (formData.next_service_due_odometer !== undefined) updateData.next_service_due_odometer = formData.next_service_due_odometer ? Number(formData.next_service_due_odometer) : null;
+    if (formData.technician_name !== undefined) updateData.technician_name = formData.technician_name ? formData.technician_name.trim() : null;
+
+    const { data: updated, error } = await supabaseAdmin
+      .from("service_records")
+      .update(updateData)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) return { success: false, error: error.message };
+
+    const targetVehicleId = formData.vehicle_id || existing.vehicle_id;
+
+    // Update vehicle odometer and status if needed
+    const updateVehPayload: Record<string, any> = {};
+    if (formData.odometer_km) {
+      const { data: currentV } = await supabaseAdmin
+        .from("vehicles")
+        .select("odometer_km, status")
+        .eq("id", targetVehicleId)
+        .single();
+
+      if (currentV && Number(formData.odometer_km) > (currentV.odometer_km || 0)) {
+        updateVehPayload.odometer_km = Number(formData.odometer_km);
+      }
+    }
+    if (formData.post_service_status) {
+      updateVehPayload.status = formData.post_service_status;
+    }
+    if (Object.keys(updateVehPayload).length > 0) {
+      await supabaseAdmin
+        .from("vehicles")
+        .update(updateVehPayload)
+        .eq("id", targetVehicleId);
+    }
+
+    // Insert into vehicle_specification_history as audit trail
+    try {
+      const invoiceNo = incomingParts.invoice_number || `#${id.slice(-6)}`;
+      await supabaseAdmin
+        .from("vehicle_specification_history")
+        .insert({
+          vehicle_id: targetVehicleId,
+          changed_by: user.id || "authenticated_user",
+          changed_by_name: performerName,
+          changed_by_email: performerEmail,
+          change_summary: `Updated Workshop Job Card ${invoiceNo}: ${changeSummaryText}`,
+          old_data: existing,
+          new_data: updated,
+          changed_fields: changedFields.map((f) => `service_records.${f}`)
+        });
+    } catch (auditErr) {
+      console.warn("[vehicle-actions] Service update audit history insert error (non-fatal):", auditErr);
+    }
+
+    return { success: true, record: updated as MaintenanceRecord };
   } catch (err: any) {
     return { success: false, error: err.message };
   }
@@ -2916,12 +3138,45 @@ export async function deleteServiceRecordAction(id: string): Promise<{
       return { success: false, error: "Access Denied: You lack permission to delete service records." };
     }
 
+    // Fetch existing record first for audit logging
+    const { data: existing } = await supabaseAdmin
+      .from("service_records")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+
     const { error } = await supabaseAdmin
       .from("service_records")
       .delete()
       .eq("id", id);
 
     if (error) return { success: false, error: error.message };
+
+    // Record audit trail if existing record was found
+    if (existing) {
+      try {
+        const performerName = (user.user_metadata?.full_name as string) || (user.user_metadata?.name as string) || user.email?.split("@")[0] || "Fleet Manager";
+        const performerEmail = user.email || "";
+        const partsData = typeof existing.parts_replaced === "object" && existing.parts_replaced !== null ? existing.parts_replaced : {};
+        const invoiceNo = partsData.invoice_number || `#${id.slice(-6)}`;
+
+        await supabaseAdmin
+          .from("vehicle_specification_history")
+          .insert({
+            vehicle_id: existing.vehicle_id,
+            changed_by: user.id || "authenticated_user",
+            changed_by_name: performerName,
+            changed_by_email: performerEmail,
+            change_summary: `Deleted Workshop Job Card ${invoiceNo}: ${existing.service_type} (₹${Number(existing.cost || 0).toLocaleString("en-IN")}) at ${existing.service_center}`,
+            old_data: existing,
+            new_data: {},
+            changed_fields: ["service_records.deleted"]
+          });
+      } catch (auditErr) {
+        console.warn("[vehicle-actions] Service deletion audit history insert error (non-fatal):", auditErr);
+      }
+    }
+
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err.message };

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { toast } from "react-toastify";
 import { 
   DesignMasterStore, 
   DEFAULT_DESIGN_CATEGORIES 
@@ -89,6 +90,7 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
     e.preventDefault();
     if (!name.trim()) {
       setFormError("Category name is required.");
+      toast.error("Category name is required.");
       return;
     }
 
@@ -102,6 +104,7 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
         icon: selectedIcon,
         color: selectedColor
       });
+      toast.success(`Category "${name.trim()}" updated successfully!`);
     } else {
       DesignMasterStore.addCategory({
         name: name.trim(),
@@ -110,6 +113,7 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
         icon: selectedIcon,
         color: selectedColor
       });
+      toast.success(`Category "${name.trim()}" created successfully!`);
     }
 
     setIsModalOpen(false);
@@ -125,7 +129,9 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
 
   const handleConfirmDelete = (reason: string) => {
     if (categoryToDeleteId) {
+      const cat = categories.find(c => c.id === categoryToDeleteId);
       DesignMasterStore.deleteCategory(categoryToDeleteId, reason, "Design Lead");
+      toast.success(`Category "${cat?.name || "Discipline"}" deleted successfully.`);
       setIsDeleteModalOpen(false);
       setCategoryToDeleteId(null);
     }

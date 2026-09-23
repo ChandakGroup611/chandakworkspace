@@ -22,6 +22,7 @@ import {
 import { DesignMasterStore } from "../services/designMasterStore";
 import { LookAheadEntry } from "../types/masterTypes";
 import { DesignMultiSelectDropdown, DropdownOption } from "./DesignMultiSelectDropdown";
+import { toast } from "react-toastify";
 
 export const LookAheadDashboard: React.FC = () => {
   const [storeState, setStoreState] = useState(() => DesignMasterStore.getState());
@@ -663,7 +664,7 @@ export const LookAheadDashboard: React.FC = () => {
               onSubmit={e => {
                 e.preventDefault();
                 if (!newProjectId || !newTowerId || !newDesc.trim()) {
-                  alert("Please select Project, Tower Wing, and enter Deliverable Description.");
+                  toast.error("Please select Project, Tower Wing, and enter Deliverable Description.");
                   return;
                 }
                 DesignMasterStore.addLookAhead({
@@ -675,6 +676,7 @@ export const LookAheadDashboard: React.FC = () => {
                   priority: newPriority,
                   status: "PENDING"
                 });
+                toast.success("Look-Ahead deliverable added successfully!");
                 setIsAddModalOpen(false);
               }}
               className="space-y-3.5 text-xs"

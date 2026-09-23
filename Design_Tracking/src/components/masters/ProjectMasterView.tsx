@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { toast } from "react-toastify";
 import { 
   DesignMasterStore 
 } from "../../services/designMasterStore";
@@ -209,6 +210,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
     e.preventDefault();
     if (!projectName.trim()) {
       setFormError("Project Name is required.");
+      toast.error("Project Name is required.");
       return;
     }
 
@@ -233,6 +235,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
         taggedCategories: selectedCategories,
         subProjectCategories: { default: selectedCategories }
       });
+      toast.success(`Project "${projectName.trim()}" updated successfully!`);
     } else {
       DesignMasterStore.addProject({
         name: projectName.trim(),
@@ -253,6 +256,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
         isSubProject: false,
         subProjectCategories: { default: selectedCategories }
       });
+      toast.success(`Project "${projectName.trim()}" created successfully!`);
     }
 
     setIsModalOpen(false);
@@ -268,7 +272,9 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
 
   const handleConfirmDelete = (reason: string) => {
     if (projectToDeleteId) {
+      const proj = projects.find(p => p.id === projectToDeleteId);
       DesignMasterStore.deleteProject(projectToDeleteId, reason, "Design Lead");
+      toast.success(`Project "${proj?.name || "Selected"}" deleted successfully.`);
       setIsDeleteModalOpen(false);
       setProjectToDeleteId(null);
     }

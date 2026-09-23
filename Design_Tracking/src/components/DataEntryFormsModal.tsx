@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import { toast } from "react-toastify";
 import { DesignMasterStore, MasterStoreState } from "../services/designMasterStore";
 import { ProjectMaster } from "../types/masterTypes";
 import { 
@@ -113,14 +114,17 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
     e.preventDefault();
     if (!pkgProjectId || !pkgTowerId || !pkgId) {
       setPkgError("Please select Project, Tower Wing, and Work Package.");
+      toast.error("Please select Project, Tower Wing, and Work Package.");
       return;
     }
     if (!pkgPlannedDate.trim()) {
       setPkgError("Planned Date is mandatory.");
+      toast.error("Planned Date is mandatory.");
       return;
     }
     if (!pkgActualDate.trim()) {
       setPkgError("Actual Date is mandatory.");
+      toast.error("Actual Date is mandatory.");
       return;
     }
 
@@ -142,14 +146,14 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
       "Senior Design Manager"
     );
 
-    alert("Tender Package Status updated with mandatory dates and audit logged!");
+    toast.success("Tender Package Status updated with mandatory dates and audit logged!");
     onClose();
   };
 
   const handleSaveLookAhead = (e: React.FormEvent) => {
     e.preventDefault();
     if (!laProjectId || !laTowerId || !laDescription.trim()) {
-      alert("Please fill in Project, Tower Wing, and Deliverable Description.");
+      toast.error("Please fill in Project, Tower Wing, and Deliverable Description.");
       return;
     }
 
@@ -166,14 +170,14 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
       status: "PENDING"
     });
 
-    alert("Look-Ahead execution milestone logged!");
+    toast.success("Look-Ahead execution milestone logged successfully!");
     onClose();
   };
 
   const handleSaveLiaison = (e: React.FormEvent) => {
     e.preventDefault();
     if (!liaisonProjectId || !liaisonTowerId || !liaisonAuthorityId) {
-      alert("Please select Project, Tower Wing, and Statutory Authority.");
+      toast.error("Please select Project, Tower Wing, and Statutory Authority.");
       return;
     }
 
@@ -189,7 +193,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
       liaisonRemarks || undefined
     );
 
-    alert("Statutory Authority onboarding updated!");
+    toast.success("Statutory Authority onboarding updated successfully!");
     onClose();
   };
 

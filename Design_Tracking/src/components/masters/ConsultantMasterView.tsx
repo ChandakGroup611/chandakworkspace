@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { toast } from "react-toastify";
 import { 
   DesignMasterStore 
 } from "../../services/designMasterStore";
@@ -115,18 +116,22 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
     e.preventDefault();
     if (!name.trim()) {
       setFormError("Consultant firm name is required.");
+      toast.error("Consultant firm name is required.");
       return;
     }
     if (!leadContact.trim()) {
       setFormError("Lead contact person name is required.");
+      toast.error("Lead contact person name is required.");
       return;
     }
     if (!email.trim() || !email.includes("@")) {
       setFormError("Valid official email address is required.");
+      toast.error("Valid official email address is required.");
       return;
     }
     if (selectedCategories.length === 0) {
       setFormError("Please map at least one discipline category.");
+      toast.error("Please map at least one discipline category.");
       return;
     }
 
@@ -143,6 +148,7 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
         averageTatDays: parseFloat(tatDays) || 3.0,
         rating: parseFloat(rating) || 5.0
       });
+      toast.success(`Consultant firm "${name.trim()}" updated successfully!`);
     } else {
       DesignMasterStore.addConsultant({
         name: name.trim(),
@@ -158,6 +164,7 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
         averageTatDays: parseFloat(tatDays) || 3.0,
         rating: parseFloat(rating) || 5.0
       });
+      toast.success(`Consultant firm "${name.trim()}" registered successfully!`);
     }
 
     setIsModalOpen(false);
@@ -173,7 +180,9 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
 
   const handleConfirmDelete = (reason: string) => {
     if (consultantToDeleteId) {
+      const c = consultants.find(cons => cons.id === consultantToDeleteId);
       DesignMasterStore.deleteConsultant(consultantToDeleteId, reason, "Design Lead");
+      toast.success(`Consultant firm "${c?.name || "Partner"}" deleted successfully.`);
       setIsDeleteModalOpen(false);
       setConsultantToDeleteId(null);
     }

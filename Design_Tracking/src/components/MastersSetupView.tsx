@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { toast } from "react-toastify";
 import { 
   DesignMasterStore, 
   MasterStoreState 
@@ -133,7 +134,10 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
 
   const handleCreatePackage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPackageName.trim()) return;
+    if (!newPackageName.trim()) {
+      toast.error("Package Name / Title is required.");
+      return;
+    }
 
     const generatedCode = newPackageCode.trim() || `PKG-${(storeState.packages.length + 1).toString().padStart(2, "0")}`;
 
@@ -145,6 +149,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
       description: newPackageDescription.trim() || undefined
     });
 
+    toast.success(`Work Package "${newPackageName.trim()}" created successfully!`);
     setNewPackageName("");
     setNewPackageCode("");
     setNewPackageDescription("");
@@ -153,7 +158,10 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
 
   const handleUpdatePackage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingPackage || !newPackageName.trim()) return;
+    if (!editingPackage || !newPackageName.trim()) {
+      toast.error("Package Name / Title is required.");
+      return;
+    }
 
     DesignMasterStore.updatePackage(editingPackage.id, {
       disciplineId: `disc-${newPackageDiscipline.toLowerCase().replace(/[^a-z0-9]/g, "-")}`,
@@ -163,13 +171,17 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
       description: newPackageDescription.trim() || undefined
     });
 
+    toast.success(`Work Package "${newPackageName.trim()}" updated successfully!`);
     setIsEditPackageModalOpen(false);
     setEditingPackage(null);
   };
 
   const handleCreateAuthority = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newAuthorityName.trim()) return;
+    if (!newAuthorityName.trim()) {
+      toast.error("Authority / Body Name is required.");
+      return;
+    }
 
     DesignMasterStore.addAuthority({
       authorityName: newAuthorityName.trim(),
@@ -177,6 +189,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
       category: "Municipal"
     });
 
+    toast.success(`Statutory Authority "${newAuthorityName.trim()}" registered successfully!`);
     setNewAuthorityName("");
     setNewAuthorityScope("");
     setIsNewAuthorityModalOpen(false);
@@ -439,6 +452,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                       type="button"
                       onClick={() => handleTriggerDelete("PACKAGE", pkg.id, (reason) => {
                         DesignMasterStore.deletePackage(pkg.id, reason, "Design Lead");
+                        toast.success(`Work Package "${pkg.packageName}" deleted successfully.`);
                       })}
                       className="h-6 w-6 rounded hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 flex items-center justify-center cursor-pointer"
                     >
@@ -488,6 +502,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                   type="button"
                   onClick={() => handleTriggerDelete("AUTHORITY", auth.id, (reason) => {
                     DesignMasterStore.deleteAuthority(auth.id, reason, "Design Lead");
+                    toast.success(`Statutory Authority "${auth.authorityName}" deleted successfully.`);
                   })}
                   className="h-6 w-6 rounded hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 flex items-center justify-center cursor-pointer shrink-0"
                 >
@@ -522,6 +537,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                   document.body.appendChild(downloadAnchor);
                   downloadAnchor.click();
                   downloadAnchor.remove();
+                  toast.success("Design masters JSON backup exported successfully!");
                 }}
                 className="px-3.5 py-1.5 rounded-xl border border-border bg-background hover:bg-muted text-foreground text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
               >
@@ -534,6 +550,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                 onClick={() => {
                   if (confirm("Reset all masters to initial clean state?")) {
                     DesignMasterStore.resetToBlank();
+                    toast.info("Design masters reset to initial blank state.");
                   }
                 }}
                 className="px-3.5 py-1.5 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"

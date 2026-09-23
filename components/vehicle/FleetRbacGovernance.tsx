@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import { toast } from "react-toastify";
 import { 
   ShieldCheck, 
   ShieldAlert, 
@@ -340,12 +341,15 @@ export default function FleetRbacGovernance() {
       if (res.success) {
         FleetMasterStore.saveUserAccess(record);
         setFeedbackMessage({ type: "success", text: "Personnel permissions updated successfully!" });
+        toast.success("Personnel permissions updated successfully!");
         setIsDrawerOpen(false);
       } else {
         setFeedbackMessage({ type: "error", text: res.error || "Failed to save permissions." });
+        toast.error(res.error || "Failed to save permissions.");
       }
     } catch (e: any) {
       setFeedbackMessage({ type: "error", text: e.message || "An unexpected error occurred." });
+      toast.error(e.message || "An unexpected error occurred.");
     } finally {
       setIsSaving(false);
       setTimeout(() => setFeedbackMessage(null), 4000);
@@ -361,11 +365,14 @@ export default function FleetRbacGovernance() {
       if (res.success) {
         setWorkspaceUsers(prev => prev.map(u => u.id === user.id ? { ...u, hasModuleAccess: newStatus } : u));
         setFeedbackMessage({ type: "success", text: `${user.fullName}'s Vehicle Desk access was ${newStatus ? 'enabled' : 'revoked'}.` });
+        toast.success(`${user.fullName}'s Vehicle Desk access was ${newStatus ? 'enabled' : 'revoked'}.`);
       } else {
         setFeedbackMessage({ type: "error", text: res.error || "Failed to toggle access." });
+        toast.error(res.error || "Failed to toggle access.");
       }
     } catch (e: any) {
       setFeedbackMessage({ type: "error", text: e.message });
+      toast.error(e.message || "Failed to toggle access.");
     } finally {
       setTogglingUserId(null);
       setTimeout(() => setFeedbackMessage(null), 4000);
@@ -518,6 +525,7 @@ export default function FleetRbacGovernance() {
       type: "success",
       text: `Granted Full CRUD permissions to ${selectedRoleDef.label}. Applied in real-time!`
     });
+    toast.success(`Granted Full CRUD permissions to ${selectedRoleDef.label}.`);
     setTimeout(() => setFeedbackMessage(null), 3000);
   };
 
@@ -563,6 +571,7 @@ export default function FleetRbacGovernance() {
       type: "success",
       text: `Set ${selectedRoleDef.label} permissions to Read-Only. Applied in real-time!`
     });
+    toast.success(`Set ${selectedRoleDef.label} permissions to Read-Only.`);
     setTimeout(() => setFeedbackMessage(null), 3000);
   };
 
@@ -577,6 +586,7 @@ export default function FleetRbacGovernance() {
       type: "success",
       text: `Reset ${selectedRoleDef.label} to default system matrix template. Applied in real-time!`
     });
+    toast.success(`Reset ${selectedRoleDef.label} to default system matrix.`);
     setTimeout(() => setFeedbackMessage(null), 3000);
   };
 

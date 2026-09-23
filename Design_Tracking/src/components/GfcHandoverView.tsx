@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { toast } from "react-toastify";
 import { GfcRelease } from "../types";
 import { 
   ShieldCheck, 
@@ -309,7 +310,7 @@ export const GfcHandoverView: React.FC<GfcHandoverViewProps> = ({
                     <td className="p-3.5 text-right whitespace-nowrap min-w-[140px]">
                       <button
                         type="button"
-                        onClick={() => alert(`Downloading Verified GFC Digital Certificate for ${rel.drawingCode}`)}
+                        onClick={() => toast.info(`Downloading Verified GFC Digital Certificate for ${rel.drawingCode}`)}
                         className="h-7 px-2.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-semibold text-xs inline-flex items-center gap-1 hover:bg-emerald-500/20 transition-colors cursor-pointer whitespace-nowrap"
                       >
                         <Download className="h-3.5 w-3.5 shrink-0" />

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { toast } from "react-toastify";
 import { 
   DesignMasterStore 
 } from "../../services/designMasterStore";
@@ -196,10 +197,12 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
     e.preventDefault();
     if (!subProjectName.trim()) {
       setFormError("Sub-Project / Wing Name is required.");
+      toast.error("Sub-Project / Wing Name is required.");
       return;
     }
     if (!selectedProjectId) {
       setFormError("Parent Project must be selected.");
+      toast.error("Parent Project must be selected.");
       return;
     }
 
@@ -218,6 +221,7 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
         taggedConsultants: selectedConsultants,
         taggedCategories: selectedCategories
       });
+      toast.success(`Sub-Project "${subProjectName.trim()}" updated successfully!`);
     } else {
       DesignMasterStore.addSubProject({
         projectId: selectedProjectId,
@@ -231,6 +235,7 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
         taggedConsultants: selectedConsultants,
         taggedCategories: selectedCategories
       });
+      toast.success(`Sub-Project "${subProjectName.trim()}" created successfully!`);
     }
 
     setIsModalOpen(false);
@@ -246,7 +251,9 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
 
   const handleConfirmDelete = (reason: string) => {
     if (subProjectToDeleteId) {
+      const sp = subProjects.find(s => s.id === subProjectToDeleteId);
       DesignMasterStore.deleteSubProject(subProjectToDeleteId, reason, "Design Lead");
+      toast.success(`Sub-Project "${sp?.towerName || "Selected"}" deleted successfully.`);
       setIsDeleteModalOpen(false);
       setSubProjectToDeleteId(null);
     }

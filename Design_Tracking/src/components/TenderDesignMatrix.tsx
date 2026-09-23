@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
+import { toast } from "react-toastify";
 import { DesignMasterStore, MasterStoreState } from "../services/designMasterStore";
 import { exportTenderMatrixToExcel } from "../services/excelExportService";
 import { WorkPackageMaster, TowerMaster, ProjectMaster, PackageStatusEntry, MatrixAuditLog } from "../types/masterTypes";
@@ -382,12 +383,12 @@ export const TenderDesignMatrix: React.FC = () => {
   // Execute Batch Update with Mandatory Dates
   const handleExecuteBatchUpdate = async () => {
     if (!batchProjectId || batchSelectedTowers.length === 0) {
-      alert("Please select at least one Wing / Sub-Project line item to update.");
+      toast.error("Please select at least one Wing / Sub-Project line item to update.");
       return;
     }
 
     if (!batchPlannedDate.trim() || !batchActualDate.trim()) {
-      alert("Both Planned Date and Actual Date are mandatory for batch updates.");
+      toast.error("Both Planned Date and Actual Date are mandatory for batch updates.");
       return;
     }
 
@@ -397,7 +398,7 @@ export const TenderDesignMatrix: React.FC = () => {
     }
 
     if (targetPkgs.length === 0) {
-      alert("No packages found matching the selected discipline.");
+      toast.error("No packages found matching the selected discipline.");
       return;
     }
 
@@ -432,7 +433,7 @@ export const TenderDesignMatrix: React.FC = () => {
     });
 
     DesignMasterStore.bulkRecordPackageStatus(updates, "Senior Design Manager");
-    alert(`⚡ Batch Updated ${updates.length} cells successfully across ${batchSelectedTowers.length} line items with mandatory dates & audit logging!`);
+    toast.success(`⚡ Batch Updated ${updates.length} cells successfully across ${batchSelectedTowers.length} line items with mandatory dates & audit logging!`);
     setIsBatchModalOpen(false);
   };
 
@@ -441,9 +442,10 @@ export const TenderDesignMatrix: React.FC = () => {
     try {
       setIsExportingExcel(true);
       await exportTenderMatrixToExcel(storeState, filteredPackages, visibleColumns);
+      toast.success("Excel report exported successfully!");
     } catch (err) {
       console.error("Excel export error:", err);
-      alert("Failed to export Excel file. Please try CSV export.");
+      toast.error("Failed to export Excel file. Please try CSV export.");
     } finally {
       setIsExportingExcel(false);
     }

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
+import { toast } from "react-toastify";
 import { 
   ShieldCheck, 
   ShieldAlert, 
@@ -430,7 +431,7 @@ export const DesignRbacGovernance: React.FC = () => {
 
   const handleSaveRoleModal = async () => {
     if (!roleFormLabel.trim()) {
-      alert("Please enter a Role Name.");
+      toast.error("Please enter a Role Name.");
       return;
     }
     const cleanCode = roleFormCode.trim() || roleFormLabel.trim().toUpperCase().replace(/[^A-Z0-9_]/g, "_");
@@ -523,9 +524,10 @@ export const DesignRbacGovernance: React.FC = () => {
         type: "success",
         text: `Role '${savedRole.label}' and its module permissions saved successfully.`
       });
+      toast.success(`Role '${savedRole.label}' saved successfully!`);
       loadWorkspaceUsers();
     } catch (err: any) {
-      alert(err.message || "Failed to save role");
+      toast.error(err.message || "Failed to save role");
     } finally {
       setIsSaving(false);
     }
@@ -536,13 +538,14 @@ export const DesignRbacGovernance: React.FC = () => {
     try {
       DesignMasterStore.deleteCustomRole(roleToDelete.code);
       setSelectedBuilderRoleCode("DESIGN_ADMIN");
-      setRoleToDelete(null);
       setFeedbackMessage({
         type: "success",
         text: `Role '${roleToDelete.label}' has been deleted.`
       });
+      toast.success(`Role '${roleToDelete.label}' has been deleted.`);
+      setRoleToDelete(null);
     } catch (err: any) {
-      alert(err.message || "Failed to delete role");
+      toast.error(err.message || "Failed to delete role");
     }
   };
 
@@ -599,13 +602,16 @@ export const DesignRbacGovernance: React.FC = () => {
       const res = await saveDesignUserAccessAction(payload);
       if (res.success) {
         setFeedbackMessage({ type: "success", text: "User access updated successfully." });
+        toast.success("User access permissions updated successfully!");
         setIsDrawerOpen(false);
         loadWorkspaceUsers();
       } else {
         setFeedbackMessage({ type: "error", text: res.error || "Failed to update." });
+        toast.error(res.error || "Failed to update user access.");
       }
     } catch (err: any) {
       setFeedbackMessage({ type: "error", text: err.message });
+      toast.error(err.message || "Failed to update user access.");
     } finally {
       setIsSaving(false);
     }
@@ -636,10 +642,12 @@ export const DesignRbacGovernance: React.FC = () => {
           });
         }
         setFeedbackMessage({ type: "success", text: `${user.fullName} access ${newStatus ? "enabled" : "disabled"}.` });
+        toast.success(`${user.fullName} access ${newStatus ? "enabled" : "disabled"}.`);
         loadWorkspaceUsers();
       }
     } catch (err: any) {
       setFeedbackMessage({ type: "error", text: err.message });
+      toast.error(err.message || "Failed to toggle module access.");
     } finally {
       setTogglingUserId(null);
     }

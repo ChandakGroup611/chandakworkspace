@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { toast } from "react-toastify";
 import { usePathname, useRouter } from "next/navigation";
 import { 
   Car, 
@@ -96,6 +97,7 @@ import {
   updateTripStatusAction,
   deleteTripAction,
   createServiceRecordAction,
+  updateServiceRecordAction,
   deleteServiceRecordAction,
   fetchVehiclePortalDetailsAction,
   VehicleDashboardStats,
@@ -548,7 +550,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   const [newTripEndTime, setNewTripEndTime] = useState("18:00");
 
   // ----------------------------------------------------------------------------
-  // Form States — Detailed Real-World Maintenance Job Card & Service Logging
+  // Form States — Service Records & Workshop Job Cards (Dedicated Module)
   // ----------------------------------------------------------------------------
   const [newMaintVehicleId, setNewMaintVehicleId] = useState("");
   const [newMaintCategory, setNewMaintCategory] = useState("PERIODIC_SERVICE");
@@ -559,28 +561,42 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   const [newMaintInvoiceNo, setNewMaintInvoiceNo] = useState("");
   const [newMaintDate, setNewMaintDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [newMaintOdometer, setNewMaintOdometer] = useState<number>(0);
-  const [newMaintPartsCost, setNewMaintPartsCost] = useState<number>(3250);
-  const [newMaintLabourCost, setNewMaintLabourCost] = useState<number>(1200);
-  const [newMaintTaxCost, setNewMaintTaxCost] = useState<number>(800);
-  const [newMaintCost, setNewMaintCost] = useState<number>(5250);
+  const [newMaintLabourCost, setNewMaintLabourCost] = useState<number>(0);
+  const [newMaintPartsCost, setNewMaintPartsCost] = useState<number>(0);
+  const [newMaintTaxCost, setNewMaintTaxCost] = useState<number>(0);
+  const [newMaintCost, setNewMaintCost] = useState<number>(0);
+  const [newMaintPaymentMode, setNewMaintPaymentMode] = useState("UPI / Bank Transfer");
+  const [newMaintPaymentStatus, setNewMaintPaymentStatus] = useState("PAID");
   const [newMaintNextDue, setNewMaintNextDue] = useState("");
   const [newMaintNextDueOdometer, setNewMaintNextDueOdometer] = useState<number>(0);
   const [newMaintNotes, setNewMaintNotes] = useState("");
   const [newMaintPostStatus, setNewMaintPostStatus] = useState("IN_STOCK");
-  const [newMaintActiveSection, setNewMaintActiveSection] = useState<"SCOPE" | "PARTS" | "BILLING" | "FORECAST">("SCOPE");
-  const [newMaintChecklist, setNewMaintChecklist] = useState<{ [key: string]: boolean }>({
-    oil_filter: true,
-    air_filter: true,
-    fluids_topped: true,
-    brakes_checked: true,
-    tyre_alignment: false,
-    battery_tested: true,
-    washing_cleaning: true
-  });
-  const [newMaintPartsItems, setNewMaintPartsItems] = useState<Array<{ name: string; cost: number }>>([
-    { name: "Synthetic Engine Oil (Grade 5W-30)", cost: 2800 },
-    { name: "OEM Engine Oil Filter Element", cost: 450 }
-  ]);
+  const [newMaintActiveSection, setNewMaintActiveSection] = useState<"SCOPE_WORKSHOP" | "BILLING_FORECAST">("SCOPE_WORKSHOP");
+
+  // Edit Service Record States
+  const [isEditMaintenanceOpen, setIsEditMaintenanceOpen] = useState(false);
+  const [selectedMaintenanceForEdit, setSelectedMaintenanceForEdit] = useState<MaintenanceRecord | null>(null);
+  const [editMaintVehicleId, setEditMaintVehicleId] = useState("");
+  const [editMaintCategory, setEditMaintCategory] = useState("PERIODIC_SERVICE");
+  const [editMaintServiceType, setEditMaintServiceType] = useState("");
+  const [editMaintVendor, setEditMaintVendor] = useState("");
+  const [editMaintLocation, setEditMaintLocation] = useState("");
+  const [editMaintTechnician, setEditMaintTechnician] = useState("");
+  const [editMaintInvoiceNo, setEditMaintInvoiceNo] = useState("");
+  const [editMaintDate, setEditMaintDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [editMaintOdometer, setEditMaintOdometer] = useState<number>(0);
+  const [editMaintLabourCost, setEditMaintLabourCost] = useState<number>(0);
+  const [editMaintPartsCost, setEditMaintPartsCost] = useState<number>(0);
+  const [editMaintTaxCost, setEditMaintTaxCost] = useState<number>(0);
+  const [editMaintCost, setEditMaintCost] = useState<number>(0);
+  const [editMaintPaymentMode, setEditMaintPaymentMode] = useState("UPI / Bank Transfer");
+  const [editMaintPaymentStatus, setEditMaintPaymentStatus] = useState("PAID");
+  const [editMaintNextDue, setEditMaintNextDue] = useState("");
+  const [editMaintNextDueOdometer, setEditMaintNextDueOdometer] = useState<number>(0);
+  const [editMaintNotes, setEditMaintNotes] = useState("");
+  const [editMaintPostStatus, setEditMaintPostStatus] = useState("IN_STOCK");
+  const [editMaintActiveSection, setEditMaintActiveSection] = useState<"SCOPE_WORKSHOP" | "BILLING_FORECAST">("SCOPE_WORKSHOP");
+
   const [selectedMaintenanceForView, setSelectedMaintenanceForView] = useState<MaintenanceRecord | null>(null);
 
   const resetMaintenanceForm = () => {
@@ -593,28 +609,43 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     setNewMaintInvoiceNo("");
     setNewMaintDate(new Date().toISOString().split("T")[0]);
     setNewMaintOdometer(0);
-    setNewMaintPartsCost(0);
     setNewMaintLabourCost(0);
+    setNewMaintPartsCost(0);
     setNewMaintTaxCost(0);
     setNewMaintCost(0);
+    setNewMaintPaymentMode("UPI / Bank Transfer");
+    setNewMaintPaymentStatus("PAID");
     setNewMaintNextDue("");
     setNewMaintNextDueOdometer(0);
     setNewMaintNotes("");
     setNewMaintPostStatus("IN_STOCK");
-    setNewMaintActiveSection("SCOPE");
-    setNewMaintChecklist({
-      oil_filter: true,
-      air_filter: true,
-      fluids_topped: true,
-      brakes_checked: true,
-      tyre_alignment: false,
-      battery_tested: true,
-      washing_cleaning: true
-    });
-    setNewMaintPartsItems([
-      { name: "Synthetic Engine Oil (Grade 5W-30)", cost: 0 },
-      { name: "OEM Engine Oil Filter Element", cost: 0 }
-    ]);
+    setNewMaintActiveSection("SCOPE_WORKSHOP");
+  };
+
+  const openEditMaintenanceModal = (m: MaintenanceRecord) => {
+    setSelectedMaintenanceForEdit(m);
+    const partsData = typeof m.parts_replaced === "object" && m.parts_replaced !== null ? m.parts_replaced : {};
+    setEditMaintVehicleId(m.vehicle_id);
+    setEditMaintCategory(partsData.category || "PERIODIC_SERVICE");
+    setEditMaintServiceType(m.service_type || "");
+    setEditMaintVendor(m.service_center || "");
+    setEditMaintLocation(partsData.location || "");
+    setEditMaintTechnician(m.technician_name || "");
+    setEditMaintInvoiceNo(partsData.invoice_number || "");
+    setEditMaintDate(m.service_date || new Date().toISOString().split("T")[0]);
+    setEditMaintOdometer(m.odometer_km || 0);
+    setEditMaintLabourCost(Number(partsData.labour_cost) || 0);
+    setEditMaintPartsCost(Number(partsData.parts_cost) || 0);
+    setEditMaintTaxCost(Number(partsData.tax_amount) || 0);
+    setEditMaintCost(Number(m.cost) || 0);
+    setEditMaintPaymentMode(partsData.payment_mode || "UPI / Bank Transfer");
+    setEditMaintPaymentStatus(partsData.payment_status || "PAID");
+    setEditMaintNextDue(m.next_service_due_date || "");
+    setEditMaintNextDueOdometer(Number(m.next_service_due_odometer) || 0);
+    setEditMaintNotes(partsData.technician_notes || "");
+    setEditMaintPostStatus(partsData.post_service_status || "IN_STOCK");
+    setEditMaintActiveSection("SCOPE_WORKSHOP");
+    setIsEditMaintenanceOpen(true);
   };
 
   const handleSelectMaintVehicle = (vehId: string) => {
@@ -649,35 +680,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         else setNewMaintVendor(`${sel.make} Authorized Service Center`);
       }
     }
-  };
-
-  const handleAddPartItem = () => {
-    setNewMaintPartsItems((prev) => [...prev, { name: "", cost: 0 }]);
-  };
-
-  const handleRemovePartItem = (index: number) => {
-    setNewMaintPartsItems((prev) => {
-      const updated = prev.filter((_, i) => i !== index);
-      const sum = updated.reduce((acc, curr) => acc + (Number(curr.cost) || 0), 0);
-      setNewMaintPartsCost(sum);
-      setNewMaintCost(sum + (Number(newMaintLabourCost) || 0) + (Number(newMaintTaxCost) || 0));
-      return updated;
-    });
-  };
-
-  const handlePartItemChange = (index: number, field: "name" | "cost", value: string | number) => {
-    setNewMaintPartsItems((prev) => {
-      const updated = [...prev];
-      if (field === "name") {
-        updated[index].name = String(value);
-      } else {
-        updated[index].cost = Number(value) || 0;
-        const sum = updated.reduce((acc, curr) => acc + (Number(curr.cost) || 0), 0);
-        setNewMaintPartsCost(sum);
-        setNewMaintCost(sum + (Number(newMaintLabourCost) || 0) + (Number(newMaintTaxCost) || 0));
-      }
-      return updated;
-    });
   };
 
   // ----------------------------------------------------------------------------
@@ -728,9 +730,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     if (isError) {
       setErrorBanner(msg);
       setSuccessBanner(null);
+      toast.error(msg);
     } else {
       setSuccessBanner(msg);
       setErrorBanner(null);
+      toast.success(msg);
     }
     setTimeout(() => {
       setErrorBanner(null);
@@ -1487,13 +1491,13 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   };
 
   // ----------------------------------------------------------------------------
-  // CRUD Handlers: MAINTENANCE
+  // CRUD Handlers: SERVICE RECORDS & WORKSHOP JOB CARDS
   // ----------------------------------------------------------------------------
 
   const handleLogMaintenance = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMaintVehicleId || !newMaintServiceType.trim() || !newMaintVendor.trim()) {
-      triggerToast("Vehicle, service description, and authorized workshop are required.", true);
+      triggerToast("Please select a target vehicle, specify service scope, and authorized workshop.", true);
       return;
     }
 
@@ -1506,9 +1510,9 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         parts_cost: Number(newMaintPartsCost) || 0,
         labour_cost: Number(newMaintLabourCost) || 0,
         tax_amount: Number(newMaintTaxCost) || 0,
-        technician_notes: newMaintNotes.trim() || undefined,
-        parts_items: newMaintPartsItems.filter((p) => p.name.trim()),
-        checklist: newMaintChecklist
+        payment_mode: newMaintPaymentMode,
+        payment_status: newMaintPaymentStatus,
+        technician_notes: newMaintNotes.trim() || undefined
       };
 
       const res = await createServiceRecordAction({
@@ -1526,7 +1530,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       });
 
       if (res.success) {
-        triggerToast("Detailed job card & maintenance record logged successfully!");
+        triggerToast("Workshop Job Card & Service Bill logged successfully!");
         setIsAddMaintenanceOpen(false);
         resetMaintenanceForm();
         loadAllData(true);
@@ -1535,6 +1539,62 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       }
     } catch (err: any) {
       triggerToast(err.message || "Failed to log maintenance", true);
+    } finally {
+      setModalSubmitting(false);
+    }
+  };
+
+  const handleUpdateMaintenance = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedMaintenanceForEdit) return;
+    if (!editMaintVehicleId || !editMaintServiceType.trim() || !editMaintVendor.trim()) {
+      triggerToast("Please select a target vehicle, specify service scope, and authorized workshop.", true);
+      return;
+    }
+
+    setModalSubmitting(true);
+    try {
+      const existingParts = typeof selectedMaintenanceForEdit.parts_replaced === "object" && selectedMaintenanceForEdit.parts_replaced !== null
+        ? selectedMaintenanceForEdit.parts_replaced
+        : {};
+
+      const partsPayload = {
+        ...existingParts,
+        category: editMaintCategory,
+        invoice_number: editMaintInvoiceNo.trim() || undefined,
+        location: editMaintLocation.trim() || undefined,
+        parts_cost: Number(editMaintPartsCost) || 0,
+        labour_cost: Number(editMaintLabourCost) || 0,
+        tax_amount: Number(editMaintTaxCost) || 0,
+        payment_mode: editMaintPaymentMode,
+        payment_status: editMaintPaymentStatus,
+        technician_notes: editMaintNotes.trim() || undefined
+      };
+
+      const res = await updateServiceRecordAction(selectedMaintenanceForEdit.id, {
+        vehicle_id: editMaintVehicleId,
+        service_type: editMaintServiceType.trim(),
+        service_center: editMaintVendor.trim(),
+        service_date: editMaintDate || undefined,
+        cost: Number(editMaintCost) || 0,
+        odometer_km: Number(editMaintOdometer) || 0,
+        next_service_due_date: editMaintNextDue || undefined,
+        next_service_due_odometer: Number(editMaintNextDueOdometer) || undefined,
+        technician_name: editMaintTechnician.trim() || undefined,
+        parts_replaced: partsPayload,
+        post_service_status: editMaintPostStatus || "IN_STOCK"
+      });
+
+      if (res.success) {
+        triggerToast("Workshop Job Card & Service Bill updated successfully!");
+        setIsEditMaintenanceOpen(false);
+        setSelectedMaintenanceForEdit(null);
+        loadAllData(true);
+      } else {
+        triggerToast(res.error || "Failed to update maintenance record", true);
+      }
+    } catch (err: any) {
+      triggerToast(err.message || "Failed to update maintenance record", true);
     } finally {
       setModalSubmitting(false);
     }
@@ -4559,6 +4619,20 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:border-theme-btn-primary shadow-2xs"
                 />
               </div>
+              {canManageMaintenance && (
+                <AppButton
+                  variant="primary"
+                  size="sm"
+                  onClick={() => {
+                    resetMaintenanceForm();
+                    setIsAddMaintenanceOpen(true);
+                  }}
+                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs shrink-0"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>Log Service Job Card</span>
+                </AppButton>
+              )}
             </div>
           </AppCardHeader>
 
@@ -4581,7 +4655,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   {filteredMaintenance.length === 0 ? (
                     <AppTableRow>
                       <AppTableCell colSpan={8} className="text-center py-12 text-muted-foreground">
-                        No maintenance records yet. Click <strong>Log Maintenance</strong> to record service work.
+                        No maintenance records yet. Click <strong>Log Service Job Card</strong> to record service work.
                       </AppTableCell>
                     </AppTableRow>
                   ) : (
@@ -4595,7 +4669,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         badge: "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20"
                       };
                       const invoiceNo = partsData?.invoice_number;
-                      const partsCount = Array.isArray(partsData?.parts_items) ? partsData.parts_items.length : 0;
 
                       return (
                         <AppTableRow 
@@ -4623,11 +4696,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                 <span>{catInfo.icon}</span>
                                 <span>{catInfo.label}</span>
                               </span>
-                              {partsCount > 0 && (
-                                <span className="px-1.5 py-0.2 rounded text-[9px] bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 font-medium">
-                                  {partsCount} {partsCount === 1 ? "part" : "parts"}
-                                </span>
-                              )}
                             </div>
                             <div className="text-foreground font-medium truncate text-xs" title={m.service_type}>
                               {m.service_type}
@@ -4639,7 +4707,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             </div>
                             {m.technician_name ? (
                               <div className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
-                                <span>Tech:</span>
+                                <span>Advisor:</span>
                                 <span className="font-medium text-foreground">{m.technician_name}</span>
                               </div>
                             ) : partsData?.location ? (
@@ -4686,6 +4754,21 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                 <Eye className="h-3.5 w-3.5" />
                                 <span className="hidden sm:inline">Job Card</span>
                               </AppButton>
+                              {canManageMaintenance && (
+                                <AppButton
+                                  variant="outline"
+                                  size="sm"
+                                  title="Edit Service Record & Bill"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openEditMaintenanceModal(m);
+                                  }}
+                                  className="h-7 px-2 text-xs text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/10 gap-1 font-semibold"
+                                >
+                                  <Edit2 className="h-3.5 w-3.5" />
+                                  <span className="hidden sm:inline">Edit</span>
+                                </AppButton>
+                              )}
                               {canManageMaintenance && (
                                 <AppButton
                                   variant="outline"
@@ -7603,11 +7686,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       )}
 
       {/* ---------------------------------------------------------------------- */}
-      {/* LOG MAINTENANCE WORK — DETAILED ENTERPRISE JOB CARD MODAL */}
+      {/* LOG SERVICE JOB CARD & WORKSHOP BILL MODAL */}
       {/* ---------------------------------------------------------------------- */}
       {isAddMaintenanceOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+          <div className="bg-surface border border-border w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
             {/* Modal Header */}
             <div className="p-4 sm:p-5 border-b border-border bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -7616,13 +7699,13 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-base font-bold text-foreground">Workshop Job Card & Maintenance Logger</h3>
+                    <h3 className="text-base font-bold text-foreground">Workshop Job Card & Service Bill Logger</h3>
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
                       Standard ERP Format
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Log itemized spare parts, multi-point inspection checklists, labour charges, and service forecasts
+                    Log authorized workshop maintenance, repair job sheets, labour & tax billing, and service forecasts
                   </p>
                 </div>
               </div>
@@ -7635,56 +7718,36 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             <div className="px-5 py-2.5 bg-surface/80 border-b border-border flex items-center gap-2 overflow-x-auto text-xs font-semibold">
               <AppButton
                 type="button"
-                variant={newMaintActiveSection === "SCOPE" ? "primary" : "ghost"}
+                variant={newMaintActiveSection === "SCOPE_WORKSHOP" ? "primary" : "ghost"}
                 size="sm"
-                onClick={() => setNewMaintActiveSection("SCOPE")}
-                className={`h-8 text-xs shrink-0 ${newMaintActiveSection === "SCOPE" ? "bg-theme-btn-primary text-white font-bold" : "text-muted-foreground"}`}
+                onClick={() => setNewMaintActiveSection("SCOPE_WORKSHOP")}
+                className={`h-8 text-xs shrink-0 ${newMaintActiveSection === "SCOPE_WORKSHOP" ? "bg-theme-btn-primary text-white font-bold" : "text-muted-foreground"}`}
               >
-                <span>1. Service Scope & Vehicle</span>
+                <span>1. Vehicle & Service Scope</span>
               </AppButton>
               <AppButton
                 type="button"
-                variant={newMaintActiveSection === "PARTS" ? "primary" : "ghost"}
+                variant={newMaintActiveSection === "BILLING_FORECAST" ? "primary" : "ghost"}
                 size="sm"
-                onClick={() => setNewMaintActiveSection("PARTS")}
-                className={`h-8 text-xs shrink-0 gap-1.5 ${newMaintActiveSection === "PARTS" ? "bg-theme-btn-primary text-white font-bold" : "text-muted-foreground"}`}
-              >
-                <ClipboardCheck className="h-3.5 w-3.5" />
-                <span>2. Inspection & Parts ({newMaintPartsItems.length})</span>
-              </AppButton>
-              <AppButton
-                type="button"
-                variant={newMaintActiveSection === "BILLING" ? "primary" : "ghost"}
-                size="sm"
-                onClick={() => setNewMaintActiveSection("BILLING")}
-                className={`h-8 text-xs shrink-0 gap-1.5 ${newMaintActiveSection === "BILLING" ? "bg-theme-btn-primary text-white font-bold" : "text-muted-foreground"}`}
+                onClick={() => setNewMaintActiveSection("BILLING_FORECAST")}
+                className={`h-8 text-xs shrink-0 gap-1.5 ${newMaintActiveSection === "BILLING_FORECAST" ? "bg-theme-btn-primary text-white font-bold" : "text-muted-foreground"}`}
               >
                 <Receipt className="h-3.5 w-3.5" />
-                <span>3. Workshop & Billing</span>
-              </AppButton>
-              <AppButton
-                type="button"
-                variant={newMaintActiveSection === "FORECAST" ? "primary" : "ghost"}
-                size="sm"
-                onClick={() => setNewMaintActiveSection("FORECAST")}
-                className={`h-8 text-xs shrink-0 gap-1.5 ${newMaintActiveSection === "FORECAST" ? "bg-theme-btn-primary text-white font-bold" : "text-muted-foreground"}`}
-              >
-                <Calendar className="h-3.5 w-3.5" />
-                <span>4. Forecast & Handover</span>
+                <span>2. Billing & Service Forecast</span>
               </AppButton>
             </div>
 
             <form onSubmit={handleLogMaintenance} className="flex-1 overflow-y-auto flex flex-col">
               <div className="p-5 space-y-5 flex-1">
                 {/* ---------------------------------------------------- */}
-                {/* TAB 1: SERVICE SCOPE & VEHICLE */}
+                {/* SECTION 1: VEHICLE & SERVICE SCOPE */}
                 {/* ---------------------------------------------------- */}
-                {newMaintActiveSection === "SCOPE" && (
+                {newMaintActiveSection === "SCOPE_WORKSHOP" && (
                   <div className="space-y-4 animate-in fade-in duration-150">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="font-semibold block mb-1.5 text-xs text-foreground">
-                          Target Vehicle *
+                          Target Fleet Vehicle *
                         </label>
                         <select
                           value={newMaintVehicleId}
@@ -7692,7 +7755,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           required
                           className="w-full h-10 rounded-lg border border-border bg-surface px-3 text-xs font-medium text-foreground focus:outline-none focus:border-theme-btn-primary"
                         >
-                          <option value="">-- Choose Fleet Vehicle --</option>
+                          <option value="">-- Select Target Vehicle --</option>
                           {vehicles.map((v) => (
                             <option key={v.id} value={v.id}>
                               {v.registration_number} — {v.make} {v.model} ({v.odometer_km?.toLocaleString() || 0} km)
@@ -7723,7 +7786,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           Job Card / Tax Invoice Number
                         </label>
                         <AppInput
-                          placeholder="e.g. JC-2026-9042 / INV-8472"
                           value={newMaintInvoiceNo}
                           onChange={(e) => setNewMaintInvoiceNo(e.target.value)}
                           className="h-10 text-xs font-mono"
@@ -7771,10 +7833,9 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         <label className="font-semibold text-xs text-foreground">
                           Service / Repair Scope Title *
                         </label>
-                        <span className="text-[11px] text-muted-foreground">Select a preset or type custom</span>
+                        <span className="text-[11px] text-muted-foreground">Select a preset or enter details</span>
                       </div>
                       <AppInput
-                        placeholder="e.g. 20,000 km Major Periodic Service & Synthetic Oil Flush"
                         value={newMaintServiceType}
                         onChange={(e) => setNewMaintServiceType(e.target.value)}
                         required
@@ -7798,162 +7859,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         ))}
                       </div>
                     </div>
-                  </div>
-                )}
 
-                {/* ---------------------------------------------------- */}
-                {/* TAB 2: INSPECTION CHECKLIST & SPARE PARTS */}
-                {/* ---------------------------------------------------- */}
-                {newMaintActiveSection === "PARTS" && (
-                  <div className="space-y-5 animate-in fade-in duration-150">
-                    {/* Standard Multi-point Inspection Checklist */}
-                    <div className="p-4 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/40 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <ClipboardCheck className="h-4 w-4 text-emerald-500" />
-                          <h4 className="font-bold text-xs text-foreground">Standard 7-Point Workshop Inspection Checklist</h4>
-                        </div>
-                        <span className="text-[11px] text-muted-foreground">Toggle items completed during service</span>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
-                        {CHECKLIST_ITEMS.map((item) => {
-                          const isDone = !!newMaintChecklist[item.key];
-                          return (
-                            <AppButton
-                              key={item.key}
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setNewMaintChecklist((prev) => ({
-                                  ...prev,
-                                  [item.key]: !prev[item.key]
-                                }));
-                              }}
-                              className={`p-2.5 h-auto rounded-lg text-left flex items-center justify-between gap-2 text-xs ${
-                                isDone
-                                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-800 dark:text-emerald-300 font-semibold"
-                                  : "bg-surface border-border text-muted-foreground"
-                              }`}
-                            >
-                              <div className="flex items-center gap-2">
-                                <span>{item.icon}</span>
-                                <span className="text-[11px] leading-snug">{item.label}</span>
-                              </div>
-                              <span className={`h-4 w-4 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold ${
-                                isDone ? "bg-emerald-500 text-white" : "border border-border text-transparent"
-                              }`}>
-                                ✓
-                              </span>
-                            </AppButton>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Itemized Replaced Spare Parts & Consumables */}
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="font-bold text-xs text-foreground flex items-center gap-1.5">
-                            <span>Itemized Replaced Spare Parts & Consumables</span>
-                            <span className="px-2 py-0.2 rounded-full text-[10px] bg-primary/10 text-primary font-mono">
-                              {newMaintPartsItems.length} items
-                            </span>
-                          </h4>
-                          <p className="text-[11px] text-muted-foreground mt-0.5">
-                            List individual oils, filters, brake pads, and OEM components replaced
-                          </p>
-                        </div>
-                        <AppButton
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={handleAddPartItem}
-                          className="h-8 text-xs gap-1 border-dashed"
-                        >
-                          <Plus className="h-3.5 w-3.5" />
-                          <span>Add Line Item</span>
-                        </AppButton>
-                      </div>
-
-                      <div className="border border-border rounded-xl overflow-hidden">
-                        <div className="grid grid-cols-12 bg-slate-100/80 dark:bg-slate-800/80 px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                          <div className="col-span-1 text-center">#</div>
-                          <div className="col-span-8">Part Name / Material Description</div>
-                          <div className="col-span-2 text-right">Cost (₹)</div>
-                          <div className="col-span-1 text-center">Action</div>
-                        </div>
-
-                        <div className="divide-y divide-border bg-surface">
-                          {newMaintPartsItems.length === 0 ? (
-                            <div className="p-4 text-center text-xs text-muted-foreground">
-                              No spare parts replaced. Click <strong>Add Line Item</strong> if parts or consumables were billed.
-                            </div>
-                          ) : (
-                            newMaintPartsItems.map((item, idx) => (
-                              <div key={idx} className="grid grid-cols-12 items-center px-3 py-2 gap-2 text-xs">
-                                <div className="col-span-1 text-center font-mono text-muted-foreground text-[11px]">
-                                  {idx + 1}
-                                </div>
-                                <div className="col-span-8">
-                                  <AppInput
-                                    placeholder="e.g. Synthetic Engine Oil 5W-30 (3.5L)"
-                                    value={item.name}
-                                    onChange={(e) => handlePartItemChange(idx, "name", e.target.value)}
-                                    className="h-8 text-xs"
-                                  />
-                                </div>
-                                <div className="col-span-2">
-                                  <AppInput
-                                    type="number"
-                                    placeholder="0"
-                                    value={item.cost || ""}
-                                    onChange={(e) => handlePartItemChange(idx, "cost", e.target.value)}
-                                    className="h-8 text-xs text-right font-mono font-semibold"
-                                  />
-                                </div>
-                                <div className="col-span-1 text-center">
-                                  <AppButton
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon-sm"
-                                    onClick={() => handleRemovePartItem(idx)}
-                                    className="h-7 w-7 text-rose-500 hover:bg-rose-500/10"
-                                    title="Remove Item"
-                                  >
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                  </AppButton>
-                                </div>
-                              </div>
-                            ))
-                          )}
-                        </div>
-
-                        <div className="p-3 bg-slate-50/80 dark:bg-slate-900/60 border-t border-border flex items-center justify-between text-xs">
-                          <span className="font-semibold text-muted-foreground">Spare Parts & Consumables Subtotal:</span>
-                          <span className="font-mono font-bold text-foreground text-sm">
-                            ₹{Number(newMaintPartsCost).toLocaleString("en-IN")}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* ---------------------------------------------------- */}
-                {/* TAB 3: WORKSHOP & BILLING */}
-                {/* ---------------------------------------------------- */}
-                {newMaintActiveSection === "BILLING" && (
-                  <div className="space-y-5 animate-in fade-in duration-150">
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {/* Workshop & Service Advisor */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
                       <div className="sm:col-span-2">
                         <label className="font-semibold block mb-1 text-xs text-foreground">
                           Authorized Workshop / Dealership *
                         </label>
                         <AppInput
-                          placeholder="e.g. Lakozy Toyota Authorized Service Center"
                           value={newMaintVendor}
                           onChange={(e) => setNewMaintVendor(e.target.value)}
                           required
@@ -7962,10 +7875,9 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       </div>
                       <div>
                         <label className="font-semibold block mb-1 text-xs text-foreground">
-                          Workshop Branch / Location
+                          Workshop Location / Branch
                         </label>
                         <AppInput
-                          placeholder="e.g. Andheri East, Mumbai"
                           value={newMaintLocation}
                           onChange={(e) => setNewMaintLocation(e.target.value)}
                           className="h-10 text-xs"
@@ -7978,112 +7890,18 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         Lead Service Advisor / Workshop Technician
                       </label>
                       <AppInput
-                        placeholder="e.g. Ramesh Patil (Senior Diagnostic Technician)"
                         value={newMaintTechnician}
                         onChange={(e) => setNewMaintTechnician(e.target.value)}
                         className="h-10 text-xs"
                       />
                     </div>
-
-                    {/* Financial Costing Breakdown */}
-                    <div className="p-4 rounded-xl border border-border bg-slate-50/60 dark:bg-slate-900/50 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Receipt className="h-4 w-4 text-amber-500" />
-                          <h4 className="font-bold text-xs text-foreground">Invoicing & Financial Cost Breakdown</h4>
-                        </div>
-                        <AppButton
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            const sub = (Number(newMaintPartsCost) || 0) + (Number(newMaintLabourCost) || 0);
-                            const gst = Math.round(sub * 0.18);
-                            setNewMaintTaxCost(gst);
-                            setNewMaintCost(sub + gst);
-                          }}
-                          className="text-[11px] font-semibold text-primary hover:underline p-0 h-auto"
-                        >
-                          Auto-Calculate 18% GST
-                        </AppButton>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div>
-                          <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
-                            Spare Parts Cost (₹)
-                          </label>
-                          <AppInput
-                            type="number"
-                            placeholder="0"
-                            value={newMaintPartsCost}
-                            onChange={(e) => {
-                              const val = Number(e.target.value) || 0;
-                              setNewMaintPartsCost(val);
-                              setNewMaintCost(val + (Number(newMaintLabourCost) || 0) + (Number(newMaintTaxCost) || 0));
-                            }}
-                            className="h-9 text-xs font-mono font-semibold"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
-                            Labour / Workshop Charges (₹)
-                          </label>
-                          <AppInput
-                            type="number"
-                            placeholder="0"
-                            value={newMaintLabourCost}
-                            onChange={(e) => {
-                              const val = Number(e.target.value) || 0;
-                              setNewMaintLabourCost(val);
-                              setNewMaintCost((Number(newMaintPartsCost) || 0) + val + (Number(newMaintTaxCost) || 0));
-                            }}
-                            className="h-9 text-xs font-mono font-semibold"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
-                            Taxes / GST Amount (₹)
-                          </label>
-                          <AppInput
-                            type="number"
-                            placeholder="0"
-                            value={newMaintTaxCost}
-                            onChange={(e) => {
-                              const val = Number(e.target.value) || 0;
-                              setNewMaintTaxCost(val);
-                              setNewMaintCost((Number(newMaintPartsCost) || 0) + (Number(newMaintLabourCost) || 0) + val);
-                            }}
-                            className="h-9 text-xs font-mono font-semibold"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="p-3.5 rounded-xl bg-theme-btn-primary/10 border border-theme-btn-primary/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div>
-                          <span className="text-xs font-bold text-foreground block">
-                            Grand Total Invoiced Amount
-                          </span>
-                          <span className="text-[11px] text-muted-foreground font-mono">
-                            Parts (₹{Number(newMaintPartsCost).toLocaleString("en-IN")}) + Labour (₹{Number(newMaintLabourCost).toLocaleString("en-IN")}) + Taxes (₹{Number(newMaintTaxCost).toLocaleString("en-IN")})
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-xl font-bold font-mono text-foreground">
-                            ₹{Number(newMaintCost).toLocaleString("en-IN")}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
                   </div>
                 )}
 
                 {/* ---------------------------------------------------- */}
-                {/* TAB 4: FORECAST & HANDOVER */}
+                {/* SECTION 2: BILLING & SERVICE FORECAST */}
                 {/* ---------------------------------------------------- */}
-                {newMaintActiveSection === "FORECAST" && (
+                {newMaintActiveSection === "BILLING_FORECAST" && (
                   <div className="space-y-5 animate-in fade-in duration-150">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
@@ -8105,8 +7923,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         </label>
                         <AppInput
                           type="number"
-                          placeholder="0"
-                          value={newMaintOdometer}
+                          value={newMaintOdometer || ""}
                           onChange={(e) => {
                             const val = Number(e.target.value) || 0;
                             setNewMaintOdometer(val);
@@ -8117,6 +7934,130 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           required
                           className="h-10 text-xs font-mono font-semibold"
                         />
+                      </div>
+                    </div>
+
+                    {/* Financial Costing Breakdown */}
+                    <div className="p-4 rounded-xl border border-border bg-slate-50/60 dark:bg-slate-900/50 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Receipt className="h-4 w-4 text-amber-500" />
+                          <h4 className="font-bold text-xs text-foreground">Workshop Invoice & Financial Statement</h4>
+                        </div>
+                        <AppButton
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const sub = (Number(newMaintPartsCost) || 0) + (Number(newMaintLabourCost) || 0);
+                            const gst = Math.round(sub * 0.18);
+                            setNewMaintTaxCost(gst);
+                            setNewMaintCost(sub + gst);
+                          }}
+                          className="text-[11px] font-semibold text-primary hover:underline p-0 h-auto"
+                        >
+                          Auto-Calculate 18% GST
+                        </AppButton>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
+                            Labour / Service Charges (₹)
+                          </label>
+                          <AppInput
+                            type="number"
+                            value={newMaintLabourCost || ""}
+                            onChange={(e) => {
+                              const val = Number(e.target.value) || 0;
+                              setNewMaintLabourCost(val);
+                              setNewMaintCost((Number(newMaintPartsCost) || 0) + val + (Number(newMaintTaxCost) || 0));
+                            }}
+                            className="h-9 text-xs font-mono font-semibold"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
+                            Consumables & Workshop Misc (₹)
+                          </label>
+                          <AppInput
+                            type="number"
+                            value={newMaintPartsCost || ""}
+                            onChange={(e) => {
+                              const val = Number(e.target.value) || 0;
+                              setNewMaintPartsCost(val);
+                              setNewMaintCost(val + (Number(newMaintLabourCost) || 0) + (Number(newMaintTaxCost) || 0));
+                            }}
+                            className="h-9 text-xs font-mono font-semibold"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
+                            Taxes / GST Amount (₹)
+                          </label>
+                          <AppInput
+                            type="number"
+                            value={newMaintTaxCost || ""}
+                            onChange={(e) => {
+                              const val = Number(e.target.value) || 0;
+                              setNewMaintTaxCost(val);
+                              setNewMaintCost((Number(newMaintPartsCost) || 0) + (Number(newMaintLabourCost) || 0) + val);
+                            }}
+                            className="h-9 text-xs font-mono font-semibold"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-theme-btn-primary/10 border border-theme-btn-primary/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                          <span className="text-xs font-bold text-foreground block">
+                            Grand Total Invoiced Amount
+                          </span>
+                          <span className="text-[11px] text-muted-foreground font-mono">
+                            Labour (₹{Number(newMaintLabourCost).toLocaleString("en-IN")}) + Consumables (₹{Number(newMaintPartsCost).toLocaleString("en-IN")}) + Taxes (₹{Number(newMaintTaxCost).toLocaleString("en-IN")})
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xl font-bold font-mono text-foreground">
+                            ₹{Number(newMaintCost).toLocaleString("en-IN")}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                        <div>
+                          <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
+                            Payment Mode / Channel
+                          </label>
+                          <select
+                            value={newMaintPaymentMode}
+                            onChange={(e) => setNewMaintPaymentMode(e.target.value)}
+                            className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs font-medium text-foreground focus:outline-none focus:border-theme-btn-primary"
+                          >
+                            <option value="UPI / Bank Transfer">UPI / Bank Transfer</option>
+                            <option value="Corporate Credit Card">Corporate Credit Card</option>
+                            <option value="Cash / Petty Cash">Cash / Petty Cash</option>
+                            <option value="Workshop Ledger Account">Workshop Ledger Account</option>
+                            <option value="Cheque / DD">Cheque / Demand Draft</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
+                            Payment Settlement Status
+                          </label>
+                          <select
+                            value={newMaintPaymentStatus}
+                            onChange={(e) => setNewMaintPaymentStatus(e.target.value)}
+                            className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs font-medium text-foreground focus:outline-none focus:border-theme-btn-primary"
+                          >
+                            <option value="PAID">Paid / Settled</option>
+                            <option value="PENDING">Pending Settlement</option>
+                            <option value="BILLED_TO_ACCOUNT">Billed to Corporate Account</option>
+                          </select>
+                        </div>
                       </div>
                     </div>
 
@@ -8146,8 +8087,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           </label>
                           <AppInput
                             type="number"
-                            placeholder="e.g. 60000"
-                            value={newMaintNextDueOdometer}
+                            value={newMaintNextDueOdometer || ""}
                             onChange={(e) => setNewMaintNextDueOdometer(Number(e.target.value) || 0)}
                             className="h-9 text-xs font-mono font-semibold"
                           />
@@ -8195,7 +8135,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       </label>
                       <textarea
                         rows={3}
-                        placeholder="e.g. Brake pads inspected with 6mm friction remaining. Coolant ratio 50:50. Recommended tyre replacement at 45,000 km."
                         value={newMaintNotes}
                         onChange={(e) => setNewMaintNotes(e.target.value)}
                         className="w-full rounded-lg border border-border bg-surface p-2.5 text-xs focus:outline-none focus:border-theme-btn-primary"
@@ -8208,16 +8147,12 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               {/* Modal Footer Controls */}
               <div className="p-4 border-t border-border bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
                 <div>
-                  {newMaintActiveSection !== "SCOPE" && (
+                  {newMaintActiveSection !== "SCOPE_WORKSHOP" && (
                     <AppButton
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={() => {
-                        if (newMaintActiveSection === "FORECAST") setNewMaintActiveSection("BILLING");
-                        else if (newMaintActiveSection === "BILLING") setNewMaintActiveSection("PARTS");
-                        else if (newMaintActiveSection === "PARTS") setNewMaintActiveSection("SCOPE");
-                      }}
+                      onClick={() => setNewMaintActiveSection("SCOPE_WORKSHOP")}
                       className="gap-1 text-xs"
                     >
                       <ArrowLeft className="h-3.5 w-3.5" />
@@ -8231,19 +8166,15 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     Cancel
                   </AppButton>
 
-                  {newMaintActiveSection !== "FORECAST" ? (
+                  {newMaintActiveSection === "SCOPE_WORKSHOP" ? (
                     <AppButton
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => {
-                        if (newMaintActiveSection === "SCOPE") setNewMaintActiveSection("PARTS");
-                        else if (newMaintActiveSection === "PARTS") setNewMaintActiveSection("BILLING");
-                        else if (newMaintActiveSection === "BILLING") setNewMaintActiveSection("FORECAST");
-                      }}
+                      onClick={() => setNewMaintActiveSection("BILLING_FORECAST")}
                       className="gap-1 text-xs font-semibold"
                     >
-                      <span>Next Step</span>
+                      <span>Next: Billing & Forecast</span>
                       <ArrowRight className="h-3.5 w-3.5" />
                     </AppButton>
                   ) : null}
@@ -8255,6 +8186,503 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   >
                     {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                     <span>Save & Log Job Card</span>
+                  </AppButton>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------------------------- */}
+      {/* EDIT SERVICE RECORD & WORKSHOP BILL MODAL */}
+      {/* ---------------------------------------------------------------------- */}
+      {isEditMaintenanceOpen && selectedMaintenanceForEdit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-200">
+          <div className="bg-surface border border-border w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 border-b border-border bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/25 shrink-0 shadow-xs">
+                  <Edit2 className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-bold text-foreground">Edit Workshop Job Card & Service Bill</h3>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25">
+                      {editMaintInvoiceNo || `#${selectedMaintenanceForEdit.id.slice(-6)}`}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Update service scope, billing amounts, workshop info, and forecast with full audit tracking
+                  </p>
+                </div>
+              </div>
+              <AppButton 
+                variant="ghost" 
+                size="icon-sm" 
+                onClick={() => {
+                  setIsEditMaintenanceOpen(false);
+                  setSelectedMaintenanceForEdit(null);
+                }}
+              >
+                <X className="h-4 w-4" />
+              </AppButton>
+            </div>
+
+            {/* Navigation Tabs Header */}
+            <div className="px-5 py-2.5 bg-surface/80 border-b border-border flex items-center gap-2 overflow-x-auto text-xs font-semibold">
+              <AppButton
+                type="button"
+                variant={editMaintActiveSection === "SCOPE_WORKSHOP" ? "primary" : "ghost"}
+                size="sm"
+                onClick={() => setEditMaintActiveSection("SCOPE_WORKSHOP")}
+                className={`h-8 text-xs shrink-0 ${editMaintActiveSection === "SCOPE_WORKSHOP" ? "bg-theme-btn-primary text-white font-bold" : "text-muted-foreground"}`}
+              >
+                <span>1. Vehicle & Service Scope</span>
+              </AppButton>
+              <AppButton
+                type="button"
+                variant={editMaintActiveSection === "BILLING_FORECAST" ? "primary" : "ghost"}
+                size="sm"
+                onClick={() => setEditMaintActiveSection("BILLING_FORECAST")}
+                className={`h-8 text-xs shrink-0 gap-1.5 ${editMaintActiveSection === "BILLING_FORECAST" ? "bg-theme-btn-primary text-white font-bold" : "text-muted-foreground"}`}
+              >
+                <Receipt className="h-3.5 w-3.5" />
+                <span>2. Billing & Service Forecast</span>
+              </AppButton>
+            </div>
+
+            <form onSubmit={handleUpdateMaintenance} className="flex-1 overflow-y-auto flex flex-col">
+              <div className="p-5 space-y-5 flex-1">
+                {/* ---------------------------------------------------- */}
+                {/* SECTION 1: VEHICLE & SERVICE SCOPE */}
+                {/* ---------------------------------------------------- */}
+                {editMaintActiveSection === "SCOPE_WORKSHOP" && (
+                  <div className="space-y-4 animate-in fade-in duration-150">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="font-semibold block mb-1.5 text-xs text-foreground">
+                          Target Fleet Vehicle *
+                        </label>
+                        <select
+                          value={editMaintVehicleId}
+                          onChange={(e) => setEditMaintVehicleId(e.target.value)}
+                          required
+                          className="w-full h-10 rounded-lg border border-border bg-surface px-3 text-xs font-medium text-foreground focus:outline-none focus:border-theme-btn-primary"
+                        >
+                          <option value="">-- Select Target Vehicle --</option>
+                          {vehicles.map((v) => (
+                            <option key={v.id} value={v.id}>
+                              {v.registration_number} — {v.make} {v.model} ({v.odometer_km?.toLocaleString() || 0} km)
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="font-semibold block mb-1.5 text-xs text-foreground">
+                          Job Card / Tax Invoice Number
+                        </label>
+                        <AppInput
+                          value={editMaintInvoiceNo}
+                          onChange={(e) => setEditMaintInvoiceNo(e.target.value)}
+                          className="h-10 text-xs font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Maintenance Category Grid */}
+                    <div>
+                      <label className="font-semibold block mb-2 text-xs text-foreground">
+                        Maintenance Category *
+                      </label>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {MAINTENANCE_CATEGORIES.map((cat) => {
+                          const isSelected = editMaintCategory === cat.id;
+                          return (
+                            <AppButton
+                              key={cat.id}
+                              type="button"
+                              variant={isSelected ? "primary" : "outline"}
+                              size="sm"
+                              onClick={() => setEditMaintCategory(cat.id)}
+                              className={`p-2.5 h-auto rounded-xl text-left flex items-center justify-start gap-2.5 text-xs ${
+                                isSelected
+                                  ? "border-theme-btn-primary bg-theme-btn-primary/5 text-foreground ring-1 ring-theme-btn-primary"
+                                  : "border-border bg-surface text-muted-foreground"
+                              }`}
+                            >
+                              <span className="text-base">{cat.icon}</span>
+                              <span className={`font-semibold leading-tight text-[11px] ${isSelected ? "text-foreground" : ""}`}>
+                                {cat.label}
+                              </span>
+                            </AppButton>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Service Description Title */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="font-semibold text-xs text-foreground">
+                          Service / Repair Scope Title *
+                        </label>
+                      </div>
+                      <AppInput
+                        value={editMaintServiceType}
+                        onChange={(e) => setEditMaintServiceType(e.target.value)}
+                        required
+                        className="h-10 text-xs font-medium"
+                      />
+
+                      {/* Quick Presets */}
+                      <div className="mt-2.5 flex flex-wrap gap-1.5 items-center">
+                        <span className="text-[10px] uppercase font-bold text-muted-foreground mr-1">Quick Presets:</span>
+                        {SERVICE_PRESETS.map((preset) => (
+                          <AppButton
+                            key={preset}
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setEditMaintServiceType(preset)}
+                            className="h-6 px-2 text-[11px] bg-slate-100 dark:bg-slate-800/80 border-border text-muted-foreground hover:text-theme-btn-primary"
+                          >
+                            <span>+ {preset}</span>
+                          </AppButton>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Workshop & Service Advisor */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                      <div className="sm:col-span-2">
+                        <label className="font-semibold block mb-1 text-xs text-foreground">
+                          Authorized Workshop / Dealership *
+                        </label>
+                        <AppInput
+                          value={editMaintVendor}
+                          onChange={(e) => setEditMaintVendor(e.target.value)}
+                          required
+                          className="h-10 text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="font-semibold block mb-1 text-xs text-foreground">
+                          Workshop Location / Branch
+                        </label>
+                        <AppInput
+                          value={editMaintLocation}
+                          onChange={(e) => setEditMaintLocation(e.target.value)}
+                          className="h-10 text-xs"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="font-semibold block mb-1 text-xs text-foreground">
+                        Lead Service Advisor / Workshop Technician
+                      </label>
+                      <AppInput
+                        value={editMaintTechnician}
+                        onChange={(e) => setEditMaintTechnician(e.target.value)}
+                        className="h-10 text-xs"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* ---------------------------------------------------- */}
+                {/* SECTION 2: BILLING & SERVICE FORECAST */}
+                {/* ---------------------------------------------------- */}
+                {editMaintActiveSection === "BILLING_FORECAST" && (
+                  <div className="space-y-5 animate-in fade-in duration-150">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="font-semibold block mb-1 text-xs text-foreground">
+                          Service Execution Date *
+                        </label>
+                        <AppInput
+                          type="date"
+                          value={editMaintDate}
+                          onChange={(e) => setEditMaintDate(e.target.value)}
+                          required
+                          className="h-10 text-xs font-mono"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="font-semibold block mb-1 text-xs text-foreground">
+                          Vehicle Odometer at Service (km) *
+                        </label>
+                        <AppInput
+                          type="number"
+                          value={editMaintOdometer || ""}
+                          onChange={(e) => setEditMaintOdometer(Number(e.target.value) || 0)}
+                          required
+                          className="h-10 text-xs font-mono font-semibold"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Financial Costing Breakdown */}
+                    <div className="p-4 rounded-xl border border-border bg-slate-50/60 dark:bg-slate-900/50 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Receipt className="h-4 w-4 text-amber-500" />
+                          <h4 className="font-bold text-xs text-foreground">Workshop Invoice & Financial Statement</h4>
+                        </div>
+                        <AppButton
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const sub = (Number(editMaintPartsCost) || 0) + (Number(editMaintLabourCost) || 0);
+                            const gst = Math.round(sub * 0.18);
+                            setEditMaintTaxCost(gst);
+                            setEditMaintCost(sub + gst);
+                          }}
+                          className="text-[11px] font-semibold text-primary hover:underline p-0 h-auto"
+                        >
+                          Auto-Calculate 18% GST
+                        </AppButton>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
+                            Labour / Service Charges (₹)
+                          </label>
+                          <AppInput
+                            type="number"
+                            value={editMaintLabourCost || ""}
+                            onChange={(e) => {
+                              const val = Number(e.target.value) || 0;
+                              setEditMaintLabourCost(val);
+                              setEditMaintCost((Number(editMaintPartsCost) || 0) + val + (Number(editMaintTaxCost) || 0));
+                            }}
+                            className="h-9 text-xs font-mono font-semibold"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
+                            Consumables & Workshop Misc (₹)
+                          </label>
+                          <AppInput
+                            type="number"
+                            value={editMaintPartsCost || ""}
+                            onChange={(e) => {
+                              const val = Number(e.target.value) || 0;
+                              setEditMaintPartsCost(val);
+                              setEditMaintCost(val + (Number(editMaintLabourCost) || 0) + (Number(editMaintTaxCost) || 0));
+                            }}
+                            className="h-9 text-xs font-mono font-semibold"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
+                            Taxes / GST Amount (₹)
+                          </label>
+                          <AppInput
+                            type="number"
+                            value={editMaintTaxCost || ""}
+                            onChange={(e) => {
+                              const val = Number(e.target.value) || 0;
+                              setEditMaintTaxCost(val);
+                              setEditMaintCost((Number(editMaintPartsCost) || 0) + (Number(editMaintLabourCost) || 0) + val);
+                            }}
+                            className="h-9 text-xs font-mono font-semibold"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-theme-btn-primary/10 border border-theme-btn-primary/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                          <span className="text-xs font-bold text-foreground block">
+                            Grand Total Invoiced Amount
+                          </span>
+                          <span className="text-[11px] text-muted-foreground font-mono">
+                            Labour (₹{Number(editMaintLabourCost).toLocaleString("en-IN")}) + Consumables (₹{Number(editMaintPartsCost).toLocaleString("en-IN")}) + Taxes (₹{Number(editMaintTaxCost).toLocaleString("en-IN")})
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xl font-bold font-mono text-foreground">
+                            ₹{Number(editMaintCost).toLocaleString("en-IN")}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                        <div>
+                          <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
+                            Payment Mode / Channel
+                          </label>
+                          <select
+                            value={editMaintPaymentMode}
+                            onChange={(e) => setEditMaintPaymentMode(e.target.value)}
+                            className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs font-medium text-foreground focus:outline-none focus:border-theme-btn-primary"
+                          >
+                            <option value="UPI / Bank Transfer">UPI / Bank Transfer</option>
+                            <option value="Corporate Credit Card">Corporate Credit Card</option>
+                            <option value="Cash / Petty Cash">Cash / Petty Cash</option>
+                            <option value="Workshop Ledger Account">Workshop Ledger Account</option>
+                            <option value="Cheque / DD">Cheque / Demand Draft</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
+                            Payment Settlement Status
+                          </label>
+                          <select
+                            value={editMaintPaymentStatus}
+                            onChange={(e) => setEditMaintPaymentStatus(e.target.value)}
+                            className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs font-medium text-foreground focus:outline-none focus:border-theme-btn-primary"
+                          >
+                            <option value="PAID">Paid / Settled</option>
+                            <option value="PENDING">Pending Settlement</option>
+                            <option value="BILLED_TO_ACCOUNT">Billed to Corporate Account</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Next Service Forecast */}
+                    <div className="p-4 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/40 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-blue-500" />
+                        <h4 className="font-bold text-xs text-foreground">Next Scheduled Service Due Forecasting</h4>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
+                            Next Service Due Date
+                          </label>
+                          <AppInput
+                            type="date"
+                            value={editMaintNextDue}
+                            onChange={(e) => setEditMaintNextDue(e.target.value)}
+                            className="h-9 text-xs font-mono"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
+                            Next Service Due Odometer (km)
+                          </label>
+                          <AppInput
+                            type="number"
+                            value={editMaintNextDueOdometer || ""}
+                            onChange={(e) => setEditMaintNextDueOdometer(Number(e.target.value) || 0)}
+                            className="h-9 text-xs font-mono font-semibold"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Post-Service Vehicle Status */}
+                    <div>
+                      <label className="font-semibold block mb-1.5 text-xs text-foreground">
+                        Post-Service Vehicle Fleet Status
+                      </label>
+                      <div className="grid grid-cols-3 gap-2 text-xs">
+                        {[
+                          { id: "IN_STOCK", label: "Available (Ready for Dispatch)", desc: "Parked at hub", color: "border-emerald-500/30 bg-emerald-500/5 text-emerald-700 dark:text-emerald-300" },
+                          { id: "ON_DUTY", label: "On Duty (Direct Deployment)", desc: "Immediately assigned", color: "border-blue-500/30 bg-blue-500/5 text-blue-700 dark:text-blue-300" },
+                          { id: "MAINTENANCE", label: "Under Observation", desc: "Test drive / monitoring", color: "border-amber-500/30 bg-amber-500/5 text-amber-700 dark:text-amber-300" }
+                        ].map((st) => {
+                          const isSel = editMaintPostStatus === st.id;
+                          return (
+                            <AppButton
+                              key={st.id}
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setEditMaintPostStatus(st.id)}
+                              className={`p-2.5 h-auto rounded-xl text-left transition-all ${
+                                isSel ? `${st.color} ring-1 ring-primary font-semibold` : "border-border bg-surface text-muted-foreground"
+                              }`}
+                            >
+                              <div>
+                                <div className="font-bold text-xs">{st.label}</div>
+                                <div className="text-[10px] opacity-80 mt-0.5">{st.desc}</div>
+                              </div>
+                            </AppButton>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Technician Notes & Observations */}
+                    <div>
+                      <label className="font-semibold block mb-1 text-xs text-foreground">
+                        Workshop Technician Observations & Advisory Notes
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={editMaintNotes}
+                        onChange={(e) => setEditMaintNotes(e.target.value)}
+                        className="w-full rounded-lg border border-border bg-surface p-2.5 text-xs focus:outline-none focus:border-theme-btn-primary"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer Controls */}
+              <div className="p-4 border-t border-border bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
+                <div>
+                  {editMaintActiveSection !== "SCOPE_WORKSHOP" && (
+                    <AppButton
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setEditMaintActiveSection("SCOPE_WORKSHOP")}
+                      className="gap-1 text-xs"
+                    >
+                      <ArrowLeft className="h-3.5 w-3.5" />
+                      <span>Previous Step</span>
+                    </AppButton>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <AppButton 
+                    type="button" 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => {
+                      setIsEditMaintenanceOpen(false);
+                      setSelectedMaintenanceForEdit(null);
+                    }}
+                  >
+                    Cancel
+                  </AppButton>
+
+                  {editMaintActiveSection === "SCOPE_WORKSHOP" ? (
+                    <AppButton
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEditMaintActiveSection("BILLING_FORECAST")}
+                      className="gap-1 text-xs font-semibold"
+                    >
+                      <span>Next: Billing & Forecast</span>
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </AppButton>
+                  ) : null}
+
+                  <AppButton
+                    type="submit"
+                    disabled={modalSubmitting}
+                    className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white font-bold gap-1.5 shadow-xs text-xs h-9 px-4"
+                  >
+                    {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                    <span>Update Service Record</span>
                   </AppButton>
                 </div>
               </div>
@@ -8289,6 +8717,22 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               </div>
 
               <div className="flex items-center gap-1.5">
+                {canManageMaintenance && (
+                  <AppButton
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const rec = selectedMaintenanceForView;
+                      setSelectedMaintenanceForView(null);
+                      openEditMaintenanceModal(rec);
+                    }}
+                    className="gap-1 text-xs h-8 text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/10 font-semibold"
+                    title="Edit Record"
+                  >
+                    <Edit2 className="h-3.5 w-3.5" />
+                    <span>Edit</span>
+                  </AppButton>
+                )}
                 <AppButton
                   variant="outline"
                   size="sm"
@@ -8323,6 +8767,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   icon: "🔧",
                   badge: "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20"
                 };
+
+                const auditTrail = Array.isArray(partsData?.audit_trail) ? partsData.audit_trail : [];
 
                 return (
                   <>
@@ -8380,64 +8826,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       </div>
                     </div>
 
-                    {/* Inspection Checklist */}
-                    {partsData?.checklist && (
-                      <div className="p-4 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/40 space-y-3">
-                        <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                          <ClipboardCheck className="h-4 w-4 text-emerald-500" />
-                          <span>Standard Workshop Inspection Checklist</span>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                          {CHECKLIST_ITEMS.map((item) => {
-                            const isDone = !!partsData.checklist[item.key];
-                            return (
-                              <div
-                                key={item.key}
-                                className={`p-2 rounded-lg border flex items-center justify-between gap-1.5 text-xs ${
-                                  isDone
-                                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-800 dark:text-emerald-300 font-semibold"
-                                    : "bg-surface border-border text-muted-foreground opacity-60"
-                                }`}
-                              >
-                                <div className="flex items-center gap-1.5">
-                                  <span>{item.icon}</span>
-                                  <span className="text-[11px]">{item.label}</span>
-                                </div>
-                                <span className={`h-4 w-4 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold ${
-                                  isDone ? "bg-emerald-500 text-white" : "border border-border text-transparent"
-                                }`}>
-                                  ✓
-                                </span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Replaced Spare Parts & Consumables Table */}
-                    {Array.isArray(partsData?.parts_items) && partsData.parts_items.length > 0 && (
-                      <div className="border border-border rounded-xl overflow-hidden">
-                        <div className="bg-slate-100/80 dark:bg-slate-800/80 px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
-                          <span>Replaced Spare Parts & Consumables</span>
-                          <span className="font-mono">{partsData.parts_items.length} items</span>
-                        </div>
-                        <div className="divide-y divide-border bg-surface">
-                          {partsData.parts_items.map((pt: any, i: number) => (
-                            <div key={i} className="px-4 py-2.5 flex items-center justify-between text-xs">
-                              <div className="flex items-center gap-2">
-                                <span className="font-mono text-muted-foreground text-[11px]">{i + 1}.</span>
-                                <span className="font-medium text-foreground">{pt.name}</span>
-                              </div>
-                              <div className="font-mono font-bold text-foreground">
-                                ₹{Number(pt.cost || 0).toLocaleString("en-IN")}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
                     {/* Billing & Tax Statement */}
                     <div className="p-4 rounded-xl border border-border bg-surface space-y-3">
                       <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
@@ -8446,15 +8834,15 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       </div>
                       <div className="space-y-1.5">
                         <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>Spare Parts Subtotal:</span>
-                          <span className="font-mono font-medium text-foreground">
-                            ₹{Number(partsData?.parts_cost || 0).toLocaleString("en-IN")}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
                           <span>Labour & Service Charges:</span>
                           <span className="font-mono font-medium text-foreground">
                             ₹{Number(partsData?.labour_cost || 0).toLocaleString("en-IN")}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span>Consumables & Workshop Misc:</span>
+                          <span className="font-mono font-medium text-foreground">
+                            ₹{Number(partsData?.parts_cost || 0).toLocaleString("en-IN")}
                           </span>
                         </div>
                         <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -8463,8 +8851,19 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             ₹{Number(partsData?.tax_amount || 0).toLocaleString("en-IN")}
                           </span>
                         </div>
+                        {partsData?.payment_mode && (
+                          <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
+                            <span>Payment Mode / Status:</span>
+                            <span className="font-medium text-foreground flex items-center gap-1.5">
+                              <span>{partsData.payment_mode}</span>
+                              <span className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                                {partsData.payment_status || "PAID"}
+                              </span>
+                            </span>
+                          </div>
+                        )}
                         <div className="pt-2 border-t border-border flex items-center justify-between text-sm font-bold">
-                          <span className="text-foreground">Grand Total Paid:</span>
+                          <span className="text-foreground">Grand Total Invoiced:</span>
                           <span className="font-mono text-base text-primary">
                             ₹{Number(selectedMaintenanceForView.cost).toLocaleString("en-IN")}
                           </span>
@@ -8505,6 +8904,50 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           <p className="text-xs text-foreground italic">
                             "{partsData.technician_notes}"
                           </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Activity & Audit Trail Timeline */}
+                    <div className="p-4 rounded-xl border border-border bg-slate-50/40 dark:bg-slate-900/30 space-y-3">
+                      <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                        <History className="h-3.5 w-3.5 text-indigo-500" />
+                        <span>Audit Trail & Activity Log History</span>
+                      </div>
+                      
+                      {auditTrail.length === 0 ? (
+                        <div className="text-xs text-muted-foreground py-2 italic">
+                          Created on {selectedMaintenanceForView.service_date}
+                        </div>
+                      ) : (
+                        <div className="divide-y divide-border/60">
+                          {auditTrail.map((entry: any, i: number) => {
+                            const isCreate = entry.action === "CREATED";
+                            return (
+                              <div key={i} className="py-2.5 first:pt-0 last:pb-0 flex items-start gap-2.5 text-xs">
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 mt-0.5 ${
+                                  isCreate 
+                                    ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20" 
+                                    : "bg-blue-500/10 text-blue-600 border border-blue-500/20"
+                                }`}>
+                                  {entry.action}
+                                </span>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="font-semibold text-foreground truncate">
+                                      {entry.performer_name || "Fleet Administrator"}
+                                    </span>
+                                    <span className="text-[10px] font-mono text-muted-foreground shrink-0">
+                                      {entry.timestamp ? new Date(entry.timestamp).toLocaleString("en-IN") : ""}
+                                    </span>
+                                  </div>
+                                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                                    {entry.summary || entry.note || "Activity recorded"}
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
