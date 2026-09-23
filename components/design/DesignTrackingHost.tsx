@@ -101,11 +101,12 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
       try {
         const res = await fetchDesignWorkspaceUsersAction();
         if (res.success && res.users) {
-          res.users.forEach(u => {
-            if (u.designAccess) {
-              DesignMasterStore.saveUserAccess(u.designAccess);
-            }
-          });
+          const accessRecords = res.users
+            .filter(u => !!u.designAccess)
+            .map(u => u.designAccess!);
+          if (accessRecords.length > 0) {
+            DesignMasterStore.saveBulkUserAccess(accessRecords);
+          }
         }
       } catch (err) {
         console.warn("Could not background hydrate design access:", err);

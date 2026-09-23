@@ -2244,6 +2244,37 @@ export class DesignMasterStore {
     this.notify();
   }
 
+  public static saveBulkUserAccess(records: DesignUserAccessRecord[]): void {
+    if (!records || records.length === 0) return;
+    const state = this.getState();
+    if (!state.userAccessList) state.userAccessList = [];
+    let changed = false;
+
+    records.forEach(record => {
+      if (!record || !record.userId) return;
+      const idx = state.userAccessList.findIndex(u => u.userId === record.userId);
+      if (idx >= 0) {
+        state.userAccessList[idx] = {
+          ...state.userAccessList[idx],
+          ...record,
+          updatedAt: new Date().toISOString()
+        };
+        changed = true;
+      } else {
+        state.userAccessList.push({
+          ...record,
+          id: record.id || `dua-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+          updatedAt: new Date().toISOString()
+        });
+        changed = true;
+      }
+    });
+
+    if (changed) {
+      this.notify();
+    }
+  }
+
   public static deleteUserAccess(userId: string): void {
     const state = this.getState();
     if (!state.userAccessList) return;

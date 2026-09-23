@@ -198,11 +198,12 @@ export const DesignRbacGovernance: React.FC = () => {
       const res = await fetchDesignWorkspaceUsersAction();
       if (res.success && res.users) {
         setWorkspaceUsers(res.users);
-        res.users.forEach(u => {
-          if (u.designAccess) {
-            DesignMasterStore.saveUserAccess(u.designAccess);
-          }
-        });
+        const accessRecords = res.users
+          .filter(u => !!u.designAccess)
+          .map(u => u.designAccess!);
+        if (accessRecords.length > 0) {
+          DesignMasterStore.saveBulkUserAccess(accessRecords);
+        }
       } else {
         const storeAccess = DesignMasterStore.getUserAccessList();
         const fallbackUsers: DesignWorkspaceUser[] = storeAccess.map(a => ({

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useCallback, memo } from "react";
 import { toast } from "react-toastify";
 import { 
   DesignMasterStore 
@@ -19,36 +19,40 @@ import {
   Clock, 
   Check, 
   X, 
-  SlidersHorizontal, 
   Tag, 
-  Sparkles, 
   CheckSquare, 
   Square,
-  Building2,
   AlertCircle,
   ShieldCheck
 } from "lucide-react";
 import { DeleteDependencyModal } from "../DeleteDependencyModal";
 
-interface ConsultantMasterViewProps {
-  onSelectConsultant?: (consultant: ConsultantPartner) => void;
+interface ConsultantFormModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  editingConsultant: ConsultantPartner | null;
+  categories: CategoryMaster[];
+  onSave: (data: {
+    name: string;
+    leadContact: string;
+    email: string;
+    phone: string;
+    tatDays: string;
+    rating: string;
+    selectedCategories: string[];
+  }) => void;
 }
 
-export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
-  const store = DesignMasterStore.getState();
-  const consultants = store.consultants || [];
-  const categories = DesignMasterStore.getCategories();
-  const projects = store.projects || [];
-
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState("ALL");
-  const [selectedOnboardingFilter, setSelectedOnboardingFilter] = useState("ALL");
-
-  // Modal states
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingConsultant, setEditingConsultant] = useState<ConsultantPartner | null>(null);
-
-  // Form states
+// ==============================================================================
+// Isolated Memoized Modal: Prevents full background UI re-renders on keystrokes
+// ==============================================================================
+const ConsultantFormModal: React.FC<ConsultantFormModalProps> = memo(({
+  isOpen,
+  onClose,
+  editingConsultant,
+  categories,
+  onSave
+}) => {
   const [name, setName] = useState("");
   const [leadContact, setLeadContact] = useState("");
   const [email, setEmail] = useState("");
@@ -59,58 +63,47 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
   const [categorySearchQuery, setCategorySearchQuery] = useState("");
   const [formError, setFormError] = useState("");
 
-  // Delete modal states
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [deleteReport, setDeleteReport] = useState<EntityDependencyReport | null>(null);
-  const [consultantToDeleteId, setConsultantToDeleteId] = useState<string | null>(null);
+  // Sync initial form values whenever modal opens or editingConsultant changes
+  useEffect(() => {
+    if (isOpen) {
+      if (editingConsultant) {
+        setName(editingConsultant.name || "");
+        setLeadContact(editingConsultant.leadContact || "");
+        setEmail(editingConsultant.email || "");
+        setPhone(editingConsultant.phone || "");
+        setTatDays(editingConsultant.averageTatDays?.toString() || "3.0");
+        setRating(editingConsultant.rating?.toString() || "4.8");
+        const existingCats = editingConsultant.categories && editingConsultant.categories.length > 0 
+          ? editingConsultant.categories 
+          : (editingConsultant.category ? [editingConsultant.category as string] : []);
+        setSelectedCategories(existingCats);
+      } else {
+        setName("");
+        setLeadContact("");
+        setEmail("");
+        setPhone("");
+        setTatDays("3.0");
+        setRating("4.8");
+        setSelectedCategories([]);
+      }
+      setCategorySearchQuery("");
+      setFormError("");
+    }
+  }, [isOpen, editingConsultant]);
 
-  const handleOpenAdd = () => {
-    setEditingConsultant(null);
-    setName("");
-    setLeadContact("");
-    setEmail("");
-    setPhone("");
-    setTatDays("3.0");
-    setRating("4.8");
-    // Start with empty categories - user selects required mapped categories explicitly
-    setSelectedCategories([]);
-    setCategorySearchQuery("");
-    setFormError("");
-    setIsModalOpen(true);
-  };
-
-  const handleOpenEdit = (c: ConsultantPartner) => {
-    setEditingConsultant(c);
-    setName(c.name);
-    setLeadContact(c.leadContact);
-    setEmail(c.email);
-    setPhone(c.phone);
-    setTatDays(c.averageTatDays?.toString() || "3.0");
-    setRating(c.rating?.toString() || "4.8");
-    
-    // Resolve categories
-    const existingCats = c.categories && c.categories.length > 0 
-      ? c.categories 
-      : (c.category ? [c.category as string] : []);
-    setSelectedCategories(existingCats);
-    setCategorySearchQuery("");
-    setFormError("");
-    setIsModalOpen(true);
-  };
-
-  const handleToggleCategory = (catName: string) => {
+  const handleToggleCategory = useCallback((catName: string) => {
     setSelectedCategories(prev => 
       prev.includes(catName) ? prev.filter(c => c !== catName) : [...prev, catName]
     );
-  };
+  }, []);
 
-  const handleSelectAllCategories = () => {
+  const handleSelectAllCategories = useCallback(() => {
     setSelectedCategories(categories.map(c => c.name));
-  };
+  }, [categories]);
 
-  const handleRemoveAllCategories = () => {
+  const handleRemoveAllCategories = useCallback(() => {
     setSelectedCategories([]);
-  };
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,50 +128,379 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
       return;
     }
 
-    const primaryCategory = selectedCategories[0] || "Architectural";
+    onSave({
+      name: name.trim(),
+      leadContact: leadContact.trim(),
+      email: email.trim(),
+      phone: phone.trim() || "+91 22 0000 0000",
+      tatDays,
+      rating,
+      selectedCategories
+    });
+  };
+
+  const filteredModalCategories = useMemo(() => {
+    if (!categorySearchQuery.trim()) return categories;
+    const q = categorySearchQuery.toLowerCase();
+    return categories.filter(c => 
+      c.name.toLowerCase().includes(q) || (c.code && c.code.toLowerCase().includes(q))
+    );
+  }, [categories, categorySearchQuery]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+      <div className="relative w-full max-w-4xl xl:max-w-5xl rounded-3xl bg-surface border border-border shadow-2xl p-6 sm:p-8 space-y-5 animate-in zoom-in-95 duration-150 my-8">
+        {/* Header */}
+        <div className="flex items-center justify-between pb-3 border-b border-border">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+              <Users className="h-4 w-4" />
+            </div>
+            <h3 className="text-base font-bold text-foreground">
+              {editingConsultant ? "Edit Consultant Master" : "Create New Consultant Partner"}
+            </h3>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-7 w-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-muted-foreground flex items-center justify-center cursor-pointer"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {formError && (
+          <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>{formError}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Firm Name & Lead Contact */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-foreground">
+                Consultant Firm Name <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                required
+                className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-foreground">
+                Lead Contact Person <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={leadContact}
+                onChange={e => setLeadContact(e.target.value)}
+                required
+                className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
+              />
+            </div>
+          </div>
+
+          {/* Email & Phone */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-foreground">
+                Official Email <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-foreground">
+                Direct Phone Number
+              </label>
+              <input
+                type="tel"
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
+              />
+            </div>
+          </div>
+
+          {/* TAT & Rating */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-foreground">
+                Target TAT (Days)
+              </label>
+              <input
+                type="number"
+                step="0.5"
+                min="1"
+                max="30"
+                value={tatDays}
+                onChange={e => setTatDays(e.target.value)}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-foreground">
+                Quality Rating (1.0 - 5.0)
+              </label>
+              <input
+                type="number"
+                step="0.1"
+                min="1"
+                max="5"
+                value={rating}
+                onChange={e => setRating(e.target.value)}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
+              />
+            </div>
+          </div>
+
+          {/* CATEGORY MASTER MAPPING SECTION */}
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-border space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5">
+                <Tag className="h-3.5 w-3.5 text-purple-500" />
+                <label className="text-xs font-bold text-foreground">
+                  Map Categories from Category Master <span className="text-rose-500">*</span>
+                </label>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold">
+                  {selectedCategories.length} Selected
+                </span>
+              </div>
+
+              {/* Quick Select All / Remove All Buttons */}
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={handleSelectAllCategories}
+                  className="px-2 py-1 rounded-lg text-[10px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 transition-colors cursor-pointer inline-flex items-center gap-1"
+                >
+                  <CheckSquare className="h-3 w-3" />
+                  <span>Select All</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRemoveAllCategories}
+                  className="px-2 py-1 rounded-lg text-[10px] font-bold bg-slate-500/10 text-slate-600 dark:text-slate-400 hover:bg-slate-500/20 transition-colors cursor-pointer inline-flex items-center gap-1"
+                >
+                  <Square className="h-3 w-3" />
+                  <span>Remove All</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Category Search */}
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+              <input
+                type="text"
+                value={categorySearchQuery}
+                onChange={e => setCategorySearchQuery(e.target.value)}
+                className="w-full pl-7 pr-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
+              />
+            </div>
+
+            {/* Interactive Category Chips Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-56 overflow-y-auto custom-scrollbar p-1">
+              {filteredModalCategories.map(cat => {
+                const isSelected = selectedCategories.includes(cat.name);
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => handleToggleCategory(cat.name)}
+                    className={`p-2 rounded-xl text-left text-xs border transition-all cursor-pointer flex items-center justify-between gap-2 ${
+                      isSelected
+                        ? "bg-purple-50 dark:bg-purple-950/40 border-purple-500/60 text-purple-900 dark:text-purple-100 font-bold shadow-2xs"
+                        : "bg-background border-border text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="text-sm shrink-0">{cat.icon || "📁"}</span>
+                      <div className="min-w-0">
+                        <div className="truncate font-semibold">{cat.name}</div>
+                        <span className="text-[9px] text-muted-foreground font-mono font-normal">
+                          {cat.code}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className={`h-4 w-4 rounded-md flex items-center justify-center shrink-0 border ${
+                      isSelected
+                        ? "bg-purple-600 border-purple-600 text-white"
+                        : "border-border bg-background"
+                    }`}>
+                      {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Modal Action Buttons */}
+          <div className="pt-3 border-t border-border flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-3.5 py-1.5 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-foreground cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-md cursor-pointer transition-all"
+            >
+              {editingConsultant ? "Save Consultant" : "Register Consultant"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+});
+
+ConsultantFormModal.displayName = "ConsultantFormModal";
+
+// ==============================================================================
+// Main Consultant Master View Component
+// ==============================================================================
+interface ConsultantMasterViewProps {
+  onSelectConsultant?: (consultant: ConsultantPartner) => void;
+}
+
+export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
+  const [storeState, setStoreState] = useState(() => DesignMasterStore.getState());
+
+  // Subscribe to DesignMasterStore for reactive updates
+  useEffect(() => {
+    const unsubscribe = DesignMasterStore.subscribe(() => {
+      setStoreState({ ...DesignMasterStore.getState() });
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const consultants = storeState.consultants || [];
+  const categories = useMemo(() => DesignMasterStore.getCategories(), [storeState.disciplines]);
+
+  // Fast map lookup for categories to avoid repeated O(N) searching
+  const categoryMap = useMemo(() => {
+    const map = new Map<string, CategoryMaster>();
+    categories.forEach(c => map.set(c.name, c));
+    return map;
+  }, [categories]);
+
+  // Precompute category counts to avoid O(N * M) calculations on every render
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    consultants.forEach(c => {
+      const cats = c.categories && c.categories.length > 0 ? c.categories : (c.category ? [c.category as string] : []);
+      cats.forEach(catName => {
+        counts[catName] = (counts[catName] || 0) + 1;
+      });
+    });
+    return counts;
+  }, [consultants]);
+
+  const onboardedCount = useMemo(() => {
+    return consultants.filter(c => c.onboardingStatus === "Onboard" || (c.activeProjects || []).length > 0).length;
+  }, [consultants]);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState("ALL");
+  const [selectedOnboardingFilter, setSelectedOnboardingFilter] = useState("ALL");
+
+  // Modal states
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingConsultant, setEditingConsultant] = useState<ConsultantPartner | null>(null);
+
+  // Delete modal states
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteReport, setDeleteReport] = useState<EntityDependencyReport | null>(null);
+  const [consultantToDeleteId, setConsultantToDeleteId] = useState<string | null>(null);
+
+  const handleOpenAdd = useCallback(() => {
+    setEditingConsultant(null);
+    setIsModalOpen(true);
+  }, []);
+
+  const handleOpenEdit = useCallback((c: ConsultantPartner) => {
+    setEditingConsultant(c);
+    setIsModalOpen(true);
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setIsModalOpen(false);
+    setEditingConsultant(null);
+  }, []);
+
+  const handleSaveConsultant = useCallback((formData: {
+    name: string;
+    leadContact: string;
+    email: string;
+    phone: string;
+    tatDays: string;
+    rating: string;
+    selectedCategories: string[];
+  }) => {
+    const primaryCategory = formData.selectedCategories[0] || "Architectural";
 
     if (editingConsultant) {
       DesignMasterStore.updateConsultant(editingConsultant.id, {
-        name: name.trim(),
-        leadContact: leadContact.trim(),
-        email: email.trim(),
-        phone: phone.trim() || "+91 22 0000 0000",
+        name: formData.name,
+        leadContact: formData.leadContact,
+        email: formData.email,
+        phone: formData.phone,
         category: primaryCategory as any,
-        categories: selectedCategories,
-        averageTatDays: parseFloat(tatDays) || 3.0,
-        rating: parseFloat(rating) || 5.0
+        categories: formData.selectedCategories,
+        averageTatDays: parseFloat(formData.tatDays) || 3.0,
+        rating: parseFloat(formData.rating) || 5.0
       });
-      toast.success(`Consultant firm "${name.trim()}" updated successfully!`);
+      toast.success(`Consultant firm "${formData.name}" updated successfully!`);
     } else {
       DesignMasterStore.addConsultant({
-        name: name.trim(),
-        leadContact: leadContact.trim(),
-        email: email.trim(),
-        phone: phone.trim() || "+91 22 0000 0000",
+        name: formData.name,
+        leadContact: formData.leadContact,
+        email: formData.email,
+        phone: formData.phone,
         category: primaryCategory as any,
-        categories: selectedCategories,
+        categories: formData.selectedCategories,
         expertise: [],
         activeProjects: [],
         onboardingStatus: "Not Onboard",
         totalDrawingsSubmitted: 0,
-        averageTatDays: parseFloat(tatDays) || 3.0,
-        rating: parseFloat(rating) || 5.0
+        averageTatDays: parseFloat(formData.tatDays) || 3.0,
+        rating: parseFloat(formData.rating) || 5.0
       });
-      toast.success(`Consultant firm "${name.trim()}" registered successfully!`);
+      toast.success(`Consultant firm "${formData.name}" registered successfully!`);
     }
 
     setIsModalOpen(false);
     setEditingConsultant(null);
-  };
+  }, [editingConsultant]);
 
-  const handleTriggerDelete = (c: ConsultantPartner) => {
+  const handleTriggerDelete = useCallback((c: ConsultantPartner) => {
     const report = DesignMasterStore.getEntityDependencies("CONSULTANT", c.id);
     setDeleteReport(report);
     setConsultantToDeleteId(c.id);
     setIsDeleteModalOpen(true);
-  };
+  }, []);
 
-  const handleConfirmDelete = (reason: string) => {
+  const handleConfirmDelete = useCallback((reason: string) => {
     if (consultantToDeleteId) {
       const c = consultants.find(cons => cons.id === consultantToDeleteId);
       DesignMasterStore.deleteConsultant(consultantToDeleteId, reason, "Design Lead");
@@ -186,10 +508,11 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
       setIsDeleteModalOpen(false);
       setConsultantToDeleteId(null);
     }
-  };
+  }, [consultantToDeleteId, consultants]);
 
-  // Filtered consultants
+  // Filtered consultants memoized
   const filteredConsultants = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
     return consultants.filter(c => {
       // Category filter
       if (selectedCategoryFilter !== "ALL") {
@@ -207,8 +530,7 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
       }
 
       // Search query
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
+      if (q) {
         const matchName = c.name.toLowerCase().includes(q);
         const matchContact = (c.leadContact || "").toLowerCase().includes(q);
         const matchEmail = (c.email || "").toLowerCase().includes(q);
@@ -219,15 +541,6 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
       return true;
     });
   }, [consultants, selectedCategoryFilter, selectedOnboardingFilter, searchQuery]);
-
-  // Filtered categories in modal
-  const filteredModalCategories = useMemo(() => {
-    if (!categorySearchQuery.trim()) return categories;
-    const q = categorySearchQuery.toLowerCase();
-    return categories.filter(c => 
-      c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q)
-    );
-  }, [categories, categorySearchQuery]);
 
   return (
     <div className="space-y-4 animate-in fade-in duration-150">
@@ -270,7 +583,7 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
           <div>
             <span className="text-[11px] font-semibold text-muted-foreground block">Onboarded & Tagged</span>
             <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">
-              {consultants.filter(c => c.onboardingStatus === "Onboard" || (c.activeProjects || []).length > 0).length}
+              {onboardedCount}
             </span>
           </div>
           <ShieldCheck className="h-4 w-4 text-emerald-500" />
@@ -279,7 +592,7 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
           <div>
             <span className="text-[11px] font-semibold text-muted-foreground block">Pending Tagging</span>
             <span className="text-lg font-black text-amber-600 dark:text-amber-400">
-              {consultants.filter(c => c.onboardingStatus !== "Onboard" && (!c.activeProjects || c.activeProjects.length === 0)).length}
+              {consultants.length - onboardedCount}
             </span>
           </div>
           <Clock className="h-4 w-4 text-amber-500" />
@@ -355,9 +668,7 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
             All Categories
           </button>
           {categories.map(cat => {
-            const count = consultants.filter(c => 
-              (c.categories && c.categories.includes(cat.name)) || c.category === cat.name
-            ).length;
+            const count = categoryCounts[cat.name] || 0;
 
             return (
               <button
@@ -482,7 +793,7 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                     </span>
                     <div className="flex flex-wrap gap-1 max-h-16 overflow-y-auto custom-scrollbar">
                       {mappedCats.map((catName, idx) => {
-                        const catMaster = categories.find(cat => cat.name === catName);
+                        const catMaster = categoryMap.get(catName);
                         return (
                           <span
                             key={idx}
@@ -524,230 +835,14 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
         </div>
       )}
 
-      {/* Add / Edit Consultant Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-          <div className="relative w-full max-w-4xl xl:max-w-5xl rounded-3xl bg-surface border border-border shadow-2xl p-6 sm:p-8 space-y-5 animate-in zoom-in-95 duration-150 my-8">
-            {/* Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-border">
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
-                  <Users className="h-4 w-4" />
-                </div>
-                <h3 className="text-base font-bold text-foreground">
-                  {editingConsultant ? "Edit Consultant Master" : "Create New Consultant Partner"}
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="h-7 w-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-muted-foreground flex items-center justify-center cursor-pointer"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            {formError && (
-              <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 shrink-0" />
-                <span>{formError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Firm Name & Lead Contact */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-foreground">
-                    Consultant Firm Name <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={e => setName(e.target.value)}
-                    required
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-foreground">
-                    Lead Contact Person <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={leadContact}
-                    onChange={e => setLeadContact(e.target.value)}
-                    required
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
-                  />
-                </div>
-              </div>
-
-              {/* Email & Phone */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-foreground">
-                    Official Email <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    required
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-foreground">
-                    Direct Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={e => setPhone(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
-                  />
-                </div>
-              </div>
-
-              {/* TAT & Rating */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-foreground">
-                    Target TAT (Days)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.5"
-                    min="1"
-                    max="30"
-                    value={tatDays}
-                    onChange={e => setTatDays(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-foreground">
-                    Quality Rating (1.0 - 5.0)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="1"
-                    max="5"
-                    value={rating}
-                    onChange={e => setRating(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
-                  />
-                </div>
-              </div>
-
-              {/* 🎯 CATEGORY MASTER MAPPING SECTION */}
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-border space-y-3">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5">
-                    <Tag className="h-3.5 w-3.5 text-purple-500" />
-                    <label className="text-xs font-bold text-foreground">
-                      Map Categories from Category Master <span className="text-rose-500">*</span>
-                    </label>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold">
-                      {selectedCategories.length} Selected
-                    </span>
-                  </div>
-
-                  {/* Quick Select All / Remove All Buttons */}
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={handleSelectAllCategories}
-                      className="px-2 py-1 rounded-lg text-[10px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 transition-colors cursor-pointer inline-flex items-center gap-1"
-                    >
-                      <CheckSquare className="h-3 w-3" />
-                      <span>Select All</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleRemoveAllCategories}
-                      className="px-2 py-1 rounded-lg text-[10px] font-bold bg-slate-500/10 text-slate-600 dark:text-slate-400 hover:bg-slate-500/20 transition-colors cursor-pointer inline-flex items-center gap-1"
-                    >
-                      <Square className="h-3 w-3" />
-                      <span>Remove All</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Category Search */}
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-                  <input
-                    type="text"
-                    value={categorySearchQuery}
-                    onChange={e => setCategorySearchQuery(e.target.value)}
-                    className="w-full pl-7 pr-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
-                  />
-                </div>
-
-                {/* Interactive Category Chips Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-56 overflow-y-auto custom-scrollbar p-1">
-                  {filteredModalCategories.map(cat => {
-                    const isSelected = selectedCategories.includes(cat.name);
-                    return (
-                      <button
-                        key={cat.id}
-                        type="button"
-                        onClick={() => handleToggleCategory(cat.name)}
-                        className={`p-2 rounded-xl text-left text-xs border transition-all cursor-pointer flex items-center justify-between gap-2 ${
-                          isSelected
-                            ? "bg-purple-50 dark:bg-purple-950/40 border-purple-500/60 text-purple-900 dark:text-purple-100 font-bold shadow-2xs"
-                            : "bg-background border-border text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-                        }`}
-                      >
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <span className="text-sm shrink-0">{cat.icon || "📁"}</span>
-                          <div className="min-w-0">
-                            <div className="truncate font-semibold">{cat.name}</div>
-                            <span className="text-[9px] text-muted-foreground font-mono font-normal">
-                              {cat.code}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className={`h-4 w-4 rounded-md flex items-center justify-center shrink-0 border ${
-                          isSelected
-                            ? "bg-purple-600 border-purple-600 text-white"
-                            : "border-border bg-background"
-                        }`}>
-                          {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Modal Action Buttons */}
-              <div className="pt-3 border-t border-border flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-3.5 py-1.5 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-foreground cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-md cursor-pointer transition-all"
-                >
-                  {editingConsultant ? "Save Consultant" : "Register Consultant"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Add / Edit Consultant Modal (Isolated State & Zero Background Lag) */}
+      <ConsultantFormModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        editingConsultant={editingConsultant}
+        categories={categories}
+        onSave={handleSaveConsultant}
+      />
 
       {/* Delete Dependency Safety Modal */}
       <DeleteDependencyModal
