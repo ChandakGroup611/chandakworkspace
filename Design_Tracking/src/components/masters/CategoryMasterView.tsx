@@ -241,7 +241,7 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
       </div>
 
       {/* Category Grid Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-3.5 w-full">
         {filteredCategories.map(cat => {
           const theme = COLOR_THEMES.find(t => t.id === (cat.color || "purple")) || COLOR_THEMES[0];
           

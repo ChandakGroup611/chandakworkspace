@@ -17,6 +17,7 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
   const isAuthRoute = pathname === "/login" || pathname === "/register" || pathname === "/select-module";
   const isDashboardRoute = pathname === "/";
   const isRequirementDetailsRoute = pathname.startsWith('/requirements/') && pathname.split('/').length === 3 && !['reports', 'approvals', 'grooming'].includes(pathname.split('/')[2]);
+  const isDesignRoute = pathname?.startsWith('/design');
   const isZeroPaddingRoute = isAuthRoute || isRequirementDetailsRoute || isDashboardRoute;
   const [isSidebarCompact, setIsSidebarCompact] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -68,7 +69,9 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
         <main className={`flex-1 flex flex-col min-w-0 min-h-0 relative overflow-y-auto ${
           isZeroPaddingRoute 
             ? 'p-0 pb-16 md:pb-0' 
-            : 'p-3 sm:p-4 md:p-6 lg:p-8 pb-20 md:pb-8 bg-transparent'
+            : isDesignRoute
+              ? 'p-2 sm:p-3 md:p-4 lg:p-5 pb-16 md:pb-6 bg-transparent w-full min-w-0 max-w-none'
+              : 'p-3 sm:p-4 md:p-6 lg:p-8 pb-20 md:pb-8 bg-transparent'
         }`}>
           {children}
         </main>

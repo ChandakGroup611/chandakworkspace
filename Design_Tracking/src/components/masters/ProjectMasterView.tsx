@@ -474,7 +474,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4 w-full">
           {filteredProjects.map(proj => {
             const projTowers = allTowers.filter(t => t.projectId === proj.id);
             const taggedCons = proj.taggedConsultants || [];
