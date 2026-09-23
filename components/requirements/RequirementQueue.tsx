@@ -61,7 +61,7 @@ export function RequirementQueue({ requirements }: { requirements: any[] }) {
             </div>
             
             <h3 className={`font-semibold text-lg leading-tight mb-2 transition-colors line-clamp-2 ${
-              "texttext-2xl font-bold text-foreground group-hover:text-theme-icon"
+              "text-foreground group-hover:text-theme-icon"
             }`}>
               {req.title}
             </h3>

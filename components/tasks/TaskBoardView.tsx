@@ -92,10 +92,11 @@ export default function TaskBoardView({ tasks, statuses, onStatusChange, onTaskC
         newStatusId = overTask.status_id;
       }
     }
-
+    
     if (newStatusId && newStatusId !== "unassigned") {
       const activeTask = tasks.find(t => t.id === activeTaskId);
       if (activeTask && activeTask.status_id !== newStatusId) {
+        if (canUpdateTask && !canUpdateTask(activeTask)) return;
         await onStatusChange(activeTaskId, newStatusId);
       }
     }

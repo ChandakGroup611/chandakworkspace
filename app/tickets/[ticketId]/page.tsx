@@ -16,7 +16,7 @@ import DOMPurify from 'dompurify';
 export default function TicketDetailsPage({ params }: { params: Promise<{ ticketId: string }> }) {
   const router = useRouter();
   const { ticketId } = use(params);
-  const { userId, loading: permissionsLoading } = usePermissions();
+  const { userId, hasPermission, roleCode, loading: permissionsLoading } = usePermissions();
 
   const [loading, setLoading] = useState(true);
   const [ticketData, setTicketData] = useState<any>(null);
@@ -118,6 +118,10 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
     );
   }
 
+  const isSuperAdmin = roleCode === "SUPER_ADMIN" || (hasPermission && hasPermission("SUPER_ADMIN"));
+  const isTicketOwner = userId ? (ticketData.created_by === userId || ticketData.assigned_to === userId || ticketData.owner_id === userId) : false;
+  const canEditTicket = isSuperAdmin || isTicketOwner || (hasPermission && (hasPermission("TICKETS_UPDATE") || hasPermission("TICKETS_MANAGE")));
+
   return (
     <div className="flex flex-col h-full bg-background text-foreground space-y-4 pt-2">
       <div className="px-6 flex flex-wrap items-center gap-4">
@@ -143,7 +147,7 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
                 </p>
               </div>
               <div className="inline-flex items-center gap-2 rounded-2xl bg-theme-btn-primary/10 px-4 py-2 text-xs font-semibold text-theme-icon dark:bg-theme-btn-primary/10 dark:text-purple-200 shrink-0">
-                <ArrowLeft className="h-4 w-4" /> {/* Or some other icon */}
+                <ArrowLeft className="h-4 w-4" />
                 Full ticket page
               </div>
             </div>
@@ -155,23 +159,25 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
                   <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
                     Subject
                   </span>
-                  {!isEditing ? (
-                    <AppButton variant="secondary" onClick={() => setIsEditing(true)} className="text-[10px] font-bold uppercase tracking-widest text-theme-icon hover:text-theme-icon">
-                      Edit
-                    </AppButton>
-                  ) : (
-                    <div className="flex gap-2">
-                      <AppButton variant="secondary" onClick={() => {
-                        setIsEditing(false);
-                        setEditTitle(ticketData.title || "");
-                        setEditDescription(ticketData.description || "");
-                      }} className="text-[10px] font-bold uppercase tracking-widest text-muted hover:text-subtle">
-                        Cancel
+                  {canEditTicket && (
+                    !isEditing ? (
+                      <AppButton variant="secondary" onClick={() => setIsEditing(true)} className="text-[10px] font-bold uppercase tracking-widest text-theme-icon hover:text-theme-icon">
+                        Edit
                       </AppButton>
-                      <AppButton variant="secondary" onClick={handleSaveDetails} className="text-[10px] font-bold uppercase tracking-widest text-success hover:text-success">
-                        Save
-                      </AppButton>
-                    </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <AppButton variant="secondary" onClick={() => {
+                          setIsEditing(false);
+                          setEditTitle(ticketData.title || "");
+                          setEditDescription(ticketData.description || "");
+                        }} className="text-[10px] font-bold uppercase tracking-widest text-muted hover:text-subtle">
+                          Cancel
+                        </AppButton>
+                        <AppButton variant="secondary" onClick={handleSaveDetails} className="text-[10px] font-bold uppercase tracking-widest text-success hover:text-success">
+                          Save
+                        </AppButton>
+                      </div>
+                    )
                   )}
                 </div>
                 <div className="flex items-center gap-3 min-w-0 w-full">
@@ -179,7 +185,7 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
                     <h1 className="text-lg font-bold text-theme-icon dark:text-theme-icon break-words whitespace-normal w-full">{ticketData.title}</h1>
                   ) : (
                     <input 
-                      className="text-lg font-bold w-full border border-theme-btn-primary/30 rounded px-2 py-1 bg-background"
+                      className="text-lg font-bold w-full border border-theme-btn-primary/30 rounded px-2 py-1 bg-background text-foreground"
                       value={editTitle}
                       onChange={(e) => setEditTitle(e.target.value)}
                     />
@@ -198,7 +204,7 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ ticket
                   />
                 ) : (
                   <textarea 
-                    className="w-full text-[13px] sm:text-sm border border-theme-btn-primary/30 rounded-xl p-4 bg-background min-h-[120px] resize-y"
+                    className="w-full text-[13px] sm:text-sm border border-theme-btn-primary/30 rounded-xl p-4 bg-background text-foreground min-h-[120px] resize-y"
                     value={editDescription}
                     onChange={(e) => setEditDescription(e.target.value)}
                   />

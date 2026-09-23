@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { DrawingItem, DrawingStatus } from "../types";
 import { X, CheckCircle2, AlertCircle, Clock, ShieldCheck, Download, FileText } from "lucide-react";
 
@@ -17,11 +18,23 @@ export const ReviewApprovalModal: React.FC<ReviewApprovalModalProps> = ({
   onClose,
   onStatusUpdated
 }) => {
+  const [mounted, setMounted] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<DrawingStatus>(drawing?.status || "Under Review");
   const [reviewComments, setReviewComments] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  if (!isOpen || !drawing) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (drawing) {
+      setSelectedStatus(drawing.status || "Under Review");
+      setReviewComments("");
+    }
+  }, [drawing]);
+
+  if (!isOpen || !drawing || !mounted) return null;
 
   const handleSaveReview = () => {
     setSubmitting(true);
@@ -32,29 +45,29 @@ export const ReviewApprovalModal: React.FC<ReviewApprovalModalProps> = ({
     }, 300);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-      <div className="bg-surface border border-border w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
-        <div className="p-5 border-b border-border bg-surface flex items-center justify-between">
+  return createPortal(
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 backdrop-blur-xs p-3 sm:p-5 md:p-6 animate-in fade-in duration-200">
+      <div className="bg-surface border border-border w-full max-w-2xl rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+        <div className="p-4 sm:p-5 border-b border-border bg-slate-50/50 dark:bg-slate-900/50 shrink-0 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-primary/15 text-primary flex items-center justify-center border border-primary/25">
               <ShieldCheck className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-foreground">Stage-Gate Review & GFC Stamp</h3>
+              <h3 className="text-sm sm:text-base font-bold text-foreground">Stage-Gate Review & GFC Stamp</h3>
               <p className="text-xs text-muted-foreground">{drawing.code} • {drawing.project}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="h-8 w-8 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors cursor-pointer"
+            className="h-8 w-8 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors cursor-pointer"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="p-5 space-y-5 overflow-y-auto flex-1 text-xs">
+        <div className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1 min-h-0 text-xs custom-scrollbar">
           {/* Drawing Profile Card */}
           <div className="p-4 rounded-xl border border-border bg-muted/20 space-y-2.5">
             <div className="flex items-center justify-between">
@@ -137,7 +150,7 @@ export const ReviewApprovalModal: React.FC<ReviewApprovalModalProps> = ({
               rows={3}
               value={reviewComments}
               onChange={(e) => setReviewComments(e.target.value)}
-              className="w-full rounded-lg border border-border bg-background p-2.5 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+              className="w-full rounded-xl border border-border bg-background p-2.5 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary resize-none"
             />
           </div>
 
@@ -151,11 +164,11 @@ export const ReviewApprovalModal: React.FC<ReviewApprovalModalProps> = ({
           )}
         </div>
 
-        <div className="p-4 border-t border-border bg-surface flex items-center justify-end gap-2">
+        <div className="p-4 sm:p-5 border-t border-border bg-slate-50/50 dark:bg-slate-900/50 shrink-0 flex items-center justify-end gap-2">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-xs font-semibold border border-border bg-background text-foreground hover:bg-muted transition-colors cursor-pointer"
+            className="px-4 py-2 rounded-xl text-xs font-semibold border border-border bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             Cancel
           </button>
@@ -169,6 +182,7 @@ export const ReviewApprovalModal: React.FC<ReviewApprovalModalProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

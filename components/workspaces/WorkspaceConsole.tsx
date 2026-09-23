@@ -12,7 +12,7 @@ export function WorkspaceGrid({ workspaces }: { workspaces: any[] }) {
         <div key={ws.id} className="theme-card-structural rounded-2xl p-6 hover: transition-all group">
           <div className="flex justify-between items-start mb-4">
             <div>
-              <h3 className="font-semibold text-lg texttext-2xl font-bold text-foreground group-hover:text-theme-icon transition-colors">{ws.workspace_name}</h3>
+              <h3 className="font-semibold text-lg text-foreground group-hover:text-theme-icon transition-colors">{ws.workspace_name}</h3>
               <p className="text-xs text-muted mt-1">{ws.workspace_code}</p>
             </div>
             {ws.status && (
@@ -81,7 +81,7 @@ export function WorkspaceConsole({ workspace, tasks }: { workspace: any, tasks: 
             </div>
           </div>
           
-          <h2 className="text-lg font-semibold mb-4 texttext-2xl font-bold text-foreground">Active Tasks Kanban</h2>
+          <h2 className="text-lg font-semibold mb-4 text-foreground">Active Tasks Kanban</h2>
           {/* <TaskBoard initialTasks={tasks} statuses={[]} /> */}
         </div>
       </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { DesignRbacPolicy } from "../types/masterTypes";
 import { DesignMasterStore } from "../services/designMasterStore";
 import { saveRbacPoliciesAction } from "@/lib/actions/designTracking";
@@ -60,8 +61,10 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
   const [selectedProject, setSelectedProject] = useState<string>("ALL");
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccessMessage, setSaveSuccessMessage] = useState("");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const unsub = DesignMasterStore.subscribe(() => {
       const s = DesignMasterStore.getState();
       setStoreState(s);
@@ -70,7 +73,7 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
     return unsub;
   }, []);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const currentRoleObj = ROLES.find(r => r.code === selectedRole) || ROLES[0];
 
@@ -200,8 +203,8 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+  return createPortal(
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/65 backdrop-blur-xs p-4 animate-in fade-in duration-150">
       <div className="bg-surface border border-border w-full max-w-4xl rounded-3xl shadow-2xl p-6 sm:p-7 space-y-5 max-h-[90vh] overflow-y-auto custom-scrollbar">
         {/* Header */}
         <div className="flex items-start justify-between border-b border-border pb-4">
@@ -487,6 +490,7 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
         </>
       )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { DesignDiscipline, DrawingItem } from "../types";
 import { DesignMasterStore } from "../services/designMasterStore";
 import { X, Upload, FileText, Check, Sparkles } from "lucide-react";
@@ -16,6 +17,7 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
   onClose,
   onDrawingUploaded
 }) => {
+  const [mounted, setMounted] = useState(false);
   const projects = DesignMasterStore.getUserAccessibleProjects();
   const [code, setCode] = useState("");
   const [title, setTitle] = useState("");
@@ -27,7 +29,11 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
   const [fileSize, setFileSize] = useState("18.4 MB");
   const [submitting, setSubmitting] = useState(false);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!isOpen || !mounted) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,36 +58,36 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
     }, 400);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-      <div className="bg-surface border border-border w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        <div className="p-5 border-b border-border bg-surface flex items-center justify-between">
+  return createPortal(
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 backdrop-blur-xs p-3 sm:p-5 md:p-6 animate-in fade-in duration-200">
+      <div className="bg-surface border border-border w-full max-w-xl rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="p-4 sm:p-5 border-b border-border bg-slate-50/50 dark:bg-slate-900/50 shrink-0 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/25">
               <Upload className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-foreground">Upload Drawing Sheet</h3>
+              <h3 className="text-sm sm:text-base font-bold text-foreground">Upload Drawing Sheet</h3>
               <p className="text-xs text-muted-foreground">Register new CAD or PDF revision into drawing control register</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="h-8 w-8 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors cursor-pointer"
+            className="h-8 w-8 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors cursor-pointer"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto flex-1 text-xs">
-          <div className="grid grid-cols-2 gap-3">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1 min-h-0 text-xs custom-scrollbar">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="font-semibold block mb-1 text-foreground">Target Project *</label>
               <select
                 value={project}
                 onChange={(e) => setProject(e.target.value)}
-                className="w-full h-9 rounded-lg border border-border bg-background px-2.5 text-xs text-foreground cursor-pointer focus:outline-hidden focus:ring-1 focus:ring-primary"
+                className="w-full h-9 rounded-xl border border-border bg-background px-2.5 text-xs text-foreground cursor-pointer focus:outline-hidden focus:ring-1 focus:ring-primary"
               >
                 {projects.map(p => (
                   <option key={p.id} value={p.name}>{p.name}</option>
@@ -93,61 +99,75 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
               <select
                 value={discipline}
                 onChange={(e) => setDiscipline(e.target.value as DesignDiscipline)}
-                className="w-full h-9 rounded-lg border border-border bg-background px-2.5 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                className="w-full h-9 rounded-xl border border-border bg-background px-2.5 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
               >
                 <option value="Architectural">Architectural</option>
                 <option value="Structural">Structural</option>
                 <option value="MEP">MEP (Mech / Elec / Plumb)</option>
-                <option value="Landscape">Landscape</option>
-                <option value="Interior">Interior</option>
+                <option value="Civil">Civil / Infrastructure</option>
+                <option value="Façade">Façade & Glazing</option>
+                <option value="Landscape">Landscape & Hardscape</option>
+                <option value="Interior">Interior / Common Areas</option>
+                <option value="BIM">BIM & Clash Coordination</option>
               </select>
             </div>
           </div>
 
-          <div>
-            <label className="font-semibold block mb-1 text-foreground">Drawing Code / Number *</label>
-            <input
-              type="text"
-              required
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              className="w-full h-9 rounded-lg border border-border bg-background px-3 text-xs font-mono font-bold text-foreground uppercase focus:outline-hidden focus:ring-1 focus:ring-primary"
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="sm:col-span-2">
+              <label className="font-semibold block mb-1 text-foreground">Drawing Sheet Code *</label>
+              <input
+                type="text"
+                required
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                placeholder="e.g. AR-T1-TYP-101"
+                className="w-full h-9 rounded-xl border border-border bg-background px-3 text-xs text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
+              />
+            </div>
+            <div>
+              <label className="font-semibold block mb-1 text-foreground">Revision *</label>
+              <input
+                type="text"
+                required
+                value={revision}
+                onChange={(e) => setRevision(e.target.value)}
+                placeholder="e.g. R0, R1"
+                className="w-full h-9 rounded-xl border border-border bg-background px-3 text-xs text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
+              />
+            </div>
           </div>
 
           <div>
-            <label className="font-semibold block mb-1 text-foreground">Drawing Title *</label>
+            <label className="font-semibold block mb-1 text-foreground">Drawing Title / Description *</label>
             <input
               type="text"
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full h-9 rounded-lg border border-border bg-background px-3 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+              placeholder="e.g. Tower 1 - Typical Floor Architectural General Arrangement Plan"
+              className="w-full h-9 rounded-xl border border-border bg-background px-3 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="font-semibold block mb-1 text-foreground">Revision Tag</label>
-              <select
-                value={revision}
-                onChange={(e) => setRevision(e.target.value)}
-                className="w-full h-9 rounded-lg border border-border bg-background px-2.5 text-xs text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
-              >
-                <option value="R0">R0 (Schematic Draft)</option>
-                <option value="R1">R1 (First Review)</option>
-                <option value="R2">R2 (Post-Clash Revision)</option>
-                <option value="R3">R3 (Pre-GFC Final)</option>
-                <option value="R-GFC">R-GFC (Certified GFC)</option>
-              </select>
-            </div>
-            <div>
-              <label className="font-semibold block mb-1 text-foreground">Author / Consultant</label>
+              <label className="font-semibold block mb-1 text-foreground">Consultant / Firm Author</label>
               <input
                 type="text"
                 value={consultant}
                 onChange={(e) => setConsultant(e.target.value)}
-                className="w-full h-9 rounded-lg border border-border bg-background px-3 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                placeholder="e.g. Hafeez Contractor / MEP Design"
+                className="w-full h-9 rounded-xl border border-border bg-background px-3 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+              />
+            </div>
+            <div>
+              <label className="font-semibold block mb-1 text-foreground">File Size</label>
+              <input
+                type="text"
+                value={fileSize}
+                onChange={(e) => setFileSize(e.target.value)}
+                className="w-full h-9 rounded-xl border border-border bg-background px-3 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
               />
             </div>
           </div>
@@ -158,7 +178,7 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
               rows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full rounded-lg border border-border bg-background p-2.5 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+              className="w-full rounded-xl border border-border bg-background p-2.5 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary resize-none"
             />
           </div>
 
@@ -173,11 +193,11 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
             </div>
           </div>
 
-          <div className="pt-3 border-t border-border flex items-center justify-end gap-2">
+          <div className="p-4 border-t border-border bg-slate-50/50 dark:bg-slate-900/50 shrink-0 flex items-center justify-end gap-2 -mx-4 -mb-4 sm:-mx-5 sm:-mb-5">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-semibold border border-border bg-background text-foreground hover:bg-muted transition-colors cursor-pointer"
+              className="px-4 py-2 rounded-xl text-xs font-semibold border border-border bg-surface text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
               Cancel
             </button>
@@ -191,6 +211,7 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
