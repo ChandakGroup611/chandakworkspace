@@ -1183,10 +1183,50 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         triggerToast(`Vehicle ${editVehiclePlate.toUpperCase()} updated successfully!`);
         setIsEditVehicleOpen(false);
         const updatedVehId = selectedVehicleForEdit.id;
+        
+        // Optimistic state sync
+        setVehicles(prev => prev.map(v => {
+          if (v.id === updatedVehId) {
+            const matchedDriver = drivers.find(d => d.id === editVehicleDriverId);
+            return {
+              ...v,
+              registration_number: editVehiclePlate.trim().toUpperCase(),
+              make: editVehicleMake.trim(),
+              model: editVehicleModel.trim(),
+              variant: editVehicleVariant.trim() || "Standard",
+              category: editVehicleCategory,
+              status: editVehicleStatus,
+              odometer_km: Number(editVehicleOdometer) || 0,
+              nickname: editVehicleNickname.trim() || v.nickname,
+              paint_color: editVehicleColor,
+              vin_chassis_number: editVehicleVin.trim() || v.vin_chassis_number,
+              engine_number: editVehicleEngine.trim() || v.engine_number,
+              fuel_type: editVehicleFuel,
+              registration_date: editVehicleRegDate || v.registration_date,
+              rto_office: editVehicleRtoOffice.trim() || v.rto_office,
+              registered_owner: editVehicleOwner.trim() || v.registered_owner,
+              rto_rmn: editVehicleRtoRmn.trim() || v.rto_rmn,
+              insurance_vendor_id: editVehicleInsuranceVendorId || null,
+              insurance_vendor: editVehicleInsuranceVendor || null,
+              insurance_policy_number: editVehicleInsurancePolicy.trim() || v.insurance_policy_number,
+              insurance_expiry_date: editVehicleInsuranceExpiry || v.insurance_expiry_date,
+              puc_expiry_date: editVehiclePucExpiry || v.puc_expiry_date,
+              fitness_expiry_date: editVehicleFitnessExpiry || v.fitness_expiry_date,
+              has_roadside_assistance: editVehicleRsa,
+              has_hsrp_plate: editVehicleHsrp,
+              assignedDriver: matchedDriver ? { id: matchedDriver.id, full_name: matchedDriver.full_name, phone: matchedDriver.phone } : null
+            };
+          }
+          return v;
+        }));
+
         setSelectedVehicleForEdit(null);
-        loadAllData(true);
+        await loadAllData(true);
+
         if (selectedVehicleForSpecHistory?.id === updatedVehId) {
-          handleOpenVehicleSpecHistoryModal(selectedVehicleForSpecHistory);
+          fetchVehicleSpecificationHistoryAction(updatedVehId).then(hRes => {
+            if (hRes.success) setVehicleSpecHistory(hRes.history);
+          });
         }
       } else {
         triggerToast(res.error || "Failed to update vehicle", true);

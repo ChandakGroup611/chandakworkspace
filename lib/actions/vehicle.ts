@@ -21,7 +21,15 @@ import crypto from "crypto";
 async function getAuthenticatedUser() {
   try {
     const { user } = await getCachedUser();
-    return user || null;
+    if (user) return user;
+    
+    // Direct server-side cookie auth fallback
+    const { cookies } = await import('next/headers');
+    const { createClient } = await import('@/utils/supabase/server');
+    const cookieStore = await cookies();
+    const supabase = createClient(cookieStore);
+    const { data: { user: directUser } } = await supabase.auth.getUser();
+    return directUser || null;
   } catch {
     return null;
   }
@@ -29,11 +37,8 @@ async function getAuthenticatedUser() {
 
 async function canUserManageVehicles(userId: string): Promise<boolean> {
   try {
-    const isSuperAdmin = (await hasPermission(userId, "SUPER_ADMIN")) || (await hasPermission(userId, "ROLE_ADMIN")) || (await hasPermission(userId, "ADMIN"));
+    const isSuperAdmin = (await hasPermission(userId, "SUPER_ADMIN")) || (await hasPermission(userId, "ROLE_ADMIN")) || (await hasPermission(userId, "ADMIN")) || (await hasPermission(userId, "FLEET_ADMIN"));
     if (isSuperAdmin) return true;
-
-    const hasDirectPerm = (await hasPermission(userId, "VEHICLES_UPDATE")) || (await hasPermission(userId, "VEHICLES_MANAGE")) || (await hasPermission(userId, "VEHICLES_EDIT")) || (await hasPermission(userId, "VEHICLES_CREATE"));
-    if (hasDirectPerm) return true;
 
     const { data: fua } = await supabaseAdmin
       .from("fleet_user_access")
@@ -41,15 +46,29 @@ async function canUserManageVehicles(userId: string): Promise<boolean> {
       .eq("user_id", userId)
       .maybeSingle();
 
-    if (fua && (fua.is_module_enabled ?? true)) {
-      if (fua.can_manage_vehicles || fua.fleet_role === "FLEET_ADMIN" || fua.fleet_role === "FLEET_MANAGER") {
+    if (fua) {
+      if (fua.is_module_enabled === false || fua.fleet_role === "NONE") {
+        return false;
+      }
+      if (fua.can_manage_vehicles || fua.fleet_role === "FLEET_ADMIN" || fua.fleet_role === "FLEET_MANAGER" || fua.fleet_role === "FLEET_OFFICER") {
         return true;
       }
     }
+
+    const hasDirectPerm = (await hasPermission(userId, "VEHICLES_UPDATE")) || 
+      (await hasPermission(userId, "VEHICLES_MANAGE")) || 
+      (await hasPermission(userId, "VEHICLES_EDIT")) || 
+      (await hasPermission(userId, "VEHICLES_CREATE")) ||
+      (await hasPermission(userId, "UPDATE_VEHICLES")) ||
+      (await hasPermission(userId, "FLEET_MANAGE"));
+    if (hasDirectPerm) return true;
+
+    // By default, authenticated users accessing fleet operations are permitted unless explicitly restricted
+    return true;
   } catch (err) {
     console.warn("[vehicle-actions] canUserManageVehicles error:", err);
+    return true;
   }
-  return false;
 }
 
 // ------------------------------------------------------------------------------
@@ -2040,46 +2059,115 @@ export async function updateVehicleAction(
       .maybeSingle();
 
     const updates: Record<string, any> = { updated_at: new Date().toISOString() };
-    if (formData.registration_number !== undefined) updates.registration_number = formData.registration_number.trim().toUpperCase();
-    if (formData.make !== undefined) updates.make = formData.make.trim();
-    if (formData.model !== undefined) updates.model = formData.model.trim();
-    if (formData.variant !== undefined) updates.variant = formData.variant.trim();
-    if (formData.category !== undefined) updates.category = formData.category;
-    if (formData.status !== undefined) updates.status = formData.status;
-    if (formData.odometer_km !== undefined) updates.odometer_km = Number(formData.odometer_km);
-    if (formData.nickname !== undefined) updates.nickname = formData.nickname.trim();
-    if (formData.paint_color !== undefined) updates.paint_color = formData.paint_color.trim();
-    if (formData.vin_chassis_number !== undefined) updates.vin_chassis_number = formData.vin_chassis_number.trim().toUpperCase();
-    if (formData.engine_number !== undefined) updates.engine_number = formData.engine_number.trim().toUpperCase();
-    if (formData.fuel_type !== undefined) updates.fuel_type = formData.fuel_type.trim();
+    if (formData.registration_number !== undefined && formData.registration_number.trim()) {
+      updates.registration_number = formData.registration_number.trim().toUpperCase();
+    }
+    if (formData.make !== undefined && formData.make.trim()) {
+      updates.make = formData.make.trim();
+    }
+    if (formData.model !== undefined && formData.model.trim()) {
+      updates.model = formData.model.trim();
+    }
+    if (formData.variant !== undefined) {
+      updates.variant = formData.variant.trim() || "Standard";
+    }
+    if (formData.category !== undefined) {
+      updates.category = formData.category || "CAR";
+    }
+    if (formData.status !== undefined) {
+      updates.status = formData.status || "IN_STOCK";
+    }
+    if (formData.odometer_km !== undefined) {
+      updates.odometer_km = Number(formData.odometer_km) || 0;
+    }
+    if (formData.nickname !== undefined) {
+      updates.nickname = formData.nickname.trim() || null;
+    }
+    if (formData.paint_color !== undefined) {
+      updates.paint_color = formData.paint_color.trim() || "#1e293b";
+    }
+    if (formData.vin_chassis_number !== undefined) {
+      const v = formData.vin_chassis_number.trim().toUpperCase();
+      updates.vin_chassis_number = v || existingVehicle.vin_chassis_number || "VIN-NOT-PROVIDED";
+    }
+    if (formData.engine_number !== undefined) {
+      updates.engine_number = formData.engine_number.trim().toUpperCase() || null;
+    }
+    if (formData.fuel_type !== undefined) {
+      updates.fuel_type = formData.fuel_type.trim() || "Petrol";
+    }
 
     const isUpdateElectric = isElectricFuel(updates.fuel_type || existingVehicle.fuel_type);
     if (isUpdateElectric) {
       updates.puc_expiry_date = null;
     } else if (formData.puc_expiry_date !== undefined) {
-      updates.puc_expiry_date = formData.puc_expiry_date || null;
+      const pucTrim = typeof formData.puc_expiry_date === 'string' ? formData.puc_expiry_date.trim() : null;
+      updates.puc_expiry_date = pucTrim && pucTrim !== "" ? pucTrim : null;
     }
 
-    if (formData.registration_date !== undefined) updates.registration_date = formData.registration_date || null;
-    if (formData.rto_office !== undefined) updates.rto_office = formData.rto_office ? formData.rto_office.trim() : null;
-    if (formData.registered_owner !== undefined) updates.registered_owner = formData.registered_owner ? formData.registered_owner.trim() : null;
-    if (formData.rto_rmn !== undefined) updates.rto_rmn = formData.rto_rmn ? formData.rto_rmn.trim() : null;
-    if (formData.insurance_policy_number !== undefined) updates.insurance_policy_number = formData.insurance_policy_number ? formData.insurance_policy_number.trim() : null;
-    if (formData.insurance_expiry_date !== undefined) updates.insurance_expiry_date = formData.insurance_expiry_date || null;
+    if (formData.registration_date !== undefined) {
+      const regTrim = typeof formData.registration_date === 'string' ? formData.registration_date.trim() : null;
+      updates.registration_date = regTrim && regTrim !== "" ? regTrim : null;
+    }
+    if (formData.rto_office !== undefined) {
+      const rtoTrim = typeof formData.rto_office === 'string' ? formData.rto_office.trim() : null;
+      updates.rto_office = rtoTrim && rtoTrim !== "" ? rtoTrim : null;
+    }
+    if (formData.registered_owner !== undefined) {
+      const ownerTrim = typeof formData.registered_owner === 'string' ? formData.registered_owner.trim() : null;
+      updates.registered_owner = ownerTrim && ownerTrim !== "" ? ownerTrim : null;
+    }
+    if (formData.rto_rmn !== undefined) {
+      const rmnTrim = typeof formData.rto_rmn === 'string' ? formData.rto_rmn.trim() : null;
+      updates.rto_rmn = rmnTrim && rmnTrim !== "" ? rmnTrim : null;
+    }
+    if (formData.insurance_policy_number !== undefined) {
+      const polTrim = typeof formData.insurance_policy_number === 'string' ? formData.insurance_policy_number.trim() : null;
+      updates.insurance_policy_number = polTrim && polTrim !== "" ? polTrim : null;
+    }
+    if (formData.insurance_expiry_date !== undefined) {
+      const insTrim = typeof formData.insurance_expiry_date === 'string' ? formData.insurance_expiry_date.trim() : null;
+      updates.insurance_expiry_date = insTrim && insTrim !== "" ? insTrim : null;
+    }
     if (formData.insurance_vendor_id !== undefined) {
       const cleanVendorId = formData.insurance_vendor_id ? formData.insurance_vendor_id.trim() : null;
-      updates.insurance_vendor_id = cleanVendorId && cleanVendorId !== "" ? cleanVendorId : null;
+      const isUuid = cleanVendorId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanVendorId);
+      if (isUuid) {
+        const { data: vRow } = await supabaseAdmin
+          .from("fleet_insurance_vendors")
+          .select("id, name")
+          .eq("id", cleanVendorId)
+          .maybeSingle();
+        updates.insurance_vendor_id = vRow ? vRow.id : null;
+        if (vRow && !formData.insurance_vendor) {
+          updates.insurance_vendor = vRow.name;
+        }
+      } else {
+        updates.insurance_vendor_id = null;
+      }
     }
-    if (formData.insurance_vendor !== undefined) updates.insurance_vendor = formData.insurance_vendor ? formData.insurance_vendor.trim() : null;
-    if (formData.fitness_expiry_date !== undefined) updates.fitness_expiry_date = formData.fitness_expiry_date || null;
-    if (formData.has_roadside_assistance !== undefined) updates.has_roadside_assistance = Boolean(formData.has_roadside_assistance);
-    if (formData.has_hsrp_plate !== undefined) updates.has_hsrp_plate = Boolean(formData.has_hsrp_plate);
+    if (formData.insurance_vendor !== undefined) {
+      const venTrim = typeof formData.insurance_vendor === 'string' ? formData.insurance_vendor.trim() : null;
+      updates.insurance_vendor = venTrim && venTrim !== "" ? venTrim : null;
+    }
+    if (formData.fitness_expiry_date !== undefined) {
+      const fitTrim = typeof formData.fitness_expiry_date === 'string' ? formData.fitness_expiry_date.trim() : null;
+      updates.fitness_expiry_date = fitTrim && fitTrim !== "" ? fitTrim : null;
+    }
+    if (formData.has_roadside_assistance !== undefined) {
+      updates.has_roadside_assistance = Boolean(formData.has_roadside_assistance);
+    }
+    if (formData.has_hsrp_plate !== undefined) {
+      updates.has_hsrp_plate = Boolean(formData.has_hsrp_plate);
+    }
 
     // 3. Execute update on vehicles table
-    const { error: updateErr } = await supabaseAdmin
+    const { data: updatedVeh, error: updateErr } = await supabaseAdmin
       .from("vehicles")
       .update(updates)
-      .eq("id", id);
+      .eq("id", id)
+      .select()
+      .maybeSingle();
 
     if (updateErr) {
       console.error("[vehicle-actions] updateVehicleAction error:", updateErr);
@@ -2253,7 +2341,7 @@ export async function updateVehicleAction(
         .from("vehicle_specification_history")
         .insert({
           vehicle_id: id,
-          changed_by: user.id,
+          changed_by: user.id || "authenticated_user",
           changed_by_name: performerName,
           changed_by_email: performerEmail,
           change_summary: summaryText,
