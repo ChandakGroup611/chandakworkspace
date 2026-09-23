@@ -657,8 +657,8 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
 
       {/* Add / Edit Project Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="relative w-full max-w-5xl xl:max-w-6xl rounded-3xl bg-surface border border-border shadow-2xl p-6 sm:p-8 space-y-5 animate-in zoom-in-95 duration-150 my-6 max-h-[92vh] flex flex-col justify-between">
+        <div className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="relative w-full max-w-5xl xl:max-w-6xl rounded-3xl bg-surface border border-border shadow-2xl p-6 sm:p-8 space-y-5 my-6 max-h-[92vh] flex flex-col justify-between">
             {/* Header */}
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center gap-2.5">

@@ -150,8 +150,8 @@ const ConsultantFormModal: React.FC<ConsultantFormModalProps> = memo(({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-      <div className="relative w-full max-w-4xl xl:max-w-5xl rounded-3xl bg-surface border border-border shadow-2xl p-6 sm:p-8 space-y-5 animate-in zoom-in-95 duration-150 my-8">
+    <div className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+      <div className="relative w-full max-w-4xl xl:max-w-5xl rounded-3xl bg-surface border border-border shadow-2xl p-6 sm:p-8 space-y-5 my-8">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-border">
           <div className="flex items-center gap-2">
@@ -323,7 +323,7 @@ const ConsultantFormModal: React.FC<ConsultantFormModalProps> = memo(({
                     key={cat.id}
                     type="button"
                     onClick={() => handleToggleCategory(cat.name)}
-                    className={`p-2 rounded-xl text-left text-xs border transition-all cursor-pointer flex items-center justify-between gap-2 ${
+                    className={`p-2 rounded-xl text-left text-xs border transition-colors cursor-pointer flex items-center justify-between gap-2 ${
                       isSelected
                         ? "bg-purple-50 dark:bg-purple-950/40 border-purple-500/60 text-purple-900 dark:text-purple-100 font-bold shadow-2xs"
                         : "bg-background border-border text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
