@@ -77,6 +77,8 @@ type ActiveTabType =
   | "CATEGORIES"
   | "SUB_PROJECTS"
   | "PROJECTS"
+  | "AUTHORITIES"
+  | "TEMPLATES"
   | "REPORTS" 
   | "RBAC"
   | "MASTERS";
@@ -123,7 +125,9 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
 
     if (combined.includes("category") || combined.includes("categories") || combined.includes("discipline")) return "CATEGORIES";
     if (combined.includes("sub-project") || combined.includes("subproject") || combined.includes("wing")) return "SUB_PROJECTS";
-    if (combined.includes("project-master") || combined.includes("projects-master")) return "PROJECTS";
+    if (combined.includes("project-master") || combined.includes("projects-master") || combined.includes("/design/projects") || combined.endsWith("/projects")) return "PROJECTS";
+    if (combined.includes("authorit")) return "AUTHORITIES";
+    if (combined.includes("template") || combined.includes("backup")) return "TEMPLATES";
     if (combined.includes("rbac") || combined.includes("access") || combined.includes("policy") || combined.includes("permission") || combined.includes("governance")) return "RBAC";
     if (combined.includes("package") || combined.includes("work-package") || combined.includes("workpackage")) return "PACKAGES";
     if (combined.includes("master") || combined.includes("setting")) return "MASTERS";
@@ -158,6 +162,8 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
       CATEGORIES: "/design/categories",
       SUB_PROJECTS: "/design/sub-projects",
       PROJECTS: "/design/projects",
+      AUTHORITIES: "/design/authorities",
+      TEMPLATES: "/design/templates",
       REPORTS: "/design/reports",
       RBAC: "/design/rbac",
       MASTERS: "/design/masters"
@@ -324,206 +330,6 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
         </div>
       </div>
 
-      {/* Main Module Segmented Tabs Navigation */}
-      <div className="border-b border-border flex items-center justify-between gap-4 overflow-x-auto custom-scrollbar">
-        <div className="flex items-center gap-1 min-w-max pb-0.5">
-          <button
-            type="button"
-            onClick={() => handleTabChange("MATRIX")}
-            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-              activeTab === "MATRIX"
-                ? "border-emerald-500 text-foreground font-bold"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Layers className={`h-3.5 w-3.5 ${activeTab === "MATRIX" ? "text-emerald-500" : "text-muted-foreground"}`} />
-            <span>Tender Matrix</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleTabChange("LOOK_AHEAD")}
-            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-              activeTab === "LOOK_AHEAD"
-                ? "border-emerald-500 text-foreground font-bold"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Clock className={`h-3.5 w-3.5 ${activeTab === "LOOK_AHEAD" ? "text-amber-500" : "text-muted-foreground"}`} />
-            <span>Look-Ahead</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleTabChange("LIAISONING")}
-            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-              activeTab === "LIAISONING"
-                ? "border-emerald-500 text-foreground font-bold"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <ShieldCheck className={`h-3.5 w-3.5 ${activeTab === "LIAISONING" ? "text-purple-500" : "text-muted-foreground"}`} />
-            <span>Statutory Liaisoning</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleTabChange("STAGES")}
-            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-              activeTab === "STAGES"
-                ? "border-emerald-500 text-foreground font-bold"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Calendar className={`h-3.5 w-3.5 ${activeTab === "STAGES" ? "text-blue-500" : "text-muted-foreground"}`} />
-            <span>Design Stages</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleTabChange("DRAWINGS")}
-            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-              activeTab === "DRAWINGS"
-                ? "border-emerald-500 text-foreground font-bold"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <FileText className={`h-3.5 w-3.5 ${activeTab === "DRAWINGS" ? "text-emerald-500" : "text-muted-foreground"}`} />
-            <span>Drawing Register</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleTabChange("APPROVALS")}
-            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-              activeTab === "APPROVALS"
-                ? "border-emerald-500 text-foreground font-bold"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <CheckCircle2 className={`h-3.5 w-3.5 ${activeTab === "APPROVALS" ? "text-emerald-500" : "text-muted-foreground"}`} />
-            <span>Approvals</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleTabChange("REVISIONS")}
-            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-              activeTab === "REVISIONS"
-                ? "border-emerald-500 text-foreground font-bold"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <RotateCcw className={`h-3.5 w-3.5 ${activeTab === "REVISIONS" ? "text-blue-500" : "text-muted-foreground"}`} />
-            <span>Revision History</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleTabChange("GFC_HANDOVER")}
-            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-              activeTab === "GFC_HANDOVER"
-                ? "border-emerald-500 text-foreground font-bold"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Building2 className={`h-3.5 w-3.5 ${activeTab === "GFC_HANDOVER" ? "text-emerald-500" : "text-muted-foreground"}`} />
-            <span>GFC Handover</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleTabChange("TRANSMITTALS")}
-            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-              activeTab === "TRANSMITTALS"
-                ? "border-blue-500 text-foreground font-bold"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Send className={`h-3.5 w-3.5 ${activeTab === "TRANSMITTALS" ? "text-blue-500" : "text-muted-foreground"}`} />
-            <span>Transmittals</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleTabChange("RFIS")}
-            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-              activeTab === "RFIS"
-                ? "border-purple-500 text-foreground font-bold"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <HelpCircle className={`h-3.5 w-3.5 ${activeTab === "RFIS" ? "text-purple-500" : "text-muted-foreground"}`} />
-            <span>RFI & Queries</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleTabChange("CONSULTANTS")}
-            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-              activeTab === "CONSULTANTS"
-                ? "border-emerald-500 text-foreground font-bold"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Users className={`h-3.5 w-3.5 ${activeTab === "CONSULTANTS" ? "text-purple-500" : "text-muted-foreground"}`} />
-            <span>Consultants</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleTabChange("PACKAGES")}
-            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-              activeTab === "PACKAGES"
-                ? "border-emerald-500 text-foreground font-bold"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Layers className={`h-3.5 w-3.5 ${activeTab === "PACKAGES" ? "text-emerald-500" : "text-muted-foreground"}`} />
-            <span>Work Packages Master</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleTabChange("REPORTS")}
-            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-              activeTab === "REPORTS"
-                ? "border-emerald-500 text-foreground font-bold"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <LineChart className={`h-3.5 w-3.5 ${activeTab === "REPORTS" ? "text-teal-500" : "text-muted-foreground"}`} />
-            <span>Analytics</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleTabChange("RBAC")}
-            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-              activeTab === "RBAC"
-                ? "border-purple-500 text-foreground font-bold"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <ShieldCheck className={`h-3.5 w-3.5 ${activeTab === "RBAC" ? "text-purple-500" : "text-muted-foreground"}`} />
-            <span>RBAC & Access</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleTabChange("MASTERS")}
-            className={`py-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-              activeTab === "MASTERS"
-                ? "border-teal-500 text-foreground font-bold"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Settings2 className={`h-3.5 w-3.5 ${activeTab === "MASTERS" ? "text-teal-500" : "text-muted-foreground"}`} />
-            <span>Masters Setup</span>
-          </button>
-        </div>
-      </div>
-
       {/* Tab 1: Master Tender Design Matrix */}
       {activeTab === "MATRIX" && (
         <TenderDesignMatrix />
@@ -614,6 +420,16 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
       {/* Direct Category Master View */}
       {activeTab === "CATEGORIES" && (
         <MastersSetupView initialSubTab="CATEGORIES" />
+      )}
+
+      {/* Direct Statutory Authorities View */}
+      {activeTab === "AUTHORITIES" && (
+        <MastersSetupView initialSubTab="AUTHORITIES" />
+      )}
+
+      {/* Direct Backup & Templates View */}
+      {activeTab === "TEMPLATES" && (
+        <MastersSetupView initialSubTab="TEMPLATES" />
       )}
 
       {/* Tab 13: Design Reports & Analytics */}

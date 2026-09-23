@@ -191,7 +191,7 @@ const vehicleNavGroups: NavGroup[] = [
 
 const designNavGroups: NavGroup[] = [
   {
-    label: "Tender & Design",
+    label: "Tender & Pre-Construction",
     items: [
       { label: "Tender Design Matrix", href: "/design/matrix", icon: Layers },
       { label: "Look-Ahead Forecast", href: "/design/look-ahead", icon: Clock },
@@ -200,7 +200,7 @@ const designNavGroups: NavGroup[] = [
     ]
   },
   {
-    label: "Drawings & Quality",
+    label: "Drawings & Site Execution",
     items: [
       { label: "Drawing Register", href: "/design/drawings", icon: FileText },
       { label: "Design Approvals", href: "/design/approvals", icon: CheckCircle2 },
@@ -214,9 +214,22 @@ const designNavGroups: NavGroup[] = [
     label: "Directory & Governance",
     items: [
       { label: "Consultant Directory", href: "/design/consultants", icon: Users },
-      { label: "RBAC Access Policies", href: "/design/rbac", icon: Key, permission: "USERS_VIEW" },
       { label: "Design Analytics", href: "/design/reports", icon: LineChart },
-      { label: "Masters Setup", href: "/design/masters", icon: Settings2, permission: "MASTERS_VIEW" },
+      { label: "RBAC Access Policies", href: "/design/rbac", icon: Key, permission: "USERS_VIEW" },
+      { 
+        label: "Masters Setup", 
+        href: "/design/masters", 
+        icon: Settings2, 
+        permission: "MASTERS_VIEW",
+        subItems: [
+          { label: "Project Master", href: "/design/projects", permission: "MASTERS_VIEW" },
+          { label: "Sub-Project Master", href: "/design/sub-projects", permission: "MASTERS_VIEW" },
+          { label: "Category Master", href: "/design/categories", permission: "MASTERS_VIEW" },
+          { label: "Work Packages Master", href: "/design/packages", permission: "MASTERS_VIEW" },
+          { label: "Statutory Authorities", href: "/design/authorities", permission: "MASTERS_VIEW" },
+          { label: "Backup & Templates", href: "/design/templates", permission: "MASTERS_VIEW" }
+        ]
+      },
     ]
   }
 ];
@@ -252,7 +265,11 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
   // Sync accordion with active route on navigation
   useEffect(() => {
     const activeItem = navGroups.flatMap(g => g.items).find(item => 
-      item.href !== "/" && (pathname === item.href || pathname.startsWith(item.href + "/"))
+      item.href !== "/" && (
+        pathname === item.href || 
+        pathname.startsWith(item.href + "/") ||
+        item.subItems?.some(s => pathname === s.href || pathname.startsWith(s.href + "/"))
+      )
     );
     if (activeItem && activeItem.subItems) {
       setExpandedTrees(prev => ({ ...prev, [activeItem.href]: true }));
@@ -375,6 +392,14 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
                   isBaseActive = pathname === "/design" || pathname === "/design/matrix";
                 } else if (item.href === "/vehicle") {
                   isBaseActive = pathname === "/vehicle";
+                } else if (item.href === "/design/masters") {
+                  isBaseActive = pathname === "/design/masters" || 
+                    pathname === "/design/projects" || 
+                    pathname === "/design/sub-projects" || 
+                    pathname === "/design/categories" || 
+                    pathname === "/design/packages" || 
+                    pathname === "/design/authorities" || 
+                    pathname === "/design/templates";
                 } else {
                   isBaseActive = pathname === item.href || pathname.startsWith(item.href + "/");
                 }
@@ -481,6 +506,8 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
                             isSubActive = pathname === '/workspaces/tasks' && !currentWsId;
                           } else if (sub.href === '/workspaces') {
                             isSubActive = pathname === '/workspaces' || (pathname === '/workspaces/tasks' && !!currentWsId);
+                          } else if (sub.href === '/design/projects') {
+                            isSubActive = pathname === '/design/projects' || pathname === '/design/masters';
                           } else {
                             isSubActive = pathname === sub.href;
                           }
