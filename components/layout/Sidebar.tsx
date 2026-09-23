@@ -224,6 +224,7 @@ const designNavGroups: NavGroup[] = [
         subItems: [
           { label: "Project Master", href: "/design/projects", permission: "MASTERS_VIEW" },
           { label: "Sub-Project Master", href: "/design/sub-projects", permission: "MASTERS_VIEW" },
+          { label: "Consultant Master", href: "/design/consultants", permission: "MASTERS_VIEW" },
           { label: "Category Master", href: "/design/categories", permission: "MASTERS_VIEW" },
           { label: "Work Packages Master", href: "/design/packages", permission: "MASTERS_VIEW" },
           { label: "Statutory Authorities", href: "/design/authorities", permission: "MASTERS_VIEW" },

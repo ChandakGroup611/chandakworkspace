@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "react-toastify";
 import { 
   DesignMasterStore 
@@ -54,11 +55,16 @@ const PROJECT_STATUS_OPTIONS = [
 ];
 
 export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigateToSubProjects }) => {
+  const [mounted, setMounted] = useState(false);
   const store = DesignMasterStore.getState();
   // Filter ONLY main / parent projects (no subprojects mixed in)
   const projects = (store.projects || []).filter(p => !p.isSubProject);
   const consultants = store.consultants || [];
   const categories = DesignMasterStore.getCategories();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const allTowers = store.towers || [];
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -655,10 +661,18 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
         </div>
       )}
 
-      {/* Add / Edit Project Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="relative w-full max-w-5xl xl:max-w-6xl rounded-3xl bg-surface border border-border shadow-2xl p-6 sm:p-8 space-y-5 my-6 max-h-[92vh] flex flex-col justify-between">
+      {/* Add / Edit Project Modal (Rendered via React Portal) */}
+      {isModalOpen && mounted && createPortal(
+        <div 
+          className="fixed inset-0 z-[99999] bg-black/80 flex items-center justify-center p-2 sm:p-4 md:p-6 animate-in fade-in duration-150"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsModalOpen(false);
+          }}
+        >
+          <div 
+            className="relative w-full max-w-5xl xl:max-w-6xl max-h-[92vh] flex flex-col min-h-0 rounded-3xl bg-surface border border-border shadow-2xl p-6 sm:p-8 space-y-5 my-6 animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Header */}
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center gap-2.5">
@@ -1146,7 +1160,8 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Delete Dependency Safety Modal */}

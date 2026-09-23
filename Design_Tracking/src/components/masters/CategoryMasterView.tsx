@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "react-toastify";
 import { 
   DesignMasterStore, 
@@ -42,10 +43,15 @@ const COLOR_THEMES = [
 const PRESET_ICONS = ["🏛️", "🏗️", "⚡", "🧱", "🏢", "🌳", "🛋️", "⛰️", "🔥", "🌱", "🚗", "💻", "🔬", "📐", "📋", "⚙️"];
 
 export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
+  const [mounted, setMounted] = useState(false);
   const store = DesignMasterStore.getState();
   const categories = store.disciplines || [];
   const consultants = store.consultants || [];
   const packages = store.packages || [];
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -341,12 +347,20 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
         })}
       </div>
 
-      {/* Add / Edit Category Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-          <div className="relative w-full max-w-2xl sm:max-w-3xl rounded-3xl bg-surface border border-border shadow-2xl p-6 sm:p-8 space-y-5 animate-in zoom-in-95 duration-150 my-8">
+      {/* Add / Edit Category Modal (Rendered via React Portal) */}
+      {isModalOpen && mounted && createPortal(
+        <div 
+          className="fixed inset-0 z-[99999] bg-black/80 flex items-center justify-center p-2 sm:p-4 md:p-6 animate-in fade-in duration-150"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsModalOpen(false);
+          }}
+        >
+          <div 
+            className="relative w-full max-w-2xl sm:max-w-3xl max-h-[92vh] flex flex-col min-h-0 rounded-3xl bg-surface border border-border shadow-2xl p-6 sm:p-8 space-y-4 animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Modal Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-border">
+            <div className="flex items-center justify-between pb-3 border-b border-border shrink-0">
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
                   <Tag className="h-4 w-4" />
@@ -365,13 +379,13 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
             </div>
 
             {formError && (
-              <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs flex items-center gap-2">
+              <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs flex items-center gap-2 shrink-0">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 <span>{formError}</span>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="flex-1 min-h-0 overflow-y-auto custom-scrollbar space-y-4 pr-1">
               {/* Category Name & Code in 2 columns */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="sm:col-span-2 space-y-1">
@@ -462,7 +476,7 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
               </div>
 
               {/* Modal Buttons */}
-              <div className="pt-3 border-t border-border flex items-center justify-end gap-2">
+              <div className="pt-3 border-t border-border flex items-center justify-end gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
@@ -479,7 +493,8 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Delete Dependency Safety Modal */}

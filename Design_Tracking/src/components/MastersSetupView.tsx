@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "react-toastify";
 import { 
   DesignMasterStore, 
@@ -56,6 +57,11 @@ interface MastersSetupViewProps {
 export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTab = "PROJECTS" }) => {
   const [storeState, setStoreState] = useState<MasterStoreState>(DesignMasterStore.getState());
   const [activeSubTab, setActiveSubTab] = useState<MasterSubTab>(initialSubTab);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Foreign Key Dependency Delete Modal State
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -456,10 +462,10 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
       )}
 
       {/* Modal: New Package */}
-      {isNewPackageModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 sm:p-6 animate-in fade-in duration-150">
-          <div className="bg-surface border border-border w-full max-w-xl sm:max-w-2xl rounded-3xl shadow-2xl p-6 sm:p-8 space-y-5">
-            <div className="flex items-center justify-between pb-3 border-b border-border">
+      {isNewPackageModalOpen && mounted && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 sm:p-6 animate-in fade-in duration-150">
+          <div className="bg-surface border border-border w-full max-w-xl sm:max-w-2xl max-h-[90vh] flex flex-col min-h-0 rounded-3xl shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between p-5 border-b border-border bg-slate-50/50 dark:bg-slate-900/50 shrink-0">
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center">
                   <Layers className="h-4 w-4" />
@@ -471,7 +477,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
               </button>
             </div>
 
-            <form onSubmit={handleCreatePackage} className="space-y-4 text-xs">
+            <form onSubmit={handleCreatePackage} className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4 text-xs">
               <div className="space-y-1">
                 <label className="font-bold text-foreground">Package Name / Title <span className="text-rose-500">*</span></label>
                 <input
@@ -518,24 +524,25 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
-                <button type="button" onClick={() => setIsNewPackageModalOpen(false)} className="px-4 py-1.5 rounded-xl border border-border bg-background text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer font-semibold">
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-border shrink-0">
+                <button type="button" onClick={() => setIsNewPackageModalOpen(false)} className="px-4 py-2 rounded-xl border border-border bg-background text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer font-semibold">
                   Cancel
                 </button>
-                <button type="submit" className="px-4 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold cursor-pointer transition-all shadow-md">
+                <button type="submit" className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold cursor-pointer transition-all shadow-md">
                   Create Package
                 </button>
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Modal: Edit Package */}
-      {isEditPackageModalOpen && editingPackage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 sm:p-6 animate-in fade-in duration-150">
-          <div className="bg-surface border border-border w-full max-w-xl sm:max-w-2xl rounded-3xl shadow-2xl p-6 sm:p-8 space-y-5">
-            <div className="flex items-center justify-between pb-3 border-b border-border">
+      {isEditPackageModalOpen && editingPackage && mounted && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 sm:p-6 animate-in fade-in duration-150">
+          <div className="bg-surface border border-border w-full max-w-xl sm:max-w-2xl max-h-[90vh] flex flex-col min-h-0 rounded-3xl shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between p-5 border-b border-border bg-slate-50/50 dark:bg-slate-900/50 shrink-0">
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center">
                   <Layers className="h-4 w-4" />
@@ -547,7 +554,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
               </button>
             </div>
 
-            <form onSubmit={handleUpdatePackage} className="space-y-4 text-xs">
+            <form onSubmit={handleUpdatePackage} className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4 text-xs">
               <div className="space-y-1">
                 <label className="font-bold text-foreground">Package Name / Title <span className="text-rose-500">*</span></label>
                 <input
@@ -594,24 +601,25 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
-                <button type="button" onClick={() => setIsEditPackageModalOpen(false)} className="px-4 py-1.5 rounded-xl border border-border bg-background text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer font-semibold">
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-border shrink-0">
+                <button type="button" onClick={() => setIsEditPackageModalOpen(false)} className="px-4 py-2 rounded-xl border border-border bg-background text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer font-semibold">
                   Cancel
                 </button>
-                <button type="submit" className="px-4 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold cursor-pointer transition-all shadow-md">
+                <button type="submit" className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold cursor-pointer transition-all shadow-md">
                   Update Package
                 </button>
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Modal: New Authority */}
-      {isNewAuthorityModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 sm:p-6 animate-in fade-in duration-150">
-          <div className="bg-surface border border-border w-full max-w-xl sm:max-w-2xl rounded-3xl shadow-2xl p-6 sm:p-8 space-y-5">
-            <div className="flex items-center justify-between pb-3 border-b border-border">
+      {isNewAuthorityModalOpen && mounted && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 sm:p-6 animate-in fade-in duration-150">
+          <div className="bg-surface border border-border w-full max-w-xl sm:max-w-2xl max-h-[90vh] flex flex-col min-h-0 rounded-3xl shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between p-5 border-b border-border bg-slate-50/50 dark:bg-slate-900/50 shrink-0">
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
                   <ShieldCheck className="h-4 w-4" />
@@ -623,7 +631,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
               </button>
             </div>
 
-            <form onSubmit={handleCreateAuthority} className="space-y-4 text-xs">
+            <form onSubmit={handleCreateAuthority} className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4 text-xs">
               <div className="space-y-1">
                 <label className="font-bold text-foreground">Authority / Body Name <span className="text-rose-500">*</span></label>
                 <input
@@ -645,17 +653,18 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
-                <button type="button" onClick={() => setIsNewAuthorityModalOpen(false)} className="px-4 py-1.5 rounded-xl border border-border bg-background text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer font-semibold">
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-border shrink-0">
+                <button type="button" onClick={() => setIsNewAuthorityModalOpen(false)} className="px-4 py-2 rounded-xl border border-border bg-background text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer font-semibold">
                   Cancel
                 </button>
-                <button type="submit" className="px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold cursor-pointer transition-all shadow-md">
+                <button type="submit" className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold cursor-pointer transition-all shadow-md">
                   Add Authority
                 </button>
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Foreign Key Dependency Guard Deletion Modal */}

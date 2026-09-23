@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { 
   AlertTriangle, 
   Trash2, 
@@ -37,10 +38,25 @@ export const DeleteDependencyModal: React.FC<DeleteDependencyModalProps> = ({
   onConfirmDelete,
   isSubmitting = false
 }) => {
+  const [mounted, setMounted] = useState(false);
   const [deleteReason, setDeleteReason] = useState("");
   const activeReport = dependencyReport || report;
 
-  if (!isOpen || !activeReport) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+  }, [isOpen]);
+
+  if (!isOpen || !activeReport || !mounted) return null;
 
   const { entityType, entityName, totalDependentRecords, dependencies, isReferencedByOtherRecords } = activeReport;
 
@@ -91,14 +107,19 @@ export const DeleteDependencyModal: React.FC<DeleteDependencyModalProps> = ({
     onConfirmDelete(deleteReason.trim());
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+  const modalContent = (
+    <div 
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/75 animate-in fade-in duration-200 overflow-hidden"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
       <div 
         className="relative w-full max-w-lg rounded-2xl bg-surface border border-border shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-rose-500/5">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-rose-500/5 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             <div className="h-10 w-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center shrink-0">
               {getEntityIcon()}
@@ -215,7 +236,7 @@ export const DeleteDependencyModal: React.FC<DeleteDependencyModalProps> = ({
           </div>
 
           {/* Footer Controls */}
-          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-border">
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-border shrink-0">
             <button
               type="button"
               onClick={onClose}
@@ -237,4 +258,6 @@ export const DeleteDependencyModal: React.FC<DeleteDependencyModalProps> = ({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };

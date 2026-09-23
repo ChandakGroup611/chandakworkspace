@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "react-toastify";
 import { DesignMasterStore, MasterStoreState } from "../services/designMasterStore";
 import { ProjectMaster } from "../types/masterTypes";
@@ -30,6 +31,11 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
 }) => {
   const [storeState, setStoreState] = useState<MasterStoreState>(DesignMasterStore.getState());
   const [activeTab, setActiveTab] = useState<"PACKAGE" | "LOOK_AHEAD" | "LIAISON">(defaultTab);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     setActiveTab(defaultTab);
@@ -197,69 +203,73 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
     onClose();
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-      <div className="bg-surface border border-border w-full max-w-lg rounded-3xl shadow-2xl p-6 sm:p-7 space-y-5">
-        {/* Header */}
-        <div className="flex items-start justify-between">
-          <div className="space-y-0.5">
-            <span className="text-[10px] font-black uppercase tracking-wider text-emerald-500 flex items-center gap-1.5">
-              <Plus className="h-3.5 w-3.5" />
-              <span>Live Data Fill Entry</span>
-            </span>
-            <h4 className="text-base font-black text-foreground">
-              Record Execution Data
-            </h4>
-            <p className="text-xs text-muted-foreground">
-              Fill project tender packages, milestones, and statutory clearances. Output dashboards calculate automatically.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="h-8 w-8 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+  if (!isOpen || !mounted) return null;
 
-        {/* Tab Selector */}
-        <div className="p-1 rounded-xl bg-muted/40 border border-border flex items-center gap-1 text-xs">
-          <button
-            type="button"
-            onClick={() => setActiveTab("PACKAGE")}
-            className={`flex-1 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-              activeTab === "PACKAGE" ? "bg-surface text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Layers className="h-3.5 w-3.5" />
-            <span>Tender Status</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("LOOK_AHEAD")}
-            className={`flex-1 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-              activeTab === "LOOK_AHEAD" ? "bg-surface text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Clock className="h-3.5 w-3.5" />
-            <span>Look-Ahead</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("LIAISON")}
-            className={`flex-1 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-              activeTab === "LIAISON" ? "bg-surface text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <ShieldCheck className="h-3.5 w-3.5" />
-            <span>Authority NOC</span>
-          </button>
+  return createPortal(
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 sm:p-6 animate-in fade-in duration-150">
+      <div className="bg-surface border border-border w-full max-w-xl max-h-[90vh] flex flex-col min-h-0 rounded-3xl shadow-2xl overflow-hidden">
+        {/* Header */}
+        <div className="p-6 pb-3 border-b border-border bg-slate-50/50 dark:bg-slate-900/50 shrink-0 space-y-3">
+          <div className="flex items-start justify-between">
+            <div className="space-y-0.5">
+              <span className="text-[10px] font-black uppercase tracking-wider text-emerald-500 flex items-center gap-1.5">
+                <Plus className="h-3.5 w-3.5" />
+                <span>Live Data Fill Entry</span>
+              </span>
+              <h4 className="text-base font-black text-foreground">
+                Record Execution Data
+              </h4>
+              <p className="text-xs text-muted-foreground">
+                Fill project tender packages, milestones, and statutory clearances.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="h-8 w-8 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Tab Selector */}
+          <div className="p-1 rounded-xl bg-muted/40 border border-border flex items-center gap-1 text-xs">
+            <button
+              type="button"
+              onClick={() => setActiveTab("PACKAGE")}
+              className={`flex-1 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                activeTab === "PACKAGE" ? "bg-surface text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Layers className="h-3.5 w-3.5" />
+              <span>Tender Status</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("LOOK_AHEAD")}
+              className={`flex-1 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                activeTab === "LOOK_AHEAD" ? "bg-surface text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Clock className="h-3.5 w-3.5" />
+              <span>Look-Ahead</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("LIAISON")}
+              className={`flex-1 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                activeTab === "LIAISON" ? "bg-surface text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <ShieldCheck className="h-3.5 w-3.5" />
+              <span>Authority NOC</span>
+            </button>
+          </div>
         </div>
 
         {/* Form 1: Tender Package Status */}
         {activeTab === "PACKAGE" && (
-          <form onSubmit={handleSavePackageStatus} className="space-y-3.5 text-xs">
+          <form onSubmit={handleSavePackageStatus} className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4 text-xs">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <label className="font-bold text-foreground">Project *</label>
@@ -421,7 +431,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
 
         {/* Form 2: Look-Ahead Milestone */}
         {activeTab === "LOOK_AHEAD" && (
-          <form onSubmit={handleSaveLookAhead} className="space-y-3.5 text-xs">
+          <form onSubmit={handleSaveLookAhead} className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4 text-xs">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <label className="font-bold text-foreground">Project *</label>
@@ -526,7 +536,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
 
         {/* Form 3: Statutory Authority NOC */}
         {activeTab === "LIAISON" && (
-          <form onSubmit={handleSaveLiaison} className="space-y-3.5 text-xs">
+          <form onSubmit={handleSaveLiaison} className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4 text-xs">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <label className="font-bold text-foreground">Project *</label>
@@ -630,6 +640,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
           </form>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
