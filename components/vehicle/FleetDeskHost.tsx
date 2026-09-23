@@ -117,7 +117,10 @@ import {
   VehiclePucCertificateRecord,
   fetchVehiclePucCertificatesAction,
   renewVehiclePucCertificateAction,
-  deleteVehiclePucCertificateAction
+  deleteVehiclePucCertificateAction,
+  VehicleSpecificationHistoryRecord,
+  fetchVehicleSpecificationHistoryAction,
+  deleteVehicleSpecificationHistoryRecordAction
 } from "@/lib/actions/vehicle";
 
 export const MAINTENANCE_CATEGORIES = [
@@ -306,6 +309,12 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   const [selectedVehicleForPucHistory, setSelectedVehicleForPucHistory] = useState<VehicleRecord | null>(null);
   const [vehiclePucHistory, setVehiclePucHistory] = useState<VehiclePucCertificateRecord[]>([]);
   const [loadingPucHistory, setLoadingPucHistory] = useState(false);
+
+  // Vehicle Specification Revision History & Audit Modal States
+  const [isSpecHistoryModalOpen, setIsSpecHistoryModalOpen] = useState(false);
+  const [selectedVehicleForSpecHistory, setSelectedVehicleForSpecHistory] = useState<VehicleRecord | null>(null);
+  const [vehicleSpecHistory, setVehicleSpecHistory] = useState<VehicleSpecificationHistoryRecord[]>([]);
+  const [loadingSpecHistory, setLoadingSpecHistory] = useState(false);
 
   // PUC Renewal Form States
   const [renewPucNumber, setRenewPucNumber] = useState("");
@@ -1173,8 +1182,12 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       if (res.success) {
         triggerToast(`Vehicle ${editVehiclePlate.toUpperCase()} updated successfully!`);
         setIsEditVehicleOpen(false);
+        const updatedVehId = selectedVehicleForEdit.id;
         setSelectedVehicleForEdit(null);
         loadAllData(true);
+        if (selectedVehicleForSpecHistory?.id === updatedVehId) {
+          handleOpenVehicleSpecHistoryModal(selectedVehicleForSpecHistory);
+        }
       } else {
         triggerToast(res.error || "Failed to update vehicle", true);
       }
@@ -1960,6 +1973,48 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       }
     } catch (err: any) {
       triggerToast(err.message || "Failed to remove PUC record.", true);
+    }
+  };
+
+  // ----------------------------------------------------------------------------
+  // Vehicle Specification Revision History & Audit Handlers
+  // ----------------------------------------------------------------------------
+
+  const handleOpenVehicleSpecHistoryModal = async (veh: VehicleRecord) => {
+    setSelectedVehicleForSpecHistory(veh);
+    setIsSpecHistoryModalOpen(true);
+    setLoadingSpecHistory(true);
+    try {
+      const res = await fetchVehicleSpecificationHistoryAction(veh.id);
+      if (res.success) {
+        setVehicleSpecHistory(res.history);
+      } else {
+        triggerToast(res.error || "Failed to load specification history", true);
+        setVehicleSpecHistory([]);
+      }
+    } catch (err: any) {
+      triggerToast(err.message || "Failed to load specification history", true);
+      setVehicleSpecHistory([]);
+    } finally {
+      setLoadingSpecHistory(false);
+    }
+  };
+
+  const handleDeleteSpecHistoryRecord = async (historyId: string) => {
+    if (!selectedVehicleForSpecHistory) return;
+    if (!confirm("Are you sure you want to void this specification revision log?")) return;
+
+    try {
+      const res = await deleteVehicleSpecificationHistoryRecordAction(historyId, selectedVehicleForSpecHistory.id);
+      if (res.success) {
+        triggerToast("Specification history log record voided.");
+        handleOpenVehicleSpecHistoryModal(selectedVehicleForSpecHistory);
+        loadAllData(true);
+      } else {
+        triggerToast(res.error || "Failed to void history record.", true);
+      }
+    } catch (err: any) {
+      triggerToast(err.message || "Failed to void history record.", true);
     }
   };
 
@@ -3786,6 +3841,18 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             <AppButton
                               variant="outline"
                               size="icon-sm"
+                              title="Specification Revision History & Audit Trail"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenVehicleSpecHistoryModal(veh);
+                              }}
+                              className="h-7 w-7 text-purple-600 hover:text-purple-700 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/40 shadow-2xs"
+                            >
+                              <ClipboardCheck className="h-3.5 w-3.5" />
+                            </AppButton>
+                            <AppButton
+                              variant="outline"
+                              size="icon-sm"
                               title="Edit Vehicle"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -4066,6 +4133,19 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             >
                               <History className="h-3 w-3" />
                               <span>History</span>
+                            </AppButton>
+                            <AppButton
+                              variant="outline"
+                              size="sm"
+                              title="View Specification Revision History & Audit Ledger"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenVehicleSpecHistoryModal(veh);
+                              }}
+                              className="h-7 px-2 text-xs gap-1 font-semibold text-purple-600 dark:text-purple-400 border-purple-500/30 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/30 shadow-2xs"
+                            >
+                              <ClipboardCheck className="h-3 w-3" />
+                              <span>Specs History</span>
                             </AppButton>
                             {canEditVehicle && (
                               <AppButton
@@ -6413,9 +6493,22 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <p className="text-xs text-muted-foreground">Update official RTO RC records, compliance dates, or driver assignment</p>
                 </div>
               </div>
-              <AppButton variant="ghost" size="icon-sm" onClick={() => setIsEditVehicleOpen(false)}>
-                <X className="h-4 w-4" />
-              </AppButton>
+              <div className="flex items-center gap-2">
+                <AppButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleOpenVehicleSpecHistoryModal(selectedVehicleForEdit)}
+                  className="h-8 px-2.5 text-xs gap-1.5 font-semibold text-purple-600 dark:text-purple-400 border-purple-500/30 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/30 shadow-2xs"
+                  title="View specification change history and audit trail"
+                >
+                  <ClipboardCheck className="h-3.5 w-3.5" />
+                  <span>Revision History</span>
+                </AppButton>
+                <AppButton variant="ghost" size="icon-sm" onClick={() => setIsEditVehicleOpen(false)}>
+                  <X className="h-4 w-4" />
+                </AppButton>
+              </div>
             </div>
 
             <form onSubmit={handleUpdateVehicle} className="p-5 space-y-4 overflow-y-auto flex-1 text-xs">
@@ -10266,6 +10359,245 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       )}
 
       {/* ---------------------------------------------------------------------- */}
+      {/* VEHICLE SPECIFICATION REVISION HISTORY & AUDIT LEDGER MODAL */}
+      {/* ---------------------------------------------------------------------- */}
+      {isSpecHistoryModalOpen && selectedVehicleForSpecHistory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-surface border border-border w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-border bg-gradient-to-r from-purple-500/10 via-indigo-500/10 to-transparent flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-11 w-11 rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center border border-purple-500/25 shadow-xs">
+                  <ClipboardCheck className="h-6 w-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-bold text-foreground">
+                      Vehicle Specifications Revision History & Audit Ledger
+                    </h3>
+                    <span className="px-2.5 py-0.5 rounded-md font-mono text-xs font-bold bg-theme-btn-primary text-white">
+                      {selectedVehicleForSpecHistory.registration_number}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {selectedVehicleForSpecHistory.make} {selectedVehicleForSpecHistory.model} ({selectedVehicleForSpecHistory.variant || "Standard"}) • Chronological audit log of all specification & compliance updates
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {canEditVehicle && (
+                  <AppButton
+                    variant="primary"
+                    size="sm"
+                    onClick={() => {
+                      setIsSpecHistoryModalOpen(false);
+                      openEditVehicleModal(selectedVehicleForSpecHistory);
+                    }}
+                    className="bg-purple-600 hover:bg-purple-700 text-white font-semibold gap-1.5 shadow-xs"
+                  >
+                    <Edit2 className="h-3.5 w-3.5" />
+                    <span>Edit Vehicle</span>
+                  </AppButton>
+                )}
+                <AppButton variant="ghost" size="icon-sm" onClick={() => setIsSpecHistoryModalOpen(false)}>
+                  <X className="h-4 w-4" />
+                </AppButton>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-5 overflow-y-auto flex-1">
+              {/* Summary Metric Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <div className="p-3.5 rounded-xl border border-border bg-surface shadow-2xs space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total Revisions</span>
+                  <div className="text-sm font-extrabold font-mono text-purple-600 dark:text-purple-400">
+                    {vehicleSpecHistory.length} {vehicleSpecHistory.length === 1 ? "Audit Entry" : "Audit Entries"}
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-border bg-surface shadow-2xs space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Current Status</span>
+                  <div className="text-xs font-bold truncate text-foreground">
+                    {selectedVehicleForSpecHistory.status === "IN_STOCK" ? "Available / In Stock" : selectedVehicleForSpecHistory.status === "IN_SERVICE" ? "Active in Service" : selectedVehicleForSpecHistory.status}
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-border bg-surface shadow-2xs space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Current Odometer</span>
+                  <div className="text-sm font-extrabold font-mono text-foreground">
+                    {Number(selectedVehicleForSpecHistory.odometer_km || 0).toLocaleString("en-IN")} km
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-border bg-surface shadow-2xs space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Assigned Chauffeur</span>
+                  <div className="text-xs font-bold truncate text-foreground">
+                    {selectedVehicleForSpecHistory.assignedDriver?.full_name || "Unassigned"}
+                  </div>
+                </div>
+              </div>
+
+              {/* History Timeline */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+                    <Sparkles className="h-3.5 w-3.5 text-purple-500" />
+                    <span>Chronological Specification Audit Trail</span>
+                  </h4>
+                  <span className="text-[11px] text-muted-foreground">
+                    Sorted from newest to oldest change event
+                  </span>
+                </div>
+
+                {loadingSpecHistory ? (
+                  <div className="py-12 flex flex-col items-center justify-center gap-3">
+                    <ChandakLoader size="md" />
+                    <span className="text-xs text-muted-foreground font-medium">Loading specification history...</span>
+                  </div>
+                ) : vehicleSpecHistory.length === 0 ? (
+                  <div className="py-12 text-center rounded-xl border border-dashed border-border bg-slate-50/50 dark:bg-slate-900/30 p-6 space-y-3">
+                    <div className="h-12 w-12 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center mx-auto">
+                      <ClipboardCheck className="h-6 w-6" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-bold text-foreground">No Specification Revision History Yet</p>
+                      <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                        This vehicle specifications are in their initial state. Any edits made via "Edit Vehicle Specifications" will automatically generate historical audit records here.
+                      </p>
+                    </div>
+                    {canEditVehicle && (
+                      <AppButton
+                        variant="primary"
+                        size="sm"
+                        onClick={() => {
+                          setIsSpecHistoryModalOpen(false);
+                          openEditVehicleModal(selectedVehicleForSpecHistory);
+                        }}
+                        className="bg-purple-600 hover:bg-purple-700 text-white font-semibold gap-1.5 shadow-xs"
+                      >
+                        <Edit2 className="h-3.5 w-3.5" />
+                        <span>Edit Vehicle Specifications</span>
+                      </AppButton>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-3.5">
+                    {vehicleSpecHistory.map((record, idx) => (
+                      <div
+                        key={record.id}
+                        className="p-4 rounded-xl border border-border bg-surface shadow-2xs hover:border-purple-500/40 transition-colors space-y-3"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="px-2 py-0.5 rounded-md font-mono text-[10px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                              Revision #{vehicleSpecHistory.length - idx}
+                            </span>
+                            <span className="text-xs font-semibold text-foreground">
+                              {record.changed_by_name || "Fleet Officer"}
+                            </span>
+                            {record.changed_by_email && (
+                              <span className="text-[11px] text-muted-foreground">
+                                ({record.changed_by_email})
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] text-muted-foreground flex items-center gap-1 font-mono">
+                              <Clock className="h-3 w-3 text-muted-foreground" />
+                              {new Date(record.created_at).toLocaleString("en-IN", {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit"
+                              })}
+                            </span>
+
+                            {canDeleteVehicle && (
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteSpecHistoryRecord(record.id)}
+                                className="text-muted-foreground hover:text-rose-500 p-1 rounded-md transition-colors"
+                                title="Void audit log entry (Admin Only)"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Summary Bar */}
+                        <div className="px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-border/80 text-xs text-foreground font-medium flex items-center gap-2">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                          <span className="break-words">{record.change_summary}</span>
+                        </div>
+
+                        {/* Detailed Diffs if available */}
+                        {record.changed_fields && record.changed_fields.length > 0 && record.old_data && record.new_data && (
+                          <div className="space-y-1.5 pt-1">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                              Modified Attribute Breakdown ({record.changed_fields.length} {record.changed_fields.length === 1 ? "field" : "fields"})
+                            </span>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              {record.changed_fields.map((fieldKey) => {
+                                const oldV = record.old_data?.[fieldKey];
+                                const newV = record.new_data?.[fieldKey];
+                                const formatVal = (v: any) => {
+                                  if (v === null || v === undefined || v === "") return "None / Empty";
+                                  if (typeof v === "boolean") return v ? "Yes / Active" : "No / Inactive";
+                                  return String(v);
+                                };
+                                return (
+                                  <div
+                                    key={fieldKey}
+                                    className="p-2.5 rounded-lg border border-border/60 bg-surface/50 text-[11px] space-y-1"
+                                  >
+                                    <div className="font-semibold text-foreground uppercase text-[10px] tracking-wider text-muted-foreground">
+                                      {fieldKey.replace(/_/g, " ")}
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs">
+                                      <span className="px-2 py-0.5 rounded bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 font-mono truncate max-w-[45%]">
+                                        {formatVal(oldV)}
+                                      </span>
+                                      <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                                      <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-mono truncate max-w-[45%]">
+                                        {formatVal(newV)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-border bg-surface/50 flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">
+                All vehicle specification revisions are tracked for fleet audit trails and statutory compliance.
+              </span>
+              <AppButton
+                variant="outline"
+                size="sm"
+                onClick={() => setIsSpecHistoryModalOpen(false)}
+              >
+                Close Ledger
+              </AppButton>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------------------------- */}
       {/* 1. VIEW VEHICLE INSPECTOR MODAL */}
       {/* ---------------------------------------------------------------------- */}
       {viewingVehicle && (
@@ -10299,6 +10631,20 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               </div>
 
               <div className="flex items-center gap-2">
+                <AppButton
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const v = viewingVehicle;
+                    setViewingVehicle(null);
+                    handleOpenVehicleSpecHistoryModal(v);
+                  }}
+                  className="text-xs h-8 font-semibold gap-1.5 text-purple-600 dark:text-purple-400 border-purple-500/30 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/30 shadow-2xs"
+                  title="View specification change history"
+                >
+                  <ClipboardCheck className="h-3.5 w-3.5" />
+                  <span>Revision History</span>
+                </AppButton>
                 {canEditVehicle && (
                   <AppButton
                     variant="primary"
@@ -10549,6 +10895,20 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 Vehicle ID: <strong className="font-mono text-foreground">{viewingVehicle.id}</strong>
               </span>
               <div className="flex items-center gap-2">
+                <AppButton
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const v = viewingVehicle;
+                    setViewingVehicle(null);
+                    handleOpenVehicleSpecHistoryModal(v);
+                  }}
+                  className="text-xs h-9 px-3 font-semibold gap-1.5 text-purple-600 dark:text-purple-400 border-purple-500/30 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/30 shadow-2xs"
+                  title="View specification revision history and audit ledger"
+                >
+                  <ClipboardCheck className="h-3.5 w-3.5" />
+                  <span>Revision History</span>
+                </AppButton>
                 {canEditVehicle && (
                   <AppButton
                     variant="primary"

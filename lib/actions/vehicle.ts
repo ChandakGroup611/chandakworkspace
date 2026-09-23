@@ -27,9 +27,47 @@ async function getAuthenticatedUser() {
   }
 }
 
+async function canUserManageVehicles(userId: string): Promise<boolean> {
+  try {
+    const isSuperAdmin = (await hasPermission(userId, "SUPER_ADMIN")) || (await hasPermission(userId, "ROLE_ADMIN")) || (await hasPermission(userId, "ADMIN"));
+    if (isSuperAdmin) return true;
+
+    const hasDirectPerm = (await hasPermission(userId, "VEHICLES_UPDATE")) || (await hasPermission(userId, "VEHICLES_MANAGE")) || (await hasPermission(userId, "VEHICLES_EDIT")) || (await hasPermission(userId, "VEHICLES_CREATE"));
+    if (hasDirectPerm) return true;
+
+    const { data: fua } = await supabaseAdmin
+      .from("fleet_user_access")
+      .select("can_manage_vehicles, fleet_role, is_module_enabled")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (fua && (fua.is_module_enabled ?? true)) {
+      if (fua.can_manage_vehicles || fua.fleet_role === "FLEET_ADMIN" || fua.fleet_role === "FLEET_MANAGER") {
+        return true;
+      }
+    }
+  } catch (err) {
+    console.warn("[vehicle-actions] canUserManageVehicles error:", err);
+  }
+  return false;
+}
+
 // ------------------------------------------------------------------------------
 // Types & Contracts
 // ------------------------------------------------------------------------------
+
+export interface VehicleSpecificationHistoryRecord {
+  id: string;
+  vehicle_id: string;
+  changed_by?: string | null;
+  changed_by_name: string;
+  changed_by_email?: string | null;
+  change_summary: string;
+  old_data: Record<string, any>;
+  new_data: Record<string, any>;
+  changed_fields: string[];
+  created_at: string;
+}
 
 function calculateDaysRemaining(dateStr?: string | null): number | null {
   if (!dateStr) return null;
@@ -1768,7 +1806,7 @@ export async function createVehicleAction(formData: {
       return { success: false, error: "Unauthorized request" };
     }
 
-    const canCreate = (await hasPermission(user.id, "VEHICLES_CREATE")) || (await hasPermission(user.id, "VEHICLES_MANAGE"));
+    const canCreate = (await hasPermission(user.id, "VEHICLES_CREATE")) || (await hasPermission(user.id, "VEHICLES_MANAGE")) || (await canUserManageVehicles(user.id));
     if (!canCreate) {
       return { success: false, error: "Access Denied: You lack permission to register new vehicles." };
     }
@@ -1919,6 +1957,21 @@ export async function createVehicleAction(formData: {
         .eq("id", formData.assigned_driver_id);
     }
 
+    // Record initial creation specification history
+    const creatorName = (user.user_metadata?.full_name as string) || user.email?.split("@")[0] || "Fleet Officer";
+    await supabaseAdmin
+      .from("vehicle_specification_history")
+      .insert({
+        vehicle_id: vehicleId,
+        changed_by: user.id,
+        changed_by_name: creatorName,
+        changed_by_email: user.email || "",
+        change_summary: `Initial registration of vehicle ${regNum} (${make} ${model} ${variant || ""})`,
+        old_data: {},
+        new_data: newRecord,
+        changed_fields: Object.keys(newRecord)
+      });
+
     return { success: true, vehicle: inserted as VehicleRecord };
   } catch (err: any) {
     console.error("[vehicle-actions] createVehicleAction exception:", err);
@@ -1963,79 +2016,259 @@ export async function updateVehicleAction(
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
-    const canUpdate = (await hasPermission(user.id, "VEHICLES_UPDATE")) || (await hasPermission(user.id, "VEHICLES_MANAGE")) || (await hasPermission(user.id, "VEHICLES_EDIT"));
+    const canUpdate = await canUserManageVehicles(user.id);
     if (!canUpdate) {
       return { success: false, error: "Access Denied: You lack permission to edit vehicle specifications." };
     }
 
-    const updates: Record<string, any> = { updated_at: new Date().toISOString() };
-    if (formData.registration_number) updates.registration_number = formData.registration_number.trim().toUpperCase();
-    if (formData.make) updates.make = formData.make.trim();
-    if (formData.model) updates.model = formData.model.trim();
-    if (formData.variant !== undefined) updates.variant = formData.variant.trim();
-    if (formData.category) updates.category = formData.category;
-    if (formData.status) updates.status = formData.status;
-    if (formData.odometer_km !== undefined) updates.odometer_km = Number(formData.odometer_km);
-    if (formData.nickname !== undefined) updates.nickname = formData.nickname;
-    if (formData.paint_color !== undefined) updates.paint_color = formData.paint_color;
-    if (formData.vin_chassis_number !== undefined) updates.vin_chassis_number = formData.vin_chassis_number.trim();
-    if (formData.engine_number !== undefined) updates.engine_number = formData.engine_number.trim();
-    if (formData.fuel_type !== undefined) updates.fuel_type = formData.fuel_type.trim();
-    let isUpdateElectric = formData.fuel_type ? isElectricFuel(formData.fuel_type) : false;
-    if (!formData.fuel_type) {
-      const { data: currVeh } = await supabaseAdmin
-        .from("vehicles")
-        .select("fuel_type")
-        .eq("id", id)
-        .maybeSingle();
-      if (currVeh && isElectricFuel(currVeh.fuel_type)) {
-        isUpdateElectric = true;
-      }
+    // 1. Fetch current vehicle record
+    const { data: existingVehicle, error: fetchErr } = await supabaseAdmin
+      .from("vehicles")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (fetchErr || !existingVehicle) {
+      return { success: false, error: fetchErr?.message || "Vehicle not found in database." };
     }
+
+    // 2. Fetch current assigned driver
+    const { data: currentDriver } = await supabaseAdmin
+      .from("drivers")
+      .select("id, full_name, phone")
+      .eq("assigned_vehicle_id", id)
+      .maybeSingle();
+
+    const updates: Record<string, any> = { updated_at: new Date().toISOString() };
+    if (formData.registration_number !== undefined) updates.registration_number = formData.registration_number.trim().toUpperCase();
+    if (formData.make !== undefined) updates.make = formData.make.trim();
+    if (formData.model !== undefined) updates.model = formData.model.trim();
+    if (formData.variant !== undefined) updates.variant = formData.variant.trim();
+    if (formData.category !== undefined) updates.category = formData.category;
+    if (formData.status !== undefined) updates.status = formData.status;
+    if (formData.odometer_km !== undefined) updates.odometer_km = Number(formData.odometer_km);
+    if (formData.nickname !== undefined) updates.nickname = formData.nickname.trim();
+    if (formData.paint_color !== undefined) updates.paint_color = formData.paint_color.trim();
+    if (formData.vin_chassis_number !== undefined) updates.vin_chassis_number = formData.vin_chassis_number.trim().toUpperCase();
+    if (formData.engine_number !== undefined) updates.engine_number = formData.engine_number.trim().toUpperCase();
+    if (formData.fuel_type !== undefined) updates.fuel_type = formData.fuel_type.trim();
+
+    const isUpdateElectric = isElectricFuel(updates.fuel_type || existingVehicle.fuel_type);
     if (isUpdateElectric) {
       updates.puc_expiry_date = null;
     } else if (formData.puc_expiry_date !== undefined) {
       updates.puc_expiry_date = formData.puc_expiry_date || null;
     }
+
     if (formData.registration_date !== undefined) updates.registration_date = formData.registration_date || null;
-    if (formData.rto_office !== undefined) updates.rto_office = formData.rto_office.trim();
-    if (formData.registered_owner !== undefined) updates.registered_owner = formData.registered_owner.trim();
+    if (formData.rto_office !== undefined) updates.rto_office = formData.rto_office ? formData.rto_office.trim() : null;
+    if (formData.registered_owner !== undefined) updates.registered_owner = formData.registered_owner ? formData.registered_owner.trim() : null;
     if (formData.rto_rmn !== undefined) updates.rto_rmn = formData.rto_rmn ? formData.rto_rmn.trim() : null;
-    if (formData.insurance_policy_number !== undefined) updates.insurance_policy_number = formData.insurance_policy_number.trim();
+    if (formData.insurance_policy_number !== undefined) updates.insurance_policy_number = formData.insurance_policy_number ? formData.insurance_policy_number.trim() : null;
     if (formData.insurance_expiry_date !== undefined) updates.insurance_expiry_date = formData.insurance_expiry_date || null;
-    if (formData.insurance_vendor_id !== undefined) updates.insurance_vendor_id = formData.insurance_vendor_id || null;
+    if (formData.insurance_vendor_id !== undefined) {
+      const cleanVendorId = formData.insurance_vendor_id ? formData.insurance_vendor_id.trim() : null;
+      updates.insurance_vendor_id = cleanVendorId && cleanVendorId !== "" ? cleanVendorId : null;
+    }
     if (formData.insurance_vendor !== undefined) updates.insurance_vendor = formData.insurance_vendor ? formData.insurance_vendor.trim() : null;
     if (formData.fitness_expiry_date !== undefined) updates.fitness_expiry_date = formData.fitness_expiry_date || null;
-    if (formData.has_roadside_assistance !== undefined) updates.has_roadside_assistance = formData.has_roadside_assistance;
-    if (formData.has_hsrp_plate !== undefined) updates.has_hsrp_plate = formData.has_hsrp_plate;
+    if (formData.has_roadside_assistance !== undefined) updates.has_roadside_assistance = Boolean(formData.has_roadside_assistance);
+    if (formData.has_hsrp_plate !== undefined) updates.has_hsrp_plate = Boolean(formData.has_hsrp_plate);
 
+    // 3. Execute update on vehicles table
     const { error: updateErr } = await supabaseAdmin
       .from("vehicles")
       .update(updates)
       .eq("id", id);
 
-    if (updateErr) return { success: false, error: updateErr.message };
+    if (updateErr) {
+      console.error("[vehicle-actions] updateVehicleAction error:", updateErr);
+      return { success: false, error: updateErr.message };
+    }
 
-    // Update driver assignment if specified
+    // 4. Update driver assignment if specified
+    let newDriverObj: { id: string; full_name: string; phone: string } | null = null;
     if (formData.assigned_driver_id !== undefined) {
-      // Clear previous driver assigned to this vehicle
-      await supabaseAdmin
-        .from("drivers")
-        .update({ assigned_vehicle_id: null })
-        .eq("assigned_vehicle_id", id);
+      const targetDriverId = formData.assigned_driver_id ? formData.assigned_driver_id.trim() : null;
+      const oldDriverId = currentDriver?.id || null;
 
-      // Assign new driver if provided
-      if (formData.assigned_driver_id) {
+      if (targetDriverId !== oldDriverId) {
+        // Clear previous driver assigned to this vehicle
         await supabaseAdmin
           .from("drivers")
-          .update({ assigned_vehicle_id: id })
-          .eq("id", formData.assigned_driver_id);
+          .update({ assigned_vehicle_id: null })
+          .eq("assigned_vehicle_id", id);
+
+        // Assign new driver if provided
+        if (targetDriverId) {
+          const { data: nd } = await supabaseAdmin
+            .from("drivers")
+            .update({ assigned_vehicle_id: id })
+            .eq("id", targetDriverId)
+            .select("id, full_name, phone")
+            .maybeSingle();
+          newDriverObj = nd || null;
+
+          // Record driver assignment history
+          await supabaseAdmin
+            .from("vehicle_driver_assignments")
+            .insert({
+              vehicle_id: id,
+              driver_id: targetDriverId,
+              start_date: new Date().toISOString(),
+              assigned_by: (user.user_metadata?.full_name as string) || user.email || "Fleet Manager"
+            });
+        }
       }
+    }
+
+    // 5. If status changed, record to vehicle_status_history
+    if (updates.status && updates.status !== existingVehicle.status) {
+      await supabaseAdmin
+        .from("vehicle_status_history")
+        .insert({
+          vehicle_id: id,
+          previous_status: existingVehicle.status,
+          new_status: updates.status,
+          changed_by: (user.user_metadata?.full_name as string) || user.email || "Fleet Manager",
+          reason: "Specification / status update"
+        });
+    }
+
+    // 6. If insurance policy details updated, sync with insurance_policies table
+    if (updates.insurance_policy_number || updates.insurance_expiry_date) {
+      const activePolicyNum = updates.insurance_policy_number || existingVehicle.insurance_policy_number;
+      const activePolicyEnd = updates.insurance_expiry_date || existingVehicle.insurance_expiry_date;
+      const activeVendorId = updates.insurance_vendor_id !== undefined ? updates.insurance_vendor_id : existingVehicle.insurance_vendor_id;
+      const activeVendorName = updates.insurance_vendor || existingVehicle.insurance_vendor || "General Fleet Insurer";
+
+      if (activePolicyNum && activePolicyEnd) {
+        const { data: existingPolicy } = await supabaseAdmin
+          .from("insurance_policies")
+          .select("id, policy_number, end_date")
+          .eq("vehicle_id", id)
+          .eq("is_active", true)
+          .maybeSingle();
+
+        if (existingPolicy) {
+          await supabaseAdmin
+            .from("insurance_policies")
+            .update({
+              policy_number: activePolicyNum,
+              end_date: activePolicyEnd,
+              insurer_name: activeVendorName,
+              insurance_vendor_id: activeVendorId || null,
+              has_roadside_assistance: updates.has_roadside_assistance !== undefined ? updates.has_roadside_assistance : existingVehicle.has_roadside_assistance,
+              updated_at: new Date().toISOString()
+            })
+            .eq("id", existingPolicy.id);
+        } else {
+          await supabaseAdmin
+            .from("insurance_policies")
+            .insert({
+              vehicle_id: id,
+              policy_number: activePolicyNum,
+              insurer_name: activeVendorName,
+              policy_type: "Comprehensive",
+              start_date: updates.registration_date || existingVehicle.registration_date || new Date().toISOString().split("T")[0],
+              end_date: activePolicyEnd,
+              insurance_vendor_id: activeVendorId || null,
+              is_active: true,
+              has_roadside_assistance: updates.has_roadside_assistance !== undefined ? updates.has_roadside_assistance : true,
+              renewed_by: (user.user_metadata?.full_name as string) || user.email || "Fleet Manager"
+            });
+        }
+      }
+    }
+
+    // 7. Compute complete differences & generate specification history record
+    const changedFields: string[] = [];
+    const oldSnapshot: Record<string, any> = {};
+    const newSnapshot: Record<string, any> = {};
+    const summaryParts: string[] = [];
+
+    const fieldMap: Record<string, { label: string; format?: (v: any) => string }> = {
+      registration_number: { label: "Plate Number" },
+      make: { label: "Make" },
+      model: { label: "Model" },
+      variant: { label: "Variant" },
+      category: { label: "Category" },
+      status: { label: "Status" },
+      odometer_km: { label: "Odometer", format: (v) => `${Number(v || 0).toLocaleString("en-IN")} km` },
+      fuel_type: { label: "Fuel Type" },
+      paint_color: { label: "Color" },
+      vin_chassis_number: { label: "Chassis (VIN)" },
+      engine_number: { label: "Engine No." },
+      registration_date: { label: "Registration Date" },
+      rto_office: { label: "RTO Office" },
+      registered_owner: { label: "Owner" },
+      rto_rmn: { label: "RTO RMN" },
+      insurance_policy_number: { label: "Insurance Policy" },
+      insurance_expiry_date: { label: "Insurance Expiry" },
+      insurance_vendor: { label: "Insurance Vendor" },
+      puc_expiry_date: { label: "PUC Expiry" },
+      fitness_expiry_date: { label: "Fitness Expiry" },
+      has_hsrp_plate: { label: "HSRP Plate", format: (v) => v ? "Fitted" : "Not Fitted" },
+      has_roadside_assistance: { label: "Roadside Assistance (RSA)", format: (v) => v ? "Active" : "Inactive" },
+      nickname: { label: "Nickname" }
+    };
+
+    Object.keys(fieldMap).forEach((key) => {
+      const oldVal = existingVehicle[key];
+      const newVal = updates[key];
+      if (newVal !== undefined && String(newVal ?? "") !== String(oldVal ?? "")) {
+        changedFields.push(key);
+        oldSnapshot[key] = oldVal ?? null;
+        newSnapshot[key] = newVal ?? null;
+
+        const info = fieldMap[key];
+        const oldDisp = info.format ? info.format(oldVal) : String(oldVal || "None");
+        const newDisp = info.format ? info.format(newVal) : String(newVal || "None");
+        summaryParts.push(`${info.label}: ${oldDisp} → ${newDisp}`);
+      }
+    });
+
+    // Check driver difference
+    if (formData.assigned_driver_id !== undefined) {
+      const oldDriverName = currentDriver?.full_name || "No Driver";
+      const newDriverName = newDriverObj ? newDriverObj.full_name : (formData.assigned_driver_id ? "Assigned" : "No Driver");
+      if (formData.assigned_driver_id !== (currentDriver?.id || "")) {
+        changedFields.push("assigned_driver");
+        oldSnapshot.assigned_driver = oldDriverName;
+        newSnapshot.assigned_driver = newDriverName;
+        summaryParts.push(`Driver: ${oldDriverName} → ${newDriverName}`);
+      }
+    }
+
+    const performerName = (user.user_metadata?.full_name as string) || (user.user_metadata?.name as string) || user.email?.split("@")[0] || "Fleet Administrator";
+    const performerEmail = user.email || "";
+
+    const summaryText = summaryParts.length > 0 
+      ? summaryParts.join(" • ") 
+      : "Vehicle specifications verified and re-saved.";
+
+    // Insert into vehicle_specification_history table
+    try {
+      await supabaseAdmin
+        .from("vehicle_specification_history")
+        .insert({
+          vehicle_id: id,
+          changed_by: user.id,
+          changed_by_name: performerName,
+          changed_by_email: performerEmail,
+          change_summary: summaryText,
+          old_data: oldSnapshot,
+          new_data: newSnapshot,
+          changed_fields: changedFields
+        });
+    } catch (histErr) {
+      console.warn("[vehicle-actions] History log insert error (non-fatal):", histErr);
     }
 
     return { success: true };
   } catch (err: any) {
-    return { success: false, error: err.message };
+    console.error("[vehicle-actions] updateVehicleAction exception:", err);
+    return { success: false, error: err.message || "Failed to update vehicle specifications." };
   }
 }
 
@@ -3676,6 +3909,86 @@ export async function deleteVehiclePucCertificateAction(
     return { success: false, error: err.message || "Failed to delete PUC certificate" };
   }
 }
+
+/**
+ * ==============================================================================
+ * Vehicle Specification Modification History & Comprehensive Audit Ledger Actions
+ * ==============================================================================
+ */
+
+export async function fetchVehicleSpecificationHistoryAction(vehicleId: string): Promise<{
+  success: boolean;
+  history: VehicleSpecificationHistoryRecord[];
+  error?: string;
+}> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) return { success: false, history: [], error: "Unauthorized" };
+
+    const { data, error } = await supabaseAdmin
+      .from("vehicle_specification_history")
+      .select("*")
+      .eq("vehicle_id", vehicleId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("[vehicle-actions] fetchVehicleSpecificationHistoryAction error:", error);
+      return { success: false, history: [], error: error.message };
+    }
+
+    const formattedHistory: VehicleSpecificationHistoryRecord[] = (data || []).map((row: any) => ({
+      id: row.id,
+      vehicle_id: row.vehicle_id,
+      changed_by: row.changed_by,
+      changed_by_name: row.changed_by_name || "Fleet Officer",
+      changed_by_email: row.changed_by_email || "",
+      change_summary: row.change_summary || "Specification update",
+      old_data: row.old_data || {},
+      new_data: row.new_data || {},
+      changed_fields: row.changed_fields || [],
+      created_at: row.created_at
+    }));
+
+    return { success: true, history: formattedHistory };
+  } catch (err: any) {
+    console.error("[vehicle-actions] fetchVehicleSpecificationHistoryAction exception:", err);
+    return { success: false, history: [], error: err.message || "Failed to fetch vehicle history" };
+  }
+}
+
+export async function deleteVehicleSpecificationHistoryRecordAction(
+  historyId: string,
+  vehicleId: string
+): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    const canDelete = (await hasPermission(user.id, "SUPER_ADMIN")) || (await hasPermission(user.id, "ROLE_ADMIN")) || (await hasPermission(user.id, "VEHICLES_DELETE")) || (await hasPermission(user.id, "VEHICLES_MANAGE"));
+    if (!canDelete) {
+      return { success: false, error: "Access Denied: Only administrators can void specification audit records." };
+    }
+
+    const { error } = await supabaseAdmin
+      .from("vehicle_specification_history")
+      .delete()
+      .eq("id", historyId)
+      .eq("vehicle_id", vehicleId);
+
+    if (error) {
+      console.error("[vehicle-actions] deleteVehicleSpecificationHistoryRecordAction error:", error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to void history record" };
+  }
+}
+
 
 
 
