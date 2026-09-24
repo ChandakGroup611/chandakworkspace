@@ -81,13 +81,11 @@ interface UnifiedAuthData {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    // 1. Listen for Auth State Changes (Login, Logout, Token Refresh, Initial Session)
+    // 1. Listen for Auth State Changes (Login, Logout, User Profile Updates)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (
         event === "SIGNED_IN" || 
         event === "SIGNED_OUT" || 
-        event === "INITIAL_SESSION" || 
-        event === "TOKEN_REFRESHED" || 
         event === "USER_UPDATED"
       ) {
         queryClient.invalidateQueries({ queryKey: ["global_auth_context"] });
@@ -207,8 +205,8 @@ interface UnifiedAuthData {
 
       return { profile, permissions: perms, roleCode: finalRoleCode };
     },
-    staleTime: 10000,
-    gcTime: 300000,
+    staleTime: 300000, // 5 minutes fresh cache
+    gcTime: 600000,    // 10 minutes garbage collection
   });
 
   const loading = isLoading;

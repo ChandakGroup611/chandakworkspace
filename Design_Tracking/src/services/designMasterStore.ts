@@ -366,17 +366,39 @@ export class DesignMasterStore {
 
     // Initialize with completely clean blank state (no predefined mock data)
     this.state = this.buildBlankState();
-    this.saveToStorage();
+    this.saveToStorage(true);
     return this.state;
   }
 
-  private static saveToStorage() {
+  private static saveTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  private static saveToStorage(immediate = false) {
     if (typeof window !== "undefined" && this.state) {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
-      } catch (e) {
-        console.warn("Failed to save DesignMasterStore to localStorage:", e);
+      if (immediate) {
+        if (this.saveTimeout) {
+          clearTimeout(this.saveTimeout);
+          this.saveTimeout = null;
+        }
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+        } catch (e) {
+          console.warn("Failed to save DesignMasterStore to localStorage:", e);
+        }
+        return;
       }
+
+      // Debounce non-immediate serialization (250ms) to avoid locking the UI thread during rapid updates
+      if (this.saveTimeout) clearTimeout(this.saveTimeout);
+      this.saveTimeout = setTimeout(() => {
+        try {
+          if (this.state) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+          }
+        } catch (e) {
+          console.warn("Failed to save DesignMasterStore to localStorage:", e);
+        }
+        this.saveTimeout = null;
+      }, 250);
     }
   }
 

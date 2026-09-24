@@ -1,16 +1,32 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { usePathname } from "next/navigation";
 import { usePermissions } from "@/hooks/usePermissions";
 import { FleetMasterStore } from "@/components/vehicle/services/fleetMasterStore";
 import { fetchMyFleetAccessAction } from "@/lib/actions/vehicleRbac";
 import { FleetFunctionalModule, FleetRoleCode, FleetMovementAccessScope, FleetUserAccessRecord } from "@/types/vehicleRbacTypes";
 
+// In-memory module cache for user fleet access to avoid repeated DB hits
+let cachedFleetAccessUserId: string | null = null;
+let cachedFleetAccessRecord: FleetUserAccessRecord | null = null;
+let cachedFleetAccessTimestamp = 0;
+const FLEET_ACCESS_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
 export function useFleetPermissions() {
+  const pathname = usePathname() || "/";
+  const isVehicleRoute = pathname.startsWith("/vehicle");
   const { userId, roleCode: globalRoleCode, hasPermission, loading: authLoading } = usePermissions();
   const [storeState, setStoreState] = useState(() => FleetMasterStore.getState());
-  const [serverUserAccess, setServerUserAccess] = useState<FleetUserAccessRecord | null>(null);
-  const [serverLoaded, setServerLoaded] = useState(false);
+  const [serverUserAccess, setServerUserAccess] = useState<FleetUserAccessRecord | null>(() => {
+    if (userId && cachedFleetAccessUserId === userId && (Date.now() - cachedFleetAccessTimestamp < FLEET_ACCESS_CACHE_TTL_MS)) {
+      return cachedFleetAccessRecord;
+    }
+    return null;
+  });
+  const [serverLoaded, setServerLoaded] = useState(() => {
+    return Boolean(userId && cachedFleetAccessUserId === userId && (Date.now() - cachedFleetAccessTimestamp < FLEET_ACCESS_CACHE_TTL_MS));
+  });
 
   // Sync with store
   useEffect(() => {
@@ -20,13 +36,32 @@ export function useFleetPermissions() {
     return () => unsubscribe();
   }, []);
 
-  // Fetch actual user access record from server
+  // Fetch actual user access record from server when on Vehicle route or cache is cold
   useEffect(() => {
     let isMounted = true;
+
+    // Skip eager DB round-trip on non-vehicle pages if we don't have cached data yet
+    if (!isVehicleRoute && !cachedFleetAccessRecord) {
+      setServerLoaded(true);
+      return;
+    }
+
+    // Check valid in-memory cache
+    if (userId && cachedFleetAccessUserId === userId && (Date.now() - cachedFleetAccessTimestamp < FLEET_ACCESS_CACHE_TTL_MS)) {
+      if (isMounted) {
+        setServerUserAccess(cachedFleetAccessRecord);
+        setServerLoaded(true);
+      }
+      return;
+    }
+
     async function loadMyAccess() {
       try {
         const res = await fetchMyFleetAccessAction();
         if (isMounted && res.success && res.fleetAccess) {
+          cachedFleetAccessUserId = userId;
+          cachedFleetAccessRecord = res.fleetAccess;
+          cachedFleetAccessTimestamp = Date.now();
           setServerUserAccess(res.fleetAccess);
           FleetMasterStore.saveUserAccess(res.fleetAccess);
         }
@@ -43,7 +78,7 @@ export function useFleetPermissions() {
     return () => {
       isMounted = false;
     };
-  }, [userId]);
+  }, [userId, isVehicleRoute]);
 
   const isGlobalSuperAdmin = useMemo(() => {
     const code = (globalRoleCode || "").toUpperCase();

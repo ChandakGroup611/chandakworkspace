@@ -159,6 +159,18 @@ export const CHECKLIST_ITEMS = [
   { key: "washing_cleaning", label: "Vehicle Interior Vacuum & Exterior Wash", icon: "🚿" }
 ];
 
+// Module-level in-memory cache for FleetDesk data
+let fleetDataCache: {
+  stats?: VehicleDashboardStats;
+  vehicles?: VehicleRecord[];
+  drivers?: DriverRecord[];
+  trips?: TripRecord[];
+  maintenance?: MaintenanceRecord[];
+  vendors?: InsuranceVendorRecord[];
+  parts?: PartAccessoryRecord[];
+  timestamp: number;
+} | null = null;
+
 export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] }) {
   const pathname = usePathname() || "/vehicle";
   const router = useRouter();
@@ -683,11 +695,25 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   };
 
   // ----------------------------------------------------------------------------
-  // Data Loaders (Module-local operations)
+  // Data Loaders (Module-local operations with 60s in-memory cache)
   // ----------------------------------------------------------------------------
 
-  const loadAllData = useCallback(async (isSilent = false) => {
+  const loadAllData = useCallback(async (isSilent = false, forceRefresh = false) => {
     try {
+      const now = Date.now();
+      // Use cached dataset on quick tab switching or re-renders
+      if (!forceRefresh && fleetDataCache && (now - fleetDataCache.timestamp < 60000)) {
+        if (fleetDataCache.stats) setStats(fleetDataCache.stats);
+        if (fleetDataCache.vehicles) setVehicles(fleetDataCache.vehicles);
+        if (fleetDataCache.drivers) setDrivers(fleetDataCache.drivers);
+        if (fleetDataCache.trips) setTrips(fleetDataCache.trips);
+        if (fleetDataCache.maintenance) setMaintenance(fleetDataCache.maintenance);
+        if (fleetDataCache.vendors) setInsuranceVendors(fleetDataCache.vendors);
+        if (fleetDataCache.parts) setParts(fleetDataCache.parts);
+        setLoading(false);
+        return;
+      }
+
       if (!isSilent) setLoading(true);
       else setRefreshing(true);
 
@@ -701,13 +727,26 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         fetchVehiclePartsList()
       ]);
 
-      if (statsRes.success) setStats(statsRes.stats);
-      if (vehiclesRes.success) setVehicles(vehiclesRes.vehicles);
-      if (driversRes.success) setDrivers(driversRes.drivers);
-      if (tripsRes.success) setTrips(tripsRes.trips);
-      if (maintRes.success) setMaintenance(maintRes.records);
-      if (vendorsRes.success) setInsuranceVendors(vendorsRes.vendors);
-      if (partsRes.success && partsRes.parts) setParts(partsRes.parts);
+      const newCache: {
+        stats?: VehicleDashboardStats;
+        vehicles?: VehicleRecord[];
+        drivers?: DriverRecord[];
+        trips?: TripRecord[];
+        maintenance?: MaintenanceRecord[];
+        vendors?: InsuranceVendorRecord[];
+        parts?: PartAccessoryRecord[];
+        timestamp: number;
+      } = { timestamp: Date.now() };
+
+      if (statsRes.success) { setStats(statsRes.stats); newCache.stats = statsRes.stats; }
+      if (vehiclesRes.success) { setVehicles(vehiclesRes.vehicles); newCache.vehicles = vehiclesRes.vehicles; }
+      if (driversRes.success) { setDrivers(driversRes.drivers); newCache.drivers = driversRes.drivers; }
+      if (tripsRes.success) { setTrips(tripsRes.trips); newCache.trips = tripsRes.trips; }
+      if (maintRes.success) { setMaintenance(maintRes.records); newCache.maintenance = maintRes.records; }
+      if (vendorsRes.success) { setInsuranceVendors(vendorsRes.vendors); newCache.vendors = vendorsRes.vendors; }
+      if (partsRes.success && partsRes.parts) { setParts(partsRes.parts); newCache.parts = partsRes.parts; }
+
+      fleetDataCache = newCache;
 
       if (vehiclesRes.error && !isSilent) {
         setErrorBanner(vehiclesRes.error);

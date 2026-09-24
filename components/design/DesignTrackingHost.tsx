@@ -83,6 +83,10 @@ type ActiveTabType =
   | "RBAC"
   | "MASTERS";
 
+// In-memory cache timestamp to prevent redundant database hydration on tab switching
+let lastDesignAccessHydratedTimestamp = 0;
+const DESIGN_ACCESS_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
 export default function DesignTrackingHost({ initialSlug, currentUser }: DesignTrackingHostProps) {
   const pathname = usePathname() || "/design";
   const router = useRouter();
@@ -97,12 +101,17 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
     }
   }, [currentUser]);
 
-  // Hydrate user access list from database in background
+  // Hydrate user access list from database in background (with 5-minute TTL cache)
   useEffect(() => {
     const hydrateAccess = async () => {
+      const now = Date.now();
+      if (now - lastDesignAccessHydratedTimestamp < DESIGN_ACCESS_CACHE_TTL_MS) {
+        return;
+      }
       try {
         const res = await fetchDesignWorkspaceUsersAction();
         if (res.success && res.users) {
+          lastDesignAccessHydratedTimestamp = Date.now();
           const accessRecords = res.users
             .filter(u => !!u.designAccess)
             .map(u => u.designAccess!);

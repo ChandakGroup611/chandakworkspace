@@ -22,11 +22,13 @@ import { registerUserSession } from "@/lib/actions/iam";
 const HEARTBEAT_INTERVAL_MS = 60_000; // 60 seconds
 const SESSION_IDLE_LIMIT_MS = 5 * 60 * 1000; // 5 minutes — matches Navbar timeout
 const BROADCAST_CHANNEL_NAME = "adios_session_heartbeat";
+const ACTIVITY_BROADCAST_THROTTLE_MS = 10_000; // 10s throttle to protect main thread
 
 export default function ClientSessionManager() {
   const router = useRouter();
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastActivityRef = useRef<number>(Date.now());
+  const lastBroadcastRef = useRef<number>(0);
   const isLeaderRef = useRef<boolean>(true); // Whether this tab owns the heartbeat
   const broadcastRef = useRef<BroadcastChannel | null>(null);
   const isMountedRef = useRef(true);
@@ -182,15 +184,19 @@ export default function ClientSessionManager() {
     // ── 3. User activity tracking ───────────────────────────────
     const activityEvents = ["mousemove", "keydown", "click", "scroll", "touchstart"];
     const handleActivity = () => {
-      lastActivityRef.current = Date.now();
+      const now = Date.now();
+      lastActivityRef.current = now;
 
-      // Broadcast activity to other tabs
-      try {
-        broadcastRef.current?.postMessage({
-          type: "activity",
-          timestamp: Date.now(),
-        });
-      } catch {}
+      // Throttle cross-tab IPC broadcast to prevent saturating the main thread
+      if (now - lastBroadcastRef.current >= ACTIVITY_BROADCAST_THROTTLE_MS) {
+        lastBroadcastRef.current = now;
+        try {
+          broadcastRef.current?.postMessage({
+            type: "activity",
+            timestamp: now,
+          });
+        } catch {}
+      }
     };
 
     activityEvents.forEach((evt) => {

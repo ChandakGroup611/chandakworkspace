@@ -4,6 +4,11 @@ import { cookies } from "next/headers";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { supabaseAdmin } from "@/lib/supabase/service_role";
 
+// Static metadata cache for modules_master
+let cachedActiveModules: any[] | null = null;
+let cachedActiveModulesTimestamp = 0;
+const MODULES_MASTER_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
 export interface ModuleInfo {
   id: string;
   code: string;
@@ -49,16 +54,25 @@ export async function getUserAllowedModules(targetUserId?: string): Promise<User
     const roleCode = (userProfile?.role as any)?.code || "";
     const isAdmin = roleCode === "SUPER_ADMIN" || roleCode === "ROLE_ADMIN";
 
-    // Fetch all active modules
-    const { data: allActiveModules, error: modErr } = await supabaseAdmin
-      .from("modules_master")
-      .select("*")
-      .eq("is_active", true)
-      .order("display_order", { ascending: true });
+    // Fetch all active modules (with 5-minute memory cache)
+    let allActiveModules: any[] | null = null;
+    const now = Date.now();
+    if (cachedActiveModules && (now - cachedActiveModulesTimestamp < MODULES_MASTER_CACHE_TTL_MS)) {
+      allActiveModules = cachedActiveModules;
+    } else {
+      const { data: fetchedModules, error: modErr } = await supabaseAdmin
+        .from("modules_master")
+        .select("*")
+        .eq("is_active", true)
+        .order("display_order", { ascending: true });
 
-    if (modErr || !allActiveModules) {
-      console.error("[module-switcher] Failed to fetch modules_master:", modErr);
-      return { modules: [], defaultModule: null, activeModuleCode: null, isAdmin };
+      if (modErr || !fetchedModules) {
+        console.error("[module-switcher] Failed to fetch modules_master:", modErr);
+        return { modules: [], defaultModule: null, activeModuleCode: null, isAdmin };
+      }
+      allActiveModules = fetchedModules;
+      cachedActiveModules = fetchedModules;
+      cachedActiveModulesTimestamp = now;
     }
 
     // Fetch user assigned modules

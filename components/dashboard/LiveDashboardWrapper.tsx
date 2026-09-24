@@ -26,10 +26,10 @@ export default function LiveDashboardWrapper({ initialMetrics, initialKpis, init
       return result;
     },
     initialData: (hasInitialData ? { data: initialMetrics, kpis: initialKpis, meta: initialMeta } : undefined) as any,
-    refetchInterval: 60000,
+    refetchInterval: 120000,
     refetchOnWindowFocus: false,
     refetchIntervalInBackground: false,
-    staleTime: 30000,
+    staleTime: 60000,
   });
 
   const metrics = data?.data || (hasInitialData ? initialMetrics : []);
