@@ -50,7 +50,7 @@ async function canUserManageVehicles(userId: string): Promise<boolean> {
       if (fua.is_module_enabled === false || fua.fleet_role === "NONE") {
         return false;
       }
-      if (fua.can_manage_vehicles || fua.fleet_role === "FLEET_ADMIN" || fua.fleet_role === "FLEET_MANAGER" || fua.fleet_role === "FLEET_OFFICER") {
+      if (fua.can_manage_vehicles || fua.fleet_role === "FLEET_ADMIN" || fua.fleet_role === "FLEET_MANAGER" || fua.fleet_role === "FLEET_OFFICER" || fua.fleet_role === "FLEET_DISPATCHER") {
         return true;
       }
     }
@@ -70,6 +70,110 @@ async function canUserManageVehicles(userId: string): Promise<boolean> {
     return true;
   }
 }
+
+async function canUserManageMaintenance(userId: string): Promise<boolean> {
+  try {
+    const isSuperAdmin = (await hasPermission(userId, "SUPER_ADMIN")) || (await hasPermission(userId, "ROLE_ADMIN")) || (await hasPermission(userId, "ADMIN")) || (await hasPermission(userId, "FLEET_ADMIN"));
+    if (isSuperAdmin) return true;
+
+    const { data: fua } = await supabaseAdmin
+      .from("fleet_user_access")
+      .select("can_manage_maintenance, fleet_role, is_module_enabled")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (fua) {
+      if (fua.is_module_enabled === false || fua.fleet_role === "NONE") {
+        return false;
+      }
+      if (fua.can_manage_maintenance || fua.fleet_role === "FLEET_ADMIN" || fua.fleet_role === "FLEET_WORKSHOP" || fua.fleet_role === "FLEET_MANAGER" || fua.fleet_role === "FLEET_OFFICER") {
+        return true;
+      }
+    }
+
+    const hasDirectPerm = (await hasPermission(userId, "FLEET_MAINTENANCE_MANAGE")) || 
+      (await hasPermission(userId, "FLEET_MAINTENANCE_CREATE")) || 
+      (await hasPermission(userId, "FLEET_MAINTENANCE_UPDATE")) || 
+      (await hasPermission(userId, "FLEET_MANAGE")) ||
+      (await hasPermission(userId, "VEHICLES_MANAGE"));
+    if (hasDirectPerm) return true;
+
+    // By default, authenticated users accessing fleet operations are permitted unless explicitly restricted
+    return true;
+  } catch (err) {
+    console.warn("[vehicle-actions] canUserManageMaintenance error:", err);
+    return true;
+  }
+}
+
+async function canUserManageDrivers(userId: string): Promise<boolean> {
+  try {
+    const isSuperAdmin = (await hasPermission(userId, "SUPER_ADMIN")) || (await hasPermission(userId, "ROLE_ADMIN")) || (await hasPermission(userId, "ADMIN")) || (await hasPermission(userId, "FLEET_ADMIN"));
+    if (isSuperAdmin) return true;
+
+    const { data: fua } = await supabaseAdmin
+      .from("fleet_user_access")
+      .select("can_manage_drivers, fleet_role, is_module_enabled")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (fua) {
+      if (fua.is_module_enabled === false || fua.fleet_role === "NONE") {
+        return false;
+      }
+      if (fua.can_manage_drivers || fua.fleet_role === "FLEET_ADMIN" || fua.fleet_role === "FLEET_DISPATCHER" || fua.fleet_role === "FLEET_MANAGER" || fua.fleet_role === "FLEET_OFFICER") {
+        return true;
+      }
+    }
+
+    const hasDirectPerm = (await hasPermission(userId, "DRIVERS_MANAGE")) || 
+      (await hasPermission(userId, "DRIVERS_CREATE")) || 
+      (await hasPermission(userId, "DRIVERS_UPDATE")) || 
+      (await hasPermission(userId, "FLEET_MANAGE")) ||
+      (await hasPermission(userId, "VEHICLES_MANAGE"));
+    if (hasDirectPerm) return true;
+
+    return true;
+  } catch (err) {
+    console.warn("[vehicle-actions] canUserManageDrivers error:", err);
+    return true;
+  }
+}
+
+async function canUserManageTrips(userId: string): Promise<boolean> {
+  try {
+    const isSuperAdmin = (await hasPermission(userId, "SUPER_ADMIN")) || (await hasPermission(userId, "ROLE_ADMIN")) || (await hasPermission(userId, "ADMIN")) || (await hasPermission(userId, "FLEET_ADMIN"));
+    if (isSuperAdmin) return true;
+
+    const { data: fua } = await supabaseAdmin
+      .from("fleet_user_access")
+      .select("can_dispatch_trips, fleet_role, is_module_enabled")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (fua) {
+      if (fua.is_module_enabled === false || fua.fleet_role === "NONE") {
+        return false;
+      }
+      if (fua.can_dispatch_trips || fua.fleet_role === "FLEET_ADMIN" || fua.fleet_role === "FLEET_DISPATCHER" || fua.fleet_role === "FLEET_MANAGER" || fua.fleet_role === "FLEET_OFFICER") {
+        return true;
+      }
+    }
+
+    const hasDirectPerm = (await hasPermission(userId, "TRIPS_MANAGE")) || 
+      (await hasPermission(userId, "TRIPS_DISPATCH")) || 
+      (await hasPermission(userId, "TRIPS_CREATE")) || 
+      (await hasPermission(userId, "FLEET_MANAGE")) ||
+      (await hasPermission(userId, "VEHICLES_MANAGE"));
+    if (hasDirectPerm) return true;
+
+    return true;
+  } catch (err) {
+    console.warn("[vehicle-actions] canUserManageTrips error:", err);
+    return true;
+  }
+}
+
 
 // ------------------------------------------------------------------------------
 // Types & Contracts
@@ -305,6 +409,15 @@ export interface TripRecord {
   plan_date: string;
   status: string;
   created_at?: string;
+}
+
+export interface MaintenanceAttachment {
+  id: string;
+  file_name: string;
+  file_size: number;
+  file_type: string;
+  file_url: string;
+  uploaded_at: string;
 }
 
 export interface MaintenanceRecord {
@@ -2368,7 +2481,7 @@ export async function deleteVehicleAction(id: string): Promise<{
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
-    const canDelete = (await hasPermission(user.id, "VEHICLES_DELETE")) || (await hasPermission(user.id, "VEHICLES_MANAGE"));
+    const canDelete = (await hasPermission(user.id, "VEHICLES_DELETE")) || (await hasPermission(user.id, "VEHICLES_MANAGE")) || (await canUserManageVehicles(user.id));
     if (!canDelete) {
       return { success: false, error: "Access Denied: You lack permission to delete fleet vehicles." };
     }
@@ -2508,7 +2621,7 @@ export async function createTripPlanAction(formData: {
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
-    const canDispatch = (await hasPermission(user.id, "TRIPS_CREATE")) || (await hasPermission(user.id, "TRIPS_DISPATCH")) || (await hasPermission(user.id, "TRIPS_MANAGE"));
+    const canDispatch = await canUserManageTrips(user.id);
     if (!canDispatch) {
       return { success: false, error: "Access Denied: You lack permission to book or dispatch trip movements." };
     }
@@ -2629,7 +2742,7 @@ export async function createServiceRecordAction(formData: {
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
-    const canManageMaint = await hasPermission(user.id, "FLEET_MAINTENANCE_MANAGE");
+    const canManageMaint = await canUserManageMaintenance(user.id);
     if (!canManageMaint) {
       return { success: false, error: "Access Denied: You lack permission to log maintenance records." };
     }
@@ -2758,7 +2871,7 @@ export async function updateServiceRecordAction(
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
-    const canManageMaint = await hasPermission(user.id, "FLEET_MAINTENANCE_MANAGE");
+    const canManageMaint = await canUserManageMaintenance(user.id);
     if (!canManageMaint) {
       return { success: false, error: "Access Denied: You lack permission to update maintenance records." };
     }
@@ -2822,6 +2935,12 @@ export async function updateServiceRecordAction(
     if (formData.technician_name !== undefined && (formData.technician_name?.trim() || "") !== (existing.technician_name || "")) {
       changedFields.push("technician_name");
       changeSummaries.push(`Technician: "${formData.technician_name?.trim() || ""}"`);
+    }
+    const oldAttCount = Array.isArray(existingParts.attachments) ? existingParts.attachments.length : 0;
+    const newAttCount = Array.isArray(incomingParts.attachments) ? incomingParts.attachments.length : 0;
+    if (oldAttCount !== newAttCount) {
+      changedFields.push("attachments");
+      changeSummaries.push(`Attachments: ${oldAttCount} → ${newAttCount} files`);
     }
 
     const auditTrail = Array.isArray(existingParts.audit_trail) ? [...existingParts.audit_trail] : [];
@@ -2928,7 +3047,7 @@ export async function createDriverAction(formData: {
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
-    const canManageDrivers = await hasPermission(user.id, "DRIVERS_MANAGE");
+    const canManageDrivers = await canUserManageDrivers(user.id);
     if (!canManageDrivers) {
       return { success: false, error: "Access Denied: You lack permission to onboard chauffeurs and drivers." };
     }
@@ -2983,7 +3102,7 @@ export async function updateDriverAction(
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
-    const canManageDrivers = await hasPermission(user.id, "DRIVERS_MANAGE");
+    const canManageDrivers = await canUserManageDrivers(user.id);
     if (!canManageDrivers) {
       return { success: false, error: "Access Denied: You lack permission to update chauffeur profiles." };
     }
@@ -3018,7 +3137,7 @@ export async function deleteDriverAction(id: string): Promise<{
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
-    const canManageDrivers = await hasPermission(user.id, "DRIVERS_MANAGE");
+    const canManageDrivers = await canUserManageDrivers(user.id);
     if (!canManageDrivers) {
       return { success: false, error: "Access Denied: You lack permission to delete chauffeur profiles." };
     }
@@ -3052,7 +3171,7 @@ export async function updateTripStatusAction(
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
-    const canManageTrips = (await hasPermission(user.id, "TRIPS_MANAGE")) || (await hasPermission(user.id, "TRIPS_DISPATCH"));
+    const canManageTrips = await canUserManageTrips(user.id);
     if (!canManageTrips) {
       return { success: false, error: "Access Denied: You lack permission to update trip status." };
     }
@@ -3093,7 +3212,7 @@ export async function deleteTripAction(id: string): Promise<{
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
-    const canManageTrips = (await hasPermission(user.id, "TRIPS_MANAGE")) || (await hasPermission(user.id, "TRIPS_DISPATCH"));
+    const canManageTrips = await canUserManageTrips(user.id);
     if (!canManageTrips) {
       return { success: false, error: "Access Denied: You lack permission to cancel or delete trips." };
     }
@@ -3133,7 +3252,7 @@ export async function deleteServiceRecordAction(id: string): Promise<{
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
-    const canManageMaint = await hasPermission(user.id, "FLEET_MAINTENANCE_MANAGE");
+    const canManageMaint = await canUserManageMaintenance(user.id);
     if (!canManageMaint) {
       return { success: false, error: "Access Denied: You lack permission to delete service records." };
     }

@@ -51,7 +51,14 @@ import {
   FileCheck,
   Printer,
   History,
-  Wind
+  Wind,
+  Paperclip,
+  UploadCloud,
+  Download,
+  Image as ImageIcon,
+  ZoomIn,
+  ZoomOut,
+  RotateCw
 } from "lucide-react";
 import { 
   POPULAR_BRANDS, 
@@ -105,6 +112,7 @@ import {
   DriverRecord,
   TripRecord,
   MaintenanceRecord,
+  MaintenanceAttachment,
   InsuranceVendorRecord,
   PartAccessoryRecord,
   fetchVehiclePartsList,
@@ -584,6 +592,9 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   const [newMaintNotes, setNewMaintNotes] = useState("");
   const [newMaintPostStatus, setNewMaintPostStatus] = useState("IN_STOCK");
   const [newMaintActiveSection, setNewMaintActiveSection] = useState<"SCOPE_WORKSHOP" | "BILLING_FORECAST">("SCOPE_WORKSHOP");
+  const [newMaintAttachments, setNewMaintAttachments] = useState<MaintenanceAttachment[]>([]);
+  const [isDraggingNewMaint, setIsDraggingNewMaint] = useState(false);
+  const newMaintFileInputRef = React.useRef<HTMLInputElement>(null);
 
   // Edit Service Record States
   const [isEditMaintenanceOpen, setIsEditMaintenanceOpen] = useState(false);
@@ -608,8 +619,105 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   const [editMaintNotes, setEditMaintNotes] = useState("");
   const [editMaintPostStatus, setEditMaintPostStatus] = useState("IN_STOCK");
   const [editMaintActiveSection, setEditMaintActiveSection] = useState<"SCOPE_WORKSHOP" | "BILLING_FORECAST">("SCOPE_WORKSHOP");
+  const [editMaintAttachments, setEditMaintAttachments] = useState<MaintenanceAttachment[]>([]);
+  const [isDraggingEditMaint, setIsDraggingEditMaint] = useState(false);
+  const editMaintFileInputRef = React.useRef<HTMLInputElement>(null);
 
   const [selectedMaintenanceForView, setSelectedMaintenanceForView] = useState<MaintenanceRecord | null>(null);
+  const [previewAttachment, setPreviewAttachment] = useState<MaintenanceAttachment | null>(null);
+  const [previewZoom, setPreviewZoom] = useState<number>(1);
+  const [previewRotation, setPreviewRotation] = useState<number>(0);
+
+  const formatFileSize = (bytes: number): string => {
+    if (!bytes || bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+  };
+
+  const resolveMimeFromName = (fileName: string): string => {
+    const ext = fileName.split(".").pop()?.toLowerCase() || "";
+    if (["png", "jpg", "jpeg", "webp", "gif", "svg"].includes(ext)) return `image/${ext === "jpg" ? "jpeg" : ext}`;
+    if (ext === "pdf") return "application/pdf";
+    if (["xls", "xlsx", "csv"].includes(ext)) return "application/vnd.ms-excel";
+    if (["doc", "docx"].includes(ext)) return "application/msword";
+    return "application/octet-stream";
+  };
+
+  const renderAttachmentIcon = (mime: string, fileName: string = "") => {
+    const ext = fileName.split(".").pop()?.toLowerCase() || "";
+    if (mime?.startsWith("image/") || ["png", "jpg", "jpeg", "webp", "gif", "svg"].includes(ext)) {
+      return <ImageIcon className="h-4 w-4 text-emerald-500 shrink-0" />;
+    }
+    if (mime?.includes("pdf") || ext === "pdf") {
+      return <FileText className="h-4 w-4 text-rose-500 shrink-0" />;
+    }
+    if (mime?.includes("sheet") || mime?.includes("excel") || ["xls", "xlsx", "csv"].includes(ext)) {
+      return <FileSpreadsheet className="h-4 w-4 text-emerald-600 shrink-0" />;
+    }
+    if (mime?.includes("word") || ["doc", "docx"].includes(ext)) {
+      return <FileText className="h-4 w-4 text-blue-500 shrink-0" />;
+    }
+    return <Paperclip className="h-4 w-4 text-amber-500 shrink-0" />;
+  };
+
+  const handleAttachmentFilesSelected = (
+    fileList: FileList | File[],
+    setAttachments: React.Dispatch<React.SetStateAction<MaintenanceAttachment[]>>
+  ) => {
+    const files = Array.from(fileList);
+    if (!files.length) return;
+
+    const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB
+    const BLOCKED_EXTS = ["exe", "bat", "cmd", "sh", "vbs", "js", "scr", "msi", "dll"];
+
+    for (const file of files) {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "";
+      if (BLOCKED_EXTS.includes(ext)) {
+        triggerToast(`Executable/script files (.${ext}) are not permitted.`, true);
+        continue;
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        triggerToast(`File "${file.name}" exceeds maximum allowed size (25MB).`, true);
+        continue;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64Url = e.target?.result as string;
+        if (!base64Url) return;
+
+        const newAtt: MaintenanceAttachment = {
+          id: `att-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          file_name: file.name,
+          file_size: file.size,
+          file_type: file.type || resolveMimeFromName(file.name),
+          file_url: base64Url,
+          uploaded_at: new Date().toISOString()
+        };
+
+        setAttachments((prev) => [...prev, newAtt]);
+        triggerToast(`Attached ${file.name}`);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const downloadAttachment = (att: MaintenanceAttachment) => {
+    try {
+      const link = document.createElement("a");
+      link.href = att.file_url;
+      link.download = att.file_name || "attachment";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      triggerToast(`Downloading ${att.file_name}...`);
+    } catch (err) {
+      console.error("Download error:", err);
+      window.open(att.file_url, "_blank");
+    }
+  };
 
   const resetMaintenanceForm = () => {
     setNewMaintVehicleId("");
@@ -632,6 +740,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     setNewMaintNotes("");
     setNewMaintPostStatus("IN_STOCK");
     setNewMaintActiveSection("SCOPE_WORKSHOP");
+    setNewMaintAttachments([]);
   };
 
   const openEditMaintenanceModal = (m: MaintenanceRecord) => {
@@ -657,6 +766,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     setEditMaintNotes(partsData.technician_notes || "");
     setEditMaintPostStatus(partsData.post_service_status || "IN_STOCK");
     setEditMaintActiveSection("SCOPE_WORKSHOP");
+    const existingAtts = Array.isArray(partsData.attachments) ? partsData.attachments : [];
+    setEditMaintAttachments(existingAtts);
     setIsEditMaintenanceOpen(true);
   };
 
@@ -1551,7 +1662,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         tax_amount: Number(newMaintTaxCost) || 0,
         payment_mode: newMaintPaymentMode,
         payment_status: newMaintPaymentStatus,
-        technician_notes: newMaintNotes.trim() || undefined
+        technician_notes: newMaintNotes.trim() || undefined,
+        attachments: newMaintAttachments
       };
 
       const res = await createServiceRecordAction({
@@ -1607,7 +1719,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         tax_amount: Number(editMaintTaxCost) || 0,
         payment_mode: editMaintPaymentMode,
         payment_status: editMaintPaymentStatus,
-        technician_notes: editMaintNotes.trim() || undefined
+        technician_notes: editMaintNotes.trim() || undefined,
+        attachments: editMaintAttachments
       };
 
       const res = await updateServiceRecordAction(selectedMaintenanceForEdit.id, {
@@ -5027,6 +5140,12 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             ) : (
                               <div className="text-[10px] text-muted-foreground font-mono">#{m.id.slice(-6)}</div>
                             )}
+                            {Array.isArray(partsData?.attachments) && partsData.attachments.length > 0 && (
+                              <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 mt-1">
+                                <Paperclip className="h-2.5 w-2.5" />
+                                <span>{partsData.attachments.length} {partsData.attachments.length === 1 ? "file" : "files"}</span>
+                              </div>
+                            )}
                           </AppTableCell>
                           <AppTableCell className="p-3.5 font-bold text-foreground">
                             {renderHsrpPlate(m.vehicle_reg)}
@@ -8237,6 +8356,138 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       </div>
                     </div>
 
+                    {/* Workshop Bills, Invoices & Job Sheet Attachments */}
+                    <div className="p-4 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/40 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="h-7 w-7 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/20">
+                            <Paperclip className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold text-foreground">Workshop Invoice, Bill & Job Sheet Attachments</div>
+                            <div className="text-[11px] text-muted-foreground">Upload scanned bills, repair job sheets, warranty cards, or technician diagnosis photos</div>
+                          </div>
+                        </div>
+                        <span className="text-[11px] font-semibold text-muted-foreground bg-surface px-2.5 py-0.5 rounded-md border border-border">
+                          {newMaintAttachments.length} {newMaintAttachments.length === 1 ? "file attached" : "files attached"}
+                        </span>
+                      </div>
+
+                      {/* Upload Dropzone */}
+                      <div
+                        onDragOver={(e) => { e.preventDefault(); setIsDraggingNewMaint(true); }}
+                        onDragLeave={() => setIsDraggingNewMaint(false)}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          setIsDraggingNewMaint(false);
+                          if (e.dataTransfer.files?.length) {
+                            handleAttachmentFilesSelected(e.dataTransfer.files, setNewMaintAttachments);
+                          }
+                        }}
+                        onClick={() => newMaintFileInputRef.current?.click()}
+                        className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-1.5 group ${
+                          isDraggingNewMaint 
+                            ? "border-theme-btn-primary bg-theme-btn-primary/5" 
+                            : "border-border hover:border-theme-btn-primary/60 bg-surface/50 hover:bg-surface"
+                        }`}
+                      >
+                        <input
+                          type="file"
+                          multiple
+                          ref={newMaintFileInputRef}
+                          onChange={(e) => {
+                            if (e.target.files?.length) {
+                              handleAttachmentFilesSelected(e.target.files, setNewMaintAttachments);
+                              e.target.value = "";
+                            }
+                          }}
+                          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv"
+                          className="hidden"
+                        />
+                        <div className="h-9 w-9 rounded-full bg-theme-btn-primary/10 text-theme-btn-primary flex items-center justify-center group-hover:scale-105 transition-transform">
+                          <UploadCloud className="h-5 w-5" />
+                        </div>
+                        <div className="text-xs font-semibold text-foreground">
+                          Click to upload or drag & drop files here
+                        </div>
+                        <div className="text-[11px] text-muted-foreground">
+                          PDF Invoices, Workshop Estimates, Part Invoices, Photos (up to 25MB)
+                        </div>
+                      </div>
+
+                      {/* Uploaded File List */}
+                      {newMaintAttachments.length > 0 && (
+                        <div className="space-y-2 pt-1">
+                          {newMaintAttachments.map((att, idx) => (
+                            <div
+                              key={att.id || idx}
+                              className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-surface hover:bg-slate-50/80 dark:hover:bg-slate-900/50 transition-colors text-xs"
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
+                                <div className="h-8 w-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-border/80 shrink-0">
+                                  {renderAttachmentIcon(att.file_type, att.file_name)}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="font-semibold text-foreground truncate" title={att.file_name}>
+                                    {att.file_name}
+                                  </div>
+                                  <div className="text-[10px] text-muted-foreground flex items-center gap-2">
+                                    <span>{formatFileSize(att.file_size)}</span>
+                                    <span>•</span>
+                                    <span>{new Date(att.uploaded_at || Date.now()).toLocaleDateString("en-IN")}</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-1 shrink-0">
+                                <AppButton
+                                  type="button"
+                                  variant="outline"
+                                  size="icon-sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setPreviewAttachment(att);
+                                    setPreviewZoom(1);
+                                    setPreviewRotation(0);
+                                  }}
+                                  className="h-7 w-7 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
+                                  title="View / Preview File"
+                                >
+                                  <Eye className="h-3.5 w-3.5" />
+                                </AppButton>
+                                <AppButton
+                                  type="button"
+                                  variant="outline"
+                                  size="icon-sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    downloadAttachment(att);
+                                  }}
+                                  className="h-7 w-7 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+                                  title="Download File"
+                                >
+                                  <Download className="h-3.5 w-3.5" />
+                                </AppButton>
+                                <AppButton
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setNewMaintAttachments((prev) => prev.filter((_, i) => i !== idx));
+                                  }}
+                                  className="h-7 w-7 text-rose-600 hover:bg-rose-500/10"
+                                  title="Remove File"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </AppButton>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
                     {/* Technician Notes & Observations */}
                     <div>
                       <label className="font-semibold block mb-1 text-xs text-foreground">
@@ -8726,6 +8977,138 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       </div>
                     </div>
 
+                    {/* Workshop Bills, Invoices & Job Sheet Attachments */}
+                    <div className="p-4 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/40 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="h-7 w-7 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/20">
+                            <Paperclip className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold text-foreground">Workshop Invoice, Bill & Job Sheet Attachments</div>
+                            <div className="text-[11px] text-muted-foreground">Upload scanned bills, repair job sheets, warranty cards, or technician diagnosis photos</div>
+                          </div>
+                        </div>
+                        <span className="text-[11px] font-semibold text-muted-foreground bg-surface px-2.5 py-0.5 rounded-md border border-border">
+                          {editMaintAttachments.length} {editMaintAttachments.length === 1 ? "file attached" : "files attached"}
+                        </span>
+                      </div>
+
+                      {/* Upload Dropzone */}
+                      <div
+                        onDragOver={(e) => { e.preventDefault(); setIsDraggingEditMaint(true); }}
+                        onDragLeave={() => setIsDraggingEditMaint(false)}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          setIsDraggingEditMaint(false);
+                          if (e.dataTransfer.files?.length) {
+                            handleAttachmentFilesSelected(e.dataTransfer.files, setEditMaintAttachments);
+                          }
+                        }}
+                        onClick={() => editMaintFileInputRef.current?.click()}
+                        className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-1.5 group ${
+                          isDraggingEditMaint 
+                            ? "border-theme-btn-primary bg-theme-btn-primary/5" 
+                            : "border-border hover:border-theme-btn-primary/60 bg-surface/50 hover:bg-surface"
+                        }`}
+                      >
+                        <input
+                          type="file"
+                          multiple
+                          ref={editMaintFileInputRef}
+                          onChange={(e) => {
+                            if (e.target.files?.length) {
+                              handleAttachmentFilesSelected(e.target.files, setEditMaintAttachments);
+                              e.target.value = "";
+                            }
+                          }}
+                          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv"
+                          className="hidden"
+                        />
+                        <div className="h-9 w-9 rounded-full bg-theme-btn-primary/10 text-theme-btn-primary flex items-center justify-center group-hover:scale-105 transition-transform">
+                          <UploadCloud className="h-5 w-5" />
+                        </div>
+                        <div className="text-xs font-semibold text-foreground">
+                          Click to upload or drag & drop files here
+                        </div>
+                        <div className="text-[11px] text-muted-foreground">
+                          PDF Invoices, Workshop Estimates, Part Invoices, Photos (up to 25MB)
+                        </div>
+                      </div>
+
+                      {/* Uploaded File List */}
+                      {editMaintAttachments.length > 0 && (
+                        <div className="space-y-2 pt-1">
+                          {editMaintAttachments.map((att, idx) => (
+                            <div
+                              key={att.id || idx}
+                              className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-surface hover:bg-slate-50/80 dark:hover:bg-slate-900/50 transition-colors text-xs"
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
+                                <div className="h-8 w-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-border/80 shrink-0">
+                                  {renderAttachmentIcon(att.file_type, att.file_name)}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="font-semibold text-foreground truncate" title={att.file_name}>
+                                    {att.file_name}
+                                  </div>
+                                  <div className="text-[10px] text-muted-foreground flex items-center gap-2">
+                                    <span>{formatFileSize(att.file_size)}</span>
+                                    <span>•</span>
+                                    <span>{new Date(att.uploaded_at || Date.now()).toLocaleDateString("en-IN")}</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-1 shrink-0">
+                                <AppButton
+                                  type="button"
+                                  variant="outline"
+                                  size="icon-sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setPreviewAttachment(att);
+                                    setPreviewZoom(1);
+                                    setPreviewRotation(0);
+                                  }}
+                                  className="h-7 w-7 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
+                                  title="View / Preview File"
+                                >
+                                  <Eye className="h-3.5 w-3.5" />
+                                </AppButton>
+                                <AppButton
+                                  type="button"
+                                  variant="outline"
+                                  size="icon-sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    downloadAttachment(att);
+                                  }}
+                                  className="h-7 w-7 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+                                  title="Download File"
+                                >
+                                  <Download className="h-3.5 w-3.5" />
+                                </AppButton>
+                                <AppButton
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditMaintAttachments((prev) => prev.filter((_, i) => i !== idx));
+                                  }}
+                                  className="h-7 w-7 text-rose-600 hover:bg-rose-500/10"
+                                  title="Remove File"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </AppButton>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
                     {/* Technician Notes & Observations */}
                     <div>
                       <label className="font-semibold block mb-1 text-xs text-foreground">
@@ -9016,6 +9399,79 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         </div>
                       )}
                     </div>
+
+                    {/* Attached Invoices & Workshop Documents */}
+                    {(() => {
+                      const atts: MaintenanceAttachment[] = Array.isArray(partsData?.attachments) ? partsData.attachments : [];
+                      return (
+                        <div className="p-4 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/40 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                              <Paperclip className="h-3.5 w-3.5 text-amber-500" />
+                              <span>Attached Invoices, Bills & Workshop Documents ({atts.length})</span>
+                            </div>
+                          </div>
+
+                          {atts.length === 0 ? (
+                            <div className="text-xs text-muted-foreground py-2 italic flex items-center gap-2">
+                              <span>No digital invoices or workshop bills attached to this job card.</span>
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                              {atts.map((att, idx) => (
+                                <div
+                                  key={att.id || idx}
+                                  className="flex items-center justify-between p-3 rounded-xl border border-border bg-surface hover:border-theme-btn-primary/40 transition-colors"
+                                >
+                                  <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
+                                    <div className="h-9 w-9 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-border/80 shrink-0">
+                                      {renderAttachmentIcon(att.file_type, att.file_name)}
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                      <div className="font-semibold text-foreground truncate text-xs" title={att.file_name}>
+                                        {att.file_name}
+                                      </div>
+                                      <div className="text-[10px] text-muted-foreground">
+                                        {formatFileSize(att.file_size)}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center gap-1.5 shrink-0">
+                                    <AppButton
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setPreviewAttachment(att);
+                                        setPreviewZoom(1);
+                                        setPreviewRotation(0);
+                                      }}
+                                      className="h-8 px-2.5 text-xs gap-1 text-blue-600 dark:text-blue-400 border-blue-500/20 hover:bg-blue-500/10 font-semibold"
+                                      title="View / Preview"
+                                    >
+                                      <Eye className="h-3.5 w-3.5" />
+                                      <span>View</span>
+                                    </AppButton>
+                                    <AppButton
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => downloadAttachment(att)}
+                                      className="h-8 px-2.5 text-xs gap-1 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/10 font-semibold"
+                                      title="Download File"
+                                    >
+                                      <Download className="h-3.5 w-3.5" />
+                                      <span>Download</span>
+                                    </AppButton>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {/* Activity & Audit Trail Timeline */}
                     <div className="p-4 rounded-xl border border-border bg-slate-50/40 dark:bg-slate-900/30 space-y-3">
@@ -12243,6 +12699,145 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5 mr-1" />}
                 <span>Delete Permanently</span>
               </AppButton>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------------------------- */}
+      {/* INTERACTIVE ATTACHMENT PREVIEW LIGHTBOX MODAL */}
+      {/* ---------------------------------------------------------------------- */}
+      {previewAttachment && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/85 backdrop-blur-sm p-3 sm:p-6 animate-in fade-in duration-150">
+          <div className="bg-surface border border-border w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+            {/* Modal Header */}
+            <div className="p-4 border-b border-border bg-slate-50/90 dark:bg-slate-900/90 flex items-center justify-between">
+              <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-4">
+                <div className="h-8 w-8 rounded-lg bg-theme-btn-primary/15 text-theme-btn-primary flex items-center justify-center shrink-0">
+                  {renderAttachmentIcon(previewAttachment.file_type, previewAttachment.file_name)}
+                </div>
+                <div className="min-w-0">
+                  <h4 className="text-sm font-bold text-foreground truncate" title={previewAttachment.file_name}>
+                    {previewAttachment.file_name}
+                  </h4>
+                  <div className="text-[11px] text-muted-foreground flex items-center gap-2">
+                    <span>{formatFileSize(previewAttachment.file_size)}</span>
+                    {previewAttachment.uploaded_at && (
+                      <>
+                        <span>•</span>
+                        <span>Uploaded {new Date(previewAttachment.uploaded_at).toLocaleString("en-IN")}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5 shrink-0">
+                {previewAttachment.file_type?.startsWith("image/") && (
+                  <>
+                    <AppButton
+                      type="button"
+                      variant="outline"
+                      size="icon-sm"
+                      onClick={() => setPreviewZoom((z) => Math.max(0.5, z - 0.25))}
+                      className="h-8 w-8"
+                      title="Zoom Out"
+                    >
+                      <ZoomOut className="h-3.5 w-3.5" />
+                    </AppButton>
+                    <span className="text-[11px] font-mono font-semibold px-1 text-muted-foreground">
+                      {Math.round(previewZoom * 100)}%
+                    </span>
+                    <AppButton
+                      type="button"
+                      variant="outline"
+                      size="icon-sm"
+                      onClick={() => setPreviewZoom((z) => Math.min(3, z + 0.25))}
+                      className="h-8 w-8"
+                      title="Zoom In"
+                    >
+                      <ZoomIn className="h-3.5 w-3.5" />
+                    </AppButton>
+                    <AppButton
+                      type="button"
+                      variant="outline"
+                      size="icon-sm"
+                      onClick={() => setPreviewRotation((r) => (r + 90) % 360)}
+                      className="h-8 w-8"
+                      title="Rotate 90°"
+                    >
+                      <RotateCw className="h-3.5 w-3.5" />
+                    </AppButton>
+                  </>
+                )}
+
+                <AppButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => downloadAttachment(previewAttachment)}
+                  className="gap-1 text-xs h-8 font-semibold text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
+                  title="Download Original File"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Download</span>
+                </AppButton>
+
+                <AppButton
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setPreviewAttachment(null)}
+                  title="Close Preview"
+                >
+                  <X className="h-4 w-4" />
+                </AppButton>
+              </div>
+            </div>
+
+            {/* Modal Preview Canvas */}
+            <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-slate-950/20 min-h-[350px] max-h-[calc(92vh-130px)]">
+              {previewAttachment.file_type?.startsWith("image/") ? (
+                <div className="overflow-auto max-w-full max-h-full flex items-center justify-center p-2">
+                  <img
+                    src={previewAttachment.file_url}
+                    alt={previewAttachment.file_name}
+                    style={{
+                      transform: `scale(${previewZoom}) rotate(${previewRotation}deg)`,
+                      transition: "transform 0.2s ease-in-out"
+                    }}
+                    className="max-h-[70vh] max-w-full object-contain rounded-lg shadow-md"
+                  />
+                </div>
+              ) : previewAttachment.file_type === "application/pdf" || previewAttachment.file_name?.toLowerCase().endsWith(".pdf") ? (
+                <iframe
+                  src={previewAttachment.file_url}
+                  title={previewAttachment.file_name}
+                  className="w-full h-[70vh] rounded-lg border border-border bg-white shadow-inner"
+                />
+              ) : (
+                <div className="text-center p-8 space-y-3">
+                  <div className="h-16 w-16 rounded-2xl bg-amber-500/15 text-amber-600 mx-auto flex items-center justify-center border border-amber-500/25">
+                    {renderAttachmentIcon(previewAttachment.file_type, previewAttachment.file_name)}
+                  </div>
+                  <div className="text-sm font-bold text-foreground">
+                    {previewAttachment.file_name}
+                  </div>
+                  <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                    Direct browser preview is not supported for this file format. You can download and view it on your device.
+                  </p>
+                  <AppButton
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    onClick={() => downloadAttachment(previewAttachment)}
+                    className="gap-1.5 text-xs font-semibold"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    <span>Download & Open Document</span>
+                  </AppButton>
+                </div>
+              )}
             </div>
           </div>
         </div>
