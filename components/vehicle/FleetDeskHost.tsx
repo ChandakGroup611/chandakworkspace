@@ -62,7 +62,9 @@ import {
   CalendarSync,
   Gift,
   Ticket,
-  BadgePercent
+  BadgePercent,
+  Percent,
+  Calculator
 } from "lucide-react";
 import { 
   POPULAR_BRANDS, 
@@ -740,6 +742,15 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   const [partFormPurchaseAmount, setPartFormPurchaseAmount] = useState<number>(0);
   const [partFormUnitPrice, setPartFormUnitPrice] = useState<number>(0);
   const [partFormQuantity, setPartFormQuantity] = useState<number>(1);
+  const [partFormDiscount, setPartFormDiscount] = useState<number>(0);
+  const [partFormTaxRate, setPartFormTaxRate] = useState<number>(18);
+  const [partFormTaxAmount, setPartFormTaxAmount] = useState<number>(0);
+  const [partFormTdsRate, setPartFormTdsRate] = useState<number>(0);
+  const [partFormTdsDeduction, setPartFormTdsDeduction] = useState<number>(0);
+  const [partFormOtherDeductions, setPartFormOtherDeductions] = useState<number>(0);
+  const [partFormAttachments, setPartFormAttachments] = useState<MaintenanceAttachment[]>([]);
+  const [isDraggingPartFile, setIsDraggingPartFile] = useState(false);
+  const partFileInputRef = React.useRef<HTMLInputElement>(null);
   const [partFormPurchaseDate, setPartFormPurchaseDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [partFormVendorName, setPartFormVendorName] = useState("");
   const [partFormInvoiceNumber, setPartFormInvoiceNumber] = useState("");
@@ -962,7 +973,12 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   const [newMaintOdometer, setNewMaintOdometer] = useState<number>(0);
   const [newMaintLabourCost, setNewMaintLabourCost] = useState<number>(0);
   const [newMaintPartsCost, setNewMaintPartsCost] = useState<number>(0);
+  const [newMaintDiscount, setNewMaintDiscount] = useState<number>(0);
+  const [newMaintTaxRate, setNewMaintTaxRate] = useState<number>(18);
   const [newMaintTaxCost, setNewMaintTaxCost] = useState<number>(0);
+  const [newMaintTdsRate, setNewMaintTdsRate] = useState<number>(0);
+  const [newMaintTdsAmount, setNewMaintTdsAmount] = useState<number>(0);
+  const [newMaintOtherDeductions, setNewMaintOtherDeductions] = useState<number>(0);
   const [newMaintCost, setNewMaintCost] = useState<number>(0);
   const [newMaintPaymentMode, setNewMaintPaymentMode] = useState("UPI / Bank Transfer");
   const [newMaintPaymentStatus, setNewMaintPaymentStatus] = useState("PAID");
@@ -989,7 +1005,12 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   const [editMaintOdometer, setEditMaintOdometer] = useState<number>(0);
   const [editMaintLabourCost, setEditMaintLabourCost] = useState<number>(0);
   const [editMaintPartsCost, setEditMaintPartsCost] = useState<number>(0);
+  const [editMaintDiscount, setEditMaintDiscount] = useState<number>(0);
+  const [editMaintTaxRate, setEditMaintTaxRate] = useState<number>(18);
   const [editMaintTaxCost, setEditMaintTaxCost] = useState<number>(0);
+  const [editMaintTdsRate, setEditMaintTdsRate] = useState<number>(0);
+  const [editMaintTdsAmount, setEditMaintTdsAmount] = useState<number>(0);
+  const [editMaintOtherDeductions, setEditMaintOtherDeductions] = useState<number>(0);
   const [editMaintCost, setEditMaintCost] = useState<number>(0);
   const [editMaintPaymentMode, setEditMaintPaymentMode] = useState("UPI / Bank Transfer");
   const [editMaintPaymentStatus, setEditMaintPaymentStatus] = useState("PAID");
@@ -1110,7 +1131,12 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     setNewMaintOdometer(0);
     setNewMaintLabourCost(0);
     setNewMaintPartsCost(0);
+    setNewMaintDiscount(0);
+    setNewMaintTaxRate(18);
     setNewMaintTaxCost(0);
+    setNewMaintTdsRate(0);
+    setNewMaintTdsAmount(0);
+    setNewMaintOtherDeductions(0);
     setNewMaintCost(0);
     setNewMaintPaymentMode("UPI / Bank Transfer");
     setNewMaintPaymentStatus("PAID");
@@ -1134,9 +1160,23 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     setEditMaintInvoiceNo(partsData.invoice_number || "");
     setEditMaintDate(normalizeDateToInputFormat(m.service_date) || new Date().toISOString().split("T")[0]);
     setEditMaintOdometer(m.odometer_km || 0);
-    setEditMaintLabourCost(Number(partsData.labour_cost) || 0);
-    setEditMaintPartsCost(Number(partsData.parts_cost) || 0);
-    setEditMaintTaxCost(Number(partsData.tax_amount) || 0);
+    const labour = Number(partsData.labour_cost) || 0;
+    const parts = Number(partsData.parts_cost) || 0;
+    const disc = Number(partsData.discount) || 0;
+    const taxR = partsData.tax_rate !== undefined ? Number(partsData.tax_rate) : 18;
+    const taxAmt = Number(partsData.tax_amount) || 0;
+    const tdsR = Number(partsData.tds_rate) || 0;
+    const tdsAmt = Number(partsData.tds_amount) || 0;
+    const otherDed = Number(partsData.other_deductions) || 0;
+
+    setEditMaintLabourCost(labour);
+    setEditMaintPartsCost(parts);
+    setEditMaintDiscount(disc);
+    setEditMaintTaxRate(taxR);
+    setEditMaintTaxCost(taxAmt);
+    setEditMaintTdsRate(tdsR);
+    setEditMaintTdsAmount(tdsAmt);
+    setEditMaintOtherDeductions(otherDed);
     setEditMaintCost(Number(m.cost) || 0);
     setEditMaintPaymentMode(partsData.payment_mode || "UPI / Bank Transfer");
     setEditMaintPaymentStatus(partsData.payment_status || "PAID");
@@ -2032,13 +2072,27 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
     setModalSubmitting(true);
     try {
+      const labour = Number(newMaintLabourCost) || 0;
+      const parts = Number(newMaintPartsCost) || 0;
+      const discount = Number(newMaintDiscount) || 0;
+      const gross = labour + parts;
+      const taxable = Math.max(0, gross - discount);
+
       const partsPayload = {
         category: newMaintCategory,
         invoice_number: newMaintInvoiceNo.trim() || undefined,
         location: newMaintLocation.trim() || undefined,
-        parts_cost: Number(newMaintPartsCost) || 0,
-        labour_cost: Number(newMaintLabourCost) || 0,
+        parts_cost: parts,
+        labour_cost: labour,
+        gross_amount: gross,
+        discount: discount,
+        taxable_base: taxable,
+        tax_rate: Number(newMaintTaxRate) || 0,
         tax_amount: Number(newMaintTaxCost) || 0,
+        tds_rate: Number(newMaintTdsRate) || 0,
+        tds_amount: Number(newMaintTdsAmount) || 0,
+        other_deductions: Number(newMaintOtherDeductions) || 0,
+        net_amount: Number(newMaintCost) || 0,
         payment_mode: newMaintPaymentMode,
         payment_status: newMaintPaymentStatus,
         technician_notes: newMaintNotes.trim() || undefined,
@@ -2088,14 +2142,28 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         ? selectedMaintenanceForEdit.parts_replaced
         : {};
 
+      const labour = Number(editMaintLabourCost) || 0;
+      const parts = Number(editMaintPartsCost) || 0;
+      const discount = Number(editMaintDiscount) || 0;
+      const gross = labour + parts;
+      const taxable = Math.max(0, gross - discount);
+
       const partsPayload = {
         ...existingParts,
         category: editMaintCategory,
         invoice_number: editMaintInvoiceNo.trim() || undefined,
         location: editMaintLocation.trim() || undefined,
-        parts_cost: Number(editMaintPartsCost) || 0,
-        labour_cost: Number(editMaintLabourCost) || 0,
+        parts_cost: parts,
+        labour_cost: labour,
+        gross_amount: gross,
+        discount: discount,
+        taxable_base: taxable,
+        tax_rate: Number(editMaintTaxRate) || 0,
         tax_amount: Number(editMaintTaxCost) || 0,
+        tds_rate: Number(editMaintTdsRate) || 0,
+        tds_amount: Number(editMaintTdsAmount) || 0,
+        other_deductions: Number(editMaintOtherDeductions) || 0,
+        net_amount: Number(editMaintCost) || 0,
         payment_mode: editMaintPaymentMode,
         payment_status: editMaintPaymentStatus,
         technician_notes: editMaintNotes.trim() || undefined,
@@ -2145,6 +2213,13 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     setPartFormPurchaseAmount(0);
     setPartFormUnitPrice(0);
     setPartFormQuantity(1);
+    setPartFormDiscount(0);
+    setPartFormTaxRate(18);
+    setPartFormTaxAmount(0);
+    setPartFormTdsRate(0);
+    setPartFormTdsDeduction(0);
+    setPartFormOtherDeductions(0);
+    setPartFormAttachments([]);
     setPartFormPurchaseDate(new Date().toISOString().split("T")[0]);
     setPartFormVendorName("");
     setPartFormInvoiceNumber("");
@@ -2209,7 +2284,45 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     setPartFormInstalledBy(part.installed_by || "");
     setPartFormCondition(part.condition || "NEW");
     setPartFormSerialNumber(part.serial_number || "");
-    setPartFormNotes(part.notes || "");
+
+    // Parse structured notes for attachments & tax breakdown
+    let rawNotes = part.notes || "";
+    let extractedAtts: MaintenanceAttachment[] = [];
+    let disc = 0;
+    let taxR = 18;
+    let taxAmt = 0;
+    let tdsR = 0;
+    let tdsDed = 0;
+    let otherDed = 0;
+
+    if (rawNotes) {
+      try {
+        const parsed = JSON.parse(rawNotes);
+        if (parsed && typeof parsed === "object") {
+          rawNotes = parsed.text || "";
+          if (Array.isArray(parsed.attachments)) extractedAtts = parsed.attachments;
+          if (parsed.tax_breakdown) {
+            disc = Number(parsed.tax_breakdown.discount) || 0;
+            taxR = parsed.tax_breakdown.tax_rate !== undefined ? Number(parsed.tax_breakdown.tax_rate) : 18;
+            taxAmt = Number(parsed.tax_breakdown.tax_amount) || 0;
+            tdsR = Number(parsed.tax_breakdown.tds_rate) || 0;
+            tdsDed = Number(parsed.tax_breakdown.tds_deduction) || 0;
+            otherDed = Number(parsed.tax_breakdown.other_deductions) || 0;
+          }
+        }
+      } catch {
+        // Plain text notes
+      }
+    }
+
+    setPartFormNotes(rawNotes);
+    setPartFormAttachments(extractedAtts);
+    setPartFormDiscount(disc);
+    setPartFormTaxRate(taxR);
+    setPartFormTaxAmount(taxAmt);
+    setPartFormTdsRate(tdsR);
+    setPartFormTdsDeduction(tdsDed);
+    setPartFormOtherDeductions(otherDed);
     setIsEditPartOpen(true);
   };
 
@@ -2234,7 +2347,35 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         assignedReg = "";
       }
 
-      const totalAmt = Number(partFormPurchaseAmount) || (Number(partFormUnitPrice) * Number(partFormQuantity)) || 0;
+      const unitPrice = Number(partFormUnitPrice) || 0;
+      const qty = Number(partFormQuantity) || 1;
+      const grossBase = unitPrice * qty;
+      const discount = Number(partFormDiscount) || 0;
+      const taxableBase = Math.max(0, grossBase - discount);
+      const taxAmt = Number(partFormTaxAmount) || 0;
+      const tdsDed = Number(partFormTdsDeduction) || 0;
+      const otherDed = Number(partFormOtherDeductions) || 0;
+      const calculatedNet = Math.max(0, taxableBase + taxAmt - tdsDed - otherDed);
+      const finalPurchaseAmount = Number(partFormPurchaseAmount) || calculatedNet || grossBase;
+
+      // Pack structured metadata into notes
+      const notesPayload = {
+        text: partFormNotes.trim(),
+        attachments: partFormAttachments,
+        tax_breakdown: {
+          unit_price: unitPrice,
+          quantity: qty,
+          gross_base: grossBase,
+          discount: discount,
+          taxable_base: taxableBase,
+          tax_rate: Number(partFormTaxRate) || 0,
+          tax_amount: taxAmt,
+          tds_rate: Number(partFormTdsRate) || 0,
+          tds_deduction: tdsDed,
+          other_deductions: otherDed,
+          net_invoiced: finalPurchaseAmount
+        }
+      };
 
       const payload = {
         name: partFormName.trim(),
@@ -2242,9 +2383,9 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         part_number: partFormPartNumber.trim() || undefined,
         category: partFormCategory.trim() || "Spare Parts",
         brand: partFormBrand.trim(),
-        purchase_amount: totalAmt,
-        unit_price: Number(partFormUnitPrice) || undefined,
-        quantity: Number(partFormQuantity) || 1,
+        purchase_amount: finalPurchaseAmount,
+        unit_price: unitPrice || undefined,
+        quantity: qty,
         purchase_date: partFormPurchaseDate || new Date().toISOString().split("T")[0],
         vendor_name: partFormVendorName.trim() || "OEM / Direct Store",
         invoice_number: partFormInvoiceNumber.trim() || undefined,
@@ -2269,7 +2410,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         installed_by: partFormInstalledBy.trim() || undefined,
         condition: partFormCondition,
         serial_number: partFormSerialNumber.trim() || undefined,
-        notes: partFormNotes.trim() || undefined
+        notes: JSON.stringify(notesPayload)
       };
 
       let res;
@@ -6644,7 +6785,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                     {part.brand}
                                   </span>
                                 </div>
-                                <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                                <div className="flex items-center gap-2 text-[11px] text-muted-foreground flex-wrap">
                                   <span className="font-mono">{part.category}</span>
                                   {part.part_number && (
                                     <>
@@ -6654,6 +6795,24 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                       </span>
                                     </>
                                   )}
+                                  {(() => {
+                                    let attCount = 0;
+                                    if (part.notes) {
+                                      try {
+                                        const parsed = JSON.parse(part.notes);
+                                        if (Array.isArray(parsed.attachments)) attCount = parsed.attachments.length;
+                                      } catch {}
+                                    }
+                                    if (attCount > 0) {
+                                      return (
+                                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.2 rounded border border-amber-500/20">
+                                          <Paperclip className="h-3 w-3" />
+                                          <span>{attCount} {attCount === 1 ? "doc" : "docs"}</span>
+                                        </span>
+                                      );
+                                    }
+                                    return null;
+                                  })()}
                                 </div>
                                 {part.serial_number && (
                                   <div className="text-[10px] font-mono text-muted-foreground">
@@ -8510,20 +8669,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           onBack={() => setIsAddMaintenanceOpen(false)}
           backLabel="Back to Maintenance"
           onReset={() => {
-            setNewMaintVehicleId("");
-            setNewMaintCategory("PERIODIC_SERVICE");
-            setNewMaintServiceType("");
-            setNewMaintVendor("");
-            setNewMaintLocation("");
-            setNewMaintTechnician("");
-            setNewMaintInvoiceNo("");
-            setNewMaintOdometer(0);
-            setNewMaintLabourCost(0);
-            setNewMaintPartsCost(0);
-            setNewMaintTaxCost(0);
-            setNewMaintCost(0);
-            setNewMaintNotes("");
-            setNewMaintAttachments([]);
+            resetMaintenanceForm();
           }}
           onSave={handleLogMaintenance}
           saveLabel="Save Service Record & Bill"
@@ -8532,6 +8678,38 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         >
           <div className="space-y-6">
               <div className="p-5 space-y-5 flex-1">
+                {/* Sub-Tab Navigation Header */}
+                <div className="flex items-center gap-2 p-1.5 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-border">
+                  <button
+                    type="button"
+                    onClick={() => setNewMaintActiveSection("SCOPE_WORKSHOP")}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 px-3.5 rounded-lg text-xs font-bold transition-all ${
+                      newMaintActiveSection === "SCOPE_WORKSHOP"
+                        ? "bg-surface text-foreground shadow-xs border border-border"
+                        : "text-muted-foreground hover:text-foreground hover:bg-surface/50"
+                    }`}
+                  >
+                    <Wrench className="h-4 w-4 text-amber-500" />
+                    <span>1. Vehicle & Service Scope</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNewMaintActiveSection("BILLING_FORECAST")}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 px-3.5 rounded-lg text-xs font-bold transition-all ${
+                      newMaintActiveSection === "BILLING_FORECAST"
+                        ? "bg-surface text-foreground shadow-xs border border-border"
+                        : "text-muted-foreground hover:text-foreground hover:bg-surface/50"
+                    }`}
+                  >
+                    <Receipt className="h-4 w-4 text-emerald-500" />
+                    <span>2. Billing, Tax Breakdown & Attachments</span>
+                    {newMaintAttachments.length > 0 && (
+                      <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                        {newMaintAttachments.length}
+                      </span>
+                    )}
+                  </button>
+                </div>
                 {/* ---------------------------------------------------- */}
                 {/* SECTION 1: VEHICLE & SERVICE SCOPE */}
                 {/* ---------------------------------------------------- */}
@@ -8685,8 +8863,21 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       <AppInput
                         value={newMaintTechnician}
                         onChange={(e) => setNewMaintTechnician(e.target.value)}
+                        placeholder="e.g. Ramesh Sharma (Lead Service Advisor)"
                         className="h-10 text-xs"
                       />
+                    </div>
+
+                    <div className="pt-3 border-t border-border flex justify-end">
+                      <AppButton
+                        type="button"
+                        variant="primary"
+                        onClick={() => setNewMaintActiveSection("BILLING_FORECAST")}
+                        className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs font-semibold gap-1.5 h-9"
+                      >
+                        <span>Proceed to Billing, Taxes & Attachments</span>
+                        <ArrowRight className="h-4 w-4" />
+                      </AppButton>
                     </div>
                   </div>
                 )}
@@ -8730,96 +8921,319 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       </div>
                     </div>
 
-                    {/* Financial Costing Breakdown */}
+                    {/* Financial Costing & Statutory Tax Breakdown */}
                     <div className="p-4 rounded-xl border border-border bg-slate-50/60 dark:bg-slate-900/50 space-y-4">
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/70 pb-3">
                         <div className="flex items-center gap-2">
-                          <Receipt className="h-4 w-4 text-amber-500" />
-                          <h4 className="font-bold text-xs text-foreground">Workshop Invoice & Financial Statement</h4>
+                          <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20 shrink-0">
+                            <Receipt className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-xs text-foreground">Workshop Invoice & Statutory Tax Breakdown</h4>
+                            <p className="text-[10px] text-muted-foreground">Itemized charges, GST additions, and TDS withholding deductions</p>
+                          </div>
                         </div>
-                        <AppButton
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            const sub = (Number(newMaintPartsCost) || 0) + (Number(newMaintLabourCost) || 0);
-                            const gst = Math.round(sub * 0.18);
-                            setNewMaintTaxCost(gst);
-                            setNewMaintCost(sub + gst);
-                          }}
-                          className="text-[11px] font-semibold text-primary hover:underline p-0 h-auto"
-                        >
-                          Auto-Calculate 18% GST
-                        </AppButton>
-                      </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div>
-                          <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
-                            Labour / Service Charges (₹)
-                          </label>
-                          <AppInput
-                            type="number"
-                            value={newMaintLabourCost || ""}
-                            onChange={(e) => {
-                              const val = Number(e.target.value) || 0;
-                              setNewMaintLabourCost(val);
-                              setNewMaintCost((Number(newMaintPartsCost) || 0) + val + (Number(newMaintTaxCost) || 0));
+                        {/* Quick Presets */}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[10px] text-muted-foreground font-semibold mr-1">Presets:</span>
+                          <AppButton
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const gross = (Number(newMaintPartsCost) || 0) + (Number(newMaintLabourCost) || 0);
+                              const taxable = Math.max(0, gross - (Number(newMaintDiscount) || 0));
+                              const gst = Math.round(taxable * 0.18);
+                              setNewMaintTaxRate(18);
+                              setNewMaintTaxCost(gst);
+                              setNewMaintCost(Math.max(0, taxable + gst - (Number(newMaintTdsAmount) || 0) - (Number(newMaintOtherDeductions) || 0)));
                             }}
-                            className="h-9 text-xs font-mono font-semibold"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
-                            Consumables & Workshop Misc (₹)
-                          </label>
-                          <AppInput
-                            type="number"
-                            value={newMaintPartsCost || ""}
-                            onChange={(e) => {
-                              const val = Number(e.target.value) || 0;
-                              setNewMaintPartsCost(val);
-                              setNewMaintCost(val + (Number(newMaintLabourCost) || 0) + (Number(newMaintTaxCost) || 0));
+                            className="text-[10px] h-6 px-2 py-0 border-blue-500/30 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40"
+                          >
+                            18% GST (Std)
+                          </AppButton>
+                          <AppButton
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const gross = (Number(newMaintPartsCost) || 0) + (Number(newMaintLabourCost) || 0);
+                              const taxable = Math.max(0, gross - (Number(newMaintDiscount) || 0));
+                              const gst = Math.round(taxable * 0.12);
+                              setNewMaintTaxRate(12);
+                              setNewMaintTaxCost(gst);
+                              setNewMaintCost(Math.max(0, taxable + gst - (Number(newMaintTdsAmount) || 0) - (Number(newMaintOtherDeductions) || 0)));
                             }}
-                            className="h-9 text-xs font-mono font-semibold"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
-                            Taxes / GST Amount (₹)
-                          </label>
-                          <AppInput
-                            type="number"
-                            value={newMaintTaxCost || ""}
-                            onChange={(e) => {
-                              const val = Number(e.target.value) || 0;
-                              setNewMaintTaxCost(val);
-                              setNewMaintCost((Number(newMaintPartsCost) || 0) + (Number(newMaintLabourCost) || 0) + val);
+                            className="text-[10px] h-6 px-2 py-0 border-slate-300 dark:border-slate-700 hover:bg-slate-100"
+                          >
+                            12% GST
+                          </AppButton>
+                          <AppButton
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const gross = (Number(newMaintPartsCost) || 0) + (Number(newMaintLabourCost) || 0);
+                              const taxable = Math.max(0, gross - (Number(newMaintDiscount) || 0));
+                              const tds = Math.round(taxable * 0.02);
+                              setNewMaintTdsRate(2);
+                              setNewMaintTdsAmount(tds);
+                              setNewMaintCost(Math.max(0, taxable + (Number(newMaintTaxCost) || 0) - tds - (Number(newMaintOtherDeductions) || 0)));
                             }}
-                            className="h-9 text-xs font-mono font-semibold"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="p-3.5 rounded-xl bg-theme-btn-primary/10 border border-theme-btn-primary/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div>
-                          <span className="text-xs font-bold text-foreground block">
-                            Grand Total Invoiced Amount
-                          </span>
-                          <span className="text-[11px] text-muted-foreground font-mono">
-                            Labour (₹{Number(newMaintLabourCost).toLocaleString("en-IN")}) + Consumables (₹{Number(newMaintPartsCost).toLocaleString("en-IN")}) + Taxes (₹{Number(newMaintTaxCost).toLocaleString("en-IN")})
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-xl font-bold font-mono text-foreground">
-                            ₹{Number(newMaintCost).toLocaleString("en-IN")}
-                          </span>
+                            className="text-[10px] h-6 px-2 py-0 border-purple-500/30 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40"
+                          >
+                            2% TDS (194C)
+                          </AppButton>
+                          <AppButton
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const gross = (Number(newMaintPartsCost) || 0) + (Number(newMaintLabourCost) || 0);
+                              const taxable = Math.max(0, gross - (Number(newMaintDiscount) || 0));
+                              setNewMaintTaxRate(0);
+                              setNewMaintTaxCost(0);
+                              setNewMaintTdsRate(0);
+                              setNewMaintTdsAmount(0);
+                              setNewMaintOtherDeductions(0);
+                              setNewMaintCost(taxable);
+                            }}
+                            className="text-[10px] h-6 px-1.5 py-0 text-muted-foreground hover:text-foreground"
+                          >
+                            Clear
+                          </AppButton>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                      {/* 1. Base Cost Components & Trade Discount */}
+                      <div className="space-y-1.5">
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                          <span className="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
+                          <span>1. Gross Service Base & Trade Discount</span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div>
+                            <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
+                              Labour / Service Charges (₹)
+                            </label>
+                            <AppInput
+                              type="number"
+                              min="0"
+                              value={newMaintLabourCost || ""}
+                              onChange={(e) => {
+                                const val = Number(e.target.value) || 0;
+                                setNewMaintLabourCost(val);
+                                const gross = val + (Number(newMaintPartsCost) || 0);
+                                const taxable = Math.max(0, gross - (Number(newMaintDiscount) || 0));
+                                const taxAmt = newMaintTaxRate > 0 ? Math.round(taxable * (newMaintTaxRate / 100)) : (Number(newMaintTaxCost) || 0);
+                                const tdsAmt = newMaintTdsRate > 0 ? Math.round(taxable * (newMaintTdsRate / 100)) : (Number(newMaintTdsAmount) || 0);
+                                setNewMaintCost(Math.max(0, taxable + taxAmt - tdsAmt - (Number(newMaintOtherDeductions) || 0)));
+                              }}
+                              className="h-9 text-xs font-mono font-semibold"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
+                              Consumables & Workshop Misc (₹)
+                            </label>
+                            <AppInput
+                              type="number"
+                              min="0"
+                              value={newMaintPartsCost || ""}
+                              onChange={(e) => {
+                                const val = Number(e.target.value) || 0;
+                                setNewMaintPartsCost(val);
+                                const gross = (Number(newMaintLabourCost) || 0) + val;
+                                const taxable = Math.max(0, gross - (Number(newMaintDiscount) || 0));
+                                const taxAmt = newMaintTaxRate > 0 ? Math.round(taxable * (newMaintTaxRate / 100)) : (Number(newMaintTaxCost) || 0);
+                                const tdsAmt = newMaintTdsRate > 0 ? Math.round(taxable * (newMaintTdsRate / 100)) : (Number(newMaintTdsAmount) || 0);
+                                setNewMaintCost(Math.max(0, taxable + taxAmt - tdsAmt - (Number(newMaintOtherDeductions) || 0)));
+                              }}
+                              className="h-9 text-xs font-mono font-semibold"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
+                              Trade Discount / Vendor Waiver (₹)
+                            </label>
+                            <AppInput
+                              type="number"
+                              min="0"
+                              value={newMaintDiscount || ""}
+                              onChange={(e) => {
+                                const val = Number(e.target.value) || 0;
+                                setNewMaintDiscount(val);
+                                const gross = (Number(newMaintLabourCost) || 0) + (Number(newMaintPartsCost) || 0);
+                                const taxable = Math.max(0, gross - val);
+                                const taxAmt = newMaintTaxRate > 0 ? Math.round(taxable * (newMaintTaxRate / 100)) : (Number(newMaintTaxCost) || 0);
+                                const tdsAmt = newMaintTdsRate > 0 ? Math.round(taxable * (newMaintTdsRate / 100)) : (Number(newMaintTdsAmount) || 0);
+                                setNewMaintCost(Math.max(0, taxable + taxAmt - tdsAmt - (Number(newMaintOtherDeductions) || 0)));
+                              }}
+                              className="h-9 text-xs font-mono font-semibold text-rose-600 dark:text-rose-400"
+                              placeholder="0"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 2. Tax Addition (GST Rate & Taxes) */}
+                      <div className="space-y-1.5 pt-1 border-t border-border/50">
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
+                          <span className="flex items-center gap-1">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                            <span>2. Statutory Tax Addition (GST / VAT)</span>
+                          </span>
+                          {newMaintTaxCost > 0 && (
+                            <span className="font-mono text-[10px] text-muted-foreground font-normal">
+                              CGST: ₹{Math.round(newMaintTaxCost / 2).toLocaleString("en-IN")} + SGST: ₹{Math.round(newMaintTaxCost / 2).toLocaleString("en-IN")} (or IGST)
+                            </span>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div>
+                            <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
+                              GST Rate (%)
+                            </label>
+                            <select
+                              value={newMaintTaxRate}
+                              onChange={(e) => {
+                                const rate = Number(e.target.value) || 0;
+                                setNewMaintTaxRate(rate);
+                                const gross = (Number(newMaintLabourCost) || 0) + (Number(newMaintPartsCost) || 0);
+                                const taxable = Math.max(0, gross - (Number(newMaintDiscount) || 0));
+                                const taxAmt = Math.round(taxable * (rate / 100));
+                                setNewMaintTaxCost(taxAmt);
+                                setNewMaintCost(Math.max(0, taxable + taxAmt - (Number(newMaintTdsAmount) || 0) - (Number(newMaintOtherDeductions) || 0)));
+                              }}
+                              className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs font-medium text-foreground focus:outline-none focus:border-theme-btn-primary"
+                            >
+                              <option value={0}>0% (Tax Exempt / Nil)</option>
+                              <option value={5}>5% GST</option>
+                              <option value={12}>12% GST</option>
+                              <option value={18}>18% GST (Standard)</option>
+                              <option value={28}>28% GST (Luxury/Heavy)</option>
+                            </select>
+                          </div>
+
+                          <div className="sm:col-span-2">
+                            <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
+                              GST / Tax Addition Amount (₹)
+                            </label>
+                            <AppInput
+                              type="number"
+                              min="0"
+                              value={newMaintTaxCost || ""}
+                              onChange={(e) => {
+                                const val = Number(e.target.value) || 0;
+                                setNewMaintTaxCost(val);
+                                const gross = (Number(newMaintLabourCost) || 0) + (Number(newMaintPartsCost) || 0);
+                                const taxable = Math.max(0, gross - (Number(newMaintDiscount) || 0));
+                                setNewMaintCost(Math.max(0, taxable + val - (Number(newMaintTdsAmount) || 0) - (Number(newMaintOtherDeductions) || 0)));
+                              }}
+                              className="h-9 text-xs font-mono font-semibold text-emerald-600 dark:text-emerald-400"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 3. Tax Deductions & Withholding (TDS / Retentions) */}
+                      <div className="space-y-1.5 pt-1 border-t border-border/50">
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                          <span className="h-1.5 w-1.5 rounded-full bg-purple-500"></span>
+                          <span>3. Statutory Tax Deductions & Withholding (TDS / Sec 194C / Other)</span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div>
+                            <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
+                              TDS Withholding Rate (%)
+                            </label>
+                            <select
+                              value={newMaintTdsRate}
+                              onChange={(e) => {
+                                const rate = Number(e.target.value) || 0;
+                                setNewMaintTdsRate(rate);
+                                const gross = (Number(newMaintLabourCost) || 0) + (Number(newMaintPartsCost) || 0);
+                                const taxable = Math.max(0, gross - (Number(newMaintDiscount) || 0));
+                                const tdsAmt = Math.round(taxable * (rate / 100));
+                                setNewMaintTdsAmount(tdsAmt);
+                                setNewMaintCost(Math.max(0, taxable + (Number(newMaintTaxCost) || 0) - tdsAmt - (Number(newMaintOtherDeductions) || 0)));
+                              }}
+                              className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs font-medium text-foreground focus:outline-none focus:border-theme-btn-primary"
+                            >
+                              <option value={0}>0% (No TDS Withholding)</option>
+                              <option value={1}>1% (TDS Sec 194C - Individual/HUF)</option>
+                              <option value={2}>2% (TDS Sec 194C - Company/Firm / 194J)</option>
+                              <option value={5}>5% (TDS Sec 194H / Misc)</option>
+                              <option value={10}>10% (TDS Sec 194J Professional)</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
+                              TDS Deduction Amount (₹)
+                            </label>
+                            <AppInput
+                              type="number"
+                              min="0"
+                              value={newMaintTdsAmount || ""}
+                              onChange={(e) => {
+                                const val = Number(e.target.value) || 0;
+                                setNewMaintTdsAmount(val);
+                                const gross = (Number(newMaintLabourCost) || 0) + (Number(newMaintPartsCost) || 0);
+                                const taxable = Math.max(0, gross - (Number(newMaintDiscount) || 0));
+                                setNewMaintCost(Math.max(0, taxable + (Number(newMaintTaxCost) || 0) - val - (Number(newMaintOtherDeductions) || 0)));
+                              }}
+                              className="h-9 text-xs font-mono font-semibold text-purple-600 dark:text-purple-400"
+                              placeholder="0"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
+                              Other Deductions / Advance Adj (₹)
+                            </label>
+                            <AppInput
+                              type="number"
+                              min="0"
+                              value={newMaintOtherDeductions || ""}
+                              onChange={(e) => {
+                                const val = Number(e.target.value) || 0;
+                                setNewMaintOtherDeductions(val);
+                                const gross = (Number(newMaintLabourCost) || 0) + (Number(newMaintPartsCost) || 0);
+                                const taxable = Math.max(0, gross - (Number(newMaintDiscount) || 0));
+                                setNewMaintCost(Math.max(0, taxable + (Number(newMaintTaxCost) || 0) - (Number(newMaintTdsAmount) || 0) - val));
+                              }}
+                              className="h-9 text-xs font-mono font-semibold"
+                              placeholder="0"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 4. Grand Total Net Payable Card with Live Equation */}
+                      <div className="p-3.5 rounded-xl bg-theme-btn-primary/10 border border-theme-btn-primary/20 space-y-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div>
+                            <span className="text-xs font-bold text-foreground block">
+                              Net Payable / Invoiced Amount
+                            </span>
+                            <span className="text-[11px] text-muted-foreground font-mono">
+                              Gross (₹{(Number(newMaintLabourCost) + Number(newMaintPartsCost)).toLocaleString("en-IN")}) - Disc (₹{Number(newMaintDiscount).toLocaleString("en-IN")}) + GST (₹{Number(newMaintTaxCost).toLocaleString("en-IN")}) - TDS (₹{Number(newMaintTdsAmount).toLocaleString("en-IN")}) - Ded (₹{Number(newMaintOtherDeductions).toLocaleString("en-IN")})
+                            </span>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-2xl font-bold font-mono text-primary">
+                              ₹{Number(newMaintCost).toLocaleString("en-IN")}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Payment Mode & Settlement */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-border/50">
                         <div>
                           <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
                             Payment Mode / Channel
@@ -8848,7 +9262,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           >
                             <option value="PAID">Paid / Settled</option>
                             <option value="PENDING">Pending Settlement</option>
-                            <option value="BILLED_TO_ACCOUNT">Billed to Corporate Account</option>
+                            <option value="PARTIAL">Partial Settlement</option>
+                            <option value="WAIVED">Warranty / Fully Waived</option>
                           </select>
                         </div>
                       </div>
@@ -9065,6 +9480,18 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         className="w-full rounded-lg border border-border bg-surface p-2.5 text-xs focus:outline-none focus:border-theme-btn-primary"
                       />
                     </div>
+
+                    <div className="pt-3 border-t border-border flex justify-start">
+                      <AppButton
+                        type="button"
+                        variant="secondary"
+                        onClick={() => setNewMaintActiveSection("SCOPE_WORKSHOP")}
+                        className="text-xs font-semibold gap-1.5 h-9"
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                        <span>Back to Vehicle & Service Scope</span>
+                      </AppButton>
+                    </div>
                   </div>
                 )}
               </div>
@@ -9100,6 +9527,38 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         >
           <div className="space-y-6">
               <div className="p-5 space-y-5 flex-1">
+                {/* Sub-Tab Navigation Header */}
+                <div className="flex items-center gap-2 p-1.5 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-border">
+                  <button
+                    type="button"
+                    onClick={() => setEditMaintActiveSection("SCOPE_WORKSHOP")}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 px-3.5 rounded-lg text-xs font-bold transition-all ${
+                      editMaintActiveSection === "SCOPE_WORKSHOP"
+                        ? "bg-surface text-foreground shadow-xs border border-border"
+                        : "text-muted-foreground hover:text-foreground hover:bg-surface/50"
+                    }`}
+                  >
+                    <Wrench className="h-4 w-4 text-amber-500" />
+                    <span>1. Vehicle & Service Scope</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditMaintActiveSection("BILLING_FORECAST")}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 px-3.5 rounded-lg text-xs font-bold transition-all ${
+                      editMaintActiveSection === "BILLING_FORECAST"
+                        ? "bg-surface text-foreground shadow-xs border border-border"
+                        : "text-muted-foreground hover:text-foreground hover:bg-surface/50"
+                    }`}
+                  >
+                    <Receipt className="h-4 w-4 text-emerald-500" />
+                    <span>2. Billing, Tax Breakdown & Attachments</span>
+                    {editMaintAttachments.length > 0 && (
+                      <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                        {editMaintAttachments.length}
+                      </span>
+                    )}
+                  </button>
+                </div>
                 {/* ---------------------------------------------------- */}
                 {/* SECTION 1: VEHICLE & SERVICE SCOPE */}
                 {/* ---------------------------------------------------- */}
@@ -9232,8 +9691,21 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       <AppInput
                         value={editMaintTechnician}
                         onChange={(e) => setEditMaintTechnician(e.target.value)}
+                        placeholder="e.g. Ramesh Sharma (Lead Service Advisor)"
                         className="h-10 text-xs"
                       />
+                    </div>
+
+                    <div className="pt-3 border-t border-border flex justify-end">
+                      <AppButton
+                        type="button"
+                        variant="primary"
+                        onClick={() => setEditMaintActiveSection("BILLING_FORECAST")}
+                        className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs font-semibold gap-1.5 h-9"
+                      >
+                        <span>Proceed to Billing, Taxes & Attachments</span>
+                        <ArrowRight className="h-4 w-4" />
+                      </AppButton>
                     </div>
                   </div>
                 )}
@@ -9271,96 +9743,319 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       </div>
                     </div>
 
-                    {/* Financial Costing Breakdown */}
+                    {/* Financial Costing & Statutory Tax Breakdown */}
                     <div className="p-4 rounded-xl border border-border bg-slate-50/60 dark:bg-slate-900/50 space-y-4">
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/70 pb-3">
                         <div className="flex items-center gap-2">
-                          <Receipt className="h-4 w-4 text-amber-500" />
-                          <h4 className="font-bold text-xs text-foreground">Workshop Invoice & Financial Statement</h4>
+                          <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20 shrink-0">
+                            <Receipt className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-xs text-foreground">Workshop Invoice & Statutory Tax Breakdown</h4>
+                            <p className="text-[10px] text-muted-foreground">Itemized charges, GST additions, and TDS withholding deductions</p>
+                          </div>
                         </div>
-                        <AppButton
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            const sub = (Number(editMaintPartsCost) || 0) + (Number(editMaintLabourCost) || 0);
-                            const gst = Math.round(sub * 0.18);
-                            setEditMaintTaxCost(gst);
-                            setEditMaintCost(sub + gst);
-                          }}
-                          className="text-[11px] font-semibold text-primary hover:underline p-0 h-auto"
-                        >
-                          Auto-Calculate 18% GST
-                        </AppButton>
-                      </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div>
-                          <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
-                            Labour / Service Charges (₹)
-                          </label>
-                          <AppInput
-                            type="number"
-                            value={editMaintLabourCost || ""}
-                            onChange={(e) => {
-                              const val = Number(e.target.value) || 0;
-                              setEditMaintLabourCost(val);
-                              setEditMaintCost((Number(editMaintPartsCost) || 0) + val + (Number(editMaintTaxCost) || 0));
+                        {/* Quick Presets */}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[10px] text-muted-foreground font-semibold mr-1">Presets:</span>
+                          <AppButton
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const gross = (Number(editMaintPartsCost) || 0) + (Number(editMaintLabourCost) || 0);
+                              const taxable = Math.max(0, gross - (Number(editMaintDiscount) || 0));
+                              const gst = Math.round(taxable * 0.18);
+                              setEditMaintTaxRate(18);
+                              setEditMaintTaxCost(gst);
+                              setEditMaintCost(Math.max(0, taxable + gst - (Number(editMaintTdsAmount) || 0) - (Number(editMaintOtherDeductions) || 0)));
                             }}
-                            className="h-9 text-xs font-mono font-semibold"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
-                            Consumables & Workshop Misc (₹)
-                          </label>
-                          <AppInput
-                            type="number"
-                            value={editMaintPartsCost || ""}
-                            onChange={(e) => {
-                              const val = Number(e.target.value) || 0;
-                              setEditMaintPartsCost(val);
-                              setEditMaintCost(val + (Number(editMaintLabourCost) || 0) + (Number(editMaintTaxCost) || 0));
+                            className="text-[10px] h-6 px-2 py-0 border-blue-500/30 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40"
+                          >
+                            18% GST (Std)
+                          </AppButton>
+                          <AppButton
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const gross = (Number(editMaintPartsCost) || 0) + (Number(editMaintLabourCost) || 0);
+                              const taxable = Math.max(0, gross - (Number(editMaintDiscount) || 0));
+                              const gst = Math.round(taxable * 0.12);
+                              setEditMaintTaxRate(12);
+                              setEditMaintTaxCost(gst);
+                              setEditMaintCost(Math.max(0, taxable + gst - (Number(editMaintTdsAmount) || 0) - (Number(editMaintOtherDeductions) || 0)));
                             }}
-                            className="h-9 text-xs font-mono font-semibold"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
-                            Taxes / GST Amount (₹)
-                          </label>
-                          <AppInput
-                            type="number"
-                            value={editMaintTaxCost || ""}
-                            onChange={(e) => {
-                              const val = Number(e.target.value) || 0;
-                              setEditMaintTaxCost(val);
-                              setEditMaintCost((Number(editMaintPartsCost) || 0) + (Number(editMaintLabourCost) || 0) + val);
+                            className="text-[10px] h-6 px-2 py-0 border-slate-300 dark:border-slate-700 hover:bg-slate-100"
+                          >
+                            12% GST
+                          </AppButton>
+                          <AppButton
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const gross = (Number(editMaintPartsCost) || 0) + (Number(editMaintLabourCost) || 0);
+                              const taxable = Math.max(0, gross - (Number(editMaintDiscount) || 0));
+                              const tds = Math.round(taxable * 0.02);
+                              setEditMaintTdsRate(2);
+                              setEditMaintTdsAmount(tds);
+                              setEditMaintCost(Math.max(0, taxable + (Number(editMaintTaxCost) || 0) - tds - (Number(editMaintOtherDeductions) || 0)));
                             }}
-                            className="h-9 text-xs font-mono font-semibold"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="p-3.5 rounded-xl bg-theme-btn-primary/10 border border-theme-btn-primary/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div>
-                          <span className="text-xs font-bold text-foreground block">
-                            Grand Total Invoiced Amount
-                          </span>
-                          <span className="text-[11px] text-muted-foreground font-mono">
-                            Labour (₹{Number(editMaintLabourCost).toLocaleString("en-IN")}) + Consumables (₹{Number(editMaintPartsCost).toLocaleString("en-IN")}) + Taxes (₹{Number(editMaintTaxCost).toLocaleString("en-IN")})
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-xl font-bold font-mono text-foreground">
-                            ₹{Number(editMaintCost).toLocaleString("en-IN")}
-                          </span>
+                            className="text-[10px] h-6 px-2 py-0 border-purple-500/30 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40"
+                          >
+                            2% TDS (194C)
+                          </AppButton>
+                          <AppButton
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const gross = (Number(editMaintPartsCost) || 0) + (Number(editMaintLabourCost) || 0);
+                              const taxable = Math.max(0, gross - (Number(editMaintDiscount) || 0));
+                              setEditMaintTaxRate(0);
+                              setEditMaintTaxCost(0);
+                              setEditMaintTdsRate(0);
+                              setEditMaintTdsAmount(0);
+                              setEditMaintOtherDeductions(0);
+                              setEditMaintCost(taxable);
+                            }}
+                            className="text-[10px] h-6 px-1.5 py-0 text-muted-foreground hover:text-foreground"
+                          >
+                            Clear
+                          </AppButton>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                      {/* 1. Base Cost Components & Trade Discount */}
+                      <div className="space-y-1.5">
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                          <span className="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
+                          <span>1. Gross Service Base & Trade Discount</span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div>
+                            <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
+                              Labour / Service Charges (₹)
+                            </label>
+                            <AppInput
+                              type="number"
+                              min="0"
+                              value={editMaintLabourCost || ""}
+                              onChange={(e) => {
+                                const val = Number(e.target.value) || 0;
+                                setEditMaintLabourCost(val);
+                                const gross = val + (Number(editMaintPartsCost) || 0);
+                                const taxable = Math.max(0, gross - (Number(editMaintDiscount) || 0));
+                                const taxAmt = editMaintTaxRate > 0 ? Math.round(taxable * (editMaintTaxRate / 100)) : (Number(editMaintTaxCost) || 0);
+                                const tdsAmt = editMaintTdsRate > 0 ? Math.round(taxable * (editMaintTdsRate / 100)) : (Number(editMaintTdsAmount) || 0);
+                                setEditMaintCost(Math.max(0, taxable + taxAmt - tdsAmt - (Number(editMaintOtherDeductions) || 0)));
+                              }}
+                              className="h-9 text-xs font-mono font-semibold"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
+                              Consumables & Workshop Misc (₹)
+                            </label>
+                            <AppInput
+                              type="number"
+                              min="0"
+                              value={editMaintPartsCost || ""}
+                              onChange={(e) => {
+                                const val = Number(e.target.value) || 0;
+                                setEditMaintPartsCost(val);
+                                const gross = (Number(editMaintLabourCost) || 0) + val;
+                                const taxable = Math.max(0, gross - (Number(editMaintDiscount) || 0));
+                                const taxAmt = editMaintTaxRate > 0 ? Math.round(taxable * (editMaintTaxRate / 100)) : (Number(editMaintTaxCost) || 0);
+                                const tdsAmt = editMaintTdsRate > 0 ? Math.round(taxable * (editMaintTdsRate / 100)) : (Number(editMaintTdsAmount) || 0);
+                                setEditMaintCost(Math.max(0, taxable + taxAmt - tdsAmt - (Number(editMaintOtherDeductions) || 0)));
+                              }}
+                              className="h-9 text-xs font-mono font-semibold"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
+                              Trade Discount / Vendor Waiver (₹)
+                            </label>
+                            <AppInput
+                              type="number"
+                              min="0"
+                              value={editMaintDiscount || ""}
+                              onChange={(e) => {
+                                const val = Number(e.target.value) || 0;
+                                setEditMaintDiscount(val);
+                                const gross = (Number(editMaintLabourCost) || 0) + (Number(editMaintPartsCost) || 0);
+                                const taxable = Math.max(0, gross - val);
+                                const taxAmt = editMaintTaxRate > 0 ? Math.round(taxable * (editMaintTaxRate / 100)) : (Number(editMaintTaxCost) || 0);
+                                const tdsAmt = editMaintTdsRate > 0 ? Math.round(taxable * (editMaintTdsRate / 100)) : (Number(editMaintTdsAmount) || 0);
+                                setEditMaintCost(Math.max(0, taxable + taxAmt - tdsAmt - (Number(editMaintOtherDeductions) || 0)));
+                              }}
+                              className="h-9 text-xs font-mono font-semibold text-rose-600 dark:text-rose-400"
+                              placeholder="0"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 2. Tax Addition (GST Rate & Taxes) */}
+                      <div className="space-y-1.5 pt-1 border-t border-border/50">
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
+                          <span className="flex items-center gap-1">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                            <span>2. Statutory Tax Addition (GST / VAT)</span>
+                          </span>
+                          {editMaintTaxCost > 0 && (
+                            <span className="font-mono text-[10px] text-muted-foreground font-normal">
+                              CGST: ₹{Math.round(editMaintTaxCost / 2).toLocaleString("en-IN")} + SGST: ₹{Math.round(editMaintTaxCost / 2).toLocaleString("en-IN")} (or IGST)
+                            </span>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div>
+                            <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
+                              GST Rate (%)
+                            </label>
+                            <select
+                              value={editMaintTaxRate}
+                              onChange={(e) => {
+                                const rate = Number(e.target.value) || 0;
+                                setEditMaintTaxRate(rate);
+                                const gross = (Number(editMaintLabourCost) || 0) + (Number(editMaintPartsCost) || 0);
+                                const taxable = Math.max(0, gross - (Number(editMaintDiscount) || 0));
+                                const taxAmt = Math.round(taxable * (rate / 100));
+                                setEditMaintTaxCost(taxAmt);
+                                setEditMaintCost(Math.max(0, taxable + taxAmt - (Number(editMaintTdsAmount) || 0) - (Number(editMaintOtherDeductions) || 0)));
+                              }}
+                              className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs font-medium text-foreground focus:outline-none focus:border-theme-btn-primary"
+                            >
+                              <option value={0}>0% (Tax Exempt / Nil)</option>
+                              <option value={5}>5% GST</option>
+                              <option value={12}>12% GST</option>
+                              <option value={18}>18% GST (Standard)</option>
+                              <option value={28}>28% GST (Luxury/Heavy)</option>
+                            </select>
+                          </div>
+
+                          <div className="sm:col-span-2">
+                            <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
+                              GST / Tax Addition Amount (₹)
+                            </label>
+                            <AppInput
+                              type="number"
+                              min="0"
+                              value={editMaintTaxCost || ""}
+                              onChange={(e) => {
+                                const val = Number(e.target.value) || 0;
+                                setEditMaintTaxCost(val);
+                                const gross = (Number(editMaintLabourCost) || 0) + (Number(editMaintPartsCost) || 0);
+                                const taxable = Math.max(0, gross - (Number(editMaintDiscount) || 0));
+                                setEditMaintCost(Math.max(0, taxable + val - (Number(editMaintTdsAmount) || 0) - (Number(editMaintOtherDeductions) || 0)));
+                              }}
+                              className="h-9 text-xs font-mono font-semibold text-emerald-600 dark:text-emerald-400"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 3. Tax Deductions & Withholding (TDS / Retentions) */}
+                      <div className="space-y-1.5 pt-1 border-t border-border/50">
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                          <span className="h-1.5 w-1.5 rounded-full bg-purple-500"></span>
+                          <span>3. Statutory Tax Deductions & Withholding (TDS / Sec 194C / Other)</span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div>
+                            <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
+                              TDS Withholding Rate (%)
+                            </label>
+                            <select
+                              value={editMaintTdsRate}
+                              onChange={(e) => {
+                                const rate = Number(e.target.value) || 0;
+                                setEditMaintTdsRate(rate);
+                                const gross = (Number(editMaintLabourCost) || 0) + (Number(editMaintPartsCost) || 0);
+                                const taxable = Math.max(0, gross - (Number(editMaintDiscount) || 0));
+                                const tdsAmt = Math.round(taxable * (rate / 100));
+                                setEditMaintTdsAmount(tdsAmt);
+                                setEditMaintCost(Math.max(0, taxable + (Number(editMaintTaxCost) || 0) - tdsAmt - (Number(editMaintOtherDeductions) || 0)));
+                              }}
+                              className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs font-medium text-foreground focus:outline-none focus:border-theme-btn-primary"
+                            >
+                              <option value={0}>0% (No TDS Withholding)</option>
+                              <option value={1}>1% (TDS Sec 194C - Individual/HUF)</option>
+                              <option value={2}>2% (TDS Sec 194C - Company/Firm / 194J)</option>
+                              <option value={5}>5% (TDS Sec 194H / Misc)</option>
+                              <option value={10}>10% (TDS Sec 194J Professional)</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
+                              TDS Deduction Amount (₹)
+                            </label>
+                            <AppInput
+                              type="number"
+                              min="0"
+                              value={editMaintTdsAmount || ""}
+                              onChange={(e) => {
+                                const val = Number(e.target.value) || 0;
+                                setEditMaintTdsAmount(val);
+                                const gross = (Number(editMaintLabourCost) || 0) + (Number(editMaintPartsCost) || 0);
+                                const taxable = Math.max(0, gross - (Number(editMaintDiscount) || 0));
+                                setEditMaintCost(Math.max(0, taxable + (Number(editMaintTaxCost) || 0) - val - (Number(editMaintOtherDeductions) || 0)));
+                              }}
+                              className="h-9 text-xs font-mono font-semibold text-purple-600 dark:text-purple-400"
+                              placeholder="0"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
+                              Other Deductions / Advance Adj (₹)
+                            </label>
+                            <AppInput
+                              type="number"
+                              min="0"
+                              value={editMaintOtherDeductions || ""}
+                              onChange={(e) => {
+                                const val = Number(e.target.value) || 0;
+                                setEditMaintOtherDeductions(val);
+                                const gross = (Number(editMaintLabourCost) || 0) + (Number(editMaintPartsCost) || 0);
+                                const taxable = Math.max(0, gross - (Number(editMaintDiscount) || 0));
+                                setEditMaintCost(Math.max(0, taxable + (Number(editMaintTaxCost) || 0) - (Number(editMaintTdsAmount) || 0) - val));
+                              }}
+                              className="h-9 text-xs font-mono font-semibold"
+                              placeholder="0"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 4. Grand Total Net Payable Card with Live Equation */}
+                      <div className="p-3.5 rounded-xl bg-theme-btn-primary/10 border border-theme-btn-primary/20 space-y-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div>
+                            <span className="text-xs font-bold text-foreground block">
+                              Net Payable / Invoiced Amount
+                            </span>
+                            <span className="text-[11px] text-muted-foreground font-mono">
+                              Gross (₹{(Number(editMaintLabourCost) + Number(editMaintPartsCost)).toLocaleString("en-IN")}) - Disc (₹{Number(editMaintDiscount).toLocaleString("en-IN")}) + GST (₹{Number(editMaintTaxCost).toLocaleString("en-IN")}) - TDS (₹{Number(editMaintTdsAmount).toLocaleString("en-IN")}) - Ded (₹{Number(editMaintOtherDeductions).toLocaleString("en-IN")})
+                            </span>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-2xl font-bold font-mono text-primary">
+                              ₹{Number(editMaintCost).toLocaleString("en-IN")}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Payment Mode & Settlement */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-border/50">
                         <div>
                           <label className="text-[11px] font-semibold block mb-1 text-muted-foreground">
                             Payment Mode / Channel
@@ -9389,7 +10084,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           >
                             <option value="PAID">Paid / Settled</option>
                             <option value="PENDING">Pending Settlement</option>
-                            <option value="BILLED_TO_ACCOUNT">Billed to Corporate Account</option>
+                            <option value="PARTIAL">Partial Settlement</option>
+                            <option value="WAIVED">Warranty / Fully Waived</option>
                           </select>
                         </div>
                       </div>
@@ -9606,6 +10302,18 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         className="w-full rounded-lg border border-border bg-surface p-2.5 text-xs focus:outline-none focus:border-theme-btn-primary"
                       />
                     </div>
+
+                    <div className="pt-3 border-t border-border flex justify-start">
+                      <AppButton
+                        type="button"
+                        variant="secondary"
+                        onClick={() => setEditMaintActiveSection("SCOPE_WORKSHOP")}
+                        className="text-xs font-semibold gap-1.5 h-9"
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                        <span>Back to Vehicle & Service Scope</span>
+                      </AppButton>
+                    </div>
                   </div>
                 )}
               </div>
@@ -9716,11 +10424,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       </div>
                     </div>
 
-                    {/* Billing & Tax Statement */}
+                    {/* Billing & Tax Statement with Additions & Deductions */}
                     <div className="p-4 rounded-xl border border-border bg-surface space-y-3">
-                      <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                        <Receipt className="h-4 w-4 text-amber-500" />
-                        <span>Tax Invoice & Financial Statement</span>
+                      <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border">
+                        <Receipt className="h-4 w-4 text-emerald-500" />
+                        <span>Tax Invoice & Accounting Statement</span>
                       </div>
                       <div className="space-y-1.5">
                         <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -9730,20 +10438,52 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           </span>
                         </div>
                         <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>Consumables & Workshop Misc:</span>
+                          <span>Consumables & Workshop Spares:</span>
                           <span className="font-mono font-medium text-foreground">
                             ₹{Number(partsData?.parts_cost || 0).toLocaleString("en-IN")}
                           </span>
                         </div>
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>GST / Statutory Taxes:</span>
-                          <span className="font-mono font-medium text-foreground">
-                            ₹{Number(partsData?.tax_amount || 0).toLocaleString("en-IN")}
+                        {Boolean(partsData?.discount) && Number(partsData.discount) > 0 && (
+                          <div className="flex items-center justify-between text-xs text-rose-600 dark:text-rose-400">
+                            <span>Trade Discount / Waiver:</span>
+                            <span className="font-mono font-medium">
+                              -₹{Number(partsData.discount).toLocaleString("en-IN")}
+                            </span>
+                          </div>
+                        )}
+                        {Boolean(partsData?.taxable_base) && Number(partsData.taxable_base) > 0 && (
+                          <div className="flex items-center justify-between text-xs text-muted-foreground font-semibold">
+                            <span>Taxable Base:</span>
+                            <span className="font-mono text-foreground">
+                              ₹{Number(partsData.taxable_base).toLocaleString("en-IN")}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400">
+                          <span>GST / Statutory Tax Addition {partsData?.tax_rate ? `(${partsData.tax_rate}%)` : ""}:</span>
+                          <span className="font-mono font-medium">
+                            +₹{Number(partsData?.tax_amount || 0).toLocaleString("en-IN")}
                           </span>
                         </div>
+                        {Boolean(partsData?.tds_amount) && Number(partsData.tds_amount) > 0 && (
+                          <div className="flex items-center justify-between text-xs text-purple-600 dark:text-purple-400">
+                            <span>TDS Withholding Deduction {partsData?.tds_rate ? `(${partsData.tds_rate}%)` : ""}:</span>
+                            <span className="font-mono font-medium">
+                              -₹{Number(partsData.tds_amount).toLocaleString("en-IN")}
+                            </span>
+                          </div>
+                        )}
+                        {Boolean(partsData?.other_deductions) && Number(partsData.other_deductions) > 0 && (
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span>Other Deductions / Advances:</span>
+                            <span className="font-mono font-medium">
+                              -₹{Number(partsData.other_deductions).toLocaleString("en-IN")}
+                            </span>
+                          </div>
+                        )}
                         {partsData?.payment_mode && (
-                          <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
-                            <span>Payment Mode / Status:</span>
+                          <div className="flex items-center justify-between text-xs text-muted-foreground pt-1.5 border-t border-border/60">
+                            <span>Payment Channel & Status:</span>
                             <span className="font-medium text-foreground flex items-center gap-1.5">
                               <span>{partsData.payment_mode}</span>
                               <span className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
@@ -9753,7 +10493,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           </div>
                         )}
                         <div className="pt-2 border-t border-border flex items-center justify-between text-sm font-bold">
-                          <span className="text-foreground">Grand Total Invoiced:</span>
+                          <span className="text-foreground">Net Invoiced / Payable Amount:</span>
                           <span className="font-mono text-base text-primary">
                             ₹{Number(selectedMaintenanceForView.cost).toLocaleString("en-IN")}
                           </span>
@@ -10067,13 +10807,87 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 </div>
               </div>
 
-              {/* Section 2: Procurement & Financials */}
-              <div className="space-y-3">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border">
-                  <Receipt className="h-3.5 w-3.5 text-emerald-500" />
-                  <span>2. Procurement, Invoicing & Costs</span>
+              {/* Section 2: Procurement, Invoicing, Taxes & Costs */}
+              <div className="space-y-3 p-4 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/40">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-border">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                    <Receipt className="h-3.5 w-3.5 text-emerald-500" />
+                    <span>2. Procurement, Invoicing & Statutory Tax Breakdown</span>
+                  </div>
+
+                  {/* Quick Presets */}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[10px] text-muted-foreground font-semibold">Presets:</span>
+                    <AppButton
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const gross = (Number(partFormUnitPrice) || 0) * (Number(partFormQuantity) || 1);
+                        const taxable = Math.max(0, gross - (Number(partFormDiscount) || 0));
+                        const gst = Math.round(taxable * 0.18);
+                        setPartFormTaxRate(18);
+                        setPartFormTaxAmount(gst);
+                        setPartFormPurchaseAmount(Math.max(0, taxable + gst - (Number(partFormTdsDeduction) || 0) - (Number(partFormOtherDeductions) || 0)));
+                      }}
+                      className="text-[10px] h-6 px-2 py-0 border-blue-500/30 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40"
+                    >
+                      18% GST (Std)
+                    </AppButton>
+                    <AppButton
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const gross = (Number(partFormUnitPrice) || 0) * (Number(partFormQuantity) || 1);
+                        const taxable = Math.max(0, gross - (Number(partFormDiscount) || 0));
+                        const gst = Math.round(taxable * 0.28);
+                        setPartFormTaxRate(28);
+                        setPartFormTaxAmount(gst);
+                        setPartFormPurchaseAmount(Math.max(0, taxable + gst - (Number(partFormTdsDeduction) || 0) - (Number(partFormOtherDeductions) || 0)));
+                      }}
+                      className="text-[10px] h-6 px-2 py-0 border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40"
+                    >
+                      28% GST (Spares)
+                    </AppButton>
+                    <AppButton
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const gross = (Number(partFormUnitPrice) || 0) * (Number(partFormQuantity) || 1);
+                        const taxable = Math.max(0, gross - (Number(partFormDiscount) || 0));
+                        const tds = Math.round(taxable * 0.02);
+                        setPartFormTdsRate(2);
+                        setPartFormTdsDeduction(tds);
+                        setPartFormPurchaseAmount(Math.max(0, taxable + (Number(partFormTaxAmount) || 0) - tds - (Number(partFormOtherDeductions) || 0)));
+                      }}
+                      className="text-[10px] h-6 px-2 py-0 border-purple-500/30 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40"
+                    >
+                      2% TDS
+                    </AppButton>
+                    <AppButton
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        const gross = (Number(partFormUnitPrice) || 0) * (Number(partFormQuantity) || 1);
+                        const taxable = Math.max(0, gross - (Number(partFormDiscount) || 0));
+                        setPartFormTaxRate(0);
+                        setPartFormTaxAmount(0);
+                        setPartFormTdsRate(0);
+                        setPartFormTdsDeduction(0);
+                        setPartFormOtherDeductions(0);
+                        setPartFormPurchaseAmount(taxable);
+                      }}
+                      className="text-[10px] h-6 px-1.5 py-0 text-muted-foreground hover:text-foreground"
+                    >
+                      Clear
+                    </AppButton>
+                  </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
                     <label className="font-semibold block mb-1 flex items-center gap-1">
                       <Calendar className="h-3 w-3 text-blue-500" />
@@ -10087,7 +10901,28 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     />
                   </div>
                   <div>
-                    <label className="font-semibold block mb-1">Unit Price (₹)</label>
+                    <label className="font-semibold block mb-1">Procurement Vendor / Supplier</label>
+                    <AppInput
+                      value={partFormVendorName}
+                      onChange={(e) => setPartFormVendorName(e.target.value)}
+                      placeholder="e.g. Bosch Authorized Distributor"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1">Invoice / Bill Number</label>
+                    <AppInput
+                      value={partFormInvoiceNumber}
+                      onChange={(e) => setPartFormInvoiceNumber(e.target.value)}
+                      className="font-mono"
+                      placeholder="e.g. INV-2026-889"
+                    />
+                  </div>
+                </div>
+
+                {/* Pricing, Quantity & Discount */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                  <div>
+                    <label className="font-semibold block mb-1 text-xs">Unit Price (₹)</label>
                     <AppInput
                       type="number"
                       min="0"
@@ -10096,13 +10931,17 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       onChange={(e) => {
                         const unit = Number(e.target.value) || 0;
                         setPartFormUnitPrice(unit);
-                        setPartFormPurchaseAmount(unit * (Number(partFormQuantity) || 1));
+                        const gross = unit * (Number(partFormQuantity) || 1);
+                        const taxable = Math.max(0, gross - (Number(partFormDiscount) || 0));
+                        const taxAmt = partFormTaxRate > 0 ? Math.round(taxable * (partFormTaxRate / 100)) : (Number(partFormTaxAmount) || 0);
+                        const tdsAmt = partFormTdsRate > 0 ? Math.round(taxable * (partFormTdsRate / 100)) : (Number(partFormTdsDeduction) || 0);
+                        setPartFormPurchaseAmount(Math.max(0, taxable + taxAmt - tdsAmt - (Number(partFormOtherDeductions) || 0)));
                       }}
                       className="font-mono"
                     />
                   </div>
                   <div>
-                    <label className="font-semibold block mb-1">Quantity</label>
+                    <label className="font-semibold block mb-1 text-xs">Quantity</label>
                     <AppInput
                       type="number"
                       min="1"
@@ -10110,35 +10949,130 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       onChange={(e) => {
                         const qty = Number(e.target.value) || 1;
                         setPartFormQuantity(qty);
-                        setPartFormPurchaseAmount((Number(partFormUnitPrice) || 0) * qty);
+                        const gross = (Number(partFormUnitPrice) || 0) * qty;
+                        const taxable = Math.max(0, gross - (Number(partFormDiscount) || 0));
+                        const taxAmt = partFormTaxRate > 0 ? Math.round(taxable * (partFormTaxRate / 100)) : (Number(partFormTaxAmount) || 0);
+                        const tdsAmt = partFormTdsRate > 0 ? Math.round(taxable * (partFormTdsRate / 100)) : (Number(partFormTdsDeduction) || 0);
+                        setPartFormPurchaseAmount(Math.max(0, taxable + taxAmt - tdsAmt - (Number(partFormOtherDeductions) || 0)));
                       }}
                       className="font-mono"
                     />
                   </div>
                   <div>
-                    <label className="font-semibold block mb-1">Total Purchase Amount (₹)</label>
+                    <label className="font-semibold block mb-1 text-xs">Trade Discount / Vendor Rebate (₹)</label>
+                    <AppInput
+                      type="number"
+                      min="0"
+                      value={partFormDiscount || ""}
+                      onChange={(e) => {
+                        const disc = Number(e.target.value) || 0;
+                        setPartFormDiscount(disc);
+                        const gross = (Number(partFormUnitPrice) || 0) * (Number(partFormQuantity) || 1);
+                        const taxable = Math.max(0, gross - disc);
+                        const taxAmt = partFormTaxRate > 0 ? Math.round(taxable * (partFormTaxRate / 100)) : (Number(partFormTaxAmount) || 0);
+                        const tdsAmt = partFormTdsRate > 0 ? Math.round(taxable * (partFormTdsRate / 100)) : (Number(partFormTdsDeduction) || 0);
+                        setPartFormPurchaseAmount(Math.max(0, taxable + taxAmt - tdsAmt - (Number(partFormOtherDeductions) || 0)));
+                      }}
+                      className="font-mono text-rose-600 dark:text-rose-400"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+
+                {/* Tax Addition & Deduction Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-2">
+                  <div>
+                    <label className="font-semibold block mb-1 text-xs">GST Rate (%)</label>
+                    <select
+                      value={partFormTaxRate}
+                      onChange={(e) => {
+                        const rate = Number(e.target.value) || 0;
+                        setPartFormTaxRate(rate);
+                        const gross = (Number(partFormUnitPrice) || 0) * (Number(partFormQuantity) || 1);
+                        const taxable = Math.max(0, gross - (Number(partFormDiscount) || 0));
+                        const taxAmt = Math.round(taxable * (rate / 100));
+                        setPartFormTaxAmount(taxAmt);
+                        setPartFormPurchaseAmount(Math.max(0, taxable + taxAmt - (Number(partFormTdsDeduction) || 0) - (Number(partFormOtherDeductions) || 0)));
+                      }}
+                      className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                    >
+                      <option value={0}>0% (Tax Exempt)</option>
+                      <option value={5}>5% GST</option>
+                      <option value={12}>12% GST</option>
+                      <option value={18}>18% GST (Standard)</option>
+                      <option value={28}>28% GST (Spares/Tyres)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1 text-xs">GST Tax Amount (₹)</label>
+                    <AppInput
+                      type="number"
+                      min="0"
+                      value={partFormTaxAmount || ""}
+                      onChange={(e) => {
+                        const val = Number(e.target.value) || 0;
+                        setPartFormTaxAmount(val);
+                        const gross = (Number(partFormUnitPrice) || 0) * (Number(partFormQuantity) || 1);
+                        const taxable = Math.max(0, gross - (Number(partFormDiscount) || 0));
+                        setPartFormPurchaseAmount(Math.max(0, taxable + val - (Number(partFormTdsDeduction) || 0) - (Number(partFormOtherDeductions) || 0)));
+                      }}
+                      className="font-mono text-emerald-600 dark:text-emerald-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1 text-xs">TDS Deduction (₹)</label>
+                    <AppInput
+                      type="number"
+                      min="0"
+                      value={partFormTdsDeduction || ""}
+                      onChange={(e) => {
+                        const val = Number(e.target.value) || 0;
+                        setPartFormTdsDeduction(val);
+                        const gross = (Number(partFormUnitPrice) || 0) * (Number(partFormQuantity) || 1);
+                        const taxable = Math.max(0, gross - (Number(partFormDiscount) || 0));
+                        setPartFormPurchaseAmount(Math.max(0, taxable + (Number(partFormTaxAmount) || 0) - val - (Number(partFormOtherDeductions) || 0)));
+                      }}
+                      className="font-mono text-purple-600 dark:text-purple-400"
+                      placeholder="0"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1 text-xs">Other Deductions (₹)</label>
+                    <AppInput
+                      type="number"
+                      min="0"
+                      value={partFormOtherDeductions || ""}
+                      onChange={(e) => {
+                        const val = Number(e.target.value) || 0;
+                        setPartFormOtherDeductions(val);
+                        const gross = (Number(partFormUnitPrice) || 0) * (Number(partFormQuantity) || 1);
+                        const taxable = Math.max(0, gross - (Number(partFormDiscount) || 0));
+                        setPartFormPurchaseAmount(Math.max(0, taxable + (Number(partFormTaxAmount) || 0) - (Number(partFormTdsDeduction) || 0) - val));
+                      }}
+                      className="font-mono"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+
+                {/* Grand Total Net Invoiced Card */}
+                <div className="p-3 rounded-xl bg-theme-btn-primary/10 border border-theme-btn-primary/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-2">
+                  <div>
+                    <span className="text-xs font-bold text-foreground block">
+                      Total Net Purchase Invoiced Amount (₹)
+                    </span>
+                    <span className="text-[10px] text-muted-foreground font-mono">
+                      Gross: ₹{((Number(partFormUnitPrice) || 0) * (Number(partFormQuantity) || 1)).toLocaleString("en-IN")} • Taxable: ₹{Math.max(0, ((Number(partFormUnitPrice) || 0) * (Number(partFormQuantity) || 1)) - (Number(partFormDiscount) || 0)).toLocaleString("en-IN")} • GST: +₹{Number(partFormTaxAmount).toLocaleString("en-IN")} • TDS: -₹{Number(partFormTdsDeduction).toLocaleString("en-IN")}
+                    </span>
+                  </div>
+                  <div className="text-right">
                     <AppInput
                       type="number"
                       min="0"
                       step="any"
                       value={partFormPurchaseAmount || ""}
                       onChange={(e) => setPartFormPurchaseAmount(Number(e.target.value) || 0)}
-                      className="font-mono font-bold text-emerald-600 dark:text-emerald-400"
-                    />
-                  </div>
-                  <div className="sm:col-span-2">
-                    <label className="font-semibold block mb-1">Procurement Vendor / Supplier</label>
-                    <AppInput
-                      value={partFormVendorName}
-                      onChange={(e) => setPartFormVendorName(e.target.value)}
-                    />
-                  </div>
-                  <div className="sm:col-span-2">
-                    <label className="font-semibold block mb-1">Invoice / Bill Number</label>
-                    <AppInput
-                      value={partFormInvoiceNumber}
-                      onChange={(e) => setPartFormInvoiceNumber(e.target.value)}
-                      className="font-mono"
+                      className="font-mono font-bold text-base text-primary h-9 w-44 text-right"
                     />
                   </div>
                 </div>
@@ -10426,10 +11360,145 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       rows={2}
                       value={partFormNotes}
                       onChange={(e) => setPartFormNotes(e.target.value)}
+                      placeholder="Serial numbers, storage bin, workshop notes, fitting guidelines..."
                       className="w-full text-xs p-2.5 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* Section 7: Invoices, Warranty Cards, Spec Sheets & Part Photos */}
+              <div className="space-y-3 p-4 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/40">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="h-7 w-7 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/20">
+                      <Paperclip className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-foreground">Part Invoices, Warranty Cards & Spec Sheet Attachments</div>
+                      <div className="text-[11px] text-muted-foreground">Upload purchase invoices, OEM spec sheets, warranty certificates, or part condition photos</div>
+                    </div>
+                  </div>
+                  <span className="text-[11px] font-semibold text-muted-foreground bg-surface px-2.5 py-0.5 rounded-md border border-border">
+                    {partFormAttachments.length} {partFormAttachments.length === 1 ? "file attached" : "files attached"}
+                  </span>
+                </div>
+
+                {/* Upload Dropzone */}
+                <div
+                  onDragOver={(e) => { e.preventDefault(); setIsDraggingPartFile(true); }}
+                  onDragLeave={() => setIsDraggingPartFile(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsDraggingPartFile(false);
+                    if (e.dataTransfer.files?.length) {
+                      handleAttachmentFilesSelected(e.dataTransfer.files, setPartFormAttachments);
+                    }
+                  }}
+                  onClick={() => partFileInputRef.current?.click()}
+                  className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-1.5 group ${
+                    isDraggingPartFile 
+                      ? "border-theme-btn-primary bg-theme-btn-primary/5" 
+                      : "border-border hover:border-theme-btn-primary/60 bg-surface/50 hover:bg-surface"
+                  }`}
+                >
+                  <input
+                    type="file"
+                    multiple
+                    ref={partFileInputRef}
+                    onChange={(e) => {
+                      if (e.target.files?.length) {
+                        handleAttachmentFilesSelected(e.target.files, setPartFormAttachments);
+                        e.target.value = "";
+                      }
+                    }}
+                    className="hidden"
+                    accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.csv"
+                  />
+                  <div className="h-9 w-9 rounded-full bg-theme-btn-primary/10 text-theme-btn-primary flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <UploadCloud className="h-5 w-5" />
+                  </div>
+                  <div className="text-xs font-semibold text-foreground">
+                    Click to browse or drag & drop files here
+                  </div>
+                  <div className="text-[11px] text-muted-foreground">
+                    PDF Invoices, Spec Sheets, Warranty Cards, Photos (up to 25MB each)
+                  </div>
+                </div>
+
+                {/* Uploaded File List */}
+                {partFormAttachments.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                    {partFormAttachments.map((att, idx) => (
+                      <div
+                        key={att.id || idx}
+                        className="flex items-center justify-between p-2.5 rounded-xl border border-border bg-surface hover:border-theme-btn-primary/40 transition-colors"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
+                          <div className="h-8 w-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-border/80 shrink-0">
+                            {renderAttachmentIcon(att.file_type, att.file_name)}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-semibold text-foreground truncate text-xs" title={att.file_name}>
+                              {att.file_name}
+                            </div>
+                            <div className="text-[10px] text-muted-foreground flex items-center gap-1.5">
+                              <span>{formatFileSize(att.file_size)}</span>
+                              <span>•</span>
+                              <span>{att.uploaded_at ? new Date(att.uploaded_at).toLocaleDateString("en-IN") : "Attached"}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1 shrink-0">
+                          {att.file_type?.startsWith("image/") && (
+                            <AppButton
+                              type="button"
+                              variant="ghost"
+                              size="icon-sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPreviewAttachment(att);
+                                setPreviewZoom(1);
+                                setPreviewRotation(0);
+                              }}
+                              className="h-7 w-7 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
+                              title="Preview Image"
+                            >
+                              <Eye className="h-3.5 w-3.5" />
+                            </AppButton>
+                          )}
+                          <AppButton
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              downloadAttachment(att);
+                            }}
+                            className="h-7 w-7 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+                            title="Download File"
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                          </AppButton>
+                          <AppButton
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPartFormAttachments((prev) => prev.filter((_, i) => i !== idx));
+                            }}
+                            className="h-7 w-7 text-rose-600 hover:bg-rose-500/10"
+                            title="Remove Attachment"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </AppButton>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Modal Footer */}
@@ -12595,6 +13664,162 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   )}
                 </div>
               </div>
+
+              {/* Tax Invoice Breakdown & Attached Documents */}
+              {(() => {
+                let notesText = viewingPart.notes || "";
+                let atts: MaintenanceAttachment[] = [];
+                let tb: any = null;
+
+                if (viewingPart.notes) {
+                  try {
+                    const parsed = JSON.parse(viewingPart.notes);
+                    if (parsed && typeof parsed === "object") {
+                      notesText = parsed.text || "";
+                      if (Array.isArray(parsed.attachments)) atts = parsed.attachments;
+                      if (parsed.tax_breakdown) tb = parsed.tax_breakdown;
+                    }
+                  } catch {
+                    notesText = viewingPart.notes;
+                  }
+                }
+
+                return (
+                  <div className="space-y-4">
+                    {/* Tax Breakdown Card */}
+                    <div className="p-4 rounded-xl border border-border bg-surface space-y-3">
+                      <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border">
+                        <Receipt className="h-4 w-4 text-emerald-500" />
+                        <span>Procurement Invoice & Statutory Tax Breakdown</span>
+                      </div>
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span>Gross Base Price ({viewingPart.quantity} units @ ₹{Number(viewingPart.unit_price || 0).toLocaleString("en-IN")}):</span>
+                          <span className="font-mono font-medium text-foreground">
+                            ₹{((Number(viewingPart.unit_price || 0)) * (Number(viewingPart.quantity || 1))).toLocaleString("en-IN")}
+                          </span>
+                        </div>
+                        {tb && tb.discount > 0 && (
+                          <div className="flex items-center justify-between text-xs text-rose-600 dark:text-rose-400">
+                            <span>Trade Discount / Rebate:</span>
+                            <span className="font-mono font-medium">-₹{Number(tb.discount).toLocaleString("en-IN")}</span>
+                          </div>
+                        )}
+                        {tb && tb.taxable_base > 0 && (
+                          <div className="flex items-center justify-between text-xs text-muted-foreground font-semibold">
+                            <span>Taxable Base Amount:</span>
+                            <span className="font-mono text-foreground">₹{Number(tb.taxable_base).toLocaleString("en-IN")}</span>
+                          </div>
+                        )}
+                        {tb && tb.tax_amount > 0 && (
+                          <div className="flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400">
+                            <span>GST Tax Addition ({tb.tax_rate}%):</span>
+                            <span className="font-mono font-medium">+₹{Number(tb.tax_amount).toLocaleString("en-IN")}</span>
+                          </div>
+                        )}
+                        {tb && tb.tds_deduction > 0 && (
+                          <div className="flex items-center justify-between text-xs text-purple-600 dark:text-purple-400">
+                            <span>TDS Withholding Deduction ({tb.tds_rate}%):</span>
+                            <span className="font-mono font-medium">-₹{Number(tb.tds_deduction).toLocaleString("en-IN")}</span>
+                          </div>
+                        )}
+                        {tb && tb.other_deductions > 0 && (
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span>Other Deductions:</span>
+                            <span className="font-mono font-medium">-₹{Number(tb.other_deductions).toLocaleString("en-IN")}</span>
+                          </div>
+                        )}
+                        <div className="pt-2 border-t border-border flex items-center justify-between text-sm font-bold">
+                          <span className="text-foreground">Total Invoiced Asset Valuation:</span>
+                          <span className="font-mono text-base text-primary">
+                            ₹{Number(viewingPart.purchase_amount).toLocaleString("en-IN")}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Attached Documents */}
+                    <div className="p-4 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/40 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                          <Paperclip className="h-3.5 w-3.5 text-amber-500" />
+                          <span>Attached Invoices, Warranty Cards & Spec Sheets ({atts.length})</span>
+                        </div>
+                      </div>
+
+                      {atts.length === 0 ? (
+                        <div className="text-xs text-muted-foreground py-2 italic">
+                          No digital invoices or spec sheet files attached to this part.
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          {atts.map((att, idx) => (
+                            <div
+                              key={att.id || idx}
+                              className="flex items-center justify-between p-3 rounded-xl border border-border bg-surface hover:border-theme-btn-primary/40 transition-colors"
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
+                                <div className="h-9 w-9 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-border/80 shrink-0">
+                                  {renderAttachmentIcon(att.file_type, att.file_name)}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="font-semibold text-foreground truncate text-xs" title={att.file_name}>
+                                    {att.file_name}
+                                  </div>
+                                  <div className="text-[10px] text-muted-foreground">
+                                    {formatFileSize(att.file_size)}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                {att.file_type?.startsWith("image/") && (
+                                  <AppButton
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    onClick={() => {
+                                      setPreviewAttachment(att);
+                                      setPreviewZoom(1);
+                                      setPreviewRotation(0);
+                                    }}
+                                    className="h-7 w-7 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
+                                    title="Preview Image"
+                                  >
+                                    <Eye className="h-3.5 w-3.5" />
+                                  </AppButton>
+                                )}
+                                <AppButton
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  onClick={() => downloadAttachment(att)}
+                                  className="h-7 w-7 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+                                  title="Download File"
+                                >
+                                  <Download className="h-3.5 w-3.5" />
+                                </AppButton>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Technical Notes */}
+                    {notesText && (
+                      <div className="p-4 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/40 space-y-1.5">
+                        <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                          Technical Notes & Location Guidelines
+                        </div>
+                        <p className="text-xs text-foreground italic bg-surface p-3 rounded-lg border border-border/60 whitespace-pre-wrap">
+                          {notesText}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
         </WorkingDocumentLayout>
       )}
 
