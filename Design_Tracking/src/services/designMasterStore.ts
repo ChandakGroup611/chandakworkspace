@@ -1912,6 +1912,423 @@ export class DesignMasterStore {
   }
 
   // ============================================================================
+  // Bulk Import Engines for All Masters (Package, Sub-Package, Projects, Towers, Consultants)
+  // ============================================================================
+
+  public static bulkImportPackages(
+    packages: Array<{ name: string; code?: string; description?: string; icon?: string; color?: string }>,
+    duplicateStrategy: "SKIP" | "OVERWRITE" = "SKIP"
+  ): { added: number; updated: number; skipped: number } {
+    const state = this.getState();
+    let added = 0;
+    let updated = 0;
+    let skipped = 0;
+
+    packages.forEach(pkg => {
+      const cleanName = pkg.name.trim();
+      if (!cleanName) return;
+      const cleanCode = (pkg.code || cleanName.slice(0, 4)).trim().toUpperCase();
+
+      const existingIdx = (state.disciplines || []).findIndex(
+        p => p.name.toLowerCase() === cleanName.toLowerCase() || (cleanCode && p.code.toLowerCase() === cleanCode.toLowerCase())
+      );
+
+      if (existingIdx !== -1) {
+        if (duplicateStrategy === "OVERWRITE") {
+          const old = state.disciplines[existingIdx];
+          state.disciplines[existingIdx] = {
+            ...old,
+            name: cleanName,
+            code: cleanCode,
+            description: pkg.description !== undefined ? pkg.description : old.description,
+            icon: pkg.icon || old.icon,
+            color: pkg.color || old.color
+          };
+          updated++;
+        } else {
+          skipped++;
+        }
+      } else {
+        const newPkg: PackageMaster = {
+          id: `disc-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+          name: cleanName,
+          code: cleanCode,
+          description: pkg.description,
+          icon: pkg.icon || "📁",
+          color: pkg.color || "purple",
+          createdAt: new Date().toISOString()
+        };
+        state.disciplines.push(newPkg);
+        added++;
+      }
+    });
+
+    if (added > 0 || updated > 0) {
+      this.notify();
+    }
+    return { added, updated, skipped };
+  }
+
+  public static bulkImportSubPackages(
+    subPackages: Array<{
+      parentPackageName: string;
+      subPackageName: string;
+      subPackageCode?: string;
+      description?: string;
+    }>,
+    duplicateStrategy: "SKIP" | "OVERWRITE" = "SKIP"
+  ): { added: number; updated: number; skipped: number } {
+    const state = this.getState();
+    let added = 0;
+    let updated = 0;
+    let skipped = 0;
+
+    subPackages.forEach(sp => {
+      const pName = (sp.parentPackageName || "Architectural").trim();
+      const subName = sp.subPackageName.trim();
+      if (!subName) return;
+
+      let parent = state.disciplines.find(
+        d => d.name.toLowerCase() === pName.toLowerCase() || d.code.toLowerCase() === pName.toLowerCase()
+      );
+      if (!parent) {
+        parent = {
+          id: `disc-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+          name: pName,
+          code: pName.slice(0, 4).toUpperCase(),
+          icon: "📁",
+          color: "purple",
+          createdAt: new Date().toISOString()
+        };
+        state.disciplines.push(parent);
+      }
+
+      const generatedCode = (sp.subPackageCode || `PKG-${(state.packages.length + added + 1).toString().padStart(2, "0")}`).trim().toUpperCase();
+
+      const existingIdx = (state.packages || []).findIndex(
+        p => (p.disciplineName.toLowerCase() === parent!.name.toLowerCase() && (p.subPackageName || p.packageName).toLowerCase() === subName.toLowerCase()) ||
+             (generatedCode && (p.subPackageCode || p.packageCode || "").toLowerCase() === generatedCode.toLowerCase())
+      );
+
+      if (existingIdx !== -1) {
+        if (duplicateStrategy === "OVERWRITE") {
+          const old = state.packages[existingIdx];
+          state.packages[existingIdx] = {
+            ...old,
+            disciplineId: parent.id,
+            disciplineName: parent.name,
+            packageName: subName,
+            subPackageName: subName,
+            packageCode: generatedCode,
+            subPackageCode: generatedCode,
+            description: sp.description !== undefined ? sp.description : old.description
+          };
+          updated++;
+        } else {
+          skipped++;
+        }
+      } else {
+        const newSubPkg: SubPackageMaster = {
+          id: `pkg-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+          disciplineId: parent.id,
+          disciplineName: parent.name,
+          packageName: subName,
+          subPackageName: subName,
+          packageCode: generatedCode,
+          subPackageCode: generatedCode,
+          description: sp.description,
+          defaultDurationDays: 30
+        };
+        state.packages.push(newSubPkg);
+        added++;
+      }
+    });
+
+    if (added > 0 || updated > 0) {
+      this.notify();
+    }
+    return { added, updated, skipped };
+  }
+
+  public static bulkImportProjects(
+    projects: Array<{
+      name: string;
+      code?: string;
+      location?: string;
+      projectType?: string;
+      projectStatus?: string;
+      plotArea?: string | number;
+      builtUpArea?: string | number;
+      estimatedBudget?: string | number;
+      reraNumber?: string;
+      targetDate?: string;
+      leadManager?: string;
+      leadManagerEmail?: string;
+      taggedPackages?: string[];
+      taggedConsultants?: string[];
+      description?: string;
+    }>,
+    duplicateStrategy: "SKIP" | "OVERWRITE" = "SKIP"
+  ): { added: number; updated: number; skipped: number } {
+    const state = this.getState();
+    let added = 0;
+    let updated = 0;
+    let skipped = 0;
+
+    projects.forEach(p => {
+      const cleanName = p.name.trim();
+      if (!cleanName) return;
+      const cleanCode = (p.code || cleanName.slice(0, 4)).trim().toUpperCase();
+
+      const existingIdx = (state.projects || []).findIndex(
+        ep => ep.name.toLowerCase() === cleanName.toLowerCase() || (cleanCode && ep.code.toLowerCase() === cleanCode.toLowerCase())
+      );
+
+      const pkgs = p.taggedPackages || [];
+      const conns = p.taggedConsultants || [];
+
+      if (existingIdx !== -1) {
+        if (duplicateStrategy === "OVERWRITE") {
+          const old = state.projects[existingIdx];
+          state.projects[existingIdx] = {
+            ...old,
+            name: cleanName,
+            code: cleanCode,
+            location: p.location || old.location,
+            projectType: p.projectType || old.projectType,
+            projectStatus: p.projectStatus || old.projectStatus,
+            plotArea: p.plotArea !== undefined ? String(p.plotArea) : old.plotArea,
+            builtUpArea: p.builtUpArea !== undefined ? String(p.builtUpArea) : old.builtUpArea,
+            estimatedBudget: p.estimatedBudget !== undefined ? String(p.estimatedBudget) : old.estimatedBudget,
+            reraNumber: p.reraNumber || old.reraNumber,
+            targetCompletionDate: p.targetDate ? String(p.targetDate) : old.targetCompletionDate,
+            leadManager: p.leadManager || old.leadManager,
+            leadManagerEmail: p.leadManagerEmail || old.leadManagerEmail,
+            taggedCategories: pkgs.length > 0 ? pkgs : old.taggedCategories,
+            taggedPackages: pkgs.length > 0 ? pkgs : old.taggedPackages,
+            taggedConsultants: conns.length > 0 ? conns : old.taggedConsultants,
+            description: p.description !== undefined ? p.description : old.description
+          };
+          updated++;
+        } else {
+          skipped++;
+        }
+      } else {
+        const newProjId = `proj-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+        const newProj: ProjectMaster = {
+          id: newProjId,
+          name: cleanName,
+          code: cleanCode,
+          location: p.location || "Mumbai MMR",
+          projectType: p.projectType || "Residential High-Rise",
+          projectStatus: p.projectStatus || "Planning & Design",
+          plotArea: p.plotArea ? String(p.plotArea) : undefined,
+          builtUpArea: p.builtUpArea ? String(p.builtUpArea) : undefined,
+          estimatedBudget: p.estimatedBudget ? String(p.estimatedBudget) : undefined,
+          reraNumber: p.reraNumber,
+          targetCompletionDate: p.targetDate ? String(p.targetDate) : undefined,
+          leadManager: p.leadManager,
+          leadManagerEmail: p.leadManagerEmail,
+          taggedCategories: pkgs,
+          taggedPackages: pkgs,
+          subProjectCategories: { default: pkgs },
+          taggedConsultants: conns,
+          description: p.description,
+          createdAt: new Date().toISOString(),
+          isSubProject: false
+        };
+        state.projects.push(newProj);
+
+        const twrId = `twr-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+        state.towers.push({
+          id: twrId,
+          projectId: newProjId,
+          projectName: cleanName,
+          towerName: "Wing A",
+          subProjectCode: `${cleanCode}-WA`,
+          towerType: "Sale",
+          taggedCategories: pkgs,
+          taggedPackages: pkgs,
+          taggedConsultants: conns,
+          createdAt: new Date().toISOString()
+        });
+
+        added++;
+      }
+    });
+
+    if (added > 0 || updated > 0) {
+      this.notify();
+    }
+    return { added, updated, skipped };
+  }
+
+  public static bulkImportSubProjects(
+    subProjects: Array<{
+      parentProjectNameOrId: string;
+      towerName: string;
+      subProjectCode?: string;
+      towerType?: TowerMaster["towerType"];
+      totalFloors?: number;
+      heightMeters?: number;
+      targetCompletionDate?: string;
+      taggedPackages?: string[];
+      taggedConsultants?: string[];
+      description?: string;
+    }>,
+    duplicateStrategy: "SKIP" | "OVERWRITE" = "SKIP"
+  ): { added: number; updated: number; skipped: number } {
+    const state = this.getState();
+    let added = 0;
+    let updated = 0;
+    let skipped = 0;
+
+    subProjects.forEach(sp => {
+      const parentQuery = (sp.parentProjectNameOrId || "").trim().toLowerCase();
+      const towerName = (sp.towerName || "").trim();
+      if (!parentQuery || !towerName) return;
+
+      const parent = state.projects.find(
+        p => p.name.toLowerCase() === parentQuery || p.code.toLowerCase() === parentQuery || p.id.toLowerCase() === parentQuery
+      );
+      if (!parent) return;
+
+      const existingIdx = (state.towers || []).findIndex(
+        t => t.projectId === parent.id && t.towerName.toLowerCase() === towerName.toLowerCase()
+      );
+
+      const pkgs = sp.taggedPackages && sp.taggedPackages.length > 0
+        ? sp.taggedPackages
+        : (parent.taggedPackages || parent.taggedCategories || []);
+      const conns = sp.taggedConsultants && sp.taggedConsultants.length > 0
+        ? sp.taggedConsultants
+        : (parent.taggedConsultants || []);
+
+      if (existingIdx !== -1) {
+        if (duplicateStrategy === "OVERWRITE") {
+          const old = state.towers[existingIdx];
+          state.towers[existingIdx] = {
+            ...old,
+            towerName,
+            subProjectCode: sp.subProjectCode || old.subProjectCode,
+            towerType: sp.towerType || old.towerType,
+            totalFloors: sp.totalFloors !== undefined ? sp.totalFloors : old.totalFloors,
+            heightMeters: sp.heightMeters !== undefined ? sp.heightMeters : old.heightMeters,
+            targetCompletionDate: sp.targetCompletionDate || old.targetCompletionDate,
+            taggedCategories: pkgs,
+            taggedPackages: pkgs,
+            taggedConsultants: conns,
+            description: sp.description !== undefined ? sp.description : old.description
+          };
+          updated++;
+        } else {
+          skipped++;
+        }
+      } else {
+        const newTwr: TowerMaster = {
+          id: `twr-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+          projectId: parent.id,
+          projectName: parent.name,
+          towerName,
+          subProjectCode: sp.subProjectCode || `${parent.code}-${towerName.slice(0, 3).toUpperCase()}`,
+          towerType: sp.towerType || "Sale",
+          totalFloors: sp.totalFloors,
+          heightMeters: sp.heightMeters,
+          targetCompletionDate: sp.targetCompletionDate,
+          taggedCategories: pkgs,
+          taggedPackages: pkgs,
+          taggedConsultants: conns,
+          description: sp.description,
+          createdAt: new Date().toISOString()
+        };
+        state.towers.push(newTwr);
+        added++;
+      }
+    });
+
+    if (added > 0 || updated > 0) {
+      this.notify();
+    }
+    return { added, updated, skipped };
+  }
+
+  public static bulkImportConsultants(
+    consultants: Array<{
+      name: string;
+      leadContact: string;
+      email: string;
+      phone?: string;
+      categories?: string[];
+      rating?: number;
+      averageTatDays?: number;
+      onboardingStatus?: "Onboard" | "Not Onboard";
+    }>,
+    duplicateStrategy: "SKIP" | "OVERWRITE" = "SKIP"
+  ): { added: number; updated: number; skipped: number } {
+    const state = this.getState();
+    let added = 0;
+    let updated = 0;
+    let skipped = 0;
+
+    consultants.forEach(c => {
+      const cleanName = (c.name || "").trim();
+      const cleanEmail = (c.email || "").trim().toLowerCase();
+      if (!cleanName || !cleanEmail) return;
+
+      const existingIdx = (state.consultants || []).findIndex(
+        ec => ec.name.toLowerCase() === cleanName.toLowerCase() || ec.email.toLowerCase() === cleanEmail
+      );
+
+      const cats = c.categories || ["Architectural Design"];
+
+      if (existingIdx !== -1) {
+        if (duplicateStrategy === "OVERWRITE") {
+          const old = state.consultants[existingIdx];
+          state.consultants[existingIdx] = {
+            ...old,
+            name: cleanName,
+            leadContact: c.leadContact || old.leadContact,
+            email: cleanEmail,
+            phone: c.phone || old.phone,
+            category: cats[0] || old.category,
+            categories: cats,
+            rating: c.rating !== undefined ? c.rating : old.rating,
+            averageTatDays: c.averageTatDays !== undefined ? c.averageTatDays : old.averageTatDays,
+            onboardingStatus: c.onboardingStatus || old.onboardingStatus
+          };
+          updated++;
+        } else {
+          skipped++;
+        }
+      } else {
+        const newCons: ConsultantPartner = {
+          id: `cons-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+          name: cleanName,
+          leadContact: c.leadContact,
+          email: cleanEmail,
+          phone: c.phone || "",
+          totalDrawingsSubmitted: 0,
+          category: cats[0] || "Architectural Design",
+          categories: cats,
+          expertise: cats,
+          activeProjects: [],
+          onboardingStatus: c.onboardingStatus || "Onboard",
+          rating: c.rating || 4.8,
+          averageTatDays: c.averageTatDays || 3.0
+        };
+        state.consultants.push(newCons);
+        added++;
+      }
+    });
+
+    if (added > 0 || updated > 0) {
+      this.notify();
+    }
+    return { added, updated, skipped };
+  }
+
+
+  // ============================================================================
   // Transaction Fill: Package Status & Mandatory Planned/Actual Dates & Audit Trail
   // ============================================================================
 

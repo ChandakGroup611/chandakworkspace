@@ -8,7 +8,8 @@ import {
 } from "../../services/designMasterStore";
 import { ProjectMaster, EntityDependencyReport, TowerMaster } from "../../types/masterTypes";
 import { 
-  Building2, 
+  Building2,
+  Upload, 
   Plus, 
   Search, 
   Edit2, 
@@ -28,6 +29,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { DeleteDependencyModal } from "../DeleteDependencyModal";
+import { MasterBulkImportModal } from "./MasterBulkImportModal";
 import { TransactionFormLayout } from "../DesignTransactionLayout";
 
 interface ProjectMasterViewProps {
@@ -74,6 +76,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<ProjectMaster | null>(null);
 
   // Form states
@@ -359,14 +362,24 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={handleOpenAdd}
-          className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          <span>Add Project</span>
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => setIsImportModalOpen(true)}
+            className="px-3.5 py-1.5 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-bold inline-flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all shrink-0 whitespace-nowrap"
+          >
+            <Upload className="h-3.5 w-3.5 text-emerald-600" />
+            <span>Import Projects</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleOpenAdd}
+            className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            <span>Add Project</span>
+          </button>
+        </div>
       </div>
 
       {/* Metrics Row */}
@@ -1160,6 +1173,12 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
         }}
         report={deleteReport}
         onConfirmDelete={handleConfirmDelete}
+      />
+
+      <MasterBulkImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        initialMasterType="PROJECTS"
       />
     </div>
   );

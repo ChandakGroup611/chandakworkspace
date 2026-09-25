@@ -8,7 +8,8 @@ import {
 } from "../../services/designMasterStore";
 import { TowerMaster, ProjectMaster, EntityDependencyReport, SubProjectMaster } from "../../types/masterTypes";
 import { 
-  Layers, 
+  Layers,
+  Upload, 
   Building2, 
   Plus, 
   Search, 
@@ -27,6 +28,7 @@ import {
   RotateCcw
 } from "lucide-react";
 import { DeleteDependencyModal } from "../DeleteDependencyModal";
+import { MasterBulkImportModal } from "./MasterBulkImportModal";
 import { TransactionFormLayout } from "../DesignTransactionLayout";
 
 interface SubProjectMasterViewProps {
@@ -62,6 +64,7 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [editingSubProject, setEditingSubProject] = useState<SubProjectMaster | null>(null);
 
   // Form states
@@ -341,14 +344,24 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => handleOpenAdd()}
-          className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          <span>Add Sub-Project / Wing</span>
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => setIsImportModalOpen(true)}
+            className="px-3.5 py-1.5 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-bold inline-flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all shrink-0 whitespace-nowrap"
+          >
+            <Upload className="h-3.5 w-3.5 text-purple-600" />
+            <span>Import Sub-Projects</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleOpenAdd()}
+            className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            <span>Add Sub-Project / Wing</span>
+          </button>
+        </div>
       </div>
 
       {/* Filter Toolbar */}
@@ -1016,6 +1029,12 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
         }}
         report={deleteReport}
         onConfirmDelete={handleConfirmDelete}
+      />
+
+      <MasterBulkImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        initialMasterType="SUB_PROJECTS"
       />
     </div>
   );

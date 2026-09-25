@@ -37,6 +37,8 @@ import { ProjectMasterView } from "./masters/ProjectMasterView";
 import { SubProjectMasterView } from "./masters/SubProjectMasterView";
 import { ConsultantMasterView } from "./masters/ConsultantMasterView";
 import { CategoryMasterView } from "./masters/CategoryMasterView";
+import { MasterBulkImportModal } from "./masters/MasterBulkImportModal";
+import { MasterImportType } from "../services/masterImportExportService";
 import { DesignRbacGovernance } from "./DesignRbacGovernance";
 import { DeleteDependencyModal } from "./DeleteDependencyModal";
 import { TransactionFormLayout } from "./DesignTransactionLayout";
@@ -69,6 +71,8 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
 
   // Foreign Key Dependency Delete Modal State
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
+  const [bulkImportTarget, setBulkImportTarget] = useState<MasterImportType>("ALL");
   const [deleteModalReport, setDeleteModalReport] = useState<EntityDependencyReport | null>(null);
   const [activeDeleteExecutor, setActiveDeleteExecutor] = useState<((reason: string) => void) | null>(null);
 
@@ -260,14 +264,27 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                 <h4 className="text-sm font-bold text-foreground">Sub-Package Deliverables Master</h4>
                 <p className="text-xs text-muted-foreground">Manage granular engineering deliverable packages linked under parent Packages</p>
               </div>
-              <button
-                type="button"
-                onClick={handleOpenAddPackage}
-                className="px-3.5 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                <span>Add Sub Package</span>
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBulkImportTarget("SUB_PACKAGES");
+                    setIsBulkImportOpen(true);
+                  }}
+                  className="px-3.5 py-1.5 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-bold inline-flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all shrink-0 whitespace-nowrap"
+                >
+                  <Upload className="h-3.5 w-3.5 text-teal-600" />
+                  <span>Import Sub-Packages</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleOpenAddPackage}
+                  className="px-3.5 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>Add Sub Package</span>
+                </button>
+              </div>
             </div>
 
             {/* Filter & Search Bar */}
@@ -437,6 +454,17 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
             
             <div className="flex flex-wrap gap-2 pt-2">
               <button
+                type="button"
+                onClick={() => {
+                  setBulkImportTarget("ALL");
+                  setIsBulkImportOpen(true);
+                }}
+                className="px-3.5 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-sm cursor-pointer transition-all"
+              >
+                <Upload className="h-3.5 w-3.5" />
+                <span>Bulk Import & Template Center</span>
+              </button>
+                            <button
                 type="button"
                 onClick={() => {
                   const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(DesignMasterStore.exportToJson());
@@ -699,6 +727,12 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
         }}
         report={deleteModalReport}
         onConfirmDelete={handleExecuteDelete}
+      />
+
+      <MasterBulkImportModal
+        isOpen={isBulkImportOpen}
+        onClose={() => setIsBulkImportOpen(false)}
+        initialMasterType={bulkImportTarget}
       />
     </div>
   );

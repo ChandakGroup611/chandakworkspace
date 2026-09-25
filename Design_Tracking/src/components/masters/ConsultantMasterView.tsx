@@ -8,7 +8,8 @@ import {
 import { ConsultantPartner } from "../../types";
 import { CategoryMaster, EntityDependencyReport } from "../../types/masterTypes";
 import { 
-  Users, 
+  Users,
+  Upload, 
   Plus, 
   Search, 
   Edit2, 
@@ -26,6 +27,7 @@ import {
   ShieldCheck
 } from "lucide-react";
 import { DeleteDependencyModal } from "../DeleteDependencyModal";
+import { MasterBulkImportModal } from "./MasterBulkImportModal";
 import { TransactionFormLayout } from "../DesignTransactionLayout";
 
 
@@ -92,6 +94,7 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
   // Modal states
       // Delete modal states
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [deleteReport, setDeleteReport] = useState<EntityDependencyReport | null>(null);
   const [consultantToDeleteId, setConsultantToDeleteId] = useState<string | null>(null);
 
@@ -491,6 +494,14 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
             <div className="flex items-center gap-2 shrink-0">
               <button
                 type="button"
+                onClick={() => setIsImportModalOpen(true)}
+                className="px-3.5 py-1.5 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-bold inline-flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all shrink-0 whitespace-nowrap"
+              >
+                <Upload className="h-3.5 w-3.5 text-purple-600" />
+                <span>Import Consultants</span>
+              </button>
+              <button
+                type="button"
                 onClick={handleOpenAdd}
                 className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
               >
@@ -776,6 +787,12 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
             }}
             report={deleteReport}
             onConfirmDelete={handleConfirmDelete}
+          />
+
+          <MasterBulkImportModal
+            isOpen={isImportModalOpen}
+            onClose={() => setIsImportModalOpen(false)}
+            initialMasterType="CONSULTANTS"
           />
         </div>
       )}
