@@ -62,7 +62,10 @@ import {
   fetchFleetWorkspaceUsersAction, 
   saveFleetUserAccessAction, 
   deleteFleetUserAccessAction,
-  toggleUserFleetModuleAccessAction
+  toggleUserFleetModuleAccessAction,
+  fetchFleetRbacPoliciesAction,
+  saveSingleFleetRbacPolicyAction,
+  saveFleetRbacPoliciesAction
 } from "@/lib/actions/vehicleRbac";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
@@ -194,21 +197,30 @@ export default function FleetRbacGovernance() {
     return () => unsubscribe();
   }, []);
 
-  // Fetch workspace users
+  // Fetch workspace users & policies
   const loadWorkspaceUsers = async () => {
     setIsLoading(true);
     try {
-      const res = await fetchFleetWorkspaceUsersAction();
-      if (res.success && res.users) {
-        setWorkspaceUsers(res.users);
-        res.users.forEach(u => {
+      const [usersRes, policiesRes] = await Promise.all([
+        fetchFleetWorkspaceUsersAction(),
+        fetchFleetRbacPoliciesAction()
+      ]);
+
+      if (usersRes.success && usersRes.users) {
+        setWorkspaceUsers(usersRes.users);
+        usersRes.users.forEach(u => {
           if (u.fleetAccess) {
             FleetMasterStore.saveUserAccess(u.fleetAccess);
           }
         });
       }
+
+      if (policiesRes.success && policiesRes.policies) {
+        setPolicyRecords(policiesRes.policies);
+        FleetMasterStore.saveRbacPolicies(policiesRes.policies);
+      }
     } catch (err: any) {
-      console.warn("Could not fetch fleet personnel:", err);
+      console.warn("Could not fetch fleet personnel or policies:", err);
     } finally {
       setIsLoading(false);
     }
@@ -390,21 +402,22 @@ export default function FleetRbacGovernance() {
     );
 
     let updatedPolicies: FleetRbacPolicy[];
+    let targetPolicy: FleetRbacPolicy;
 
     if (existingIdx >= 0) {
       const existing = currentPolicies[existingIdx];
-      const updatedPolicy: FleetRbacPolicy = {
+      targetPolicy = {
         ...existing,
         [field]: !existing[field]
       };
       updatedPolicies = [
         ...currentPolicies.slice(0, existingIdx),
-        updatedPolicy,
+        targetPolicy,
         ...currentPolicies.slice(existingIdx + 1)
       ];
     } else {
       const defaultPolicy = DEFAULT_MODULE_PERMS[moduleCode];
-      const newPolicy: FleetRbacPolicy = {
+      targetPolicy = {
         id: `pol-${selectedRoleDef.code.toLowerCase()}-${moduleCode.toLowerCase()}`,
         roleCode: selectedRoleDef.code,
         module: moduleCode,
@@ -417,12 +430,17 @@ export default function FleetRbacGovernance() {
         movementAccessScope: selectedRoleDef.movementAccessScope || "ALL",
         [field]: !defaultPolicy[field]
       };
-      updatedPolicies = [...currentPolicies, newPolicy];
+      updatedPolicies = [...currentPolicies, targetPolicy];
     }
 
     // Immediately update reactive state & local storage (zero refresh / zero relogin needed)
     setPolicyRecords(updatedPolicies);
     FleetMasterStore.saveRbacPolicies(updatedPolicies);
+
+    // Asynchronously save to PostgreSQL in background
+    saveSingleFleetRbacPolicyAction(targetPolicy).catch(err => {
+      console.error("Failed to save fleet policy to database:", err);
+    });
 
     if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent("fleet-rbac-policy-updated", {
@@ -442,21 +460,22 @@ export default function FleetRbacGovernance() {
     );
 
     let updatedPolicies: FleetRbacPolicy[];
+    let targetPolicy: FleetRbacPolicy;
 
     if (existingIdx >= 0) {
       const existing = currentPolicies[existingIdx];
-      const updatedPolicy: FleetRbacPolicy = {
+      targetPolicy = {
         ...existing,
         movementAccessScope: scope
       };
       updatedPolicies = [
         ...currentPolicies.slice(0, existingIdx),
-        updatedPolicy,
+        targetPolicy,
         ...currentPolicies.slice(existingIdx + 1)
       ];
     } else {
       const defaultPolicy = DEFAULT_MODULE_PERMS[moduleCode];
-      const newPolicy: FleetRbacPolicy = {
+      targetPolicy = {
         id: `pol-${selectedRoleDef.code.toLowerCase()}-${moduleCode.toLowerCase()}`,
         roleCode: selectedRoleDef.code,
         module: moduleCode,
@@ -468,11 +487,16 @@ export default function FleetRbacGovernance() {
         canExport: defaultPolicy.canExport,
         movementAccessScope: scope
       };
-      updatedPolicies = [...currentPolicies, newPolicy];
+      updatedPolicies = [...currentPolicies, targetPolicy];
     }
 
     setPolicyRecords(updatedPolicies);
     FleetMasterStore.saveRbacPolicies(updatedPolicies);
+
+    // Asynchronously save to PostgreSQL in background
+    saveSingleFleetRbacPolicyAction(targetPolicy).catch(err => {
+      console.error("Failed to save movement scope to database:", err);
+    });
 
     if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent("fleet-rbac-policy-updated", {
@@ -521,9 +545,13 @@ export default function FleetRbacGovernance() {
 
     setPolicyRecords(updated);
     FleetMasterStore.saveRbacPolicies(updated);
+    saveFleetRbacPoliciesAction(updated).catch(err => {
+      console.error("Failed to persist bulk permissions to database:", err);
+    });
+
     setFeedbackMessage({
       type: "success",
-      text: `Granted Full CRUD permissions to ${selectedRoleDef.label}. Applied in real-time!`
+      text: `Granted Full CRUD permissions to ${selectedRoleDef.label}. Saved & applied!`
     });
     toast.success(`Granted Full CRUD permissions to ${selectedRoleDef.label}.`);
     setTimeout(() => setFeedbackMessage(null), 3000);
@@ -567,9 +595,13 @@ export default function FleetRbacGovernance() {
 
     setPolicyRecords(updated);
     FleetMasterStore.saveRbacPolicies(updated);
+    saveFleetRbacPoliciesAction(updated).catch(err => {
+      console.error("Failed to persist read-only permissions to database:", err);
+    });
+
     setFeedbackMessage({
       type: "success",
-      text: `Set ${selectedRoleDef.label} permissions to Read-Only. Applied in real-time!`
+      text: `Set ${selectedRoleDef.label} permissions to Read-Only. Saved & applied!`
     });
     toast.success(`Set ${selectedRoleDef.label} permissions to Read-Only.`);
     setTimeout(() => setFeedbackMessage(null), 3000);
@@ -582,9 +614,13 @@ export default function FleetRbacGovernance() {
 
     setPolicyRecords(updated);
     FleetMasterStore.saveRbacPolicies(updated);
+    saveFleetRbacPoliciesAction(updated).catch(err => {
+      console.error("Failed to persist default policies to database:", err);
+    });
+
     setFeedbackMessage({
       type: "success",
-      text: `Reset ${selectedRoleDef.label} to default system matrix template. Applied in real-time!`
+      text: `Reset ${selectedRoleDef.label} to default system matrix template. Saved & applied!`
     });
     toast.success(`Reset ${selectedRoleDef.label} to default system matrix.`);
     setTimeout(() => setFeedbackMessage(null), 3000);

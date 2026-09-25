@@ -56,7 +56,9 @@ import {
   saveDesignUserAccessAction, 
   deleteDesignUserAccessAction,
   toggleUserDesignModuleAccessAction,
-  saveRbacPoliciesAction
+  saveRbacPoliciesAction,
+  fetchRbacPoliciesAction,
+  saveSingleDesignRbacPolicyAction
 } from "@/lib/actions/designTracking";
 import { TransactionFormLayout } from "./DesignTransactionLayout";
 
@@ -192,14 +194,18 @@ export const DesignRbacGovernance: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
-  // Fetch workspace users
+  // Fetch workspace users & RBAC policies
   const loadWorkspaceUsers = async () => {
     setIsLoading(true);
     try {
-      const res = await fetchDesignWorkspaceUsersAction();
-      if (res.success && res.users) {
-        setWorkspaceUsers(res.users);
-        const accessRecords = res.users
+      const [usersRes, policiesRes] = await Promise.all([
+        fetchDesignWorkspaceUsersAction(),
+        fetchRbacPoliciesAction()
+      ]);
+
+      if (usersRes.success && usersRes.users) {
+        setWorkspaceUsers(usersRes.users);
+        const accessRecords = usersRes.users
           .filter(u => !!u.designAccess)
           .map(u => u.designAccess!);
         if (accessRecords.length > 0) {
@@ -217,8 +223,13 @@ export const DesignRbacGovernance: React.FC = () => {
         }));
         setWorkspaceUsers(fallbackUsers);
       }
+
+      if (policiesRes.success && policiesRes.policies) {
+        setPolicyRecords(policiesRes.policies);
+        DesignMasterStore.bulkSaveRbacPolicies(policiesRes.policies);
+      }
     } catch (err: any) {
-      console.warn("Could not fetch workspace users:", err);
+      console.warn("Could not fetch workspace users or policies:", err);
     } finally {
       setIsLoading(false);
     }
@@ -696,6 +707,11 @@ export const DesignRbacGovernance: React.FC = () => {
     };
     DesignMasterStore.saveRbacPolicy(updated);
     setPolicyRecords(DesignMasterStore.getRbacPolicies());
+
+    // Instantly commit single toggle to Supabase Postgres in background
+    saveSingleDesignRbacPolicyAction(updated).catch(err => {
+      console.error("Failed to save design policy toggle to database:", err);
+    });
   };
 
   const handlePolicyTicketScopeChange = (moduleCode: DesignRbacPolicy["module"], newScope: DesignTicketAccessScope) => {
@@ -713,6 +729,11 @@ export const DesignRbacGovernance: React.FC = () => {
     };
     DesignMasterStore.saveRbacPolicy(updated);
     setPolicyRecords(DesignMasterStore.getRbacPolicies());
+
+    // Instantly commit single scope change to Supabase Postgres in background
+    saveSingleDesignRbacPolicyAction(updated).catch(err => {
+      console.error("Failed to save design policy scope to database:", err);
+    });
   };
 
   const handleSaveAllPolicies = async () => {

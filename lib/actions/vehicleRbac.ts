@@ -7,6 +7,7 @@ import {
   FleetUserAccessRecord, 
   FleetRbacPolicy 
 } from "@/types/vehicleRbacTypes";
+import { DEFAULT_FLEET_POLICIES } from "@/components/vehicle/services/fleetMasterStore";
 
 async function verifyAdminOrFleetLead() {
   const { user } = await getCachedUser();
@@ -315,3 +316,150 @@ export async function fetchMyFleetAccessAction(): Promise<{
     return { success: false, error: err.message || "Failed to fetch user fleet access" };
   }
 }
+
+/**
+ * Fetch all Fleet RBAC Policies from Supabase Postgres
+ */
+export async function fetchFleetRbacPoliciesAction(): Promise<{
+  success: boolean;
+  policies?: FleetRbacPolicy[];
+  error?: string;
+}> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("fleet_rbac_policies")
+      .select("*")
+      .order("module", { ascending: true });
+
+    if (error) {
+      console.error("fetchFleetRbacPoliciesAction error:", error);
+      return { success: false, error: error.message };
+    }
+
+    if (data && data.length > 0) {
+      const mapped: FleetRbacPolicy[] = data.map((row: any) => ({
+        id: row.id,
+        roleCode: row.role_code,
+        module: row.module,
+        canCreate: !!row.can_create,
+        canRead: !!row.can_read,
+        canUpdate: !!row.can_update,
+        canDelete: !!row.can_delete,
+        canApprove: !!row.can_approve,
+        canExport: !!row.can_export,
+        movementAccessScope: row.movement_access_scope || "ALL"
+      }));
+      return { success: true, policies: mapped };
+    }
+
+    // Seed defaults if empty
+    const defaultRows = DEFAULT_FLEET_POLICIES.map(p => ({
+      id: p.id,
+      role_code: p.roleCode,
+      module: p.module,
+      can_create: !!p.canCreate,
+      can_read: !!p.canRead,
+      can_update: !!p.canUpdate,
+      can_delete: !!p.canDelete,
+      can_approve: !!p.canApprove,
+      can_export: !!p.canExport,
+      movement_access_scope: p.movementAccessScope || "ALL",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }));
+
+    await supabaseAdmin
+      .from("fleet_rbac_policies")
+      .upsert(defaultRows, { onConflict: "role_code,module" });
+
+    return { success: true, policies: DEFAULT_FLEET_POLICIES };
+  } catch (err: any) {
+    console.error("fetchFleetRbacPoliciesAction error:", err);
+    return { success: false, error: err.message || "Failed to fetch fleet policies" };
+  }
+}
+
+/**
+ * Atomic save / update for a single Fleet RBAC Policy
+ */
+export async function saveSingleFleetRbacPolicyAction(policy: FleetRbacPolicy): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    await verifyAdminOrFleetLead();
+
+    const row = {
+      id: policy.id || `pol-${policy.roleCode.toLowerCase()}-${policy.module.toLowerCase()}`,
+      role_code: policy.roleCode,
+      module: policy.module,
+      can_create: !!policy.canCreate,
+      can_read: !!policy.canRead,
+      can_update: !!policy.canUpdate,
+      can_delete: !!policy.canDelete,
+      can_approve: !!policy.canApprove,
+      can_export: !!policy.canExport,
+      movement_access_scope: policy.movementAccessScope || "ALL",
+      updated_at: new Date().toISOString()
+    };
+
+    const { error } = await supabaseAdmin
+      .from("fleet_rbac_policies")
+      .upsert(row, { onConflict: "role_code,module" });
+
+    if (error) {
+      console.error("saveSingleFleetRbacPolicyAction error:", error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    console.error("saveSingleFleetRbacPolicyAction error:", err);
+    return { success: false, error: err.message || "Failed to save fleet policy" };
+  }
+}
+
+/**
+ * Bulk save / update Fleet RBAC Policies
+ */
+export async function saveFleetRbacPoliciesAction(policies: FleetRbacPolicy[]): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    await verifyAdminOrFleetLead();
+
+    if (!policies || policies.length === 0) {
+      return { success: true };
+    }
+
+    const rows = policies.map(p => ({
+      id: p.id || `pol-${p.roleCode.toLowerCase()}-${p.module.toLowerCase()}`,
+      role_code: p.roleCode,
+      module: p.module,
+      can_create: !!p.canCreate,
+      can_read: !!p.canRead,
+      can_update: !!p.canUpdate,
+      can_delete: !!p.canDelete,
+      can_approve: !!p.canApprove,
+      can_export: !!p.canExport,
+      movement_access_scope: p.movementAccessScope || "ALL",
+      updated_at: new Date().toISOString()
+    }));
+
+    const { error } = await supabaseAdmin
+      .from("fleet_rbac_policies")
+      .upsert(rows, { onConflict: "role_code,module" });
+
+    if (error) {
+      console.error("saveFleetRbacPoliciesAction error:", error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    console.error("saveFleetRbacPoliciesAction error:", err);
+    return { success: false, error: err.message || "Failed to save fleet policies" };
+  }
+}
+

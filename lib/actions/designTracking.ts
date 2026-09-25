@@ -26,6 +26,7 @@ import {
   RfiItem,
   ConsultantPartner
 } from "@/Design_Tracking/src/types";
+import { DesignMasterStore } from "@/Design_Tracking/src/services/designMasterStore";
 
 // ==============================================================================
 // Design Tracking Server Actions (Supabase Postgres Database Sync)
@@ -219,18 +220,128 @@ export async function recordMatrixAuditAction(auditLog: MatrixAuditLog) {
 }
 
 /**
+ * Fetch all Design RBAC Policies from Supabase Postgres
+ */
+export async function fetchRbacPoliciesAction(): Promise<{
+  success: boolean;
+  policies?: DesignRbacPolicy[];
+  error?: string;
+}> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("design_rbac_policies")
+      .select("*")
+      .order("module", { ascending: true });
+
+    if (error) {
+      console.error("fetchRbacPoliciesAction error:", error);
+      return { success: false, error: error.message };
+    }
+
+    if (data && data.length > 0) {
+      const mapped: DesignRbacPolicy[] = data.map((row: any) => ({
+        id: row.id,
+        roleCode: row.role_code,
+        roleName: row.role_name || row.role_code,
+        projectId: row.project_id || "ALL",
+        projectName: row.project_name || "All Development Projects",
+        module: row.module,
+        canCreate: !!row.can_create,
+        canRead: !!row.can_read,
+        canUpdate: !!row.can_update,
+        canDelete: !!row.can_delete,
+        canApprove: !!row.can_approve,
+        canExport: !!row.can_export,
+        ticketAccessScope: row.ticket_access_scope || "ALL",
+        updatedAt: row.updated_at
+      }));
+      return { success: true, policies: mapped };
+    }
+
+    // Seed defaults if empty
+    const defaultPolicies = DesignMasterStore.buildDefaultRbacPolicies();
+    const defaultRows = defaultPolicies.map(p => ({
+      id: p.id,
+      role_code: p.roleCode,
+      role_name: p.roleName,
+      project_id: p.projectId || "ALL",
+      project_name: p.projectName || "All Development Projects",
+      module: p.module,
+      can_create: !!p.canCreate,
+      can_read: !!p.canRead,
+      can_update: !!p.canUpdate,
+      can_delete: !!p.canDelete,
+      can_approve: !!p.canApprove,
+      can_export: !!p.canExport,
+      ticket_access_scope: p.ticketAccessScope || "ALL",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }));
+
+    await supabaseAdmin
+      .from("design_rbac_policies")
+      .upsert(defaultRows, { onConflict: "role_code,project_id,module" });
+
+    return { success: true, policies: defaultPolicies };
+  } catch (err: any) {
+    console.error("fetchRbacPoliciesAction error:", err);
+    return { success: false, error: err?.message || "Failed to fetch design RBAC policies" };
+  }
+}
+
+/**
+ * Atomic save / update for a single Design RBAC Policy
+ */
+export async function saveSingleDesignRbacPolicyAction(policy: DesignRbacPolicy): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    const row = {
+      id: policy.id || `rbac-${policy.roleCode.toLowerCase()}-${(policy.projectId || "all").toLowerCase()}-${policy.module.toLowerCase()}`,
+      role_code: policy.roleCode,
+      role_name: policy.roleName || policy.roleCode,
+      project_id: policy.projectId || "ALL",
+      project_name: policy.projectName || "All Development Projects",
+      module: policy.module,
+      can_create: !!policy.canCreate,
+      can_read: !!policy.canRead,
+      can_update: !!policy.canUpdate,
+      can_delete: !!policy.canDelete,
+      can_approve: !!policy.canApprove,
+      can_export: !!policy.canExport,
+      ticket_access_scope: policy.ticketAccessScope || "ALL",
+      updated_at: new Date().toISOString()
+    };
+
+    const { error } = await supabaseAdmin
+      .from("design_rbac_policies")
+      .upsert(row, { onConflict: "role_code,project_id,module" });
+
+    if (error) {
+      console.error("saveSingleDesignRbacPolicyAction error:", error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    console.error("saveSingleDesignRbacPolicyAction error:", err);
+    return { success: false, error: err?.message || "Failed to save design RBAC policy" };
+  }
+}
+
+/**
  * Save or bulk update Design RBAC Policies in Supabase Postgres
  */
 export async function saveRbacPoliciesAction(policies: DesignRbacPolicy[]): Promise<{ success: boolean; error?: string }> {
   try {
-    const supabase = await getSupabase();
     if (policies && policies.length > 0) {
       const rows = policies.map(p => ({
-        id: p.id,
+        id: p.id || `rbac-${p.roleCode.toLowerCase()}-${(p.projectId || "all").toLowerCase()}-${p.module.toLowerCase()}`,
         role_code: p.roleCode,
-        role_name: p.roleName,
-        project_id: p.projectId,
-        project_name: p.projectName,
+        role_name: p.roleName || p.roleCode,
+        project_id: p.projectId || "ALL",
+        project_name: p.projectName || "All Development Projects",
         module: p.module,
         can_create: !!p.canCreate,
         can_read: !!p.canRead,
@@ -242,19 +353,19 @@ export async function saveRbacPoliciesAction(policies: DesignRbacPolicy[]): Prom
         updated_at: p.updatedAt || new Date().toISOString()
       }));
 
-      try {
-        const { error } = await supabase.from("design_rbac_policies").upsert(rows, { onConflict: "id" });
-        if (error) {
-          await supabaseAdmin.from("design_rbac_policies").upsert(rows, { onConflict: "id" });
-        }
-      } catch (dbErr: any) {
-        console.warn("design_rbac_policies DB table upsert note:", dbErr?.message);
+      const { error } = await supabaseAdmin
+        .from("design_rbac_policies")
+        .upsert(rows, { onConflict: "role_code,project_id,module" });
+
+      if (error) {
+        console.error("saveRbacPoliciesAction upsert error:", error);
+        return { success: false, error: error.message };
       }
     }
     return { success: true };
   } catch (err: any) {
-    console.warn("saveRbacPoliciesAction note (handled):", err?.message);
-    return { success: true };
+    console.error("saveRbacPoliciesAction error:", err);
+    return { success: false, error: err?.message || "Failed to save design policies" };
   }
 }
 

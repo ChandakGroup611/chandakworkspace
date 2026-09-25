@@ -48,7 +48,7 @@ import { DataEntryFormsModal } from "../../Design_Tracking/src/components/DataEn
 import { DesignMasterStore } from "../../Design_Tracking/src/services/designMasterStore";
 import { DrawingItem, DrawingStatus, ConsultantPartner, GfcRelease } from "../../Design_Tracking/src/types";
 
-import { fetchDesignWorkspaceUsersAction } from "@/lib/actions/designTracking";
+import { fetchDesignWorkspaceUsersAction, fetchRbacPoliciesAction } from "@/lib/actions/designTracking";
 
 interface DesignTrackingHostProps {
   initialSlug?: string[];
@@ -101,7 +101,7 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
     }
   }, [currentUser]);
 
-  // Hydrate user access list from database in background (with 5-minute TTL cache)
+  // Hydrate user access list & policies from database in background (with 5-minute TTL cache)
   useEffect(() => {
     const hydrateAccess = async () => {
       const now = Date.now();
@@ -109,18 +109,24 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
         return;
       }
       try {
-        const res = await fetchDesignWorkspaceUsersAction();
-        if (res.success && res.users) {
+        const [usersRes, policiesRes] = await Promise.all([
+          fetchDesignWorkspaceUsersAction(),
+          fetchRbacPoliciesAction()
+        ]);
+        if (usersRes.success && usersRes.users) {
           lastDesignAccessHydratedTimestamp = Date.now();
-          const accessRecords = res.users
+          const accessRecords = usersRes.users
             .filter(u => !!u.designAccess)
             .map(u => u.designAccess!);
           if (accessRecords.length > 0) {
             DesignMasterStore.saveBulkUserAccess(accessRecords);
           }
         }
+        if (policiesRes.success && policiesRes.policies) {
+          DesignMasterStore.bulkSaveRbacPolicies(policiesRes.policies);
+        }
       } catch (err) {
-        console.warn("Could not background hydrate design access:", err);
+        console.warn("Could not background hydrate design access/policies:", err);
       }
     };
     hydrateAccess();

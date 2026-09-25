@@ -4,7 +4,11 @@ import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { DesignRbacPolicy } from "../types/masterTypes";
 import { DesignMasterStore } from "../services/designMasterStore";
-import { saveRbacPoliciesAction } from "@/lib/actions/designTracking";
+import { 
+  saveRbacPoliciesAction, 
+  fetchRbacPoliciesAction, 
+  saveSingleDesignRbacPolicyAction 
+} from "@/lib/actions/designTracking";
 import { 
   ShieldCheck, 
   X, 
@@ -65,6 +69,13 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
 
   useEffect(() => {
     setMounted(true);
+    fetchRbacPoliciesAction().then(res => {
+      if (res.success && res.policies) {
+        setPolicies(res.policies);
+        DesignMasterStore.bulkSaveRbacPolicies(res.policies);
+      }
+    }).catch(err => console.warn("Failed to load design policies:", err));
+
     const unsub = DesignMasterStore.subscribe(() => {
       const s = DesignMasterStore.getState();
       setStoreState(s);
@@ -113,91 +124,87 @@ export const DesignRbacModal: React.FC<DesignRbacModalProps> = ({
     moduleCode: DesignRbacPolicy["module"],
     action: "canCreate" | "canRead" | "canUpdate" | "canDelete"
   ) => {
-    setPolicies(prev => {
-      const existingIdx = prev.findIndex(p => 
-        p.roleCode === selectedRole && 
-        p.projectId === selectedProject && 
-        p.module === moduleCode
-      );
+    const targetPolicy = getPolicyForModule(moduleCode);
+    const updatedPolicy: DesignRbacPolicy = {
+      ...targetPolicy,
+      projectId: selectedProject,
+      projectName: selectedProject === "ALL" ? "All Development Projects" : (storeState.projects.find(p => p.id === selectedProject)?.name || selectedProject),
+      [action]: !targetPolicy[action],
+      updatedAt: new Date().toISOString()
+    };
 
-      const targetPolicy = getPolicyForModule(moduleCode);
-      const updatedPolicy: DesignRbacPolicy = {
-        ...targetPolicy,
-        projectId: selectedProject,
-        projectName: selectedProject === "ALL" ? "All Development Projects" : (storeState.projects.find(p => p.id === selectedProject)?.name || selectedProject),
-        [action]: !targetPolicy[action],
-        updatedAt: new Date().toISOString()
-      };
+    DesignMasterStore.saveRbacPolicy(updatedPolicy);
+    saveSingleDesignRbacPolicyAction(updatedPolicy).catch(e => console.error("Auto-save policy error:", e));
 
-      if (existingIdx >= 0) {
-        const next = [...prev];
-        next[existingIdx] = updatedPolicy;
-        return next;
-      } else {
-        return [...prev, updatedPolicy];
-      }
-    });
+    setPolicies(DesignMasterStore.getRbacPolicies());
   };
 
   const handleGrantAll = (moduleCode: DesignRbacPolicy["module"]) => {
-    setPolicies(prev => {
-      const filtered = prev.filter(p => 
-        !(p.roleCode === selectedRole && p.projectId === selectedProject && p.module === moduleCode)
-      );
-      const updatedPolicy: DesignRbacPolicy = {
-        id: `rbac-${selectedRole.toLowerCase()}-${moduleCode.toLowerCase()}-${selectedProject}`,
-        roleCode: selectedRole,
-        roleName: currentRoleObj.name,
-        projectId: selectedProject,
-        projectName: selectedProject === "ALL" ? "All Development Projects" : (storeState.projects.find(p => p.id === selectedProject)?.name || selectedProject),
-        module: moduleCode,
-        canCreate: true,
-        canRead: true,
-        canUpdate: true,
-        canDelete: true,
-        updatedAt: new Date().toISOString()
-      };
-      return [...filtered, updatedPolicy];
-    });
+    const updatedPolicy: DesignRbacPolicy = {
+      id: `rbac-${selectedRole.toLowerCase()}-${selectedProject.toLowerCase()}-${moduleCode.toLowerCase()}`,
+      roleCode: selectedRole,
+      roleName: currentRoleObj.name,
+      projectId: selectedProject,
+      projectName: selectedProject === "ALL" ? "All Development Projects" : (storeState.projects.find(p => p.id === selectedProject)?.name || selectedProject),
+      module: moduleCode,
+      canCreate: true,
+      canRead: true,
+      canUpdate: true,
+      canDelete: true,
+      canApprove: true,
+      canExport: true,
+      updatedAt: new Date().toISOString()
+    };
+
+    DesignMasterStore.saveRbacPolicy(updatedPolicy);
+    saveSingleDesignRbacPolicyAction(updatedPolicy).catch(e => console.error("Auto-save grant error:", e));
+
+    setPolicies(DesignMasterStore.getRbacPolicies());
   };
 
   const handleRevokeAll = (moduleCode: DesignRbacPolicy["module"]) => {
-    setPolicies(prev => {
-      const filtered = prev.filter(p => 
-        !(p.roleCode === selectedRole && p.projectId === selectedProject && p.module === moduleCode)
-      );
-      const updatedPolicy: DesignRbacPolicy = {
-        id: `rbac-${selectedRole.toLowerCase()}-${moduleCode.toLowerCase()}-${selectedProject}`,
-        roleCode: selectedRole,
-        roleName: currentRoleObj.name,
-        projectId: selectedProject,
-        projectName: selectedProject === "ALL" ? "All Development Projects" : (storeState.projects.find(p => p.id === selectedProject)?.name || selectedProject),
-        module: moduleCode,
-        canCreate: false,
-        canRead: false,
-        canUpdate: false,
-        canDelete: false,
-        updatedAt: new Date().toISOString()
-      };
-      return [...filtered, updatedPolicy];
-    });
+    const updatedPolicy: DesignRbacPolicy = {
+      id: `rbac-${selectedRole.toLowerCase()}-${selectedProject.toLowerCase()}-${moduleCode.toLowerCase()}`,
+      roleCode: selectedRole,
+      roleName: currentRoleObj.name,
+      projectId: selectedProject,
+      projectName: selectedProject === "ALL" ? "All Development Projects" : (storeState.projects.find(p => p.id === selectedProject)?.name || selectedProject),
+      module: moduleCode,
+      canCreate: false,
+      canRead: false,
+      canUpdate: false,
+      canDelete: false,
+      canApprove: false,
+      canExport: false,
+      updatedAt: new Date().toISOString()
+    };
+
+    DesignMasterStore.saveRbacPolicy(updatedPolicy);
+    saveSingleDesignRbacPolicyAction(updatedPolicy).catch(e => console.error("Auto-save revoke error:", e));
+
+    setPolicies(DesignMasterStore.getRbacPolicies());
   };
 
   const handleSavePolicies = async () => {
     setIsSaving(true);
-    DesignMasterStore.bulkSaveRbacPolicies(policies);
-    await saveRbacPoliciesAction(policies);
-    setIsSaving(false);
-    setSaveSuccessMessage("RBAC Policies saved and synchronized successfully!");
-    setTimeout(() => setSaveSuccessMessage(""), 4000);
+    try {
+      const current = DesignMasterStore.getRbacPolicies();
+      await saveRbacPoliciesAction(current);
+      setSaveSuccessMessage("RBAC Policies saved and synchronized successfully!");
+    } catch (err: any) {
+      console.error("Save policies error:", err);
+    } finally {
+      setIsSaving(false);
+      setTimeout(() => setSaveSuccessMessage(""), 4000);
+    }
   };
 
-  const handleResetDefaults = () => {
+  const handleResetDefaults = async () => {
     if (confirm("Reset all RBAC policies to system recommended defaults?")) {
       const defaults = DesignMasterStore.buildDefaultRbacPolicies();
       setPolicies(defaults);
       DesignMasterStore.bulkSaveRbacPolicies(defaults);
-      saveRbacPoliciesAction(defaults);
+      await saveRbacPoliciesAction(defaults);
       setSaveSuccessMessage("Policies reset to default configurations.");
       setTimeout(() => setSaveSuccessMessage(""), 4000);
     }
