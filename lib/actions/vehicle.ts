@@ -335,6 +335,57 @@ export interface VehiclePucCertificateRecord {
   statusBadge?: "ACTIVE" | "EXPIRING_SOON" | "EXPIRED" | "UPCOMING";
 }
 
+export interface VehicleServiceEntitlementRecord {
+  id: string;
+  vehicle_id: string;
+  voucher_number?: string | null;
+  service_title: string;
+  service_type: string; // 'OEM_FREE_1' | 'OEM_FREE_2' | 'OEM_FREE_3' | 'AMC_PACKAGE' | 'EXTENDED_WARRANTY' | 'DEALER_PROMO'
+  coverage_scope: string; // 'LABOR_ONLY' | 'LABOR_AND_PARTS' | 'FULL_COMPREHENSIVE'
+  provider_vendor?: string | null;
+  valid_from_date: string;
+  valid_to_date: string;
+  min_odometer_km: number;
+  max_odometer_km: number;
+  max_claims_allowed: number;
+  claims_used_count: number;
+  status: "AVAILABLE" | "REDEEMED" | "EXPIRED" | "EXTENDED" | "VOIDED";
+  redeemed_at?: string | null;
+  redeemed_job_card_id?: string | null;
+  redeemed_odometer_km?: number | null;
+  labor_waived_amount?: number;
+  parts_waived_amount?: number;
+  workshop_center?: string | null;
+  invoice_number?: string | null;
+  document_url?: string | null;
+  terms_conditions?: string | null;
+  notes?: string | null;
+  renewed_by?: string | null;
+  is_deleted?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  daysRemaining?: number | null;
+  kmRemaining?: number | null;
+  statusBadge?: "ACTIVE" | "EXPIRING_SOON" | "EXPIRED" | "REDEEMED" | "UPCOMING";
+}
+
+export interface UnifiedVehicleRenewalTimelineItem {
+  record_id: string;
+  vehicle_id: string;
+  renewal_type: "INSURANCE" | "PUC" | "MAINTENANCE_AMC" | "ROAD_TAX";
+  certificate_or_policy_number: string;
+  provider_or_vendor: string;
+  valid_from: string;
+  valid_upto: string;
+  cost_or_fee: number;
+  is_active: boolean;
+  document_url?: string | null;
+  renewed_by?: string | null;
+  recorded_at: string;
+  metadata?: Record<string, any>;
+  daysRemaining?: number | null;
+  statusBadge: "ACTIVE" | "EXPIRING_SOON" | "EXPIRED" | "UPCOMING" | "REDEEMED";
+}
 
 export interface PartAccessoryRecord {
   id: string;
@@ -4451,8 +4502,311 @@ export async function deleteVehicleSpecificationHistoryRecordAction(
   }
 }
 
+// ------------------------------------------------------------------------------
+// Fleet Vehicle Free Service Entitlements & AMC Voucher Actions
+// ------------------------------------------------------------------------------
 
+/**
+ * Fetch all maintenance entitlements, OEM free service vouchers, and AMC contracts for a vehicle
+ */
+export async function fetchVehicleServiceEntitlementsAction(
+  vehicleId: string,
+  currentOdo?: number
+): Promise<{
+  success: boolean;
+  entitlements: VehicleServiceEntitlementRecord[];
+  error?: string;
+}> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) {
+      return { success: false, entitlements: [], error: "Unauthenticated" };
+    }
 
+    if (!vehicleId) {
+      return { success: false, entitlements: [], error: "Vehicle ID is required" };
+    }
 
+    const { data, error } = await supabaseAdmin
+      .from("vehicle_service_entitlements")
+      .select("*")
+      .eq("vehicle_id", vehicleId)
+      .eq("is_deleted", false)
+      .order("valid_from_date", { ascending: true })
+      .order("created_at", { ascending: true });
 
+    if (error) {
+      console.error("[vehicle-actions] fetchVehicleServiceEntitlementsAction error:", error);
+      return { success: false, entitlements: [], error: error.message };
+    }
 
+    const raw = (data || []) as any[];
+    const enriched: VehicleServiceEntitlementRecord[] = raw.map((ent) => {
+      const daysRemaining = calculateDaysRemaining(ent.valid_to_date);
+      const odo = currentOdo ?? 0;
+      const kmRemaining = ent.max_odometer_km ? ent.max_odometer_km - odo : null;
+
+      let statusBadge: "ACTIVE" | "EXPIRING_SOON" | "EXPIRED" | "REDEEMED" | "UPCOMING" = "ACTIVE";
+
+      if (ent.status === "REDEEMED") {
+        statusBadge = "REDEEMED";
+      } else if (ent.valid_from_date && new Date(ent.valid_from_date) > new Date()) {
+        statusBadge = "UPCOMING";
+      } else if ((daysRemaining !== null && daysRemaining < 0) || (kmRemaining !== null && kmRemaining < 0)) {
+        statusBadge = "EXPIRED";
+      } else if ((daysRemaining !== null && daysRemaining <= 30) || (kmRemaining !== null && kmRemaining <= 500)) {
+        statusBadge = "EXPIRING_SOON";
+      } else {
+        statusBadge = "ACTIVE";
+      }
+
+      return {
+        ...ent,
+        min_odometer_km: Number(ent.min_odometer_km) || 0,
+        max_odometer_km: Number(ent.max_odometer_km) || 0,
+        max_claims_allowed: Number(ent.max_claims_allowed) || 1,
+        claims_used_count: Number(ent.claims_used_count) || 0,
+        labor_waived_amount: Number(ent.labor_waived_amount) || 0,
+        parts_waived_amount: Number(ent.parts_waived_amount) || 0,
+        redeemed_odometer_km: ent.redeemed_odometer_km ? Number(ent.redeemed_odometer_km) : null,
+        daysRemaining,
+        kmRemaining,
+        statusBadge
+      };
+    });
+
+    return { success: true, entitlements: enriched };
+  } catch (err: any) {
+    console.error("[vehicle-actions] fetchVehicleServiceEntitlementsAction exception:", err);
+    return { success: false, entitlements: [], error: err.message || "Failed to fetch service entitlements" };
+  }
+}
+
+/**
+ * Create a new service entitlement / Free OEM voucher / AMC contract
+ */
+export async function createVehicleServiceEntitlementAction(
+  vehicleId: string,
+  payload: {
+    service_title: string;
+    service_type?: string;
+    coverage_scope?: string;
+    voucher_number?: string;
+    provider_vendor?: string;
+    valid_from_date: string;
+    valid_to_date: string;
+    min_odometer_km?: number;
+    max_odometer_km: number;
+    terms_conditions?: string;
+    notes?: string;
+  }
+): Promise<{
+  success: boolean;
+  entitlement?: VehicleServiceEntitlementRecord;
+  error?: string;
+}> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    if (!vehicleId) return { success: false, error: "Vehicle ID is required" };
+    if (!payload.service_title?.trim()) return { success: false, error: "Service title is required" };
+    if (!payload.valid_from_date || !payload.valid_to_date) {
+      return { success: false, error: "Validity start and end dates are required" };
+    }
+
+    const newEntitlement = {
+      vehicle_id: vehicleId,
+      service_title: payload.service_title.trim(),
+      service_type: payload.service_type || "OEM_FREE_1",
+      coverage_scope: payload.coverage_scope || "LABOR_ONLY",
+      voucher_number: payload.voucher_number?.trim() || null,
+      provider_vendor: payload.provider_vendor?.trim() || "OEM / Authorized Service Network",
+      valid_from_date: payload.valid_from_date,
+      valid_to_date: payload.valid_to_date,
+      min_odometer_km: Number(payload.min_odometer_km) || 0,
+      max_odometer_km: Number(payload.max_odometer_km) || 5000,
+      max_claims_allowed: 1,
+      claims_used_count: 0,
+      status: "AVAILABLE",
+      terms_conditions: payload.terms_conditions?.trim() || null,
+      notes: payload.notes?.trim() || null,
+      renewed_by: user.user_metadata?.full_name || user.email || "System Admin",
+      is_deleted: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    const { data, error } = await supabaseAdmin
+      .from("vehicle_service_entitlements")
+      .insert(newEntitlement)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("[vehicle-actions] createVehicleServiceEntitlementAction error:", error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, entitlement: data };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to create entitlement" };
+  }
+}
+
+/**
+ * Redeem / Claim a Free Service voucher or AMC package
+ */
+export async function redeemVehicleServiceEntitlementAction(
+  entitlementId: string,
+  vehicleId: string,
+  redemptionData: {
+    redeemed_odometer_km: number;
+    workshop_center: string;
+    invoice_number?: string;
+    labor_waived_amount?: number;
+    parts_waived_amount?: number;
+    document_url?: string;
+    notes?: string;
+  }
+): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    const updatePayload = {
+      status: "REDEEMED",
+      redeemed_at: new Date().toISOString(),
+      redeemed_odometer_km: Number(redemptionData.redeemed_odometer_km) || 0,
+      workshop_center: redemptionData.workshop_center.trim(),
+      invoice_number: redemptionData.invoice_number?.trim() || null,
+      labor_waived_amount: Number(redemptionData.labor_waived_amount) || 0,
+      parts_waived_amount: Number(redemptionData.parts_waived_amount) || 0,
+      document_url: redemptionData.document_url?.trim() || null,
+      notes: redemptionData.notes?.trim() || null,
+      claims_used_count: 1,
+      renewed_by: user.user_metadata?.full_name || user.email || "System Admin",
+      updated_at: new Date().toISOString()
+    };
+
+    const { error } = await supabaseAdmin
+      .from("vehicle_service_entitlements")
+      .update(updatePayload)
+      .eq("id", entitlementId)
+      .eq("vehicle_id", vehicleId);
+
+    if (error) {
+      console.error("[vehicle-actions] redeemVehicleServiceEntitlementAction error:", error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to redeem entitlement" };
+  }
+}
+
+/**
+ * Soft delete an entitlement record
+ */
+export async function deleteVehicleServiceEntitlementAction(
+  entitlementId: string,
+  vehicleId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    const { error } = await supabaseAdmin
+      .from("vehicle_service_entitlements")
+      .update({ is_deleted: true, updated_at: new Date().toISOString() })
+      .eq("id", entitlementId)
+      .eq("vehicle_id", vehicleId);
+
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Failed to void entitlement" };
+  }
+}
+
+/**
+ * Fetch unified vehicle renewal & compliance timeline consolidating:
+ * 1. Insurance Policies
+ * 2. PUC Certificates
+ * 3. Maintenance, Free Services & AMC Packages
+ */
+export async function fetchVehicleUnifiedRenewalsTimelineAction(
+  vehicleId: string
+): Promise<{
+  success: boolean;
+  timeline: UnifiedVehicleRenewalTimelineItem[];
+  error?: string;
+}> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) {
+      return { success: false, timeline: [], error: "Unauthenticated" };
+    }
+
+    if (!vehicleId) {
+      return { success: false, timeline: [], error: "Vehicle ID is required" };
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from("v_vehicle_renewal_history")
+      .select("*")
+      .eq("vehicle_id", vehicleId)
+      .order("valid_from", { ascending: false })
+      .order("recorded_at", { ascending: false });
+
+    if (error) {
+      console.error("[vehicle-actions] fetchVehicleUnifiedRenewalsTimelineAction error:", error);
+      return { success: false, timeline: [], error: error.message };
+    }
+
+    const raw = (data || []) as any[];
+    const enriched: UnifiedVehicleRenewalTimelineItem[] = raw.map((item) => {
+      const daysRemaining = calculateDaysRemaining(item.valid_upto);
+      let statusBadge: "ACTIVE" | "EXPIRING_SOON" | "EXPIRED" | "UPCOMING" | "REDEEMED" = "ACTIVE";
+
+      if (item.metadata?.status === "REDEEMED") {
+        statusBadge = "REDEEMED";
+      } else if (item.valid_from && new Date(item.valid_from) > new Date()) {
+        statusBadge = "UPCOMING";
+      } else if (daysRemaining !== null && daysRemaining < 0) {
+        statusBadge = "EXPIRED";
+      } else if (daysRemaining !== null && daysRemaining <= 30) {
+        statusBadge = "EXPIRING_SOON";
+      } else {
+        statusBadge = "ACTIVE";
+      }
+
+      return {
+        record_id: item.record_id,
+        vehicle_id: item.vehicle_id,
+        renewal_type: item.renewal_type,
+        certificate_or_policy_number: item.certificate_or_policy_number || "N/A",
+        provider_or_vendor: item.provider_or_vendor || "Authorized Provider",
+        valid_from: item.valid_from,
+        valid_upto: item.valid_upto,
+        cost_or_fee: Number(item.cost_or_fee) || 0,
+        is_active: !!item.is_active,
+        document_url: item.document_url || null,
+        renewed_by: item.renewed_by || "System Admin",
+        recorded_at: item.recorded_at,
+        metadata: item.metadata || {},
+        daysRemaining,
+        statusBadge
+      };
+    });
+
+    return { success: true, timeline: enriched };
+  } catch (err: any) {
+    console.error("[vehicle-actions] fetchVehicleUnifiedRenewalsTimelineAction exception:", err);
+    return { success: false, timeline: [], error: err.message || "Failed to load renewals timeline" };
+  }
+}

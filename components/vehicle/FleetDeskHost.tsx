@@ -58,7 +58,11 @@ import {
   Image as ImageIcon,
   ZoomIn,
   ZoomOut,
-  RotateCw
+  RotateCw,
+  CalendarSync,
+  Gift,
+  Ticket,
+  BadgePercent
 } from "lucide-react";
 import { 
   POPULAR_BRANDS, 
@@ -130,7 +134,14 @@ import {
   deleteVehiclePucCertificateAction,
   VehicleSpecificationHistoryRecord,
   fetchVehicleSpecificationHistoryAction,
-  deleteVehicleSpecificationHistoryRecordAction
+  deleteVehicleSpecificationHistoryRecordAction,
+  VehicleServiceEntitlementRecord,
+  UnifiedVehicleRenewalTimelineItem,
+  fetchVehicleServiceEntitlementsAction,
+  createVehicleServiceEntitlementAction,
+  redeemVehicleServiceEntitlementAction,
+  deleteVehicleServiceEntitlementAction,
+  fetchVehicleUnifiedRenewalsTimelineAction
 } from "@/lib/actions/vehicle";
 
 export const MAINTENANCE_CATEGORIES = [
@@ -351,6 +362,40 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   const [renewPucSmokeDensity, setRenewPucSmokeDensity] = useState<number>(0.45);
   const [renewPucDocUrl, setRenewPucDocUrl] = useState("");
   const [renewPucNotes, setRenewPucNotes] = useState("");
+
+  // Unified Vehicle Renewals & Free Service Entitlements Modal States
+  const [isUnifiedRenewalsModalOpen, setIsUnifiedRenewalsModalOpen] = useState(false);
+  const [selectedVehicleForRenewals, setSelectedVehicleForRenewals] = useState<VehicleRecord | null>(null);
+  const [unifiedTimeline, setUnifiedTimeline] = useState<UnifiedVehicleRenewalTimelineItem[]>([]);
+  const [vehicleEntitlements, setVehicleEntitlements] = useState<VehicleServiceEntitlementRecord[]>([]);
+  const [loadingUnifiedTimeline, setLoadingUnifiedTimeline] = useState(false);
+  const [renewalsFilter, setRenewalsFilter] = useState<"ALL" | "INSURANCE" | "PUC" | "MAINTENANCE_AMC">("ALL");
+  const [renewalsActiveTab, setRenewalsActiveTab] = useState<"TIMELINE" | "FREE_SERVICES">("TIMELINE");
+
+  // Add Free Service / AMC Voucher Modal State
+  const [isAddEntitlementModalOpen, setIsAddEntitlementModalOpen] = useState(false);
+  const [entitlementFormTitle, setEntitlementFormTitle] = useState("");
+  const [entitlementFormType, setEntitlementFormType] = useState("OEM_FREE_1");
+  const [entitlementFormScope, setEntitlementFormScope] = useState("LABOR_ONLY");
+  const [entitlementFormVoucherNo, setEntitlementFormVoucherNo] = useState("");
+  const [entitlementFormProvider, setEntitlementFormProvider] = useState("OEM / Authorized Dealership Network");
+  const [entitlementFormValidFrom, setEntitlementFormValidFrom] = useState("");
+  const [entitlementFormValidTo, setEntitlementFormValidTo] = useState("");
+  const [entitlementFormMinKm, setEntitlementFormMinKm] = useState<number>(0);
+  const [entitlementFormMaxKm, setEntitlementFormMaxKm] = useState<number>(5000);
+  const [entitlementFormTerms, setEntitlementFormTerms] = useState("");
+  const [entitlementFormNotes, setEntitlementFormNotes] = useState("");
+
+  // Redeem / Claim Entitlement Modal State
+  const [isRedeemEntitlementModalOpen, setIsRedeemEntitlementModalOpen] = useState(false);
+  const [selectedEntitlementForRedeem, setSelectedEntitlementForRedeem] = useState<VehicleServiceEntitlementRecord | null>(null);
+  const [redeemFormOdometer, setRedeemFormOdometer] = useState<number>(0);
+  const [redeemFormWorkshop, setRedeemFormWorkshop] = useState("");
+  const [redeemFormInvoiceNo, setRedeemFormInvoiceNo] = useState("");
+  const [redeemFormLaborWaived, setRedeemFormLaborWaived] = useState<number>(0);
+  const [redeemFormPartsWaived, setRedeemFormPartsWaived] = useState<number>(0);
+  const [redeemFormDocUrl, setRedeemFormDocUrl] = useState("");
+  const [redeemFormNotes, setRedeemFormNotes] = useState("");
 
   // Parts Form States
   const [partFormName, setPartFormName] = useState("");
@@ -2225,6 +2270,171 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       }
     } catch (err: any) {
       triggerToast(err.message || "Failed to remove PUC record.", true);
+    }
+  };
+
+  // ----------------------------------------------------------------------------
+  // Unified Vehicle Renewal & Free Service Entitlements Handlers
+  // ----------------------------------------------------------------------------
+
+  const handleOpenVehicleUnifiedRenewalsModal = async (veh: VehicleRecord, defaultTab: "TIMELINE" | "FREE_SERVICES" = "TIMELINE") => {
+    setSelectedVehicleForRenewals(veh);
+    setRenewalsActiveTab(defaultTab);
+    setIsUnifiedRenewalsModalOpen(true);
+    setLoadingUnifiedTimeline(true);
+    try {
+      const [timelineRes, entitlementsRes] = await Promise.all([
+        fetchVehicleUnifiedRenewalsTimelineAction(veh.id),
+        fetchVehicleServiceEntitlementsAction(veh.id, veh.odometer_km)
+      ]);
+
+      if (timelineRes.success) {
+        setUnifiedTimeline(timelineRes.timeline);
+      } else {
+        setUnifiedTimeline([]);
+      }
+
+      if (entitlementsRes.success) {
+        setVehicleEntitlements(entitlementsRes.entitlements);
+      } else {
+        setVehicleEntitlements([]);
+      }
+    } catch (err: any) {
+      triggerToast(err.message || "Failed to load renewals timeline", true);
+    } finally {
+      setLoadingUnifiedTimeline(false);
+    }
+  };
+
+  const handleOpenAddEntitlementModal = (veh: VehicleRecord) => {
+    const today = new Date().toISOString().split("T")[0];
+    const sixMonthsLater = new Date();
+    sixMonthsLater.setMonth(sixMonthsLater.getMonth() + 6);
+    const cleanPlate = (veh.registration_number || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+
+    setEntitlementFormTitle("Periodic Free Service Voucher");
+    setEntitlementFormType("OEM_FREE_2");
+    setEntitlementFormScope("LABOR_ONLY");
+    setEntitlementFormVoucherNo(`VOUCHER-${cleanPlate}-FS${(vehicleEntitlements.length + 1)}`);
+    setEntitlementFormProvider("OEM / Authorized Dealership Network");
+    setEntitlementFormValidFrom(today);
+    setEntitlementFormValidTo(sixMonthsLater.toISOString().split("T")[0]);
+    setEntitlementFormMinKm(veh.odometer_km || 0);
+    setEntitlementFormMaxKm((veh.odometer_km || 0) + 5000);
+    setEntitlementFormTerms("100% Labor waived. Consumables & fluids payable at actuals.");
+    setEntitlementFormNotes("");
+    setIsAddEntitlementModalOpen(true);
+  };
+
+  const handleSaveAddEntitlement = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedVehicleForRenewals) return;
+
+    if (!entitlementFormTitle.trim()) {
+      triggerToast("Service title is required.", true);
+      return;
+    }
+    if (!entitlementFormValidFrom || !entitlementFormValidTo) {
+      triggerToast("Validity dates are required.", true);
+      return;
+    }
+
+    setModalSubmitting(true);
+    try {
+      const res = await createVehicleServiceEntitlementAction(selectedVehicleForRenewals.id, {
+        service_title: entitlementFormTitle.trim(),
+        service_type: entitlementFormType,
+        coverage_scope: entitlementFormScope,
+        voucher_number: entitlementFormVoucherNo.trim() || undefined,
+        provider_vendor: entitlementFormProvider.trim() || undefined,
+        valid_from_date: entitlementFormValidFrom,
+        valid_to_date: entitlementFormValidTo,
+        min_odometer_km: Number(entitlementFormMinKm) || 0,
+        max_odometer_km: Number(entitlementFormMaxKm) || 5000,
+        terms_conditions: entitlementFormTerms.trim() || undefined,
+        notes: entitlementFormNotes.trim() || undefined
+      });
+
+      if (res.success) {
+        triggerToast("Service voucher / entitlement created successfully!");
+        setIsAddEntitlementModalOpen(false);
+        handleOpenVehicleUnifiedRenewalsModal(selectedVehicleForRenewals, "FREE_SERVICES");
+      } else {
+        triggerToast(res.error || "Failed to create entitlement.", true);
+      }
+    } catch (err: any) {
+      triggerToast(err.message || "Failed to create entitlement.", true);
+    } finally {
+      setModalSubmitting(false);
+    }
+  };
+
+  const handleOpenRedeemEntitlementModal = (ent: VehicleServiceEntitlementRecord) => {
+    setSelectedEntitlementForRedeem(ent);
+    setRedeemFormOdometer(selectedVehicleForRenewals?.odometer_km || ent.min_odometer_km || 0);
+    setRedeemFormWorkshop("Authorized Pune Workshop Center");
+    setRedeemFormInvoiceNo(`INV-${Math.floor(100000 + Math.random() * 900000)}`);
+    setRedeemFormLaborWaived(1200);
+    setRedeemFormPartsWaived(0);
+    setRedeemFormDocUrl("");
+    setRedeemFormNotes("Voucher verified and redeemed against job card.");
+    setIsRedeemEntitlementModalOpen(true);
+  };
+
+  const handleSaveRedeemEntitlement = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedEntitlementForRedeem || !selectedVehicleForRenewals) return;
+
+    if (!redeemFormWorkshop.trim()) {
+      triggerToast("Workshop center is required.", true);
+      return;
+    }
+
+    setModalSubmitting(true);
+    try {
+      const res = await redeemVehicleServiceEntitlementAction(
+        selectedEntitlementForRedeem.id,
+        selectedVehicleForRenewals.id,
+        {
+          redeemed_odometer_km: Number(redeemFormOdometer) || 0,
+          workshop_center: redeemFormWorkshop.trim(),
+          invoice_number: redeemFormInvoiceNo.trim() || undefined,
+          labor_waived_amount: Number(redeemFormLaborWaived) || 0,
+          parts_waived_amount: Number(redeemFormPartsWaived) || 0,
+          document_url: redeemFormDocUrl.trim() || undefined,
+          notes: redeemFormNotes.trim() || undefined
+        }
+      );
+
+      if (res.success) {
+        triggerToast(`Voucher "${selectedEntitlementForRedeem.service_title}" claimed & recorded!`);
+        setIsRedeemEntitlementModalOpen(false);
+        setSelectedEntitlementForRedeem(null);
+        handleOpenVehicleUnifiedRenewalsModal(selectedVehicleForRenewals, "FREE_SERVICES");
+      } else {
+        triggerToast(res.error || "Failed to redeem entitlement.", true);
+      }
+    } catch (err: any) {
+      triggerToast(err.message || "Failed to redeem entitlement.", true);
+    } finally {
+      setModalSubmitting(false);
+    }
+  };
+
+  const handleDeleteEntitlement = async (entId: string) => {
+    if (!selectedVehicleForRenewals) return;
+    if (!confirm("Are you sure you want to void this service entitlement / voucher?")) return;
+
+    try {
+      const res = await deleteVehicleServiceEntitlementAction(entId, selectedVehicleForRenewals.id);
+      if (res.success) {
+        triggerToast("Voucher voided.");
+        handleOpenVehicleUnifiedRenewalsModal(selectedVehicleForRenewals, "FREE_SERVICES");
+      } else {
+        triggerToast(res.error || "Failed to void voucher.", true);
+      }
+    } catch (err: any) {
+      triggerToast(err.message || "Failed to void voucher.", true);
     }
   };
 
@@ -4407,6 +4617,18 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             <AppButton
                               variant="outline"
                               size="icon-sm"
+                              title="Unified Renewals & Free Services Lifecycle"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenVehicleUnifiedRenewalsModal(veh);
+                              }}
+                              className="h-7 w-7 text-blue-600 hover:text-blue-700 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/40 shadow-2xs"
+                            >
+                              <CalendarSync className="h-3.5 w-3.5" />
+                            </AppButton>
+                            <AppButton
+                              variant="outline"
+                              size="icon-sm"
                               title="Edit Vehicle"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -4700,6 +4922,19 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             >
                               <ClipboardCheck className="h-3 w-3" />
                               <span>Specs History</span>
+                            </AppButton>
+                            <AppButton
+                              variant="outline"
+                              size="sm"
+                              title="View Unified Renewals & Free Services Lifecycle"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenVehicleUnifiedRenewalsModal(veh);
+                              }}
+                              className="h-7 px-2 text-xs gap-1 font-semibold text-blue-600 dark:text-blue-400 border-blue-500/30 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 shadow-2xs"
+                            >
+                              <CalendarSync className="h-3 w-3" />
+                              <span>Renewals & Free Services</span>
                             </AppButton>
                             {canEditVehicle && (
                               <AppButton
@@ -5631,6 +5866,19 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                       </AppButton>
                                     </>
                                   )}
+                                  <AppButton
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleOpenVehicleUnifiedRenewalsModal(item.vehicle!);
+                                    }}
+                                    className="h-7 text-xs px-2 text-blue-600 dark:text-blue-400 border-blue-500/30 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 gap-1 font-semibold shadow-2xs"
+                                    title="Unified Renewals & Free Services Lifecycle"
+                                  >
+                                    <CalendarSync className="h-3 w-3" />
+                                    <span>All Renewals</span>
+                                  </AppButton>
                                   <AppButton
                                     variant="outline"
                                     size="sm"
@@ -11600,6 +11848,818 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       )}
 
       {/* ---------------------------------------------------------------------- */}
+      {/* UNIFIED VEHICLE RENEWALS & FREE SERVICES TIMELINE MODAL */}
+      {/* ---------------------------------------------------------------------- */}
+      {isUnifiedRenewalsModalOpen && selectedVehicleForRenewals && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-200">
+          <div className="bg-surface border border-border w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-border bg-slate-50/90 dark:bg-slate-900/90 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-500/25 shrink-0 shadow-xs">
+                  <CalendarSync className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-base font-bold text-foreground">
+                      Unified Renewal & Service Passport
+                    </h3>
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                      {selectedVehicleForRenewals.make} {selectedVehicleForRenewals.model}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-surface text-muted-foreground border border-border">
+                      Odo: {(selectedVehicleForRenewals.odometer_km || 0).toLocaleString()} KM
+                    </span>
+                  </div>
+                  <div className="mt-1 flex items-center gap-3">
+                    {renderHsrpPlate(selectedVehicleForRenewals.registration_number)}
+                    <span className="text-xs text-muted-foreground hidden sm:inline">
+                      Single chronological lifecycle track across Insurance, PUC, and Free Maintenance / AMC cycles.
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <AppButton
+                  variant="primary"
+                  size="sm"
+                  onClick={() => handleOpenAddEntitlementModal(selectedVehicleForRenewals)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs h-8 px-3 gap-1.5 shadow-xs"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Add Free Voucher / AMC</span>
+                  <span className="sm:hidden">Add Voucher</span>
+                </AppButton>
+                <AppButton
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setIsUnifiedRenewalsModalOpen(false)}
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </AppButton>
+              </div>
+            </div>
+
+            {/* Modal Sub-Tabs */}
+            <div className="px-5 py-2.5 bg-surface border-b border-border flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setRenewalsActiveTab("TIMELINE")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
+                    renewalsActiveTab === "TIMELINE"
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "bg-surface text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  <History className="h-3.5 w-3.5" />
+                  <span>Chronological Lifecycle Track</span>
+                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                    renewalsActiveTab === "TIMELINE" ? "bg-white/20 text-white" : "bg-muted text-foreground"
+                  }`}>
+                    {unifiedTimeline.length}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setRenewalsActiveTab("FREE_SERVICES")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
+                    renewalsActiveTab === "FREE_SERVICES"
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "bg-surface text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  <Gift className="h-3.5 w-3.5" />
+                  <span>Free Services & AMC Vouchers</span>
+                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                    renewalsActiveTab === "FREE_SERVICES" ? "bg-white/20 text-white" : "bg-muted text-foreground"
+                  }`}>
+                    {vehicleEntitlements.length}
+                  </span>
+                </button>
+              </div>
+
+              {renewalsActiveTab === "TIMELINE" && (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[11px] text-muted-foreground mr-1">Filter:</span>
+                  {(["ALL", "INSURANCE", "PUC", "MAINTENANCE_AMC"] as const).map((ft) => {
+                    const count = ft === "ALL" 
+                      ? unifiedTimeline.length 
+                      : unifiedTimeline.filter((x) => x.renewal_type === ft).length;
+                    const labels: Record<string, string> = {
+                      ALL: "All Cycles",
+                      INSURANCE: "🛡️ Insurance",
+                      PUC: "💨 PUC",
+                      MAINTENANCE_AMC: "🛠️ Maintenance / AMC"
+                    };
+                    return (
+                      <button
+                        key={ft}
+                        type="button"
+                        onClick={() => setRenewalsFilter(ft)}
+                        className={`px-2.5 py-1 rounded-md text-[11px] font-medium border transition-colors ${
+                          renewalsFilter === ft
+                            ? "bg-foreground text-background border-foreground shadow-2xs font-semibold"
+                            : "bg-surface text-muted-foreground border-border hover:border-foreground/40"
+                        }`}
+                      >
+                        {labels[ft]} ({count})
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 overflow-y-auto flex-1 space-y-4">
+              {loadingUnifiedTimeline ? (
+                <div className="py-16 text-center space-y-3">
+                  <RefreshCw className="h-8 w-8 animate-spin mx-auto text-blue-500" />
+                  <p className="text-sm text-muted-foreground">Loading vehicle renewal lineage & vouchers...</p>
+                </div>
+              ) : renewalsActiveTab === "TIMELINE" ? (
+                <div>
+                  {unifiedTimeline.filter((item) => renewalsFilter === "ALL" || item.renewal_type === renewalsFilter).length === 0 ? (
+                    <div className="py-14 text-center border-2 border-dashed border-border rounded-xl p-6">
+                      <CalendarSync className="h-10 w-10 text-muted-foreground/50 mx-auto mb-2" />
+                      <h4 className="text-sm font-semibold text-foreground">No Renewal History Found</h4>
+                      <p className="text-xs text-muted-foreground max-w-sm mx-auto mt-1">
+                        No renewals or service vouchers match the selected filter.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="relative pl-6 border-l-2 border-border/80 space-y-5 ml-3 my-2">
+                      {unifiedTimeline
+                        .filter((item) => renewalsFilter === "ALL" || item.renewal_type === renewalsFilter)
+                        .map((event, idx) => {
+                          const isInsurance = event.renewal_type === "INSURANCE";
+                          const isPuc = event.renewal_type === "PUC";
+                          const isMaint = event.renewal_type === "MAINTENANCE_AMC";
+
+                          return (
+                            <div key={event.record_id + idx} className="relative group">
+                              {/* Timeline Bullet */}
+                              <div className={`absolute -left-[31px] top-1 h-5 w-5 rounded-full border-2 border-surface flex items-center justify-center shadow-xs ${
+                                isInsurance
+                                  ? "bg-cyan-500 text-white"
+                                  : isPuc
+                                  ? "bg-emerald-500 text-white"
+                                  : "bg-blue-600 text-white"
+                              }`}>
+                                {isInsurance ? (
+                                  <Shield className="h-2.5 w-2.5" />
+                                ) : isPuc ? (
+                                  <Wind className="h-2.5 w-2.5" />
+                                ) : (
+                                  <Wrench className="h-2.5 w-2.5" />
+                                )}
+                              </div>
+
+                              {/* Timeline Card */}
+                              <div className="bg-surface border border-border/70 rounded-xl p-4 shadow-2xs hover:border-blue-500/40 transition-colors">
+                                <div className="flex items-start justify-between gap-3 flex-wrap">
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                        isInsurance
+                                          ? "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20"
+                                          : isPuc
+                                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                                          : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
+                                      }`}>
+                                        {isInsurance ? "🛡️ Insurance Policy" : isPuc ? "💨 PUC Certificate" : "🛠️ Service / AMC Voucher"}
+                                      </span>
+
+                                      <h4 className="text-sm font-bold text-foreground">
+                                        {isMaint ? event.metadata?.service_title || event.certificate_or_policy_number : `#${event.certificate_or_policy_number}`}
+                                      </h4>
+
+                                      {event.statusBadge === "ACTIVE" && (
+                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                                          Active Cycle
+                                        </span>
+                                      )}
+                                      {event.statusBadge === "REDEEMED" && (
+                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                                          Claimed / Redeemed
+                                        </span>
+                                      )}
+                                      {event.statusBadge === "EXPIRING_SOON" && (
+                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                                          Expiring ({event.daysRemaining} days left)
+                                        </span>
+                                      )}
+                                      {event.statusBadge === "EXPIRED" && (
+                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-600 border border-rose-500/20">
+                                          Superseded / Expired
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    <div className="text-xs text-muted-foreground flex items-center gap-3 flex-wrap">
+                                      <span><strong>Provider/Vendor:</strong> {event.provider_or_vendor}</span>
+                                      <span>•</span>
+                                      <span><strong>Validity:</strong> {event.valid_from} ➔ {event.valid_upto}</span>
+                                      {event.cost_or_fee > 0 && (
+                                        <>
+                                          <span>•</span>
+                                          <span><strong>{isMaint ? "Waived Benefit:" : "Fee/Premium:"}</strong> ₹{event.cost_or_fee.toLocaleString()}</span>
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {event.document_url && (
+                                    <a
+                                      href={event.document_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 dark:bg-blue-950/40 px-2.5 py-1 rounded-lg border border-blue-500/20"
+                                    >
+                                      <FileText className="h-3.5 w-3.5" />
+                                      <span>View Attachment</span>
+                                    </a>
+                                  )}
+                                </div>
+
+                                {/* Event Specific Metadata Cards */}
+                                <div className="mt-3 pt-3 border-t border-border/60 grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+                                  {isInsurance && (
+                                    <>
+                                      <div className="p-2 rounded bg-surface/50 border border-border/50">
+                                        <div className="text-muted-foreground text-[10px] uppercase">IDV Insured Value</div>
+                                        <div className="font-semibold text-foreground">₹{(event.metadata?.idv || 0).toLocaleString()}</div>
+                                      </div>
+                                      <div className="p-2 rounded bg-surface/50 border border-border/50">
+                                        <div className="text-muted-foreground text-[10px] uppercase">NCB Bonus</div>
+                                        <div className="font-semibold text-foreground">{event.metadata?.ncb_percent || 0}%</div>
+                                      </div>
+                                      <div className="p-2 rounded bg-surface/50 border border-border/50">
+                                        <div className="text-muted-foreground text-[10px] uppercase">Cover Type</div>
+                                        <div className="font-semibold text-foreground">{event.metadata?.policy_type || "Comprehensive"}</div>
+                                      </div>
+                                      <div className="p-2 rounded bg-surface/50 border border-border/50">
+                                        <div className="text-muted-foreground text-[10px] uppercase">Add-ons</div>
+                                        <div className="font-semibold text-foreground">
+                                          {[
+                                            event.metadata?.has_zero_dep ? "Zero Dep" : null,
+                                            event.metadata?.has_rsa ? "RSA" : null,
+                                            event.metadata?.has_engine_protect ? "Engine Protect" : null
+                                          ].filter(Boolean).join(", ") || "Standard"}
+                                        </div>
+                                      </div>
+                                    </>
+                                  )}
+
+                                  {isPuc && (
+                                    <>
+                                      <div className="p-2 rounded bg-surface/50 border border-border/50">
+                                        <div className="text-muted-foreground text-[10px] uppercase">Emission Norm</div>
+                                        <div className="font-semibold text-foreground">{event.metadata?.emission_norm || "BS-VI"}</div>
+                                      </div>
+                                      <div className="p-2 rounded bg-surface/50 border border-border/50">
+                                        <div className="text-muted-foreground text-[10px] uppercase">CO Reading</div>
+                                        <div className="font-semibold text-foreground">{event.metadata?.carbon_monoxide_co ?? "0.05"} %</div>
+                                      </div>
+                                      <div className="p-2 rounded bg-surface/50 border border-border/50">
+                                        <div className="text-muted-foreground text-[10px] uppercase">HC Reading</div>
+                                        <div className="font-semibold text-foreground">{event.metadata?.hydrocarbon_hc ?? "45.0"} ppm</div>
+                                      </div>
+                                      <div className="p-2 rounded bg-surface/50 border border-border/50">
+                                        <div className="text-muted-foreground text-[10px] uppercase">Test Result</div>
+                                        <div className="font-semibold text-emerald-600 dark:text-emerald-400">{event.metadata?.test_result || "PASS"}</div>
+                                      </div>
+                                    </>
+                                  )}
+
+                                  {isMaint && (
+                                    <>
+                                      <div className="p-2 rounded bg-surface/50 border border-border/50">
+                                        <div className="text-muted-foreground text-[10px] uppercase">Mileage Range</div>
+                                        <div className="font-semibold text-foreground">{event.metadata?.min_odometer_km?.toLocaleString()} - {event.metadata?.max_odometer_km?.toLocaleString()} KM</div>
+                                      </div>
+                                      <div className="p-2 rounded bg-surface/50 border border-border/50">
+                                        <div className="text-muted-foreground text-[10px] uppercase">Coverage Scope</div>
+                                        <div className="font-semibold text-foreground">
+                                          {event.metadata?.coverage_scope === "LABOR_ONLY" ? "100% Free Labor" : "Comprehensive (Labor + Parts)"}
+                                        </div>
+                                      </div>
+                                      <div className="p-2 rounded bg-surface/50 border border-border/50">
+                                        <div className="text-muted-foreground text-[10px] uppercase">Labor Waived</div>
+                                        <div className="font-semibold text-emerald-600">₹{(event.metadata?.labor_waived || 0).toLocaleString()}</div>
+                                      </div>
+                                      <div className="p-2 rounded bg-surface/50 border border-border/50">
+                                        <div className="text-muted-foreground text-[10px] uppercase">Redemption Odo</div>
+                                        <div className="font-semibold text-foreground">
+                                          {event.metadata?.redeemed_odometer_km ? `${event.metadata.redeemed_odometer_km.toLocaleString()} KM` : "Not Claimed Yet"}
+                                        </div>
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* TAB 2: FREE SERVICES & AMC VOUCHERS */
+                <div className="space-y-4">
+                  {/* Summary Banner */}
+                  <div className="p-4 rounded-xl bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-purple-500/10 border border-blue-500/20 flex items-center justify-between flex-wrap gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-500/30">
+                        <Gift className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-foreground">Free Maintenance & AMC Entitlement Passport</h4>
+                        <p className="text-xs text-muted-foreground">
+                          Track statutory OEM free service coupons, periodic checkups, and AMC contracts with mileage & time limits.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4 text-xs font-semibold">
+                      <div className="text-right">
+                        <div className="text-muted-foreground text-[10px] uppercase">Total Fleet Savings</div>
+                        <div className="text-base font-extrabold text-emerald-600">
+                          ₹{vehicleEntitlements.reduce((acc, x) => acc + (x.labor_waived_amount || 0) + (x.parts_waived_amount || 0), 0).toLocaleString()}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Vouchers Grid */}
+                  {vehicleEntitlements.length === 0 ? (
+                    <div className="py-14 text-center border-2 border-dashed border-border rounded-xl p-6">
+                      <Ticket className="h-10 w-10 text-muted-foreground/50 mx-auto mb-2" />
+                      <h4 className="text-sm font-semibold text-foreground">No Free Service Entitlements Registered</h4>
+                      <p className="text-xs text-muted-foreground max-w-sm mx-auto mt-1 mb-4">
+                        Register OEM complimentary vouchers or annual fleet maintenance contracts (AMC) for this vehicle.
+                      </p>
+                      <AppButton
+                        variant="primary"
+                        size="sm"
+                        onClick={() => handleOpenAddEntitlementModal(selectedVehicleForRenewals)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs"
+                      >
+                        <Plus className="h-3.5 w-3.5 mr-1" />
+                        Create 1st Free Service Voucher
+                      </AppButton>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {vehicleEntitlements.map((ent) => {
+                        const isRedeemed = ent.status === "REDEEMED";
+                        const isExpired = ent.statusBadge === "EXPIRED" && !isRedeemed;
+                        const isExpiring = ent.statusBadge === "EXPIRING_SOON" && !isRedeemed;
+
+                        return (
+                          <div
+                            key={ent.id}
+                            className={`p-4 rounded-xl border relative flex flex-col justify-between transition-all ${
+                              isRedeemed
+                                ? "bg-blue-50/30 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/60"
+                                : isExpired
+                                ? "bg-rose-50/30 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/60"
+                                : isExpiring
+                                ? "bg-amber-50/30 dark:bg-amber-950/20 border-amber-300 dark:border-amber-800"
+                                : "bg-surface border-border hover:border-blue-500/40 shadow-xs"
+                            }`}
+                          >
+                            <div className="space-y-3">
+                              {/* Header */}
+                              <div className="flex items-start justify-between gap-2">
+                                <div>
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-muted text-foreground border border-border">
+                                      {ent.voucher_number || `VOUCHER-${ent.id.slice(0, 6).toUpperCase()}`}
+                                    </span>
+                                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                                      {ent.coverage_scope === "LABOR_ONLY" ? "100% Free Labor" : "Full Parts + Labor"}
+                                    </span>
+                                  </div>
+                                  <h4 className="text-sm font-bold text-foreground mt-1">{ent.service_title}</h4>
+                                  <p className="text-[11px] text-muted-foreground">{ent.provider_vendor}</p>
+                                </div>
+
+                                <div>
+                                  {isRedeemed ? (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
+                                      <CheckCircle2 className="h-3 w-3" />
+                                      Claimed
+                                    </span>
+                                  ) : isExpired ? (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30">
+                                      <AlertTriangle className="h-3 w-3" />
+                                      Expired / Lapsed
+                                    </span>
+                                  ) : isExpiring ? (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30 animate-pulse">
+                                      <Clock className="h-3 w-3" />
+                                      Expiring Soon
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-500/30">
+                                      <Ticket className="h-3 w-3" />
+                                      Available
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Dual-Validity Metrics */}
+                              <div className="grid grid-cols-2 gap-2 text-xs">
+                                <div className="p-2 rounded-lg bg-surface/70 border border-border/60">
+                                  <div className="text-[10px] text-muted-foreground uppercase flex items-center gap-1">
+                                    <Calendar className="h-3 w-3 text-blue-500" />
+                                    <span>Date Validity</span>
+                                  </div>
+                                  <div className="font-semibold text-foreground text-[11px] mt-0.5">
+                                    {ent.valid_from_date} ➔ {ent.valid_to_date}
+                                  </div>
+                                  {!isRedeemed && (
+                                    <div className={`text-[10px] font-medium mt-0.5 ${
+                                      (ent.daysRemaining ?? 0) < 0 ? "text-rose-600" : (ent.daysRemaining ?? 0) <= 30 ? "text-amber-600" : "text-emerald-600"
+                                    }`}>
+                                      {(ent.daysRemaining ?? 0) < 0 ? "Date expired" : `${ent.daysRemaining} days left`}
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="p-2 rounded-lg bg-surface/70 border border-border/60">
+                                  <div className="text-[10px] text-muted-foreground uppercase flex items-center gap-1">
+                                    <Gauge className="h-3 w-3 text-indigo-500" />
+                                    <span>Mileage Bounds</span>
+                                  </div>
+                                  <div className="font-semibold text-foreground text-[11px] mt-0.5">
+                                    Max {ent.max_odometer_km.toLocaleString()} KM
+                                  </div>
+                                  {!isRedeemed && (
+                                    <div className={`text-[10px] font-medium mt-0.5 ${
+                                      (ent.kmRemaining ?? 0) < 0 ? "text-rose-600" : (ent.kmRemaining ?? 0) <= 500 ? "text-amber-600" : "text-emerald-600"
+                                    }`}>
+                                      {(ent.kmRemaining ?? 0) < 0 ? "Mileage exceeded" : `${ent.kmRemaining?.toLocaleString()} KM remaining`}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Redemption Record if Claimed */}
+                              {isRedeemed && (
+                                <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs space-y-1">
+                                  <div className="font-bold text-emerald-800 dark:text-emerald-300 flex items-center justify-between">
+                                    <span>Claimed at {ent.workshop_center || "Authorized Workshop"}</span>
+                                    <span>Waived: ₹{((ent.labor_waived_amount || 0) + (ent.parts_waived_amount || 0)).toLocaleString()}</span>
+                                  </div>
+                                  <div className="text-[11px] text-muted-foreground flex items-center gap-3">
+                                    <span>Redeemed Odo: {ent.redeemed_odometer_km ? `${ent.redeemed_odometer_km.toLocaleString()} KM` : "N/A"}</span>
+                                    {ent.invoice_number && <span>Invoice: #{ent.invoice_number}</span>}
+                                  </div>
+                                </div>
+                              )}
+
+                              {ent.terms_conditions && (
+                                <p className="text-[11px] text-muted-foreground italic line-clamp-2">
+                                  Note: {ent.terms_conditions}
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Actions */}
+                            <div className="mt-3 pt-3 border-t border-border/60 flex items-center justify-between gap-2">
+                              <span className="text-[10px] text-muted-foreground">
+                                Recorded by {ent.renewed_by || "System"}
+                              </span>
+
+                              <div className="flex items-center gap-1.5">
+                                {!isRedeemed && (
+                                  <AppButton
+                                    variant="primary"
+                                    size="sm"
+                                    onClick={() => handleOpenRedeemEntitlementModal(ent)}
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7 px-2.5 font-semibold gap-1 shadow-2xs"
+                                  >
+                                    <CheckCircle2 className="h-3 w-3" />
+                                    <span>Claim Voucher</span>
+                                  </AppButton>
+                                )}
+                                <AppButton
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  title="Void Voucher"
+                                  onClick={() => handleDeleteEntitlement(ent.id)}
+                                  className="h-7 w-7 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </AppButton>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-border bg-surface/50 flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">
+                All free service redemptions and policy renewal cycles are preserved in one immutable vehicle lineage track.
+              </span>
+              <AppButton
+                variant="outline"
+                size="sm"
+                onClick={() => setIsUnifiedRenewalsModalOpen(false)}
+              >
+                Close Passport
+              </AppButton>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------------------------- */}
+      {/* ADD SERVICE ENTITLEMENT / AMC VOUCHER MODAL */}
+      {/* ---------------------------------------------------------------------- */}
+      {isAddEntitlementModalOpen && selectedVehicleForRenewals && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/75 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-200">
+          <div className="bg-surface border border-border w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-4 border-b border-border bg-slate-50 dark:bg-slate-900 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Ticket className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                <h3 className="font-bold text-sm text-foreground">Add Free Service / AMC Voucher</h3>
+              </div>
+              <AppButton
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => setIsAddEntitlementModalOpen(false)}
+              >
+                <X className="h-4 w-4" />
+              </AppButton>
+            </div>
+
+            <form onSubmit={handleSaveAddEntitlement} className="p-5 overflow-y-auto space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-foreground block mb-1">Service Title *</label>
+                <AppInput
+                  value={entitlementFormTitle}
+                  onChange={(e) => setEntitlementFormTitle(e.target.value)}
+                  placeholder="e.g. 2nd OEM Periodic Free Service"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-foreground block mb-1">Entitlement Type</label>
+                  <select
+                    value={entitlementFormType}
+                    onChange={(e) => setEntitlementFormType(e.target.value)}
+                    className="w-full text-xs p-2 rounded-lg border border-border bg-surface text-foreground"
+                  >
+                    <option value="OEM_FREE_1">1st OEM Free Service</option>
+                    <option value="OEM_FREE_2">2nd OEM Free Service</option>
+                    <option value="OEM_FREE_3">3rd OEM Free Service</option>
+                    <option value="AMC_PACKAGE">AMC Fleet Package</option>
+                    <option value="EXTENDED_WARRANTY">Extended Warranty</option>
+                    <option value="DEALER_PROMO">Dealer Promo / Goodwill</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-foreground block mb-1">Coverage Scope</label>
+                  <select
+                    value={entitlementFormScope}
+                    onChange={(e) => setEntitlementFormScope(e.target.value)}
+                    className="w-full text-xs p-2 rounded-lg border border-border bg-surface text-foreground"
+                  >
+                    <option value="LABOR_ONLY">100% Labor Only</option>
+                    <option value="LABOR_AND_PARTS">Labor & Standard Parts</option>
+                    <option value="FULL_COMPREHENSIVE">Full Comprehensive</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-foreground block mb-1">Voucher Number</label>
+                  <AppInput
+                    value={entitlementFormVoucherNo}
+                    onChange={(e) => setEntitlementFormVoucherNo(e.target.value)}
+                    placeholder="e.g. VOUCHER-MH12-FS2"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-foreground block mb-1">Provider / Vendor</label>
+                  <AppInput
+                    value={entitlementFormProvider}
+                    onChange={(e) => setEntitlementFormProvider(e.target.value)}
+                    placeholder="OEM Dealership Network"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-foreground block mb-1">Valid From Date *</label>
+                  <AppInput
+                    type="date"
+                    value={entitlementFormValidFrom}
+                    onChange={(e) => setEntitlementFormValidFrom(e.target.value)}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-foreground block mb-1">Valid To / Expiry Date *</label>
+                  <AppInput
+                    type="date"
+                    value={entitlementFormValidTo}
+                    onChange={(e) => setEntitlementFormValidTo(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-foreground block mb-1">Min Odometer (KM)</label>
+                  <AppInput
+                    type="number"
+                    value={entitlementFormMinKm}
+                    onChange={(e) => setEntitlementFormMinKm(Number(e.target.value))}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-foreground block mb-1">Max Odometer Limit (KM) *</label>
+                  <AppInput
+                    type="number"
+                    value={entitlementFormMaxKm}
+                    onChange={(e) => setEntitlementFormMaxKm(Number(e.target.value))}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-foreground block mb-1">Terms & Conditions</label>
+                <AppInput
+                  value={entitlementFormTerms}
+                  onChange={(e) => setEntitlementFormTerms(e.target.value)}
+                  placeholder="e.g. Labor free. Engine oil and filters chargeable."
+                />
+              </div>
+
+              <div className="p-3 border-t border-border flex items-center justify-end gap-2 bg-surface/50">
+                <AppButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsAddEntitlementModalOpen(false)}
+                >
+                  Cancel
+                </AppButton>
+                <AppButton
+                  type="submit"
+                  variant="primary"
+                  size="sm"
+                  disabled={modalSubmitting}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                >
+                  {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin mr-1" /> : <Save className="h-3.5 w-3.5 mr-1" />}
+                  Save Voucher
+                </AppButton>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------------------------- */}
+      {/* REDEEM / CLAIM SERVICE ENTITLEMENT MODAL */}
+      {/* ---------------------------------------------------------------------- */}
+      {isRedeemEntitlementModalOpen && selectedEntitlementForRedeem && selectedVehicleForRenewals && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/75 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-200">
+          <div className="bg-surface border border-border w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-4 border-b border-border bg-slate-50 dark:bg-slate-900 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                <div>
+                  <h3 className="font-bold text-sm text-foreground">Claim & Redeem Service Voucher</h3>
+                  <p className="text-[11px] text-muted-foreground">{selectedEntitlementForRedeem.service_title}</p>
+                </div>
+              </div>
+              <AppButton
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => setIsRedeemEntitlementModalOpen(false)}
+              >
+                <X className="h-4 w-4" />
+              </AppButton>
+            </div>
+
+            <form onSubmit={handleSaveRedeemEntitlement} className="p-5 overflow-y-auto space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-foreground block mb-1">Odometer at Service (KM) *</label>
+                  <AppInput
+                    type="number"
+                    value={redeemFormOdometer}
+                    onChange={(e) => setRedeemFormOdometer(Number(e.target.value))}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-foreground block mb-1">Invoice / Job Card #</label>
+                  <AppInput
+                    value={redeemFormInvoiceNo}
+                    onChange={(e) => setRedeemFormInvoiceNo(e.target.value)}
+                    placeholder="INV-10928"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-foreground block mb-1">Workshop / Service Center Name *</label>
+                <AppInput
+                  value={redeemFormWorkshop}
+                  onChange={(e) => setRedeemFormWorkshop(e.target.value)}
+                  placeholder="e.g. Pune Central Authorized Workshop"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-foreground block mb-1">Labor Amount Waived (₹)</label>
+                  <AppInput
+                    type="number"
+                    value={redeemFormLaborWaived}
+                    onChange={(e) => setRedeemFormLaborWaived(Number(e.target.value))}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-foreground block mb-1">Parts Amount Waived (₹)</label>
+                  <AppInput
+                    type="number"
+                    value={redeemFormPartsWaived}
+                    onChange={(e) => setRedeemFormPartsWaived(Number(e.target.value))}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-foreground block mb-1">Scanned Invoice / Stamped Bill URL</label>
+                <AppInput
+                  value={redeemFormDocUrl}
+                  onChange={(e) => setRedeemFormDocUrl(e.target.value)}
+                  placeholder="https://.../stamped-service-bill.pdf"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-foreground block mb-1">Notes / Remarks</label>
+                <AppInput
+                  value={redeemFormNotes}
+                  onChange={(e) => setRedeemFormNotes(e.target.value)}
+                  placeholder="e.g. 1st free inspection completed with oil change."
+                />
+              </div>
+
+              <div className="p-3 border-t border-border flex items-center justify-end gap-2 bg-surface/50">
+                <AppButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsRedeemEntitlementModalOpen(false)}
+                >
+                  Cancel
+                </AppButton>
+                <AppButton
+                  type="submit"
+                  variant="primary"
+                  size="sm"
+                  disabled={modalSubmitting}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
+                >
+                  {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin mr-1" /> : <CheckCircle2 className="h-3.5 w-3.5 mr-1" />}
+                  Confirm Redemption
+                </AppButton>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------------------------- */}
       {/* 1. VIEW VEHICLE INSPECTOR MODAL */}
       {/* ---------------------------------------------------------------------- */}
       {viewingVehicle && (
@@ -11646,6 +12706,19 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 >
                   <ClipboardCheck className="h-3.5 w-3.5" />
                   <span>Revision History</span>
+                </AppButton>
+                <AppButton
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const v = viewingVehicle;
+                    handleOpenVehicleUnifiedRenewalsModal(v);
+                  }}
+                  className="text-xs h-8 font-semibold gap-1.5 text-blue-600 dark:text-blue-400 border-blue-500/30 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 shadow-2xs"
+                  title="Unified Renewals & Free Service Entitlements"
+                >
+                  <CalendarSync className="h-3.5 w-3.5" />
+                  <span>Renewals & Free Services</span>
                 </AppButton>
                 {canEditVehicle && (
                   <AppButton
