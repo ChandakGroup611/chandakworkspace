@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import { usePermissions } from "@/hooks/usePermissions";
 import { FleetMasterStore } from "@/components/vehicle/services/fleetMasterStore";
-import { fetchMyFleetAccessAction } from "@/lib/actions/vehicleRbac";
+import { fetchMyFleetAccessAction, fetchFleetRbacPoliciesAction } from "@/lib/actions/vehicleRbac";
 import { FleetFunctionalModule, FleetRoleCode, FleetMovementAccessScope, FleetUserAccessRecord } from "@/types/vehicleRbacTypes";
 
 // In-memory module cache for user fleet access to avoid repeated DB hits
@@ -36,7 +36,7 @@ export function useFleetPermissions() {
     return () => unsubscribe();
   }, []);
 
-  // Fetch actual user access record from server when on Vehicle route or cache is cold
+  // Fetch actual user access record & policies from server when on Vehicle route or cache is cold
   useEffect(() => {
     let isMounted = true;
 
@@ -57,13 +57,21 @@ export function useFleetPermissions() {
 
     async function loadMyAccess() {
       try {
-        const res = await fetchMyFleetAccessAction();
-        if (isMounted && res.success && res.fleetAccess) {
+        const [accessRes, policiesRes] = await Promise.all([
+          fetchMyFleetAccessAction(),
+          fetchFleetRbacPoliciesAction()
+        ]);
+
+        if (isMounted && accessRes.success && accessRes.fleetAccess) {
           cachedFleetAccessUserId = userId;
-          cachedFleetAccessRecord = res.fleetAccess;
+          cachedFleetAccessRecord = accessRes.fleetAccess;
           cachedFleetAccessTimestamp = Date.now();
-          setServerUserAccess(res.fleetAccess);
-          FleetMasterStore.saveUserAccess(res.fleetAccess);
+          setServerUserAccess(accessRes.fleetAccess);
+          FleetMasterStore.saveUserAccess(accessRes.fleetAccess);
+        }
+
+        if (isMounted && policiesRes.success && policiesRes.policies) {
+          FleetMasterStore.saveRbacPolicies(policiesRes.policies);
         }
       } catch (err) {
         console.warn("[useFleetPermissions] fetchMyFleetAccess error:", err);
@@ -114,6 +122,11 @@ export function useFleetPermissions() {
     if (moduleCode === "TRIPS" && (hasPermission("TRIPS_VIEW") || hasPermission("TRIPS_MANAGE") || userAccessRecord?.canDispatchTrips)) return true;
     if (moduleCode === "TRAVELERS" && (hasPermission("TRIPS_VIEW") || hasPermission("TRIPS_MANAGE") || userAccessRecord?.canDispatchTrips)) return true;
     if (moduleCode === "MAINTENANCE" && (hasPermission("FLEET_MAINTENANCE_VIEW") || hasPermission("FLEET_MAINTENANCE_MANAGE") || userAccessRecord?.canManageMaintenance)) return true;
+    if (moduleCode === "PARTS" && (hasPermission("FLEET_MAINTENANCE_VIEW") || hasPermission("FLEET_PARTS_VIEW") || userAccessRecord?.canManageMaintenance)) return true;
+    if (moduleCode === "VENDORS" && (hasPermission("FLEET_VENDORS_VIEW") || hasPermission("FLEET_MAINTENANCE_VIEW") || userAccessRecord?.canManageMaintenance)) return true;
+    if (moduleCode === "ALERTS" && (hasPermission("FLEET_ALERTS_VIEW") || userAccessRecord?.canManageVehicles || userAccessRecord?.canManageMaintenance)) return true;
+    if (moduleCode === "MY_GARAGE") return true;
+    if (moduleCode === "LEARNING") return true;
     if (moduleCode === "REPORTS" && (hasPermission("FLEET_REPORTS_VIEW") || hasPermission("VEHICLES_MANAGE") || userAccessRecord?.canViewReports)) return true;
     if (moduleCode === "RBAC" && (hasPermission("USERS_VIEW") || effectiveFleetRole === "FLEET_ADMIN")) return true;
     if (moduleCode === "SETTINGS" && (hasPermission("SETTINGS_MANAGE") || userAccessRecord?.canManageSettings || effectiveFleetRole === "FLEET_ADMIN")) return true;
@@ -135,6 +148,9 @@ export function useFleetPermissions() {
     if (moduleCode === "TRIPS" && (hasPermission("TRIPS_CREATE") || hasPermission("TRIPS_DISPATCH") || hasPermission("TRIPS_MANAGE") || userAccessRecord?.canDispatchTrips)) return true;
     if (moduleCode === "TRAVELERS" && (hasPermission("TRIPS_CREATE") || hasPermission("TRIPS_DISPATCH") || userAccessRecord?.canDispatchTrips)) return true;
     if (moduleCode === "MAINTENANCE" && (hasPermission("FLEET_MAINTENANCE_CREATE") || hasPermission("FLEET_MAINTENANCE_MANAGE") || userAccessRecord?.canManageMaintenance)) return true;
+    if (moduleCode === "PARTS" && (hasPermission("FLEET_MAINTENANCE_CREATE") || hasPermission("FLEET_MAINTENANCE_MANAGE") || userAccessRecord?.canManageMaintenance)) return true;
+    if (moduleCode === "VENDORS" && (hasPermission("FLEET_VENDORS_CREATE") || hasPermission("FLEET_MAINTENANCE_MANAGE") || userAccessRecord?.canManageMaintenance)) return true;
+    if (moduleCode === "MY_GARAGE") return true;
 
     const pol = policies.find(p => p.roleCode === effectiveFleetRole && (p.module === moduleCode || p.module === "ALL"));
     if (pol) return pol.canCreate;
@@ -149,6 +165,8 @@ export function useFleetPermissions() {
     if (moduleCode === "DRIVERS" && (hasPermission("DRIVERS_UPDATE") || hasPermission("DRIVERS_EDIT") || hasPermission("DRIVERS_MANAGE") || userAccessRecord?.canManageDrivers)) return true;
     if (moduleCode === "TRIPS" && (hasPermission("TRIPS_UPDATE") || hasPermission("TRIPS_DISPATCH") || hasPermission("TRIPS_MANAGE") || userAccessRecord?.canDispatchTrips)) return true;
     if (moduleCode === "MAINTENANCE" && (hasPermission("FLEET_MAINTENANCE_UPDATE") || hasPermission("FLEET_MAINTENANCE_MANAGE") || userAccessRecord?.canManageMaintenance)) return true;
+    if (moduleCode === "PARTS" && (hasPermission("FLEET_MAINTENANCE_UPDATE") || hasPermission("FLEET_MAINTENANCE_MANAGE") || userAccessRecord?.canManageMaintenance)) return true;
+    if (moduleCode === "VENDORS" && (hasPermission("FLEET_VENDORS_UPDATE") || hasPermission("FLEET_MAINTENANCE_MANAGE") || userAccessRecord?.canManageMaintenance)) return true;
 
     const pol = policies.find(p => p.roleCode === effectiveFleetRole && (p.module === moduleCode || p.module === "ALL"));
     if (pol) return pol.canUpdate;
@@ -163,6 +181,8 @@ export function useFleetPermissions() {
     if (moduleCode === "DRIVERS" && (hasPermission("DRIVERS_DELETE") || hasPermission("DRIVERS_MANAGE"))) return true;
     if (moduleCode === "TRIPS" && (hasPermission("TRIPS_DELETE") || hasPermission("TRIPS_MANAGE"))) return true;
     if (moduleCode === "MAINTENANCE" && (hasPermission("FLEET_MAINTENANCE_DELETE") || hasPermission("FLEET_MAINTENANCE_MANAGE"))) return true;
+    if (moduleCode === "PARTS" && (hasPermission("FLEET_MAINTENANCE_DELETE") || hasPermission("FLEET_MAINTENANCE_MANAGE"))) return true;
+    if (moduleCode === "VENDORS" && (hasPermission("FLEET_VENDORS_DELETE") || hasPermission("FLEET_MAINTENANCE_MANAGE"))) return true;
 
     const pol = policies.find(p => p.roleCode === effectiveFleetRole && (p.module === moduleCode || p.module === "ALL"));
     if (pol) return pol.canDelete;
