@@ -22,8 +22,10 @@ export interface ProjectMaster {
   leadManagerEmail?: string;
   taggedConsultants?: string[]; // Multi-selected consultant partner names / IDs (Project-Level)
   taggedCategories?: string[]; // Multi-selected discipline / category names (Project-Level)
+  taggedPackages?: string[]; // Multi-selected Package Master names (Project-Level alias)
   subProjectConsultants?: Record<string, string[]>; // Subproject/Tower ID -> Consultant names/IDs
   subProjectCategories?: Record<string, string[]>; // Subproject/Tower ID -> Category names
+  subProjectPackages?: Record<string, string[]>; // Subproject/Tower ID -> Package names (alias)
   description?: string;
   createdAt: string;
 }
@@ -40,33 +42,40 @@ export interface TowerMaster {
   targetCompletionDate?: string;
   taggedConsultants?: string[]; // Sub-project level assigned consultants
   taggedCategories?: string[]; // Sub-project level assigned discipline categories
+  taggedPackages?: string[]; // Sub-project level assigned packages (alias)
   description?: string;
   createdAt?: string;
 }
 
 export type SubProjectMaster = TowerMaster;
 
-export interface DisciplineMaster {
+export interface PackageMaster {
   id: string;
-  name: string;
-  code: string;
+  name: string; // Main engineering discipline/package e.g. "Architectural", "Structural", "MEPF Services", "Civil & RCC", "Façade", "Landscape", "Interior", "Fire & Safety", "BIM"
+  code: string; // Identifier code e.g. "ARCH", "STR", "MEP", "CIV", "FAC"
   description?: string;
   color?: string;
   icon?: string;
   createdAt?: string;
 }
 
-export type CategoryMaster = DisciplineMaster;
+export type DisciplineMaster = PackageMaster;
+export type CategoryMaster = PackageMaster;
 
-export interface WorkPackageMaster {
+export interface SubPackageMaster {
   id: string;
   disciplineId: string;
   disciplineName: string;
   packageName: string;
-  packageCode?: string;
+  packageCode: string;
+  packageId?: string; // Foreign key to parent PackageMaster.id (alias disciplineId)
+  subPackageName?: string; // Granular Sub-Package / Deliverable title (e.g. "Structural Foundation & Superstructure")
+  subPackageCode?: string; // Sub-Package Code e.g. "STR-01" (alias packageCode)
   defaultDurationDays?: number;
   description?: string;
 }
+
+export type WorkPackageMaster = SubPackageMaster;
 
 export interface StatutoryAuthorityMaster {
   id: string;
@@ -80,7 +89,9 @@ export interface ConsultantMaster {
   firmName: string;
   discipline: string;
   categories?: string[]; // Multi-selected mapped categories from Category Master
-  expertise: string[]; // Work package tags (multi-selection)
+  packages?: string[]; // Multi-selected mapped parent packages from Package Master (alias)
+  expertise: string[]; // Work package / sub-package tags (multi-selection)
+  subPackages?: string[]; // Sub-package tags (alias)
   contactPerson?: string;
   email?: string;
   phone?: string;
@@ -122,7 +133,7 @@ export interface ForeignKeyDependencyItem {
 }
 
 export interface EntityDependencyReport {
-  entityType: "PROJECT" | "SUB_PROJECT" | "TOWER" | "PACKAGE" | "CONSULTANT" | "AUTHORITY" | "CATEGORY";
+  entityType: "PROJECT" | "SUB_PROJECT" | "TOWER" | "PACKAGE" | "SUB_PACKAGE" | "CONSULTANT" | "AUTHORITY" | "CATEGORY";
   entityId: string;
   entityName: string;
   totalDependentRecords: number;

@@ -354,7 +354,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
               Project Master (Parent Development Projects)
             </h3>
             <p className="text-xs text-muted-foreground">
-              Master real estate developments with specifications, consultant mappings, and discipline scopes
+              Master real estate developments with specifications, consultant mappings, and package scopes
             </p>
           </div>
         </div>
@@ -398,7 +398,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
         </div>
         <div className="p-3 rounded-xl bg-surface border border-border flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-semibold text-muted-foreground block">Active Disciplines</span>
+            <span className="text-[11px] font-semibold text-muted-foreground block">Active Packages</span>
             <span className="text-lg font-black text-amber-600 dark:text-amber-400">
               {categories.length}
             </span>
@@ -583,7 +583,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                     )}
                   </div>
 
-                  {/* Tagged Consultants & Categories Summary */}
+                  {/* Tagged Consultants & Packages Summary */}
                   <div className="space-y-2 pt-1 border-t border-border text-xs">
                     {/* Consultants */}
                     <div>
@@ -626,7 +626,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[11px] font-bold text-muted-foreground flex items-center gap-1">
                           <Tag className="h-3 w-3 text-blue-500" />
-                          <span>Active Categories ({taggedCats.length}):</span>
+                          <span>Tagged Packages ({taggedCats.length}):</span>
                         </span>
                       </div>
                       <div className="flex flex-wrap gap-1 max-h-14 overflow-y-auto custom-scrollbar">
@@ -672,7 +672,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
         <TransactionFormLayout
           title={editingProject ? `Edit Project: ${projectName || editingProject.name}` : "Create New Project Master"}
           icon={Building2}
-          description="Configure specifications, map consultant partners, and define discipline scopes"
+          description="Configure specifications, map consultant partners, and define package scopes"
           onBack={() => setIsModalOpen(false)}
           backLabel="Back to Projects"
           breadcrumbs={[
@@ -709,7 +709,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                 }`}
               >
                 <Users className="h-4 w-4" />
-                <span>2. Map Consultants & Categories ({selectedConsultants.length} Cons / {selectedCategories.length} Cats)</span>
+                <span>2. Map Consultants & Packages ({selectedConsultants.length} Cons / {selectedCategories.length} Pkgs)</span>
               </button>
             </div>
 
@@ -895,7 +895,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                 </div>
               )}
 
-              {/* 🤝 CONSULTANT & CATEGORY MAPPING SECTION (2-COLUMN WIDE GRID) */}
+              {/* 🤝 CONSULTANT & PACKAGE MAPPING SECTION (2-COLUMN WIDE GRID) */}
               {formTab === "CONSULTANTS_CATEGORIES" && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {/* Column 1: Consultants Mapping */}
@@ -966,7 +966,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                                 <div className="min-w-0">
                                   <div className="truncate font-semibold text-foreground">{c.name}</div>
                                   <div className="text-[10px] text-muted-foreground truncate font-normal mt-0.5">
-                                    {cCats.length > 0 ? cCats.join(" • ") : "No categories defined"}
+                                    {cCats.length > 0 ? cCats.join(" • ") : "No packages defined"}
                                   </div>
                                 </div>
                                 <div className={`h-4 w-4 rounded flex items-center justify-center shrink-0 border ${
@@ -984,14 +984,14 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                     </div>
                   </div>
 
-                  {/* Column 2: Discipline Categories Scope Mapping */}
+                  {/* Column 2: Tagged Packages Scope Mapping */}
                   <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-border space-y-3 flex flex-col justify-between">
                     <div className="space-y-2.5">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div className="flex items-center gap-1.5">
                           <Tag className="h-4 w-4 text-blue-500" />
                           <label className="text-xs font-bold text-foreground">
-                            Discipline Categories Scope
+                            Tagged Packages Scope
                           </label>
                           <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-700 dark:text-blue-300 font-bold">
                             {selectedCategories.length} of {availableCategoriesList.length} Selected
@@ -1040,21 +1040,21 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                           </div>
                           <h4 className="text-xs font-bold text-foreground">No Consultants Selected Yet</h4>
                           <p className="text-[11px] text-muted-foreground max-w-xs mx-auto leading-relaxed">
-                            Select one or more consultant partners on the left to auto-load their mapped categories here.
+                            Select one or more consultant partners on the left to auto-load their mapped packages here.
                           </p>
                           <button
                             type="button"
                             onClick={() => setShowAllMasterCategories(true)}
                             className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold hover:underline cursor-pointer pt-1 inline-block"
                           >
-                            Or browse all {categories.length} Category Master disciplines →
+                            Or browse all {categories.length} Package Master packages →
                           </button>
                         </div>
                       ) : (
                         <div className="space-y-1.5 max-h-72 overflow-y-auto custom-scrollbar pr-1">
                           {filteredModalCategories.length === 0 ? (
                             <div className="p-4 text-center text-xs text-muted-foreground italic">
-                              No categories found matching search.
+                              No packages found matching search.
                             </div>
                           ) : (
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
@@ -1094,14 +1094,14 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                     {/* Mode Toggle Footer */}
                     <div className="pt-2 border-t border-border flex items-center justify-between text-[11px]">
                       <span className="text-muted-foreground">
-                        {showAllMasterCategories ? "Viewing all Master categories" : "Filtered by selected consultants"}
+                        {showAllMasterCategories ? "Viewing all Master packages" : "Filtered by selected consultants"}
                       </span>
                       <button
                         type="button"
                         onClick={() => setShowAllMasterCategories(!showAllMasterCategories)}
                         className="text-blue-600 dark:text-blue-400 font-semibold hover:underline cursor-pointer"
                       >
-                        {showAllMasterCategories ? "Filter by selected consultants" : "View all master categories"}
+                        {showAllMasterCategories ? "Filter by selected consultants" : "View all master packages"}
                       </button>
                     </div>
                   </div>
@@ -1117,7 +1117,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                       onClick={() => setFormTab("CONSULTANTS_CATEGORIES")}
                       className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline cursor-pointer"
                     >
-                      Next: Map Consultants & Categories →
+                      Next: Map Consultants & Packages →
                     </button>
                   ) : (
                     <button

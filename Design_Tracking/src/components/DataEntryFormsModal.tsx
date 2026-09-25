@@ -375,14 +375,14 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Work Package Scope *</label>
+                <label className="text-xs font-bold text-foreground">Sub-Package Deliverable Scope *</label>
                 <select
                   required
                   value={pkgId}
                   onChange={e => setPkgId(e.target.value)}
                   className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                 >
-                  <option value="">Select Package</option>
+                  <option value="">Select Sub-Package</option>
                   {storeState.packages.map(p => (
                     <option key={p.id} value={p.id}>[{p.disciplineName}] {p.packageName}</option>
                   ))}

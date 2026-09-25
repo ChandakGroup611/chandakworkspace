@@ -139,7 +139,10 @@ export const TenderDesignMatrix: React.FC = () => {
 
   // Unique disciplines across all packages
   const categories = useMemo(() => {
-    const set = new Set(storeState.packages.map(p => p.disciplineName).filter(Boolean));
+    const set = new Set<string>();
+    storeState.packages.forEach(p => {
+      if (p.disciplineName) set.add(p.disciplineName);
+    });
     return Array.from(set);
   }, [storeState.packages]);
 
@@ -550,7 +553,7 @@ export const TenderDesignMatrix: React.FC = () => {
 
   // CSV Export
   const handleExportCsv = () => {
-    const headers = ["Discipline Category", "Work Package Name", ...visibleColumns.map(c => `${c.projectName} - ${c.towerName} (Status)`)];
+    const headers = ["Package Master", "Sub-Package Scope", ...visibleColumns.map(c => `${c.projectName} - ${c.towerName} (Status)`)];
     const rows = filteredPackages.map(pkg => {
       const rowVals = visibleColumns.map(col => {
         const entry = storeState.packageStatuses[`${col.projectId}__${col.towerId}__${pkg.id}`];
@@ -775,8 +778,8 @@ export const TenderDesignMatrix: React.FC = () => {
             selectedValues={selectedDisciplines}
             onChange={setSelectedDisciplines}
             colorTheme="emerald"
-            placeholder={`All Disciplines (${categories.length})`}
-            searchPlaceholder="Search discipline..."
+            placeholder={`All Packages (${categories.length})`}
+            searchPlaceholder="Search package..."
           />
 
           {/* 3. Consultants Dropdown */}
@@ -925,7 +928,7 @@ export const TenderDesignMatrix: React.FC = () => {
                 <th 
                   className="p-3.5 sticky left-0 z-30 bg-slate-100 dark:bg-slate-900 border-r border-border min-w-[280px] max-w-[320px] font-black text-foreground uppercase tracking-wider text-[11px] shadow-sm whitespace-nowrap"
                 >
-                  Work Package & Discipline
+                  Package & Sub-Package Deliverables
                 </th>
                 {visibleColumns.map((col, idx) => (
                   <th
@@ -1483,14 +1486,14 @@ export const TenderDesignMatrix: React.FC = () => {
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                     <SlidersHorizontal className="h-3.5 w-3.5 text-emerald-500" />
-                    <span>Discipline Scope</span>
+                    <span>Parent Package Scope</span>
                   </label>
                   <select
                     value={batchDiscipline}
                     onChange={e => setBatchDiscipline(e.target.value)}
                     className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-medium focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                   >
-                    <option value="ALL">All Disciplines ({storeState.packages.length} Packages)</option>
+                    <option value="ALL">All Packages ({storeState.packages.length} Sub-Packages)</option>
                     {categories.map(cat => (
                       <option key={cat} value={cat}>{cat} ({storeState.packages.filter(p => p.disciplineName === cat).length} Packages)</option>
                     ))}
@@ -1503,7 +1506,7 @@ export const TenderDesignMatrix: React.FC = () => {
                 <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-800 dark:text-blue-300 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <Info className="h-4 w-4 shrink-0 text-blue-500" />
-                    <span>No Work Packages loaded. Load the standard template to populate all 65+ packages.</span>
+                    <span>No Sub-Packages loaded. Load the standard template to populate all standard packages.</span>
                   </div>
                   <button
                     type="button"

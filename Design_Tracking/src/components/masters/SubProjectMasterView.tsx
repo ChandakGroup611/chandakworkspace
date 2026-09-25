@@ -336,7 +336,7 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
               Sub Project Master (Tower Wings & Phases)
             </h3>
             <p className="text-xs text-muted-foreground">
-              Manage discrete tower wings, execution phases, and their specific consultant & category mappings
+              Manage discrete tower wings, execution phases, and their specific consultant & package mappings
             </p>
           </div>
         </div>
@@ -506,7 +506,7 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
                     </div>
                   )}
 
-                  {/* Tagged Consultants & Categories */}
+                  {/* Tagged Consultants & Packages */}
                   <div className="space-y-1.5 pt-1.5 border-t border-border text-xs">
                     <div>
                       <span className="text-[10px] font-bold text-muted-foreground block mb-0.5">
@@ -530,7 +530,7 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
 
                     <div>
                       <span className="text-[10px] font-bold text-muted-foreground block mb-0.5">
-                        Categories ({taggedCats.length}):
+                        Tagged Packages ({taggedCats.length}):
                       </span>
                       <div className="flex flex-wrap gap-1 max-h-10 overflow-y-auto custom-scrollbar">
                         {taggedCats.map((cat, idx) => (
@@ -573,7 +573,7 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
         <TransactionFormLayout
           title={editingSubProject ? `Edit Sub-Project / Wing: ${subProjectName || editingSubProject.towerName}` : "Create New Sub-Project / Wing"}
           icon={Layers}
-          description="Define tower specifications, parent project linkage, and consultant/category mappings"
+          description="Define tower specifications, parent project linkage, and consultant/package mappings"
           onBack={() => setIsModalOpen(false)}
           backLabel="Back to Sub-Projects"
           breadcrumbs={[
@@ -611,7 +611,7 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
                   }`}
                 >
                   <Users className="h-4 w-4" />
-                  <span>2. Map Consultants & Categories ({selectedConsultants.length} Cons / {selectedCategories.length} Cats)</span>
+                  <span>2. Map Consultants & Packages ({selectedConsultants.length} Cons / {selectedCategories.length} Pkgs)</span>
                 </button>
               </div>
 
@@ -620,7 +620,7 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
                 type="button"
                 onClick={handleInheritFromParent}
                 className="px-3.5 py-2 rounded-xl text-xs font-bold bg-purple-500/10 text-purple-700 dark:text-purple-300 hover:bg-purple-500/20 transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
-                title="Inherit all tagged consultants and categories from the selected parent project"
+                title="Inherit all tagged consultants and packages from the selected parent project"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
                 <span>Inherit from Parent Project</span>
@@ -822,7 +822,7 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
                                 <div className="min-w-0">
                                   <div className="truncate font-semibold text-foreground">{c.name}</div>
                                   <div className="text-[10px] text-muted-foreground truncate font-normal mt-0.5">
-                                    {cCats.length > 0 ? cCats.join(" • ") : "No categories defined"}
+                                    {cCats.length > 0 ? cCats.join(" • ") : "No packages defined"}
                                   </div>
                                 </div>
                                 <div className={`h-4 w-4 rounded flex items-center justify-center shrink-0 border ${
@@ -840,14 +840,14 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
                     </div>
                   </div>
 
-                  {/* Column 2: Categories Scope Mapping */}
+                  {/* Column 2: Tagged Packages Scope Mapping */}
                   <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-border space-y-3 flex flex-col justify-between">
                     <div className="space-y-2.5">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div className="flex items-center gap-1.5">
                           <Tag className="h-4 w-4 text-blue-500" />
                           <label className="text-xs font-bold text-foreground">
-                            Sub-Project Category Scope
+                            Sub-Project Tagged Packages Scope
                           </label>
                           <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-700 dark:text-blue-300 font-bold">
                             {selectedCategories.length} of {availableCategoriesList.length} Selected
@@ -896,21 +896,21 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
                           </div>
                           <h4 className="text-xs font-bold text-foreground">No Consultants Selected Yet</h4>
                           <p className="text-[11px] text-muted-foreground max-w-xs mx-auto leading-relaxed">
-                            Select one or more consultant partners on the left to auto-load their mapped categories here, or inherit from the parent project.
+                            Select one or more consultant partners on the left to auto-load their mapped packages here, or inherit from the parent project.
                           </p>
                           <button
                             type="button"
                             onClick={() => setShowAllMasterCategories(true)}
                             className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold hover:underline cursor-pointer pt-1 inline-block"
                           >
-                            Or browse all {categories.length} Category Master disciplines →
+                            Or browse all {categories.length} Package Master packages →
                           </button>
                         </div>
                       ) : (
                         <div className="space-y-1.5 max-h-72 overflow-y-auto custom-scrollbar pr-1">
                           {filteredModalCategories.length === 0 ? (
                             <div className="p-4 text-center text-xs text-muted-foreground italic">
-                              No categories found matching search.
+                              No packages found matching search.
                             </div>
                           ) : (
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
@@ -950,14 +950,14 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
                     {/* Mode Toggle Footer */}
                     <div className="pt-2 border-t border-border flex items-center justify-between text-[11px]">
                       <span className="text-muted-foreground">
-                        {showAllMasterCategories ? "Viewing all Master categories" : "Filtered by selected consultants"}
+                        {showAllMasterCategories ? "Viewing all Master packages" : "Filtered by selected consultants"}
                       </span>
                       <button
                         type="button"
                         onClick={() => setShowAllMasterCategories(!showAllMasterCategories)}
                         className="text-blue-600 dark:text-blue-400 font-semibold hover:underline cursor-pointer"
                       >
-                        {showAllMasterCategories ? "Filter by selected consultants" : "View all master categories"}
+                        {showAllMasterCategories ? "Filter by selected consultants" : "View all master packages"}
                       </button>
                     </div>
                   </div>
@@ -973,7 +973,7 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
                       onClick={() => setFormTab("MAPPINGS")}
                       className="text-purple-600 dark:text-purple-400 font-bold hover:underline cursor-pointer"
                     >
-                      Next: Map Consultants & Categories →
+                      Next: Map Consultants & Packages →
                     </button>
                   ) : (
                     <button

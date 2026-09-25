@@ -9,6 +9,8 @@ import {
   ProjectMaster, 
   TowerMaster, 
   SubProjectMaster,
+  PackageMaster,
+  SubPackageMaster,
   DisciplineMaster, 
   CategoryMaster,
   WorkPackageMaster, 
@@ -47,7 +49,7 @@ import {
 
 const STORAGE_KEY = "CHANDAK_DESIGN_MASTER_STORE_V4";
 
-export const DEFAULT_DESIGN_CATEGORIES: CategoryMaster[] = [
+export const DEFAULT_DESIGN_CATEGORIES: PackageMaster[] = [
   { id: "cat-arch", name: "Architectural", code: "ARCH", icon: "🏛️", color: "purple", description: "Master planning, floor plans, elevations, sections & 3D visualization" },
   { id: "cat-str", name: "Structural", code: "STR", icon: "🏗️", color: "blue", description: "Substructure, superstructure, RCC frames, steel detailing & PT slabs" },
   { id: "cat-mep", name: "MEPF Services", code: "MEP", icon: "⚡", color: "amber", description: "HVAC, plumbing, electrical distribution, fire fighting & ELV" },
@@ -62,6 +64,8 @@ export const DEFAULT_DESIGN_CATEGORIES: CategoryMaster[] = [
   { id: "cat-bim", name: "BIM Coordination", code: "BIM", icon: "💻", color: "indigo", description: "3D clash detection, LOD 300/400 models, asset tagging & 4D simulation" },
   { id: "cat-spec", name: "Specialist Studies", code: "SPEC", icon: "🔬", color: "purple", description: "Wind tunnel analysis, acoustic studies, thermal comfort & lighting simulation" }
 ];
+
+export const DEFAULT_DESIGN_PACKAGES: PackageMaster[] = DEFAULT_DESIGN_CATEGORIES;
 
 export const STANDARD_DESIGN_ROLES: DesignRoleDefinition[] = [
   {
@@ -1245,96 +1249,112 @@ export class DesignMasterStore {
   }
 
   // ============================================================================
-  // Master Management: Categories & Disciplines (CRUD) with Audit Tracking
+  // Master Management: Package Master (Parent Engineering Packages / Disciplines)
   // ============================================================================
 
-  public static getCategories(): CategoryMaster[] {
+  public static getPackagesMaster(): PackageMaster[] {
     const state = this.getState();
     if (!state.disciplines || state.disciplines.length === 0) {
-      state.disciplines = [...DEFAULT_DESIGN_CATEGORIES];
+      state.disciplines = [...DEFAULT_DESIGN_PACKAGES];
     }
     return state.disciplines;
   }
 
+  public static getCategories(): CategoryMaster[] {
+    return this.getPackagesMaster();
+  }
+
   public static getDisciplines(): DisciplineMaster[] {
-    return this.getCategories();
+    return this.getPackagesMaster();
+  }
+
+  public static getPackageMaster(id: string): PackageMaster | undefined {
+    return this.getPackagesMaster().find(p => p.id === id || p.name === id);
+  }
+
+  public static addPackageMaster(
+    pkg: Omit<PackageMaster, "id" | "createdAt">,
+    createdBy = "Design Lead"
+  ): PackageMaster {
+    const state = this.getState();
+    const id = `pkg-mst-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+    const newPkg: PackageMaster = {
+      ...pkg,
+      id,
+      code: pkg.code?.trim().toUpperCase() || pkg.name.slice(0, 4).toUpperCase(),
+      createdAt: new Date().toISOString()
+    };
+
+    if (!state.disciplines) state.disciplines = [];
+    state.disciplines.push(newPkg);
+
+    this.logAudit({
+      action: "CREATE",
+      entityType: "CATEGORY",
+      entityId: id,
+      entityName: newPkg.name,
+      newValue: newPkg,
+      impactSummary: `Created Package Master "${newPkg.name}" (${newPkg.code})`,
+      changedBy: createdBy
+    });
+
+    this.notify();
+    return newPkg;
   }
 
   public static addCategory(
     category: Omit<CategoryMaster, "id" | "createdAt">,
     createdBy = "Design Lead"
   ): CategoryMaster {
-    const state = this.getState();
-    const id = `cat-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
-    const newCategory: CategoryMaster = {
-      ...category,
-      id,
-      code: category.code?.trim().toUpperCase() || category.name.slice(0, 4).toUpperCase(),
-      createdAt: new Date().toISOString()
-    };
-
-    if (!state.disciplines) state.disciplines = [];
-    state.disciplines.push(newCategory);
-
-    this.logAudit({
-      action: "CREATE",
-      entityType: "CATEGORY",
-      entityId: id,
-      entityName: newCategory.name,
-      newValue: newCategory,
-      impactSummary: `Created Category / Discipline "${newCategory.name}" (${newCategory.code})`,
-      changedBy: createdBy
-    });
-
-    this.notify();
-    return newCategory;
+    return this.addPackageMaster(category, createdBy);
   }
 
   public static addDiscipline(name: string, code: string, icon = "📁", createdBy = "Design Lead"): DisciplineMaster {
-    return this.addCategory({ name, code, icon }, createdBy);
+    return this.addPackageMaster({ name, code, icon }, createdBy);
   }
 
-  public static updateCategory(
+  public static updatePackageMaster(
     id: string,
-    updates: Partial<Omit<CategoryMaster, "id">>,
+    updates: Partial<Omit<PackageMaster, "id">>,
     changedBy = "Design Lead",
     reason?: string
-  ): CategoryMaster | null {
+  ): PackageMaster | null {
     const state = this.getState();
     const idx = state.disciplines.findIndex(d => d.id === id);
     if (idx === -1) return null;
 
-    const oldCat = { ...state.disciplines[idx] };
+    const oldPkg = { ...state.disciplines[idx] };
     state.disciplines[idx] = { ...state.disciplines[idx], ...updates };
-    const updatedCat = state.disciplines[idx];
+    const updatedPkg = state.disciplines[idx];
 
-    // If category name changed, propagate to work packages, consultants, drawings
-    if (updates.name && updates.name !== oldCat.name) {
+    // If package/category name changed, propagate to sub packages, consultants, drawings, projects
+    if (updates.name && updates.name !== oldPkg.name) {
       state.packages.forEach(p => {
-        if (p.disciplineName === oldCat.name || p.disciplineId === id) {
+        if (p.disciplineName === oldPkg.name || p.disciplineId === id || p.packageName === oldPkg.name) {
           p.disciplineName = updates.name!;
+          p.packageName = updates.name!;
         }
       });
       state.consultants.forEach(c => {
-        if (c.categories && c.categories.includes(oldCat.name)) {
-          c.categories = c.categories.map(cat => cat === oldCat.name ? updates.name! : cat);
+        if (c.categories && c.categories.includes(oldPkg.name)) {
+          c.categories = c.categories.map(cat => cat === oldPkg.name ? updates.name! : cat);
         }
-        if (c.category === oldCat.name) {
+        if (c.category === oldPkg.name) {
           c.category = updates.name!;
         }
       });
       state.projects.forEach(p => {
-        if (p.taggedCategories?.includes(oldCat.name)) {
-          p.taggedCategories = p.taggedCategories.map(cat => cat === oldCat.name ? updates.name! : cat);
+        if (p.taggedCategories?.includes(oldPkg.name)) {
+          p.taggedCategories = p.taggedCategories.map(cat => cat === oldPkg.name ? updates.name! : cat);
         }
       });
       state.towers.forEach(t => {
-        if (t.taggedCategories?.includes(oldCat.name)) {
-          t.taggedCategories = t.taggedCategories.map(cat => cat === oldCat.name ? updates.name! : cat);
+        if (t.taggedCategories?.includes(oldPkg.name)) {
+          t.taggedCategories = t.taggedCategories.map(cat => cat === oldPkg.name ? updates.name! : cat);
         }
       });
       (state.drawings || []).forEach(d => {
-        if (d.discipline === oldCat.name) {
+        if (d.discipline === oldPkg.name) {
           d.discipline = updates.name! as any;
         }
       });
@@ -1344,10 +1364,10 @@ export class DesignMasterStore {
       action: "UPDATE",
       entityType: "CATEGORY",
       entityId: id,
-      entityName: updatedCat.name,
-      previousValue: oldCat,
-      newValue: updatedCat,
-      impactSummary: `Updated Category / Discipline "${updatedCat.name}" parameters`,
+      entityName: updatedPkg.name,
+      previousValue: oldPkg,
+      newValue: updatedPkg,
+      impactSummary: `Updated Package Master "${updatedPkg.name}" parameters`,
       changedBy,
       reason
     });
@@ -1356,31 +1376,40 @@ export class DesignMasterStore {
     return state.disciplines[idx];
   }
 
-  public static deleteCategory(id: string, reason?: string, deletedBy = "Design Lead"): EntityDependencyReport {
-    const state = this.getState();
-    const cat = state.disciplines.find(d => d.id === id);
-    const depReport = this.getEntityDependencies("CATEGORY", id);
-    const catName = cat?.name || id;
+  public static updateCategory(
+    id: string,
+    updates: Partial<Omit<CategoryMaster, "id">>,
+    changedBy = "Design Lead",
+    reason?: string
+  ): CategoryMaster | null {
+    return this.updatePackageMaster(id, updates, changedBy, reason);
+  }
 
-    // 1. Remove category
+  public static deletePackageMaster(id: string, reason?: string, deletedBy = "Design Lead"): EntityDependencyReport {
+    const state = this.getState();
+    const pkg = state.disciplines.find(d => d.id === id);
+    const depReport = this.getEntityDependencies("CATEGORY", id);
+    const pkgName = pkg?.name || id;
+
+    // 1. Remove package from disciplines list
     state.disciplines = state.disciplines.filter(d => d.id !== id);
 
     // 2. Untag from consultants
     state.consultants.forEach(c => {
       if (c.categories) {
-        c.categories = c.categories.filter(ct => ct !== catName && ct !== id);
+        c.categories = c.categories.filter(ct => ct !== pkgName && ct !== id);
       }
     });
 
     // 3. Untag from projects & towers
     state.projects.forEach(p => {
       if (p.taggedCategories) {
-        p.taggedCategories = p.taggedCategories.filter(ct => ct !== catName && ct !== id);
+        p.taggedCategories = p.taggedCategories.filter(ct => ct !== pkgName && ct !== id);
       }
     });
     state.towers.forEach(t => {
       if (t.taggedCategories) {
-        t.taggedCategories = t.taggedCategories.filter(ct => ct !== catName && ct !== id);
+        t.taggedCategories = t.taggedCategories.filter(ct => ct !== pkgName && ct !== id);
       }
     });
 
@@ -1389,10 +1418,10 @@ export class DesignMasterStore {
       action: "CASCADE_DELETE",
       entityType: "CATEGORY",
       entityId: id,
-      entityName: catName,
-      previousValue: cat,
+      entityName: pkgName,
+      previousValue: pkg,
       newValue: null,
-      impactSummary: `Removed Category "${catName}" and untagged from ${depReport.totalDependentRecords} referencing records`,
+      impactSummary: `Removed Package Master "${pkgName}" and untagged from ${depReport.totalDependentRecords} referencing records`,
       foreignKeyDependencies: depReport.dependencies,
       changedBy: deletedBy,
       reason
@@ -1402,9 +1431,17 @@ export class DesignMasterStore {
     return depReport;
   }
 
+  public static deleteCategory(id: string, reason?: string, deletedBy = "Design Lead"): EntityDependencyReport {
+    return this.deletePackageMaster(id, reason, deletedBy);
+  }
+
   /**
-   * Resolves all unique Categories associated with a list of consultant partner names
+   * Resolves all unique Package Master names associated with a list of consultant partner names
    */
+  public static getPackagesForConsultants(consultantNamesOrIds: string[]): string[] {
+    return this.getCategoriesForConsultants(consultantNamesOrIds);
+  }
+
   public static getCategoriesForConsultants(consultantNamesOrIds: string[]): string[] {
     const state = this.getState();
     const categoriesSet = new Set<string>();
@@ -1462,60 +1499,105 @@ export class DesignMasterStore {
     return this.deleteTower(id, reason, deletedBy);
   }
 
-  public static getPackages(disciplineName?: string): WorkPackageMaster[] {
+  // ============================================================================
+  // Sub Package Master (Child Deliverables & Work Packages linked to Parent Package)
+  // ============================================================================
+
+  public static getSubPackages(parentPackageOrDisciplineName?: string): SubPackageMaster[] {
     const state = this.getState();
-    if (!disciplineName || disciplineName === "ALL") return state.packages;
-    return state.packages.filter(p => p.disciplineName === disciplineName);
+    const pkgs = state.packages || [];
+    if (!parentPackageOrDisciplineName || parentPackageOrDisciplineName === "ALL") return pkgs;
+    return pkgs.filter(p => p.disciplineName === parentPackageOrDisciplineName || p.packageName === parentPackageOrDisciplineName);
   }
 
-  public static addPackage(pkg: Omit<WorkPackageMaster, "id">, createdBy = "Design Lead"): WorkPackageMaster {
+  public static getPackages(disciplineName?: string): WorkPackageMaster[] {
+    return this.getSubPackages(disciplineName);
+  }
+
+  public static getSubPackage(id: string): SubPackageMaster | undefined {
+    return (this.getState().packages || []).find(p => p.id === id);
+  }
+
+  public static addSubPackage(pkg: Omit<SubPackageMaster, "id">, createdBy = "Design Lead"): SubPackageMaster {
     const state = this.getState();
-    const id = `pkg-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
-    const newPkg: WorkPackageMaster = { ...pkg, id };
-    state.packages.push(newPkg);
+    const id = `subpkg-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+    const deliverableTitle = pkg.subPackageName || pkg.packageName;
+    const parentPkg = pkg.packageName || pkg.disciplineName || "Architectural";
+    const code = pkg.subPackageCode || pkg.packageCode || `PKG-${(state.packages.length + 1).toString().padStart(2, "0")}`;
+
+    const newSubPkg: SubPackageMaster = {
+      ...pkg,
+      id,
+      packageName: deliverableTitle,
+      disciplineName: parentPkg,
+      disciplineId: pkg.disciplineId || pkg.packageId || `pkg-mst-${parentPkg.toLowerCase().replace(/[^a-z0-9]/g, "-")}`,
+      packageId: pkg.packageId || pkg.disciplineId,
+      subPackageName: deliverableTitle,
+      subPackageCode: code,
+      packageCode: code
+    };
+
+    if (!state.packages) state.packages = [];
+    state.packages.push(newSubPkg);
 
     this.logAudit({
       action: "CREATE",
       entityType: "PACKAGE",
       entityId: id,
-      entityName: newPkg.packageName,
+      entityName: deliverableTitle,
       packageId: id,
-      packageName: newPkg.packageName,
-      disciplineName: newPkg.disciplineName,
-      newValue: newPkg,
-      impactSummary: `Created Work Package "${newPkg.packageName}" under [${newPkg.disciplineName}]`,
+      packageName: deliverableTitle,
+      disciplineName: parentPkg,
+      newValue: newSubPkg,
+      impactSummary: `Created Sub-Package "${deliverableTitle}" under Parent Package [${parentPkg}]`,
       changedBy: createdBy
     });
 
     this.notify();
-    return newPkg;
+    return newSubPkg;
   }
 
-  public static updatePackage(
+  public static addPackage(pkg: Omit<WorkPackageMaster, "id">, createdBy = "Design Lead"): WorkPackageMaster {
+    return this.addSubPackage(pkg, createdBy);
+  }
+
+  public static updateSubPackage(
     id: string,
-    updates: Partial<Omit<WorkPackageMaster, "id">>,
+    updates: Partial<Omit<SubPackageMaster, "id">>,
     changedBy = "Design Lead",
     reason?: string
-  ): WorkPackageMaster | null {
+  ): SubPackageMaster | null {
     const state = this.getState();
     const idx = state.packages.findIndex(p => p.id === id);
     if (idx === -1) return null;
 
     const oldPkg = { ...state.packages[idx] };
-    state.packages[idx] = { ...state.packages[idx], ...updates };
+    const deliverableTitle = updates.subPackageName || updates.packageName || oldPkg.packageName;
+    const parentPkg = updates.disciplineName || updates.packageName || oldPkg.disciplineName;
+    const code = updates.subPackageCode || updates.packageCode || oldPkg.packageCode;
+
+    state.packages[idx] = {
+      ...state.packages[idx],
+      ...updates,
+      packageName: deliverableTitle,
+      subPackageName: deliverableTitle,
+      disciplineName: parentPkg,
+      packageCode: code,
+      subPackageCode: code
+    };
     const updatedPkg = state.packages[idx];
 
     this.logAudit({
       action: "UPDATE",
       entityType: "PACKAGE",
       entityId: id,
-      entityName: updatedPkg.packageName,
+      entityName: deliverableTitle,
       packageId: id,
-      packageName: updatedPkg.packageName,
-      disciplineName: updatedPkg.disciplineName,
+      packageName: deliverableTitle,
+      disciplineName: parentPkg,
       previousValue: oldPkg,
       newValue: updatedPkg,
-      impactSummary: `Updated Work Package "${updatedPkg.packageName}"`,
+      impactSummary: `Updated Sub-Package "${deliverableTitle}" under Parent Package [${parentPkg}]`,
       changedBy,
       reason
     });
@@ -1524,10 +1606,20 @@ export class DesignMasterStore {
     return state.packages[idx];
   }
 
-  public static deletePackage(id: string, reason?: string, deletedBy = "Design Lead"): EntityDependencyReport {
+  public static updatePackage(
+    id: string,
+    updates: Partial<Omit<WorkPackageMaster, "id">>,
+    changedBy = "Design Lead",
+    reason?: string
+  ): WorkPackageMaster | null {
+    return this.updateSubPackage(id, updates, changedBy, reason);
+  }
+
+  public static deleteSubPackage(id: string, reason?: string, deletedBy = "Design Lead"): EntityDependencyReport {
     const state = this.getState();
     const pkg = state.packages.find(p => p.id === id);
     const depReport = this.getEntityDependencies("PACKAGE", id);
+    const title = pkg?.subPackageName || pkg?.packageName || "Sub-Package";
 
     state.packages = state.packages.filter(p => p.id !== id);
     Object.keys(state.packageStatuses).forEach(k => {
@@ -1538,13 +1630,13 @@ export class DesignMasterStore {
       action: "CASCADE_DELETE",
       entityType: "PACKAGE",
       entityId: id,
-      entityName: pkg?.packageName || "Work Package",
+      entityName: title,
       packageId: id,
-      packageName: pkg?.packageName,
+      packageName: title,
       disciplineName: pkg?.disciplineName,
       previousValue: pkg,
       newValue: null,
-      impactSummary: `Cascaded & removed ${depReport.totalDependentRecords} records referencing package "${pkg?.packageName}"`,
+      impactSummary: `Cascaded & removed ${depReport.totalDependentRecords} records referencing Sub-Package "${title}"`,
       foreignKeyDependencies: depReport.dependencies,
       changedBy: deletedBy,
       reason
@@ -1552,6 +1644,10 @@ export class DesignMasterStore {
 
     this.notify();
     return depReport;
+  }
+
+  public static deletePackage(id: string, reason?: string, deletedBy = "Design Lead"): EntityDependencyReport {
+    return this.deleteSubPackage(id, reason, deletedBy);
   }
 
   // ============================================================================

@@ -74,6 +74,7 @@ type ActiveTabType =
   | "RFIS"
   | "CONSULTANTS" 
   | "PACKAGES"
+  | "SUB_PACKAGES"
   | "CATEGORIES"
   | "SUB_PROJECTS"
   | "PROJECTS"
@@ -138,7 +139,8 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
     const currentPath = (pathname || "/design").toLowerCase();
     const combined = `${currentPath}/${slugStr}`;
 
-    if (combined.includes("category") || combined.includes("categories") || combined.includes("discipline")) return "CATEGORIES";
+    if (combined.includes("sub-package") || combined.includes("subpackage") || combined.includes("/design/sub-packages")) return "SUB_PACKAGES";
+    if (combined.includes("category") || combined.includes("categories") || combined.includes("discipline")) return "PACKAGES";
     if (combined.includes("sub-project") || combined.includes("subproject") || combined.includes("wing")) return "SUB_PROJECTS";
     if (combined.includes("project-master") || combined.includes("projects-master") || combined.includes("/design/projects") || combined.endsWith("/projects")) return "PROJECTS";
     if (combined.includes("authorit")) return "AUTHORITIES";
@@ -174,7 +176,8 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
       RFIS: "/design/rfis",
       CONSULTANTS: "/design/consultants",
       PACKAGES: "/design/packages",
-      CATEGORIES: "/design/categories",
+      SUB_PACKAGES: "/design/sub-packages",
+      CATEGORIES: "/design/packages",
       SUB_PROJECTS: "/design/sub-projects",
       PROJECTS: "/design/projects",
       AUTHORITIES: "/design/authorities",
@@ -449,9 +452,14 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
             />
           )}
 
-          {/* Tab 12: Work Packages Master Direct View */}
-          {activeTab === "PACKAGES" && (
+          {/* Tab 12: Package Master Direct View */}
+          {(activeTab === "PACKAGES" || activeTab === "CATEGORIES") && (
             <MastersSetupView initialSubTab="PACKAGES" />
+          )}
+
+          {/* Tab 12b: Sub Package Master Direct View */}
+          {activeTab === "SUB_PACKAGES" && (
+            <MastersSetupView initialSubTab="SUB_PACKAGES" />
           )}
 
           {/* Direct Project Master View */}

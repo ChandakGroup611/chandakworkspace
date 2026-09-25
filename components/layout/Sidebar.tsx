@@ -225,8 +225,8 @@ const designNavGroups: NavGroup[] = [
           { label: "Project Master", href: "/design/projects", permission: "MASTERS_VIEW" },
           { label: "Sub-Project Master", href: "/design/sub-projects", permission: "MASTERS_VIEW" },
           { label: "Consultant Master", href: "/design/consultants", permission: "MASTERS_VIEW" },
-          { label: "Category Master", href: "/design/categories", permission: "MASTERS_VIEW" },
-          { label: "Work Packages Master", href: "/design/packages", permission: "MASTERS_VIEW" },
+          { label: "Package Master", href: "/design/packages", permission: "MASTERS_VIEW" },
+          { label: "Sub Package Master", href: "/design/sub-packages", permission: "MASTERS_VIEW" },
           { label: "Statutory Authorities", href: "/design/authorities", permission: "MASTERS_VIEW" },
           { label: "Backup & Templates", href: "/design/templates", permission: "MASTERS_VIEW" }
         ]
@@ -398,7 +398,8 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
                     pathname === "/design/projects" || 
                     pathname === "/design/sub-projects" || 
                     pathname === "/design/categories" || 
-                    pathname === "/design/packages" || 
+                    pathname === "/design/packages" ||
+                    pathname === "/design/sub-packages" || 
                     pathname === "/design/authorities" || 
                     pathname === "/design/templates";
                 } else {

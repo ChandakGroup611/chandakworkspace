@@ -96,31 +96,31 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      setFormError("Category name is required.");
-      toast.error("Category name is required.");
+      setFormError("Package name is required.");
+      toast.error("Package name is required.");
       return;
     }
 
     const cleanCode = code.trim().toUpperCase() || name.trim().slice(0, 4).toUpperCase();
 
     if (editingCategory) {
-      DesignMasterStore.updateCategory(editingCategory.id, {
+      DesignMasterStore.updatePackageMaster(editingCategory.id, {
         name: name.trim(),
         code: cleanCode,
         description: description.trim() || undefined,
         icon: selectedIcon,
         color: selectedColor
       });
-      toast.success(`Category "${name.trim()}" updated successfully!`);
+      toast.success(`Package "${name.trim()}" updated successfully!`);
     } else {
-      DesignMasterStore.addCategory({
+      DesignMasterStore.addPackageMaster({
         name: name.trim(),
         code: cleanCode,
         description: description.trim() || undefined,
         icon: selectedIcon,
         color: selectedColor
       });
-      toast.success(`Category "${name.trim()}" created successfully!`);
+      toast.success(`Package "${name.trim()}" created successfully!`);
     }
 
     setIsModalOpen(false);
@@ -137,8 +137,8 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
   const handleConfirmDelete = (reason: string) => {
     if (categoryToDeleteId) {
       const cat = categories.find(c => c.id === categoryToDeleteId);
-      DesignMasterStore.deleteCategory(categoryToDeleteId, reason, "Design Lead");
-      toast.success(`Category "${cat?.name || "Discipline"}" deleted successfully.`);
+      DesignMasterStore.deletePackageMaster(categoryToDeleteId, reason, "Design Lead");
+      toast.success(`Package "${cat?.name || "Discipline"}" deleted successfully.`);
       setIsDeleteModalOpen(false);
       setCategoryToDeleteId(null);
     }
@@ -167,10 +167,10 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
           </div>
           <div>
             <h3 className="text-sm sm:text-base font-bold text-foreground">
-              Category Master (Engineering Disciplines)
+              Package Master (Engineering Packages)
             </h3>
             <p className="text-xs text-muted-foreground">
-              Master discipline dictionary mapped to Consultant Firms, Projects, and Work Packages
+              Master parent package dictionary mapped to Consultant Firms, Projects, and Sub-Packages
             </p>
           </div>
         </div>
@@ -181,7 +181,7 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
           className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
         >
           <Plus className="h-3.5 w-3.5" />
-          <span>Add Category</span>
+          <span>Add Package</span>
         </button>
       </div>
 
@@ -189,7 +189,7 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="p-3 rounded-xl bg-surface border border-border flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-semibold text-muted-foreground block">Total Categories</span>
+            <span className="text-[11px] font-semibold text-muted-foreground block">Total Packages</span>
             <span className="text-lg font-black text-foreground">{categories.length}</span>
           </div>
           <Tag className="h-4 w-4 text-purple-500" />
@@ -205,7 +205,7 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
         </div>
         <div className="p-3 rounded-xl bg-surface border border-border flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-semibold text-muted-foreground block">Work Packages</span>
+            <span className="text-[11px] font-semibold text-muted-foreground block">Sub-Packages</span>
             <span className="text-lg font-black text-blue-600 dark:text-blue-400">
               {packages.length}
             </span>
@@ -231,6 +231,7 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
+            placeholder="Search parent packages by name, code, description..."
             className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
           />
           {searchQuery && (
@@ -245,7 +246,7 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
         </div>
 
         <div className="text-xs text-muted-foreground font-medium self-start sm:self-auto">
-          Showing <strong>{filteredCategories.length}</strong> of {categories.length} Categories
+          Showing <strong>{filteredCategories.length}</strong> of {categories.length} Packages
         </div>
       </div>
 
@@ -294,7 +295,7 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
                       type="button"
                       onClick={() => handleOpenEdit(cat)}
                       className="h-7 w-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors cursor-pointer"
-                      title="Edit Category"
+                      title="Edit Package"
                     >
                       <Edit2 className="h-3 w-3" />
                     </button>
@@ -302,7 +303,7 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
                       type="button"
                       onClick={() => handleTriggerDelete(cat)}
                       className="h-7 w-7 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 flex items-center justify-center transition-colors cursor-pointer"
-                      title="Delete Category"
+                      title="Delete Package"
                     >
                       <Trash2 className="h-3 w-3" />
                     </button>
@@ -353,21 +354,21 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
         </div>
       )}
 
-      {/* Add / Edit Category Transaction Form Layout (Attached directly to sidebar) */}
+      {/* Add / Edit Package Transaction Form Layout (Attached directly to sidebar) */}
       {isModalOpen && (
         <TransactionFormLayout
-          title={editingCategory ? `Edit Category: ${name || editingCategory.name}` : "Create New Category Master"}
+          title={editingCategory ? `Edit Package: ${name || editingCategory.name}` : "Create New Package Master"}
           icon={Tag}
-          description="Define engineering discipline scope, identification code, icon, and color theme"
+          description="Define parent engineering package scope, identification code, icon, and color theme"
           onBack={() => setIsModalOpen(false)}
-          backLabel="Back to Categories"
+          backLabel="Back to Packages"
           breadcrumbs={[
             { label: "Design Masters", onClick: () => setIsModalOpen(false) },
-            { label: "Category Master", onClick: () => setIsModalOpen(false) },
-            { label: editingCategory ? (name || editingCategory.name) : "Create Category" }
+            { label: "Package Master", onClick: () => setIsModalOpen(false) },
+            { label: editingCategory ? (name || editingCategory.name) : "Create Package" }
           ]}
           onSave={handleSubmit}
-          saveLabel={editingCategory ? "Save Category" : "Create Category"}
+          saveLabel={editingCategory ? "Save Package" : "Create Package"}
           onReset={editingCategory ? () => handleOpenEdit(editingCategory) : handleOpenAdd}
         >
           <div className="space-y-6">
@@ -379,30 +380,32 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Category Name & Code in 2 columns */}
+              {/* Package Name & Code in 2 columns */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="sm:col-span-2 space-y-1">
                   <label className="text-xs font-bold text-foreground">
-                    Category / Discipline Name <span className="text-rose-500">*</span>
+                    Package Name <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={name}
                     onChange={e => setName(e.target.value)}
                     required
+                    placeholder="e.g., Structural, Architectural, MEPF Services"
                     className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
                   />
                 </div>
 
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-foreground">
-                    Discipline Code
+                    Package Code
                   </label>
                   <input
                     type="text"
                     value={code}
                     onChange={e => setCode(e.target.value.toUpperCase())}
                     maxLength={6}
+                    placeholder="e.g., STR, ARCH, MEP"
                     className="w-full px-3 py-2 text-xs font-mono font-bold rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
                   />
                 </div>
@@ -411,7 +414,7 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
               {/* Icon Selector */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-foreground">
-                  Category Icon
+                  Package Icon
                 </label>
                 <div className="flex flex-wrap gap-1.5 p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-border max-h-24 overflow-y-auto custom-scrollbar">
                   {PRESET_ICONS.map(icon => (
@@ -464,6 +467,7 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
                   value={description}
                   onChange={e => setDescription(e.target.value)}
                   rows={2}
+                  placeholder="Overview of engineering deliverable scope, technical specifications, and milestones..."
                   className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
                 />
               </div>
@@ -481,7 +485,7 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
                   type="submit"
                   className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-md cursor-pointer transition-all"
                 >
-                  {editingCategory ? "Save Changes" : "Create Category"}
+                  {editingCategory ? "Save Changes" : "Create Package"}
                 </button>
               </div>
             </form>

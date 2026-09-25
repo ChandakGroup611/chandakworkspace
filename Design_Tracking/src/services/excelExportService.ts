@@ -38,12 +38,12 @@ export async function exportTenderMatrixToExcel(
   // 2. Row 2: Projects & Category Header
   const row2 = worksheet.getRow(2);
   row2.height = 24;
-  worksheet.getCell(2, 1).value = "DISCIPLINE";
+  worksheet.getCell(2, 1).value = "PACKAGE";
   worksheet.getCell(2, 1).font = { bold: true, color: { argb: "FFFFFFFF" }, size: 10 };
   worksheet.getCell(2, 1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1E293B" } };
   worksheet.getCell(2, 1).alignment = { vertical: "middle", horizontal: "center" };
 
-  worksheet.getCell(2, 2).value = "WORK PACKAGE DELIVERABLES";
+  worksheet.getCell(2, 2).value = "SUB-PACKAGE DELIVERABLES";
   worksheet.getCell(2, 2).font = { bold: true, color: { argb: "FFFFFFFF" }, size: 10 };
   worksheet.getCell(2, 2).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1E293B" } };
   worksheet.getCell(2, 2).alignment = { vertical: "middle", horizontal: "left" };
@@ -59,11 +59,11 @@ export async function exportTenderMatrixToExcel(
   // 3. Row 3: Tower Wings
   const row3 = worksheet.getRow(3);
   row3.height = 22;
-  worksheet.getCell(3, 1).value = "Category";
+  worksheet.getCell(3, 1).value = "Package Master";
   worksheet.getCell(3, 1).font = { bold: true, size: 9, color: { argb: "FF64748B" } };
   worksheet.getCell(3, 1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF1F5F9" } };
 
-  worksheet.getCell(3, 2).value = "Package / Scope";
+  worksheet.getCell(3, 2).value = "Sub-Package Scope";
   worksheet.getCell(3, 2).font = { bold: true, size: 9, color: { argb: "FF64748B" } };
   worksheet.getCell(3, 2).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF1F5F9" } };
 
@@ -87,14 +87,14 @@ export async function exportTenderMatrixToExcel(
   let lastDiscipline = "";
 
   filteredPackages.forEach(pkg => {
-    const isNewDiscipline = pkg.disciplineName !== lastDiscipline;
-    lastDiscipline = pkg.disciplineName;
+    const isNewDiscipline = (pkg.disciplineName || "") !== lastDiscipline;
+    lastDiscipline = pkg.disciplineName || "";
 
     const row = worksheet.getRow(currentRowNum);
     row.height = 20;
 
     const catCell = worksheet.getCell(currentRowNum, 1);
-    catCell.value = pkg.disciplineName;
+    catCell.value = pkg.disciplineName || "";
     catCell.font = { size: 9, bold: isNewDiscipline, color: { argb: "FF475569" } };
     catCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: isNewDiscipline ? "FFF8FAFC" : "FFFFFFFF" } };
     catCell.alignment = { vertical: "middle", horizontal: "left" };

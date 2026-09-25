@@ -246,7 +246,7 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
         <TransactionFormLayout
           title={editingId ? `Edit Consultant: ${formName || "Partner"}` : "Create New Consultant Master"}
           icon={Users}
-          description="Register consultant firm credentials, lead personnel, and map engineering disciplines from Category Master"
+          description="Register consultant firm credentials, lead personnel, and map engineering packages from Package Master"
           onBack={() => setViewMode("DIRECTORY")}
           backLabel="Back to Directory"
           breadcrumbs={[
@@ -363,13 +363,13 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
               </div>
             </div>
 
-            {/* Section 2: Category Master Disciplines Mapping */}
+            {/* Section 2: Package Master Mapping */}
             <div className="p-5 rounded-2xl bg-surface border border-border shadow-xs space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-border/60">
                 <div className="flex items-center gap-2">
                   <Tag className="h-4 w-4 text-purple-500" />
                   <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
-                    2. Map Discipline Categories from Category Master <span className="text-rose-500">*</span>
+                    2. Map Tagged Packages from Package Master <span className="text-rose-500">*</span>
                   </h4>
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold">
                     {formSelectedCategories.length} Selected
@@ -403,7 +403,7 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                   type="text"
                   value={formCategorySearch}
                   onChange={e => setFormCategorySearch(e.target.value)}
-                  placeholder="Filter category master disciplines (e.g. Structural, MEP, Landscape, Façade)..."
+                  placeholder="Filter engineering packages from Package Master (e.g. Structural, MEP, Landscape, Façade)..."
                   className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
                 />
               </div>
@@ -483,7 +483,7 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                   Consultant Master (Partner Directory)
                 </h3>
                 <p className="text-xs text-muted-foreground">
-                  Register consultant firms and map their specialized engineering categories from Category Master
+                  Register consultant firms and map their specialized engineering packages from Package Master
                 </p>
               </div>
             </div>
@@ -529,9 +529,9 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
             </div>
             <div className="p-3 rounded-xl bg-surface border border-border flex items-center justify-between">
               <div>
-                <span className="text-[11px] font-semibold text-muted-foreground block">Category Coverage</span>
+                <span className="text-[11px] font-semibold text-muted-foreground block">Package Coverage</span>
                 <span className="text-lg font-black text-blue-600 dark:text-blue-400">
-                  {categories.length} Cats
+                  {categories.length} Pkgs
                 </span>
               </div>
               <Tag className="h-4 w-4 text-blue-500" />
@@ -584,7 +584,7 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
             <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 text-xs">
               <span className="text-[11px] font-bold text-muted-foreground mr-1 shrink-0 flex items-center gap-1">
                 <Tag className="h-3 w-3" />
-                <span>Category:</span>
+                <span>Package:</span>
               </span>
               <button
                 type="button"
@@ -595,7 +595,7 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                     : "bg-muted/40 text-muted-foreground hover:text-foreground"
                 }`}
               >
-                All Categories
+                All Packages
               </button>
               {categories.map(cat => {
                 const count = categoryCounts[cat.name] || 0;
@@ -630,7 +630,7 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                 <h5 className="text-sm font-bold text-foreground">No Consultants Found</h5>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {searchQuery || selectedCategoryFilter !== "ALL"
-                    ? "Try adjusting your search or category filter criteria."
+                    ? "Try adjusting your search or package filter criteria."
                     : "Register your specialized external architectural and engineering consultants."}
                 </p>
               </div>
@@ -687,7 +687,7 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                             type="button"
                             onClick={() => handleOpenEdit(c)}
                             className="h-7 w-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors cursor-pointer"
-                            title="Edit Consultant & Categories"
+                            title="Edit Consultant & Packages"
                           >
                             <Edit2 className="h-3 w-3" />
                           </button>
@@ -719,7 +719,7 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                       {/* Mapped Categories Badges */}
                       <div className="space-y-1 pt-1.5 border-t border-border">
                         <span className="text-[10px] font-bold text-muted-foreground block">
-                          Mapped Categories ({mappedCats.length}):
+                          Tagged Packages ({mappedCats.length}):
                         </span>
                         <div className="flex flex-wrap gap-1 max-h-16 overflow-y-auto custom-scrollbar">
                           {mappedCats.map((catName, idx) => {
@@ -756,7 +756,7 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                         onClick={() => handleOpenEdit(c)}
                         className="text-[11px] font-semibold text-purple-600 dark:text-purple-400 hover:underline cursor-pointer"
                       >
-                        Edit Categories
+                        Edit Packages
                       </button>
                     </div>
                   </div>

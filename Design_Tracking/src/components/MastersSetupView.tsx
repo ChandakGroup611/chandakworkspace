@@ -47,8 +47,9 @@ export type MasterSubTab =
   | "PROJECTS" 
   | "SUB_PROJECTS" 
   | "CONSULTANTS" 
-  | "CATEGORIES" 
   | "PACKAGES" 
+  | "SUB_PACKAGES" 
+  | "CATEGORIES" 
   | "AUTHORITIES" 
   | "RBAC" 
   | "TEMPLATES";
@@ -72,11 +73,11 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
   const [activeDeleteExecutor, setActiveDeleteExecutor] = useState<((reason: string) => void) | null>(null);
 
   const handleTriggerDelete = (
-    entityType: "PROJECT" | "SUB_PROJECT" | "TOWER" | "PACKAGE" | "CONSULTANT" | "AUTHORITY" | "CATEGORY",
+    entityType: "PROJECT" | "SUB_PROJECT" | "TOWER" | "PACKAGE" | "SUB_PACKAGE" | "CONSULTANT" | "AUTHORITY" | "CATEGORY",
     entityId: string,
     executor: (reason: string) => void
   ) => {
-    const report = DesignMasterStore.getEntityDependencies(entityType, entityId);
+    const report = DesignMasterStore.getEntityDependencies(entityType === "SUB_PACKAGE" ? "PACKAGE" : entityType, entityId);
     setDeleteModalReport(report);
     setActiveDeleteExecutor(() => executor);
     setIsDeleteModalOpen(true);
@@ -104,7 +105,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
     return () => unsubscribe();
   }, []);
 
-  // Form states: Work Package (Add & Edit)
+  // Form states: Sub Package (Add & Edit)
   const [isNewPackageModalOpen, setIsNewPackageModalOpen] = useState(false);
   const [isEditPackageModalOpen, setIsEditPackageModalOpen] = useState(false);
   const [editingPackage, setEditingPackage] = useState<WorkPackageMaster | null>(null);
@@ -120,23 +121,23 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
   const [newAuthorityName, setNewAuthorityName] = useState("");
   const [newAuthorityScope, setNewAuthorityScope] = useState("");
 
-  const categories = DesignMasterStore.getCategories();
+  const categories = DesignMasterStore.getPackagesMaster();
   const parentProjects = storeState.projects.filter(p => !p.isSubProject);
 
   const handleOpenAddPackage = () => {
     setEditingPackage(null);
     setNewPackageName("");
     setNewPackageCode("");
-    setNewPackageDiscipline(categories[0]?.name || "Civil & RCC");
+    setNewPackageDiscipline(categories[0]?.name || "Architectural");
     setNewPackageDescription("");
     setIsNewPackageModalOpen(true);
   };
 
   const handleOpenEditPackage = (pkg: WorkPackageMaster) => {
     setEditingPackage(pkg);
-    setNewPackageName(pkg.packageName);
-    setNewPackageCode(pkg.packageCode || "");
-    setNewPackageDiscipline(pkg.disciplineName || categories[0]?.name || "Civil & RCC");
+    setNewPackageName(pkg.subPackageName || pkg.packageName);
+    setNewPackageCode(pkg.subPackageCode || pkg.packageCode || "");
+    setNewPackageDiscipline(pkg.disciplineName || categories[0]?.name || "Architectural");
     setNewPackageDescription(pkg.description || "");
     setIsEditPackageModalOpen(true);
   };
@@ -144,21 +145,23 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
   const handleCreatePackage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPackageName.trim()) {
-      toast.error("Package Name / Title is required.");
+      toast.error("Sub-Package Title / Deliverable Name is required.");
       return;
     }
 
     const generatedCode = newPackageCode.trim() || `PKG-${(storeState.packages.length + 1).toString().padStart(2, "0")}`;
 
-    DesignMasterStore.addPackage({
+    DesignMasterStore.addSubPackage({
       disciplineId: `disc-${newPackageDiscipline.toLowerCase().replace(/[^a-z0-9]/g, "-")}`,
       disciplineName: newPackageDiscipline,
       packageName: newPackageName.trim(),
+      subPackageName: newPackageName.trim(),
       packageCode: generatedCode,
+      subPackageCode: generatedCode,
       description: newPackageDescription.trim() || undefined
     });
 
-    toast.success(`Work Package "${newPackageName.trim()}" created successfully!`);
+    toast.success(`Sub-Package "${newPackageName.trim()}" created successfully!`);
     setNewPackageName("");
     setNewPackageCode("");
     setNewPackageDescription("");
@@ -168,19 +171,21 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
   const handleUpdatePackage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingPackage || !newPackageName.trim()) {
-      toast.error("Package Name / Title is required.");
+      toast.error("Sub-Package Title / Deliverable Name is required.");
       return;
     }
 
-    DesignMasterStore.updatePackage(editingPackage.id, {
+    DesignMasterStore.updateSubPackage(editingPackage.id, {
       disciplineId: `disc-${newPackageDiscipline.toLowerCase().replace(/[^a-z0-9]/g, "-")}`,
       disciplineName: newPackageDiscipline,
       packageName: newPackageName.trim(),
+      subPackageName: newPackageName.trim(),
       packageCode: newPackageCode.trim() || editingPackage.packageCode,
+      subPackageCode: newPackageCode.trim() || editingPackage.packageCode,
       description: newPackageDescription.trim() || undefined
     });
 
-    toast.success(`Work Package "${newPackageName.trim()}" updated successfully!`);
+    toast.success(`Sub-Package "${newPackageName.trim()}" updated successfully!`);
     setIsEditPackageModalOpen(false);
     setEditingPackage(null);
   };
@@ -225,22 +230,22 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
         <ConsultantMasterView />
       )}
 
-      {/* Sub-tab 4: Category Master */}
-      {activeSubTab === "CATEGORIES" && (
+      {/* Sub-tab 4: Package Master (Parent Engineering Packages) */}
+      {(activeSubTab === "PACKAGES" || activeSubTab === "CATEGORIES") && (
         <CategoryMasterView />
       )}
 
-      {/* Sub-tab 5: Work Packages Master */}
-      {activeSubTab === "PACKAGES" && (() => {
+      {/* Sub-tab 5: Sub Package Master (Deliverables linked to Parent Package) */}
+      {activeSubTab === "SUB_PACKAGES" && (() => {
         const filteredPackages = storeState.packages.filter(pkg => {
           if (selectedDisciplineFilter !== "ALL" && pkg.disciplineName !== selectedDisciplineFilter) {
             return false;
           }
           if (packageSearchQuery.trim()) {
             const q = packageSearchQuery.toLowerCase();
-            const matchName = pkg.packageName.toLowerCase().includes(q);
-            const matchCode = (pkg.packageCode || "").toLowerCase().includes(q);
-            const matchDisc = pkg.disciplineName.toLowerCase().includes(q);
+            const matchName = (pkg.subPackageName || pkg.packageName).toLowerCase().includes(q);
+            const matchCode = (pkg.subPackageCode || pkg.packageCode || "").toLowerCase().includes(q);
+            const matchDisc = (pkg.disciplineName || "").toLowerCase().includes(q);
             const matchDesc = (pkg.description || "").toLowerCase().includes(q);
             if (!matchName && !matchCode && !matchDisc && !matchDesc) return false;
           }
@@ -252,8 +257,8 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
             {/* Top Toolbar */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h4 className="text-sm font-bold text-foreground">Standard Work Packages Directory</h4>
-                <p className="text-xs text-muted-foreground">Master engineering work packages used for tracking drawings, tenders, and consultant tagging</p>
+                <h4 className="text-sm font-bold text-foreground">Sub-Package Deliverables Master</h4>
+                <p className="text-xs text-muted-foreground">Manage granular engineering deliverable packages linked under parent Packages</p>
               </div>
               <button
                 type="button"
@@ -261,7 +266,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                 className="px-3.5 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
               >
                 <Plus className="h-3.5 w-3.5" />
-                <span>Add Work Package</span>
+                <span>Add Sub Package</span>
               </button>
             </div>
 
@@ -274,20 +279,21 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                     type="text"
                     value={packageSearchQuery}
                     onChange={e => setPackageSearchQuery(e.target.value)}
+                    placeholder="Search sub-packages by name, code..."
                     className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-teal-500"
                   />
                 </div>
 
                 <div className="text-xs text-muted-foreground font-medium">
-                  Showing <strong>{filteredPackages.length}</strong> of {storeState.packages.length} Packages
+                  Showing <strong>{filteredPackages.length}</strong> of {storeState.packages.length} Sub-Packages
                 </div>
               </div>
 
-              {/* Discipline Filter Chips */}
+              {/* Parent Package Filter Chips */}
               <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 text-xs">
                 <span className="text-[11px] font-bold text-muted-foreground mr-1 shrink-0 flex items-center gap-1">
                   <SlidersHorizontal className="h-3 w-3" />
-                  <span>Category:</span>
+                  <span>Parent Package:</span>
                 </span>
                 <button
                   type="button"
@@ -321,7 +327,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
               </div>
             </div>
 
-            {/* Packages Grid */}
+            {/* Sub-Packages Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3.5 w-full">
               {filteredPackages.map(pkg => (
                 <div
@@ -331,13 +337,13 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                   <div className="space-y-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/20">
-                        {pkg.packageCode || "PKG"}
+                        {pkg.subPackageCode || pkg.packageCode || "PKG"}
                       </span>
                       <span className="text-[10px] font-semibold text-muted-foreground bg-muted/40 px-1.5 py-0.2 rounded">
                         {pkg.disciplineName}
                       </span>
                     </div>
-                    <h5 className="text-xs font-bold text-foreground truncate">{pkg.packageName}</h5>
+                    <h5 className="text-xs font-bold text-foreground truncate">{pkg.subPackageName || pkg.packageName}</h5>
                     {pkg.description && (
                       <p className="text-[11px] text-muted-foreground line-clamp-1">{pkg.description}</p>
                     )}
@@ -354,8 +360,8 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                     <button
                       type="button"
                       onClick={() => handleTriggerDelete("PACKAGE", pkg.id, (reason) => {
-                        DesignMasterStore.deletePackage(pkg.id, reason, "Design Lead");
-                        toast.success(`Work Package "${pkg.packageName}" deleted successfully.`);
+                        DesignMasterStore.deleteSubPackage(pkg.id, reason, "Design Lead");
+                        toast.success(`Sub-Package "${pkg.subPackageName || pkg.packageName}" deleted successfully.`);
                       })}
                       className="h-6 w-6 rounded hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 flex items-center justify-center cursor-pointer"
                     >
@@ -469,18 +475,18 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
         </>
       )}
 
-      {/* Create New Work Package Transaction Layout */}
+      {/* Create New Sub-Package Transaction Layout */}
       {isNewPackageModalOpen && (
         <TransactionFormLayout
-          title="Create New Work Package"
-          category="Standard Work Packages Directory"
+          title="Create New Sub-Package"
+          category="Sub-Package Deliverables Master"
           icon={Layers}
           iconBg="bg-teal-500/10 text-teal-600 dark:text-teal-400"
-          description="Register standardized engineering work package for drawing schedules, tender matrices, and consultant scopes."
+          description="Register standardized engineering sub-package deliverable for drawing schedules, tender matrices, and consultant scopes."
           breadcrumbs={[
             { label: "Design Desk" },
             { label: "Masters Setup", onClick: () => setIsNewPackageModalOpen(false) },
-            { label: "New Work Package" }
+            { label: "New Sub-Package" }
           ]}
           onBack={() => setIsNewPackageModalOpen(false)}
           backLabel="Back to Masters Setup"
@@ -490,16 +496,16 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
             setNewPackageDescription("");
           }}
           onSave={handleCreatePackage}
-          saveLabel="Create Work Package"
+          saveLabel="Create Sub-Package"
         >
           <div className="max-w-3xl space-y-6">
             <AppCard>
               <AppCardHeader>
-                <AppCardTitle className="text-sm font-bold text-foreground">Package Specifications</AppCardTitle>
+                <AppCardTitle className="text-sm font-bold text-foreground">Sub-Package Specifications</AppCardTitle>
               </AppCardHeader>
               <AppCardContent className="space-y-4 text-xs">
                 <div className="space-y-1.5">
-                  <label className="font-bold text-foreground block">Package Name / Title <span className="text-rose-500">*</span></label>
+                  <label className="font-bold text-foreground block">Sub-Package Title / Deliverable Name <span className="text-rose-500">*</span></label>
                   <input
                     type="text"
                     required
@@ -512,7 +518,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="font-bold text-foreground block">Discipline Category <span className="text-rose-500">*</span></label>
+                    <label className="font-bold text-foreground block">Parent Package <span className="text-rose-500">*</span></label>
                     <select
                       value={newPackageDiscipline}
                       onChange={e => setNewPackageDiscipline(e.target.value)}
@@ -525,7 +531,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="font-bold text-foreground block">Package Code</label>
+                    <label className="font-bold text-foreground block">Sub-Package Code</label>
                     <input
                       type="text"
                       placeholder="e.g. STR-001"
@@ -552,32 +558,32 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
         </TransactionFormLayout>
       )}
 
-      {/* Edit Work Package Transaction Layout */}
+      {/* Edit Sub-Package Transaction Layout */}
       {isEditPackageModalOpen && editingPackage && (
         <TransactionFormLayout
-          title={`Edit Work Package: ${editingPackage.packageName}`}
-          category="Standard Work Packages Directory"
+          title={`Edit Sub-Package: ${editingPackage.subPackageName || editingPackage.packageName}`}
+          category="Sub-Package Deliverables Master"
           icon={Layers}
           iconBg="bg-teal-500/10 text-teal-600 dark:text-teal-400"
-          description="Update engineering scope, code identifier, or discipline categorization."
+          description="Update engineering deliverable scope, code identifier, or parent package linkage."
           breadcrumbs={[
             { label: "Design Desk" },
             { label: "Masters Setup", onClick: () => setIsEditPackageModalOpen(false) },
-            { label: editingPackage.packageName }
+            { label: editingPackage.subPackageName || editingPackage.packageName }
           ]}
           onBack={() => setIsEditPackageModalOpen(false)}
           backLabel="Back to Masters Setup"
           onSave={handleUpdatePackage}
-          saveLabel="Update Work Package"
+          saveLabel="Update Sub-Package"
         >
           <div className="max-w-3xl space-y-6">
             <AppCard>
               <AppCardHeader>
-                <AppCardTitle className="text-sm font-bold text-foreground">Package Specifications</AppCardTitle>
+                <AppCardTitle className="text-sm font-bold text-foreground">Sub-Package Specifications</AppCardTitle>
               </AppCardHeader>
               <AppCardContent className="space-y-4 text-xs">
                 <div className="space-y-1.5">
-                  <label className="font-bold text-foreground block">Package Name / Title <span className="text-rose-500">*</span></label>
+                  <label className="font-bold text-foreground block">Sub-Package Title / Deliverable Name <span className="text-rose-500">*</span></label>
                   <input
                     type="text"
                     required
@@ -589,7 +595,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="font-bold text-foreground block">Discipline Category <span className="text-rose-500">*</span></label>
+                    <label className="font-bold text-foreground block">Parent Package <span className="text-rose-500">*</span></label>
                     <select
                       value={newPackageDiscipline}
                       onChange={e => setNewPackageDiscipline(e.target.value)}
@@ -602,7 +608,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="font-bold text-foreground block">Package Code</label>
+                    <label className="font-bold text-foreground block">Sub-Package Code</label>
                     <input
                       type="text"
                       value={newPackageCode}
