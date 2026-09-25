@@ -190,6 +190,340 @@ let fleetDataCache: {
   timestamp: number;
 } | null = null;
 
+
+// ============================================================================
+// TRANSACTION FORM LAYOUT & WORKING DOCUMENT CANVAS (ENTERPRISE ERP VIEWPORT)
+// ============================================================================
+
+interface TransactionFormLayoutProps {
+  title: string;
+  badge?: string;
+  category?: string;
+  icon: React.ElementType;
+  iconBg?: string;
+  description: string;
+  breadcrumbs: Array<{ label: string; onClick?: () => void }>;
+  onBack: () => void;
+  backLabel: string;
+  onReset?: () => void;
+  onSave?: (e?: any) => void;
+  saveLabel?: string;
+  saveIcon?: React.ElementType;
+  isSubmitting?: boolean;
+  isSaveDisabled?: boolean;
+  saveButton?: React.ReactNode;
+  headerActions?: React.ReactNode;
+  children: React.ReactNode;
+}
+
+function TransactionFormLayout({
+  title,
+  badge,
+  category,
+  icon: Icon,
+  iconBg,
+  description,
+  breadcrumbs,
+  onBack,
+  backLabel,
+  onReset,
+  onSave,
+  saveLabel = "Save Record",
+  saveIcon: SaveIcon,
+  isSubmitting = false,
+  isSaveDisabled = false,
+  saveButton,
+  headerActions,
+  children
+}: TransactionFormLayoutProps) {
+  return (
+    <div className="w-full flex-1 flex flex-col space-y-8 animate-in fade-in duration-200">
+      {/* Top Navigation & Action Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-6">
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <AppButton
+              variant="ghost"
+              size="sm"
+              onClick={onBack}
+              className="text-xs h-8 px-2.5 gap-1.5 text-muted-foreground hover:text-foreground font-semibold"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>{backLabel}</span>
+            </AppButton>
+            {breadcrumbs.map((bc, idx) => (
+              <React.Fragment key={idx}>
+                <span className="text-border text-xs">/</span>
+                {bc.onClick ? (
+                  <button
+                    type="button"
+                    onClick={bc.onClick}
+                    className="text-xs text-muted-foreground hover:text-foreground font-medium transition-colors"
+                  >
+                    {bc.label}
+                  </button>
+                ) : (
+                  <span className="text-xs text-muted-foreground font-medium">{bc.label}</span>
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+          <div className="flex items-center gap-3 pt-1">
+            <div className={`h-11 w-11 rounded-xl flex items-center justify-center border shrink-0 ${iconBg || "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"}`}>
+              <Icon className="h-6 w-6" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2.5 flex-wrap">
+                <span>{title}</span>
+                {badge && (
+                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-theme-btn-primary/10 text-theme-btn-primary border border-theme-btn-primary/20">
+                    {badge}
+                  </span>
+                )}
+              </h1>
+              <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Top Actions */}
+        <div className="flex items-center gap-2.5 flex-wrap self-end md:self-center">
+          {headerActions}
+          <AppButton
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onBack}
+            className="text-xs h-9 px-4 font-semibold"
+          >
+            Cancel
+          </AppButton>
+          {onReset && (
+            <AppButton
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={onReset}
+              className="text-xs h-9 text-muted-foreground hover:text-foreground"
+            >
+              <RotateCcw className="h-3.5 w-3.5 mr-1" />
+              Reset Form
+            </AppButton>
+          )}
+          {saveButton ? (
+            saveButton
+          ) : onSave ? (
+            <AppButton
+              type="button"
+              variant="primary"
+              size="sm"
+              disabled={isSubmitting || isSaveDisabled}
+              onClick={() => onSave()}
+              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs px-5"
+            >
+              {isSubmitting ? (
+                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+              ) : SaveIcon ? (
+                <SaveIcon className="h-3.5 w-3.5" />
+              ) : (
+                <Save className="h-3.5 w-3.5" />
+              )}
+              <span>{saveLabel}</span>
+            </AppButton>
+          ) : null}
+        </div>
+      </div>
+
+      {/* Transaction Canvas */}
+      <div className="space-y-6">
+        {children}
+      </div>
+
+      {/* Bottom Back & Action Flow */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-border pt-6 pb-12">
+        <AppButton
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={onBack}
+          className="text-xs h-9 px-4 gap-1.5 font-semibold"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>{backLabel}</span>
+        </AppButton>
+
+        <div className="flex items-center gap-2.5 flex-wrap">
+          {headerActions}
+          <AppButton
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onBack}
+            className="text-xs h-9 px-4 font-semibold"
+          >
+            Cancel
+          </AppButton>
+          {onReset && (
+            <AppButton
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={onReset}
+              className="text-xs h-9 text-muted-foreground hover:text-foreground"
+            >
+              <RotateCcw className="h-3.5 w-3.5 mr-1" />
+              Reset Form
+            </AppButton>
+          )}
+          {saveButton ? (
+            saveButton
+          ) : onSave ? (
+            <AppButton
+              type="button"
+              variant="primary"
+              size="sm"
+              disabled={isSubmitting || isSaveDisabled}
+              onClick={() => onSave()}
+              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs px-5"
+            >
+              {isSubmitting ? (
+                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+              ) : SaveIcon ? (
+                <SaveIcon className="h-3.5 w-3.5" />
+              ) : (
+                <Save className="h-3.5 w-3.5" />
+              )}
+              <span>{saveLabel}</span>
+            </AppButton>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface WorkingDocumentLayoutProps {
+  title: string;
+  badge?: string;
+  badgeColor?: string;
+  category?: string;
+  icon: React.ElementType;
+  iconBg?: string;
+  description: string;
+  breadcrumbs: Array<{ label: string; onClick?: () => void }>;
+  onBack: () => void;
+  backLabel: string;
+  headerActions?: React.ReactNode;
+  children: React.ReactNode;
+}
+
+function WorkingDocumentLayout({
+  title,
+  badge,
+  badgeColor,
+  category,
+  icon: Icon,
+  iconBg,
+  description,
+  breadcrumbs,
+  onBack,
+  backLabel,
+  headerActions,
+  children
+}: WorkingDocumentLayoutProps) {
+  return (
+    <div className="w-full flex-1 flex flex-col space-y-8 animate-in fade-in duration-200">
+      {/* Top Navigation & Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-6">
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <AppButton
+              variant="ghost"
+              size="sm"
+              onClick={onBack}
+              className="text-xs h-8 px-2.5 gap-1.5 text-muted-foreground hover:text-foreground font-semibold"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>{backLabel}</span>
+            </AppButton>
+            {breadcrumbs.map((bc, idx) => (
+              <React.Fragment key={idx}>
+                <span className="text-border text-xs">/</span>
+                {bc.onClick ? (
+                  <button
+                    type="button"
+                    onClick={bc.onClick}
+                    className="text-xs text-muted-foreground hover:text-foreground font-medium transition-colors"
+                  >
+                    {bc.label}
+                  </button>
+                ) : (
+                  <span className="text-xs text-muted-foreground font-medium">{bc.label}</span>
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+          <div className="flex items-center gap-3 pt-1">
+            <div className={`h-11 w-11 rounded-xl flex items-center justify-center border shrink-0 ${iconBg || "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"}`}>
+              <Icon className="h-6 w-6" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2.5 flex-wrap">
+                <span>{title}</span>
+                {badge && (
+                  <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${badgeColor || "bg-theme-btn-primary/10 text-theme-btn-primary border-theme-btn-primary/20"}`}>
+                    {badge}
+                  </span>
+                )}
+              </h1>
+              <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Top Actions */}
+        <div className="flex items-center gap-2.5 flex-wrap self-end md:self-center">
+          {headerActions}
+          <AppButton
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onBack}
+            className="text-xs h-9 px-4 gap-1.5 font-semibold"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>{backLabel}</span>
+          </AppButton>
+        </div>
+      </div>
+
+      {/* Working Document Canvas */}
+      <div className="space-y-6">
+        {children}
+      </div>
+
+      {/* Bottom Navigation */}
+      <div className="flex items-center justify-between border-t border-border pt-6 pb-12">
+        <AppButton
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={onBack}
+          className="text-xs h-9 px-4 gap-1.5 font-semibold"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>{backLabel}</span>
+        </AppButton>
+        {headerActions && (
+          <div className="flex items-center gap-2.5">
+            {headerActions}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] }) {
   const pathname = usePathname() || "/vehicle";
   const router = useRouter();
@@ -3359,6 +3693,34 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     );
   }
 
+  // Transaction Form & Full-Page Working View State
+  const isAnyTransactionFormOpen = Boolean(
+    isEditVehicleOpen ||
+    isAddDriverOpen ||
+    isEditDriverOpen ||
+    isDispatchTripOpen ||
+    isAddMaintenanceOpen ||
+    isEditMaintenanceOpen ||
+    selectedMaintenanceForView ||
+    isVendorModalOpen ||
+    isAddPartOpen ||
+    isEditPartOpen ||
+    isRenewPartOpen ||
+    isRenewPolicyModalOpen ||
+    isPolicyHistoryModalOpen ||
+    isRenewPucModalOpen ||
+    isPucHistoryModalOpen ||
+    isSpecHistoryModalOpen ||
+    isUnifiedRenewalsModalOpen ||
+    isAddEntitlementModalOpen ||
+    isRedeemEntitlementModalOpen ||
+    viewingVehicle ||
+    viewingDriver ||
+    viewingTrip ||
+    viewingPart ||
+    viewingVendor
+  );
+
   return (
     <div className="w-full flex-1 flex flex-col space-y-6 min-w-0 animate-in fade-in duration-300">
       
@@ -3388,7 +3750,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       )}
 
       {/* Top Header & KPI Bar — Shown when NOT on dedicated Register Form page or RBAC page */}
-      {activeTab !== "register" && activeTab !== "rbac" && (
+      {activeTab !== "register" && activeTab !== "rbac" && !isAnyTransactionFormOpen && (
         <>
           {/* Top Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/50 pb-6">
@@ -4410,7 +4772,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       {/* ---------------------------------------------------------------------- */}
       {/* OVERVIEW TAB CONTENT */}
       {/* ---------------------------------------------------------------------- */}
-      {activeTab === "dashboard" && (
+      {!isAnyTransactionFormOpen && activeTab === "dashboard" && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
@@ -4670,7 +5032,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       {/* ---------------------------------------------------------------------- */}
       {/* INVENTORY / FLEET MASTER TAB */}
       {/* ---------------------------------------------------------------------- */}
-      {activeTab === "inventory" && (
+      {!isAnyTransactionFormOpen && activeTab === "inventory" && (
         <AppCard className="border-border shadow-xs overflow-hidden">
           <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
@@ -4988,7 +5350,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       {/* ---------------------------------------------------------------------- */}
       {/* DRIVERS DIRECTORY TAB */}
       {/* ---------------------------------------------------------------------- */}
-      {activeTab === "drivers" && (
+      {!isAnyTransactionFormOpen && activeTab === "drivers" && (
         <AppCard className="border-border shadow-xs overflow-hidden">
           <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
@@ -5132,7 +5494,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       {/* ---------------------------------------------------------------------- */}
       {/* TRIPS / DISPATCH TAB */}
       {/* ---------------------------------------------------------------------- */}
-      {activeTab === "trips" && (
+      {!isAnyTransactionFormOpen && activeTab === "trips" && (
         <AppCard className="border-border shadow-xs overflow-hidden">
           <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
@@ -5287,7 +5649,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       {/* ---------------------------------------------------------------------- */}
       {/* MAINTENANCE TAB */}
       {/* ---------------------------------------------------------------------- */}
-      {activeTab === "maintenance" && (
+      {!isAnyTransactionFormOpen && activeTab === "maintenance" && (
         <AppCard className="border-border shadow-xs overflow-hidden">
           <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
@@ -5498,7 +5860,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       {/* ---------------------------------------------------------------------- */}
       {/* TRAVELERS TAB */}
       {/* ---------------------------------------------------------------------- */}
-      {activeTab === "travelers" && (
+      {!isAnyTransactionFormOpen && activeTab === "travelers" && (
         <div className="space-y-6">
           <AppCard className="border-border shadow-xs overflow-hidden">
             <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -5676,7 +6038,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       {/* ---------------------------------------------------------------------- */}
       {/* COMPLIANCE & ALERTS TAB */}
       {/* ---------------------------------------------------------------------- */}
-      {activeTab === "alerts" && (
+      {!isAnyTransactionFormOpen && activeTab === "alerts" && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <AppCard className="border-border shadow-xs">
@@ -5922,7 +6284,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       {/* ---------------------------------------------------------------------- */}
       {/* FLEET REPORTS & ANALYTICS TAB */}
       {/* ---------------------------------------------------------------------- */}
-      {activeTab === "reports" && (
+      {!isAnyTransactionFormOpen && activeTab === "reports" && (
         <div className="space-y-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <AppCard className="border-border shadow-xs">
@@ -6040,7 +6402,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       {/* ---------------------------------------------------------------------- */}
       {/* PARTS & CONSUMABLES TAB — ENHANCED DATES, EXPIRIES & RENEWAL POLICIES */}
       {/* ---------------------------------------------------------------------- */}
-      {activeTab === "parts" && (
+      {!isAnyTransactionFormOpen && activeTab === "parts" && (
         <div className="space-y-6">
           <AppCard className="border-border shadow-xs overflow-hidden">
             {/* Filter Bar & Tabs */}
@@ -6458,7 +6820,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
       {/* ---------------------------------------------------------------------- */}
       {/* INSURANCE VENDORS MASTER TAB */}
-      {activeTab === "vendors" && (
+      {!isAnyTransactionFormOpen && activeTab === "vendors" && (
         <div className="space-y-6">
           <AppCard className="border-border shadow-xs overflow-hidden">
             {/* Filter Bar */}
@@ -6748,7 +7110,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       {/* ---------------------------------------------------------------------- */}
       {/* MY GARAGE / ASSIGNED VEHICLES TAB */}
       {/* ---------------------------------------------------------------------- */}
-      {activeTab === "my-garage" && (
+      {!isAnyTransactionFormOpen && activeTab === "my-garage" && (
         <div className="space-y-6">
           <AppCard className="border-border shadow-xs">
             <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex items-center justify-between">
@@ -6852,7 +7214,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       {/* ---------------------------------------------------------------------- */}
       {/* LEARNING / FLEET SOPS TAB */}
       {/* ---------------------------------------------------------------------- */}
-      {activeTab === "learning" && (
+      {!isAnyTransactionFormOpen && activeTab === "learning" && (
         <div className="space-y-6">
           <AppCard className="border-border shadow-xs">
             <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50">
@@ -6914,7 +7276,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       {/* ---------------------------------------------------------------------- */}
       {/* SETTINGS TAB */}
       {/* ---------------------------------------------------------------------- */}
-      {activeTab === "settings" && (
+      {!isAnyTransactionFormOpen && activeTab === "settings" && (
         <div className="space-y-6">
           <AppCard className="border-border shadow-xs">
             <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50">
@@ -7095,37 +7457,65 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       {/* EDIT VEHICLE MODAL */}
       {/* ---------------------------------------------------------------------- */}
       {isEditVehicleOpen && selectedVehicleForEdit && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-5 border-b border-border bg-surface/50 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-500/25">
-                  <Edit2 className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-foreground">Edit Fleet Vehicle Specifications</h3>
-                  <p className="text-xs text-muted-foreground">Update official RTO RC records, compliance dates, or driver assignment</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
+        <TransactionFormLayout
+          title={`Edit Vehicle Specifications: ${editVehiclePlate || selectedVehicleForEdit.registration_number}`}
+          badge="Vehicle Master Form"
+          category="Fleet Operations"
+          icon={Car}
+          iconBg="bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/25"
+          description="Update official RTO RC records, technical powertrain specifications, statutory compliance dates or driver assignment."
+          breadcrumbs={[
+            { label: "Fleet Inventory", onClick: () => setIsEditVehicleOpen(false) },
+            { label: `Edit Vehicle (${editVehiclePlate || selectedVehicleForEdit.registration_number})` }
+          ]}
+          onBack={() => setIsEditVehicleOpen(false)}
+          backLabel="Back to Fleet"
+          onReset={() => {
+            if (selectedVehicleForEdit) openEditVehicleModal(selectedVehicleForEdit);
+          }}
+          onSave={handleUpdateVehicle}
+          saveLabel="Save & Update Vehicle"
+          saveIcon={Save}
+          isSubmitting={modalSubmitting}
+          headerActions={
+            <div className="flex items-center gap-2">
+              <AppButton
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handleOpenVehicleSpecHistoryModal(selectedVehicleForEdit)}
+                className="h-9 px-3 text-xs gap-1.5 font-semibold text-purple-600 dark:text-purple-400 border-purple-500/30 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/30 shadow-2xs"
+                title="View specification change history and audit trail"
+              >
+                <ClipboardCheck className="h-3.5 w-3.5" />
+                <span>Revision History</span>
+              </AppButton>
+              {canDeleteVehicle && (
                 <AppButton
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => handleOpenVehicleSpecHistoryModal(selectedVehicleForEdit)}
-                  className="h-8 px-2.5 text-xs gap-1.5 font-semibold text-purple-600 dark:text-purple-400 border-purple-500/30 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/30 shadow-2xs"
-                  title="View specification change history and audit trail"
+                  onClick={() => {
+                    const target = selectedVehicleForEdit;
+                    setIsEditVehicleOpen(false);
+                    if (target) {
+                      setDeleteTarget({
+                        type: "vehicle",
+                        id: target.id,
+                        label: `Vehicle ${target.registration_number} (${target.make} ${target.model})`
+                      });
+                    }
+                  }}
+                  className="h-9 px-3 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900 gap-1.5 font-semibold"
                 >
-                  <ClipboardCheck className="h-3.5 w-3.5" />
-                  <span>Revision History</span>
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>Delete Vehicle</span>
                 </AppButton>
-                <AppButton variant="ghost" size="icon-sm" onClick={() => setIsEditVehicleOpen(false)}>
-                  <X className="h-4 w-4" />
-                </AppButton>
-              </div>
+              )}
             </div>
-
-            <form onSubmit={handleUpdateVehicle} className="p-5 space-y-4 overflow-y-auto flex-1 text-xs">
+          }
+        >
+          <div className="space-y-6">
               {/* SECTION 1: REGISTRATION & VEHICLE SPECS */}
               <div className="rounded-xl border border-border bg-slate-50/70 dark:bg-slate-900/50 p-4 space-y-3.5">
                 <div className="flex items-center gap-2 pb-2 border-b border-border/60 text-foreground font-semibold text-xs">
@@ -7745,72 +8135,42 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-border flex items-center justify-between gap-2">
-                {canDeleteVehicle ? (
-                  <AppButton
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const target = selectedVehicleForEdit;
-                      setIsEditVehicleOpen(false);
-                      if (target) {
-                        setDeleteTarget({
-                          type: "vehicle",
-                          id: target.id,
-                          label: `Vehicle ${target.registration_number} (${target.make} ${target.model})`
-                        });
-                      }
-                    }}
-                    className="text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200 dark:border-rose-900 gap-1.5"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    <span>Delete Vehicle</span>
-                  </AppButton>
-                ) : <div />}
-                <div className="flex items-center gap-2">
-                  <AppButton type="button" variant="ghost" onClick={() => setIsEditVehicleOpen(false)}>
-                    Cancel
-                  </AppButton>
-                  {canEditVehicle && (
-                    <AppButton 
-                      type="submit" 
-                      disabled={modalSubmitting}
-                      className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white font-semibold gap-1.5"
-                    >
-                      {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                      <span>Update Vehicle</span>
-                    </AppButton>
-                  )}
-                </div>
-              </div>
-            </form>
           </div>
-        </div>
+        </TransactionFormLayout>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* ADD DRIVER MODAL */}
       {/* ---------------------------------------------------------------------- */}
       {isAddDriverOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-5 border-b border-border bg-surface/50 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center border border-purple-500/25">
-                  <Users className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-foreground">Add Driver</h3>
-                  <p className="text-xs text-muted-foreground">Enroll a driver into the company fleet roster</p>
-                </div>
-              </div>
-              <AppButton variant="ghost" size="icon-sm" onClick={() => setIsAddDriverOpen(false)}>
-                <X className="h-4 w-4" />
-              </AppButton>
-            </div>
-
-            <form onSubmit={handleCreateDriver} className="p-5 space-y-4 overflow-y-auto flex-1 text-xs">
+        <TransactionFormLayout
+          title="Register Driver Personnel Profile"
+          badge="Driver Master Form"
+          category="Driver Operations"
+          icon={Users}
+          iconBg="bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/25"
+          description="Enroll a licensed driver into the company fleet roster, record driving credentials, emergency contacts & primary vehicle allocation."
+          breadcrumbs={[
+            { label: "Driver Management", onClick: () => setIsAddDriverOpen(false) },
+            { label: "New Driver" }
+          ]}
+          onBack={() => setIsAddDriverOpen(false)}
+          backLabel="Back to Drivers"
+          onReset={() => {
+            setNewDriverName("");
+            setNewDriverPhone("");
+            setNewDriverLicense("");
+            setNewDriverLicenseExpiry("");
+            setNewDriverExperience(0);
+            setNewDriverEmergency("");
+            setNewDriverVehicleId("");
+          }}
+          onSave={handleCreateDriver}
+          saveLabel="Save & Register Driver"
+          saveIcon={UserCheck}
+          isSubmitting={modalSubmitting}
+        >
+          <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="font-semibold block mb-1">Full Name *</label>
@@ -7881,46 +8241,36 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 </select>
               </div>
 
-              <div className="pt-4 border-t border-border flex items-center justify-end gap-2">
-                <AppButton type="button" variant="ghost" onClick={() => setIsAddDriverOpen(false)}>
-                  Cancel
-                </AppButton>
-                <AppButton 
-                  type="submit" 
-                  disabled={modalSubmitting}
-                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white font-semibold gap-1.5"
-                >
-                  {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                  <span>Save Driver</span>
-                </AppButton>
-              </div>
-            </form>
           </div>
-        </div>
+        </TransactionFormLayout>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* EDIT DRIVER MODAL */}
       {/* ---------------------------------------------------------------------- */}
       {isEditDriverOpen && selectedDriverForEdit && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-5 border-b border-border bg-surface/50 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center border border-purple-500/25">
-                  <Edit2 className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-foreground">Edit Driver</h3>
-                  <p className="text-xs text-muted-foreground">Update driver contact, license details or vehicle link</p>
-                </div>
-              </div>
-              <AppButton variant="ghost" size="icon-sm" onClick={() => setIsEditDriverOpen(false)}>
-                <X className="h-4 w-4" />
-              </AppButton>
-            </div>
-
-            <form onSubmit={handleUpdateDriver} className="p-5 space-y-4 overflow-y-auto flex-1 text-xs">
+        <TransactionFormLayout
+          title={`Edit Driver Profile: ${selectedDriverForEdit.full_name}`}
+          badge="Driver Master Form"
+          category="Driver Operations"
+          icon={Users}
+          iconBg="bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/25"
+          description="Update driver license validity, emergency contacts, primary vehicle assignment & active duty status."
+          breadcrumbs={[
+            { label: "Driver Management", onClick: () => setIsEditDriverOpen(false) },
+            { label: `Edit Driver (${selectedDriverForEdit.full_name})` }
+          ]}
+          onBack={() => setIsEditDriverOpen(false)}
+          backLabel="Back to Drivers"
+          onReset={() => {
+            if (selectedDriverForEdit) openEditDriverModal(selectedDriverForEdit);
+          }}
+          onSave={handleUpdateDriver}
+          saveLabel="Save & Update Driver"
+          saveIcon={Save}
+          isSubmitting={modalSubmitting}
+        >
+          <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="font-semibold block mb-1">Full Name *</label>
@@ -8004,46 +8354,41 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-border flex items-center justify-end gap-2">
-                <AppButton type="button" variant="ghost" onClick={() => setIsEditDriverOpen(false)}>
-                  Cancel
-                </AppButton>
-                <AppButton 
-                  type="submit" 
-                  disabled={modalSubmitting}
-                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white font-semibold gap-1.5"
-                >
-                  {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                  <span>Update Driver</span>
-                </AppButton>
-              </div>
-            </form>
           </div>
-        </div>
+        </TransactionFormLayout>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* DISPATCH TRIP MODAL */}
       {/* ---------------------------------------------------------------------- */}
       {isDispatchTripOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-5 border-b border-border bg-surface/50 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-500/25">
-                  <Calendar className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-foreground">Dispatch New Trip</h3>
-                  <p className="text-xs text-muted-foreground">Schedule an executive movement or site shuttle</p>
-                </div>
-              </div>
-              <AppButton variant="ghost" size="icon-sm" onClick={() => setIsDispatchTripOpen(false)}>
-                <X className="h-4 w-4" />
-              </AppButton>
-            </div>
-
-            <form onSubmit={handleDispatchTrip} className="p-5 space-y-4 overflow-y-auto flex-1 text-xs">
+        <TransactionFormLayout
+          title="Dispatch Vehicle Trip & Route Manifest"
+          badge="Trip Dispatch Form"
+          category="Transit Operations"
+          icon={MapPin}
+          iconBg="bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border-indigo-500/25"
+          description="Assign an available depot vehicle and duty driver, record traveler manifest, destination route & start odometer reading."
+          breadcrumbs={[
+            { label: "Trip Dispatches", onClick: () => setIsDispatchTripOpen(false) },
+            { label: "Dispatch Trip" }
+          ]}
+          onBack={() => setIsDispatchTripOpen(false)}
+          backLabel="Back to Dispatches"
+          onReset={() => {
+            setNewTripVehicleId("");
+            setNewTripDriverId("");
+            setNewTripTraveler("");
+            setNewTripPurpose("");
+            setNewTripOrigin("");
+            setNewTripDestination("");
+          }}
+          onSave={handleDispatchTrip}
+          saveLabel="Dispatch & Start Trip"
+          saveIcon={Play}
+          isSubmitting={modalSubmitting}
+        >
+          <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="font-semibold block mb-1">Select Vehicle *</label>
@@ -8143,77 +8488,49 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-border flex items-center justify-end gap-2">
-                <AppButton type="button" variant="ghost" onClick={() => setIsDispatchTripOpen(false)}>
-                  Cancel
-                </AppButton>
-                <AppButton 
-                  type="submit" 
-                  disabled={modalSubmitting}
-                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white font-semibold gap-1.5"
-                >
-                  {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                  <span>Dispatch Trip</span>
-                </AppButton>
-              </div>
-            </form>
           </div>
-        </div>
+        </TransactionFormLayout>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* LOG SERVICE JOB CARD & WORKSHOP BILL MODAL */}
       {/* ---------------------------------------------------------------------- */}
       {isAddMaintenanceOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
-            {/* Modal Header */}
-            <div className="p-4 sm:p-5 border-b border-border bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/25 shrink-0 shadow-xs">
-                  <Wrench className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base font-bold text-foreground">Workshop Job Card & Service Bill Logger</h3>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-                      Standard ERP Format
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Log authorized workshop maintenance, repair job sheets, labour & tax billing, and service forecasts
-                  </p>
-                </div>
-              </div>
-              <AppButton variant="ghost" size="icon-sm" onClick={() => setIsAddMaintenanceOpen(false)}>
-                <X className="h-4 w-4" />
-              </AppButton>
-            </div>
-
-            {/* Navigation Tabs Header */}
-            <div className="px-5 py-2.5 bg-surface/80 border-b border-border flex items-center gap-2 overflow-x-auto text-xs font-semibold">
-              <AppButton
-                type="button"
-                variant={newMaintActiveSection === "SCOPE_WORKSHOP" ? "primary" : "ghost"}
-                size="sm"
-                onClick={() => setNewMaintActiveSection("SCOPE_WORKSHOP")}
-                className={`h-8 text-xs shrink-0 ${newMaintActiveSection === "SCOPE_WORKSHOP" ? "bg-theme-btn-primary text-white font-bold" : "text-muted-foreground"}`}
-              >
-                <span>1. Vehicle & Service Scope</span>
-              </AppButton>
-              <AppButton
-                type="button"
-                variant={newMaintActiveSection === "BILLING_FORECAST" ? "primary" : "ghost"}
-                size="sm"
-                onClick={() => setNewMaintActiveSection("BILLING_FORECAST")}
-                className={`h-8 text-xs shrink-0 gap-1.5 ${newMaintActiveSection === "BILLING_FORECAST" ? "bg-theme-btn-primary text-white font-bold" : "text-muted-foreground"}`}
-              >
-                <Receipt className="h-3.5 w-3.5" />
-                <span>2. Billing & Service Forecast</span>
-              </AppButton>
-            </div>
-
-            <form onSubmit={handleLogMaintenance} className="flex-1 overflow-y-auto flex flex-col">
+        <TransactionFormLayout
+          title="Log Service Job Card & Workshop Bill"
+          badge="Maintenance Work Order"
+          category="Workshop & Maintenance"
+          icon={Wrench}
+          iconBg="bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/25"
+          description="Record scheduled service or breakdown repairs, vendor workshop invoices, parts cost & service tax breakdown."
+          breadcrumbs={[
+            { label: "Maintenance Records", onClick: () => setIsAddMaintenanceOpen(false) },
+            { label: "New Job Card" }
+          ]}
+          onBack={() => setIsAddMaintenanceOpen(false)}
+          backLabel="Back to Maintenance"
+          onReset={() => {
+            setNewMaintVehicleId("");
+            setNewMaintCategory("PERIODIC_SERVICE");
+            setNewMaintServiceType("");
+            setNewMaintVendor("");
+            setNewMaintLocation("");
+            setNewMaintTechnician("");
+            setNewMaintInvoiceNo("");
+            setNewMaintOdometer(0);
+            setNewMaintLabourCost(0);
+            setNewMaintPartsCost(0);
+            setNewMaintTaxCost(0);
+            setNewMaintCost(0);
+            setNewMaintNotes("");
+            setNewMaintAttachments([]);
+          }}
+          onSave={handleLogMaintenance}
+          saveLabel="Save Service Record & Bill"
+          saveIcon={Save}
+          isSubmitting={modalSubmitting}
+        >
+          <div className="space-y-6">
               <div className="p-5 space-y-5 flex-1">
                 {/* ---------------------------------------------------- */}
                 {/* SECTION 1: VEHICLE & SERVICE SCOPE */}
@@ -8752,116 +9069,36 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 )}
               </div>
 
-              {/* Modal Footer Controls */}
-              <div className="p-4 border-t border-border bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
-                <div>
-                  {newMaintActiveSection !== "SCOPE_WORKSHOP" && (
-                    <AppButton
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setNewMaintActiveSection("SCOPE_WORKSHOP")}
-                      className="gap-1 text-xs"
-                    >
-                      <ArrowLeft className="h-3.5 w-3.5" />
-                      <span>Previous Step</span>
-                    </AppButton>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <AppButton type="button" variant="ghost" size="sm" onClick={() => setIsAddMaintenanceOpen(false)}>
-                    Cancel
-                  </AppButton>
-
-                  {newMaintActiveSection === "SCOPE_WORKSHOP" ? (
-                    <AppButton
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setNewMaintActiveSection("BILLING_FORECAST")}
-                      className="gap-1 text-xs font-semibold"
-                    >
-                      <span>Next: Billing & Forecast</span>
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </AppButton>
-                  ) : null}
-
-                  <AppButton
-                    type="submit"
-                    disabled={modalSubmitting}
-                    className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white font-bold gap-1.5 shadow-xs text-xs h-9 px-4"
-                  >
-                    {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                    <span>Save & Log Job Card</span>
-                  </AppButton>
-                </div>
-              </div>
-            </form>
           </div>
-        </div>
+        </TransactionFormLayout>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* EDIT SERVICE RECORD & WORKSHOP BILL MODAL */}
       {/* ---------------------------------------------------------------------- */}
       {isEditMaintenanceOpen && selectedMaintenanceForEdit && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
-            {/* Modal Header */}
-            <div className="p-4 sm:p-5 border-b border-border bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/25 shrink-0 shadow-xs">
-                  <Edit2 className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base font-bold text-foreground">Edit Workshop Job Card & Service Bill</h3>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25">
-                      {editMaintInvoiceNo || `#${selectedMaintenanceForEdit.id.slice(-6)}`}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Update service scope, billing amounts, workshop info, and forecast with full audit tracking
-                  </p>
-                </div>
-              </div>
-              <AppButton 
-                variant="ghost" 
-                size="icon-sm" 
-                onClick={() => {
-                  setIsEditMaintenanceOpen(false);
-                  setSelectedMaintenanceForEdit(null);
-                }}
-              >
-                <X className="h-4 w-4" />
-              </AppButton>
-            </div>
-
-            {/* Navigation Tabs Header */}
-            <div className="px-5 py-2.5 bg-surface/80 border-b border-border flex items-center gap-2 overflow-x-auto text-xs font-semibold">
-              <AppButton
-                type="button"
-                variant={editMaintActiveSection === "SCOPE_WORKSHOP" ? "primary" : "ghost"}
-                size="sm"
-                onClick={() => setEditMaintActiveSection("SCOPE_WORKSHOP")}
-                className={`h-8 text-xs shrink-0 ${editMaintActiveSection === "SCOPE_WORKSHOP" ? "bg-theme-btn-primary text-white font-bold" : "text-muted-foreground"}`}
-              >
-                <span>1. Vehicle & Service Scope</span>
-              </AppButton>
-              <AppButton
-                type="button"
-                variant={editMaintActiveSection === "BILLING_FORECAST" ? "primary" : "ghost"}
-                size="sm"
-                onClick={() => setEditMaintActiveSection("BILLING_FORECAST")}
-                className={`h-8 text-xs shrink-0 gap-1.5 ${editMaintActiveSection === "BILLING_FORECAST" ? "bg-theme-btn-primary text-white font-bold" : "text-muted-foreground"}`}
-              >
-                <Receipt className="h-3.5 w-3.5" />
-                <span>2. Billing & Service Forecast</span>
-              </AppButton>
-            </div>
-
-            <form onSubmit={handleUpdateMaintenance} className="flex-1 overflow-y-auto flex flex-col">
+        <TransactionFormLayout
+          title={`Edit Service Record #${selectedMaintenanceForEdit.id.slice(0, 8)}`}
+          badge="Maintenance Work Order"
+          category="Workshop & Maintenance"
+          icon={Wrench}
+          iconBg="bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/25"
+          description="Update workshop invoice details, spare part costs, odometer readings & service status."
+          breadcrumbs={[
+            { label: "Maintenance Records", onClick: () => setIsEditMaintenanceOpen(false) },
+            { label: `Edit Record #${selectedMaintenanceForEdit.id.slice(0, 8)}` }
+          ]}
+          onBack={() => setIsEditMaintenanceOpen(false)}
+          backLabel="Back to Maintenance"
+          onReset={() => {
+            if (selectedMaintenanceForEdit) openEditMaintenanceModal(selectedMaintenanceForEdit);
+          }}
+          onSave={handleUpdateMaintenance}
+          saveLabel="Save Changes"
+          saveIcon={Save}
+          isSubmitting={modalSubmitting}
+        >
+          <div className="space-y-6">
               <div className="p-5 space-y-5 flex-1">
                 {/* ---------------------------------------------------- */}
                 {/* SECTION 1: VEHICLE & SERVICE SCOPE */}
@@ -9373,128 +9610,41 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 )}
               </div>
 
-              {/* Modal Footer Controls */}
-              <div className="p-4 border-t border-border bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
-                <div>
-                  {editMaintActiveSection !== "SCOPE_WORKSHOP" && (
-                    <AppButton
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setEditMaintActiveSection("SCOPE_WORKSHOP")}
-                      className="gap-1 text-xs"
-                    >
-                      <ArrowLeft className="h-3.5 w-3.5" />
-                      <span>Previous Step</span>
-                    </AppButton>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <AppButton 
-                    type="button" 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => {
-                      setIsEditMaintenanceOpen(false);
-                      setSelectedMaintenanceForEdit(null);
-                    }}
-                  >
-                    Cancel
-                  </AppButton>
-
-                  {editMaintActiveSection === "SCOPE_WORKSHOP" ? (
-                    <AppButton
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setEditMaintActiveSection("BILLING_FORECAST")}
-                      className="gap-1 text-xs font-semibold"
-                    >
-                      <span>Next: Billing & Forecast</span>
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </AppButton>
-                  ) : null}
-
-                  <AppButton
-                    type="submit"
-                    disabled={modalSubmitting}
-                    className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white font-bold gap-1.5 shadow-xs text-xs h-9 px-4"
-                  >
-                    {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                    <span>Update Service Record</span>
-                  </AppButton>
-                </div>
-              </div>
-            </form>
           </div>
-        </div>
+        </TransactionFormLayout>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* VIEW DETAILED JOB CARD & SERVICE INVOICE MODAL */}
       {/* ---------------------------------------------------------------------- */}
       {selectedMaintenanceForView && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
-            {/* Modal Header */}
-            <div className="p-5 border-b border-border bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-theme-btn-primary/15 text-theme-btn-primary flex items-center justify-center border border-theme-btn-primary/25 shrink-0 shadow-xs">
-                  <FileText className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base font-bold text-foreground">Workshop Job Card & Service Invoice</h3>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25">
-                      {selectedMaintenanceForView.parts_replaced?.invoice_number || `#${selectedMaintenanceForView.id.slice(-8)}`}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Executed on {selectedMaintenanceForView.service_date} • Authorized Workshop Record
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-1.5">
-                {canManageMaintenance && (
-                  <AppButton
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const rec = selectedMaintenanceForView;
-                      setSelectedMaintenanceForView(null);
-                      openEditMaintenanceModal(rec);
-                    }}
-                    className="gap-1 text-xs h-8 text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/10 font-semibold"
-                    title="Edit Record"
-                  >
-                    <Edit2 className="h-3.5 w-3.5" />
-                    <span>Edit</span>
-                  </AppButton>
-                )}
-                <AppButton
-                  variant="outline"
-                  size="sm"
-                  onClick={() => window.print()}
-                  className="gap-1 text-xs h-8"
-                  title="Print Job Card"
-                >
-                  <Printer className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Print / PDF</span>
-                </AppButton>
-                <AppButton
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => setSelectedMaintenanceForView(null)}
-                >
-                  <X className="h-4 w-4" />
-                </AppButton>
-              </div>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-5 space-y-5 overflow-y-auto flex-1 text-xs">
+        <WorkingDocumentLayout
+          title={`Service Work Order #${selectedMaintenanceForView.id.slice(0, 8)}`}
+          badge={selectedMaintenanceForView.status}
+          badgeColor="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+          category="Workshop & Maintenance"
+          icon={Receipt}
+          iconBg="bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/25"
+          description="Official service job card, cost ledger breakdown, workshop attachments & audit trail."
+          breadcrumbs={[
+            { label: "Maintenance Records", onClick: () => setSelectedMaintenanceForView(null) },
+            { label: `Work Order #${selectedMaintenanceForView.id.slice(0, 8)}` }
+          ]}
+          onBack={() => setSelectedMaintenanceForView(null)}
+          backLabel="Back to Maintenance"
+          headerActions={
+            <AppButton
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => window.print()}
+              className="text-xs h-9 px-3 gap-1.5 font-semibold"
+            >
+              <Printer className="h-3.5 w-3.5" />
+              <span>Print Job Card</span>
+            </AppButton>
+          }
+        >
               {/* Header Details Card */}
               {(() => {
                 const partsData = (selectedMaintenanceForView.parts_replaced && typeof selectedMaintenanceForView.parts_replaced === "object")
@@ -9767,195 +9917,75 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   </>
                 );
               })()}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-4 border-t border-border bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-end gap-2">
-              <AppButton
-                type="button"
-                variant="primary"
-                size="sm"
-                onClick={() => setSelectedMaintenanceForView(null)}
-                className="text-xs font-semibold px-4"
-              >
-                Close Job Card
-              </AppButton>
-            </div>
-          </div>
-        </div>
+        </WorkingDocumentLayout>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* INSURANCE VENDOR MASTER MODAL (ADD / EDIT) */}
       {/* ---------------------------------------------------------------------- */}
       {isVendorModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-5 border-b border-border bg-surface/50 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-500/25">
-                  <ShieldCheck className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-foreground">
-                    {selectedVendorForEdit ? "Edit Insurance Vendor" : "Register Insurance Vendor"}
-                  </h3>
-                  <p className="text-xs text-muted-foreground">
-                    Configure motor insurance company master profile and toll-free emergency support
-                  </p>
-                </div>
-              </div>
-              <AppButton variant="ghost" size="icon-sm" onClick={() => setIsVendorModalOpen(false)}>
-                <X className="h-4 w-4" />
-              </AppButton>
-            </div>
+        <TransactionFormLayout
+          title={selectedVendorForEdit ? "Edit Insurance Underwriter / Broker" : "Register Insurance Underwriter / Broker"}
+          badge="Vendor Master Form"
+          category="Supply Chain & Underwriters"
+          icon={Building2}
+          iconBg="bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/25"
+          description="Register or modify authorized insurance underwriters, broker agents & claim desk contacts."
+          breadcrumbs={[
+            { label: "Insurance Vendors", onClick: () => setIsVendorModalOpen(false) },
+            { label: selectedVendorForEdit ? "Edit Vendor" : "New Vendor" }
+          ]}
+          onBack={() => {
+            setIsVendorModalOpen(false);
+            setSelectedVendorForEdit(null);
+          }}
+          backLabel="Back to Vendors"
+          onReset={() => {
+            if (selectedVendorForEdit) openEditVendorModal(selectedVendorForEdit);
+            else openCreateVendorModal();
+          }}
+          onSave={handleSaveVendor}
+          saveLabel={selectedVendorForEdit ? "Update Vendor" : "Save Vendor"}
+          saveIcon={Building2}
+          isSubmitting={modalSubmitting}
+        >
+          <div className="space-y-4">
 
-            <form onSubmit={handleSaveVendor} className="p-5 space-y-4 overflow-y-auto flex-1 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="font-semibold block mb-1 flex items-center gap-1">
-                    <span>Vendor Code *</span>
-                    <span className="text-[10px] text-muted-foreground font-normal">(Short identifier)</span>
-                  </label>
-                  <AppInput
-                    value={vendorFormCode}
-                    onChange={(e) => setVendorFormCode(e.target.value.toUpperCase())}
-                    className="font-mono uppercase font-bold"
-                  />
-                </div>
-                <div>
-                  <label className="font-semibold block mb-1">
-                    <span>Company / Vendor Name *</span>
-                  </label>
-                  <AppInput
-                    value={vendorFormName}
-                    onChange={(e) => setVendorFormName(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="font-semibold block mb-1">Contact Person</label>
-                  <AppInput
-                    value={vendorFormContactPerson}
-                    onChange={(e) => setVendorFormContactPerson(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="font-semibold block mb-1 flex items-center gap-1">
-                    <Phone className="h-3.5 w-3.5 text-blue-500" />
-                    <span>Contact Number / Mobile</span>
-                  </label>
-                  <AppInput
-                    value={vendorFormContactNumber}
-                    onChange={(e) => setVendorFormContactNumber(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="font-semibold block mb-1">Official Email</label>
-                  <AppInput
-                    type="email"
-                    value={vendorFormEmail}
-                    onChange={(e) => setVendorFormEmail(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="font-semibold block mb-1 flex items-center gap-1">
-                    <Zap className="h-3.5 w-3.5 text-amber-500" />
-                    <span>24x7 Toll-Free RSA / Support</span>
-                  </label>
-                  <AppInput
-                    value={vendorFormSupportTollFree}
-                    onChange={(e) => setVendorFormSupportTollFree(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="font-semibold block mb-1">Portal / Claim Website URL</label>
-                <AppInput
-                  value={vendorFormWebsite}
-                  onChange={(e) => setVendorFormWebsite(e.target.value)}
-                />
-              </div>
-
-              <div>
-                <label className="font-semibold block mb-1">Policy Coverage Remarks / Notes</label>
-                <textarea
-                  rows={2}
-                  value={vendorFormDesc}
-                  onChange={(e) => setVendorFormDesc(e.target.value)}
-                  className="w-full text-xs p-2.5 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
-                />
-              </div>
-
-              <div className="pt-3 border-t border-border flex items-center justify-end gap-2">
-                <AppButton
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsVendorModalOpen(false)}
-                  disabled={modalSubmitting}
-                >
-                  Cancel
-                </AppButton>
-                <AppButton
-                  type="submit"
-                  variant="primary"
-                  size="sm"
-                  disabled={modalSubmitting}
-                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white font-semibold gap-1.5"
-                >
-                  {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                  <span>{selectedVendorForEdit ? "Update Vendor" : "Save Insurance Vendor"}</span>
-                </AppButton>
-              </div>
-            </form>
           </div>
-        </div>
+        </TransactionFormLayout>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* PARTS & ACCESSORIES MODAL (ADD / EDIT) */}
       {/* ---------------------------------------------------------------------- */}
       {(isAddPartOpen || isEditPartOpen) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
-            {/* Modal Header */}
-            <div className="p-5 border-b border-border bg-surface/50 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/25">
-                  <Package className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-foreground">
-                    {selectedPartForEdit ? "Edit Part / Accessory Record" : "Register Part, Accessory or Consumable"}
-                  </h3>
-                  <p className="text-xs text-muted-foreground">
-                    Configure procurement dates, DOM shelf-life, OEM warranty limits, recurring renewals, and vehicle mounting
-                  </p>
-                </div>
-              </div>
-              <AppButton
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => {
-                  setIsAddPartOpen(false);
-                  setIsEditPartOpen(false);
-                  setSelectedPartForEdit(null);
-                }}
-              >
-                <X className="h-4 w-4" />
-              </AppButton>
-            </div>
-
-            {/* Modal Body */}
-            <form onSubmit={handleSavePart} className="p-5 space-y-6 overflow-y-auto flex-1 text-xs">
+        <TransactionFormLayout
+          title={isEditPartOpen ? "Edit Fleet Part / Accessory" : "Register Spare Part / Accessory"}
+          badge="Part Master Form"
+          category="Supply Chain & Inventory"
+          icon={Package}
+          iconBg="bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/25"
+          description="Register spare parts, batteries, tires, telematics GPS units & warranty schedules."
+          breadcrumbs={[
+            { label: "Parts & Accessories", onClick: () => { setIsAddPartOpen(false); setIsEditPartOpen(false); } },
+            { label: isEditPartOpen ? "Edit Part" : "New Part" }
+          ]}
+          onBack={() => {
+            setIsAddPartOpen(false);
+            setIsEditPartOpen(false);
+            setSelectedPartForEdit(null);
+          }}
+          backLabel="Back to Parts"
+          onReset={() => {
+            if (selectedPartForEdit) openEditPartModal(selectedPartForEdit);
+            else openCreatePartModal();
+          }}
+          onSave={handleSavePart}
+          saveLabel={isEditPartOpen ? "Save & Update Part" : "Register Part"}
+          saveIcon={Save}
+          isSubmitting={modalSubmitting}
+        >
+          <div className="space-y-4">
               {/* Section 1: Item Identity & Type */}
               <div className="space-y-3">
                 <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border">
@@ -10403,189 +10433,67 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               </div>
 
               {/* Modal Footer */}
-              <div className="pt-4 border-t border-border flex items-center justify-end gap-2">
-                <AppButton
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setIsAddPartOpen(false);
-                    setIsEditPartOpen(false);
-                    setSelectedPartForEdit(null);
-                  }}
-                  disabled={modalSubmitting}
-                >
-                  Cancel
-                </AppButton>
-                <AppButton
-                  type="submit"
-                  variant="primary"
-                  size="sm"
-                  disabled={modalSubmitting}
-                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white font-semibold gap-1.5"
-                >
-                  {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                  <span>{selectedPartForEdit ? "Update Part Record" : "Save Part Record"}</span>
-                </AppButton>
-              </div>
-            </form>
           </div>
-        </div>
+        </TransactionFormLayout>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* QUICK RENEW POLICY MODAL */}
       {/* ---------------------------------------------------------------------- */}
       {isRenewPartOpen && selectedPartForRenew && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-5 border-b border-border bg-surface/50 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 flex items-center justify-center border border-cyan-500/25">
-                  <RotateCcw className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-foreground">
-                    Renew Policy / Subscription
-                  </h3>
-                  <p className="text-xs text-muted-foreground truncate max-w-[280px]">
-                    {selectedPartForRenew.name}
-                  </p>
-                </div>
-              </div>
-              <AppButton variant="ghost" size="icon-sm" onClick={() => setIsRenewPartOpen(false)}>
-                <X className="h-4 w-4" />
-              </AppButton>
-            </div>
+        <TransactionFormLayout
+          title={`Renew Part / Warranty: ${selectedPartForRenew.name}`}
+          badge="Warranty Renewal"
+          category="Supply Chain & Parts"
+          icon={RotateCcw}
+          iconBg="bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border-cyan-500/25"
+          description="Extend replacement warranty, update inspection dates & purchase invoice records."
+          breadcrumbs={[
+            { label: "Parts & Accessories", onClick: () => setIsRenewPartOpen(false) },
+            { label: `Renew Part (${selectedPartForRenew.name})` }
+          ]}
+          onBack={() => {
+            setIsRenewPartOpen(false);
+            setSelectedPartForRenew(null);
+          }}
+          backLabel="Back to Parts"
+          onSave={handleSaveRenewal}
+          saveLabel="Save Part Renewal"
+          saveIcon={Save}
+          isSubmitting={modalSubmitting}
+        >
+          <div className="space-y-4">
 
-            <form onSubmit={handleSaveRenewal} className="p-5 space-y-4 overflow-y-auto flex-1 text-xs">
-              <div className="p-3 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/40 space-y-1.5">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                  Current Policy Details
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div>
-                    <span className="text-muted-foreground">Type:</span>{" "}
-                    <span className="font-semibold text-foreground">{selectedPartForRenew.renewal_policy_type || "Standard"}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Current Due:</span>{" "}
-                    <span className="font-mono font-bold text-foreground">{selectedPartForRenew.renewal_date || "Not Set"}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="font-semibold block mb-1 flex items-center gap-1 text-cyan-700 dark:text-cyan-400">
-                  <Calendar className="h-3.5 w-3.5 text-cyan-500" />
-                  <span>New Extended Renewal Date *</span>
-                </label>
-                <AppInput
-                  type="date"
-                  value={renewModalDate}
-                  onChange={(e) => setRenewModalDate(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="font-semibold block mb-1">Renewal Cost (₹)</label>
-                  <AppInput
-                    type="number"
-                    min="0"
-                    value={renewModalCost || ""}
-                    onChange={(e) => setRenewModalCost(Number(e.target.value) || 0)}
-                    className="font-mono font-bold"
-                  />
-                </div>
-                <div>
-                  <label className="font-semibold block mb-1">Service Provider / Telco</label>
-                  <AppInput
-                    value={renewModalVendor}
-                    onChange={(e) => setRenewModalVendor(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="font-semibold block mb-1">New Policy / Invoice / Transaction #</label>
-                <AppInput
-                  value={renewModalPolicyNumber}
-                  onChange={(e) => setRenewModalPolicyNumber(e.target.value)}
-                  className="font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="font-semibold block mb-1">Renewal Remarks</label>
-                <textarea
-                  rows={2}
-                  value={renewModalNotes}
-                  onChange={(e) => setRenewModalNotes(e.target.value)}
-                  className="w-full text-xs p-2.5 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
-                />
-              </div>
-
-              <div className="pt-3 border-t border-border flex items-center justify-end gap-2">
-                <AppButton
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsRenewPartOpen(false)}
-                  disabled={modalSubmitting}
-                >
-                  Cancel
-                </AppButton>
-                <AppButton
-                  type="submit"
-                  variant="primary"
-                  size="sm"
-                  disabled={modalSubmitting}
-                  className="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold gap-1.5"
-                >
-                  {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
-                  <span>Confirm Policy Renewal</span>
-                </AppButton>
-              </div>
-            </form>
           </div>
-        </div>
+        </TransactionFormLayout>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* VEHICLE INSURANCE POLICY RENEWAL MODAL */}
       {/* ---------------------------------------------------------------------- */}
       {isRenewPolicyModalOpen && selectedVehicleForPolicyRenew && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
-            {/* Header */}
-            <div className="p-5 border-b border-border bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-transparent flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-11 w-11 rounded-xl bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 flex items-center justify-center border border-cyan-500/25 shadow-xs">
-                  <ShieldCheck className="h-6 w-6" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base font-bold text-foreground">
-                      Renew Vehicle Insurance Policy
-                    </h3>
-                    <span className="px-2 py-0.5 rounded-md font-mono text-[10px] font-bold bg-theme-btn-primary/10 text-theme-btn-primary border border-theme-btn-primary/20">
-                      {selectedVehicleForPolicyRenew.registration_number}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {selectedVehicleForPolicyRenew.make} {selectedVehicleForPolicyRenew.model} ({selectedVehicleForPolicyRenew.variant || "Standard"}) • Archive previous policy & issue renewal
-                  </p>
-                </div>
-              </div>
-              <AppButton variant="ghost" size="icon-sm" onClick={() => setIsRenewPolicyModalOpen(false)}>
-                <X className="h-4 w-4" />
-              </AppButton>
-            </div>
-
-            {/* Form */}
-            <form onSubmit={handleSaveVehiclePolicyRenewal} className="p-6 space-y-4 overflow-y-auto flex-1 text-xs">
+        <TransactionFormLayout
+          title={`Renew Insurance Policy: ${selectedVehicleForPolicyRenew.registration_number}`}
+          badge="Policy Renewal"
+          category="Statutory Compliance"
+          icon={ShieldCheck}
+          iconBg="bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border-cyan-500/25"
+          description="Record newly issued insurance policy number, underwriting vendor, premium amount, coverage dates & policy document."
+          breadcrumbs={[
+            { label: "Fleet Inventory", onClick: () => setIsRenewPolicyModalOpen(false) },
+            { label: `Renew Policy (${selectedVehicleForPolicyRenew.registration_number})` }
+          ]}
+          onBack={() => {
+            setIsRenewPolicyModalOpen(false);
+            setSelectedVehicleForPolicyRenew(null);
+          }}
+          backLabel="Back to Fleet"
+          onSave={handleSaveVehiclePolicyRenewal}
+          saveLabel="Save & Issue Insurance Policy"
+          saveIcon={ShieldCheck}
+          isSubmitting={modalSubmitting}
+        >
+          <div className="space-y-4">
               {/* Current Active Policy Banner */}
               <div className="p-3.5 rounded-xl border border-cyan-500/20 bg-cyan-50/50 dark:bg-cyan-950/20 flex flex-wrap items-center justify-between gap-2">
                 <div className="space-y-0.5">
@@ -10824,99 +10732,32 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 />
               </div>
 
-              {/* Modal Footer Actions */}
-              <div className="pt-3 border-t border-border flex items-center justify-between">
-                <AppButton
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setIsRenewPolicyModalOpen(false);
-                    if (selectedVehicleForPolicyRenew) {
-                      handleOpenVehiclePolicyHistoryModal(selectedVehicleForPolicyRenew);
-                    }
-                  }}
-                  className="text-indigo-600 dark:text-indigo-400 gap-1.5"
-                >
-                  <History className="h-3.5 w-3.5" />
-                  <span>View All Past Cycles</span>
-                </AppButton>
-
-                <div className="flex items-center gap-2">
-                  <AppButton
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsRenewPolicyModalOpen(false)}
-                    disabled={modalSubmitting}
-                  >
-                    Cancel
-                  </AppButton>
-                  <AppButton
-                    type="submit"
-                    variant="primary"
-                    size="sm"
-                    disabled={modalSubmitting}
-                    className="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold gap-1.5 shadow-md"
-                  >
-                    {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="h-3.5 w-3.5" />}
-                    <span>Confirm & Archive Renewal</span>
-                  </AppButton>
-                </div>
-              </div>
-            </form>
           </div>
-        </div>
+        </TransactionFormLayout>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* VEHICLE POLICY HISTORY & AUDIT LEDGER MODAL */}
       {/* ---------------------------------------------------------------------- */}
       {isPolicyHistoryModalOpen && selectedVehicleForPolicyHistory && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
-            {/* Modal Header */}
-            <div className="p-5 border-b border-border bg-gradient-to-r from-indigo-500/10 via-cyan-500/10 to-transparent flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-11 w-11 rounded-xl bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-500/25 shadow-xs">
-                  <History className="h-6 w-6" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base font-bold text-foreground">
-                      Vehicle Policy Ledger & Historical Tracks
-                    </h3>
-                    <span className="px-2.5 py-0.5 rounded-md font-mono text-xs font-bold bg-theme-btn-primary text-white">
-                      {selectedVehicleForPolicyHistory.registration_number}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {selectedVehicleForPolicyHistory.make} {selectedVehicleForPolicyHistory.model} • Complete chronological ledger of insurance policies & renewals
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <AppButton
-                  variant="primary"
-                  size="sm"
-                  onClick={() => {
-                    setIsPolicyHistoryModalOpen(false);
-                    handleOpenVehiclePolicyRenewModal(selectedVehicleForPolicyHistory);
-                  }}
-                  className="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold gap-1.5 shadow-xs"
-                >
-                  <RotateCcw className="h-3.5 w-3.5" />
-                  <span>Renew New Policy</span>
-                </AppButton>
-                <AppButton variant="ghost" size="icon-sm" onClick={() => setIsPolicyHistoryModalOpen(false)}>
-                  <X className="h-4 w-4" />
-                </AppButton>
-              </div>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-6 space-y-5 overflow-y-auto flex-1">
+        <WorkingDocumentLayout
+          title={`Insurance Policy Ledger: ${selectedVehicleForPolicyHistory.registration_number}`}
+          badge="Statutory Ledger"
+          badgeColor="bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20"
+          category="Insurance & Underwriting Ledgers"
+          icon={History}
+          iconBg="bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border-cyan-500/25"
+          description="Complete chronology of past insurance policies, premium costs, underwriters, claim contacts & certificate documents."
+          breadcrumbs={[
+            { label: "Fleet Inventory", onClick: () => setIsPolicyHistoryModalOpen(false) },
+            { label: `Policy Ledger (${selectedVehicleForPolicyHistory.registration_number})` }
+          ]}
+          onBack={() => {
+            setIsPolicyHistoryModalOpen(false);
+            setSelectedVehicleForPolicyHistory(null);
+          }}
+          backLabel="Back to Fleet"
+        >
               {/* Summary Metric Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                 <div className="p-3.5 rounded-xl border border-border bg-surface shadow-2xs space-y-1">
@@ -11088,58 +10929,35 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   </div>
                 )}
               </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-4 border-t border-border bg-surface/50 flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">
-                Enterprise compliance tracks are permanently archived for motor insurance audits & renewals.
-              </span>
-              <AppButton
-                variant="outline"
-                size="sm"
-                onClick={() => setIsPolicyHistoryModalOpen(false)}
-              >
-                Close Ledger
-              </AppButton>
-            </div>
-          </div>
-        </div>
+        </WorkingDocumentLayout>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* VEHICLE PUC RENEWAL MODAL */}
       {/* ---------------------------------------------------------------------- */}
       {isRenewPucModalOpen && selectedVehicleForPucRenew && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
-            {/* Header */}
-            <div className="p-5 border-b border-border bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-transparent flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-11 w-11 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/25 shadow-xs">
-                  <Wind className="h-6 w-6" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base font-bold text-foreground">
-                      Renew Vehicle PUC (Pollution Under Control)
-                    </h3>
-                    <span className="px-2 py-0.5 rounded-md font-mono text-[10px] font-bold bg-theme-btn-primary/10 text-theme-btn-primary border border-theme-btn-primary/20">
-                      {selectedVehicleForPucRenew.registration_number}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {selectedVehicleForPucRenew.make} {selectedVehicleForPucRenew.model} ({selectedVehicleForPucRenew.fuel_type || "Petrol"}) • Record statutory emission test & certificate
-                  </p>
-                </div>
-              </div>
-              <AppButton variant="ghost" size="icon-sm" onClick={() => setIsRenewPucModalOpen(false)}>
-                <X className="h-4 w-4" />
-              </AppButton>
-            </div>
-
-            {/* Form */}
-            <form onSubmit={handleSaveVehiclePucRenewal} className="p-6 space-y-4 overflow-y-auto flex-1 text-xs">
+        <TransactionFormLayout
+          title={`Renew PUC Emission Certificate: ${selectedVehicleForPucRenew.registration_number}`}
+          badge="PUC Renewal"
+          category="Statutory Compliance"
+          icon={Wind}
+          iconBg="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
+          description="Record newly issued pollution control test certificate number, testing station, issue/expiry dates & certificate attachment."
+          breadcrumbs={[
+            { label: "Fleet Inventory", onClick: () => setIsRenewPucModalOpen(false) },
+            { label: `Renew PUC (${selectedVehicleForPucRenew.registration_number})` }
+          ]}
+          onBack={() => {
+            setIsRenewPucModalOpen(false);
+            setSelectedVehicleForPucRenew(null);
+          }}
+          backLabel="Back to Fleet"
+          onSave={handleSaveVehiclePucRenewal}
+          saveLabel="Save & Issue PUC Certificate"
+          saveIcon={Wind}
+          isSubmitting={modalSubmitting}
+        >
+          <div className="space-y-4">
               {/* Current PUC Info Banner */}
               <div className="p-3.5 rounded-xl border border-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-950/20 flex flex-wrap items-center justify-between gap-2">
                 <div className="space-y-0.5">
@@ -11332,99 +11150,32 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 />
               </div>
 
-              {/* Modal Footer Actions */}
-              <div className="pt-3 border-t border-border flex items-center justify-between">
-                <AppButton
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setIsRenewPucModalOpen(false);
-                    if (selectedVehicleForPucRenew) {
-                      handleOpenVehiclePucHistoryModal(selectedVehicleForPucRenew);
-                    }
-                  }}
-                  className="text-teal-600 dark:text-teal-400 gap-1.5"
-                >
-                  <History className="h-3.5 w-3.5" />
-                  <span>View All Past PUC Cycles</span>
-                </AppButton>
-
-                <div className="flex items-center gap-2">
-                  <AppButton
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsRenewPucModalOpen(false)}
-                    disabled={modalSubmitting}
-                  >
-                    Cancel
-                  </AppButton>
-                  <AppButton
-                    type="submit"
-                    variant="primary"
-                    size="sm"
-                    disabled={modalSubmitting}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold gap-1.5 shadow-md"
-                  >
-                    {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Wind className="h-3.5 w-3.5" />}
-                    <span>Confirm & Archive PUC</span>
-                  </AppButton>
-                </div>
-              </div>
-            </form>
           </div>
-        </div>
+        </TransactionFormLayout>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* VEHICLE PUC HISTORY & AUDIT LEDGER MODAL */}
       {/* ---------------------------------------------------------------------- */}
       {isPucHistoryModalOpen && selectedVehicleForPucHistory && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
-            {/* Modal Header */}
-            <div className="p-5 border-b border-border bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-transparent flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-11 w-11 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/25 shadow-xs">
-                  <Wind className="h-6 w-6" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base font-bold text-foreground">
-                      PUC Certificates Ledger & Emission Audit Tracks
-                    </h3>
-                    <span className="px-2.5 py-0.5 rounded-md font-mono text-xs font-bold bg-theme-btn-primary text-white">
-                      {selectedVehicleForPucHistory.registration_number}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {selectedVehicleForPucHistory.make} {selectedVehicleForPucHistory.model} ({selectedVehicleForPucHistory.fuel_type || "Petrol"}) • Complete historical ledger of emission test certificates
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <AppButton
-                  variant="primary"
-                  size="sm"
-                  onClick={() => {
-                    setIsPucHistoryModalOpen(false);
-                    handleOpenVehiclePucRenewModal(selectedVehicleForPucHistory);
-                  }}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold gap-1.5 shadow-xs"
-                >
-                  <Wind className="h-3.5 w-3.5" />
-                  <span>Renew New PUC</span>
-                </AppButton>
-                <AppButton variant="ghost" size="icon-sm" onClick={() => setIsPucHistoryModalOpen(false)}>
-                  <X className="h-4 w-4" />
-                </AppButton>
-              </div>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-6 space-y-5 overflow-y-auto flex-1">
+        <WorkingDocumentLayout
+          title={`PUC Emission Ledger: ${selectedVehicleForPucHistory.registration_number}`}
+          badge="Emission Ledger"
+          badgeColor="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+          category="Statutory Compliance Ledgers"
+          icon={History}
+          iconBg="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
+          description="Chronological log of emission test certificates, test centers, compliance validity periods & audit records."
+          breadcrumbs={[
+            { label: "Fleet Inventory", onClick: () => setIsPucHistoryModalOpen(false) },
+            { label: `PUC History (${selectedVehicleForPucHistory.registration_number})` }
+          ]}
+          onBack={() => {
+            setIsPucHistoryModalOpen(false);
+            setSelectedVehicleForPucHistory(null);
+          }}
+          backLabel="Back to Fleet"
+        >
               {/* Summary Metric Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                 <div className="p-3.5 rounded-xl border border-border bg-surface shadow-2xs space-y-1">
@@ -11589,75 +11340,31 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   </div>
                 )}
               </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-4 border-t border-border bg-surface/50 flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">
-                Enterprise PUC test records are archived permanently for statutory emission compliance & fleet audits.
-              </span>
-              <AppButton
-                variant="outline"
-                size="sm"
-                onClick={() => setIsPucHistoryModalOpen(false)}
-              >
-                Close Ledger
-              </AppButton>
-            </div>
-          </div>
-        </div>
+        </WorkingDocumentLayout>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* VEHICLE SPECIFICATION REVISION HISTORY & AUDIT LEDGER MODAL */}
       {/* ---------------------------------------------------------------------- */}
       {isSpecHistoryModalOpen && selectedVehicleForSpecHistory && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
-            {/* Modal Header */}
-            <div className="p-5 border-b border-border bg-gradient-to-r from-purple-500/10 via-indigo-500/10 to-transparent flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-11 w-11 rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center border border-purple-500/25 shadow-xs">
-                  <ClipboardCheck className="h-6 w-6" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base font-bold text-foreground">
-                      Vehicle Specifications Revision History & Audit Ledger
-                    </h3>
-                    <span className="px-2.5 py-0.5 rounded-md font-mono text-xs font-bold bg-theme-btn-primary text-white">
-                      {selectedVehicleForSpecHistory.registration_number}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {selectedVehicleForSpecHistory.make} {selectedVehicleForSpecHistory.model} ({selectedVehicleForSpecHistory.variant || "Standard"}) • Chronological audit log of all specification & compliance updates
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                {canEditVehicle && (
-                  <AppButton
-                    variant="primary"
-                    size="sm"
-                    onClick={() => {
-                      setIsSpecHistoryModalOpen(false);
-                      openEditVehicleModal(selectedVehicleForSpecHistory);
-                    }}
-                    className="bg-purple-600 hover:bg-purple-700 text-white font-semibold gap-1.5 shadow-xs"
-                  >
-                    <Edit2 className="h-3.5 w-3.5" />
-                    <span>Edit Vehicle</span>
-                  </AppButton>
-                )}
-                <AppButton variant="ghost" size="icon-sm" onClick={() => setIsSpecHistoryModalOpen(false)}>
-                  <X className="h-4 w-4" />
-                </AppButton>
-              </div>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-6 space-y-5 overflow-y-auto flex-1">
+        <WorkingDocumentLayout
+          title={`Specification Revision Ledger: ${selectedVehicleForSpecHistory.registration_number}`}
+          badge="Specification Audit"
+          badgeColor="bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20"
+          category="Fleet Compliance & Technical Audits"
+          icon={FileSpreadsheet}
+          iconBg="bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/25"
+          description="Chronological audit trail of vehicle technical parameters, fuel type modifications, engine specifications & registration updates."
+          breadcrumbs={[
+            { label: "Fleet Inventory", onClick: () => setIsSpecHistoryModalOpen(false) },
+            { label: `Spec History (${selectedVehicleForSpecHistory.registration_number})` }
+          ]}
+          onBack={() => {
+            setIsSpecHistoryModalOpen(false);
+            setSelectedVehicleForSpecHistory(null);
+          }}
+          backLabel="Back to Fleet"
+        >
               {/* Summary Metric Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                 <div className="p-3.5 rounded-xl border border-border bg-surface shadow-2xs space-y-1">
@@ -11828,154 +11535,43 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   </div>
                 )}
               </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-4 border-t border-border bg-surface/50 flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">
-                All vehicle specification revisions are tracked for fleet audit trails and statutory compliance.
-              </span>
-              <AppButton
-                variant="outline"
-                size="sm"
-                onClick={() => setIsSpecHistoryModalOpen(false)}
-              >
-                Close Ledger
-              </AppButton>
-            </div>
-          </div>
-        </div>
+        </WorkingDocumentLayout>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* UNIFIED VEHICLE RENEWALS & FREE SERVICES TIMELINE MODAL */}
       {/* ---------------------------------------------------------------------- */}
       {isUnifiedRenewalsModalOpen && selectedVehicleForRenewals && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
-            {/* Modal Header */}
-            <div className="p-5 border-b border-border bg-slate-50/90 dark:bg-slate-900/90 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-500/25 shrink-0 shadow-xs">
-                  <CalendarSync className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-base font-bold text-foreground">
-                      Unified Renewal & Service Passport
-                    </h3>
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-                      {selectedVehicleForRenewals.make} {selectedVehicleForRenewals.model}
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-surface text-muted-foreground border border-border">
-                      Odo: {(selectedVehicleForRenewals.odometer_km || 0).toLocaleString()} KM
-                    </span>
-                  </div>
-                  <div className="mt-1 flex items-center gap-3">
-                    {renderHsrpPlate(selectedVehicleForRenewals.registration_number)}
-                    <span className="text-xs text-muted-foreground hidden sm:inline">
-                      Single chronological lifecycle track across Insurance, PUC, and Free Maintenance / AMC cycles.
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 shrink-0">
-                <AppButton
-                  variant="primary"
-                  size="sm"
-                  onClick={() => handleOpenAddEntitlementModal(selectedVehicleForRenewals)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs h-8 px-3 gap-1.5 shadow-xs"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Add Free Voucher / AMC</span>
-                  <span className="sm:hidden">Add Voucher</span>
-                </AppButton>
-                <AppButton
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => setIsUnifiedRenewalsModalOpen(false)}
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                >
-                  <X className="h-4 w-4" />
-                </AppButton>
-              </div>
-            </div>
-
-            {/* Modal Sub-Tabs */}
-            <div className="px-5 py-2.5 bg-surface border-b border-border flex items-center justify-between flex-wrap gap-3">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setRenewalsActiveTab("TIMELINE")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
-                    renewalsActiveTab === "TIMELINE"
-                      ? "bg-blue-600 text-white shadow-xs"
-                      : "bg-surface text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-                  }`}
-                >
-                  <History className="h-3.5 w-3.5" />
-                  <span>Chronological Lifecycle Track</span>
-                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                    renewalsActiveTab === "TIMELINE" ? "bg-white/20 text-white" : "bg-muted text-foreground"
-                  }`}>
-                    {unifiedTimeline.length}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setRenewalsActiveTab("FREE_SERVICES")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
-                    renewalsActiveTab === "FREE_SERVICES"
-                      ? "bg-blue-600 text-white shadow-xs"
-                      : "bg-surface text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-                  }`}
-                >
-                  <Gift className="h-3.5 w-3.5" />
-                  <span>Free Services & AMC Vouchers</span>
-                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                    renewalsActiveTab === "FREE_SERVICES" ? "bg-white/20 text-white" : "bg-muted text-foreground"
-                  }`}>
-                    {vehicleEntitlements.length}
-                  </span>
-                </button>
-              </div>
-
-              {renewalsActiveTab === "TIMELINE" && (
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-[11px] text-muted-foreground mr-1">Filter:</span>
-                  {(["ALL", "INSURANCE", "PUC", "MAINTENANCE_AMC"] as const).map((ft) => {
-                    const count = ft === "ALL" 
-                      ? unifiedTimeline.length 
-                      : unifiedTimeline.filter((x) => x.renewal_type === ft).length;
-                    const labels: Record<string, string> = {
-                      ALL: "All Cycles",
-                      INSURANCE: "🛡️ Insurance",
-                      PUC: "💨 PUC",
-                      MAINTENANCE_AMC: "🛠️ Maintenance / AMC"
-                    };
-                    return (
-                      <button
-                        key={ft}
-                        type="button"
-                        onClick={() => setRenewalsFilter(ft)}
-                        className={`px-2.5 py-1 rounded-md text-[11px] font-medium border transition-colors ${
-                          renewalsFilter === ft
-                            ? "bg-foreground text-background border-foreground shadow-2xs font-semibold"
-                            : "bg-surface text-muted-foreground border-border hover:border-foreground/40"
-                        }`}
-                      >
-                        {labels[ft]} ({count})
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-5 overflow-y-auto flex-1 space-y-4">
+        <WorkingDocumentLayout
+          title={`Unified Renewals & Free Services Timeline: ${selectedVehicleForRenewals.registration_number}`}
+          badge="Lifecycle Ledger"
+          badgeColor="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+          category="Compliance & Statutory Ledgers"
+          icon={CalendarSync}
+          iconBg="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
+          description={`Combined chronology of insurance policies, PUC emission certificates, specification revisions & free service entitlement vouchers for ${selectedVehicleForRenewals.make} ${selectedVehicleForRenewals.model}.`}
+          breadcrumbs={[
+            { label: "Fleet Inventory", onClick: () => setIsUnifiedRenewalsModalOpen(false) },
+            { label: `Unified Renewals (${selectedVehicleForRenewals.registration_number})` }
+          ]}
+          onBack={() => {
+            setIsUnifiedRenewalsModalOpen(false);
+            setSelectedVehicleForRenewals(null);
+          }}
+          backLabel="Back to Fleet"
+          headerActions={
+            <AppButton
+              type="button"
+              variant="primary"
+              size="sm"
+              onClick={() => handleOpenAddEntitlementModal(selectedVehicleForRenewals)}
+              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs px-3.5"
+            >
+              <Gift className="h-3.5 w-3.5" />
+              <span>Add Entitlement Voucher</span>
+            </AppButton>
+          }
+        >
               {loadingUnifiedTimeline ? (
                 <div className="py-16 text-center space-y-3">
                   <RefreshCw className="h-8 w-8 animate-spin mx-auto text-blue-500" />
@@ -12368,385 +11964,89 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   )}
                 </div>
               )}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-4 border-t border-border bg-surface/50 flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">
-                All free service redemptions and policy renewal cycles are preserved in one immutable vehicle lineage track.
-              </span>
-              <AppButton
-                variant="outline"
-                size="sm"
-                onClick={() => setIsUnifiedRenewalsModalOpen(false)}
-              >
-                Close Passport
-              </AppButton>
-            </div>
-          </div>
-        </div>
+        </WorkingDocumentLayout>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* ADD SERVICE ENTITLEMENT / AMC VOUCHER MODAL */}
       {/* ---------------------------------------------------------------------- */}
       {isAddEntitlementModalOpen && selectedVehicleForRenewals && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/75 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-4 border-b border-border bg-slate-50 dark:bg-slate-900 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Ticket className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                <h3 className="font-bold text-sm text-foreground">Add Free Service / AMC Voucher</h3>
-              </div>
-              <AppButton
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => setIsAddEntitlementModalOpen(false)}
-              >
-                <X className="h-4 w-4" />
-              </AppButton>
-            </div>
+        <TransactionFormLayout
+          title={`Add Free Service Voucher / AMC: ${selectedVehicleForRenewals.registration_number}`}
+          badge="Entitlement Voucher Form"
+          category="Warranty & Free Service Entitlements"
+          icon={Gift}
+          iconBg="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
+          description="Register manufacturer warranty free service coupons, dealership AMC vouchers & dual validity rules (months/odometer)."
+          breadcrumbs={[
+            { label: "Fleet Inventory", onClick: () => setIsAddEntitlementModalOpen(false) },
+            { label: "Unified Renewals", onClick: () => setIsAddEntitlementModalOpen(false) },
+            { label: "Add Service Voucher" }
+          ]}
+          onBack={() => setIsAddEntitlementModalOpen(false)}
+          backLabel="Back to Unified Renewals"
+          onSave={handleSaveAddEntitlement}
+          saveLabel="Save Service Entitlement"
+          saveIcon={Gift}
+          isSubmitting={modalSubmitting}
+        >
+          <div className="space-y-4">
 
-            <form onSubmit={handleSaveAddEntitlement} className="p-5 overflow-y-auto space-y-4">
-              <div>
-                <label className="text-xs font-semibold text-foreground block mb-1">Service Title *</label>
-                <AppInput
-                  value={entitlementFormTitle}
-                  onChange={(e) => setEntitlementFormTitle(e.target.value)}
-                  placeholder="e.g. 2nd OEM Periodic Free Service"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold text-foreground block mb-1">Entitlement Type</label>
-                  <select
-                    value={entitlementFormType}
-                    onChange={(e) => setEntitlementFormType(e.target.value)}
-                    className="w-full text-xs p-2 rounded-lg border border-border bg-surface text-foreground"
-                  >
-                    <option value="OEM_FREE_1">1st OEM Free Service</option>
-                    <option value="OEM_FREE_2">2nd OEM Free Service</option>
-                    <option value="OEM_FREE_3">3rd OEM Free Service</option>
-                    <option value="AMC_PACKAGE">AMC Fleet Package</option>
-                    <option value="EXTENDED_WARRANTY">Extended Warranty</option>
-                    <option value="DEALER_PROMO">Dealer Promo / Goodwill</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold text-foreground block mb-1">Coverage Scope</label>
-                  <select
-                    value={entitlementFormScope}
-                    onChange={(e) => setEntitlementFormScope(e.target.value)}
-                    className="w-full text-xs p-2 rounded-lg border border-border bg-surface text-foreground"
-                  >
-                    <option value="LABOR_ONLY">100% Labor Only</option>
-                    <option value="LABOR_AND_PARTS">Labor & Standard Parts</option>
-                    <option value="FULL_COMPREHENSIVE">Full Comprehensive</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold text-foreground block mb-1">Voucher Number</label>
-                  <AppInput
-                    value={entitlementFormVoucherNo}
-                    onChange={(e) => setEntitlementFormVoucherNo(e.target.value)}
-                    placeholder="e.g. VOUCHER-MH12-FS2"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-foreground block mb-1">Provider / Vendor</label>
-                  <AppInput
-                    value={entitlementFormProvider}
-                    onChange={(e) => setEntitlementFormProvider(e.target.value)}
-                    placeholder="OEM Dealership Network"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold text-foreground block mb-1">Valid From Date *</label>
-                  <AppInput
-                    type="date"
-                    value={entitlementFormValidFrom}
-                    onChange={(e) => setEntitlementFormValidFrom(e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-foreground block mb-1">Valid To / Expiry Date *</label>
-                  <AppInput
-                    type="date"
-                    value={entitlementFormValidTo}
-                    onChange={(e) => setEntitlementFormValidTo(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold text-foreground block mb-1">Min Odometer (KM)</label>
-                  <AppInput
-                    type="number"
-                    value={entitlementFormMinKm}
-                    onChange={(e) => setEntitlementFormMinKm(Number(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-foreground block mb-1">Max Odometer Limit (KM) *</label>
-                  <AppInput
-                    type="number"
-                    value={entitlementFormMaxKm}
-                    onChange={(e) => setEntitlementFormMaxKm(Number(e.target.value))}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-foreground block mb-1">Terms & Conditions</label>
-                <AppInput
-                  value={entitlementFormTerms}
-                  onChange={(e) => setEntitlementFormTerms(e.target.value)}
-                  placeholder="e.g. Labor free. Engine oil and filters chargeable."
-                />
-              </div>
-
-              <div className="p-3 border-t border-border flex items-center justify-end gap-2 bg-surface/50">
-                <AppButton
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsAddEntitlementModalOpen(false)}
-                >
-                  Cancel
-                </AppButton>
-                <AppButton
-                  type="submit"
-                  variant="primary"
-                  size="sm"
-                  disabled={modalSubmitting}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-                >
-                  {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin mr-1" /> : <Save className="h-3.5 w-3.5 mr-1" />}
-                  Save Voucher
-                </AppButton>
-              </div>
-            </form>
           </div>
-        </div>
+        </TransactionFormLayout>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* REDEEM / CLAIM SERVICE ENTITLEMENT MODAL */}
       {/* ---------------------------------------------------------------------- */}
       {isRedeemEntitlementModalOpen && selectedEntitlementForRedeem && selectedVehicleForRenewals && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/75 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-4 border-b border-border bg-slate-50 dark:bg-slate-900 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                <div>
-                  <h3 className="font-bold text-sm text-foreground">Claim & Redeem Service Voucher</h3>
-                  <p className="text-[11px] text-muted-foreground">{selectedEntitlementForRedeem.service_title}</p>
-                </div>
-              </div>
-              <AppButton
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => setIsRedeemEntitlementModalOpen(false)}
-              >
-                <X className="h-4 w-4" />
-              </AppButton>
-            </div>
+        <TransactionFormLayout
+          title={`Redeem Free Service Entitlement: ${selectedEntitlementForRedeem.service_title}`}
+          badge="Redemption Voucher Form"
+          category="Warranty & Free Service Entitlements"
+          icon={Ticket}
+          iconBg="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
+          description={`Claim free service voucher against workshop job card for vehicle ${selectedVehicleForRenewals.registration_number}.`}
+          breadcrumbs={[
+            { label: "Fleet Inventory", onClick: () => setIsRedeemEntitlementModalOpen(false) },
+            { label: "Unified Renewals", onClick: () => setIsRedeemEntitlementModalOpen(false) },
+            { label: "Redeem Voucher" }
+          ]}
+          onBack={() => {
+            setIsRedeemEntitlementModalOpen(false);
+            setSelectedEntitlementForRedeem(null);
+          }}
+          backLabel="Back to Unified Renewals"
+          onSave={handleSaveRedeemEntitlement}
+          saveLabel="Confirm & Claim Voucher"
+          saveIcon={Ticket}
+          isSubmitting={modalSubmitting}
+        >
+          <div className="space-y-4">
 
-            <form onSubmit={handleSaveRedeemEntitlement} className="p-5 overflow-y-auto space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold text-foreground block mb-1">Odometer at Service (KM) *</label>
-                  <AppInput
-                    type="number"
-                    value={redeemFormOdometer}
-                    onChange={(e) => setRedeemFormOdometer(Number(e.target.value))}
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-foreground block mb-1">Invoice / Job Card #</label>
-                  <AppInput
-                    value={redeemFormInvoiceNo}
-                    onChange={(e) => setRedeemFormInvoiceNo(e.target.value)}
-                    placeholder="INV-10928"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-foreground block mb-1">Workshop / Service Center Name *</label>
-                <AppInput
-                  value={redeemFormWorkshop}
-                  onChange={(e) => setRedeemFormWorkshop(e.target.value)}
-                  placeholder="e.g. Pune Central Authorized Workshop"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold text-foreground block mb-1">Labor Amount Waived (₹)</label>
-                  <AppInput
-                    type="number"
-                    value={redeemFormLaborWaived}
-                    onChange={(e) => setRedeemFormLaborWaived(Number(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-foreground block mb-1">Parts Amount Waived (₹)</label>
-                  <AppInput
-                    type="number"
-                    value={redeemFormPartsWaived}
-                    onChange={(e) => setRedeemFormPartsWaived(Number(e.target.value))}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-foreground block mb-1">Scanned Invoice / Stamped Bill URL</label>
-                <AppInput
-                  value={redeemFormDocUrl}
-                  onChange={(e) => setRedeemFormDocUrl(e.target.value)}
-                  placeholder="https://.../stamped-service-bill.pdf"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-foreground block mb-1">Notes / Remarks</label>
-                <AppInput
-                  value={redeemFormNotes}
-                  onChange={(e) => setRedeemFormNotes(e.target.value)}
-                  placeholder="e.g. 1st free inspection completed with oil change."
-                />
-              </div>
-
-              <div className="p-3 border-t border-border flex items-center justify-end gap-2 bg-surface/50">
-                <AppButton
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsRedeemEntitlementModalOpen(false)}
-                >
-                  Cancel
-                </AppButton>
-                <AppButton
-                  type="submit"
-                  variant="primary"
-                  size="sm"
-                  disabled={modalSubmitting}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
-                >
-                  {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin mr-1" /> : <CheckCircle2 className="h-3.5 w-3.5 mr-1" />}
-                  Confirm Redemption
-                </AppButton>
-              </div>
-            </form>
           </div>
-        </div>
+        </TransactionFormLayout>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* 1. VIEW VEHICLE INSPECTOR MODAL */}
       {/* ---------------------------------------------------------------------- */}
       {viewingVehicle && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
-            {/* Modal Header */}
-            <div className="p-5 border-b border-border bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-theme-btn-primary/15 text-theme-btn-primary flex items-center justify-center border border-theme-btn-primary/25 shrink-0 shadow-xs">
-                  <Car className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-base font-bold text-foreground">
-                      {viewingVehicle.make} {viewingVehicle.model} {viewingVehicle.variant ? `(${viewingVehicle.variant})` : ""}
-                    </h3>
-                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                      viewingVehicle.status === "IN_STOCK"
-                        ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
-                        : viewingVehicle.status === "IN_SERVICE"
-                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
-                        : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
-                    }`}>
-                      {viewingVehicle.status === "IN_STOCK" ? "Available / In Stock" : viewingVehicle.status === "IN_SERVICE" ? "Active in Service" : viewingVehicle.status}
-                    </span>
-                  </div>
-                  <div className="mt-1">
-                    {renderHsrpPlate(viewingVehicle.registration_number)}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <AppButton
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const v = viewingVehicle;
-                    setViewingVehicle(null);
-                    handleOpenVehicleSpecHistoryModal(v);
-                  }}
-                  className="text-xs h-8 font-semibold gap-1.5 text-purple-600 dark:text-purple-400 border-purple-500/30 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/30 shadow-2xs"
-                  title="View specification change history"
-                >
-                  <ClipboardCheck className="h-3.5 w-3.5" />
-                  <span>Revision History</span>
-                </AppButton>
-                <AppButton
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const v = viewingVehicle;
-                    handleOpenVehicleUnifiedRenewalsModal(v);
-                  }}
-                  className="text-xs h-8 font-semibold gap-1.5 text-blue-600 dark:text-blue-400 border-blue-500/30 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30 shadow-2xs"
-                  title="Unified Renewals & Free Service Entitlements"
-                >
-                  <CalendarSync className="h-3.5 w-3.5" />
-                  <span>Renewals & Free Services</span>
-                </AppButton>
-                {canEditVehicle && (
-                  <AppButton
-                    variant="primary"
-                    size="sm"
-                    onClick={() => {
-                      const v = viewingVehicle;
-                      setViewingVehicle(null);
-                      openEditVehicleModal(v);
-                    }}
-                    className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-8 font-semibold gap-1.5 shadow-xs"
-                  >
-                    <Edit2 className="h-3.5 w-3.5" />
-                    <span>Edit Vehicle</span>
-                  </AppButton>
-                )}
-                <AppButton
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => setViewingVehicle(null)}
-                >
-                  <X className="h-4 w-4" />
-                </AppButton>
-              </div>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-5 space-y-5 overflow-y-auto flex-1 text-xs">
+        <WorkingDocumentLayout
+          title={`Vehicle Master Dossier: ${viewingVehicle.registration_number}`}
+          badge={viewingVehicle.status}
+          badgeColor="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+          category="Fleet Operations"
+          icon={Car}
+          iconBg="bg-theme-btn-primary/15 text-theme-btn-primary border-theme-btn-primary/25"
+          description="Comprehensive vehicle master dossier, RTO registration, powertrain specifications, compliance documents & active assignment."
+          breadcrumbs={[
+            { label: "Fleet Inventory", onClick: () => setViewingVehicle(null) },
+            { label: `Vehicle Dossier (${viewingVehicle.registration_number})` }
+          ]}
+          onBack={() => setViewingVehicle(null)}
+          backLabel="Back to Fleet"
+        >
               {/* Primary Specs & Identity */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                 <div className="p-3 rounded-xl border border-border/70 bg-slate-50/50 dark:bg-slate-900/40 space-y-1">
@@ -12962,115 +12262,28 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-4 border-t border-border bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">
-                Vehicle ID: <strong className="font-mono text-foreground">{viewingVehicle.id}</strong>
-              </span>
-              <div className="flex items-center gap-2">
-                <AppButton
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const v = viewingVehicle;
-                    setViewingVehicle(null);
-                    handleOpenVehicleSpecHistoryModal(v);
-                  }}
-                  className="text-xs h-9 px-3 font-semibold gap-1.5 text-purple-600 dark:text-purple-400 border-purple-500/30 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/30 shadow-2xs"
-                  title="View specification revision history and audit ledger"
-                >
-                  <ClipboardCheck className="h-3.5 w-3.5" />
-                  <span>Revision History</span>
-                </AppButton>
-                {canEditVehicle && (
-                  <AppButton
-                    variant="primary"
-                    size="sm"
-                    onClick={() => {
-                      const v = viewingVehicle;
-                      setViewingVehicle(null);
-                      openEditVehicleModal(v);
-                    }}
-                    className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 px-3 font-semibold gap-1.5 shadow-xs"
-                  >
-                    <Edit2 className="h-3.5 w-3.5" />
-                    <span>Edit Vehicle</span>
-                  </AppButton>
-                )}
-                <AppButton
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setViewingVehicle(null)}
-                  className="text-xs h-9 px-4 font-semibold"
-                >
-                  Close
-                </AppButton>
-              </div>
-            </div>
-          </div>
-        </div>
+        </WorkingDocumentLayout>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* 2. VIEW DRIVER INSPECTOR MODAL */}
       {/* ---------------------------------------------------------------------- */}
       {viewingDriver && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            {/* Modal Header */}
-            <div className="p-5 border-b border-border bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-500/25 shrink-0 shadow-xs">
-                  <Users className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-base font-bold text-foreground">{viewingDriver.full_name}</h3>
-                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                      viewingDriver.is_active
-                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
-                        : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
-                    }`}>
-                      {viewingDriver.is_active ? "Active" : "Inactive"}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {viewingDriver.experience_years ? `${viewingDriver.experience_years} Yrs Experience • ` : ""}
-                    Commercial Fleet Chauffeur
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                {canManageDrivers && (
-                  <AppButton
-                    variant="primary"
-                    size="sm"
-                    onClick={() => {
-                      const d = viewingDriver;
-                      setViewingDriver(null);
-                      openEditDriverModal(d);
-                    }}
-                    className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-8 font-semibold gap-1.5 shadow-xs"
-                  >
-                    <Edit2 className="h-3.5 w-3.5" />
-                    <span>Edit Driver</span>
-                  </AppButton>
-                )}
-                <AppButton
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => setViewingDriver(null)}
-                >
-                  <X className="h-4 w-4" />
-                </AppButton>
-              </div>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-5 space-y-4 overflow-y-auto flex-1 text-xs">
+        <WorkingDocumentLayout
+          title={`Driver Personnel File: ${viewingDriver.full_name}`}
+          badge={viewingDriver.is_active ? "ACTIVE ON DUTY" : "INACTIVE"}
+          badgeColor={viewingDriver.is_active ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20" : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"}
+          category="Driver Operations"
+          icon={Users}
+          iconBg="bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/25"
+          description="Driver personnel credentials, driving license validity, emergency contacts, primary vehicle assignment & duty history."
+          breadcrumbs={[
+            { label: "Driver Management", onClick: () => setViewingDriver(null) },
+            { label: `Driver File (${viewingDriver.full_name})` }
+          ]}
+          onBack={() => setViewingDriver(null)}
+          backLabel="Back to Drivers"
+        >
               {/* Contact & Profile */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="p-3.5 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/40 space-y-2">
@@ -13147,89 +12360,62 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-4 border-t border-border bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">
-                Driver Record ID: <strong className="font-mono text-foreground">{viewingDriver.id}</strong>
-              </span>
-              <div className="flex items-center gap-2">
-                {canManageDrivers && (
-                  <AppButton
-                    variant="primary"
-                    size="sm"
-                    onClick={() => {
-                      const d = viewingDriver;
-                      setViewingDriver(null);
-                      openEditDriverModal(d);
-                    }}
-                    className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 px-3 font-semibold gap-1.5 shadow-xs"
-                  >
-                    <Edit2 className="h-3.5 w-3.5" />
-                    <span>Edit Driver</span>
-                  </AppButton>
-                )}
-                <AppButton
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setViewingDriver(null)}
-                  className="text-xs h-9 px-4 font-semibold"
-                >
-                  Close
-                </AppButton>
-              </div>
-            </div>
-          </div>
-        </div>
+        </WorkingDocumentLayout>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* 3. VIEW TRIP / TRAVELER INSPECTOR MODAL */}
       {/* ---------------------------------------------------------------------- */}
       {viewingTrip && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            {/* Modal Header */}
-            <div className="p-5 border-b border-border bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-500/25 shrink-0 shadow-xs">
-                  <UserCheck className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-base font-bold text-foreground">{viewingTrip.traveler_name}</h3>
-                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                      viewingTrip.status === "IN_PROGRESS"
-                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
-                        : viewingTrip.status === "COMPLETED"
-                        ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
-                        : viewingTrip.status === "CANCELLED"
-                        ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
-                        : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
-                    }`}>
-                      {viewingTrip.status}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {viewingTrip.purpose || "Official Corporate Transit / Dispatch"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-1.5">
+        <WorkingDocumentLayout
+          title={`Trip Transit Record #${viewingTrip.id.slice(0, 8)}`}
+          badge={viewingTrip.status}
+          badgeColor="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20"
+          category="Transit Operations"
+          icon={MapPin}
+          iconBg="bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border-indigo-500/25"
+          description="Transit route manifest, driver assignment, vehicle telemetry, destination itinerary & trip odometer logs."
+          breadcrumbs={[
+            { label: "Trip Dispatches", onClick: () => setViewingTrip(null) },
+            { label: `Trip #${viewingTrip.id.slice(0, 8)}` }
+          ]}
+          onBack={() => setViewingTrip(null)}
+          backLabel="Back to Dispatches"
+          headerActions={
+            <div className="flex items-center gap-1.5">
+              {canDispatchTrips && viewingTrip.status === "PLANNED" && (
                 <AppButton
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => setViewingTrip(null)}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const id = viewingTrip.id;
+                    setViewingTrip(null);
+                    handleUpdateTripStatus(id, "IN_PROGRESS");
+                  }}
+                  className="h-8 text-xs text-emerald-600 border-emerald-300 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 gap-1 font-semibold"
                 >
-                  <X className="h-4 w-4" />
+                  <Play className="h-3.5 w-3.5" />
+                  <span>Start Movement</span>
                 </AppButton>
-              </div>
+              )}
+              {canDispatchTrips && viewingTrip.status === "IN_PROGRESS" && (
+                <AppButton
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const id = viewingTrip.id;
+                    setViewingTrip(null);
+                    handleUpdateTripStatus(id, "COMPLETED");
+                  }}
+                  className="h-8 text-xs text-blue-600 border-blue-300 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/40 gap-1 font-semibold"
+                >
+                  <Check className="h-3.5 w-3.5" />
+                  <span>Complete Movement</span>
+                </AppButton>
+              )}
             </div>
-
-            {/* Modal Body */}
-            <div className="p-5 space-y-4 overflow-y-auto flex-1 text-xs">
+          }
+        >
               {/* Journey Route Details */}
               <div className="p-4 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/40 space-y-3">
                 <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
@@ -13264,112 +12450,28 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <div className="text-sm font-bold text-foreground">{viewingTrip.driver_name || "—"}</div>
                 </div>
               </div>
-            </div>
-
-            {/* Modal Footer Controls */}
-            <div className="p-4 border-t border-border bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                {canDispatchTrips && viewingTrip.status === "PLANNED" && (
-                  <AppButton
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const id = viewingTrip.id;
-                      setViewingTrip(null);
-                      handleUpdateTripStatus(id, "IN_PROGRESS");
-                    }}
-                    className="h-8 text-xs text-emerald-600 border-emerald-300 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 gap-1 font-semibold"
-                  >
-                    <Play className="h-3.5 w-3.5" />
-                    <span>Start Movement</span>
-                  </AppButton>
-                )}
-                {canDispatchTrips && viewingTrip.status === "IN_PROGRESS" && (
-                  <AppButton
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const id = viewingTrip.id;
-                      setViewingTrip(null);
-                      handleUpdateTripStatus(id, "COMPLETED");
-                    }}
-                    className="h-8 text-xs text-blue-600 border-blue-300 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/40 gap-1 font-semibold"
-                  >
-                    <Check className="h-3.5 w-3.5" />
-                    <span>Complete Movement</span>
-                  </AppButton>
-                )}
-              </div>
-
-              <AppButton
-                variant="outline"
-                size="sm"
-                onClick={() => setViewingTrip(null)}
-                className="text-xs h-9 px-4 font-semibold"
-              >
-                Close
-              </AppButton>
-            </div>
-          </div>
-        </div>
+        </WorkingDocumentLayout>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* 4. VIEW PART / ACCESSORY INSPECTOR MODAL */}
       {/* ---------------------------------------------------------------------- */}
       {viewingPart && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
-            {/* Modal Header */}
-            <div className="p-5 border-b border-border bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/25 shrink-0 shadow-xs">
-                  <Package className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-base font-bold text-foreground">{viewingPart.name}</h3>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
-                      {viewingPart.brand}
-                    </span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 font-mono">
-                      {viewingPart.category}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {viewingPart.part_number ? `SKU / Part #: ${viewingPart.part_number} • ` : ""}
-                    {viewingPart.serial_number ? `S/N: ${viewingPart.serial_number} • ` : ""}
-                    Asset Lifecycle Master
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <AppButton
-                  variant="primary"
-                  size="sm"
-                  onClick={() => {
-                    const p = viewingPart;
-                    setViewingPart(null);
-                    openEditPartModal(p);
-                  }}
-                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-8 font-semibold gap-1.5 shadow-xs"
-                >
-                  <Edit2 className="h-3.5 w-3.5" />
-                  <span>Edit Part</span>
-                </AppButton>
-                <AppButton
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => setViewingPart(null)}
-                >
-                  <X className="h-4 w-4" />
-                </AppButton>
-              </div>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-5 space-y-5 overflow-y-auto flex-1 text-xs">
+        <WorkingDocumentLayout
+          title={`Spare Part Specification: ${viewingPart.name}`}
+          badge={viewingPart.category}
+          badgeColor="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+          category="Inventory & Spare Parts"
+          icon={Package}
+          iconBg="bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/25"
+          description="Spare part master parameters, brand, SKU code, stock balance, warranty timeline & vehicle fitment."
+          breadcrumbs={[
+            { label: "Parts & Accessories", onClick: () => setViewingPart(null) },
+            { label: `Part Dossier (${viewingPart.name})` }
+          ]}
+          onBack={() => setViewingPart(null)}
+          backLabel="Back to Parts"
+        >
               {/* Procurement & Valuation */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="p-3 rounded-xl border border-border/70 bg-slate-50/50 dark:bg-slate-900/40 space-y-1">
@@ -13493,99 +12595,28 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   )}
                 </div>
               </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-4 border-t border-border bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">
-                Part ID: <strong className="font-mono text-foreground">{viewingPart.id}</strong>
-              </span>
-              <div className="flex items-center gap-2">
-                <AppButton
-                  variant="primary"
-                  size="sm"
-                  onClick={() => {
-                    const p = viewingPart;
-                    setViewingPart(null);
-                    openEditPartModal(p);
-                  }}
-                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 px-3 font-semibold gap-1.5 shadow-xs"
-                >
-                  <Edit2 className="h-3.5 w-3.5" />
-                  <span>Edit Part</span>
-                </AppButton>
-                <AppButton
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setViewingPart(null)}
-                  className="text-xs h-9 px-4 font-semibold"
-                >
-                  Close
-                </AppButton>
-              </div>
-            </div>
-          </div>
-        </div>
+        </WorkingDocumentLayout>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* 5. VIEW INSURANCE VENDOR INSPECTOR MODAL */}
       {/* ---------------------------------------------------------------------- */}
       {viewingVendor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            {/* Modal Header */}
-            <div className="p-5 border-b border-border bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-500/25 shrink-0 shadow-xs">
-                  <ShieldCheck className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-base font-bold text-foreground">{viewingVendor.name}</h3>
-                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700">
-                      {viewingVendor.code}
-                    </span>
-                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                      viewingVendor.is_active !== false
-                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
-                        : "bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700"
-                    }`}>
-                      {viewingVendor.is_active !== false ? "Active Underwriter" : "Disabled"}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Authorized Fleet Motor Insurance Underwriter & Policy Desk
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <AppButton
-                  variant="primary"
-                  size="sm"
-                  onClick={() => {
-                    const vn = viewingVendor;
-                    setViewingVendor(null);
-                    openEditVendorModal(vn);
-                  }}
-                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-8 font-semibold gap-1.5 shadow-xs"
-                >
-                  <Edit2 className="h-3.5 w-3.5" />
-                  <span>Edit Vendor</span>
-                </AppButton>
-                <AppButton
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => setViewingVendor(null)}
-                >
-                  <X className="h-4 w-4" />
-                </AppButton>
-              </div>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-5 space-y-4 overflow-y-auto flex-1 text-xs">
+        <WorkingDocumentLayout
+          title={`Insurance Underwriter Dossier: ${viewingVendor.name}`}
+          badge={viewingVendor.is_active !== false ? "Active Partner" : "Inactive"}
+          badgeColor={viewingVendor.is_active !== false ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20" : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"}
+          category="Supply Chain & Underwriters"
+          icon={Building2}
+          iconBg="bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/25"
+          description="Underwriter master profile, branch address, contact channels, portal links & active policy portfolio."
+          breadcrumbs={[
+            { label: "Insurance Vendors", onClick: () => setViewingVendor(null) },
+            { label: `Vendor Dossier (${viewingVendor.name})` }
+          ]}
+          onBack={() => setViewingVendor(null)}
+          backLabel="Back to Vendors"
+        >
               {/* 24x7 Roadside Assistance Banner */}
               {viewingVendor.support_toll_free && (
                 <div className="p-3.5 rounded-xl border border-amber-500/30 bg-amber-500/10 flex items-center justify-between gap-3">
@@ -13698,39 +12729,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   </div>
                 );
               })()}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-4 border-t border-border bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">
-                Vendor Code: <strong className="font-mono text-foreground">{viewingVendor.code}</strong>
-              </span>
-              <div className="flex items-center gap-2">
-                <AppButton
-                  variant="primary"
-                  size="sm"
-                  onClick={() => {
-                    const vn = viewingVendor;
-                    setViewingVendor(null);
-                    openEditVendorModal(vn);
-                  }}
-                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 px-3 font-semibold gap-1.5 shadow-xs"
-                >
-                  <Edit2 className="h-3.5 w-3.5" />
-                  <span>Edit Vendor</span>
-                </AppButton>
-                <AppButton
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setViewingVendor(null)}
-                  className="text-xs h-9 px-4 font-semibold"
-                >
-                  Close
-                </AppButton>
-              </div>
-            </div>
-          </div>
-        </div>
+        </WorkingDocumentLayout>
       )}
 
       {/* ---------------------------------------------------------------------- */}
