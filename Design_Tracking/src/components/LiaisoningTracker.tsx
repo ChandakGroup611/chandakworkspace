@@ -25,6 +25,9 @@ import {
 import { DesignMasterStore } from "../services/designMasterStore";
 import { StatutoryAuthorityMaster } from "../types/masterTypes";
 import { DesignMultiSelectDropdown, DropdownOption } from "./DesignMultiSelectDropdown";
+import { TransactionFormLayout } from "./DesignTransactionLayout";
+import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
+import { AppButton } from "@/components/ui/AppButton";
 
 export const LiaisoningTracker: React.FC = () => {
   const [storeState, setStoreState] = useState(() => DesignMasterStore.getState());
@@ -258,8 +261,10 @@ export const LiaisoningTracker: React.FC = () => {
 
   return (
     <div className="space-y-4 animate-in fade-in duration-150">
-      {/* Control Header Ribbon */}
-      <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-xs space-y-3.5">
+      {!activeCell && (
+        <>
+          {/* Control Header Ribbon */}
+          <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-xs space-y-3.5">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="h-9 w-9 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center border border-purple-500/20 shrink-0">
@@ -563,106 +568,112 @@ export const LiaisoningTracker: React.FC = () => {
           })}
         </div>
       )}
+        </>
+      )}
 
-      {/* Authority Cell Update Modal */}
+      {/* Authority Cell Update Transaction Canvas */}
       {activeCell && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-          <div className="bg-surface border border-border w-full max-w-md rounded-2xl shadow-2xl p-6 space-y-5">
-            <div className="flex items-start justify-between">
-              <div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-purple-500 flex items-center gap-1">
-                  <Edit2 className="h-3 w-3" />
-                  <span>Update Authority Status</span>
-                </span>
-                <h4 className="text-base font-bold text-foreground mt-0.5">
-                  {activeCell.authority.authorityName}
-                </h4>
-                <p className="text-xs text-muted-foreground">
-                  {activeCell.col.projectName} • Wing {activeCell.col.towerName}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setActiveCell(null)}
-                className="h-8 w-8 rounded-lg hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
+        <TransactionFormLayout
+          title={`Update Compliance: ${activeCell.authority.authorityName}`}
+          category="Statutory Authority & Liaisoning"
+          icon={Shield}
+          iconBg="bg-purple-500/10 text-purple-600 dark:text-purple-400"
+          description={`Update statutory approval status and consultant onboarding scope for ${activeCell.col.projectName} • Wing ${activeCell.col.towerName}.`}
+          breadcrumbs={[
+            { label: "Design Tracking Desk" },
+            { label: "Statutory Liaisoning", onClick: () => setActiveCell(null) },
+            { label: activeCell.authority.authorityName }
+          ]}
+          onBack={() => setActiveCell(null)}
+          backLabel="Back to Statutory Liaisoning"
+          onReset={() => setCustomRemark("")}
+          onSave={() => handleUpdateStatus(customRemark || activeCell.currentVal)}
+          saveLabel="Save Compliance Status"
+        >
+          <div className="max-w-4xl space-y-6">
+            <AppCard>
+              <AppCardHeader>
+                <AppCardTitle className="text-sm font-bold text-foreground">Authority Scope & Tower Target</AppCardTitle>
+              </AppCardHeader>
+              <AppCardContent className="space-y-4 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="p-3.5 rounded-xl bg-muted/20 border border-border space-y-1">
+                    <span className="text-[10px] uppercase font-bold text-muted-foreground block">Statutory Authority Body</span>
+                    <span className="text-sm font-bold text-foreground">{activeCell.authority.authorityName}</span>
+                    <p className="text-[11px] text-muted-foreground">{activeCell.authority.scope || activeCell.authority.category}</p>
+                  </div>
+                  <div className="p-3.5 rounded-xl bg-muted/20 border border-border space-y-1">
+                    <span className="text-[10px] uppercase font-bold text-muted-foreground block">Target Development & Wing</span>
+                    <span className="text-sm font-bold text-foreground">{activeCell.col.projectName}</span>
+                    <p className="text-[11px] text-muted-foreground">Wing {activeCell.col.towerName}</p>
+                  </div>
+                </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-foreground block">
-                Select Compliance Status:
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleUpdateStatus("Onboard")}
-                  className="p-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                >
-                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                  <span>Mark Onboard</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleUpdateStatus("Fixed consultant")}
-                  className="p-2.5 rounded-xl border border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-300 hover:bg-blue-500/20 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                >
-                  <Building2 className="h-3.5 w-3.5 text-blue-500" />
-                  <span>Fixed Partner</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleUpdateStatus("Compliance Pending")}
-                  className="p-2.5 rounded-xl border border-purple-500/30 bg-purple-500/10 text-purple-700 dark:text-purple-300 hover:bg-purple-500/20 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                >
-                  <FileCheck2 className="h-3.5 w-3.5 text-purple-500" />
-                  <span>Compliance Pending</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleUpdateStatus("Not Onboard")}
-                  className="p-2.5 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300 hover:bg-rose-500/20 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                >
-                  <AlertCircle className="h-3.5 w-3.5 text-rose-500" />
-                  <span>Not Onboard</span>
-                </button>
-              </div>
-            </div>
+                <div className="space-y-2 pt-2">
+                  <label className="font-bold text-foreground block">Quick Select Compliance Status:</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateStatus("Onboard")}
+                      className="p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
+                    >
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                      <span>Mark Onboard</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateStatus("Fixed consultant")}
+                      className="p-3 rounded-xl border border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-300 hover:bg-blue-500/20 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
+                    >
+                      <Building2 className="h-4 w-4 text-blue-500" />
+                      <span>Fixed Partner</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateStatus("Compliance Pending")}
+                      className="p-3 rounded-xl border border-purple-500/30 bg-purple-500/10 text-purple-700 dark:text-purple-300 hover:bg-purple-500/20 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
+                    >
+                      <FileCheck2 className="h-4 w-4 text-purple-500" />
+                      <span>Compliance Pending</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateStatus("Not Onboard")}
+                      className="p-3 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300 hover:bg-rose-500/20 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
+                    >
+                      <AlertCircle className="h-4 w-4 text-rose-500" />
+                      <span>Not Onboard</span>
+                    </button>
+                  </div>
+                </div>
 
-            {/* Custom Target / Remarks Input */}
-            <div className="space-y-1.5 pt-2 border-t border-border">
-              <label className="text-xs font-bold text-foreground block">
-                Custom Target Date / Consultant Remark:
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={customRemark}
-                  onChange={e => setCustomRemark(e.target.value)}
-                  className="flex-1 px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
-                />
-                <button
-                  type="button"
-                  onClick={() => handleUpdateStatus(customRemark || "NA")}
-                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-md cursor-pointer transition-all"
-                >
-                  Save
-                </button>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end pt-2 border-t border-border">
-              <button
-                type="button"
-                onClick={() => setActiveCell(null)}
-                className="px-4 py-1.5 rounded-xl border border-border bg-background text-xs font-semibold text-foreground hover:bg-muted transition-colors cursor-pointer"
-              >
-                Close
-              </button>
-            </div>
+                <div className="space-y-2 pt-2 border-t border-border">
+                  <label className="font-bold text-foreground block">
+                    Custom Target Date / Consultant Remark:
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="text"
+                      placeholder="e.g. In Scrutiny at CFO / Target 15 Nov"
+                      value={customRemark}
+                      onChange={e => setCustomRemark(e.target.value)}
+                      className="flex-1 h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                    />
+                    <AppButton
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      onClick={() => handleUpdateStatus(customRemark || "NA")}
+                      className="h-10 px-5 text-xs font-bold"
+                    >
+                      Save Custom Remark
+                    </AppButton>
+                  </div>
+                </div>
+              </AppCardContent>
+            </AppCard>
           </div>
-        </div>
+        </TransactionFormLayout>
       )}
     </div>
   );

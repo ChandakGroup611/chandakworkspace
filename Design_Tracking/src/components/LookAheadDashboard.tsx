@@ -22,6 +22,9 @@ import {
 import { DesignMasterStore } from "../services/designMasterStore";
 import { LookAheadEntry } from "../types/masterTypes";
 import { DesignMultiSelectDropdown, DropdownOption } from "./DesignMultiSelectDropdown";
+import { TransactionFormLayout, WorkingDocumentLayout } from "./DesignTransactionLayout";
+import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
+import { AppButton } from "@/components/ui/AppButton";
 import { toast } from "react-toastify";
 
 export const LookAheadDashboard: React.FC = () => {
@@ -217,7 +220,9 @@ export const LookAheadDashboard: React.FC = () => {
 
   return (
     <div className="space-y-4 animate-in fade-in duration-150">
-      {/* Header & Filter Ribbon */}
+      {!isAddModalOpen && !selectedItem && (
+        <>
+          {/* Header & Filter Ribbon */}
       <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -547,242 +552,253 @@ export const LookAheadDashboard: React.FC = () => {
           );
         })}
       </div>
+        </>
+      )}
 
-      {/* Item Detail / Expedite Action Modal */}
+      {/* Item Detail / Expedite Action Working Document Canvas */}
       {selectedItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-          <div className="bg-surface border border-border w-full max-w-md rounded-2xl shadow-2xl p-6 space-y-4">
-            <div className="flex items-start justify-between">
-              <div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-emerald-500">
-                  Look-Ahead Milestone Action
-                </span>
-                <h4 className="text-base font-bold text-foreground mt-0.5">
-                  {selectedItem.deliverableDescription}
-                </h4>
-                <p className="text-xs text-muted-foreground">
-                  {projectMap.get(selectedItem.projectId) || "Development"} • Wing {towerMap.get(selectedItem.towerId) || "Wing"}
-                </p>
-              </div>
-              <button
+        <WorkingDocumentLayout
+          title={`Milestone Action: ${selectedItem.deliverableDescription}`}
+          badge={selectedItem.isExpedited ? "Fast-Track Expedited" : "Normal Schedule"}
+          badgeColor={selectedItem.isExpedited ? "bg-amber-500/10 text-amber-600 border border-amber-500/30" : "bg-emerald-500/10 text-emerald-600 border border-emerald-500/30"}
+          category="Look-Ahead Schedule"
+          icon={Clock}
+          iconBg="bg-amber-500/10 text-amber-600 dark:text-amber-400"
+          description="Inspect deliverable readiness, manage expedite acceleration, or adjust milestone commitments."
+          breadcrumbs={[
+            { label: "Design Tracking Desk" },
+            { label: "Look-Ahead Forecast", onClick: () => setSelectedItem(null) },
+            { label: selectedItem.deliverableDescription }
+          ]}
+          onBack={() => setSelectedItem(null)}
+          backLabel="Back to Look-Ahead Forecast"
+          headerActions={
+            <div className="flex items-center gap-2">
+              <AppButton
                 type="button"
-                onClick={() => setSelectedItem(null)}
-                className="h-8 w-8 rounded-lg hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="p-3.5 rounded-xl bg-muted/20 border border-border space-y-2 text-xs">
-              <div className="flex items-center justify-between text-muted-foreground">
-                <span>Execution Urgency:</span>
-                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                  selectedItem.timeframe === "30_DAYS" ? "bg-rose-500 text-white" : "bg-amber-500 text-white"
-                }`}>
-                  {selectedItem.timeframe === "30_DAYS" ? "Immediate 30 Days" : "Forecast 60 Days"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-muted-foreground">
-                <span>Priority Status:</span>
-                <span className="font-bold text-foreground">
-                  {selectedItem.isExpedited ? "⚡ Fast-Track Expedited" : "Normal Schedule"}
-                </span>
-              </div>
-              {selectedItem.targetDate && (
-                <div className="flex items-center justify-between text-muted-foreground">
-                  <span>Target Date:</span>
-                  <span className="font-bold text-foreground">{selectedItem.targetDate}</span>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-2 pt-2">
-              <button
-                type="button"
+                variant="outline"
+                size="sm"
                 onClick={() => handleToggleExpedite(selectedItem.id)}
-                className={`w-full py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                className={`text-xs h-9 font-semibold gap-1.5 ${
                   selectedItem.isExpedited
-                    ? "bg-amber-500 text-white hover:bg-amber-600 shadow-md"
-                    : "bg-emerald-600 text-white hover:bg-emerald-500 shadow-md"
+                    ? "border-amber-500/40 text-amber-600 hover:bg-amber-500/10"
+                    : "border-emerald-500/40 text-emerald-600 hover:bg-emerald-500/10"
                 }`}
               >
                 <Zap className="h-3.5 w-3.5" />
-                <span>{selectedItem.isExpedited ? "Revoke Expedited Priority" : "Fast-Track / Mark Expedited"}</span>
-              </button>
-
-              <button
+                <span>{selectedItem.isExpedited ? "Revoke Expedited" : "Fast-Track Expedite"}</span>
+              </AppButton>
+              <AppButton
                 type="button"
-                onClick={() => handleDeleteItem(selectedItem.id)}
-                className="w-full py-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 border border-rose-500/30 flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  handleDeleteItem(selectedItem.id);
+                  setSelectedItem(null);
+                }}
+                className="text-xs h-9 font-semibold text-rose-600 border-rose-500/30 hover:bg-rose-500/10 gap-1.5"
               >
                 <Trash2 className="h-3.5 w-3.5" />
                 <span>Remove Milestone</span>
-              </button>
+              </AppButton>
+            </div>
+          }
+        >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-2 space-y-6">
+              <AppCard>
+                <AppCardHeader>
+                  <AppCardTitle className="text-sm font-bold text-foreground">Deliverable Overview</AppCardTitle>
+                </AppCardHeader>
+                <AppCardContent className="space-y-4 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="p-3 rounded-xl bg-muted/20 border border-border space-y-1">
+                      <span className="text-[10px] uppercase font-bold text-muted-foreground block">Project / Development</span>
+                      <span className="text-xs font-bold text-foreground">{projectMap.get(selectedItem.projectId) || "Development"}</span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-muted/20 border border-border space-y-1">
+                      <span className="text-[10px] uppercase font-bold text-muted-foreground block">Tower / Wing</span>
+                      <span className="text-xs font-bold text-foreground">Wing {towerMap.get(selectedItem.towerId) || "Wing"}</span>
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-muted/20 border border-border space-y-1">
+                    <span className="text-[10px] uppercase font-bold text-muted-foreground block">Milestone Deliverable Description</span>
+                    <p className="text-sm font-semibold text-foreground leading-relaxed">{selectedItem.deliverableDescription}</p>
+                  </div>
+                </AppCardContent>
+              </AppCard>
             </div>
 
-            <div className="flex items-center justify-end pt-2 border-t border-border">
-              <button
-                type="button"
-                onClick={() => setSelectedItem(null)}
-                className="px-4 py-1.5 rounded-xl border border-border bg-background text-xs font-semibold text-foreground hover:bg-muted transition-colors cursor-pointer"
-              >
-                Close
-              </button>
+            <div className="space-y-6">
+              <AppCard>
+                <AppCardHeader>
+                  <AppCardTitle className="text-sm font-bold text-foreground">Schedule Timeline</AppCardTitle>
+                </AppCardHeader>
+                <AppCardContent className="space-y-3 text-xs">
+                  <div className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-background">
+                    <span className="text-muted-foreground">Execution Window:</span>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                      selectedItem.timeframe === "30_DAYS" ? "bg-rose-500 text-white" : "bg-amber-500 text-white"
+                    }`}>
+                      {selectedItem.timeframe === "30_DAYS" ? "Immediate 30 Days" : "Forecast 60 Days"}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-background">
+                    <span className="text-muted-foreground">Priority Tier:</span>
+                    <span className="font-bold text-foreground">
+                      {selectedItem.isExpedited ? "⚡ Fast-Track Expedited" : "Normal Schedule"}
+                    </span>
+                  </div>
+
+                  {selectedItem.targetDate && (
+                    <div className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-background">
+                      <span className="text-muted-foreground">Target Date:</span>
+                      <span className="font-bold font-mono text-foreground">{selectedItem.targetDate}</span>
+                    </div>
+                  )}
+                </AppCardContent>
+              </AppCard>
             </div>
           </div>
-        </div>
+        </WorkingDocumentLayout>
       )}
 
-      {/* Quick Add Milestone Modal */}
+      {/* Add Milestone Transaction Form */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-          <div className="bg-surface border border-border w-full max-w-lg rounded-2xl shadow-2xl p-6 space-y-4">
-            <div className="flex items-start justify-between border-b border-border pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                  <Plus className="h-5 w-5" />
-                </div>
-                <div>
-                  <h4 className="text-base font-bold text-foreground">
-                    Add Look-Ahead Milestone
-                  </h4>
-                  <p className="text-xs text-muted-foreground">
-                    Record upcoming tender package or consultant deliverable
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsAddModalOpen(false)}
-                className="h-8 w-8 rounded-lg hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <form
-              onSubmit={e => {
-                e.preventDefault();
-                if (!newProjectId || !newTowerId || !newDesc.trim()) {
-                  toast.error("Please select Project, Tower Wing, and enter Deliverable Description.");
-                  return;
-                }
-                DesignMasterStore.addLookAhead({
-                  projectId: newProjectId,
-                  towerId: newTowerId,
-                  deliverableDescription: newDesc.trim(),
-                  timeframe: newTimeframe,
-                  targetDate: newTargetDate || (newTimeframe === "30_DAYS" ? "30 Days Window" : "60 Days Window"),
-                  priority: newPriority,
-                  status: "PENDING"
-                });
-                toast.success("Look-Ahead deliverable added successfully!");
-                setIsAddModalOpen(false);
-              }}
-              className="space-y-3.5 text-xs"
-            >
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="font-bold text-foreground block">Project:</label>
-                  <select
-                    value={newProjectId}
-                    onChange={e => {
-                      const p = e.target.value;
-                      setNewProjectId(p);
-                      const twrs = storeState.towers.filter(t => t.projectId === p);
-                      if (twrs.length > 0) setNewTowerId(twrs[0].id);
-                    }}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-bold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
-                  >
-                    {accessibleProjects.map(p => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="font-bold text-foreground block">Tower / Wing:</label>
-                  <select
-                    value={newTowerId}
-                    onChange={e => setNewTowerId(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
-                  >
-                    {storeState.towers.filter(t => t.projectId === newProjectId).map(t => (
-                      <option key={t.id} value={t.id}>{t.towerName} ({t.towerType})</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-bold text-foreground block">Deliverable Description:</label>
-                <textarea
-                  rows={2}
-                  value={newDesc}
-                  onChange={e => setNewDesc(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="font-bold text-foreground block">Urgency Window:</label>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setNewTimeframe("30_DAYS")}
-                      className={`py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                        newTimeframe === "30_DAYS"
-                          ? "border-rose-500 bg-rose-500/20 text-rose-700 dark:text-rose-400 ring-1 ring-rose-500"
-                          : "border-border text-muted-foreground hover:bg-muted"
-                      }`}
+        <TransactionFormLayout
+          title="Add Look-Ahead Milestone"
+          category="Milestone Management"
+          icon={Plus}
+          iconBg="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+          description="Record upcoming tender package deliverable or consultant target to track horizon commitments."
+          breadcrumbs={[
+            { label: "Design Tracking Desk" },
+            { label: "Look-Ahead Forecast", onClick: () => setIsAddModalOpen(false) },
+            { label: "New Milestone" }
+          ]}
+          onBack={() => setIsAddModalOpen(false)}
+          backLabel="Back to Look-Ahead Forecast"
+          onReset={() => {
+            setNewDesc("");
+            setNewTargetDate("");
+            setNewTimeframe("30_DAYS");
+          }}
+          onSave={() => {
+            if (!newProjectId || !newTowerId || !newDesc.trim()) {
+              toast.error("Please select Project, Tower Wing, and enter Deliverable Description.");
+              return;
+            }
+            DesignMasterStore.addLookAhead({
+              projectId: newProjectId,
+              towerId: newTowerId,
+              deliverableDescription: newDesc.trim(),
+              timeframe: newTimeframe,
+              targetDate: newTargetDate || (newTimeframe === "30_DAYS" ? "30 Days Window" : "60 Days Window"),
+              priority: newPriority,
+              status: "PENDING"
+            });
+            toast.success("Look-Ahead deliverable added successfully!");
+            setIsAddModalOpen(false);
+          }}
+          saveLabel="Save Milestone"
+        >
+          <div className="max-w-4xl space-y-6">
+            <AppCard>
+              <AppCardHeader>
+                <AppCardTitle className="text-sm font-bold text-foreground">Milestone Details</AppCardTitle>
+              </AppCardHeader>
+              <AppCardContent className="space-y-4 text-xs">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="font-bold text-foreground block">Project / Development *</label>
+                    <select
+                      value={newProjectId}
+                      onChange={e => {
+                        const p = e.target.value;
+                        setNewProjectId(p);
+                        const twrs = storeState.towers.filter(t => t.projectId === p);
+                        if (twrs.length > 0) setNewTowerId(twrs[0].id);
+                      }}
+                      className="w-full h-10 px-3 rounded-xl border border-border bg-background text-foreground font-bold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                     >
-                      🚨 In 30 Days
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setNewTimeframe("60_DAYS")}
-                      className={`py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                        newTimeframe === "60_DAYS"
-                          ? "border-amber-500 bg-amber-500/20 text-amber-700 dark:text-amber-400 ring-1 ring-amber-500"
-                          : "border-border text-muted-foreground hover:bg-muted"
-                      }`}
+                      {accessibleProjects.map(p => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="font-bold text-foreground block">Tower / Wing *</label>
+                    <select
+                      value={newTowerId}
+                      onChange={e => setNewTowerId(e.target.value)}
+                      className="w-full h-10 px-3 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                     >
-                      ⏳ In 60 Days
-                    </button>
+                      {storeState.towers.filter(t => t.projectId === newProjectId).map(t => (
+                        <option key={t.id} value={t.id}>{t.towerName} ({t.towerType})</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="font-bold text-foreground block">Target Date / Milestone:</label>
-                  <input
-                    type="text"
-                    value={newTargetDate}
-                    onChange={e => setNewTargetDate(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary font-mono"
+                <div className="space-y-1.5">
+                  <label className="font-bold text-foreground block">Deliverable Description *</label>
+                  <textarea
+                    rows={3}
+                    value={newDesc}
+                    onChange={e => setNewDesc(e.target.value)}
+                    placeholder="e.g., Structural Foundation GFC Drawings & Schedule of Finishes"
+                    className="w-full p-3 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                    required
                   />
                 </div>
-              </div>
 
-              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-border">
-                <button
-                  type="button"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-border bg-background text-xs font-semibold text-foreground hover:bg-muted transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md cursor-pointer transition-all active:scale-95"
-                >
-                  Save Milestone
-                </button>
-              </div>
-            </form>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                  <div className="space-y-1.5">
+                    <label className="font-bold text-foreground block">Urgency Horizon Window *</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setNewTimeframe("30_DAYS")}
+                        className={`py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                          newTimeframe === "30_DAYS"
+                            ? "border-rose-500 bg-rose-500/20 text-rose-700 dark:text-rose-400 ring-1 ring-rose-500"
+                            : "border-border text-muted-foreground hover:bg-muted"
+                        }`}
+                      >
+                        🚨 In 30 Days
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNewTimeframe("60_DAYS")}
+                        className={`py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                          newTimeframe === "60_DAYS"
+                            ? "border-amber-500 bg-amber-500/20 text-amber-700 dark:text-amber-400 ring-1 ring-amber-500"
+                            : "border-border text-muted-foreground hover:bg-muted"
+                        }`}
+                      >
+                        ⏳ In 60 Days
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="font-bold text-foreground block">Target Delivery Date / Milestone</label>
+                    <input
+                      type="text"
+                      value={newTargetDate}
+                      onChange={e => setNewTargetDate(e.target.value)}
+                      placeholder="e.g. 15 Oct 2026 or Q4-2026"
+                      className="w-full h-10 px-3 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary font-mono"
+                    />
+                  </div>
+                </div>
+              </AppCardContent>
+            </AppCard>
           </div>
-        </div>
+        </TransactionFormLayout>
       )}
     </div>
   );

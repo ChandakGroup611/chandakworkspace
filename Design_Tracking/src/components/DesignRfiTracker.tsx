@@ -25,6 +25,8 @@ import {
 import { DesignMasterStore } from "../services/designMasterStore";
 import { RfiItem, RfiPriority, RfiStatus, DesignDiscipline } from "../types";
 import { DesignMultiSelectDropdown } from "./DesignMultiSelectDropdown";
+import { TransactionFormLayout, WorkingDocumentLayout } from "./DesignTransactionLayout";
+import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
 
 export function DesignRfiTracker() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -231,8 +233,10 @@ export function DesignRfiTracker() {
 
   return (
     <div className="space-y-6">
-      {/* Header Banner */}
-      <div className="p-5 rounded-2xl bg-card border border-border flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+      {!isRaiseModalOpen && !selectedRfiForReply && (
+        <>
+          {/* Header Banner */}
+          <div className="p-5 rounded-2xl bg-card border border-border flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-600 dark:text-purple-400 shrink-0">
             <HelpCircle className="h-5 w-5" />
@@ -588,289 +592,324 @@ export function DesignRfiTracker() {
           })
         )}
       </div>
+      </>
+      )}
 
-      {/* RAISE RFI MODAL */}
+      {/* RAISE RFI TRANSACTION CANVAS */}
       {isRaiseModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-surface text-foreground border border-border w-full max-w-xl rounded-2xl shadow-2xl p-6 relative max-h-[90vh] overflow-y-auto custom-scrollbar">
-            <div className="flex items-center justify-between pb-3 border-b border-border mb-4">
-              <div>
-                <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
-                  <HelpCircle className="h-4 w-4 text-purple-500" />
-                  <span>Raise Site Request For Information (RFI)</span>
-                </h3>
-                <p className="text-xs text-muted">
-                  Log design query, site condition clash, or structural specification ambiguity
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsRaiseModalOpen(false)}
-                className="h-7 w-7 rounded-lg hover:bg-muted/20 flex items-center justify-center text-muted hover:text-foreground transition-colors"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
+        <TransactionFormLayout
+          title="Raise Site Request For Information (RFI)"
+          badge="Technical Query Entry"
+          category="RFI & Query Control"
+          icon={HelpCircle}
+          iconBg="bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/25"
+          description="Log design query, site condition clash, or structural specification ambiguity with consultant assignment."
+          breadcrumbs={[
+            { label: "RFI Tracker", onClick: () => setIsRaiseModalOpen(false) },
+            { label: "Raise Site RFI" }
+          ]}
+          onBack={() => setIsRaiseModalOpen(false)}
+          backLabel="Back to RFIs"
+          onReset={() => {
+            setTowerName("");
+            setDiscipline("Architectural");
+            setPriority("HIGH");
+            setDrawingCode("");
+            setSubject("");
+            setQueryDescription("");
+            setTargetResolutionDate("");
+            setFormError("");
+          }}
+          onSave={handleRaiseRfi}
+          saveLabel="Submit RFI"
+          saveIcon={Send}
+        >
+          <div className="space-y-6 max-w-4xl">
             {formError && (
-              <div className="p-3 mb-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center gap-2">
+              <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 <span>{formError}</span>
               </div>
             )}
 
-            <form onSubmit={handleRaiseRfi} className="space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="block font-bold text-foreground">Project *</label>
-                  <select
-                    value={projectId}
-                    onChange={e => setProjectId(e.target.value)}
-                    aria-label="Select Project"
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500 cursor-pointer"
-                  >
-                    <option value="">Select Project</option>
-                    {projects.map(p => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
-                    ))}
-                  </select>
+            <AppCard className="border-border shadow-xs">
+              <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
+                <AppCardTitle className="text-sm font-bold flex items-center gap-2">
+                  <Building2 className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                  <span>Project & Engineering Discipline</span>
+                </AppCardTitle>
+              </AppCardHeader>
+              <AppCardContent className="p-5 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-foreground">Project *</label>
+                    <select
+                      value={projectId}
+                      onChange={e => setProjectId(e.target.value)}
+                      aria-label="Select Project"
+                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500 cursor-pointer"
+                    >
+                      <option value="">Select Project</option>
+                      {projects.map(p => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-foreground">Tower / Zone</label>
+                    <input
+                      type="text"
+                      value={towerName}
+                      onChange={e => setTowerName(e.target.value)}
+                      placeholder="e.g. Tower B / Podium Basement 1"
+                      aria-label="Tower or Zone"
+                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    />
+                  </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="block font-bold text-foreground">Tower / Zone</label>
-                  <input
-                    type="text"
-                    value={towerName}
-                    onChange={e => setTowerName(e.target.value)}
-                    aria-label="Tower or Zone"
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500"
-                  />
-                </div>
-              </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-foreground">Discipline *</label>
+                    <select
+                      value={discipline}
+                      onChange={e => setDiscipline(e.target.value as DesignDiscipline)}
+                      aria-label="Discipline"
+                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500 cursor-pointer"
+                    >
+                      <option value="Architectural">Architectural</option>
+                      <option value="Structural">Structural</option>
+                      <option value="MEP">MEP (Mech / Elec / Plumb)</option>
+                      <option value="Landscape">Landscape & Hardscape</option>
+                      <option value="Interior">Interior / Common Areas</option>
+                    </select>
+                  </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="block font-bold text-foreground">Discipline *</label>
-                  <select
-                    value={discipline}
-                    onChange={e => setDiscipline(e.target.value as DesignDiscipline)}
-                    aria-label="Discipline"
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500 cursor-pointer"
-                  >
-                    <option value="Architectural">Architectural</option>
-                    <option value="Structural">Structural</option>
-                    <option value="MEP">MEP</option>
-                    <option value="Landscape">Landscape</option>
-                    <option value="Interior">Interior</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block font-bold text-foreground">Priority Level *</label>
-                  <select
-                    value={priority}
-                    onChange={e => setPriority(e.target.value as RfiPriority)}
-                    aria-label="Priority Level"
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500 cursor-pointer"
-                  >
-                    <option value="URGENT">Urgent (Site Stoppage Risk)</option>
-                    <option value="HIGH">High (Upcoming Activity)</option>
-                    <option value="NORMAL">Normal (Pre-construction / Planning)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="block font-bold text-foreground">Referenced Drawing Number</label>
-                  <input
-                    type="text"
-                    value={drawingCode}
-                    onChange={e => setDrawingCode(e.target.value)}
-                    aria-label="Referenced Drawing Number"
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500"
-                  />
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-foreground">Priority Level *</label>
+                    <select
+                      value={priority}
+                      onChange={e => setPriority(e.target.value as RfiPriority)}
+                      aria-label="Priority Level"
+                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500 cursor-pointer"
+                    >
+                      <option value="URGENT">Urgent (Site Stoppage Risk)</option>
+                      <option value="HIGH">High (Upcoming Activity)</option>
+                      <option value="NORMAL">Normal (Pre-construction / Planning)</option>
+                    </select>
+                  </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="block font-bold text-foreground">Target Resolution Date</label>
-                  <input
-                    type="date"
-                    value={targetResolutionDate}
-                    onChange={e => setTargetResolutionDate(e.target.value)}
-                    aria-label="Target Resolution Date"
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-foreground">Referenced Drawing Number</label>
+                    <input
+                      type="text"
+                      value={drawingCode}
+                      onChange={e => setDrawingCode(e.target.value)}
+                      placeholder="e.g. ST-T1-COL-204"
+                      aria-label="Referenced Drawing Number"
+                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-mono font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-foreground">Target Resolution Date</label>
+                    <input
+                      type="date"
+                      value={targetResolutionDate}
+                      onChange={e => setTargetResolutionDate(e.target.value)}
+                      aria-label="Target Resolution Date"
+                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    />
+                  </div>
                 </div>
-              </div>
+              </AppCardContent>
+            </AppCard>
 
-              <div className="space-y-1">
-                <label className="block font-bold text-foreground">Subject / Query Title *</label>
-                <input
-                  type="text"
-                  required
-                  value={subject}
-                  onChange={e => setSubject(e.target.value)}
-                  aria-label="Subject or Query Title"
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="block font-bold text-foreground">Detailed Query Description *</label>
-                <textarea
-                  rows={3}
-                  required
-                  value={queryDescription}
-                  onChange={e => setQueryDescription(e.target.value)}
-                  aria-label="Detailed Query Description"
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500 resize-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="block font-bold text-foreground">Raised By (Site Engineer) *</label>
+            <AppCard className="border-border shadow-xs">
+              <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
+                <AppCardTitle className="text-sm font-bold flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                  <span>Technical Query Details</span>
+                </AppCardTitle>
+              </AppCardHeader>
+              <AppCardContent className="p-5 space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-foreground">Subject / Query Title *</label>
                   <input
                     type="text"
                     required
-                    value={raisedBy}
-                    onChange={e => setRaisedBy(e.target.value)}
-                    aria-label="Raised By Site Engineer"
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    value={subject}
+                    onChange={e => setSubject(e.target.value)}
+                    placeholder="e.g. Clash between MEP HVAC Ducting and Structural Beam Level 3"
+                    aria-label="Subject or Query Title"
+                    className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500"
                   />
                 </div>
 
-                <div className="space-y-1">
-                  <label className="block font-bold text-foreground">Assigned Consultant Firm *</label>
-                  <input
-                    type="text"
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-foreground">Detailed Query Description *</label>
+                  <textarea
+                    rows={4}
                     required
-                    value={assignedConsultant}
-                    onChange={e => setAssignedConsultant(e.target.value)}
-                    aria-label="Assigned Consultant Firm"
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    value={queryDescription}
+                    onChange={e => setQueryDescription(e.target.value)}
+                    placeholder="Provide specific grid locations, discrepancy measurements, and contractor query..."
+                    aria-label="Detailed Query Description"
+                    className="w-full p-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500 resize-none"
                   />
                 </div>
-              </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
-                <button
-                  type="button"
-                  onClick={() => setIsRaiseModalOpen(false)}
-                  className="h-9 px-4 rounded-xl border border-border bg-surface hover:bg-muted/20 text-foreground text-xs font-bold transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="h-9 px-5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-colors shadow-sm cursor-pointer"
-                >
-                  Submit RFI
-                </button>
-              </div>
-            </form>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-foreground">Raised By (Site Engineer) *</label>
+                    <input
+                      type="text"
+                      required
+                      value={raisedBy}
+                      onChange={e => setRaisedBy(e.target.value)}
+                      placeholder="e.g. Site Engineer (Civil)"
+                      aria-label="Raised By Site Engineer"
+                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-foreground">Assigned Consultant Firm *</label>
+                    <input
+                      type="text"
+                      required
+                      value={assignedConsultant}
+                      onChange={e => setAssignedConsultant(e.target.value)}
+                      placeholder="e.g. Structural Consultant / MEP Firm"
+                      aria-label="Assigned Consultant Firm"
+                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    />
+                  </div>
+                </div>
+              </AppCardContent>
+            </AppCard>
           </div>
-        </div>
+        </TransactionFormLayout>
       )}
 
-      {/* CONSULTANT REPLY MODAL */}
+      {/* CONSULTANT CLARIFICATION WORKING CANVAS */}
       {selectedRfiForReply && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-surface text-foreground border border-border w-full max-w-xl rounded-2xl shadow-2xl p-6 relative max-h-[90vh] overflow-y-auto custom-scrollbar">
-            <div className="flex items-center justify-between pb-3 border-b border-border mb-4">
-              <div>
-                <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4 text-emerald-500" />
-                  <span>Provide Consultant Clarification ({selectedRfiForReply.rfiNumber})</span>
-                </h3>
-                <p className="text-xs text-muted">
-                  Formal technical response and drawing revision resolution
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedRfiForReply(null)}
-                className="h-7 w-7 rounded-lg hover:bg-muted/20 flex items-center justify-center text-muted hover:text-foreground transition-colors"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            {/* Query Summary */}
-            <div className="p-3.5 mb-4 rounded-xl bg-muted/15 border border-border text-xs space-y-1">
-              <div className="font-bold text-foreground">{selectedRfiForReply.subject}</div>
-              <div className="text-muted">{selectedRfiForReply.queryDescription}</div>
-              <div className="text-[10px] text-muted pt-1">
-                Raised by: {selectedRfiForReply.raisedBy} • Assigned: {selectedRfiForReply.assignedConsultant}
-              </div>
-            </div>
+        <TransactionFormLayout
+          title={`Provide Consultant Clarification (${selectedRfiForReply.rfiNumber})`}
+          badge="Consultant Response"
+          category="RFI & Query Control"
+          icon={MessageSquare}
+          iconBg="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
+          description="Formal technical response, engineering instructions and resolving drawing revision commit."
+          breadcrumbs={[
+            { label: "RFI Tracker", onClick: () => setSelectedRfiForReply(null) },
+            { label: `Clarification #${selectedRfiForReply.rfiNumber}` }
+          ]}
+          onBack={() => setSelectedRfiForReply(null)}
+          backLabel="Back to RFIs"
+          onSave={handleConsultantReply}
+          saveLabel="Resolve & Close RFI"
+          saveIcon={CheckCircle2}
+        >
+          <div className="space-y-6 max-w-4xl">
+            {/* Query Summary Dossier */}
+            <AppCard className="border-border shadow-xs">
+              <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
+                <AppCardTitle className="text-sm font-bold flex items-center gap-2">
+                  <HelpCircle className="h-4 w-4 text-theme-btn-primary" />
+                  <span>Site Query Dossier</span>
+                </AppCardTitle>
+              </AppCardHeader>
+              <AppCardContent className="p-5 space-y-3">
+                <div className="text-base font-bold text-foreground">{selectedRfiForReply.subject}</div>
+                <div className="text-xs text-muted-foreground leading-relaxed bg-muted/20 p-3.5 rounded-xl border border-border">
+                  {selectedRfiForReply.queryDescription}
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-1">
+                  <div className="p-2.5 rounded-lg bg-slate-50/50 dark:bg-slate-900/40 border border-border">
+                    <span className="text-[10px] text-muted-foreground block font-bold">Project:</span>
+                    <span className="font-semibold text-foreground">{selectedRfiForReply.projectName}</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-slate-50/50 dark:bg-slate-900/40 border border-border">
+                    <span className="text-[10px] text-muted-foreground block font-bold">Discipline:</span>
+                    <span className="font-semibold text-foreground">{selectedRfiForReply.discipline}</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-slate-50/50 dark:bg-slate-900/40 border border-border">
+                    <span className="text-[10px] text-muted-foreground block font-bold">Raised By:</span>
+                    <span className="font-semibold text-foreground">{selectedRfiForReply.raisedBy}</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-slate-50/50 dark:bg-slate-900/40 border border-border">
+                    <span className="text-[10px] text-muted-foreground block font-bold">Assigned To:</span>
+                    <span className="font-semibold text-purple-600 dark:text-purple-400">{selectedRfiForReply.assignedConsultant}</span>
+                  </div>
+                </div>
+              </AppCardContent>
+            </AppCard>
 
             {replyError && (
-              <div className="p-3 mb-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center gap-2">
+              <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 <span>{replyError}</span>
               </div>
             )}
 
-            <form onSubmit={handleConsultantReply} className="space-y-4 text-xs">
-              <div className="space-y-1">
-                <label className="block font-bold text-foreground">
-                  Consultant Clarification & Technical Instructions *
-                </label>
-                <textarea
-                  rows={4}
-                  required
-                  value={responseText}
-                  onChange={e => setResponseText(e.target.value)}
-                  aria-label="Consultant clarification and instructions"
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500 resize-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="block font-bold text-foreground">Responded By (Consultant Engineer) *</label>
-                  <input
-                    type="text"
+            {/* Technical Instructions Form */}
+            <AppCard className="border-border shadow-xs">
+              <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
+                <AppCardTitle className="text-sm font-bold flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                  <span>Consultant Technical Resolution</span>
+                </AppCardTitle>
+              </AppCardHeader>
+              <AppCardContent className="p-5 space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-foreground">
+                    Consultant Clarification & Technical Instructions *
+                  </label>
+                  <textarea
+                    rows={5}
                     required
-                    value={respondedByName}
-                    onChange={e => setRespondedByName(e.target.value)}
-                    aria-label="Responded By Consultant Engineer"
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    value={responseText}
+                    onChange={e => setResponseText(e.target.value)}
+                    placeholder="Provide detailed engineering clearance, revised coordinate fix, or contractor instructions..."
+                    aria-label="Consultant clarification and instructions"
+                    className="w-full p-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500 resize-none"
                   />
                 </div>
 
-                <div className="space-y-1">
-                  <label className="block font-bold text-foreground">Resolving Drawing Revision (e.g. R3)</label>
-                  <input
-                    type="text"
-                    value={resolvingRev}
-                    onChange={e => setResolvingRev(e.target.value)}
-                    aria-label="Resolving Drawing Revision"
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                  />
-                </div>
-              </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-foreground">Responded By (Consultant Engineer) *</label>
+                    <input
+                      type="text"
+                      required
+                      value={respondedByName}
+                      onChange={e => setRespondedByName(e.target.value)}
+                      placeholder="e.g. Lead Structural Consultant"
+                      aria-label="Responded By Consultant Engineer"
+                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    />
+                  </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
-                <button
-                  type="button"
-                  onClick={() => setSelectedRfiForReply(null)}
-                  className="h-9 px-4 rounded-xl border border-border bg-surface hover:bg-muted/20 text-foreground text-xs font-bold transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="h-9 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors shadow-sm cursor-pointer"
-                >
-                  Resolve & Close RFI
-                </button>
-              </div>
-            </form>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-foreground">Resolving Drawing Revision (e.g. R3)</label>
+                    <input
+                      type="text"
+                      value={resolvingRev}
+                      onChange={e => setResolvingRev(e.target.value)}
+                      placeholder="e.g. ST-T1-COL-204 Rev R3"
+                      aria-label="Resolving Drawing Revision"
+                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-mono font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    />
+                  </div>
+                </div>
+              </AppCardContent>
+            </AppCard>
           </div>
-        </div>
+        </TransactionFormLayout>
       )}
     </div>
   );

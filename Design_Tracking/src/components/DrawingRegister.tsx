@@ -24,6 +24,9 @@ import {
 } from "lucide-react";
 import { DesignMasterStore } from "../services/designMasterStore";
 import { DesignMultiSelectDropdown, DropdownOption } from "./DesignMultiSelectDropdown";
+import { WorkingDocumentLayout } from "./DesignTransactionLayout";
+import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
+import { AppButton } from "@/components/ui/AppButton";
 
 interface DrawingRegisterProps {
   drawings: DrawingItem[];
@@ -190,8 +193,10 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
 
   return (
     <div className="space-y-4 animate-in fade-in duration-150">
-      {/* Control Header Strip */}
-      <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-xs space-y-3.5">
+      {!previewDrawing && (
+        <>
+          {/* Control Header Strip */}
+          <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-xs space-y-3.5">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20 shrink-0">
@@ -487,96 +492,120 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
           </table>
         </div>
       </div>
+        </>
+      )}
 
-      {/* Blueprint CAD Sheet Preview Modal */}
+      {/* Blueprint CAD Sheet Inspection Working Document Canvas */}
       {previewDrawing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-150">
-          <div className="bg-slate-950 border border-slate-800 w-full max-w-4xl rounded-2xl shadow-2xl p-6 space-y-4 text-white">
-            <div className="flex items-start justify-between border-b border-slate-800 pb-3">
-              <div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
-                  <Compass className="h-3.5 w-3.5" />
-                  <span>CAD Architectural Blueprint Inspection</span>
-                </span>
-                <h4 className="text-base font-bold text-white mt-0.5">
-                  {previewDrawing.code}: {previewDrawing.title}
-                </h4>
-                <p className="text-xs text-slate-400">
-                  {previewDrawing.project} • {previewDrawing.discipline} • Revision {previewDrawing.revision}
-                </p>
-              </div>
-              <button
+        <WorkingDocumentLayout
+          title={`${previewDrawing.code}: ${previewDrawing.title}`}
+          badge={previewDrawing.status}
+          badgeColor={previewDrawing.status === "Approved (GFC)" ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/30" : "bg-cyan-500/10 text-cyan-600 border border-cyan-500/30"}
+          category="Architectural Blueprint & GFC Inspection"
+          icon={Compass}
+          iconBg="bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"
+          description={`High-fidelity vector engineering sheet verification for ${previewDrawing.project} (${previewDrawing.discipline}).`}
+          breadcrumbs={[
+            { label: "Design Tracking Desk" },
+            { label: "Drawing Register", onClick: () => setPreviewDrawing(null) },
+            { label: `${previewDrawing.code} - ${previewDrawing.title}` }
+          ]}
+          onBack={() => setPreviewDrawing(null)}
+          backLabel="Back to Drawing Register"
+          headerActions={
+            <div className="flex items-center gap-2">
+              <AppButton
                 type="button"
-                onClick={() => setPreviewDrawing(null)}
-                className="h-8 w-8 rounded-lg hover:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white transition-colors cursor-pointer"
+                variant="outline"
+                size="sm"
+                onClick={() => window.print()}
+                className="text-xs h-9 font-semibold gap-1.5"
               >
-                <X className="h-4 w-4" />
-              </button>
+                <Printer className="h-3.5 w-3.5" />
+                <span>Print Blueprint</span>
+              </AppButton>
+              <AppButton
+                type="button"
+                variant="primary"
+                size="sm"
+                onClick={() => onOpenReviewModal(previewDrawing)}
+                className="text-xs h-9 font-semibold gap-1.5"
+              >
+                <ShieldCheck className="h-3.5 w-3.5" />
+                <span>Open Stage-Gate Review</span>
+              </AppButton>
+            </div>
+          }
+        >
+          <div className="space-y-6">
+            {/* Blueprint Overview Info Header */}
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              <div className="p-3.5 rounded-xl bg-muted/20 border border-border space-y-1">
+                <span className="text-[10px] uppercase font-bold text-muted-foreground block">Project / Development</span>
+                <span className="text-xs font-bold text-foreground">{previewDrawing.project}</span>
+              </div>
+              <div className="p-3.5 rounded-xl bg-muted/20 border border-border space-y-1">
+                <span className="text-[10px] uppercase font-bold text-muted-foreground block">Discipline</span>
+                <span className="text-xs font-bold text-foreground">{previewDrawing.discipline}</span>
+              </div>
+              <div className="p-3.5 rounded-xl bg-muted/20 border border-border space-y-1">
+                <span className="text-[10px] uppercase font-bold text-muted-foreground block">Author Consultant</span>
+                <span className="text-xs font-bold text-foreground">{previewDrawing.consultant}</span>
+              </div>
+              <div className="p-3.5 rounded-xl bg-muted/20 border border-border space-y-1">
+                <span className="text-[10px] uppercase font-bold text-muted-foreground block">Revision & Date</span>
+                <span className="text-xs font-bold font-mono text-foreground">Rev {previewDrawing.revision} • {previewDrawing.submittedDate}</span>
+              </div>
             </div>
 
             {/* CAD Blueprint Canvas Simulation */}
-            <div className="h-80 w-full rounded-xl bg-slate-900 border border-cyan-500/30 relative overflow-hidden flex flex-col justify-between p-4 font-mono select-none"
+            <div
+              className="h-96 w-full rounded-2xl bg-slate-950 border border-cyan-500/30 relative overflow-hidden flex flex-col justify-between p-6 font-mono select-none shadow-2xl text-white"
               style={{
                 backgroundImage: "radial-gradient(#0ea5e9 1px, transparent 1px)",
                 backgroundSize: "24px 24px"
               }}
             >
               {/* Engineering Coordinate Grid Markers */}
-              <div className="flex items-center justify-between text-[10px] text-cyan-500/60">
-                <span>GRID: A1-F8 | SCALE: 1:100</span>
-                <span>CHANDAK DESIGN & ENGINEERING COCKPIT</span>
+              <div className="flex items-center justify-between text-[11px] text-cyan-400 font-bold">
+                <span>GRID COORD: A1-F8 | SCALE: 1:100 METRIC | PROJECTION: ORTHOGRAPHIC</span>
+                <span>CHANDAK DESIGN & ENGINEERING STUDIO</span>
               </div>
 
               {/* Center Wireframe Graphics simulation */}
-              <div className="flex flex-col items-center justify-center space-y-2 opacity-80">
-                <div className="w-56 h-36 border-2 border-dashed border-cyan-400/50 rounded-lg flex items-center justify-center relative">
-                  <div className="w-44 h-24 border border-cyan-300/40 rounded flex items-center justify-center">
-                    <span className="text-xs font-bold text-cyan-300 tracking-wider">
+              <div className="flex flex-col items-center justify-center space-y-3 opacity-90 my-auto">
+                <div className="w-80 h-44 border-2 border-dashed border-cyan-400/60 rounded-xl flex items-center justify-center relative bg-cyan-950/20 backdrop-blur-xs">
+                  <div className="w-64 h-32 border border-cyan-300/40 rounded-lg flex flex-col items-center justify-center p-4 text-center">
+                    <span className="text-sm font-bold text-cyan-300 tracking-wider">
                       {previewDrawing.title}
                     </span>
+                    <span className="text-[11px] text-cyan-400/80 font-mono mt-1">
+                      SHEET {previewDrawing.code} • REV {previewDrawing.revision}
+                    </span>
                   </div>
-                  <div className="absolute -top-3 bg-slate-950 px-2 text-[10px] text-cyan-400 font-bold border border-cyan-500/40 rounded">
-                    SECTION X-X' ELEVATION
+                  <div className="absolute -top-3 bg-slate-950 px-3 text-[10px] text-cyan-400 font-bold border border-cyan-500/40 rounded">
+                    SECTION X-X' ELEVATION ARCHITECTURAL
                   </div>
                 </div>
               </div>
 
               {/* Title Block Bottom Right */}
-              <div className="flex items-end justify-between">
-                <div className="text-[10px] text-slate-400 space-y-0.5">
-                  <div>AUTHOR: <strong className="text-white">{previewDrawing.consultant}</strong></div>
-                  <div>SHEET NO: <strong className="text-white">{previewDrawing.code}</strong></div>
-                  <div>STATUS: <strong className="text-emerald-400">{previewDrawing.status}</strong></div>
+              <div className="flex items-end justify-between border-t border-cyan-500/30 pt-3">
+                <div className="text-[11px] text-slate-300 space-y-0.5">
+                  <div>AUTHOR: <strong className="text-white font-bold">{previewDrawing.consultant}</strong></div>
+                  <div>SHEET NO: <strong className="text-white font-mono font-bold">{previewDrawing.code}</strong></div>
+                  <div>WORKFLOW STATUS: <strong className="text-emerald-400 font-bold">{previewDrawing.status}</strong></div>
                 </div>
 
                 {previewDrawing.status === "Approved (GFC)" && (
-                  <div className="p-2.5 rounded-xl border-2 border-emerald-500 bg-emerald-950/60 text-emerald-400 text-center uppercase font-black text-xs tracking-widest shadow-lg rotate-[-5deg]">
-                    ✓ GOOD FOR CONSTRUCTION
+                  <div className="p-3 rounded-xl border-2 border-emerald-500 bg-emerald-950/80 text-emerald-400 text-center uppercase font-black text-xs tracking-widest shadow-xl rotate-[-3deg]">
+                    ✓ GOOD FOR CONSTRUCTION (GFC)
                   </div>
                 )}
               </div>
             </div>
-
-            <div className="flex items-center justify-between pt-2">
-              <button
-                type="button"
-                onClick={() => window.print()}
-                className="px-3 py-1.5 rounded-xl border border-slate-700 hover:bg-slate-800 text-xs text-slate-300 inline-flex items-center gap-1.5 cursor-pointer"
-              >
-                <Printer className="h-3.5 w-3.5" />
-                <span>Print Blueprint</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setPreviewDrawing(null)}
-                className="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold cursor-pointer"
-              >
-                Close Preview
-              </button>
-            </div>
           </div>
-        </div>
+        </WorkingDocumentLayout>
       )}
     </div>
   );

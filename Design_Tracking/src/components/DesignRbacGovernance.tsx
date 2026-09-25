@@ -58,6 +58,7 @@ import {
   toggleUserDesignModuleAccessAction,
   saveRbacPoliciesAction
 } from "@/lib/actions/designTracking";
+import { TransactionFormLayout } from "./DesignTransactionLayout";
 
 // Clean badge colors
 const ROLE_BADGE_COLORS = [
@@ -729,7 +730,9 @@ export const DesignRbacGovernance: React.FC = () => {
 
   return (
     <div className="w-full space-y-5 pb-12 animate-in fade-in duration-200">
-      {/* 1. Platform Header */}
+      {!isRoleModalOpen && !isDrawerOpen && (
+        <div className="space-y-5">
+          {/* 1. Platform Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-surface border border-border/80 rounded-2xl p-4 sm:p-5 shadow-xs">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-theme-btn-primary/10 text-theme-icon flex items-center justify-center border border-theme-btn-primary/20 shrink-0">
@@ -1327,25 +1330,34 @@ export const DesignRbacGovernance: React.FC = () => {
       )}
 
       {/* ======================================================================= */}
+        </div>
+      )}
+
       {/* ALL-IN-ONE CREATE / EDIT ROLE MODAL                                     */}
       {/* ======================================================================= */}
+      {/* ALL-IN-ONE CREATE / EDIT ROLE TRANSACTION FORM LAYOUT */}
       {isRoleModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border rounded-2xl w-full max-w-4xl max-h-[90vh] shadow-2xl flex flex-col animate-in zoom-in-95 duration-200 overflow-hidden">
-            {/* Modal Header */}
-            <div className="px-5 py-4 border-b border-border/80 flex items-center justify-between shrink-0 bg-surface">
-              <div className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-theme-icon" />
-                <h3 className="text-base font-bold text-foreground">
-                  {modalMode === "CREATE" ? "Create New Role" : modalMode === "CLONE" ? "Clone Role" : "Edit Role"}
-                </h3>
-              </div>
-              <button type="button" onClick={() => setIsRoleModalOpen(false)} className="text-muted hover:text-foreground">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* Modal Scrollable Body */}
+        <TransactionFormLayout
+          title={modalMode === "CREATE" ? "Create New Design Role" : modalMode === "CLONE" ? "Clone Design Role" : `Edit Role: ${roleFormLabel}`}
+          icon={Shield}
+          description="Configure enterprise permissions, ticket lifecycle authority, and assign user rosters"
+          onBack={() => setIsRoleModalOpen(false)}
+          backLabel="Back to RBAC Matrix"
+          breadcrumbs={[
+            { label: "Design Tracking", onClick: () => setIsRoleModalOpen(false) },
+            { label: "RBAC Governance", onClick: () => setIsRoleModalOpen(false) },
+            { label: modalMode === "CREATE" ? "Create Role" : roleFormLabel }
+          ]}
+          onSave={handleSaveRoleModal}
+          saveLabel={isSaving ? "Saving..." : "Save Role & Permissions"}
+          isSubmitting={isSaving}
+          onReset={() => {
+            setRoleFormLabel("");
+            setRoleFormCode("");
+            setRoleFormDesc("");
+          }}
+        >
+          <div className="space-y-6">
             <div className="p-5 overflow-y-auto space-y-6 custom-scrollbar">
               {/* 1. Basic Info */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -1596,13 +1608,12 @@ export const DesignRbacGovernance: React.FC = () => {
                 </div>
               </div>
             </div>
-
-            {/* Modal Footer */}
-            <div className="px-5 py-3.5 border-t border-border/80 flex items-center justify-end gap-2 bg-surface shrink-0">
+            {/* Bottom Form Action Buttons */}
+            <div className="pt-4 border-t border-border flex items-center justify-end gap-3">
               <button
                 type="button"
                 onClick={() => setIsRoleModalOpen(false)}
-                className="px-4 py-2 text-xs font-semibold text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl"
+                className="px-4 py-2 text-xs font-semibold text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl border border-border cursor-pointer transition-colors"
               >
                 Cancel
               </button>
@@ -1610,30 +1621,35 @@ export const DesignRbacGovernance: React.FC = () => {
                 type="button"
                 onClick={handleSaveRoleModal}
                 disabled={isSaving}
-                className="px-5 py-2 text-xs font-bold text-theme-btn-primary-text bg-theme-btn-primary hover:bg-theme-btn-primary-secondary rounded-xl shadow-xs"
+                className="px-5 py-2 text-xs font-bold text-theme-btn-primary-text bg-theme-btn-primary hover:bg-theme-btn-primary-secondary rounded-xl shadow-xs cursor-pointer transition-all disabled:opacity-60"
               >
                 {isSaving ? "Saving..." : "Save Role & Permissions"}
               </button>
             </div>
           </div>
-        </div>
+        </TransactionFormLayout>
       )}
 
       {/* Slide-Over Drawer for Individual User Configuration */}
+      {/* USER ACCESS SCOPE CONFIGURATION TRANSACTION FORM */}
       {isDrawerOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex justify-end animate-in fade-in duration-200">
-          <div className="bg-surface border-l border-border w-full max-w-md h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
-            <div className="p-4 border-b border-border flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-bold text-foreground">User Permissions</h3>
-                <p className="text-xs text-muted">{selectedDrawerUser?.fullName}</p>
-              </div>
-              <button type="button" onClick={() => setIsDrawerOpen(false)} className="text-muted hover:text-foreground">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="p-4 overflow-y-auto space-y-4 flex-1 custom-scrollbar text-xs">
+        <TransactionFormLayout
+          title={`Configure Access Scope: ${selectedDrawerUser?.fullName || "User"}`}
+          icon={Users}
+          description="Assign role, granular item scopes, and multi-project visibility"
+          onBack={() => setIsDrawerOpen(false)}
+          backLabel="Back to User Governance"
+          breadcrumbs={[
+            { label: "Design Tracking", onClick: () => setIsDrawerOpen(false) },
+            { label: "User Governance", onClick: () => setIsDrawerOpen(false) },
+            { label: selectedDrawerUser?.fullName || "Configure Access" }
+          ]}
+          onSave={handleSaveDrawerAccess}
+          saveLabel={isSaving ? "Saving..." : "Save Access Scope"}
+          isSubmitting={isSaving}
+        >
+          <div className="space-y-6 max-w-3xl">
+            <div className="p-4 rounded-2xl bg-surface border border-border space-y-4">
               <div className="space-y-1">
                 <label className="font-bold text-foreground">Role</label>
                 <select
@@ -1699,17 +1715,26 @@ export const DesignRbacGovernance: React.FC = () => {
                 )}
               </div>
             </div>
-
-            <div className="p-4 border-t border-border flex items-center justify-end gap-2 bg-surface">
-              <button type="button" onClick={() => setIsDrawerOpen(false)} className="px-4 py-2 text-xs font-semibold text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl">
+            {/* Bottom Action Triggers */}
+            <div className="pt-4 border-t border-border flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setIsDrawerOpen(false)}
+                className="px-4 py-2 text-xs font-semibold text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl border border-border cursor-pointer transition-colors"
+              >
                 Cancel
               </button>
-              <button type="button" onClick={handleSaveDrawerAccess} disabled={isSaving} className="px-5 py-2 text-xs font-bold text-theme-btn-primary-text bg-theme-btn-primary hover:bg-theme-btn-primary-secondary rounded-xl shadow-xs">
-                {isSaving ? "Saving..." : "Save Access"}
+              <button
+                type="button"
+                onClick={handleSaveDrawerAccess}
+                disabled={isSaving}
+                className="px-5 py-2 text-xs font-bold text-theme-btn-primary-text bg-theme-btn-primary hover:bg-theme-btn-primary-secondary rounded-xl shadow-xs cursor-pointer transition-all disabled:opacity-60"
+              >
+                {isSaving ? "Saving..." : "Save Access Scope"}
               </button>
             </div>
           </div>
-        </div>
+        </TransactionFormLayout>
       )}
 
       {/* Delete Confirmation */}

@@ -1,13 +1,11 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { createPortal } from "react-dom";
 import { toast } from "react-toastify";
 import { DesignMasterStore, MasterStoreState } from "../services/designMasterStore";
 import { ProjectMaster } from "../types/masterTypes";
 import { 
   Plus, 
-  X, 
   Layers, 
   Clock, 
   ShieldCheck, 
@@ -15,8 +13,12 @@ import {
   CheckCircle2, 
   AlertCircle,
   Building2,
-  FileText
+  FileText,
+  Save,
+  RotateCcw
 } from "lucide-react";
+import { TransactionFormLayout } from "./DesignTransactionLayout";
+import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
 
 interface DataEntryFormsModalProps {
   isOpen: boolean;
@@ -31,11 +33,6 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
 }) => {
   const [storeState, setStoreState] = useState<MasterStoreState>(DesignMasterStore.getState());
   const [activeTab, setActiveTab] = useState<"PACKAGE" | "LOOK_AHEAD" | "LIAISON">(defaultTab);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     setActiveTab(defaultTab);
@@ -116,8 +113,8 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleSavePackageStatus = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSavePackageStatus = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!pkgProjectId || !pkgTowerId || !pkgId) {
       setPkgError("Please select Project, Tower Wing, and Work Package.");
       toast.error("Please select Project, Tower Wing, and Work Package.");
@@ -156,8 +153,8 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
     onClose();
   };
 
-  const handleSaveLookAhead = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveLookAhead = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!laProjectId || !laTowerId || !laDescription.trim()) {
       toast.error("Please fill in Project, Tower Wing, and Deliverable Description.");
       return;
@@ -180,8 +177,8 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
     onClose();
   };
 
-  const handleSaveLiaison = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveLiaison = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!liaisonProjectId || !liaisonTowerId || !liaisonAuthorityId) {
       toast.error("Please select Project, Tower Wing, and Statutory Authority.");
       return;
@@ -203,444 +200,501 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
     onClose();
   };
 
-  if (!isOpen || !mounted) return null;
+  const handleCurrentSave = () => {
+    if (activeTab === "PACKAGE") handleSavePackageStatus();
+    else if (activeTab === "LOOK_AHEAD") handleSaveLookAhead();
+    else handleSaveLiaison();
+  };
 
-  return createPortal(
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 sm:p-6 animate-in fade-in duration-150">
-      <div className="bg-surface border border-border w-full max-w-xl max-h-[90vh] flex flex-col min-h-0 rounded-3xl shadow-2xl overflow-hidden">
-        {/* Header */}
-        <div className="p-6 pb-3 border-b border-border bg-slate-50/50 dark:bg-slate-900/50 shrink-0 space-y-3">
-          <div className="flex items-start justify-between">
-            <div className="space-y-0.5">
-              <span className="text-[10px] font-black uppercase tracking-wider text-emerald-500 flex items-center gap-1.5">
-                <Plus className="h-3.5 w-3.5" />
-                <span>Live Data Fill Entry</span>
-              </span>
-              <h4 className="text-base font-black text-foreground">
-                Record Execution Data
-              </h4>
-              <p className="text-xs text-muted-foreground">
-                Fill project tender packages, milestones, and statutory clearances.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="h-8 w-8 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
+  const handleCurrentReset = () => {
+    if (activeTab === "PACKAGE") {
+      setPkgTowerId("");
+      setPkgId("");
+      setPkgStatus("Received");
+      setPkgRemarks("");
+      setPkgError("");
+    } else if (activeTab === "LOOK_AHEAD") {
+      setLaTowerId("");
+      setLaDescription("");
+      setLaTimeframe("30_DAYS");
+      setLaPriority("CRITICAL");
+    } else {
+      setLiaisonTowerId("");
+      setLiaisonAuthorityId("");
+      setLiaisonStatus("Onboard");
+      setLiaisonRemarks("");
+    }
+  };
 
-          {/* Tab Selector */}
-          <div className="p-1 rounded-xl bg-muted/40 border border-border flex items-center gap-1 text-xs">
-            <button
-              type="button"
-              onClick={() => setActiveTab("PACKAGE")}
-              className={`flex-1 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                activeTab === "PACKAGE" ? "bg-surface text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Layers className="h-3.5 w-3.5" />
-              <span>Tender Status</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("LOOK_AHEAD")}
-              className={`flex-1 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                activeTab === "LOOK_AHEAD" ? "bg-surface text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Clock className="h-3.5 w-3.5" />
-              <span>Look-Ahead</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("LIAISON")}
-              className={`flex-1 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                activeTab === "LIAISON" ? "bg-surface text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <ShieldCheck className="h-3.5 w-3.5" />
-              <span>Authority NOC</span>
-            </button>
-          </div>
-        </div>
+  const title = activeTab === "PACKAGE" 
+    ? "Record Tender Package Status" 
+    : activeTab === "LOOK_AHEAD" 
+    ? "Log Look-Ahead Milestone" 
+    : "Update Statutory Authority Onboarding";
 
-        {/* Form 1: Tender Package Status */}
-        {activeTab === "PACKAGE" && (
-          <form onSubmit={handleSavePackageStatus} className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4 text-xs">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="font-bold text-foreground">Project *</label>
-                <select
-                  required
-                  value={pkgProjectId}
-                  onChange={e => {
-                    setPkgProjectId(e.target.value);
-                    setPkgTowerId("");
-                  }}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
-                >
-                  <option value="">Select Project</option>
-                  {accessibleProjects.map((p: ProjectMaster) => (
-                    <option key={p.id} value={p.id}>{p.isSubProject ? `🏙️ ${p.name} (Sub-Project)` : `🏢 ${p.name}`}</option>
-                  ))}
-                </select>
-              </div>
+  const badge = activeTab === "PACKAGE" 
+    ? "Tender Matrix Transaction" 
+    : activeTab === "LOOK_AHEAD" 
+    ? "Look-Ahead Milestone" 
+    : "Liaisoning Clearance";
 
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <label className="font-bold text-foreground">Tower / Wing *</label>
-                  {pkgProjectId && pkgAvailableTowers.length === 0 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const newTwr = DesignMasterStore.addTower({
-                          projectId: pkgProjectId,
-                          towerName: "Wing A",
-                          towerType: "Sale"
-                        });
-                        setPkgTowerId(newTwr.id);
-                      }}
-                      className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold hover:underline cursor-pointer"
-                    >
-                      + Quick Add Wing A
-                    </button>
-                  )}
+  const Icon = activeTab === "PACKAGE" ? Layers : activeTab === "LOOK_AHEAD" ? Clock : ShieldCheck;
+  const iconBg = activeTab === "PACKAGE" 
+    ? "bg-teal-500/15 text-teal-600 dark:text-teal-400 border-teal-500/25" 
+    : activeTab === "LOOK_AHEAD" 
+    ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/25" 
+    : "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/25";
+
+  const saveLabel = activeTab === "PACKAGE" 
+    ? "Record Status & Log Audit" 
+    : activeTab === "LOOK_AHEAD" 
+    ? "Add Milestone" 
+    : "Update Authority";
+
+  return (
+    <TransactionFormLayout
+      title={title}
+      badge={badge}
+      category="Design Tracking"
+      icon={Icon}
+      iconBg={iconBg}
+      description="Record execution packages, look-ahead milestones, and statutory clearances directly attached to the sidebar."
+      breadcrumbs={[
+        { label: "Design Tracking", onClick: onClose },
+        { label: activeTab === "PACKAGE" ? "Tender Status" : activeTab === "LOOK_AHEAD" ? "Look-Ahead" : "Authority NOC" }
+      ]}
+      onBack={onClose}
+      backLabel="Back to Design Tracking"
+      onReset={handleCurrentReset}
+      onSave={handleCurrentSave}
+      saveLabel={saveLabel}
+      saveIcon={Save}
+    >
+      {/* Tab Selector Banner */}
+      <div className="p-1.5 rounded-2xl bg-muted/40 border border-border flex items-center gap-1.5 text-xs max-w-2xl">
+        <button
+          type="button"
+          onClick={() => setActiveTab("PACKAGE")}
+          className={`flex-1 py-2 rounded-xl font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
+            activeTab === "PACKAGE" 
+              ? "bg-surface text-foreground shadow-xs border border-border" 
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Layers className="h-4 w-4 text-teal-500" />
+          <span>Tender Status Entry</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("LOOK_AHEAD")}
+          className={`flex-1 py-2 rounded-xl font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
+            activeTab === "LOOK_AHEAD" 
+              ? "bg-surface text-foreground shadow-xs border border-border" 
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Clock className="h-4 w-4 text-amber-500" />
+          <span>30/60 Day Look-Ahead</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("LIAISON")}
+          className={`flex-1 py-2 rounded-xl font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
+            activeTab === "LIAISON" 
+              ? "bg-surface text-foreground shadow-xs border border-border" 
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <ShieldCheck className="h-4 w-4 text-purple-500" />
+          <span>Statutory Authority NOC</span>
+        </button>
+      </div>
+
+      {/* Form 1: Tender Package Status */}
+      {activeTab === "PACKAGE" && (
+        <div className="space-y-6 max-w-4xl">
+          <AppCard className="border-border shadow-xs">
+            <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
+              <AppCardTitle className="text-sm font-bold flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+                <span>Project & Location Mapping</span>
+              </AppCardTitle>
+            </AppCardHeader>
+            <AppCardContent className="p-5 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-foreground">Target Project *</label>
+                  <select
+                    required
+                    value={pkgProjectId}
+                    onChange={e => {
+                      setPkgProjectId(e.target.value);
+                      setPkgTowerId("");
+                    }}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                  >
+                    <option value="">Select Project</option>
+                    {accessibleProjects.map((p: ProjectMaster) => (
+                      <option key={p.id} value={p.id}>{p.isSubProject ? `🏙️ ${p.name} (Sub-Project)` : `🏢 ${p.name}`}</option>
+                    ))}
+                  </select>
                 </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-foreground">Tower / Wing *</label>
+                    {pkgProjectId && pkgAvailableTowers.length === 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newTwr = DesignMasterStore.addTower({
+                            projectId: pkgProjectId,
+                            towerName: "Wing A",
+                            towerType: "Sale"
+                          });
+                          setPkgTowerId(newTwr.id);
+                        }}
+                        className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold hover:underline cursor-pointer"
+                      >
+                        + Quick Add Wing A
+                      </button>
+                    )}
+                  </div>
+                  <select
+                    required
+                    value={pkgTowerId}
+                    onChange={e => setPkgTowerId(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                  >
+                    <option value="">{pkgAvailableTowers.length === 0 ? "No Wings (Click + Quick Add above)" : "Select Wing"}</option>
+                    {pkgAvailableTowers.map(t => (
+                      <option key={t.id} value={t.id}>{t.displayLabel}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-foreground">Work Package Scope *</label>
                 <select
                   required
-                  value={pkgTowerId}
-                  onChange={e => setPkgTowerId(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  value={pkgId}
+                  onChange={e => setPkgId(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                 >
-                  <option value="">{pkgAvailableTowers.length === 0 ? "No Wings (Click + Quick Add above)" : "Select Wing"}</option>
-                  {pkgAvailableTowers.map(t => (
-                    <option key={t.id} value={t.id}>{t.displayLabel}</option>
+                  <option value="">Select Package</option>
+                  {storeState.packages.map(p => (
+                    <option key={p.id} value={p.id}>[{p.disciplineName}] {p.packageName}</option>
                   ))}
                 </select>
               </div>
-            </div>
 
-            <div className="space-y-1">
-              <label className="font-bold text-foreground">Work Package *</label>
-              <select
-                required
-                value={pkgId}
-                onChange={e => setPkgId(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
-              >
-                <option value="">Select Package</option>
-                {storeState.packages.map(p => (
-                  <option key={p.id} value={p.id}>[{p.disciplineName}] {p.packageName}</option>
-                ))}
-              </select>
-            </div>
+              {pkgError && (
+                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <span>{pkgError}</span>
+                </div>
+              )}
+            </AppCardContent>
+          </AppCard>
 
-            {pkgError && (
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 shrink-0" />
-                <span>{pkgError}</span>
-              </div>
-            )}
-
-            <div className="space-y-1">
-              <label className="font-bold text-foreground">Status *</label>
-              <select
-                value={pkgStatus}
-                onChange={e => setPkgStatus(e.target.value as any)}
-                className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
-              >
-                <option value="Received">✅ Received (Tender / GFC)</option>
-                <option value="In progress">⏳ In Progress / Onboard</option>
-                <option value="Pending">⚠️ Pending / Bottleneck</option>
-                <option value="Target Date">📅 Target Date Forecast</option>
-                <option value="NA">⚪ Not Applicable (NA)</option>
-              </select>
-            </div>
-
-            {/* Mandatory Planned & Actual Dates */}
-            <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-muted/20 border border-border">
-              <div className="space-y-1">
-                <label className="font-bold text-foreground flex items-center gap-1">
-                  <Calendar className="h-3 w-3 text-blue-500" />
-                  <span>Planned Date * (Mandatory)</span>
-                </label>
-                <input
-                  type="date"
-                  required
-                  value={pkgPlannedDate}
-                  onChange={e => setPkgPlannedDate(e.target.value)}
-                  className="w-full px-3 py-1.5 rounded-xl border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
-                />
+          <AppCard className="border-border shadow-xs">
+            <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
+              <AppCardTitle className="text-sm font-bold flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+                <span>Execution Timeline & Status Parameters</span>
+              </AppCardTitle>
+            </AppCardHeader>
+            <AppCardContent className="p-5 space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-foreground">Delivery Status *</label>
+                <select
+                  value={pkgStatus}
+                  onChange={e => setPkgStatus(e.target.value as any)}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                >
+                  <option value="Received">✅ Received (Tender / GFC)</option>
+                  <option value="In progress">⏳ In Progress / Onboard</option>
+                  <option value="Pending">⚠️ Pending / Bottleneck</option>
+                  <option value="Target Date">📅 Target Date Forecast</option>
+                  <option value="NA">⚪ Not Applicable (NA)</option>
+                </select>
               </div>
 
-              <div className="space-y-1">
-                <label className="font-bold text-foreground flex items-center gap-1">
-                  <Clock className="h-3 w-3 text-emerald-500" />
-                  <span>Actual Date * (Mandatory)</span>
-                </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-muted/20 border border-border">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-foreground flex items-center gap-1">
+                    <Calendar className="h-3.5 w-3.5 text-blue-500" />
+                    <span>Planned Baseline Date * (Mandatory)</span>
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={pkgPlannedDate}
+                    onChange={e => setPkgPlannedDate(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-foreground flex items-center gap-1">
+                    <Clock className="h-3.5 w-3.5 text-emerald-500" />
+                    <span>Actual / Certified Delivery Date * (Mandatory)</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={pkgActualDate}
+                    onChange={e => setPkgActualDate(e.target.value)}
+                    placeholder="YYYY-MM-DD or DD/MM/YYYY"
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-foreground">Assigned Consultant Partner</label>
+                <select
+                  value={pkgConsultantId}
+                  onChange={e => setPkgConsultantId(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                >
+                  <option value="">None / Internal Team</option>
+                  {storeState.consultants.map(c => (
+                    <option key={c.id} value={c.id}>{c.name} ({c.category}) - {c.onboardingStatus}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-foreground">Remarks / Audit Note</label>
                 <input
                   type="text"
-                  required
-                  value={pkgActualDate}
-                  onChange={e => setPkgActualDate(e.target.value)}
-                  aria-label="Actual date"
-                  className="w-full px-3 py-1.5 rounded-xl border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  value={pkgRemarks}
+                  onChange={e => setPkgRemarks(e.target.value)}
+                  placeholder="e.g. Approved by Structural Consultant with revised column grid notes"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                 />
               </div>
-            </div>
+            </AppCardContent>
+          </AppCard>
+        </div>
+      )}
 
-            {/* Assigned Consultant */}
-            <div className="space-y-1">
-              <label className="font-bold text-foreground">Assigned Consultant Partner</label>
-              <select
-                value={pkgConsultantId}
-                onChange={e => setPkgConsultantId(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
-              >
-                <option value="">None / Internal Team</option>
-                {storeState.consultants.map(c => (
-                  <option key={c.id} value={c.id}>{c.name} ({c.category}) - {c.onboardingStatus}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <label className="font-bold text-foreground">Remarks / Action Item</label>
-              <input
-                type="text"
-                value={pkgRemarks}
-                onChange={e => setPkgRemarks(e.target.value)}
-                aria-label="Audit notes or delivery remarks"
-                className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
-              />
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
-              <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl border border-border bg-background text-foreground hover:bg-muted transition-colors cursor-pointer">
-                Cancel
-              </button>
-              <button type="submit" className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold cursor-pointer shadow-md transition-all">
-                Record Status & Log Audit
-              </button>
-            </div>
-          </form>
-        )}
-
-        {/* Form 2: Look-Ahead Milestone */}
-        {activeTab === "LOOK_AHEAD" && (
-          <form onSubmit={handleSaveLookAhead} className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4 text-xs">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="font-bold text-foreground">Project *</label>
-                <select
-                  required
-                  value={laProjectId}
-                  onChange={e => {
-                    setLaProjectId(e.target.value);
-                    setLaTowerId("");
-                  }}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
-                >
-                  <option value="">Select Project</option>
-                  {accessibleProjects.map((p: ProjectMaster) => (
-                    <option key={p.id} value={p.id}>{p.isSubProject ? `🏙️ ${p.name} (Sub-Project)` : `🏢 ${p.name}`}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <label className="font-bold text-foreground">Tower / Wing *</label>
-                  {laProjectId && laAvailableTowers.length === 0 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const newTwr = DesignMasterStore.addTower({
-                          projectId: laProjectId,
-                          towerName: "Wing A",
-                          towerType: "Sale"
-                        });
-                        setLaTowerId(newTwr.id);
-                      }}
-                      className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold hover:underline cursor-pointer"
-                    >
-                      + Quick Add Wing A
-                    </button>
-                  )}
+      {/* Form 2: Look-Ahead Milestone */}
+      {activeTab === "LOOK_AHEAD" && (
+        <div className="space-y-6 max-w-4xl">
+          <AppCard className="border-border shadow-xs">
+            <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
+              <AppCardTitle className="text-sm font-bold flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                <span>Project Target & Wing Selection</span>
+              </AppCardTitle>
+            </AppCardHeader>
+            <AppCardContent className="p-5 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-foreground">Project *</label>
+                  <select
+                    required
+                    value={laProjectId}
+                    onChange={e => {
+                      setLaProjectId(e.target.value);
+                      setLaTowerId("");
+                    }}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                  >
+                    <option value="">Select Project</option>
+                    {accessibleProjects.map((p: ProjectMaster) => (
+                      <option key={p.id} value={p.id}>{p.isSubProject ? `🏙️ ${p.name} (Sub-Project)` : `🏢 ${p.name}`}</option>
+                    ))}
+                  </select>
                 </div>
-                <select
-                  required
-                  value={laTowerId}
-                  onChange={e => setLaTowerId(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
-                >
-                  <option value="">{laAvailableTowers.length === 0 ? "No Wings (Click + Quick Add above)" : "Select Wing"}</option>
-                  {laAvailableTowers.map(t => (
-                    <option key={t.id} value={t.id}>{t.displayLabel}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
 
-            <div className="space-y-1">
-              <label className="font-bold text-foreground">Deliverable Milestone Description *</label>
-              <textarea
-                required
-                rows={2}
-                value={laDescription}
-                onChange={e => setLaDescription(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="font-bold text-foreground">Timeframe Window *</label>
-                <select
-                  value={laTimeframe}
-                  onChange={e => setLaTimeframe(e.target.value as any)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
-                >
-                  <option value="30_DAYS">🚨 In 30 Days (Immediate Action)</option>
-                  <option value="60_DAYS">⏳ In 60 Days (Mid-Term Forecast)</option>
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-bold text-foreground">Priority Level</label>
-                <select
-                  value={laPriority}
-                  onChange={e => setLaPriority(e.target.value as any)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
-                >
-                  <option value="CRITICAL">Critical (High Urgency)</option>
-                  <option value="HIGH">High Priority</option>
-                  <option value="NORMAL">Normal Schedule</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
-              <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl border border-border bg-background text-foreground hover:bg-muted transition-colors cursor-pointer">
-                Cancel
-              </button>
-              <button type="submit" className="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold cursor-pointer shadow-md transition-all">
-                Add Look-Ahead
-              </button>
-            </div>
-          </form>
-        )}
-
-        {/* Form 3: Statutory Authority NOC */}
-        {activeTab === "LIAISON" && (
-          <form onSubmit={handleSaveLiaison} className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4 text-xs">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="font-bold text-foreground">Project *</label>
-                <select
-                  required
-                  value={liaisonProjectId}
-                  onChange={e => {
-                    setLiaisonProjectId(e.target.value);
-                    setLiaisonTowerId("");
-                  }}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
-                >
-                  <option value="">Select Project</option>
-                  {accessibleProjects.map((p: ProjectMaster) => (
-                    <option key={p.id} value={p.id}>{p.isSubProject ? `🏙️ ${p.name} (Sub-Project)` : `🏢 ${p.name}`}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <label className="font-bold text-foreground">Tower / Wing *</label>
-                  {liaisonProjectId && liaisonAvailableTowers.length === 0 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const newTwr = DesignMasterStore.addTower({
-                          projectId: liaisonProjectId,
-                          towerName: "Wing A",
-                          towerType: "Sale"
-                        });
-                        setLiaisonTowerId(newTwr.id);
-                      }}
-                      className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold hover:underline cursor-pointer"
-                    >
-                      + Quick Add Wing A
-                    </button>
-                  )}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-foreground">Tower / Wing *</label>
+                    {laProjectId && laAvailableTowers.length === 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newTwr = DesignMasterStore.addTower({
+                            projectId: laProjectId,
+                            towerName: "Wing A",
+                            towerType: "Sale"
+                          });
+                          setLaTowerId(newTwr.id);
+                        }}
+                        className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold hover:underline cursor-pointer"
+                      >
+                        + Quick Add Wing A
+                      </button>
+                    )}
+                  </div>
+                  <select
+                    required
+                    value={laTowerId}
+                    onChange={e => setLaTowerId(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                  >
+                    <option value="">{laAvailableTowers.length === 0 ? "No Wings (Click + Quick Add above)" : "Select Wing"}</option>
+                    {laAvailableTowers.map(t => (
+                      <option key={t.id} value={t.id}>{t.displayLabel}</option>
+                    ))}
+                  </select>
                 </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-foreground">Deliverable Milestone Description *</label>
+                <textarea
+                  required
+                  rows={3}
+                  value={laDescription}
+                  onChange={e => setLaDescription(e.target.value)}
+                  placeholder="e.g. Issue Level 4 Podium Reinforcement Detailing to GCC Contractor"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-foreground">Timeframe Window *</label>
+                  <select
+                    value={laTimeframe}
+                    onChange={e => setLaTimeframe(e.target.value as any)}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                  >
+                    <option value="30_DAYS">🚨 In 30 Days (Immediate Action)</option>
+                    <option value="60_DAYS">⏳ In 60 Days (Mid-Term Forecast)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-foreground">Priority Level</label>
+                  <select
+                    value={laPriority}
+                    onChange={e => setLaPriority(e.target.value as any)}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                  >
+                    <option value="CRITICAL">Critical (High Urgency)</option>
+                    <option value="HIGH">High Priority</option>
+                    <option value="NORMAL">Normal Schedule</option>
+                  </select>
+                </div>
+              </div>
+            </AppCardContent>
+          </AppCard>
+        </div>
+      )}
+
+      {/* Form 3: Statutory Authority NOC */}
+      {activeTab === "LIAISON" && (
+        <div className="space-y-6 max-w-4xl">
+          <AppCard className="border-border shadow-xs">
+            <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
+              <AppCardTitle className="text-sm font-bold flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                <span>Statutory Authority & Compliance Status</span>
+              </AppCardTitle>
+            </AppCardHeader>
+            <AppCardContent className="p-5 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-foreground">Project *</label>
+                  <select
+                    required
+                    value={liaisonProjectId}
+                    onChange={e => {
+                      setLiaisonProjectId(e.target.value);
+                      setLiaisonTowerId("");
+                    }}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                  >
+                    <option value="">Select Project</option>
+                    {accessibleProjects.map((p: ProjectMaster) => (
+                      <option key={p.id} value={p.id}>{p.isSubProject ? `🏙️ ${p.name} (Sub-Project)` : `🏢 ${p.name}`}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-foreground">Tower / Wing *</label>
+                    {liaisonProjectId && liaisonAvailableTowers.length === 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newTwr = DesignMasterStore.addTower({
+                            projectId: liaisonProjectId,
+                            towerName: "Wing A",
+                            towerType: "Sale"
+                          });
+                          setLiaisonTowerId(newTwr.id);
+                        }}
+                        className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold hover:underline cursor-pointer"
+                      >
+                        + Quick Add Wing A
+                      </button>
+                    )}
+                  </div>
+                  <select
+                    required
+                    value={liaisonTowerId}
+                    onChange={e => setLiaisonTowerId(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                  >
+                    <option value="">{liaisonAvailableTowers.length === 0 ? "No Wings (Click + Quick Add above)" : "Select Wing"}</option>
+                    {liaisonAvailableTowers.map(t => (
+                      <option key={t.id} value={t.id}>{t.displayLabel}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-foreground">Statutory Authority *</label>
                 <select
                   required
-                  value={liaisonTowerId}
-                  onChange={e => setLiaisonTowerId(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  value={liaisonAuthorityId}
+                  onChange={e => setLiaisonAuthorityId(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
                 >
-                  <option value="">{liaisonAvailableTowers.length === 0 ? "No Wings (Click + Quick Add above)" : "Select Wing"}</option>
-                  {liaisonAvailableTowers.map(t => (
-                    <option key={t.id} value={t.id}>{t.displayLabel}</option>
+                  <option value="">Select Authority</option>
+                  {storeState.authorities.map(a => (
+                    <option key={a.id} value={a.id}>{a.authorityName} ({a.category})</option>
                   ))}
                 </select>
               </div>
-            </div>
 
-            <div className="space-y-1">
-              <label className="font-bold text-foreground">Statutory Authority *</label>
-              <select
-                required
-                value={liaisonAuthorityId}
-                onChange={e => setLiaisonAuthorityId(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
-              >
-                <option value="">Select Authority</option>
-                {storeState.authorities.map(a => (
-                  <option key={a.id} value={a.id}>{a.authorityName} ({a.category})</option>
-                ))}
-              </select>
-            </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-foreground">Onboarding / NOC Status *</label>
+                <select
+                  value={liaisonStatus}
+                  onChange={e => setLiaisonStatus(e.target.value as any)}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                >
+                  <option value="Onboard">✅ Onboard (Clearance Active)</option>
+                  <option value="Fixed consultant">🔷 Fixed Corporate Partner</option>
+                  <option value="Not Onboard">⚠️ Not Onboard (Action Needed)</option>
+                  <option value="Compliance Pending">⏳ Compliance Pending</option>
+                </select>
+              </div>
 
-            <div className="space-y-1">
-              <label className="font-bold text-foreground">Onboarding / NOC Status *</label>
-              <select
-                value={liaisonStatus}
-                onChange={e => setLiaisonStatus(e.target.value as any)}
-                className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-primary"
-              >
-                <option value="Onboard">✅ Onboard (Clearance Active)</option>
-                <option value="Fixed consultant">🔷 Fixed Corporate Partner</option>
-                <option value="Not Onboard">⚠️ Not Onboard (Action Needed)</option>
-                <option value="Compliance Pending">⏳ Compliance Pending</option>
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <label className="font-bold text-foreground">Consultant Name / File Ref</label>
-              <input
-                type="text"
-                value={liaisonRemarks}
-                onChange={e => setLiaisonRemarks(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
-              />
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
-              <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl border border-border bg-background text-foreground hover:bg-muted transition-colors cursor-pointer">
-                Cancel
-              </button>
-              <button type="submit" className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold cursor-pointer shadow-md transition-all">
-                Update Authority
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
-    </div>,
-    document.body
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-foreground">Consultant Name / File Ref</label>
+                <input
+                  type="text"
+                  value={liaisonRemarks}
+                  onChange={e => setLiaisonRemarks(e.target.value)}
+                  placeholder="e.g. MPCB Consent to Establish Ref #2026/09"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                />
+              </div>
+            </AppCardContent>
+          </AppCard>
+        </div>
+      )}
+    </TransactionFormLayout>
   );
 };

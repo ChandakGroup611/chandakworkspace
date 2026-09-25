@@ -8,6 +8,9 @@ import { exportTenderMatrixToExcel } from "../services/excelExportService";
 import { WorkPackageMaster, TowerMaster, ProjectMaster, PackageStatusEntry, MatrixAuditLog } from "../types/masterTypes";
 import { recordMatrixAuditAction } from "@/lib/actions/designTracking";
 import { DesignMultiSelectDropdown, DropdownOption } from "./DesignMultiSelectDropdown";
+import { TransactionFormLayout, WorkingDocumentLayout } from "./DesignTransactionLayout";
+import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
+import { AppButton } from "@/components/ui/AppButton";
 import { 
   Search, 
   Download, 
@@ -667,7 +670,9 @@ export const TenderDesignMatrix: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      {/* 🌟 Top Filter & Control Ribbon */}
+      {!activeCell && !isAuditDrawerOpen && !isBatchModalOpen && (
+        <>
+          {/* 🌟 Top Filter & Control Ribbon */}
       <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-xs space-y-3.5">
         {/* Row 1: Search & Action Buttons */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
@@ -983,77 +988,69 @@ export const TenderDesignMatrix: React.FC = () => {
           </table>
         </div>
       </div>
+        </>
+      )}
 
-      {/* 🔍 Interactive Cell Status Inspector Modal with Mandatory Dates & Audit Trail Tab */}
-      {activeCell && mounted && createPortal(
-        <div 
-          className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 backdrop-blur-xs p-3 sm:p-5 md:p-6 animate-in fade-in duration-150"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setActiveCell(null);
+      {/* 🔍 Deliverable Inspector & Edit Form Transaction Layout */}
+      {activeCell && (
+        <TransactionFormLayout
+          title={"Deliverable Inspector: " + activeCell.pkg.packageName}
+          category="Tender & Design Matrix"
+          icon={Edit2}
+          iconBg="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+          description={"Inspect deliverable readiness, update mandatory milestone dates, and review audit trail for " + activeCell.col.projectName + " • Wing " + activeCell.col.towerName + "."}
+          breadcrumbs={[
+            { label: "Design Tracking Desk" },
+            { label: "Tender Design Matrix", onClick: () => setActiveCell(null) },
+            { label: activeCell.pkg.packageName }
+          ]}
+          onBack={() => setActiveCell(null)}
+          backLabel="Back to Tender Design Matrix"
+          onReset={() => {
+            setCellStatus("Received");
+            setCellPlannedDate("");
+            setCellActualDate("");
+            setCellRemarks("");
           }}
+          onSave={handleSaveCell}
+          saveLabel="Save & Log Audit Trail"
         >
-          <div 
-            className="bg-surface border border-border w-full max-w-2xl lg:max-w-3xl max-h-[92vh] flex flex-col min-h-0 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Fixed Header */}
-            <div className="p-5 sm:p-6 border-b border-border bg-slate-50/50 dark:bg-slate-900/50 shrink-0 flex items-start justify-between">
-              <div className="space-y-1 min-w-0">
-                <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-                  <Edit2 className="h-3 w-3" />
-                  <span>Deliverable Inspector</span>
-                </span>
-                <h4 className="text-base sm:text-lg font-bold text-foreground truncate">
-                  {activeCell.pkg.packageName}
-                </h4>
-                <p className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
-                  <span className="flex items-center gap-1 font-semibold text-foreground">
-                    <Building className="h-3.5 w-3.5 text-blue-500" />
-                    <span>{activeCell.col.projectName}</span>
-                  </span>
-                  <span>•</span>
-                  <span>Wing: <strong className="text-foreground">{activeCell.col.towerName}</strong></span>
-                  <span>•</span>
-                  <span className="px-2 py-0.2 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-semibold border border-emerald-500/20 text-[10px]">
-                    {activeCell.pkg.disciplineName}
-                  </span>
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setActiveCell(null)}
-                className="h-8 w-8 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer shrink-0"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            {/* Fixed Segmented Tab: Edit vs. Audit Trail */}
-            <div className="px-6 pt-4 pb-2 border-b border-border/60 bg-surface shrink-0">
-              <div className="p-1 rounded-xl bg-muted/40 border border-border flex items-center gap-1 text-xs">
-                <button
-                  type="button"
-                  onClick={() => setInspectorTab("EDIT")}
-                  className={`flex-1 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                    inspectorTab === "EDIT" ? "bg-surface text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <Edit2 className="h-3.5 w-3.5" />
-                  <span>Edit Status & Mandatory Dates</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setInspectorTab("AUDIT")}
-                  className={`flex-1 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                    inspectorTab === "AUDIT" ? "bg-surface text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <History className="h-3.5 w-3.5 text-purple-500" />
-                  <span>Audit Trail & Mail History</span>
-                </button>
-              </div>
-            </div>
-
+          <div className="max-w-4xl space-y-6">
+            <AppCard>
+              <AppCardHeader>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-muted-foreground block">Deliverable Package Scope</span>
+                    <AppCardTitle className="text-base font-bold text-foreground">{activeCell.pkg.packageName}</AppCardTitle>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {activeCell.col.projectName} • Wing {activeCell.col.towerName} • <span className="text-emerald-600 font-semibold">{activeCell.pkg.disciplineName}</span>
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5 p-1 rounded-xl bg-muted/40 border border-border text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setInspectorTab("EDIT")}
+                      className={"px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1.5 " + (
+                        inspectorTab === "EDIT" ? "bg-surface text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      <Edit2 className="h-3.5 w-3.5" />
+                      <span>Edit Status & Dates</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setInspectorTab("AUDIT")}
+                      className={"px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1.5 " + (
+                        inspectorTab === "AUDIT" ? "bg-surface text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      <History className="h-3.5 w-3.5 text-purple-500" />
+                      <span>Audit Trail</span>
+                    </button>
+                  </div>
+                </div>
+              </AppCardHeader>
+              <AppCardContent className="space-y-4">
             {/* Scrollable Body: Tab 1 (Edit Form) */}
             {inspectorTab === "EDIT" && (
               <form id="deliverable-inspector-form" onSubmit={handleSaveCell} className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-6 space-y-5 text-xs">
@@ -1306,81 +1303,38 @@ export const TenderDesignMatrix: React.FC = () => {
               </div>
             )}
 
-            {/* Fixed Action Footer */}
-            <div className="p-4 sm:p-5 border-t border-border bg-slate-50/50 dark:bg-slate-900/50 shrink-0 flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                <Mail className="h-3.5 w-3.5 text-teal-600" />
-                <span>Audit email notification will be dispatched on save</span>
-              </div>
-
-              <div className="flex items-center gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => setActiveCell(null)}
-                  className="px-4 py-2 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-semibold cursor-pointer transition-colors"
-                >
-                  Cancel
-                </button>
-                {inspectorTab === "EDIT" ? (
-                  <button
-                    type="submit"
-                    form="deliverable-inspector-form"
-                    className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md cursor-pointer transition-all active:scale-95"
-                  >
-                    Save & Log Audit Trail
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setActiveCell(null)}
-                    className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-md cursor-pointer transition-all"
-                  >
-                    Done
-                  </button>
-                )}
-              </div>
-            </div>
+              </AppCardContent>
+            </AppCard>
           </div>
-        </div>,
-        document.body
+        </TransactionFormLayout>
       )}
 
-      {/* 📜 Audit Trail & Mail Logs Drawer / Modal */}
-      {isAuditDrawerOpen && mounted && createPortal(
-        <div 
-          className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 backdrop-blur-xs p-4 animate-in fade-in duration-150"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setIsAuditDrawerOpen(false);
-          }}
+      {/* 📜 Audit Trail & Mail Logs Working Document Canvas */}
+      {isAuditDrawerOpen && (
+        <WorkingDocumentLayout
+          title="Master Design Matrix: Audit Trail & Mail Dispatch Ledger"
+          badge={filteredAuditLogs.length + " Records"}
+          badgeColor="bg-purple-500/10 text-purple-600 border border-purple-500/30"
+          category="Audit & Compliance"
+          icon={History}
+          iconBg="bg-purple-500/10 text-purple-600 dark:text-purple-400"
+          description="Immutable revision history of deliverable dates, status modifications, and email notices."
+          breadcrumbs={[
+            { label: "Design Tracking Desk" },
+            { label: "Tender Design Matrix", onClick: () => setIsAuditDrawerOpen(false) },
+            { label: "Audit Ledger" }
+          ]}
+          onBack={() => setIsAuditDrawerOpen(false)}
+          backLabel="Back to Tender Design Matrix"
         >
-          <div 
-            className="bg-surface border border-border w-full max-w-3xl max-h-[90vh] flex flex-col min-h-0 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-5 sm:p-6 border-b border-border bg-slate-50/50 dark:bg-slate-900/50 shrink-0 flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-2xl bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center border border-purple-500/25 shrink-0">
-                  <History className="h-5 w-5" />
+          <div className="max-w-5xl space-y-6">
+            <AppCard>
+              <AppCardHeader>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <AppCardTitle className="text-sm font-bold text-foreground">Audit Log History</AppCardTitle>
                 </div>
-                <div>
-                  <h3 className="text-base font-bold text-foreground">
-                    Master Design Matrix: Audit Trail & Mail Dispatch Ledger
-                  </h3>
-                  <p className="text-xs text-muted-foreground">
-                    Immutable revision history of deliverable dates, status modifications & email notices
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsAuditDrawerOpen(false)}
-                className="h-8 w-8 rounded-xl hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer shrink-0"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            {/* Audit Search */}
+              </AppCardHeader>
+              <AppCardContent className="space-y-4">
             <div className="p-4 border-b border-border/60 bg-surface shrink-0">
               <div className="relative">
                 <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -1461,51 +1415,42 @@ export const TenderDesignMatrix: React.FC = () => {
               )}
             </div>
 
-            <div className="p-4 sm:p-5 border-t border-border bg-slate-50/50 dark:bg-slate-900/50 shrink-0 flex items-center justify-end">
-              <button
-                type="button"
-                onClick={() => setIsAuditDrawerOpen(false)}
-                className="px-5 py-2 rounded-xl bg-surface border border-border text-foreground font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-              >
-                Close Audit Ledger
-              </button>
-            </div>
+              </AppCardContent>
+            </AppCard>
           </div>
-        </div>,
-        document.body
+        </WorkingDocumentLayout>
       )}
 
-      {/* ⚡ Batch Update Modal */}
-      {isBatchModalOpen && mounted && createPortal(
-        <div 
-          className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/80 backdrop-blur-xs p-4 animate-in fade-in duration-150"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setIsBatchModalOpen(false);
+      {/* ⚡ Batch Update Transaction Layout */}
+      {isBatchModalOpen && (
+        <TransactionFormLayout
+          title="Batch Status Update"
+          category="Tender & Design Matrix"
+          icon={Zap}
+          iconBg="bg-teal-500/10 text-teal-600 dark:text-teal-400"
+          description="Bulk update package status and mandatory planned/actual milestone dates across multiple wings and towers."
+          breadcrumbs={[
+            { label: "Design Tracking Desk" },
+            { label: "Tender Design Matrix", onClick: () => setIsBatchModalOpen(false) },
+            { label: "Batch Update" }
+          ]}
+          onBack={() => setIsBatchModalOpen(false)}
+          backLabel="Back to Tender Design Matrix"
+          onReset={() => {
+            const today = new Date().toISOString().split("T")[0];
+            setBatchPlannedDate(today);
+            setBatchActualDate(today);
+            setBatchRemarks("");
           }}
+          onSave={handleExecuteBatchUpdate}
+          saveLabel="Apply Batch Update"
         >
-          <div 
-            className="bg-surface border border-border w-full max-w-2xl max-h-[90vh] flex flex-col min-h-0 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="p-5 sm:p-6 border-b border-border bg-slate-50/50 dark:bg-slate-900/50 shrink-0 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center border border-teal-500/20 shrink-0">
-                  <Zap className="h-4 w-4" />
-                </div>
-                <h4 className="text-base font-bold text-foreground">
-                  Batch Status Update
-                </h4>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsBatchModalOpen(false)}
-                className="h-8 w-8 rounded-xl hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer shrink-0"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
+          <div className="max-w-4xl space-y-6">
+            <AppCard>
+              <AppCardHeader>
+                <AppCardTitle className="text-sm font-bold text-foreground">Batch Scope & Status Details</AppCardTitle>
+              </AppCardHeader>
+              <AppCardContent className="space-y-4">
             <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-6 space-y-4 text-xs">
               {/* Project and Discipline Selection (2-Column Grid) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1819,27 +1764,10 @@ export const TenderDesignMatrix: React.FC = () => {
               </div>
             </div>
 
-            {/* Actions */}
-            <div className="p-4 sm:p-5 border-t border-border bg-slate-50/50 dark:bg-slate-900/50 shrink-0 flex items-center justify-end gap-2.5">
-              <button
-                type="button"
-                onClick={() => setIsBatchModalOpen(false)}
-                className="px-4 py-2 rounded-xl border border-border bg-surface text-foreground text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleExecuteBatchUpdate}
-                className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold shadow-xs transition-all cursor-pointer active:scale-95 flex items-center gap-1.5"
-              >
-                <Zap className="h-3.5 w-3.5" />
-                <span>Apply Batch Update</span>
-              </button>
-            </div>
+              </AppCardContent>
+            </AppCard>
           </div>
-        </div>,
-        document.body
+        </TransactionFormLayout>
       )}
     </div>
   );

@@ -28,6 +28,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { DeleteDependencyModal } from "../DeleteDependencyModal";
+import { TransactionFormLayout } from "../DesignTransactionLayout";
 
 interface ProjectMasterViewProps {
   onSelectProject?: (project: ProjectMaster) => void;
@@ -339,7 +340,9 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
   }, [availableCategoriesList, categorySearch]);
 
   return (
-    <div className="space-y-4 animate-in fade-in duration-150">
+    <div className="w-full space-y-4 animate-in fade-in duration-150">
+      {!isModalOpen && (
+        <div className="space-y-4">
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
@@ -661,66 +664,51 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
         </div>
       )}
 
-      {/* Add / Edit Project Modal (Rendered via React Portal) */}
-      {isModalOpen && mounted && createPortal(
-        <div 
-          className="fixed inset-0 z-[99999] bg-black/80 flex items-center justify-center p-2 sm:p-4 md:p-6 animate-in fade-in duration-150"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setIsModalOpen(false);
-          }}
-        >
-          <div 
-            className="relative w-full max-w-5xl xl:max-w-6xl max-h-[92vh] flex flex-col min-h-0 rounded-3xl bg-surface border border-border shadow-2xl p-6 sm:p-8 space-y-5 my-6 animate-in zoom-in-95 duration-150"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-border">
-              <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20 shrink-0">
-                  <Building2 className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-base sm:text-lg font-bold text-foreground">
-                    {editingProject ? "Edit Project Master" : "Create New Project Master"}
-                  </h3>
-                  <p className="text-xs text-muted-foreground">
-                    Configure specifications, map consultant partners, and define discipline scopes
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="h-8 w-8 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-muted-foreground flex items-center justify-center cursor-pointer transition-colors"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
+        </div>
+      )}
 
+      {/* Add / Edit Project Transaction Form Layout (Attached directly to sidebar) */}
+      {isModalOpen && (
+        <TransactionFormLayout
+          title={editingProject ? `Edit Project: ${projectName || editingProject.name}` : "Create New Project Master"}
+          icon={Building2}
+          description="Configure specifications, map consultant partners, and define discipline scopes"
+          onBack={() => setIsModalOpen(false)}
+          backLabel="Back to Projects"
+          breadcrumbs={[
+            { label: "Design Masters", onClick: () => setIsModalOpen(false) },
+            { label: "Project Master", onClick: () => setIsModalOpen(false) },
+            { label: editingProject ? (projectName || editingProject.name) : "Create Project" }
+          ]}
+          onSave={handleSubmit}
+          saveLabel={editingProject ? "Save Project" : "Create Project"}
+          onReset={editingProject ? () => handleOpenEdit(editingProject) : handleOpenAdd}
+        >
+          <div className="space-y-6">
             {/* Sub Tabs Inside Form */}
-            <div className="flex items-center gap-2 border-b border-border pb-2">
+            <div className="flex items-center gap-2 border-b border-border pb-3">
               <button
                 type="button"
                 onClick={() => setFormTab("SPECS")}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                   formTab === "SPECS"
                     ? "bg-emerald-600 text-white shadow-xs"
                     : "text-muted-foreground hover:text-foreground bg-muted/40"
                 }`}
               >
-                <Building2 className="h-3.5 w-3.5" />
+                <Building2 className="h-4 w-4" />
                 <span>1. Project Specs</span>
               </button>
               <button
                 type="button"
                 onClick={() => setFormTab("CONSULTANTS_CATEGORIES")}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                   formTab === "CONSULTANTS_CATEGORIES"
                     ? "bg-emerald-600 text-white shadow-xs"
                     : "text-muted-foreground hover:text-foreground bg-muted/40"
                 }`}
               >
-                <Users className="h-3.5 w-3.5" />
+                <Users className="h-4 w-4" />
                 <span>2. Map Consultants & Categories ({selectedConsultants.length} Cons / {selectedCategories.length} Cats)</span>
               </button>
             </div>
@@ -732,7 +720,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-6">
               {formTab === "SPECS" && (
                 <div className="space-y-4">
                   {/* Project Name & Code */}
@@ -1120,9 +1108,9 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                 </div>
               )}
 
-              {/* Modal Action Buttons */}
-              <div className="pt-3 border-t border-border flex items-center justify-between gap-2">
-                <div className="text-[11px] text-muted-foreground">
+              {/* Bottom Form Action Buttons */}
+              <div className="pt-4 border-t border-border flex items-center justify-between gap-3">
+                <div className="text-xs text-muted-foreground">
                   {formTab === "SPECS" ? (
                     <button
                       type="button"
@@ -1142,17 +1130,17 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                   )}
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="px-3.5 py-1.5 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-foreground cursor-pointer"
+                    className="px-4 py-2 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-foreground cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md cursor-pointer transition-all"
+                    className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md cursor-pointer transition-all"
                   >
                     {editingProject ? "Save Changes" : "Create Project"}
                   </button>
@@ -1160,8 +1148,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
               </div>
             </form>
           </div>
-        </div>,
-        document.body
+        </TransactionFormLayout>
       )}
 
       {/* Delete Dependency Safety Modal */}

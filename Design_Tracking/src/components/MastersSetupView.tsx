@@ -39,6 +39,9 @@ import { ConsultantMasterView } from "./masters/ConsultantMasterView";
 import { CategoryMasterView } from "./masters/CategoryMasterView";
 import { DesignRbacGovernance } from "./DesignRbacGovernance";
 import { DeleteDependencyModal } from "./DeleteDependencyModal";
+import { TransactionFormLayout } from "./DesignTransactionLayout";
+import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
+import { AppButton } from "@/components/ui/AppButton";
 
 export type MasterSubTab = 
   | "PROJECTS" 
@@ -203,7 +206,9 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
 
   return (
     <div className="space-y-5 animate-in fade-in duration-150">
-      {/* Sub-tab 1: Project Master (Parent Projects) */}
+      {!isNewPackageModalOpen && !(isEditPackageModalOpen && editingPackage) && !isNewAuthorityModalOpen && (
+        <>
+          {/* Sub-tab 1: Project Master (Parent Projects) */}
       {activeSubTab === "PROJECTS" && (
         <ProjectMasterView 
           onNavigateToSubProjects={() => setActiveSubTab("SUB_PROJECTS")}
@@ -461,210 +466,221 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
         </div>
       )}
 
-      {/* Modal: New Package */}
-      {isNewPackageModalOpen && mounted && createPortal(
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 sm:p-6 animate-in fade-in duration-150">
-          <div className="bg-surface border border-border w-full max-w-xl sm:max-w-2xl max-h-[90vh] flex flex-col min-h-0 rounded-3xl shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between p-5 border-b border-border bg-slate-50/50 dark:bg-slate-900/50 shrink-0">
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center">
-                  <Layers className="h-4 w-4" />
-                </div>
-                <h4 className="text-base font-bold text-foreground">Create New Work Package</h4>
-              </div>
-              <button type="button" onClick={() => setIsNewPackageModalOpen(false)} className="h-7 w-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-muted-foreground flex items-center justify-center cursor-pointer">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleCreatePackage} className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4 text-xs">
-              <div className="space-y-1">
-                <label className="font-bold text-foreground">Package Name / Title <span className="text-rose-500">*</span></label>
-                <input
-                  type="text"
-                  required
-                  value={newPackageName}
-                  onChange={e => setNewPackageName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-teal-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="font-bold text-foreground">Discipline Category <span className="text-rose-500">*</span></label>
-                  <select
-                    value={newPackageDiscipline}
-                    onChange={e => setNewPackageDiscipline(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-teal-500 cursor-pointer"
-                  >
-                    {categories.map(cat => (
-                      <option key={cat.id} value={cat.name}>{cat.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="font-bold text-foreground">Package Code</label>
-                  <input
-                    type="text"
-                    value={newPackageCode}
-                    onChange={e => setNewPackageCode(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-teal-500"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-bold text-foreground">Scope / Description</label>
-                <textarea
-                  rows={2}
-                  value={newPackageDescription}
-                  onChange={e => setNewPackageDescription(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-teal-500"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-4 border-t border-border shrink-0">
-                <button type="button" onClick={() => setIsNewPackageModalOpen(false)} className="px-4 py-2 rounded-xl border border-border bg-background text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer font-semibold">
-                  Cancel
-                </button>
-                <button type="submit" className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold cursor-pointer transition-all shadow-md">
-                  Create Package
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>,
-        document.body
+        </>
       )}
 
-      {/* Modal: Edit Package */}
-      {isEditPackageModalOpen && editingPackage && mounted && createPortal(
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 sm:p-6 animate-in fade-in duration-150">
-          <div className="bg-surface border border-border w-full max-w-xl sm:max-w-2xl max-h-[90vh] flex flex-col min-h-0 rounded-3xl shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between p-5 border-b border-border bg-slate-50/50 dark:bg-slate-900/50 shrink-0">
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center">
-                  <Layers className="h-4 w-4" />
-                </div>
-                <h4 className="text-base font-bold text-foreground">Edit Work Package</h4>
-              </div>
-              <button type="button" onClick={() => setIsEditPackageModalOpen(false)} className="h-7 w-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-muted-foreground flex items-center justify-center cursor-pointer">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleUpdatePackage} className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4 text-xs">
-              <div className="space-y-1">
-                <label className="font-bold text-foreground">Package Name / Title <span className="text-rose-500">*</span></label>
-                <input
-                  type="text"
-                  required
-                  value={newPackageName}
-                  onChange={e => setNewPackageName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-teal-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="font-bold text-foreground">Discipline Category <span className="text-rose-500">*</span></label>
-                  <select
-                    value={newPackageDiscipline}
-                    onChange={e => setNewPackageDiscipline(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-teal-500 cursor-pointer"
-                  >
-                    {categories.map(cat => (
-                      <option key={cat.id} value={cat.name}>{cat.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="font-bold text-foreground">Package Code</label>
+      {/* Create New Work Package Transaction Layout */}
+      {isNewPackageModalOpen && (
+        <TransactionFormLayout
+          title="Create New Work Package"
+          category="Standard Work Packages Directory"
+          icon={Layers}
+          iconBg="bg-teal-500/10 text-teal-600 dark:text-teal-400"
+          description="Register standardized engineering work package for drawing schedules, tender matrices, and consultant scopes."
+          breadcrumbs={[
+            { label: "Design Desk" },
+            { label: "Masters Setup", onClick: () => setIsNewPackageModalOpen(false) },
+            { label: "New Work Package" }
+          ]}
+          onBack={() => setIsNewPackageModalOpen(false)}
+          backLabel="Back to Masters Setup"
+          onReset={() => {
+            setNewPackageName("");
+            setNewPackageCode("");
+            setNewPackageDescription("");
+          }}
+          onSave={handleCreatePackage}
+          saveLabel="Create Work Package"
+        >
+          <div className="max-w-3xl space-y-6">
+            <AppCard>
+              <AppCardHeader>
+                <AppCardTitle className="text-sm font-bold text-foreground">Package Specifications</AppCardTitle>
+              </AppCardHeader>
+              <AppCardContent className="space-y-4 text-xs">
+                <div className="space-y-1.5">
+                  <label className="font-bold text-foreground block">Package Name / Title <span className="text-rose-500">*</span></label>
                   <input
                     type="text"
-                    value={newPackageCode}
-                    onChange={e => setNewPackageCode(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-teal-500"
+                    required
+                    placeholder="e.g., Structural Foundation & Superstructure"
+                    value={newPackageName}
+                    onChange={e => setNewPackageName(e.target.value)}
+                    className="w-full h-10 px-3 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-teal-500 font-semibold"
                   />
                 </div>
-              </div>
 
-              <div className="space-y-1">
-                <label className="font-bold text-foreground">Scope / Description</label>
-                <textarea
-                  rows={2}
-                  value={newPackageDescription}
-                  onChange={e => setNewPackageDescription(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-teal-500"
-                />
-              </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="font-bold text-foreground block">Discipline Category <span className="text-rose-500">*</span></label>
+                    <select
+                      value={newPackageDiscipline}
+                      onChange={e => setNewPackageDiscipline(e.target.value)}
+                      className="w-full h-10 px-3 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-teal-500 cursor-pointer"
+                    >
+                      {categories.map(cat => (
+                        <option key={cat.id} value={cat.name}>{cat.name}</option>
+                      ))}
+                    </select>
+                  </div>
 
-              <div className="flex items-center justify-end gap-2 pt-4 border-t border-border shrink-0">
-                <button type="button" onClick={() => setIsEditPackageModalOpen(false)} className="px-4 py-2 rounded-xl border border-border bg-background text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer font-semibold">
-                  Cancel
-                </button>
-                <button type="submit" className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold cursor-pointer transition-all shadow-md">
-                  Update Package
-                </button>
-              </div>
-            </form>
+                  <div className="space-y-1.5">
+                    <label className="font-bold text-foreground block">Package Code</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. STR-001"
+                      value={newPackageCode}
+                      onChange={e => setNewPackageCode(e.target.value)}
+                      className="w-full h-10 px-3 rounded-xl border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-teal-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-bold text-foreground block">Scope / Description</label>
+                  <textarea
+                    rows={3}
+                    placeholder="Detailed deliverable scope, technical specifications, and milestones..."
+                    value={newPackageDescription}
+                    onChange={e => setNewPackageDescription(e.target.value)}
+                    className="w-full p-3 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-teal-500"
+                  />
+                </div>
+              </AppCardContent>
+            </AppCard>
           </div>
-        </div>,
-        document.body
+        </TransactionFormLayout>
       )}
 
-      {/* Modal: New Authority */}
-      {isNewAuthorityModalOpen && mounted && createPortal(
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 sm:p-6 animate-in fade-in duration-150">
-          <div className="bg-surface border border-border w-full max-w-xl sm:max-w-2xl max-h-[90vh] flex flex-col min-h-0 rounded-3xl shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between p-5 border-b border-border bg-slate-50/50 dark:bg-slate-900/50 shrink-0">
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
-                  <ShieldCheck className="h-4 w-4" />
+      {/* Edit Work Package Transaction Layout */}
+      {isEditPackageModalOpen && editingPackage && (
+        <TransactionFormLayout
+          title={`Edit Work Package: ${editingPackage.packageName}`}
+          category="Standard Work Packages Directory"
+          icon={Layers}
+          iconBg="bg-teal-500/10 text-teal-600 dark:text-teal-400"
+          description="Update engineering scope, code identifier, or discipline categorization."
+          breadcrumbs={[
+            { label: "Design Desk" },
+            { label: "Masters Setup", onClick: () => setIsEditPackageModalOpen(false) },
+            { label: editingPackage.packageName }
+          ]}
+          onBack={() => setIsEditPackageModalOpen(false)}
+          backLabel="Back to Masters Setup"
+          onSave={handleUpdatePackage}
+          saveLabel="Update Work Package"
+        >
+          <div className="max-w-3xl space-y-6">
+            <AppCard>
+              <AppCardHeader>
+                <AppCardTitle className="text-sm font-bold text-foreground">Package Specifications</AppCardTitle>
+              </AppCardHeader>
+              <AppCardContent className="space-y-4 text-xs">
+                <div className="space-y-1.5">
+                  <label className="font-bold text-foreground block">Package Name / Title <span className="text-rose-500">*</span></label>
+                  <input
+                    type="text"
+                    required
+                    value={newPackageName}
+                    onChange={e => setNewPackageName(e.target.value)}
+                    className="w-full h-10 px-3 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-teal-500 font-semibold"
+                  />
                 </div>
-                <h4 className="text-base font-bold text-foreground">Add Statutory Authority</h4>
-              </div>
-              <button type="button" onClick={() => setIsNewAuthorityModalOpen(false)} className="h-7 w-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-muted-foreground flex items-center justify-center cursor-pointer">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
 
-            <form onSubmit={handleCreateAuthority} className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4 text-xs">
-              <div className="space-y-1">
-                <label className="font-bold text-foreground">Authority / Body Name <span className="text-rose-500">*</span></label>
-                <input
-                  type="text"
-                  required
-                  value={newAuthorityName}
-                  onChange={e => setNewAuthorityName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
-                />
-              </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="font-bold text-foreground block">Discipline Category <span className="text-rose-500">*</span></label>
+                    <select
+                      value={newPackageDiscipline}
+                      onChange={e => setNewPackageDiscipline(e.target.value)}
+                      className="w-full h-10 px-3 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-hidden focus:ring-1 focus:ring-teal-500 cursor-pointer"
+                    >
+                      {categories.map(cat => (
+                        <option key={cat.id} value={cat.name}>{cat.name}</option>
+                      ))}
+                    </select>
+                  </div>
 
-              <div className="space-y-1">
-                <label className="font-bold text-foreground">Scope / Category Description</label>
-                <input
-                  type="text"
-                  value={newAuthorityScope}
-                  onChange={e => setNewAuthorityScope(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
-                />
-              </div>
+                  <div className="space-y-1.5">
+                    <label className="font-bold text-foreground block">Package Code</label>
+                    <input
+                      type="text"
+                      value={newPackageCode}
+                      onChange={e => setNewPackageCode(e.target.value)}
+                      className="w-full h-10 px-3 rounded-xl border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-teal-500"
+                    />
+                  </div>
+                </div>
 
-              <div className="flex items-center justify-end gap-2 pt-4 border-t border-border shrink-0">
-                <button type="button" onClick={() => setIsNewAuthorityModalOpen(false)} className="px-4 py-2 rounded-xl border border-border bg-background text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer font-semibold">
-                  Cancel
-                </button>
-                <button type="submit" className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold cursor-pointer transition-all shadow-md">
-                  Add Authority
-                </button>
-              </div>
-            </form>
+                <div className="space-y-1.5">
+                  <label className="font-bold text-foreground block">Scope / Description</label>
+                  <textarea
+                    rows={3}
+                    value={newPackageDescription}
+                    onChange={e => setNewPackageDescription(e.target.value)}
+                    className="w-full p-3 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-teal-500"
+                  />
+                </div>
+              </AppCardContent>
+            </AppCard>
           </div>
-        </div>,
-        document.body
+        </TransactionFormLayout>
+      )}
+
+      {/* Add Statutory Authority Transaction Layout */}
+      {isNewAuthorityModalOpen && (
+        <TransactionFormLayout
+          title="Add Statutory Authority"
+          category="Statutory Authority Directory"
+          icon={ShieldCheck}
+          iconBg="bg-purple-500/10 text-purple-600 dark:text-purple-400"
+          description="Register civic, municipal, or regulatory authority for compliance and NOC tracking."
+          breadcrumbs={[
+            { label: "Design Desk" },
+            { label: "Masters Setup", onClick: () => setIsNewAuthorityModalOpen(false) },
+            { label: "New Authority" }
+          ]}
+          onBack={() => setIsNewAuthorityModalOpen(false)}
+          backLabel="Back to Masters Setup"
+          onReset={() => {
+            setNewAuthorityName("");
+            setNewAuthorityScope("");
+          }}
+          onSave={handleCreateAuthority}
+          saveLabel="Save Statutory Authority"
+        >
+          <div className="max-w-3xl space-y-6">
+            <AppCard>
+              <AppCardHeader>
+                <AppCardTitle className="text-sm font-bold text-foreground">Authority Scope Details</AppCardTitle>
+              </AppCardHeader>
+              <AppCardContent className="space-y-4 text-xs">
+                <div className="space-y-1.5">
+                  <label className="font-bold text-foreground block">Authority / Regulatory Body Name <span className="text-rose-500">*</span></label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Chief Fire Officer (CFO) / Tree Authority / MahaRERA"
+                    value={newAuthorityName}
+                    onChange={e => setNewAuthorityName(e.target.value)}
+                    className="w-full h-10 px-3 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500 font-semibold"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="font-bold text-foreground block">Scope / Category Description</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Fire Fighting & Life Safety NOC / Environmental Clearance"
+                    value={newAuthorityScope}
+                    onChange={e => setNewAuthorityScope(e.target.value)}
+                    className="w-full h-10 px-3 rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
+                  />
+                </div>
+              </AppCardContent>
+            </AppCard>
+          </div>
+        </TransactionFormLayout>
       )}
 
       {/* Foreign Key Dependency Guard Deletion Modal */}

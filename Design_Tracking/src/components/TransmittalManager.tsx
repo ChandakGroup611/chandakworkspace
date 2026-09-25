@@ -25,6 +25,8 @@ import {
 import { DesignMasterStore } from "../services/designMasterStore";
 import { TransmittalItem, TransmittalPurpose } from "../types";
 import { DesignMultiSelectDropdown } from "./DesignMultiSelectDropdown";
+import { TransactionFormLayout, WorkingDocumentLayout } from "./DesignTransactionLayout";
+import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
 
 export function TransmittalManager() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -185,8 +187,10 @@ export function TransmittalManager() {
 
   return (
     <div className="space-y-6">
-      {/* Header Banner */}
-      <div className="p-5 rounded-2xl bg-card border border-border flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+      {!isCreateModalOpen && !isPrintSlipOpen && (
+        <>
+          {/* Header Banner */}
+          <div className="p-5 rounded-2xl bg-card border border-border flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
             <Send className="h-5 w-5" />
@@ -507,262 +511,278 @@ export function TransmittalManager() {
           </table>
         </div>
       </div>
+      </>
+      )}
 
-      {/* CREATE TRANSMITTAL MODAL */}
+      {/* CREATE TRANSMITTAL TRANSACTION CANVAS */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-surface text-foreground border border-border w-full max-w-2xl rounded-2xl shadow-2xl p-6 relative max-h-[90vh] overflow-y-auto custom-scrollbar">
-            <div className="flex items-center justify-between pb-3 border-b border-border mb-4">
-              <div>
-                <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
-                  <Send className="h-4 w-4 text-blue-500" />
-                  <span>Generate Document Transmittal Note</span>
-                </h3>
-                <p className="text-xs text-muted">
-                  Create formal construction issue record with attached drawings schedule
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsCreateModalOpen(false)}
-                className="h-7 w-7 rounded-lg hover:bg-muted/20 flex items-center justify-center text-muted hover:text-foreground transition-colors"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
+        <TransactionFormLayout
+          title="Generate Document Transmittal Note"
+          badge="Formal Issuance Record"
+          category="Transmittal Control"
+          icon={Send}
+          iconBg="bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/25"
+          description="Create formal construction issue record with attached drawings schedule and recipient verification."
+          breadcrumbs={[
+            { label: "Transmittal Manager", onClick: () => setIsCreateModalOpen(false) },
+            { label: "Generate Transmittal Note" }
+          ]}
+          onBack={() => setIsCreateModalOpen(false)}
+          backLabel="Back to Transmittals"
+          onReset={() => {
+            setTowerName("");
+            setPurpose("GOOD_FOR_CONSTRUCTION");
+            setRecipientAgency("");
+            setRecipientContact("");
+            setSelectedDrawingIds([]);
+            setCopiesPerDrawing(2);
+            setRemarks("");
+            setFormError("");
+          }}
+          onSave={handleCreateTransmittal}
+          saveLabel="Generate & Dispatch"
+          saveIcon={Send}
+        >
+          <div className="space-y-6 max-w-4xl">
             {formError && (
-              <div className="p-3 mb-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center gap-2">
+              <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 <span>{formError}</span>
               </div>
             )}
 
-            <form onSubmit={handleCreateTransmittal} className="space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="block font-bold text-foreground">Target Project *</label>
-                  <select
-                    value={projectId}
-                    onChange={e => setProjectId(e.target.value)}
-                    aria-label="Target Project"
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
-                  >
-                    <option value="">Select Project</option>
-                    {projects.map(p => (
-                      <option key={p.id} value={p.id}>{p.name} ({p.code})</option>
-                    ))}
-                  </select>
+            <AppCard className="border-border shadow-xs">
+              <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
+                <AppCardTitle className="text-sm font-bold flex items-center gap-2">
+                  <Building2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <span>Project & Purpose Configuration</span>
+                </AppCardTitle>
+              </AppCardHeader>
+              <AppCardContent className="p-5 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-foreground">Target Project *</label>
+                    <select
+                      value={projectId}
+                      onChange={e => setProjectId(e.target.value)}
+                      aria-label="Target Project"
+                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+                    >
+                      <option value="">Select Project</option>
+                      {projects.map(p => (
+                        <option key={p.id} value={p.id}>{p.name} ({p.code})</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-foreground">Tower / Zone / Sector</label>
+                    <input
+                      type="text"
+                      value={towerName}
+                      onChange={e => setTowerName(e.target.value)}
+                      placeholder="e.g. Tower A / Podium / Commercial Wing"
+                      aria-label="Tower, Zone, or Sector"
+                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="block font-bold text-foreground">Tower / Zone / Sector</label>
-                  <input
-                    type="text"
-                    value={towerName}
-                    onChange={e => setTowerName(e.target.value)}
-                    aria-label="Tower, Zone, or Sector"
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-foreground">Purpose of Issue *</label>
+                    <select
+                      value={purpose}
+                      onChange={e => setPurpose(e.target.value as TransmittalPurpose)}
+                      aria-label="Purpose of Issue"
+                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+                    >
+                      <option value="GOOD_FOR_CONSTRUCTION">Good For Construction (GFC)</option>
+                      <option value="FOR_TENDER_BIDDING">For Tender / Pricing</option>
+                      <option value="FOR_REVIEW_APPROVAL">For Review & Approval</option>
+                      <option value="FOR_INFORMATION">For Information Only</option>
+                      <option value="AS_BUILT_RECORD">As-Built Record</option>
+                    </select>
+                  </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="block font-bold text-foreground">Purpose of Issue *</label>
-                  <select
-                    value={purpose}
-                    onChange={e => setPurpose(e.target.value as TransmittalPurpose)}
-                    aria-label="Purpose of Issue"
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
-                  >
-                    <option value="GOOD_FOR_CONSTRUCTION">Good For Construction (GFC)</option>
-                    <option value="FOR_TENDER_BIDDING">For Tender / Pricing</option>
-                    <option value="FOR_REVIEW_APPROVAL">For Review & Approval</option>
-                    <option value="FOR_INFORMATION">For Information Only</option>
-                    <option value="AS_BUILT_RECORD">As-Built Record</option>
-                  </select>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-foreground">Issued By / Designation</label>
+                    <input
+                      type="text"
+                      value={issuedBy}
+                      onChange={e => setIssuedBy(e.target.value)}
+                      aria-label="Issued By or Designation"
+                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+              </AppCardContent>
+            </AppCard>
+
+            <AppCard className="border-border shadow-xs">
+              <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
+                <AppCardTitle className="text-sm font-bold flex items-center gap-2">
+                  <UserCheck className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <span>Recipient & Contractor Details</span>
+                </AppCardTitle>
+              </AppCardHeader>
+              <AppCardContent className="p-5 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-foreground">Recipient Agency / Contractor *</label>
+                    <input
+                      type="text"
+                      required
+                      value={recipientAgency}
+                      onChange={e => setRecipientAgency(e.target.value)}
+                      placeholder="e.g. L&T Construction / Shapoorji Pallonji"
+                      aria-label="Recipient Agency or Contractor"
+                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-foreground">Recipient Contact Person</label>
+                    <input
+                      type="text"
+                      value={recipientContact}
+                      onChange={e => setRecipientContact(e.target.value)}
+                      placeholder="e.g. Mr. Rajesh Sharma (Project Director)"
+                      aria-label="Recipient Contact Person"
+                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="block font-bold text-foreground">Issued By / Designation</label>
-                  <input
-                    type="text"
-                    value={issuedBy}
-                    onChange={e => setIssuedBy(e.target.value)}
-                    aria-label="Issued By or Designation"
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="block font-bold text-foreground">Recipient Agency / Contractor *</label>
-                  <input
-                    type="text"
-                    required
-                    value={recipientAgency}
-                    onChange={e => setRecipientAgency(e.target.value)}
-                    aria-label="Recipient Agency or Contractor"
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block font-bold text-foreground">Recipient Contact Person</label>
-                  <input
-                    type="text"
-                    value={recipientContact}
-                    onChange={e => setRecipientContact(e.target.value)}
-                    aria-label="Recipient Contact Person"
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-
-              {/* Drawing Selection Checklist */}
-              <div className="space-y-1">
-                <label className="block font-bold text-foreground">
-                  Select Drawings to Include ({selectedDrawingIds.length} selected) *
-                </label>
-                <div className="p-3 rounded-xl border border-border bg-background max-h-48 overflow-y-auto custom-scrollbar space-y-2">
-                  {drawings.length === 0 ? (
-                    <div className="p-4 text-center text-muted text-xs">
-                      No drawings uploaded yet in Drawing Register.
-                    </div>
-                  ) : (
-                    drawings.map(d => {
-                      const isChecked = selectedDrawingIds.includes(d.id);
-                      return (
-                        <label
-                          key={d.id}
-                          className={`flex items-start gap-2.5 p-2 rounded-lg border text-xs cursor-pointer transition-colors ${
-                            isChecked 
-                              ? "bg-blue-500/10 border-blue-500/40 text-foreground" 
-                              : "bg-surface border-border text-muted hover:text-foreground"
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={e => {
-                              if (e.target.checked) {
-                                setSelectedDrawingIds([...selectedDrawingIds, d.id]);
-                              } else {
-                                setSelectedDrawingIds(selectedDrawingIds.filter(id => id !== d.id));
-                              }
-                            }}
-                            className="mt-0.5 rounded border-border text-blue-600 focus:ring-blue-500"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <div className="font-mono font-bold text-foreground flex items-center gap-2">
-                              <span>{d.code}</span>
-                              <span className="px-1.5 py-0.2 rounded bg-muted/20 text-[10px]">{d.revision}</span>
-                              <span className="text-[10px] text-muted">({d.discipline})</span>
+                {/* Drawing Selection Checklist */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-foreground flex items-center justify-between">
+                    <span>Select Drawings to Include ({selectedDrawingIds.length} selected) *</span>
+                    <span className="text-[11px] text-muted-foreground">Select one or more drawing revisions</span>
+                  </label>
+                  <div className="p-3 rounded-2xl border border-border bg-background max-h-56 overflow-y-auto custom-scrollbar space-y-2">
+                    {drawings.length === 0 ? (
+                      <div className="p-6 text-center text-muted-foreground text-xs">
+                        No drawings uploaded yet in Drawing Register.
+                      </div>
+                    ) : (
+                      drawings.map(d => {
+                        const isChecked = selectedDrawingIds.includes(d.id);
+                        return (
+                          <label
+                            key={d.id}
+                            className={`flex items-start gap-3 p-3 rounded-xl border text-xs cursor-pointer transition-colors ${
+                              isChecked 
+                                ? "bg-blue-500/10 border-blue-500/40 text-foreground" 
+                                : "bg-surface border-border text-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={e => {
+                                if (e.target.checked) {
+                                  setSelectedDrawingIds([...selectedDrawingIds, d.id]);
+                                } else {
+                                  setSelectedDrawingIds(selectedDrawingIds.filter(id => id !== d.id));
+                                }
+                              }}
+                              className="mt-0.5 rounded border-border text-blue-600 focus:ring-blue-500"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="font-mono font-bold text-foreground flex items-center gap-2">
+                                <span>{d.code}</span>
+                                <span className="px-2 py-0.5 rounded-md bg-muted text-[10px] border border-border">{d.revision}</span>
+                                <span className="text-[10px] text-muted-foreground">({d.discipline})</span>
+                              </div>
+                              <div className="truncate text-muted-foreground text-xs mt-0.5">{d.title}</div>
                             </div>
-                            <div className="truncate text-muted text-[11px]">{d.title}</div>
-                          </div>
-                        </label>
-                      );
-                    })
-                  )}
+                          </label>
+                        );
+                      })
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              <div className="space-y-1">
-                <label className="block font-bold text-foreground">Copies per Drawing</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="20"
-                  value={copiesPerDrawing}
-                  onChange={e => setCopiesPerDrawing(parseInt(e.target.value) || 1)}
-                  aria-label="Copies per Drawing"
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-foreground">Copies per Drawing</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="20"
+                      value={copiesPerDrawing}
+                      onChange={e => setCopiesPerDrawing(parseInt(e.target.value) || 1)}
+                      aria-label="Copies per Drawing"
+                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
 
-              <div className="space-y-1">
-                <label className="block font-bold text-foreground">Transmittal Remarks / Instructions</label>
-                <textarea
-                  rows={2}
-                  value={remarks}
-                  onChange={e => setRemarks(e.target.value)}
-                  aria-label="Transmittal remarks or instructions"
-                  className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
-                <button
-                  type="button"
-                  onClick={() => setIsCreateModalOpen(false)}
-                  className="h-9 px-4 rounded-xl border border-border bg-surface hover:bg-muted/20 text-foreground text-xs font-bold transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="h-9 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors shadow-sm cursor-pointer"
-                >
-                  Generate & Dispatch
-                </button>
-              </div>
-            </form>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-foreground">Transmittal Remarks / Instructions</label>
+                    <input
+                      type="text"
+                      value={remarks}
+                      onChange={e => setRemarks(e.target.value)}
+                      placeholder="e.g. For immediate structural column bar bending schedule execution"
+                      aria-label="Transmittal remarks or instructions"
+                      className="w-full h-10 px-3 text-xs rounded-xl border border-border bg-background text-foreground font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+              </AppCardContent>
+            </AppCard>
           </div>
-        </div>
+        </TransactionFormLayout>
       )}
 
-      {/* OFFICIAL PRINTABLE TRANSMITTAL SLIP MODAL */}
+      {/* OFFICIAL PRINTABLE TRANSMITTAL SLIP WORKING DOCUMENT */}
       {isPrintSlipOpen && selectedTransmittal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white text-slate-900 border border-slate-300 w-full max-w-3xl rounded-2xl shadow-2xl p-8 relative max-h-[95vh] overflow-y-auto custom-scrollbar">
-            {/* Action Bar */}
-            <div className="flex items-center justify-between pb-4 border-b border-slate-200 mb-6 print:hidden">
-              <div className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-emerald-600" />
-                <span>Verified Legal Issuance Document</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => window.print()}
-                  className="h-8 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer shadow"
-                >
-                  <Printer className="h-3.5 w-3.5" />
-                  <span>Print Document</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsPrintSlipOpen(false)}
-                  className="h-8 w-8 rounded-xl hover:bg-slate-100 text-slate-500 flex items-center justify-center cursor-pointer"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-
+        <WorkingDocumentLayout
+          title={`Transmittal Slip: ${selectedTransmittal.transmittalNumber}`}
+          badge="Verified Legal Issuance Document"
+          category="Transmittal Control"
+          icon={Printer}
+          iconBg="bg-slate-900 text-white border-slate-700"
+          description="Formal construction issue record with attached drawings schedule, digital QR checksum & recipient sign-off."
+          breadcrumbs={[
+            { label: "Transmittal Manager", onClick: () => setIsPrintSlipOpen(false) },
+            { label: `Slip #${selectedTransmittal.transmittalNumber}` }
+          ]}
+          onBack={() => setIsPrintSlipOpen(false)}
+          backLabel="Back to Transmittals"
+          headerActions={
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="h-9 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm"
+            >
+              <Printer className="h-3.5 w-3.5" />
+              <span>Print Transmittal Slip</span>
+            </button>
+          }
+        >
+          <div className="bg-white text-slate-900 border border-slate-300 rounded-3xl p-8 shadow-sm max-w-4xl mx-auto space-y-6">
             {/* Document Header */}
             <div className="border-b-2 border-slate-900 pb-4 mb-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <h1 className="text-lg font-black tracking-tight text-slate-900 uppercase">
+                  <h1 className="text-xl font-black tracking-tight text-slate-900 uppercase">
                     CHANDAK GROUP
                   </h1>
-                  <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                  <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">
                     Design & Project Delivery Division • Corporate Office Mumbai
                   </p>
-                  <p className="text-[10px] text-slate-500">
+                  <p className="text-[11px] text-slate-500">
                     Official Drawing Document Transmittal & Handover Record
                   </p>
                 </div>
 
                 <div className="text-right">
-                  <div className="inline-block p-1.5 border border-slate-300 rounded-lg bg-slate-50">
+                  <div className="inline-block p-2 border border-slate-300 rounded-xl bg-slate-50">
                     <QrCode className="h-10 w-10 text-slate-800" />
                   </div>
-                  <div className="text-[9px] font-mono font-bold text-slate-500 mt-1">
+                  <div className="text-[10px] font-mono font-bold text-slate-500 mt-1">
                     {selectedTransmittal.transmittalNumber}
                   </div>
                 </div>
@@ -770,7 +790,7 @@ export function TransmittalManager() {
             </div>
 
             {/* Metadata Grid */}
-            <div className="grid grid-cols-2 gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs mb-6">
+            <div className="grid grid-cols-2 gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs mb-6">
               <div>
                 <span className="text-[10px] font-bold text-slate-500 uppercase block">Project Name:</span>
                 <span className="font-bold text-slate-900 text-sm">{selectedTransmittal.projectName}</span>
@@ -795,7 +815,7 @@ export function TransmittalManager() {
 
               <div>
                 <span className="text-[10px] font-bold text-slate-500 uppercase block">Purpose of Release:</span>
-                <span className="inline-block px-2 py-0.5 mt-0.5 rounded text-[10px] font-bold bg-slate-900 text-white uppercase tracking-wider">
+                <span className="inline-block px-2.5 py-0.5 mt-0.5 rounded text-[10px] font-bold bg-slate-900 text-white uppercase tracking-wider">
                   {selectedTransmittal.purpose.replace(/_/g, " ")}
                 </span>
                 <span className="text-[11px] text-slate-600 block mt-1">Issued By: {selectedTransmittal.issuedBy}</span>
@@ -820,11 +840,11 @@ export function TransmittalManager() {
                 <tbody className="divide-y divide-slate-200">
                   {selectedTransmittal.drawingDetails.map((item, idx) => (
                     <tr key={idx} className="hover:bg-slate-50">
-                      <td className="p-2 border-r border-slate-300 text-center font-mono text-[10px]">{idx + 1}</td>
-                      <td className="p-2 border-r border-slate-300 font-mono font-bold text-slate-900">{item.drawingCode}</td>
-                      <td className="p-2 border-r border-slate-300 text-slate-700">{item.drawingTitle}</td>
-                      <td className="p-2 border-r border-slate-300 text-center font-mono font-bold text-blue-600">{item.revision}</td>
-                      <td className="p-2 text-center font-mono font-bold text-slate-900">{item.copiesIssued}</td>
+                      <td className="p-2.5 border-r border-slate-300 text-center font-mono text-[10px]">{idx + 1}</td>
+                      <td className="p-2.5 border-r border-slate-300 font-mono font-bold text-slate-900">{item.drawingCode}</td>
+                      <td className="p-2.5 border-r border-slate-300 text-slate-700">{item.drawingTitle}</td>
+                      <td className="p-2.5 border-r border-slate-300 text-center font-mono font-bold text-blue-600">{item.revision}</td>
+                      <td className="p-2.5 text-center font-mono font-bold text-slate-900">{item.copiesIssued}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -832,7 +852,7 @@ export function TransmittalManager() {
             </div>
 
             {selectedTransmittal.remarks && (
-              <div className="p-3 mb-6 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-900">
+              <div className="p-3.5 mb-6 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900">
                 <span className="font-bold block uppercase text-[10px] mb-0.5">Special Instructions / Remarks:</span>
                 <span>{selectedTransmittal.remarks}</span>
               </div>
@@ -840,13 +860,13 @@ export function TransmittalManager() {
 
             {/* Signature & Seal Block */}
             <div className="grid grid-cols-2 gap-6 pt-6 border-t-2 border-slate-300 text-xs mt-8">
-              <div className="border border-slate-300 rounded-xl p-4 bg-slate-50/50">
+              <div className="border border-slate-300 rounded-2xl p-4 bg-slate-50/50">
                 <div className="text-[10px] font-bold text-slate-500 uppercase mb-8">Issued By (Chandak Design Division):</div>
                 <div className="border-b border-slate-400 pb-1 mb-1 font-bold text-slate-800">{selectedTransmittal.issuedBy}</div>
                 <div className="text-[10px] text-slate-500">Authorized Design Signatory & Date: {selectedTransmittal.issueDate}</div>
               </div>
 
-              <div className="border border-slate-300 rounded-xl p-4 bg-slate-50/50">
+              <div className="border border-slate-300 rounded-2xl p-4 bg-slate-50/50">
                 <div className="text-[10px] font-bold text-slate-500 uppercase mb-8">Received & Acknowledged By:</div>
                 <div className="border-b border-slate-400 pb-1 mb-1 font-bold text-slate-800">
                   {selectedTransmittal.acknowledgedBy || "_______________________________"}
@@ -857,7 +877,7 @@ export function TransmittalManager() {
               </div>
             </div>
           </div>
-        </div>
+        </WorkingDocumentLayout>
       )}
     </div>
   );

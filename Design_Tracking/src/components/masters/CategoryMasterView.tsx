@@ -25,6 +25,7 @@ import {
   Users
 } from "lucide-react";
 import { DeleteDependencyModal } from "../DeleteDependencyModal";
+import { TransactionFormLayout } from "../DesignTransactionLayout";
 
 interface CategoryMasterViewProps {
   onCategorySelect?: (categoryName: string) => void;
@@ -155,7 +156,9 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
   });
 
   return (
-    <div className="space-y-4 animate-in fade-in duration-150">
+    <div className="w-full space-y-4 animate-in fade-in duration-150">
+      {!isModalOpen && (
+        <div className="space-y-4">
       {/* Header Banner & Action */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
@@ -347,45 +350,35 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
         })}
       </div>
 
-      {/* Add / Edit Category Modal (Rendered via React Portal) */}
-      {isModalOpen && mounted && createPortal(
-        <div 
-          className="fixed inset-0 z-[99999] bg-black/80 flex items-center justify-center p-2 sm:p-4 md:p-6 animate-in fade-in duration-150"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setIsModalOpen(false);
-          }}
-        >
-          <div 
-            className="relative w-full max-w-2xl sm:max-w-3xl max-h-[92vh] flex flex-col min-h-0 rounded-3xl bg-surface border border-border shadow-2xl p-6 sm:p-8 space-y-4 animate-in zoom-in-95 duration-150"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-border shrink-0">
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
-                  <Tag className="h-4 w-4" />
-                </div>
-                <h3 className="text-base font-bold text-foreground">
-                  {editingCategory ? "Edit Category Master" : "Create New Category"}
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="h-7 w-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-muted-foreground flex items-center justify-center cursor-pointer"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
+        </div>
+      )}
 
+      {/* Add / Edit Category Transaction Form Layout (Attached directly to sidebar) */}
+      {isModalOpen && (
+        <TransactionFormLayout
+          title={editingCategory ? `Edit Category: ${name || editingCategory.name}` : "Create New Category Master"}
+          icon={Tag}
+          description="Define engineering discipline scope, identification code, icon, and color theme"
+          onBack={() => setIsModalOpen(false)}
+          backLabel="Back to Categories"
+          breadcrumbs={[
+            { label: "Design Masters", onClick: () => setIsModalOpen(false) },
+            { label: "Category Master", onClick: () => setIsModalOpen(false) },
+            { label: editingCategory ? (name || editingCategory.name) : "Create Category" }
+          ]}
+          onSave={handleSubmit}
+          saveLabel={editingCategory ? "Save Category" : "Create Category"}
+          onReset={editingCategory ? () => handleOpenEdit(editingCategory) : handleOpenAdd}
+        >
+          <div className="space-y-6">
             {formError && (
-              <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs flex items-center gap-2 shrink-0">
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 <span>{formError}</span>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="flex-1 min-h-0 overflow-y-auto custom-scrollbar space-y-4 pr-1">
+            <form onSubmit={handleSubmit} className="space-y-6">
               {/* Category Name & Code in 2 columns */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="sm:col-span-2 space-y-1">
@@ -475,26 +468,25 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
                 />
               </div>
 
-              {/* Modal Buttons */}
-              <div className="pt-3 border-t border-border flex items-center justify-end gap-2 shrink-0">
+              {/* Bottom Action Triggers */}
+              <div className="pt-4 border-t border-border flex items-center justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-3.5 py-1.5 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-foreground cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-foreground cursor-pointer transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-md cursor-pointer transition-all"
+                  className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-md cursor-pointer transition-all"
                 >
                   {editingCategory ? "Save Changes" : "Create Category"}
                 </button>
               </div>
             </form>
           </div>
-        </div>,
-        document.body
+        </TransactionFormLayout>
       )}
 
       {/* Delete Dependency Safety Modal */}

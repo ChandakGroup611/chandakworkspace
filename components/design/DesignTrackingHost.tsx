@@ -288,197 +288,210 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
     DesignMasterStore.updateDrawingStatus(drawingId, newStatus, approvedDate);
   };
 
+  const isAnyHostTransactionOpen = isDataEntryOpen || isUploadOpen || Boolean(selectedDrawingForReview);
+
   return (
     <div className="w-full flex-1 flex flex-col space-y-5 min-w-0 animate-in fade-in duration-200">
-      {/* Top Header & Actions Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-4">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20 shrink-0">
-            <Compass className="h-5 w-5" />
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-                Design & Engineering Tracking
-              </h1>
-              {isRestrictedProjectScope ? (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
-                  <Building2 className="h-3 w-3" />
-                  <span>Scoped: {accessibleProjects.map(p => p.name).join(", ")} ({accessibleProjects.length} Project{accessibleProjects.length > 1 ? "s" : ""})</span>
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
-                  <ShieldCheck className="h-3 w-3" />
-                  <span>Global Scope ({accessibleProjects.length} Projects)</span>
-                </span>
-              )}
+      {/* Quick Data Entry Transaction Canvas */}
+      {isDataEntryOpen && (
+        <DataEntryFormsModal
+          isOpen={isDataEntryOpen}
+          onClose={() => setIsDataEntryOpen(false)}
+        />
+      )}
+
+      {/* Upload Drawing Transaction Canvas */}
+      {isUploadOpen && (
+        <UploadDrawingModal
+          isOpen={isUploadOpen}
+          onClose={() => setIsUploadOpen(false)}
+          onDrawingUploaded={handleDrawingUploaded}
+        />
+      )}
+
+      {/* Review & GFC Stamp Working Document Canvas */}
+      {selectedDrawingForReview && (
+        <ReviewApprovalModal
+          drawing={selectedDrawingForReview}
+          isOpen={!!selectedDrawingForReview}
+          onClose={() => setSelectedDrawingForReview(null)}
+          onStatusUpdated={handleStatusUpdated}
+        />
+      )}
+
+      {/* Standard Module View (When No Host Transaction Canvas is Open) */}
+      {!isAnyHostTransactionOpen && (
+        <>
+          {/* Top Header & Actions Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20 shrink-0">
+                <Compass className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+                    Design & Engineering Tracking
+                  </h1>
+                  {isRestrictedProjectScope ? (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                      <Building2 className="h-3 w-3" />
+                      <span>Scoped: {accessibleProjects.map(p => p.name).join(", ")} ({accessibleProjects.length} Project{accessibleProjects.length > 1 ? "s" : ""})</span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                      <ShieldCheck className="h-3 w-3" />
+                      <span>Global Scope ({accessibleProjects.length} Projects)</span>
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons on Right */}
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsDataEntryOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-semibold transition-colors cursor-pointer"
+                title="Open quick data entry form"
+              >
+                <Plus className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>Quick Entry</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsUploadOpen(true)}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-colors cursor-pointer"
+              >
+                <Upload className="h-3.5 w-3.5" />
+                <span>Upload Drawing</span>
+              </button>
             </div>
           </div>
-        </div>
 
-        {/* Action Buttons on Right */}
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={() => setIsDataEntryOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-semibold transition-colors cursor-pointer"
-            title="Open quick data entry form"
-          >
-            <Plus className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span>Quick Entry</span>
-          </button>
+          {/* Tab 1: Master Tender Design Matrix */}
+          {activeTab === "MATRIX" && (
+            <TenderDesignMatrix />
+          )}
 
-          <button
-            type="button"
-            onClick={() => setIsUploadOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-colors cursor-pointer"
-          >
-            <Upload className="h-3.5 w-3.5" />
-            <span>Upload Drawing</span>
-          </button>
-        </div>
-      </div>
+          {/* Tab 2: 30 / 60 Day Look Ahead */}
+          {activeTab === "LOOK_AHEAD" && (
+            <LookAheadDashboard />
+          )}
 
-      {/* Tab 1: Master Tender Design Matrix */}
-      {activeTab === "MATRIX" && (
-        <TenderDesignMatrix />
+          {/* Tab 3: Liaisoning Tracker */}
+          {activeTab === "LIAISONING" && (
+            <LiaisoningTracker />
+          )}
+
+          {/* Tab 4: Design Stages Roadmap */}
+          {activeTab === "STAGES" && (
+            <DesignStagesRoadmap />
+          )}
+
+          {/* Tab 5: Drawing Sheet Register */}
+          {activeTab === "DRAWINGS" && (
+            <DrawingRegister 
+              drawings={accessibleDrawings}
+              onOpenReviewModal={(drawing) => setSelectedDrawingForReview(drawing)}
+              onOpenUploadModal={() => setIsUploadOpen(true)}
+            />
+          )}
+
+          {/* Tab 6: Approvals & Review Queue */}
+          {activeTab === "APPROVALS" && (
+            <ApprovalsReviewQueue 
+              drawings={accessibleDrawings}
+              onOpenReviewModal={(drawing) => setSelectedDrawingForReview(drawing)}
+              onQuickStatusUpdate={handleStatusUpdated}
+            />
+          )}
+
+          {/* Tab 7: Revision History Logs */}
+          {activeTab === "REVISIONS" && (
+            <RevisionHistoryLogs 
+              drawings={accessibleDrawings}
+            />
+          )}
+
+          {/* Tab 8: Site Handover & GFC View */}
+          {activeTab === "GFC_HANDOVER" && (
+            <GfcHandoverView releases={gfcReleases} />
+          )}
+
+          {/* Tab 9: Transmittals & GFC Dispatch Slips */}
+          {activeTab === "TRANSMITTALS" && (
+            <TransmittalManager />
+          )}
+
+          {/* Tab 10: RFI & Site Query Tracker */}
+          {activeTab === "RFIS" && (
+            <DesignRfiTracker />
+          )}
+
+          {/* Tab 11: Consultant Directory / Dictionary */}
+          {activeTab === "CONSULTANTS" && (
+            <ConsultantDirectory 
+              consultants={storeState.consultants} 
+              onAddConsultant={handleConsultantAdded}
+              onUpdateConsultant={handleConsultantUpdated}
+              onDeleteConsultant={handleConsultantDeleted}
+              availableProjects={accessibleProjects.map(p => p.name)}
+              availableWorkPackages={storeState.packages.map(p => p.packageName)}
+            />
+          )}
+
+          {/* Tab 12: Work Packages Master Direct View */}
+          {activeTab === "PACKAGES" && (
+            <MastersSetupView initialSubTab="PACKAGES" />
+          )}
+
+          {/* Direct Project Master View */}
+          {activeTab === "PROJECTS" && (
+            <MastersSetupView initialSubTab="PROJECTS" />
+          )}
+
+          {/* Direct Sub-Project Master View */}
+          {activeTab === "SUB_PROJECTS" && (
+            <MastersSetupView initialSubTab="SUB_PROJECTS" />
+          )}
+
+          {/* Direct Category Master View */}
+          {activeTab === "CATEGORIES" && (
+            <MastersSetupView initialSubTab="CATEGORIES" />
+          )}
+
+          {/* Direct Statutory Authorities View */}
+          {activeTab === "AUTHORITIES" && (
+            <MastersSetupView initialSubTab="AUTHORITIES" />
+          )}
+
+          {/* Direct Backup & Templates View */}
+          {activeTab === "TEMPLATES" && (
+            <MastersSetupView initialSubTab="TEMPLATES" />
+          )}
+
+          {/* Tab 13: Design Reports & Analytics */}
+          {activeTab === "REPORTS" && (
+            <DesignReportsAnalytics 
+              drawings={accessibleDrawings}
+              consultants={storeState.consultants}
+            />
+          )}
+
+          {/* Tab 14: RBAC & User Access Governance */}
+          {activeTab === "RBAC" && (
+            <DesignRbacGovernance />
+          )}
+
+          {/* Tab 15: Masters Setup View */}
+          {activeTab === "MASTERS" && (
+            <MastersSetupView initialSubTab="PROJECTS" />
+          )}
+        </>
       )}
-
-      {/* Tab 2: 30 / 60 Day Look Ahead */}
-      {activeTab === "LOOK_AHEAD" && (
-        <LookAheadDashboard />
-      )}
-
-      {/* Tab 3: Liaisoning Tracker */}
-      {activeTab === "LIAISONING" && (
-        <LiaisoningTracker />
-      )}
-
-      {/* Tab 4: Design Stages Roadmap */}
-      {activeTab === "STAGES" && (
-        <DesignStagesRoadmap />
-      )}
-
-      {/* Tab 5: Drawing Sheet Register */}
-      {activeTab === "DRAWINGS" && (
-        <DrawingRegister 
-          drawings={accessibleDrawings}
-          onOpenReviewModal={(drawing) => setSelectedDrawingForReview(drawing)}
-          onOpenUploadModal={() => setIsUploadOpen(true)}
-        />
-      )}
-
-      {/* Tab 6: Approvals & Review Queue */}
-      {activeTab === "APPROVALS" && (
-        <ApprovalsReviewQueue 
-          drawings={accessibleDrawings}
-          onOpenReviewModal={(drawing) => setSelectedDrawingForReview(drawing)}
-          onQuickStatusUpdate={handleStatusUpdated}
-        />
-      )}
-
-      {/* Tab 7: Revision History Logs */}
-      {activeTab === "REVISIONS" && (
-        <RevisionHistoryLogs 
-          drawings={accessibleDrawings}
-        />
-      )}
-
-      {/* Tab 8: Site Handover & GFC View */}
-      {activeTab === "GFC_HANDOVER" && (
-        <GfcHandoverView releases={gfcReleases} />
-      )}
-
-      {/* Tab 9: Transmittals & GFC Dispatch Slips */}
-      {activeTab === "TRANSMITTALS" && (
-        <TransmittalManager />
-      )}
-
-      {/* Tab 10: RFI & Site Query Tracker */}
-      {activeTab === "RFIS" && (
-        <DesignRfiTracker />
-      )}
-
-      {/* Tab 11: Consultant Directory / Dictionary */}
-      {activeTab === "CONSULTANTS" && (
-        <ConsultantDirectory 
-          consultants={storeState.consultants} 
-          onAddConsultant={handleConsultantAdded}
-          onUpdateConsultant={handleConsultantUpdated}
-          onDeleteConsultant={handleConsultantDeleted}
-          availableProjects={accessibleProjects.map(p => p.name)}
-          availableWorkPackages={storeState.packages.map(p => p.packageName)}
-        />
-      )}
-
-      {/* Tab 12: Work Packages Master Direct View */}
-      {activeTab === "PACKAGES" && (
-        <MastersSetupView initialSubTab="PACKAGES" />
-      )}
-
-      {/* Direct Project Master View */}
-      {activeTab === "PROJECTS" && (
-        <MastersSetupView initialSubTab="PROJECTS" />
-      )}
-
-      {/* Direct Sub-Project Master View */}
-      {activeTab === "SUB_PROJECTS" && (
-        <MastersSetupView initialSubTab="SUB_PROJECTS" />
-      )}
-
-      {/* Direct Category Master View */}
-      {activeTab === "CATEGORIES" && (
-        <MastersSetupView initialSubTab="CATEGORIES" />
-      )}
-
-      {/* Direct Statutory Authorities View */}
-      {activeTab === "AUTHORITIES" && (
-        <MastersSetupView initialSubTab="AUTHORITIES" />
-      )}
-
-      {/* Direct Backup & Templates View */}
-      {activeTab === "TEMPLATES" && (
-        <MastersSetupView initialSubTab="TEMPLATES" />
-      )}
-
-      {/* Tab 13: Design Reports & Analytics */}
-      {activeTab === "REPORTS" && (
-        <DesignReportsAnalytics 
-          drawings={accessibleDrawings}
-          consultants={storeState.consultants}
-        />
-      )}
-
-      {/* Tab 14: RBAC & User Access Governance */}
-      {activeTab === "RBAC" && (
-        <DesignRbacGovernance />
-      )}
-
-      {/* Tab 15: Masters Setup View */}
-      {activeTab === "MASTERS" && (
-        <MastersSetupView initialSubTab="PROJECTS" />
-      )}
-
-      {/* Quick Data Entry Modal */}
-      <DataEntryFormsModal
-        isOpen={isDataEntryOpen}
-        onClose={() => setIsDataEntryOpen(false)}
-      />
-
-      {/* Upload Drawing Modal */}
-      <UploadDrawingModal
-        isOpen={isUploadOpen}
-        onClose={() => setIsUploadOpen(false)}
-        onDrawingUploaded={handleDrawingUploaded}
-      />
-
-      {/* Review & GFC Stamp Modal */}
-      <ReviewApprovalModal
-        drawing={selectedDrawingForReview}
-        isOpen={!!selectedDrawingForReview}
-        onClose={() => setSelectedDrawingForReview(null)}
-        onStatusUpdated={handleStatusUpdated}
-      />
     </div>
   );
 }
