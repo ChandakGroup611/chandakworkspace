@@ -9,8 +9,24 @@ import { AppTableContainer, AppTable, AppTableHeader, AppTableBody, AppTableRow,
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { createClient } from "@/utils/supabase/client";
 import { usePermissions } from "@/hooks/usePermissions";
-import { Save, Plus, Edit2, Trash2, MapPin, Globe, Phone, FileText, CheckCircle2, XCircle, Search, AlertTriangle, Building2, Check, RefreshCw, Lock, X } from "lucide-react";
+import { Save, Plus, Edit2, Trash2, MapPin, Globe, Phone, FileText, CheckCircle2, XCircle, Search, AlertTriangle, Building2, Check, RefreshCw, Lock, X, FileSpreadsheet } from "lucide-react";
 import { saveMasterEntity, deleteMasterEntity } from "@/lib/actions/masters";
+import { SystemMasterBulkImportModal, MasterTableConfig } from "@/components/masters/SystemMasterBulkImportModal";
+
+const COMPANY_MASTER_CONFIG: MasterTableConfig[] = [
+  {
+    id: "company_master",
+    table: "company_master",
+    scopeId: null,
+    label: "Company Master",
+    category: "ORGANIZATION",
+    icon: Building2,
+    desc: "Companies, subsidiaries & sister business entities",
+    parentTable: null,
+    parentKey: null,
+    parentRequired: false
+  }
+];
 
 export default function CompanyMasterPage() {
   const supabase = createClient();
@@ -24,6 +40,7 @@ export default function CompanyMasterPage() {
   
   // Modals and Alerts
   const [showModal, setShowModal] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [errorAlert, setErrorAlert] = useState<string | null>(null);
   const [successAlert, setSuccessAlert] = useState<string | null>(null);
 
@@ -204,6 +221,14 @@ export default function CompanyMasterPage() {
           <AppButton 
             variant="outline" 
             size="sm" 
+            leftIcon={<FileSpreadsheet className="h-4 w-4 text-emerald-600" />}
+            onClick={() => setIsImportModalOpen(true)}
+          >
+            Import Excel
+          </AppButton>
+          <AppButton 
+            variant="outline" 
+            size="sm" 
             leftIcon={<RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />}
             onClick={fetchCompanies}
           >
@@ -362,6 +387,16 @@ export default function CompanyMasterPage() {
           </AppCard>
         </div>
       )}
+
+      {/* Bulk Excel Import Modal */}
+      <SystemMasterBulkImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        masterTables={COMPANY_MASTER_CONFIG}
+        initialTabId="company_master"
+        existingRecords={companies}
+        onSuccess={fetchCompanies}
+      />
     </div>
   );
 }

@@ -314,3 +314,208 @@ export async function createIssueType(name: string) {
   }
   return data;
 }
+
+/**
+ * Bulk Import Master Records from Spreadsheet (.xlsx / .csv)
+ * Handles auto-mapping, parent resolution, and duplicate strategies
+ */
+export async function bulkImportMasterRecords(
+  table: string,
+  records: Array<{
+    code?: string;
+    name?: string;
+    description?: string;
+    parent_id?: string;
+    parent_code?: string;
+    parent_name?: string;
+    asset_tag?: string;
+    status_color?: string;
+    priority_color?: string;
+    sla_minutes?: number;
+    scope_id?: string | null;
+    [key: string]: any;
+  }>,
+  duplicateStrategy: "SKIP" | "OVERWRITE" = "SKIP",
+  scopeId?: string | null,
+  parentKey?: string | null,
+  parentTable?: string | null
+): Promise<{ success: boolean; added: number; updated: number; skipped: number; error?: string }> {
+  try {
+    const isAuthorized = await checkServerPermission("SUPER_ADMIN") || 
+                         await checkServerPermission("MASTERS_MANAGE") || 
+                         await checkServerPermission("SYSTEM_MASTERS_MANAGE") ||
+                         await checkServerPermission("MASTERS_CREATE");
+    if (!isAuthorized) {
+      return { success: false, added: 0, updated: 0, skipped: 0, error: "Unauthorized. Missing master administration privileges." };
+    }
+
+    if (!records || records.length === 0) {
+      return { success: false, added: 0, updated: 0, skipped: 0, error: "No records to import." };
+    }
+
+    const cookieStore = await cookies();
+    const supabase = createClient(cookieStore);
+
+    // 1. Fetch existing records for duplicate resolution
+    let existingQuery = supabase.from(table).select("*");
+    if (scopeId) {
+      existingQuery = existingQuery.eq("scope_id", scopeId);
+    }
+    const { data: existingData, error: fetchErr } = await existingQuery;
+    if (fetchErr) {
+      console.warn(`[BulkImport] Could not fetch existing records for ${table}:`, fetchErr.message);
+    }
+    const existingList = (existingData || []).filter((r: any) => r.is_deleted !== true);
+
+    // 2. Fetch parent records map if parent lookup is needed
+    let parentMap: Map<string, string> = new Map();
+    if (parentKey && parentTable) {
+      try {
+        const { data: pData } = await supabase.from(parentTable).select("id, code, name").eq("is_deleted", false);
+        if (pData) {
+          pData.forEach((p: any) => {
+            if (p.id) parentMap.set(String(p.id).toLowerCase(), p.id);
+            if (p.code) parentMap.set(String(p.code).toLowerCase(), p.id);
+            if (p.name) parentMap.set(String(p.name).toLowerCase(), p.id);
+          });
+        }
+      } catch (err) {
+        console.warn(`[BulkImport] Parent lookup failed for ${parentTable}:`, err);
+      }
+    }
+
+    let added = 0;
+    let updated = 0;
+    let skipped = 0;
+
+    for (const raw of records) {
+      const cleanCode = (raw.code || "").trim().toUpperCase();
+      const cleanName = (raw.name || "").trim();
+      if (!cleanCode && !cleanName) {
+        skipped++;
+        continue;
+      }
+
+      // Check existing duplicate by code or name
+      const existing = existingList.find((ex: any) => {
+        const exCode = (ex.code || ex.status_code || ex.priority_code || ex.company_code || "").trim().toUpperCase();
+        const exName = (ex.name || ex.status_name || ex.priority_name || ex.company_name || "").trim().toLowerCase();
+        if (cleanCode && exCode && exCode === cleanCode) return true;
+        if (cleanName && exName && exName === cleanName.toLowerCase()) return true;
+        return false;
+      });
+
+      // Resolve parent key if required
+      let resolvedParentId = raw.parent_id || null;
+      if (!resolvedParentId && (raw.parent_code || raw.parent_name) && parentMap.size > 0) {
+        resolvedParentId = parentMap.get((raw.parent_code || raw.parent_name || "").trim().toLowerCase()) || null;
+      }
+
+      const payload: Record<string, any> = {
+        description: raw.description ? String(raw.description).trim() : null,
+        is_active: raw.is_active !== undefined ? Boolean(raw.is_active) : true,
+        scope_id: scopeId || raw.scope_id || null
+      };
+
+      if (table === "status_master") {
+        payload.status_code = cleanCode || cleanName.slice(0, 4).toUpperCase();
+        payload.status_name = cleanName || cleanCode;
+        payload.status_color = raw.status_color || raw.color || "#808080";
+        if (scopeId === "e1f8e8e8-e1e1-4e1e-a1e1-e1e1e1e1e1e1") {
+          payload.module = "infra"; payload.scope_type = "INFRA";
+        } else if (scopeId === "e2f8e8e8-e2e2-4e2e-a2e2-e2e2e2e2e2e2") {
+          payload.module = "erp"; payload.scope_type = "ERP";
+        } else if (scopeId === "e3f8e8e8-e3e3-4e3e-a3e3-e3e3e3e3e3e3") {
+          payload.module = "workspaces"; payload.scope_type = "TASK";
+        } else {
+          payload.module = "requirements"; payload.scope_type = "REQUIREMENT";
+        }
+      } else if (table === "priority_master") {
+        payload.priority_code = cleanCode || cleanName.slice(0, 4).toUpperCase();
+        payload.priority_name = cleanName || cleanCode;
+        payload.priority_color = raw.priority_color || raw.color || "#808080";
+        const standardMinutes = Number(raw.sla_minutes) || 120;
+        payload.max_sla_hours = Math.ceil(standardMinutes / 60);
+        payload.warning_sla_hours = Math.max(1, Math.floor(standardMinutes / 60));
+        payload.min_sla_hours = Math.max(1, Math.floor(standardMinutes * 0.5 / 60));
+      } else if (table === "assets") {
+        payload.code = cleanCode;
+        payload.name = cleanName;
+        payload.asset_tag = (raw.asset_tag || cleanCode).trim().toUpperCase();
+        payload.status = raw.status || "OPERATIONAL";
+        if (resolvedParentId) payload.department_id = resolvedParentId;
+      } else if (table === "company_master") {
+        payload.company_code = cleanCode;
+        payload.company_name = cleanName;
+        payload.short_name = raw.short_name || null;
+        payload.email = raw.email || null;
+        payload.phone = raw.phone || null;
+        payload.address = raw.address || null;
+        payload.remarks = raw.remarks || raw.description || null;
+      } else if (table === "fleet_insurance_vendors") {
+        payload.vendor_name = cleanName || cleanCode;
+        payload.contact_person = raw.contact_person || raw.contact_name || null;
+        payload.phone = raw.phone || null;
+        payload.email = raw.email || null;
+      } else if (table === "vendor_master") {
+        payload.name = cleanName || cleanCode;
+        payload.website = raw.website || null;
+        payload.contact_name = raw.contact_name || raw.contact_person || null;
+        payload.contact_email = raw.contact_email || raw.email || null;
+        payload.phone = raw.phone || null;
+        payload.address_line1 = raw.address_line1 || raw.address || null;
+        payload.city = raw.city || null;
+        payload.state = raw.state || null;
+        payload.pincode = raw.pincode || null;
+        payload.tax_gstin = raw.tax_gstin || raw.gstin || null;
+        payload.tax_pan = raw.tax_pan || raw.pan || null;
+      } else {
+        payload.code = cleanCode;
+        payload.name = cleanName;
+        if (parentKey && resolvedParentId) {
+          payload[parentKey] = resolvedParentId;
+        }
+      }
+
+      if (existing) {
+        if (duplicateStrategy === "OVERWRITE") {
+          const { error: updErr } = await supabase.from(table).update({ ...payload, updated_at: new Date().toISOString() }).eq("id", existing.id);
+          if (!updErr) {
+            updated++;
+          } else {
+            console.error(`[BulkImport] Update error on ${table}:`, updErr);
+            skipped++;
+          }
+        } else {
+          skipped++;
+        }
+      } else {
+        const { error: insErr } = await supabase.from(table).insert([payload]);
+        if (!insErr) {
+          added++;
+        } else {
+          console.error(`[BulkImport] Insert error on ${table}:`, insErr);
+          skipped++;
+        }
+      }
+    }
+
+    // 3. Audit Log
+    try {
+      await supabase.from("master_audit_logs").insert([{
+        master_table: table,
+        record_id: "00000000-0000-0000-0000-000000000000",
+        operation: "BULK_IMPORT",
+        after_values: { added, updated, skipped, totalRows: records.length, duplicateStrategy }
+      }]);
+    } catch (auditErr) {
+      console.warn("[BulkImport] Audit log non-blocking error:", auditErr);
+    }
+
+    return { success: true, added, updated, skipped };
+  } catch (err: any) {
+    console.error(`[BulkImport] Fatal error on ${table}:`, err);
+    return { success: false, added: 0, updated: 0, skipped: 0, error: err.message || "Failed to process bulk import." };
+  }
+}
+

@@ -21,6 +21,7 @@ export type MasterImportType =
   | "PROJECTS" 
   | "SUB_PROJECTS" 
   | "CONSULTANTS"
+  | "AUTHORITIES"
   | "ALL";
 
 export interface MasterColumnDefinition {
@@ -110,6 +111,11 @@ export const MASTER_SCHEMAS: Record<Exclude<MasterImportType, "ALL">, MasterColu
     { key: "rating", label: "Quality Rating (1.0 - 5.0)", required: false, example: "4.8", description: "Performance score", aliases: ["rating", "score"] },
     { key: "averageTatDays", label: "Average TAT (Days)", required: false, example: "3.5", description: "Turnaround time in days", aliases: ["tat", "tat_days", "turnaround_days"] },
     { key: "onboardingStatus", label: "Onboarding Status", required: false, example: "Onboard", description: "Onboard or Not Onboard", aliases: ["status", "onboarding"] }
+  ],
+  AUTHORITIES: [
+    { key: "authorityName", label: "Authority / Body Name", required: true, example: "MCGM Fire Brigade", description: "Statutory authority or municipal body", aliases: ["authority", "name", "body", "authority_name"] },
+    { key: "category", label: "Category", required: false, example: "Municipal", description: "Municipal, Fire Safety, Environmental, Aviation, etc.", aliases: ["type", "group"] },
+    { key: "scope", label: "Scope / Clearance Description", required: false, example: "Fire Fighting & Life Safety NOC", description: "Clearance or NOC jurisdiction", aliases: ["description", "notes", "scope_description"] }
   ]
 };
 
@@ -168,6 +174,13 @@ export const SAMPLE_DATA: Record<Exclude<MasterImportType, "ALL">, Record<string
       taggedConsultants: "Sterling Engineering & Structural",
       description: "Premium residential enclave with 35+ lifestyle amenities and podium club"
     }
+  ],
+  AUTHORITIES: [
+    { authorityName: "MCGM Building Proposal", category: "Municipal", scope: "IOD & CC Clearance" },
+    { authorityName: "Chief Fire Officer (CFO)", category: "Fire Safety", scope: "Fire Fighting & Life Safety NOC" },
+    { authorityName: "State Environmental Appraisal Committee (SEAC)", category: "Environmental", scope: "Environmental Clearance (EC)" },
+    { authorityName: "Tree Authority (MCGM)", category: "Municipal", scope: "Tree Cutting / Transplantation NOC" },
+    { authorityName: "Airports Authority of India (AAI)", category: "Aviation", scope: "Height Clearance NOC" }
   ],
   SUB_PROJECTS: [
     {
@@ -298,13 +311,14 @@ export class MasterImportExportService {
       });
 
       // 2. Add each master sheet
-      const masterKeys: Array<Exclude<MasterImportType, "ALL">> = ["PACKAGES", "SUB_PACKAGES", "PROJECTS", "SUB_PROJECTS", "CONSULTANTS"];
+      const masterKeys: Array<Exclude<MasterImportType, "ALL">> = ["PACKAGES", "SUB_PACKAGES", "PROJECTS", "SUB_PROJECTS", "CONSULTANTS", "AUTHORITIES"];
       const sheetTitles: Record<string, string> = {
         PACKAGES: "Package Master",
         SUB_PACKAGES: "Sub-Package Master",
         PROJECTS: "Project Master",
         SUB_PROJECTS: "Sub-Project Master",
-        CONSULTANTS: "Consultant Master"
+        CONSULTANTS: "Consultant Master",
+        AUTHORITIES: "Statutory Authorities"
       };
 
       for (const mKey of masterKeys) {
@@ -707,6 +721,15 @@ export class MasterImportExportService {
         isDuplicate = true;
         existingId = existing.id;
       }
+    } else if (type === "AUTHORITIES") {
+      const name = (data.authorityName || "").trim().toLowerCase();
+      const existing = (store.authorities || []).find(
+        a => a.authorityName.toLowerCase() === name
+      );
+      if (existing) {
+        isDuplicate = true;
+        existingId = existing.id;
+      }
     }
 
     const isValid = errors.length === 0;
@@ -744,7 +767,8 @@ export class MasterImportExportService {
         "SUB_PACKAGES",
         "PROJECTS",
         "SUB_PROJECTS",
-        "CONSULTANTS"
+        "CONSULTANTS",
+        "AUTHORITIES"
       ];
 
       for (const mType of executionOrder) {
@@ -874,6 +898,16 @@ export class MasterImportExportService {
       return { ...res, errors: result.invalidCount };
     }
 
+    if (mType === "AUTHORITIES") {
+      const items = validRows.map(r => ({
+        authorityName: String(r.data.authorityName).trim(),
+        category: r.data.category ? String(r.data.category).trim() : undefined,
+        scope: r.data.scope ? String(r.data.scope).trim() : undefined
+      }));
+      const res = DesignMasterStore.bulkImportAuthorities(items, duplicateStrategy);
+      return { ...res, errors: result.invalidCount };
+    }
+
     return { added: 0, updated: 0, skipped: 0, errors: 0 };
   }
 
@@ -972,6 +1006,7 @@ export class MasterImportExportService {
       PROJECTS: "Project Master",
       SUB_PROJECTS: "Sub-Project Master",
       CONSULTANTS: "Consultant Master",
+      AUTHORITIES: "Statutory Authorities",
       ALL: "All Masters"
     };
     return map[type] || "Master";

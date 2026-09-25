@@ -12,7 +12,7 @@ import {
   FolderKanban, Users, Activity, Plus, Send, 
   Layers, GitMerge, ChevronDown, Building2, Calendar, Target,
   Loader2, ShieldAlert, Sparkles, ShieldCheck, Search, Filter,
-  X, Check, ChevronsDownUp, ChevronsUpDown, UserCheck, RefreshCw, Globe
+  X, Check, ChevronsDownUp, ChevronsUpDown, UserCheck, RefreshCw, Globe, FileSpreadsheet
 } from "lucide-react";
 import { 
   fetchWorkspaces, fetchTasksByWorkspace, toggleChecklistItem, 
@@ -1142,6 +1142,18 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               )}
             </div>
 
+            <AppButton 
+              variant="outline" 
+              size="sm" 
+              leftIcon={<FileSpreadsheet className="h-4 w-4 text-emerald-600" />} 
+              onClick={() => router.push("/migration")}
+              className="shrink-0 whitespace-nowrap"
+              title="Bulk Data Migration & Excel Import for Workspaces & Tasks"
+            >
+              <span className="hidden sm:inline">Import Excel</span>
+              <span className="sm:hidden">Import</span>
+            </AppButton>
+            
             <AppButton 
               variant="primary" 
               size="sm" 

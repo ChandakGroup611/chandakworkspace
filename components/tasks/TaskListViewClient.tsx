@@ -1429,6 +1429,15 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
               </Popover.Portal>
             </Popover.Root>
 
+            <AppButton
+              variant="outline"
+              onClick={() => router.push("/migration")}
+              className="h-9 sm:h-10 px-3 rounded-xl bg-elevated/50 shadow-sm font-semibold hover:theme-card-structural shrink-0"
+              title="Bulk Data Migration & Excel Import for Tasks"
+            >
+              <span className="flex items-center gap-1.5"><FileSpreadsheet className="h-4 w-4 text-emerald-600" /><span className="hidden sm:inline">Import Excel</span></span>
+            </AppButton>
+
             <Popover.Root>
               <Popover.Trigger asChild>
                 <AppButton variant="outline" className="h-9 sm:h-10 px-3 rounded-xl bg-elevated/50 shadow-sm font-semibold hover:theme-card-structural shrink-0">

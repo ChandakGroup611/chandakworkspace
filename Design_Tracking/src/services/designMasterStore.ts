@@ -2327,6 +2327,71 @@ export class DesignMasterStore {
     return { added, updated, skipped };
   }
 
+  public static bulkImportAuthorities(
+    authorities: Array<{
+      authorityName: string;
+      category?: string;
+      scope?: string;
+    }>,
+    duplicateStrategy: "SKIP" | "OVERWRITE" = "SKIP"
+  ): { added: number; updated: number; skipped: number } {
+    const state = this.getState();
+    let added = 0;
+    let updated = 0;
+    let skipped = 0;
+
+    const validCategories: StatutoryAuthorityMaster["category"][] = [
+      "Municipal",
+      "Fire & Safety",
+      "Environment",
+      "Aviation & Defence",
+      "Legal & RERA",
+      "Utilities"
+    ];
+    const parseCategory = (cat?: string): StatutoryAuthorityMaster["category"] => {
+      const found = validCategories.find(c => c.toLowerCase() === (cat || "").trim().toLowerCase());
+      return found || "Municipal";
+    };
+
+    authorities.forEach(a => {
+      const cleanName = (a.authorityName || "").trim();
+      if (!cleanName) return;
+
+      const existingIdx = (state.authorities || []).findIndex(
+        ea => ea.authorityName.toLowerCase() === cleanName.toLowerCase()
+      );
+
+      if (existingIdx !== -1) {
+        if (duplicateStrategy === "OVERWRITE") {
+          const old = state.authorities[existingIdx];
+          state.authorities[existingIdx] = {
+            ...old,
+            authorityName: cleanName,
+            category: a.category ? parseCategory(a.category) : old.category,
+            scope: a.scope !== undefined ? a.scope : old.scope
+          };
+          updated++;
+        } else {
+          skipped++;
+        }
+      } else {
+        const newAuth: StatutoryAuthorityMaster = {
+          id: `auth-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+          authorityName: cleanName,
+          category: parseCategory(a.category),
+          scope: a.scope || "Statutory clearance"
+        };
+        state.authorities.push(newAuth);
+        added++;
+      }
+    });
+
+    if (added > 0 || updated > 0) {
+      this.notify();
+    }
+    return { added, updated, skipped };
+  }
+
 
   // ============================================================================
   // Transaction Fill: Package Status & Mandatory Planned/Actual Dates & Audit Trail

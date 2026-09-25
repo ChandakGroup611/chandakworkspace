@@ -11,10 +11,26 @@ import { AppInput } from "@/components/ui/AppInput";
 import { AppBadge } from "@/components/ui/AppBadge";
 import { AppTableContainer, AppTable, AppTableHeader, AppTableBody, AppTableRow, AppTableHead, AppTableCell } from "@/components/ui/AppTable";
 import { createClient } from "@/utils/supabase/client";
-import { Building2, Search, Plus, Edit, Trash2, X, RefreshCw, FileText, Briefcase, Landmark, Settings, Check } from "lucide-react";
+import { Building2, Search, Plus, Edit, Trash2, X, RefreshCw, FileText, Briefcase, Landmark, Settings, Check, FileSpreadsheet } from "lucide-react";
 import { CityManagerModal } from "@/components/shared/CityManagerModal";
 import { FormMultiSelect } from "@/components/ui/FormMultiSelect";
 import { MasterOptionsManager } from "@/components/shared/MasterOptionsManager";
+import { SystemMasterBulkImportModal, MasterTableConfig } from "@/components/masters/SystemMasterBulkImportModal";
+
+const VENDOR_MASTER_CONFIG: MasterTableConfig[] = [
+  {
+    id: "vendor_master",
+    table: "vendor_master",
+    scopeId: null,
+    label: "Provider / Vendor Master",
+    category: "SUPPLIERS",
+    icon: Building2,
+    desc: "Service providers, contractors, OEMs and suppliers",
+    parentTable: null,
+    parentKey: null,
+    parentRequired: false
+  }
+];
 
 const INDIAN_STATES = [
   "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana", 
@@ -31,6 +47,7 @@ export default function VendorMasterPage() {
   const [searchQuery, setSearchQuery] = useState("");
   
   const [showModal, setShowModal] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -365,6 +382,15 @@ export default function VendorMasterPage() {
                   className="pl-9 h-10 w-full"
                 />
               </div>
+              <AppButton 
+                variant="outline" 
+                size="sm" 
+                leftIcon={<FileSpreadsheet className="h-4 w-4 text-emerald-600" />}
+                onClick={() => setIsImportModalOpen(true)}
+                className="h-10 px-3"
+              >
+                Import Excel
+              </AppButton>
               <AppButton variant="outline" size="sm" onClick={fetchVendors} className="h-10 px-3 hidden sm:flex">
                 <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               </AppButton>
@@ -759,6 +785,15 @@ export default function VendorMasterPage() {
           onUpdate={fetchDependencies}
         />
       )}
+      {/* Bulk Excel Import Modal */}
+      <SystemMasterBulkImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        masterTables={VENDOR_MASTER_CONFIG}
+        initialTabId="vendor_master"
+        existingRecords={vendors}
+        onSuccess={fetchVendors}
+      />
     </PageContainer>
   );
 }

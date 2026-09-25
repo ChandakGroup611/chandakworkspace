@@ -31,7 +31,9 @@ import {
   Settings,
   AlertTriangle,
   Edit2,
-  Search
+  Search,
+  FolderTree,
+  FileSpreadsheet
 } from "lucide-react";
 import { ProjectMasterView } from "./masters/ProjectMasterView";
 import { SubProjectMasterView } from "./masters/SubProjectMasterView";
@@ -217,6 +219,65 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
     <div className="space-y-5 animate-in fade-in duration-150">
       {!isNewPackageModalOpen && !(isEditPackageModalOpen && editingPackage) && !isNewAuthorityModalOpen && (
         <>
+          {/* Top Master Sub-Tab Navigation Bar & Excel Import Action */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-2 rounded-2xl bg-surface border border-border shadow-xs">
+            <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 sm:pb-0 text-xs">
+              {[
+                { id: "PROJECTS" as MasterSubTab, label: "Projects", icon: Building2, count: parentProjects.length, color: "text-emerald-600" },
+                { id: "SUB_PROJECTS" as MasterSubTab, label: "Sub-Projects / Wings", icon: FolderTree, count: storeState.towers.length, color: "text-purple-600" },
+                { id: "CONSULTANTS" as MasterSubTab, label: "Consultants", icon: Users, count: storeState.consultants.length, color: "text-blue-600" },
+                { id: "PACKAGES" as MasterSubTab, label: "Package Master", icon: Tag, count: categories.length, color: "text-indigo-600" },
+                { id: "SUB_PACKAGES" as MasterSubTab, label: "Sub-Packages", icon: Layers, count: storeState.packages.length, color: "text-teal-600" },
+                { id: "AUTHORITIES" as MasterSubTab, label: "Authorities", icon: ShieldCheck, count: storeState.authorities.length, color: "text-amber-600" },
+                { id: "TEMPLATES" as MasterSubTab, label: "Templates & Backup", icon: FileSpreadsheet, color: "text-slate-600" }
+              ].map(tab => {
+                const Icon = tab.icon;
+                const isSelected = activeSubTab === tab.id || (activeSubTab === "CATEGORIES" && tab.id === "PACKAGES");
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveSubTab(tab.id)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                      isSelected
+                        ? "bg-teal-600 text-white shadow-xs"
+                        : "text-muted hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800/80"
+                    }`}
+                  >
+                    <Icon className={`h-3.5 w-3.5 ${isSelected ? "text-white" : tab.color}`} />
+                    <span>{tab.label}</span>
+                    {tab.count !== undefined && (
+                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                        isSelected ? "bg-white/20 text-white" : "bg-muted/30 text-muted-foreground"
+                      }`}>
+                        {tab.count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+              <button
+                type="button"
+                onClick={() => {
+                  const target = activeSubTab === "TEMPLATES" || activeSubTab === "RBAC" 
+                    ? "ALL" 
+                    : activeSubTab === "CATEGORIES" 
+                    ? "PACKAGES" 
+                    : (activeSubTab as MasterImportType);
+                  setBulkImportTarget(target);
+                  setIsBulkImportOpen(true);
+                }}
+                className="px-3.5 py-1.5 rounded-xl border border-teal-500/40 bg-teal-500/10 hover:bg-teal-500/20 text-teal-700 dark:text-teal-300 text-xs font-bold inline-flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all shrink-0 whitespace-nowrap"
+              >
+                <FileSpreadsheet className="h-3.5 w-3.5" />
+                <span>Import Excel (.xlsx)</span>
+              </button>
+            </div>
+          </div>
+
           {/* Sub-tab 1: Project Master (Parent Projects) */}
       {activeSubTab === "PROJECTS" && (
         <ProjectMasterView 
@@ -400,14 +461,27 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
               <h4 className="text-sm font-bold text-foreground">Statutory Authorities & NOC Clearance Bodies</h4>
               <p className="text-xs text-muted-foreground">Municipal, fire, environmental, and regulatory authorities</p>
             </div>
-            <button
-              type="button"
-              onClick={() => setIsNewAuthorityModalOpen(true)}
-              className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              <span>Add Authority</span>
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setBulkImportTarget("AUTHORITIES");
+                  setIsBulkImportOpen(true);
+                }}
+                className="px-3.5 py-1.5 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-bold inline-flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all shrink-0 whitespace-nowrap"
+              >
+                <Upload className="h-3.5 w-3.5 text-purple-600" />
+                <span>Import Authorities (Excel)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsNewAuthorityModalOpen(true)}
+                className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>Add Authority</span>
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3.5 w-full">

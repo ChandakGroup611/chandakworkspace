@@ -185,7 +185,7 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
             className="px-3.5 py-1.5 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-bold inline-flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all shrink-0 whitespace-nowrap"
           >
             <Upload className="h-3.5 w-3.5 text-purple-600" />
-            <span>Import Packages</span>
+            <span>Import Packages (Excel)</span>
           </button>
           <button
             type="button"

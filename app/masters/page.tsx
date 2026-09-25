@@ -46,8 +46,10 @@ import {
   Server,
   Box,
   Edit,
-  Clock
+  Clock,
+  FileSpreadsheet
 } from "lucide-react";
+import { SystemMasterBulkImportModal } from "@/components/masters/SystemMasterBulkImportModal";
 
 // List of all master tables mapped to labels and icons
 const MASTER_TABLES = [
@@ -139,6 +141,7 @@ function MastersPageContent() {
 
   // Modal State
   const [showModal, setShowModal] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [editRecordId, setEditRecordId] = useState<string | null>(null);
   const [formCode, setFormCode] = useState("");
   const [formName, setFormName] = useState("");
@@ -564,6 +567,15 @@ function MastersPageContent() {
         icon={<Database className="h-6 w-6" />}
         actions={
           <>
+            <AppButton 
+              variant="outline" 
+              size="sm" 
+              leftIcon={<FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />}
+              onClick={() => setIsImportModalOpen(true)}
+              disabled={!hasPermission("MASTERS_CREATE")}
+            >
+              Import Excel
+            </AppButton>
             <AppButton 
               variant="outline" 
               size="sm" 
@@ -1327,6 +1339,16 @@ function MastersPageContent() {
           </div>
         </div>
       )}
+
+      {/* Bulk Excel Import Modal */}
+      <SystemMasterBulkImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        masterTables={MASTER_TABLES}
+        initialTabId={activeTab}
+        existingRecords={records}
+        onSuccess={fetchRecords}
+      />
     </PageContainer>
   );
 }

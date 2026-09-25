@@ -19,7 +19,8 @@ import {
   RefreshCw,
   Check,
   AlertTriangle,
-  Info
+  Info,
+  ShieldCheck
 } from "lucide-react";
 import { 
   MasterImportExportService, 
@@ -144,7 +145,8 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
     { id: "PROJECTS", label: "Project Master", icon: Building2, color: "text-blue-600 bg-blue-500/10 border-blue-500/30" },
     { id: "SUB_PROJECTS", label: "Sub-Project / Wings", icon: FolderTree, color: "text-indigo-600 bg-indigo-500/10 border-indigo-500/30" },
     { id: "CONSULTANTS", label: "Consultant Master", icon: Users, color: "text-emerald-600 bg-emerald-500/10 border-emerald-500/30" },
-    { id: "ALL", label: "All Masters (Consolidated)", icon: FileSpreadsheet, color: "text-amber-600 bg-amber-500/10 border-amber-500/30" }
+    { id: "AUTHORITIES", label: "Statutory Authorities", icon: ShieldCheck, color: "text-amber-600 bg-amber-500/10 border-amber-500/30" },
+    { id: "ALL", label: "All Masters (Consolidated)", icon: FileSpreadsheet, color: "text-teal-600 bg-teal-500/10 border-teal-500/30" }
   ];
 
   return (
