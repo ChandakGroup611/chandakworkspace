@@ -634,7 +634,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   // Vehicle Master Dossier Multi-Column / Tab View States
   const [vehicleDossierTab, setVehicleDossierTab] = useState<
     "OVERVIEW" | "SERVICES" | "PARTS" | "DOCS" | "COMPLIANCE" | "TRIPS" | "ALL"
-  >("OVERVIEW");
+  >("ALL");
   const [dossierOriginVehicle, setDossierOriginVehicle] = useState<VehicleRecord | null>(null);
   const [isDossierAddDocOpen, setIsDossierAddDocOpen] = useState(false);
   const [dossierNewDocType, setDossierNewDocType] = useState("PUC");
@@ -14666,13 +14666,127 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             </div>
           </div>
 
-          {/* 2. CLICKABLE METRIC JUMP TILES (Fast overview & quick navigation) */}
+          {/* 2. DOSSIER COLUMNS & SECTIONS TAB NAVIGATION BAR */}
+          <div className="bg-surface/80 backdrop-blur-md p-2 rounded-2xl border border-border/80 shadow-xs flex items-center gap-2 overflow-x-auto no-scrollbar sticky top-0 z-20">
+            <button
+              type="button"
+              onClick={() => setVehicleDossierTab("ALL")}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shrink-0 transition-all ${
+                vehicleDossierTab === "ALL"
+                  ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-sm ring-2 ring-slate-900/20"
+                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+              }`}
+            >
+              <Layers className="h-4 w-4 text-theme-btn-primary" />
+              <span>360° All Columns (Everything)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setVehicleDossierTab("SERVICES")}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shrink-0 transition-all ${
+                vehicleDossierTab === "SERVICES"
+                  ? "bg-amber-600 text-white shadow-sm ring-2 ring-amber-600/20"
+                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+              }`}
+            >
+              <Wrench className="h-4 w-4" />
+              <span>Service Details</span>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                vehicleDossierTab === "SERVICES" ? "bg-white/25 text-white" : "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+              }`}>
+                {dossierData.services.length} Svc
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setVehicleDossierTab("PARTS")}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shrink-0 transition-all ${
+                vehicleDossierTab === "PARTS"
+                  ? "bg-blue-600 text-white shadow-sm ring-2 ring-blue-600/20"
+                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+              }`}
+            >
+              <Package className="h-4 w-4" />
+              <span>Spare Parts Details</span>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                vehicleDossierTab === "PARTS" ? "bg-white/25 text-white" : "bg-blue-500/15 text-blue-700 dark:text-blue-300"
+              }`}>
+                {dossierData.parts.length} Parts
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setVehicleDossierTab("DOCS")}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shrink-0 transition-all ${
+                vehicleDossierTab === "DOCS"
+                  ? "bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-600/20"
+                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+              }`}
+            >
+              <FileCheck className="h-4 w-4" />
+              <span>Document Vault</span>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                vehicleDossierTab === "DOCS" ? "bg-white/25 text-white" : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+              }`}>
+                {dossierData.docs.length} Docs
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setVehicleDossierTab("COMPLIANCE")}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shrink-0 transition-all ${
+                vehicleDossierTab === "COMPLIANCE"
+                  ? "bg-cyan-600 text-white shadow-sm ring-2 ring-cyan-600/20"
+                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+              }`}
+            >
+              <ShieldCheck className="h-4 w-4" />
+              <span>Compliance & Renewals</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setVehicleDossierTab("TRIPS")}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shrink-0 transition-all ${
+                vehicleDossierTab === "TRIPS"
+                  ? "bg-purple-600 text-white shadow-sm ring-2 ring-purple-600/20"
+                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+              }`}
+            >
+              <MapPin className="h-4 w-4" />
+              <span>Trip Movements</span>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                vehicleDossierTab === "TRIPS" ? "bg-white/25 text-white" : "bg-purple-500/15 text-purple-700 dark:text-purple-300"
+              }`}>
+                {dossierData.trips.length} Trips
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setVehicleDossierTab("OVERVIEW")}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shrink-0 transition-all ${
+                vehicleDossierTab === "OVERVIEW"
+                  ? "bg-theme-btn-primary text-white shadow-sm ring-2 ring-theme-btn-primary/20"
+                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+              }`}
+            >
+              <Car className="h-4 w-4" />
+              <span>Overview & Specs</span>
+            </button>
+          </div>
+
+          {/* 3. CLICKABLE METRIC JUMP TILES */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {/* Tile 1: Services */}
             <button
               type="button"
               onClick={() => setVehicleDossierTab("SERVICES")}
-              className={`p-3.5 rounded-xl border text-left transition-all relative overflow-hidden group ${
+              className={`p-3.5 rounded-xl border text-left transition-all relative overflow-hidden group cursor-pointer ${
                 vehicleDossierTab === "SERVICES"
                   ? "border-amber-500/60 bg-amber-500/10 dark:bg-amber-950/20 shadow-xs ring-1 ring-amber-500/30"
                   : "border-border bg-surface hover:border-amber-500/40 hover:bg-slate-50/50 dark:hover:bg-slate-900/40"
@@ -14699,7 +14813,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             <button
               type="button"
               onClick={() => setVehicleDossierTab("PARTS")}
-              className={`p-3.5 rounded-xl border text-left transition-all relative overflow-hidden group ${
+              className={`p-3.5 rounded-xl border text-left transition-all relative overflow-hidden group cursor-pointer ${
                 vehicleDossierTab === "PARTS"
                   ? "border-blue-500/60 bg-blue-500/10 dark:bg-blue-950/20 shadow-xs ring-1 ring-blue-500/30"
                   : "border-border bg-surface hover:border-blue-500/40 hover:bg-slate-50/50 dark:hover:bg-slate-900/40"
@@ -14726,7 +14840,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             <button
               type="button"
               onClick={() => setVehicleDossierTab("DOCS")}
-              className={`p-3.5 rounded-xl border text-left transition-all relative overflow-hidden group ${
+              className={`p-3.5 rounded-xl border text-left transition-all relative overflow-hidden group cursor-pointer ${
                 vehicleDossierTab === "DOCS"
                   ? "border-emerald-500/60 bg-emerald-500/10 dark:bg-emerald-950/20 shadow-xs ring-1 ring-emerald-500/30"
                   : "border-border bg-surface hover:border-emerald-500/40 hover:bg-slate-50/50 dark:hover:bg-slate-900/40"
@@ -14765,7 +14879,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             <button
               type="button"
               onClick={() => setVehicleDossierTab("TRIPS")}
-              className={`p-3.5 rounded-xl border text-left transition-all relative overflow-hidden group ${
+              className={`p-3.5 rounded-xl border text-left transition-all relative overflow-hidden group cursor-pointer ${
                 vehicleDossierTab === "TRIPS"
                   ? "border-purple-500/60 bg-purple-500/10 dark:bg-purple-950/20 shadow-xs ring-1 ring-purple-500/30"
                   : "border-border bg-surface hover:border-purple-500/40 hover:bg-slate-50/50 dark:hover:bg-slate-900/40"
@@ -14786,120 +14900,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
                 {dossierData.activeTripsCount} scheduled or en-route
               </div>
-            </button>
-          </div>
-
-          {/* 3. DOSSIER COLUMNS / SECTIONS TAB NAVIGATION BAR */}
-          <div className="flex items-center gap-1.5 border-b border-border pb-2 overflow-x-auto">
-            <button
-              type="button"
-              onClick={() => setVehicleDossierTab("OVERVIEW")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-colors ${
-                vehicleDossierTab === "OVERVIEW"
-                  ? "bg-theme-btn-primary text-white shadow-2xs"
-                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-              }`}
-            >
-              <Car className="h-3.5 w-3.5" />
-              <span>Overview & Specs</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setVehicleDossierTab("SERVICES")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-colors ${
-                vehicleDossierTab === "SERVICES"
-                  ? "bg-amber-600 text-white shadow-2xs"
-                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-              }`}
-            >
-              <Wrench className="h-3.5 w-3.5" />
-              <span>Service Records</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                vehicleDossierTab === "SERVICES" ? "bg-white/20 text-white" : "bg-slate-200 dark:bg-slate-700 text-foreground"
-              }`}>
-                {dossierData.services.length}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setVehicleDossierTab("PARTS")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-colors ${
-                vehicleDossierTab === "PARTS"
-                  ? "bg-blue-600 text-white shadow-2xs"
-                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-              }`}
-            >
-              <Package className="h-3.5 w-3.5" />
-              <span>Spare Parts & Assets</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                vehicleDossierTab === "PARTS" ? "bg-white/20 text-white" : "bg-slate-200 dark:bg-slate-700 text-foreground"
-              }`}>
-                {dossierData.parts.length}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setVehicleDossierTab("DOCS")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-colors ${
-                vehicleDossierTab === "DOCS"
-                  ? "bg-emerald-600 text-white shadow-2xs"
-                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-              }`}
-            >
-              <FileCheck className="h-3.5 w-3.5" />
-              <span>Document Vault</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                vehicleDossierTab === "DOCS" ? "bg-white/20 text-white" : "bg-slate-200 dark:bg-slate-700 text-foreground"
-              }`}>
-                {dossierData.docs.length}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setVehicleDossierTab("COMPLIANCE")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-colors ${
-                vehicleDossierTab === "COMPLIANCE"
-                  ? "bg-cyan-600 text-white shadow-2xs"
-                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-              }`}
-            >
-              <ShieldCheck className="h-3.5 w-3.5" />
-              <span>Compliance & Renewals</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setVehicleDossierTab("TRIPS")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-colors ${
-                vehicleDossierTab === "TRIPS"
-                  ? "bg-purple-600 text-white shadow-2xs"
-                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-              }`}
-            >
-              <MapPin className="h-3.5 w-3.5" />
-              <span>Trip Movements</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                vehicleDossierTab === "TRIPS" ? "bg-white/20 text-white" : "bg-slate-200 dark:bg-slate-700 text-foreground"
-              }`}>
-                {dossierData.trips.length}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setVehicleDossierTab("ALL")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-colors ${
-                vehicleDossierTab === "ALL"
-                  ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-2xs"
-                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-              }`}
-            >
-              <Layers className="h-3.5 w-3.5" />
-              <span>Complete 360° Dossier (All Columns)</span>
             </button>
           </div>
 
