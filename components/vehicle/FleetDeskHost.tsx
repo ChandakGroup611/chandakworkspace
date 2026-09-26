@@ -629,7 +629,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   const [viewingTrip, setViewingTrip] = useState<TripRecord | null>(null);
   const [viewingPart, setViewingPart] = useState<PartAccessoryRecord | null>(null);
   const [viewingVendor, setViewingVendor] = useState<InsuranceVendorRecord | null>(null);
-  const [optionsVehicle, setOptionsVehicle] = useState<VehicleRecord | null>(null);
 
   // Vehicle Master Dossier Multi-Column / Tab View States
   const [vehicleDossierTab, setVehicleDossierTab] = useState<
@@ -1654,27 +1653,17 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   // Auto-fetch documents for viewingVehicle dossier if not already populated
   useEffect(() => {
     if (viewingVehicle?.id && (!viewingVehicle.documents || viewingVehicle.documents.length === 0)) {
-      fetchVehicleDocumentsAction(viewingVehicle.id).then((res) => {
+      const vId = viewingVehicle.id;
+      fetchVehicleDocumentsAction(vId).then((res) => {
         if (res.success && res.documents && res.documents.length > 0) {
-          setViewingVehicle((prev) => (prev && prev.id === viewingVehicle.id ? { ...prev, documents: res.documents } : prev));
-        }
-      });
-    }
-  }, [viewingVehicle?.id]);
-
-  // Auto-fetch documents for optionsVehicle if not already populated
-  useEffect(() => {
-    if (optionsVehicle?.id && (!optionsVehicle.documents || optionsVehicle.documents.length === 0)) {
-      fetchVehicleDocumentsAction(optionsVehicle.id).then((res) => {
-        if (res.success && res.documents && res.documents.length > 0) {
-          setOptionsVehicle((prev) => (prev && prev.id === optionsVehicle.id ? { ...prev, documents: res.documents } : prev));
+          setViewingVehicle((prev) => (prev && prev.id === vId ? { ...prev, documents: res.documents } : prev));
           setVehicles((prev) =>
-            prev.map((v) => (v.id === optionsVehicle.id ? { ...v, documents: res.documents } : v))
+            prev.map((v) => (v.id === vId ? { ...v, documents: res.documents } : v))
           );
         }
       });
     }
-  }, [optionsVehicle?.id]);
+  }, [viewingVehicle?.id]);
 
   // Vehicle Dossier Computed Statistics and Subsystem Entities
   const dossierData = useMemo(() => {
@@ -6048,7 +6037,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       return (
                         <AppTableRow 
                           key={veh.id} 
-                          onClick={() => setOptionsVehicle(veh)}
+                          onClick={() => {
+                            setViewingVehicle(veh);
+                            setVehicleDossierTab("ALL");
+                          }}
                           className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group"
                         >
                           {/* 1. Vehicle Name & Regn No */}
@@ -6216,15 +6208,16 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                               <AppButton
                                 variant="primary"
                                 size="sm"
-                                title="Open Vehicle Options & Details Menu"
+                                title="Open Complete Vehicle Master Dossier & Details"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  setOptionsVehicle(veh);
+                                  setViewingVehicle(veh);
+                                  setVehicleDossierTab("ALL");
                                 }}
                                 className="h-7 px-2.5 text-xs gap-1 font-semibold bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white shadow-2xs"
                               >
-                                <Car className="h-3 w-3" />
-                                <span>Options</span>
+                                <Eye className="h-3 w-3" />
+                                <span>View Details</span>
                               </AppButton>
                               <AppButton
                                 variant="outline"
@@ -6298,303 +6291,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           </AppCardContent>
         </AppCard>
       )}
-
-      {/* ========================================================================= */}
-      {/* VEHICLE OPTIONS & ACTIONS HUB MODAL */}
-      {/* ========================================================================= */}
-      {optionsVehicle && (() => {
-        const norm = (s?: string | null) => (s || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
-        const targetId = optionsVehicle.id;
-        const targetPlate = norm(optionsVehicle.registration_number);
-
-        const vServices = maintenance.filter(
-          (m) =>
-            (m.vehicle_id && m.vehicle_id === targetId) ||
-            (m.vehicle_reg && norm(m.vehicle_reg) === targetPlate)
-        );
-        const totalSvcSpend = vServices.reduce((sum, s) => sum + (Number(s.cost) || 0), 0);
-
-        const vParts = parts.filter(
-          (p) =>
-            (p.vehicle_id && p.vehicle_id === targetId) ||
-            (p.assigned_vehicle_reg && norm(p.assigned_vehicle_reg) === targetPlate)
-        );
-        const totalPartsVal = vParts.reduce((sum, p) => sum + (Number(p.purchase_amount) || 0), 0);
-
-        const vTrips = trips.filter(
-          (t) =>
-            (t.vehicle_id && t.vehicle_id === targetId) ||
-            (t.vehicle_reg && norm(t.vehicle_reg) === targetPlate)
-        );
-
-        const vDocs = optionsVehicle.documents || [];
-
-        return (
-          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
-            <div className="bg-surface border border-border rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-              
-              {/* Modal Header */}
-              <div className="p-5 border-b border-border bg-slate-50/70 dark:bg-slate-900/70 flex items-start justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-11 w-11 rounded-xl bg-theme-btn-primary/10 border border-theme-btn-primary/25 flex items-center justify-center text-theme-btn-primary shrink-0 shadow-2xs">
-                    <Car className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-base font-bold text-foreground">
-                        {optionsVehicle.make} {optionsVehicle.model} {optionsVehicle.year ? `(${optionsVehicle.year})` : ""}
-                      </h3>
-                      {renderHsrpPlate(optionsVehicle.registration_number)}
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                        optionsVehicle.status === "IN_STOCK"
-                          ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
-                          : optionsVehicle.status === "IN_SERVICE"
-                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
-                          : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
-                      }`}>
-                        {optionsVehicle.status === "IN_STOCK" ? "Available" : optionsVehicle.status === "IN_SERVICE" ? "On Route" : optionsVehicle.status}
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Select an option below to view detailed records and management tools for this vehicle
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setOptionsVehicle(null)}
-                  className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-
-              {/* Modal Body: Option Cards */}
-              <div className="p-5 space-y-3.5 max-h-[70vh] overflow-y-auto">
-                
-                {/* Quick Summary Badges */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs pb-2 border-b border-border/60">
-                  <div className="p-2.5 rounded-xl bg-amber-500/5 border border-amber-500/20 space-y-0.5">
-                    <span className="text-[10px] font-bold text-amber-800 dark:text-amber-300 uppercase">Workshop Services</span>
-                    <div className="font-bold text-foreground text-xs">{vServices.length} Records</div>
-                    <div className="text-[10px] font-mono text-muted-foreground">₹{totalSvcSpend.toLocaleString("en-IN")} Spend</div>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-blue-500/5 border border-blue-500/20 space-y-0.5">
-                    <span className="text-[10px] font-bold text-blue-800 dark:text-blue-300 uppercase">Spare Parts</span>
-                    <div className="font-bold text-foreground text-xs">{vParts.length} Mounted</div>
-                    <div className="text-[10px] font-mono text-muted-foreground">₹{totalPartsVal.toLocaleString("en-IN")} Value</div>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 space-y-0.5">
-                    <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 uppercase">Document Vault</span>
-                    <div className="font-bold text-foreground text-xs">{vDocs.length} Archived</div>
-                    <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">PUC & Insurance</div>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-purple-500/5 border border-purple-500/20 space-y-0.5">
-                    <span className="text-[10px] font-bold text-purple-800 dark:text-purple-300 uppercase">Trips & Dispatches</span>
-                    <div className="font-bold text-foreground text-xs">{vTrips.length} Journeys</div>
-                    <div className="text-[10px] text-muted-foreground truncate">{optionsVehicle.assignedDriver?.full_name || "Unassigned"}</div>
-                  </div>
-                </div>
-
-                <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                  Vehicle Options & Details:
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  
-                  {/* 1. Vehicle Service Details */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const target = optionsVehicle;
-                      setOptionsVehicle(null);
-                      setViewingVehicle(target);
-                      setVehicleDossierTab("SERVICES");
-                    }}
-                    className="p-3.5 rounded-xl border border-border bg-surface hover:border-amber-500 hover:bg-amber-500/5 text-left transition-all group flex items-start gap-3 shadow-2xs cursor-pointer"
-                  >
-                    <div className="h-9 w-9 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-600 flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform shadow-2xs">
-                      <Wrench className="h-4 w-4" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="font-bold text-foreground text-xs flex items-center justify-between">
-                        <span className="group-hover:text-amber-600 transition-colors">Vehicle Service Details</span>
-                        <span className="text-[10px] font-mono font-bold text-amber-600">{vServices.length} Svc</span>
-                      </div>
-                      <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
-                        View workshop repair logs, job sheets, technicians, invoice numbers, spend & log new services.
-                      </p>
-                    </div>
-                  </button>
-
-                  {/* 2. Spare Parts Details */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const target = optionsVehicle;
-                      setOptionsVehicle(null);
-                      setViewingVehicle(target);
-                      setVehicleDossierTab("PARTS");
-                    }}
-                    className="p-3.5 rounded-xl border border-border bg-surface hover:border-blue-500 hover:bg-blue-500/5 text-left transition-all group flex items-start gap-3 shadow-2xs cursor-pointer"
-                  >
-                    <div className="h-9 w-9 rounded-lg bg-blue-500/10 border border-blue-500/25 text-blue-600 flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform shadow-2xs">
-                      <Package className="h-4 w-4" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="font-bold text-foreground text-xs flex items-center justify-between">
-                        <span className="group-hover:text-blue-600 transition-colors">Spare Parts Details</span>
-                        <span className="text-[10px] font-mono font-bold text-blue-600">{vParts.length} Parts</span>
-                      </div>
-                      <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
-                        View mounted tires, batteries, GPS units, warranty counters, serial numbers & mount new parts.
-                      </p>
-                    </div>
-                  </button>
-
-                  {/* 3. Document Details */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const target = optionsVehicle;
-                      setOptionsVehicle(null);
-                      setViewingVehicle(target);
-                      setVehicleDossierTab("DOCS");
-                    }}
-                    className="p-3.5 rounded-xl border border-border bg-surface hover:border-emerald-500 hover:bg-emerald-500/5 text-left transition-all group flex items-start gap-3 shadow-2xs cursor-pointer"
-                  >
-                    <div className="h-9 w-9 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform shadow-2xs">
-                      <FileCheck className="h-4 w-4" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="font-bold text-foreground text-xs flex items-center justify-between">
-                        <span className="group-hover:text-emerald-600 transition-colors">Document Details</span>
-                        <span className="text-[10px] font-mono font-bold text-emerald-600">{vDocs.length} Docs</span>
-                      </div>
-                      <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
-                        PUC, Insurance, RC Book Smart Card, Fitness, with View (Lightbox Modal), Download & Upload.
-                      </p>
-                    </div>
-                  </button>
-
-                  {/* 4. Statutory Compliance & Renewals */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const target = optionsVehicle;
-                      setOptionsVehicle(null);
-                      setViewingVehicle(target);
-                      setVehicleDossierTab("COMPLIANCE");
-                    }}
-                    className="p-3.5 rounded-xl border border-border bg-surface hover:border-cyan-500 hover:bg-cyan-500/5 text-left transition-all group flex items-start gap-3 shadow-2xs cursor-pointer"
-                  >
-                    <div className="h-9 w-9 rounded-lg bg-cyan-500/10 border border-cyan-500/25 text-cyan-600 flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform shadow-2xs">
-                      <ShieldCheck className="h-4 w-4" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="font-bold text-foreground text-xs flex items-center justify-between">
-                        <span className="group-hover:text-cyan-600 transition-colors">Compliance & Renewals</span>
-                        <span className="text-[10px] font-mono font-bold text-cyan-600">Active</span>
-                      </div>
-                      <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
-                        Motor insurance policies, PUC validity, fitness certificates, RSA status & renewal ledger.
-                      </p>
-                    </div>
-                  </button>
-
-                  {/* 5. Trip Movements & Dispatch Logs */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const target = optionsVehicle;
-                      setOptionsVehicle(null);
-                      setViewingVehicle(target);
-                      setVehicleDossierTab("TRIPS");
-                    }}
-                    className="p-3.5 rounded-xl border border-border bg-surface hover:border-purple-500 hover:bg-purple-500/5 text-left transition-all group flex items-start gap-3 shadow-2xs cursor-pointer"
-                  >
-                    <div className="h-9 w-9 rounded-lg bg-purple-500/10 border border-purple-500/25 text-purple-600 flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform shadow-2xs">
-                      <MapPin className="h-4 w-4" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="font-bold text-foreground text-xs flex items-center justify-between">
-                        <span className="group-hover:text-purple-600 transition-colors">Trip Movements</span>
-                        <span className="text-[10px] font-mono font-bold text-purple-600">{vTrips.length} Trips</span>
-                      </div>
-                      <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
-                        Passenger transit history, route logs, chauffeur assignments, and dispatch schedules.
-                      </p>
-                    </div>
-                  </button>
-
-                  {/* 6. Technical Specifications & Specs History */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const target = optionsVehicle;
-                      setOptionsVehicle(null);
-                      setViewingVehicle(target);
-                      setVehicleDossierTab("OVERVIEW");
-                    }}
-                    className="p-3.5 rounded-xl border border-border bg-surface hover:border-indigo-500 hover:bg-indigo-500/5 text-left transition-all group flex items-start gap-3 shadow-2xs cursor-pointer"
-                  >
-                    <div className="h-9 w-9 rounded-lg bg-indigo-500/10 border border-indigo-500/25 text-indigo-600 flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform shadow-2xs">
-                      <Gauge className="h-4 w-4" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="font-bold text-foreground text-xs flex items-center justify-between">
-                        <span className="group-hover:text-indigo-600 transition-colors">Specifications & Identity</span>
-                        <span className="text-[10px] font-mono font-bold text-indigo-600">Specs</span>
-                      </div>
-                      <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
-                        VIN/Chassis #, Engine #, Purchase Price (₹), Custom Extended Expiry, RTO Jurisdiction.
-                      </p>
-                    </div>
-                  </button>
-
-                </div>
-
-                {/* Bottom Secondary Actions */}
-                <div className="pt-3 border-t border-border flex items-center justify-between gap-2 flex-wrap">
-                  {canEditVehicle && (
-                    <AppButton
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const target = optionsVehicle;
-                        setOptionsVehicle(null);
-                        openEditVehicleModal(target);
-                      }}
-                      className="text-xs h-8 px-3 gap-1.5 font-semibold"
-                    >
-                      <Edit2 className="h-3.5 w-3.5" />
-                      <span>Edit Vehicle Details</span>
-                    </AppButton>
-                  )}
-
-                  <AppButton
-                    type="button"
-                    variant="primary"
-                    size="sm"
-                    onClick={() => {
-                      const target = optionsVehicle;
-                      setOptionsVehicle(null);
-                      setViewingVehicle(target);
-                      setVehicleDossierTab("ALL");
-                    }}
-                    className="text-xs h-8 px-3.5 gap-1.5 font-semibold bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white shadow-2xs ml-auto"
-                  >
-                    <Layers className="h-3.5 w-3.5" />
-                    <span>View All Details (360° Dossier)</span>
-                  </AppButton>
-                </div>
-
-              </div>
-            </div>
-          </div>
-        );
-      })()}
 
       {/* ---------------------------------------------------------------------- */}
       {/* DRIVERS DIRECTORY TAB */}
@@ -14504,20 +14200,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           backLabel="Back to Fleet"
           headerActions={
             <div className="flex items-center gap-2 flex-wrap">
-              <AppButton
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const target = viewingVehicle;
-                  setViewingVehicle(null);
-                  setOptionsVehicle(target);
-                }}
-                className="text-xs h-9 px-3 gap-1.5 font-semibold text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-              >
-                <Car className="h-3.5 w-3.5 text-theme-btn-primary" />
-                <span>Options Menu</span>
-              </AppButton>
               {canEditVehicle && (
                 <AppButton
                   type="button"
@@ -14666,240 +14348,491 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             </div>
           </div>
 
-          {/* 2. DOSSIER COLUMNS & SECTIONS TAB NAVIGATION BAR */}
-          <div className="bg-surface/80 backdrop-blur-md p-2 rounded-2xl border border-border/80 shadow-xs flex items-center gap-2 overflow-x-auto no-scrollbar sticky top-0 z-20">
-            <button
-              type="button"
-              onClick={() => setVehicleDossierTab("ALL")}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shrink-0 transition-all ${
-                vehicleDossierTab === "ALL"
-                  ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-sm ring-2 ring-slate-900/20"
-                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-              }`}
-            >
-              <Layers className="h-4 w-4 text-theme-btn-primary" />
-              <span>360° All Columns (Everything)</span>
-            </button>
-
+          {/* 2. TOP METRICS & ASSET SUMMARY BADGES */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {/* 1. Workshop Services */}
             <button
               type="button"
               onClick={() => setVehicleDossierTab("SERVICES")}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shrink-0 transition-all ${
+              className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer shadow-2xs group ${
                 vehicleDossierTab === "SERVICES"
-                  ? "bg-amber-600 text-white shadow-sm ring-2 ring-amber-600/20"
-                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-              }`}
-            >
-              <Wrench className="h-4 w-4" />
-              <span>Service Details</span>
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                vehicleDossierTab === "SERVICES" ? "bg-white/25 text-white" : "bg-amber-500/15 text-amber-700 dark:text-amber-300"
-              }`}>
-                {dossierData.services.length} Svc
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setVehicleDossierTab("PARTS")}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shrink-0 transition-all ${
-                vehicleDossierTab === "PARTS"
-                  ? "bg-blue-600 text-white shadow-sm ring-2 ring-blue-600/20"
-                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-              }`}
-            >
-              <Package className="h-4 w-4" />
-              <span>Spare Parts Details</span>
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                vehicleDossierTab === "PARTS" ? "bg-white/25 text-white" : "bg-blue-500/15 text-blue-700 dark:text-blue-300"
-              }`}>
-                {dossierData.parts.length} Parts
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setVehicleDossierTab("DOCS")}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shrink-0 transition-all ${
-                vehicleDossierTab === "DOCS"
-                  ? "bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-600/20"
-                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-              }`}
-            >
-              <FileCheck className="h-4 w-4" />
-              <span>Document Vault</span>
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                vehicleDossierTab === "DOCS" ? "bg-white/25 text-white" : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-              }`}>
-                {dossierData.docs.length} Docs
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setVehicleDossierTab("COMPLIANCE")}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shrink-0 transition-all ${
-                vehicleDossierTab === "COMPLIANCE"
-                  ? "bg-cyan-600 text-white shadow-sm ring-2 ring-cyan-600/20"
-                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-              }`}
-            >
-              <ShieldCheck className="h-4 w-4" />
-              <span>Compliance & Renewals</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setVehicleDossierTab("TRIPS")}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shrink-0 transition-all ${
-                vehicleDossierTab === "TRIPS"
-                  ? "bg-purple-600 text-white shadow-sm ring-2 ring-purple-600/20"
-                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-              }`}
-            >
-              <MapPin className="h-4 w-4" />
-              <span>Trip Movements</span>
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                vehicleDossierTab === "TRIPS" ? "bg-white/25 text-white" : "bg-purple-500/15 text-purple-700 dark:text-purple-300"
-              }`}>
-                {dossierData.trips.length} Trips
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setVehicleDossierTab("OVERVIEW")}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shrink-0 transition-all ${
-                vehicleDossierTab === "OVERVIEW"
-                  ? "bg-theme-btn-primary text-white shadow-sm ring-2 ring-theme-btn-primary/20"
-                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-              }`}
-            >
-              <Car className="h-4 w-4" />
-              <span>Overview & Specs</span>
-            </button>
-          </div>
-
-          {/* 3. CLICKABLE METRIC JUMP TILES */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {/* Tile 1: Services */}
-            <button
-              type="button"
-              onClick={() => setVehicleDossierTab("SERVICES")}
-              className={`p-3.5 rounded-xl border text-left transition-all relative overflow-hidden group cursor-pointer ${
-                vehicleDossierTab === "SERVICES"
-                  ? "border-amber-500/60 bg-amber-500/10 dark:bg-amber-950/20 shadow-xs ring-1 ring-amber-500/30"
-                  : "border-border bg-surface hover:border-amber-500/40 hover:bg-slate-50/50 dark:hover:bg-slate-900/40"
+                  ? "border-amber-500 bg-amber-500/10 dark:bg-amber-950/30 ring-2 ring-amber-500/30 shadow-xs"
+                  : "border-border bg-surface hover:border-amber-500/40 hover:bg-amber-500/5"
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
-                  <Wrench className="h-4 w-4" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                  <Wrench className="h-3.5 w-3.5" />
                   <span>Workshop Services</span>
                 </span>
                 <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300">
-                  {dossierData.services.length}
+                  {dossierData.services.length} Records
                 </span>
               </div>
-              <div className="text-lg font-bold text-foreground mt-2 font-mono">
-                ₹{dossierData.totalServiceSpend.toLocaleString("en-IN")}
+              <div className="text-base font-bold text-foreground mt-1.5 font-mono">
+                ₹{dossierData.totalServiceSpend.toLocaleString("en-IN")} <span className="text-[10px] font-normal text-muted-foreground font-sans">Spend</span>
               </div>
               <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
                 {dossierData.lastService ? `Last: ${dossierData.lastService.service_date}` : "No service logs yet"}
               </div>
             </button>
 
-            {/* Tile 2: Mounted Spare Parts */}
+            {/* 2. Spare Parts */}
             <button
               type="button"
               onClick={() => setVehicleDossierTab("PARTS")}
-              className={`p-3.5 rounded-xl border text-left transition-all relative overflow-hidden group cursor-pointer ${
+              className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer shadow-2xs group ${
                 vehicleDossierTab === "PARTS"
-                  ? "border-blue-500/60 bg-blue-500/10 dark:bg-blue-950/20 shadow-xs ring-1 ring-blue-500/30"
-                  : "border-border bg-surface hover:border-blue-500/40 hover:bg-slate-50/50 dark:hover:bg-slate-900/40"
+                  ? "border-blue-500 bg-blue-500/10 dark:bg-blue-950/30 ring-2 ring-blue-500/30 shadow-xs"
+                  : "border-border bg-surface hover:border-blue-500/40 hover:bg-blue-500/5"
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400 flex items-center gap-1.5">
-                  <Package className="h-4 w-4" />
-                  <span>Spare Parts & Assets</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400 flex items-center gap-1.5">
+                  <Package className="h-3.5 w-3.5" />
+                  <span>Spare Parts</span>
                 </span>
                 <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-700 dark:text-blue-300">
-                  {dossierData.parts.length}
+                  {dossierData.parts.length} Mounted
                 </span>
               </div>
-              <div className="text-lg font-bold text-foreground mt-2 font-mono">
-                ₹{dossierData.totalPartsValue.toLocaleString("en-IN")}
+              <div className="text-base font-bold text-foreground mt-1.5 font-mono">
+                ₹{dossierData.totalPartsValue.toLocaleString("en-IN")} <span className="text-[10px] font-normal text-muted-foreground font-sans">Value</span>
               </div>
               <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
                 {dossierData.activeWarrantiesCount} mounted parts under warranty
               </div>
             </button>
 
-            {/* Tile 3: Document Vault */}
+            {/* 3. Document Vault */}
             <button
               type="button"
               onClick={() => setVehicleDossierTab("DOCS")}
-              className={`p-3.5 rounded-xl border text-left transition-all relative overflow-hidden group cursor-pointer ${
+              className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer shadow-2xs group ${
                 vehicleDossierTab === "DOCS"
-                  ? "border-emerald-500/60 bg-emerald-500/10 dark:bg-emerald-950/20 shadow-xs ring-1 ring-emerald-500/30"
-                  : "border-border bg-surface hover:border-emerald-500/40 hover:bg-slate-50/50 dark:hover:bg-slate-900/40"
+                  ? "border-emerald-500 bg-emerald-500/10 dark:bg-emerald-950/30 ring-2 ring-emerald-500/30 shadow-xs"
+                  : "border-border bg-surface hover:border-emerald-500/40 hover:bg-emerald-500/5"
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
-                  <FileCheck className="h-4 w-4" />
-                  <span>Legal Document Vault</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+                  <FileCheck className="h-3.5 w-3.5" />
+                  <span>Document Vault</span>
                 </span>
                 <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
-                  {dossierData.docs.length}
+                  {dossierData.docs.length} Archived
                 </span>
               </div>
-              <div className="text-lg font-bold text-foreground mt-2">
+              <div className="text-base font-bold text-foreground mt-1.5 flex items-center gap-1.5">
                 {dossierData.expiredDocsCount > 0 ? (
-                  <span className="text-rose-600 dark:text-rose-400 text-sm font-semibold">
-                    {dossierData.expiredDocsCount} Expired
+                  <span className="text-rose-600 dark:text-rose-400 text-xs font-bold">
+                    {dossierData.expiredDocsCount} Expired Doc(s)
                   </span>
                 ) : dossierData.docs.length > 0 ? (
-                  <span className="text-emerald-600 dark:text-emerald-400 text-sm font-semibold">
+                  <span className="text-emerald-600 dark:text-emerald-400 text-xs font-bold">
                     All Valid & Archived
                   </span>
                 ) : (
-                  <span className="text-amber-600 dark:text-amber-400 text-sm font-semibold">
+                  <span className="text-amber-600 dark:text-amber-400 text-xs font-bold">
                     No Files Attached
                   </span>
                 )}
               </div>
               <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
-                PUC, Insurance, RC Smart Card & Permits
+                PUC, Insurance & RC Smart Card
               </div>
             </button>
 
-            {/* Tile 4: Trips Movement */}
+            {/* 4. Trips & Dispatches */}
             <button
               type="button"
               onClick={() => setVehicleDossierTab("TRIPS")}
-              className={`p-3.5 rounded-xl border text-left transition-all relative overflow-hidden group cursor-pointer ${
+              className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer shadow-2xs group ${
                 vehicleDossierTab === "TRIPS"
-                  ? "border-purple-500/60 bg-purple-500/10 dark:bg-purple-950/20 shadow-xs ring-1 ring-purple-500/30"
-                  : "border-border bg-surface hover:border-purple-500/40 hover:bg-slate-50/50 dark:hover:bg-slate-900/40"
+                  ? "border-purple-500 bg-purple-500/10 dark:bg-purple-950/30 ring-2 ring-purple-500/30 shadow-xs"
+                  : "border-border bg-surface hover:border-purple-500/40 hover:bg-purple-500/5"
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-400 flex items-center gap-1.5">
-                  <MapPin className="h-4 w-4" />
-                  <span>Trip Movements</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-400 flex items-center gap-1.5">
+                  <MapPin className="h-3.5 w-3.5" />
+                  <span>Trips & Dispatches</span>
                 </span>
                 <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-700 dark:text-purple-300">
-                  {dossierData.trips.length}
+                  {dossierData.trips.length} Journeys
                 </span>
               </div>
-              <div className="text-lg font-bold text-foreground mt-2">
+              <div className="text-base font-bold text-foreground mt-1.5">
                 {dossierData.completedTripsCount} <span className="text-xs text-muted-foreground font-normal">Completed</span>
               </div>
               <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
-                {dossierData.activeTripsCount} scheduled or en-route
+                {viewingVehicle.assignedDriver?.full_name || "Unassigned Pool"}
               </div>
+            </button>
+          </div>
+
+          {/* 3. VEHICLE OPTIONS & SECTIONS HUB (RICH OPTION SELECTOR LIST ABOVE DETAILS) */}
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <Layers className="h-3.5 w-3.5 text-theme-btn-primary" />
+                <span>Vehicle Options & Details:</span>
+              </div>
+              <div className="text-[11px] text-muted-foreground">
+                Select an option below to filter sections or choose 360° All Columns
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
+              
+              {/* Option 0: 360° All Columns */}
+              <button
+                type="button"
+                onClick={() => setVehicleDossierTab("ALL")}
+                className={`p-3 rounded-xl border text-left transition-all group flex items-start gap-3 shadow-2xs cursor-pointer ${
+                  vehicleDossierTab === "ALL"
+                    ? "border-slate-900 dark:border-slate-100 bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 ring-2 ring-slate-900/20"
+                    : "border-border bg-surface hover:border-theme-btn-primary hover:bg-slate-50/60 dark:hover:bg-slate-900/40"
+                }`}
+              >
+                <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-transform group-hover:scale-105 shadow-2xs ${
+                  vehicleDossierTab === "ALL"
+                    ? "bg-white/20 text-white dark:bg-slate-900/20 dark:text-slate-900"
+                    : "bg-theme-btn-primary/10 border border-theme-btn-primary/20 text-theme-btn-primary"
+                }`}>
+                  <Layers className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="font-bold text-xs flex items-center justify-between">
+                    <span className={vehicleDossierTab === "ALL" ? "" : "text-foreground group-hover:text-theme-btn-primary"}>
+                      360° All Columns
+                    </span>
+                    <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded ${
+                      vehicleDossierTab === "ALL"
+                        ? "bg-white/20 text-white dark:bg-slate-900/20 dark:text-slate-900"
+                        : "bg-theme-btn-primary/10 text-theme-btn-primary"
+                    }`}>
+                      Full Dossier
+                    </span>
+                  </div>
+                  <p className={`text-[11px] mt-0.5 leading-snug line-clamp-2 ${
+                    vehicleDossierTab === "ALL" ? "text-slate-200 dark:text-slate-700" : "text-muted-foreground"
+                  }`}>
+                    Complete dossier with powertrain specs, workshop logs, spare parts, document vault & trips.
+                  </p>
+                </div>
+              </button>
+
+              {/* Option 1: Vehicle Service Details */}
+              <button
+                type="button"
+                onClick={() => setVehicleDossierTab("SERVICES")}
+                className={`p-3 rounded-xl border text-left transition-all group flex items-start gap-3 shadow-2xs cursor-pointer ${
+                  vehicleDossierTab === "SERVICES"
+                    ? "border-amber-600 bg-amber-600 text-white ring-2 ring-amber-600/20"
+                    : "border-border bg-surface hover:border-amber-500 hover:bg-amber-500/5"
+                }`}
+              >
+                <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-transform group-hover:scale-105 shadow-2xs ${
+                  vehicleDossierTab === "SERVICES"
+                    ? "bg-white/20 text-white"
+                    : "bg-amber-500/10 border border-amber-500/25 text-amber-600"
+                }`}>
+                  <Wrench className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="font-bold text-xs flex items-center justify-between">
+                    <span className={vehicleDossierTab === "SERVICES" ? "" : "text-foreground group-hover:text-amber-600"}>
+                      Vehicle Service Details
+                    </span>
+                    <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded ${
+                      vehicleDossierTab === "SERVICES" ? "bg-white/20 text-white" : "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                    }`}>
+                      {dossierData.services.length} Svc
+                    </span>
+                  </div>
+                  <p className={`text-[11px] mt-0.5 leading-snug line-clamp-2 ${
+                    vehicleDossierTab === "SERVICES" ? "text-amber-100" : "text-muted-foreground"
+                  }`}>
+                    View workshop repair logs, job sheets, technicians, invoice numbers, spend & log new services.
+                  </p>
+                </div>
+              </button>
+
+              {/* Option 2: Spare Parts Details */}
+              <button
+                type="button"
+                onClick={() => setVehicleDossierTab("PARTS")}
+                className={`p-3 rounded-xl border text-left transition-all group flex items-start gap-3 shadow-2xs cursor-pointer ${
+                  vehicleDossierTab === "PARTS"
+                    ? "border-blue-600 bg-blue-600 text-white ring-2 ring-blue-600/20"
+                    : "border-border bg-surface hover:border-blue-500 hover:bg-blue-500/5"
+                }`}
+              >
+                <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-transform group-hover:scale-105 shadow-2xs ${
+                  vehicleDossierTab === "PARTS"
+                    ? "bg-white/20 text-white"
+                    : "bg-blue-500/10 border border-blue-500/25 text-blue-600"
+                }`}>
+                  <Package className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="font-bold text-xs flex items-center justify-between">
+                    <span className={vehicleDossierTab === "PARTS" ? "" : "text-foreground group-hover:text-blue-600"}>
+                      Spare Parts Details
+                    </span>
+                    <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded ${
+                      vehicleDossierTab === "PARTS" ? "bg-white/20 text-white" : "bg-blue-500/15 text-blue-700 dark:text-blue-300"
+                    }`}>
+                      {dossierData.parts.length} Parts
+                    </span>
+                  </div>
+                  <p className={`text-[11px] mt-0.5 leading-snug line-clamp-2 ${
+                    vehicleDossierTab === "PARTS" ? "text-blue-100" : "text-muted-foreground"
+                  }`}>
+                    View mounted tires, batteries, GPS units, warranty counters, serial numbers & mount new parts.
+                  </p>
+                </div>
+              </button>
+
+              {/* Option 3: Document Details */}
+              <button
+                type="button"
+                onClick={() => setVehicleDossierTab("DOCS")}
+                className={`p-3 rounded-xl border text-left transition-all group flex items-start gap-3 shadow-2xs cursor-pointer ${
+                  vehicleDossierTab === "DOCS"
+                    ? "border-emerald-600 bg-emerald-600 text-white ring-2 ring-emerald-600/20"
+                    : "border-border bg-surface hover:border-emerald-500 hover:bg-emerald-500/5"
+                }`}
+              >
+                <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-transform group-hover:scale-105 shadow-2xs ${
+                  vehicleDossierTab === "DOCS"
+                    ? "bg-white/20 text-white"
+                    : "bg-emerald-500/10 border border-emerald-500/25 text-emerald-600"
+                }`}>
+                  <FileCheck className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="font-bold text-xs flex items-center justify-between">
+                    <span className={vehicleDossierTab === "DOCS" ? "" : "text-foreground group-hover:text-emerald-600"}>
+                      Document Details
+                    </span>
+                    <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded ${
+                      vehicleDossierTab === "DOCS" ? "bg-white/20 text-white" : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                    }`}>
+                      {dossierData.docs.length} Docs
+                    </span>
+                  </div>
+                  <p className={`text-[11px] mt-0.5 leading-snug line-clamp-2 ${
+                    vehicleDossierTab === "DOCS" ? "text-emerald-100" : "text-muted-foreground"
+                  }`}>
+                    PUC, Insurance, RC Book Smart Card, Fitness, with Lightbox Preview, Download & Upload.
+                  </p>
+                </div>
+              </button>
+
+              {/* Option 4: Compliance & Renewals */}
+              <button
+                type="button"
+                onClick={() => setVehicleDossierTab("COMPLIANCE")}
+                className={`p-3 rounded-xl border text-left transition-all group flex items-start gap-3 shadow-2xs cursor-pointer ${
+                  vehicleDossierTab === "COMPLIANCE"
+                    ? "border-cyan-600 bg-cyan-600 text-white ring-2 ring-cyan-600/20"
+                    : "border-border bg-surface hover:border-cyan-500 hover:bg-cyan-500/5"
+                }`}
+              >
+                <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-transform group-hover:scale-105 shadow-2xs ${
+                  vehicleDossierTab === "COMPLIANCE"
+                    ? "bg-white/20 text-white"
+                    : "bg-cyan-500/10 border border-cyan-500/25 text-cyan-600"
+                }`}>
+                  <ShieldCheck className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="font-bold text-xs flex items-center justify-between">
+                    <span className={vehicleDossierTab === "COMPLIANCE" ? "" : "text-foreground group-hover:text-cyan-600"}>
+                      Compliance & Renewals
+                    </span>
+                    <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded ${
+                      vehicleDossierTab === "COMPLIANCE" ? "bg-white/20 text-white" : "bg-cyan-500/15 text-cyan-700 dark:text-cyan-300"
+                    }`}>
+                      Active
+                    </span>
+                  </div>
+                  <p className={`text-[11px] mt-0.5 leading-snug line-clamp-2 ${
+                    vehicleDossierTab === "COMPLIANCE" ? "text-cyan-100" : "text-muted-foreground"
+                  }`}>
+                    Motor insurance policies, PUC validity, fitness certificates, RSA status & renewal ledger.
+                  </p>
+                </div>
+              </button>
+
+              {/* Option 5: Trip Movements */}
+              <button
+                type="button"
+                onClick={() => setVehicleDossierTab("TRIPS")}
+                className={`p-3 rounded-xl border text-left transition-all group flex items-start gap-3 shadow-2xs cursor-pointer ${
+                  vehicleDossierTab === "TRIPS"
+                    ? "border-purple-600 bg-purple-600 text-white ring-2 ring-purple-600/20"
+                    : "border-border bg-surface hover:border-purple-500 hover:bg-purple-500/5"
+                }`}
+              >
+                <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-transform group-hover:scale-105 shadow-2xs ${
+                  vehicleDossierTab === "TRIPS"
+                    ? "bg-white/20 text-white"
+                    : "bg-purple-500/10 border border-purple-500/25 text-purple-600"
+                }`}>
+                  <MapPin className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="font-bold text-xs flex items-center justify-between">
+                    <span className={vehicleDossierTab === "TRIPS" ? "" : "text-foreground group-hover:text-purple-600"}>
+                      Trip Movements
+                    </span>
+                    <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded ${
+                      vehicleDossierTab === "TRIPS" ? "bg-white/20 text-white" : "bg-purple-500/15 text-purple-700 dark:text-purple-300"
+                    }`}>
+                      {dossierData.trips.length} Trips
+                    </span>
+                  </div>
+                  <p className={`text-[11px] mt-0.5 leading-snug line-clamp-2 ${
+                    vehicleDossierTab === "TRIPS" ? "text-purple-100" : "text-muted-foreground"
+                  }`}>
+                    Passenger transit history, route logs, chauffeur assignments, and dispatch schedules.
+                  </p>
+                </div>
+              </button>
+
+              {/* Option 6: Technical Specifications & Identity */}
+              <button
+                type="button"
+                onClick={() => setVehicleDossierTab("OVERVIEW")}
+                className={`p-3 rounded-xl border text-left transition-all group flex items-start gap-3 shadow-2xs cursor-pointer ${
+                  vehicleDossierTab === "OVERVIEW"
+                    ? "border-indigo-600 bg-indigo-600 text-white ring-2 ring-indigo-600/20"
+                    : "border-border bg-surface hover:border-indigo-500 hover:bg-indigo-500/5"
+                }`}
+              >
+                <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-transform group-hover:scale-105 shadow-2xs ${
+                  vehicleDossierTab === "OVERVIEW"
+                    ? "bg-white/20 text-white"
+                    : "bg-indigo-500/10 border border-indigo-500/25 text-indigo-600"
+                }`}>
+                  <Gauge className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="font-bold text-xs flex items-center justify-between">
+                    <span className={vehicleDossierTab === "OVERVIEW" ? "" : "text-foreground group-hover:text-indigo-600"}>
+                      Specifications & Identity
+                    </span>
+                    <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded ${
+                      vehicleDossierTab === "OVERVIEW" ? "bg-white/20 text-white" : "bg-indigo-500/15 text-indigo-700 dark:text-indigo-300"
+                    }`}>
+                      Specs
+                    </span>
+                  </div>
+                  <p className={`text-[11px] mt-0.5 leading-snug line-clamp-2 ${
+                    vehicleDossierTab === "OVERVIEW" ? "text-indigo-100" : "text-muted-foreground"
+                  }`}>
+                    VIN/Chassis #, Engine #, Purchase Price (₹), Custom Extended Expiry, RTO Jurisdiction.
+                  </p>
+                </div>
+              </button>
+
+            </div>
+          </div>
+
+          {/* 4. STICKY QUICK TAB SWITCHER BAR */}
+          <div className="bg-surface/90 backdrop-blur-md p-1.5 rounded-xl border border-border shadow-2xs flex items-center gap-1.5 overflow-x-auto no-scrollbar sticky top-0 z-20">
+            <button
+              type="button"
+              onClick={() => setVehicleDossierTab("ALL")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all ${
+                vehicleDossierTab === "ALL"
+                  ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-2xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+              }`}
+            >
+              <Layers className="h-3.5 w-3.5 text-theme-btn-primary" />
+              <span>360° All Columns</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setVehicleDossierTab("SERVICES")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all ${
+                vehicleDossierTab === "SERVICES"
+                  ? "bg-amber-600 text-white shadow-2xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+              }`}
+            >
+              <Wrench className="h-3.5 w-3.5" />
+              <span>Service Details ({dossierData.services.length})</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setVehicleDossierTab("PARTS")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all ${
+                vehicleDossierTab === "PARTS"
+                  ? "bg-blue-600 text-white shadow-2xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+              }`}
+            >
+              <Package className="h-3.5 w-3.5" />
+              <span>Spare Parts ({dossierData.parts.length})</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setVehicleDossierTab("DOCS")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all ${
+                vehicleDossierTab === "DOCS"
+                  ? "bg-emerald-600 text-white shadow-2xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+              }`}
+            >
+              <FileCheck className="h-3.5 w-3.5" />
+              <span>Document Vault ({dossierData.docs.length})</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setVehicleDossierTab("COMPLIANCE")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all ${
+                vehicleDossierTab === "COMPLIANCE"
+                  ? "bg-cyan-600 text-white shadow-2xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+              }`}
+            >
+              <ShieldCheck className="h-3.5 w-3.5" />
+              <span>Compliance & Renewals</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setVehicleDossierTab("TRIPS")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all ${
+                vehicleDossierTab === "TRIPS"
+                  ? "bg-purple-600 text-white shadow-2xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+              }`}
+            >
+              <MapPin className="h-3.5 w-3.5" />
+              <span>Trip Movements ({dossierData.trips.length})</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setVehicleDossierTab("OVERVIEW")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all ${
+                vehicleDossierTab === "OVERVIEW"
+                  ? "bg-indigo-600 text-white shadow-2xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+              }`}
+            >
+              <Gauge className="h-3.5 w-3.5" />
+              <span>Overview & Specs</span>
             </button>
           </div>
 
