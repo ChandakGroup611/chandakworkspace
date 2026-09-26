@@ -208,7 +208,7 @@ interface TransactionFormLayoutProps {
   onBack: () => void;
   backLabel: string;
   onReset?: () => void;
-  onSave?: (e?: any) => void;
+  onSave?: (e?: any) => void | Promise<void>;
   saveLabel?: string;
   saveIcon?: React.ElementType;
   isSubmitting?: boolean;
@@ -320,7 +320,7 @@ function TransactionFormLayout({
               variant="primary"
               size="sm"
               disabled={isSubmitting || isSaveDisabled}
-              onClick={() => onSave()}
+              onClick={(e) => onSave?.(e)}
               className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs px-5"
             >
               {isSubmitting ? (
@@ -385,7 +385,7 @@ function TransactionFormLayout({
               variant="primary"
               size="sm"
               disabled={isSubmitting || isSaveDisabled}
-              onClick={() => onSave()}
+              onClick={(e) => onSave?.(e)}
               className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs px-5"
             >
               {isSubmitting ? (
@@ -1718,8 +1718,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     }
   };
 
-  const handleUpdateVehicle = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleUpdateVehicle = async (e?: React.FormEvent | React.MouseEvent) => {
+    e?.preventDefault?.();
     if (!selectedVehicleForEdit) return;
 
     setModalSubmitting(true);
@@ -1794,7 +1794,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         }));
 
         setSelectedVehicleForEdit(null);
-        await loadAllData(true);
+        fleetDataCache = null;
+        await loadAllData(true, true);
 
         if (selectedVehicleForSpecHistory?.id === updatedVehId) {
           fetchVehicleSpecificationHistoryAction(updatedVehId).then(hRes => {
@@ -1841,8 +1842,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     setIsVendorModalOpen(true);
   };
 
-  const handleSaveVendor = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveVendor = async (e?: React.FormEvent | React.MouseEvent) => {
+    e?.preventDefault?.();
     if (!vendorFormName.trim()) {
       triggerToast("Insurance vendor name is mandatory.", true);
       return;
@@ -1883,7 +1884,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             setEditVehicleInsuranceVendor(res.vendor.name);
           }
         }
-        loadAllData(true);
+        fleetDataCache = null;
+        loadAllData(true, true);
       } else {
         triggerToast(res.error || "Failed to save insurance vendor.", true);
       }
@@ -1912,8 +1914,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   // CRUD Handlers: DRIVERS
   // ----------------------------------------------------------------------------
 
-  const handleCreateDriver = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreateDriver = async (e?: React.FormEvent | React.MouseEvent) => {
+    e?.preventDefault?.();
     if (!newDriverName.trim() || !newDriverPhone.trim() || !newDriverLicense.trim()) {
       triggerToast("Driver name, phone, and license number are required.", true);
       return;
@@ -1941,7 +1943,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         setNewDriverExperience(3);
         setNewDriverEmergency("");
         setNewDriverVehicleId("");
-        loadAllData(true);
+        fleetDataCache = null;
+        loadAllData(true, true);
       } else {
         triggerToast(res.error || "Failed to add driver", true);
       }
@@ -1965,8 +1968,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     setIsEditDriverOpen(true);
   };
 
-  const handleUpdateDriver = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleUpdateDriver = async (e?: React.FormEvent | React.MouseEvent) => {
+    e?.preventDefault?.();
     if (!selectedDriverForEdit) return;
 
     setModalSubmitting(true);
@@ -1986,7 +1989,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         triggerToast(`Driver ${editDriverName} updated successfully!`);
         setIsEditDriverOpen(false);
         setSelectedDriverForEdit(null);
-        loadAllData(true);
+        fleetDataCache = null;
+        loadAllData(true, true);
       } else {
         triggerToast(res.error || "Failed to update driver", true);
       }
@@ -2001,8 +2005,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   // CRUD Handlers: TRIPS & DISPATCH
   // ----------------------------------------------------------------------------
 
-  const handleDispatchTrip = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleDispatchTrip = async (e?: React.FormEvent | React.MouseEvent) => {
+    e?.preventDefault?.();
     if (!newTripVehicleId || !newTripDriverId || !newTripTraveler.trim() || !newTripPurpose.trim() || !newTripOrigin.trim() || !newTripDestination.trim()) {
       triggerToast("Please fill in vehicle, driver, traveler name, purpose, origin and destination.", true);
       return;
@@ -2031,7 +2035,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         setNewTripDestination("");
         setNewTripVehicleId("");
         setNewTripDriverId("");
-        loadAllData(true);
+        fleetDataCache = null;
+        loadAllData(true, true);
       } else {
         triggerToast(res.error || "Failed to dispatch trip", true);
       }
@@ -2063,8 +2068,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   // CRUD Handlers: SERVICE RECORDS & WORKSHOP JOB CARDS
   // ----------------------------------------------------------------------------
 
-  const handleLogMaintenance = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogMaintenance = async (e?: React.FormEvent | React.MouseEvent) => {
+    e?.preventDefault?.();
     if (!newMaintVehicleId || !newMaintServiceType.trim() || !newMaintVendor.trim()) {
       triggerToast("Please select a target vehicle, specify service scope, and authorized workshop.", true);
       return;
@@ -2115,9 +2120,13 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
       if (res.success) {
         triggerToast("Workshop Job Card & Service Bill logged successfully!");
+        if (res.record) {
+          setMaintenance((prev) => [res.record!, ...prev]);
+        }
         setIsAddMaintenanceOpen(false);
         resetMaintenanceForm();
-        loadAllData(true);
+        fleetDataCache = null;
+        loadAllData(true, true);
       } else {
         triggerToast(res.error || "Failed to log maintenance", true);
       }
@@ -2128,8 +2137,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     }
   };
 
-  const handleUpdateMaintenance = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleUpdateMaintenance = async (e?: React.FormEvent | React.MouseEvent) => {
+    e?.preventDefault?.();
     if (!selectedMaintenanceForEdit) return;
     if (!editMaintVehicleId || !editMaintServiceType.trim() || !editMaintVendor.trim()) {
       triggerToast("Please select a target vehicle, specify service scope, and authorized workshop.", true);
@@ -2186,9 +2195,13 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
       if (res.success) {
         triggerToast("Workshop Job Card & Service Bill updated successfully!");
+        if (res.record) {
+          setMaintenance((prev) => prev.map((item) => item.id === res.record!.id ? res.record! : item));
+        }
         setIsEditMaintenanceOpen(false);
         setSelectedMaintenanceForEdit(null);
-        loadAllData(true);
+        fleetDataCache = null;
+        loadAllData(true, true);
       } else {
         triggerToast(res.error || "Failed to update maintenance record", true);
       }
@@ -2326,14 +2339,18 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     setIsEditPartOpen(true);
   };
 
-  const handleSavePart = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSavePart = async (e?: React.FormEvent | React.MouseEvent) => {
+    e?.preventDefault?.();
     if (!partFormName.trim()) {
       triggerToast("Part / Accessory name is required.", true);
       return;
     }
     if (!partFormBrand.trim()) {
       triggerToast("Brand / Manufacturer is required.", true);
+      return;
+    }
+    if (partFormHasRenewal && !partFormRenewalDate) {
+      triggerToast("Please specify the renewal due date for the active renewal policy.", true);
       return;
     }
 
@@ -2422,10 +2439,18 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
       if (res.success) {
         triggerToast(`Part '${payload.name}' saved successfully!`);
+        if (res.part) {
+          if (selectedPartForEdit) {
+            setParts((prev) => prev.map((p) => p.id === res.part!.id ? res.part! : p));
+          } else {
+            setParts((prev) => [res.part!, ...prev]);
+          }
+        }
         setIsAddPartOpen(false);
         setIsEditPartOpen(false);
         setSelectedPartForEdit(null);
-        loadAllData(true);
+        fleetDataCache = null;
+        loadAllData(true, true);
       } else {
         triggerToast(res.error || "Failed to save part record.", true);
       }
@@ -2449,8 +2474,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     setIsRenewPartOpen(true);
   };
 
-  const handleSaveRenewal = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveRenewal = async (e?: React.FormEvent | React.MouseEvent) => {
+    e?.preventDefault?.();
     if (!selectedPartForRenew) return;
     if (!renewModalDate) {
       triggerToast("New renewal date is required.", true);
@@ -2471,7 +2496,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         triggerToast(`Policy for '${selectedPartForRenew.name}' renewed until ${renewModalDate}!`);
         setIsRenewPartOpen(false);
         setSelectedPartForRenew(null);
-        loadAllData(true);
+        fleetDataCache = null;
+        loadAllData(true, true);
       } else {
         triggerToast(res.error || "Failed to renew policy.", true);
       }
@@ -2546,8 +2572,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     }
   };
 
-  const handleSaveVehiclePolicyRenewal = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveVehiclePolicyRenewal = async (e?: React.FormEvent | React.MouseEvent) => {
+    e?.preventDefault?.();
     if (!selectedVehicleForPolicyRenew) return;
 
     if (!renewPolicyNumber.trim()) {
@@ -2587,7 +2613,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         triggerToast(`Policy #${renewPolicyNumber} successfully renewed until ${renewPolicyEndDate}!`);
         setIsRenewPolicyModalOpen(false);
         setSelectedVehicleForPolicyRenew(null);
-        loadAllData(true);
+        fleetDataCache = null;
+        loadAllData(true, true);
         if (selectedVehicleForPolicyHistory?.id === selectedVehicleForPolicyRenew.id) {
           handleOpenVehiclePolicyHistoryModal(selectedVehicleForPolicyRenew);
         }
@@ -2682,8 +2709,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     }
   };
 
-  const handleSaveVehiclePucRenewal = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveVehiclePucRenewal = async (e?: React.FormEvent | React.MouseEvent) => {
+    e?.preventDefault?.();
     if (!selectedVehicleForPucRenew) return;
 
     if (!renewPucNumber.trim()) {
@@ -2716,7 +2743,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         triggerToast(`PUC Certificate #${renewPucNumber} successfully issued until ${renewPucValidUpto}!`);
         setIsRenewPucModalOpen(false);
         setSelectedVehicleForPucRenew(null);
-        loadAllData(true);
+        fleetDataCache = null;
+        loadAllData(true, true);
         if (selectedVehicleForPucHistory?.id === selectedVehicleForPucRenew.id) {
           handleOpenVehiclePucHistoryModal(selectedVehicleForPucRenew);
         }
@@ -2801,8 +2829,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     setIsAddEntitlementModalOpen(true);
   };
 
-  const handleSaveAddEntitlement = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveAddEntitlement = async (e?: React.FormEvent | React.MouseEvent) => {
+    e?.preventDefault?.();
     if (!selectedVehicleForRenewals) return;
 
     if (!entitlementFormTitle.trim()) {
@@ -2856,8 +2884,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     setIsRedeemEntitlementModalOpen(true);
   };
 
-  const handleSaveRedeemEntitlement = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveRedeemEntitlement = async (e?: React.FormEvent | React.MouseEvent) => {
+    e?.preventDefault?.();
     if (!selectedEntitlementForRedeem || !selectedVehicleForRenewals) return;
 
     if (!redeemFormWorkshop.trim()) {
@@ -2981,8 +3009,15 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
       if (res.success) {
         triggerToast(`${deleteTarget.label} deleted successfully!`);
+        if (deleteTarget.type === "vehicle") setVehicles(prev => prev.filter(v => v.id !== deleteTarget.id));
+        else if (deleteTarget.type === "driver") setDrivers(prev => prev.filter(d => d.id !== deleteTarget.id));
+        else if (deleteTarget.type === "trip") setTrips(prev => prev.filter(t => t.id !== deleteTarget.id));
+        else if (deleteTarget.type === "vendor") setInsuranceVendors(prev => prev.filter(vn => vn.id !== deleteTarget.id));
+        else if (deleteTarget.type === "part") setParts(prev => prev.filter(p => p.id !== deleteTarget.id));
+        else setMaintenance(prev => prev.filter(m => m.id !== deleteTarget.id));
         setDeleteTarget(null);
-        loadAllData(true);
+        fleetDataCache = null;
+        loadAllData(true, true);
       } else {
         triggerToast(res.error || `Failed to delete ${deleteTarget.label}`, true);
       }
@@ -10341,16 +10376,34 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           onBack={() => setSelectedMaintenanceForView(null)}
           backLabel="Back to Maintenance"
           headerActions={
-            <AppButton
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => window.print()}
-              className="text-xs h-9 px-3 gap-1.5 font-semibold"
-            >
-              <Printer className="h-3.5 w-3.5" />
-              <span>Print Job Card</span>
-            </AppButton>
+            <div className="flex items-center gap-2">
+              {canManageMaintenance && (
+                <AppButton
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  onClick={() => {
+                    const m = selectedMaintenanceForView;
+                    setSelectedMaintenanceForView(null);
+                    openEditMaintenanceModal(m);
+                  }}
+                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 px-3 gap-1.5 font-semibold"
+                >
+                  <Edit2 className="h-3.5 w-3.5" />
+                  <span>Edit Job Card</span>
+                </AppButton>
+              )}
+              <AppButton
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => window.print()}
+                className="text-xs h-9 px-3 gap-1.5 font-semibold"
+              >
+                <Printer className="h-3.5 w-3.5" />
+                <span>Print Job Card</span>
+              </AppButton>
+            </div>
           }
         >
               {/* Header Details Card */}
@@ -13540,6 +13593,22 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           ]}
           onBack={() => setViewingPart(null)}
           backLabel="Back to Parts"
+          headerActions={
+            <AppButton
+              type="button"
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                const p = viewingPart;
+                setViewingPart(null);
+                openEditPartModal(p);
+              }}
+              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 px-3 gap-1.5 font-semibold"
+            >
+              <Edit2 className="h-3.5 w-3.5" />
+              <span>Edit Part</span>
+            </AppButton>
+          }
         >
               {/* Procurement & Valuation */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

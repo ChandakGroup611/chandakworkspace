@@ -3012,15 +3012,19 @@ export async function updateServiceRecordAction(
     const updateData: Record<string, any> = {
       parts_replaced: incomingParts
     };
-    if (formData.vehicle_id !== undefined) updateData.vehicle_id = formData.vehicle_id;
-    if (formData.service_type !== undefined) updateData.service_type = formData.service_type.trim();
-    if (formData.service_center !== undefined) updateData.service_center = formData.service_center.trim();
-    if (formData.service_date !== undefined) updateData.service_date = formData.service_date;
+    if (formData.vehicle_id !== undefined && formData.vehicle_id) updateData.vehicle_id = formData.vehicle_id;
+    if (formData.service_type !== undefined && formData.service_type.trim()) updateData.service_type = formData.service_type.trim();
+    if (formData.service_center !== undefined && formData.service_center.trim()) updateData.service_center = formData.service_center.trim();
+    if (formData.service_date !== undefined && formData.service_date.trim()) updateData.service_date = formData.service_date.trim();
     if (formData.cost !== undefined) updateData.cost = Number(formData.cost) || 0.0;
     if (formData.odometer_km !== undefined) updateData.odometer_km = Number(formData.odometer_km) || 0;
-    if (formData.next_service_due_date !== undefined) updateData.next_service_due_date = formData.next_service_due_date || null;
-    if (formData.next_service_due_odometer !== undefined) updateData.next_service_due_odometer = formData.next_service_due_odometer ? Number(formData.next_service_due_odometer) : null;
-    if (formData.technician_name !== undefined) updateData.technician_name = formData.technician_name ? formData.technician_name.trim() : null;
+    if (formData.next_service_due_date !== undefined) updateData.next_service_due_date = formData.next_service_due_date?.trim() || null;
+    if (formData.next_service_due_odometer !== undefined) {
+      updateData.next_service_due_odometer = (formData.next_service_due_odometer !== null && !isNaN(Number(formData.next_service_due_odometer)))
+        ? Number(formData.next_service_due_odometer)
+        : null;
+    }
+    if (formData.technician_name !== undefined) updateData.technician_name = formData.technician_name?.trim() || null;
 
     const { data: updated, error } = await supabaseAdmin
       .from("service_records")
@@ -3075,7 +3079,19 @@ export async function updateServiceRecordAction(
       console.warn("[vehicle-actions] Service update audit history insert error (non-fatal):", auditErr);
     }
 
-    return { success: true, record: updated as MaintenanceRecord };
+    // Lookup vehicle plate to enrich record for instant UI hydration
+    const { data: vInfo } = await supabaseAdmin
+      .from("vehicles")
+      .select("registration_number")
+      .eq("id", targetVehicleId)
+      .single();
+
+    const recordWithReg: MaintenanceRecord = {
+      ...(updated as MaintenanceRecord),
+      vehicle_reg: vInfo?.registration_number || existing.vehicle_reg || "N/A"
+    };
+
+    return { success: true, record: recordWithReg };
   } catch (err: any) {
     return { success: false, error: err.message };
   }
@@ -3806,30 +3822,34 @@ export async function updateVehiclePartAction(
     if (formData.part_number !== undefined) updates.part_number = formData.part_number ? formData.part_number.trim() : null;
     if (formData.category !== undefined) updates.category = formData.category.trim();
     if (formData.brand !== undefined) updates.brand = formData.brand.trim();
-    if (formData.purchase_amount !== undefined) updates.purchase_amount = Number(formData.purchase_amount);
-    if (formData.unit_price !== undefined) updates.unit_price = Number(formData.unit_price);
-    if (formData.quantity !== undefined) updates.quantity = Number(formData.quantity);
-    if (formData.purchase_date !== undefined) updates.purchase_date = formData.purchase_date;
-    if (formData.vendor_name !== undefined) updates.vendor_name = formData.vendor_name ? formData.vendor_name.trim() : null;
+    if (formData.purchase_amount !== undefined) updates.purchase_amount = Number(formData.purchase_amount) || 0;
+    if (formData.unit_price !== undefined) updates.unit_price = Number(formData.unit_price) || 0;
+    if (formData.quantity !== undefined) updates.quantity = Number(formData.quantity) || 1;
+    if (formData.purchase_date !== undefined) updates.purchase_date = formData.purchase_date?.trim() || new Date().toISOString().split("T")[0];
+    if (formData.vendor_name !== undefined) updates.vendor_name = formData.vendor_name?.trim() || "OEM / Direct Store";
     if (formData.invoice_number !== undefined) updates.invoice_number = formData.invoice_number ? formData.invoice_number.trim() : null;
-    if (formData.manufacturing_date !== undefined) updates.manufacturing_date = formData.manufacturing_date ? formData.manufacturing_date.trim() : null;
-    if (formData.expiry_date !== undefined) updates.expiry_date = formData.expiry_date ? formData.expiry_date.trim() : null;
+    if (formData.manufacturing_date !== undefined) updates.manufacturing_date = formData.manufacturing_date?.trim() || null;
+    if (formData.expiry_date !== undefined) updates.expiry_date = formData.expiry_date?.trim() || null;
     if (formData.warranty_type !== undefined) updates.warranty_type = formData.warranty_type;
-    if (formData.warranty_months !== undefined) updates.warranty_months = Number(formData.warranty_months);
-    if (formData.warranty_expiry_date !== undefined) updates.warranty_expiry_date = formData.warranty_expiry_date ? formData.warranty_expiry_date.trim() : null;
+    if (formData.warranty_months !== undefined) updates.warranty_months = !isNaN(Number(formData.warranty_months)) ? Number(formData.warranty_months) : 0;
+    if (formData.warranty_expiry_date !== undefined) updates.warranty_expiry_date = formData.warranty_expiry_date?.trim() || null;
     if (formData.warranty_terms !== undefined) updates.warranty_terms = formData.warranty_terms ? formData.warranty_terms.trim() : null;
     if (formData.has_renewal_policy !== undefined) updates.has_renewal_policy = Boolean(formData.has_renewal_policy);
     if (formData.renewal_policy_type !== undefined) updates.renewal_policy_type = formData.renewal_policy_type ? formData.renewal_policy_type.trim() : null;
-    if (formData.renewal_date !== undefined) updates.renewal_date = formData.renewal_date ? formData.renewal_date.trim() : null;
-    if (formData.renewal_cost !== undefined) updates.renewal_cost = Number(formData.renewal_cost);
+    if (formData.renewal_date !== undefined) updates.renewal_date = formData.renewal_date?.trim() || null;
+    if (formData.renewal_cost !== undefined) updates.renewal_cost = !isNaN(Number(formData.renewal_cost)) ? Number(formData.renewal_cost) : 0;
     if (formData.renewal_vendor !== undefined) updates.renewal_vendor = formData.renewal_vendor ? formData.renewal_vendor.trim() : null;
     if (formData.renewal_policy_number !== undefined) updates.renewal_policy_number = formData.renewal_policy_number ? formData.renewal_policy_number.trim() : null;
-    if (formData.renewal_reminder_days !== undefined) updates.renewal_reminder_days = Number(formData.renewal_reminder_days);
+    if (formData.renewal_reminder_days !== undefined) updates.renewal_reminder_days = !isNaN(Number(formData.renewal_reminder_days)) ? Number(formData.renewal_reminder_days) : 30;
     if (formData.status !== undefined) updates.status = formData.status;
     if (formData.vehicle_id !== undefined) updates.vehicle_id = formData.vehicle_id;
     if (formData.assigned_vehicle_reg !== undefined) updates.assigned_vehicle_reg = formData.assigned_vehicle_reg ? formData.assigned_vehicle_reg.trim() : null;
-    if (formData.installation_date !== undefined) updates.installation_date = formData.installation_date ? formData.installation_date.trim() : null;
-    if (formData.installed_odometer_km !== undefined) updates.installed_odometer_km = formData.installed_odometer_km !== null ? Number(formData.installed_odometer_km) : null;
+    if (formData.installation_date !== undefined) updates.installation_date = formData.installation_date?.trim() || null;
+    if (formData.installed_odometer_km !== undefined) {
+      updates.installed_odometer_km = (formData.installed_odometer_km !== null && !isNaN(Number(formData.installed_odometer_km)))
+        ? Number(formData.installed_odometer_km)
+        : null;
+    }
     if (formData.installed_by !== undefined) updates.installed_by = formData.installed_by ? formData.installed_by.trim() : null;
     if (formData.condition !== undefined) updates.condition = formData.condition;
     if (formData.serial_number !== undefined) updates.serial_number = formData.serial_number ? formData.serial_number.trim() : null;

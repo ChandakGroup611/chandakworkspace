@@ -61,17 +61,17 @@ export interface ImportValidationResult {
 
 export const MASTER_SCHEMAS: Record<Exclude<MasterImportType, "ALL">, MasterColumnDefinition[]> = {
   PACKAGES: [
-    { key: "name", label: "Package Name", required: true, example: "Structural Engineering", description: "Main parent engineering package / discipline name", aliases: ["package", "discipline", "category", "package_name"] },
-    { key: "code", label: "Package Code", required: true, example: "STR", description: "Short 2-6 letter alphanumeric code", aliases: ["code", "package_code", "short_code"] },
+    { key: "name", label: "Package Name", required: true, example: "Structural Engineering", description: "Main parent engineering package / discipline name", aliases: ["package", "discipline", "category", "package_name", "activity", "promotion_activity", "promotionactivity", "title", "name", "deliverable", "deliverable_name", "item"] },
+    { key: "code", label: "Package Code", required: false, example: "STR", description: "Short 2-6 letter alphanumeric code", aliases: ["code", "package_code", "short_code", "activity_code", "id"] },
     { key: "icon", label: "Icon Emoji", required: false, example: "🏗️", description: "Emoji icon representing package", aliases: ["icon", "emoji"] },
     { key: "color", label: "Color Theme", required: false, example: "blue", description: "purple, blue, emerald, amber, teal, rose, slate", aliases: ["color", "theme"] },
-    { key: "description", label: "Description", required: false, example: "Substructure, superstructure, RCC frames & PT slabs", description: "Overview of engineering scope", aliases: ["desc", "notes", "scope"] }
+    { key: "description", label: "Description", required: false, example: "Substructure, superstructure, RCC frames & PT slabs", description: "Overview of engineering scope", aliases: ["desc", "notes", "scope", "budget", "budgeted_amount", "budgetedamount", "details", "remarks"] }
   ],
   SUB_PACKAGES: [
-    { key: "parentPackageName", label: "Parent Package Name", required: true, example: "Structural Engineering", description: "Must match or map to Package Master", aliases: ["parent_package", "package", "discipline", "category"] },
-    { key: "subPackageName", label: "Sub-Package Deliverable Name", required: true, example: "Raft Foundation & Shoring", description: "Granular deliverable or contract package", aliases: ["sub_package", "work_package", "deliverable", "package_name", "title"] },
-    { key: "subPackageCode", label: "Sub-Package Code", required: false, example: "STR-01", description: "Unique deliverable identifier", aliases: ["code", "sub_package_code", "package_code"] },
-    { key: "description", label: "Scope & Deliverables", required: false, example: "Soil excavation, pile caps, retention wall & earth anchors", description: "Technical scope details", aliases: ["description", "scope", "details"] }
+    { key: "parentPackageName", label: "Parent Package Name", required: false, example: "Structural Engineering", description: "Parent Package. If omitted, item is imported as a Package Master.", aliases: ["parent_package", "package", "discipline", "category", "parent", "parent_discipline", "main_package", "group"] },
+    { key: "subPackageName", label: "Sub-Package Deliverable Name", required: true, example: "Raft Foundation & Shoring", description: "Granular deliverable or contract package", aliases: ["sub_package", "work_package", "deliverable", "package_name", "title", "activity", "promotion_activity", "promotionactivity", "sub_category", "subcategory", "item", "name", "deliverable_name", "activity_name", "task", "work_item"] },
+    { key: "subPackageCode", label: "Sub-Package Code", required: false, example: "STR-01", description: "Unique deliverable identifier", aliases: ["code", "sub_package_code", "package_code", "activity_code", "id", "short_code"] },
+    { key: "description", label: "Scope & Deliverables", required: false, example: "Soil excavation, pile caps, retention wall & earth anchors", description: "Technical scope details", aliases: ["description", "scope", "details", "remarks", "notes", "budget", "budgeted_amount", "budgetedamount", "amount", "amount_spent", "amount_remaining"] }
   ],
   PROJECTS: [
     { key: "name", label: "Project Name", required: true, example: "Chandak GreenAiry", description: "Official real estate development name", aliases: ["project", "project_name", "title"] },
@@ -453,24 +453,66 @@ export class MasterImportExportService {
       };
     }
 
-    const headerCells = this.parseCsvRow(lines[0]);
     const schema = MASTER_SCHEMAS[targetType];
-    const keyMapping = this.resolveHeaderMapping(headerCells, schema);
+
+    // Scan first 15 lines for best matching header row
+    let bestLineIdx = 0;
+    let bestKeyMapping: Record<string, number | undefined> = {};
+    let maxMatchCount = 0;
+
+    const maxScanLines = Math.min(lines.length, 15);
+    for (let i = 0; i < maxScanLines; i++) {
+      const headerCells = this.parseCsvRow(lines[i]);
+      const mapping = this.resolveHeaderMapping(headerCells, schema);
+      const matchCount = Object.keys(mapping).length;
+      if (matchCount > maxMatchCount) {
+        maxMatchCount = matchCount;
+        bestLineIdx = i;
+        bestKeyMapping = mapping;
+      }
+    }
+
+    if (maxMatchCount === 0) {
+      bestLineIdx = 0;
+      const primaryKey = targetType === "SUB_PACKAGES" ? "subPackageName" : "name";
+      bestKeyMapping = { [primaryKey]: 0 };
+    }
 
     const rows: ImportRowValidation[] = [];
-    for (let i = 1; i < lines.length; i++) {
+    const seenBatchKeys = new Set<string>();
+
+    for (let i = bestLineIdx + 1; i < lines.length; i++) {
       const line = lines[i].trim();
       if (!line) continue;
       const cells = this.parseCsvRow(line);
       const rowData: Record<string, any> = {};
+      let hasData = false;
 
-      Object.entries(keyMapping).forEach(([colKey, cIdx]) => {
+      Object.entries(bestKeyMapping).forEach(([colKey, cIdx]) => {
         if (cIdx !== undefined && cIdx < cells.length) {
-          rowData[colKey] = cells[cIdx];
+          const val = cells[cIdx].trim();
+          if (val) {
+            hasData = true;
+            rowData[colKey] = val;
+          }
         }
       });
 
-      const validation = this.validateRecord(rowData, i + 1, targetType);
+      if (!rowData.subPackageName && rowData.parentPackageName) {
+        rowData.subPackageName = rowData.parentPackageName;
+        rowData.parentPackageName = "";
+      }
+
+      const checkName = (rowData.subPackageName || rowData.name || "").trim().toLowerCase();
+      if (!hasData || !checkName || checkName === "total" || checkName === "grand total") {
+        continue;
+      }
+
+      const batchKey = `${(rowData.parentPackageName || "").trim().toLowerCase()}:::${checkName}`;
+      const isBatchDuplicate = seenBatchKeys.has(batchKey);
+      seenBatchKeys.add(batchKey);
+
+      const validation = this.validateRecord(rowData, i + 1, targetType, isBatchDuplicate);
       rows.push(validation);
     }
 
@@ -497,41 +539,45 @@ export class MasterImportExportService {
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(buffer);
 
-    // If multi-sheet or requestedType === "ALL", inspect sheets
-    if (requestedType === "ALL" || workbook.worksheets.length > 1) {
+    // Keyword detection mapping - ORDER MATTERS: Longer/specific keywords MUST be first!
+    const masterTypeMapping: Array<[string, Exclude<MasterImportType, "ALL">]> = [
+      ["sub_package", "SUB_PACKAGES"],
+      ["subpackage", "SUB_PACKAGES"],
+      ["deliverable", "SUB_PACKAGES"],
+      ["sub_project", "SUB_PROJECTS"],
+      ["subproject", "SUB_PROJECTS"],
+      ["tower", "SUB_PROJECTS"],
+      ["wing", "SUB_PROJECTS"],
+      ["package", "PACKAGES"],
+      ["discipline", "PACKAGES"],
+      ["category", "PACKAGES"],
+      ["project", "PROJECTS"],
+      ["consultant", "CONSULTANTS"],
+      ["authority", "AUTHORITIES"],
+      ["statutory", "AUTHORITIES"]
+    ];
+
+    const detectSheetType = (sheetName: string): Exclude<MasterImportType, "ALL"> | null => {
+      const lower = sheetName.toLowerCase().replace(/[^a-z0-9]/g, "_");
+      if (lower.includes("instruction") || lower.includes("readme")) return null;
+      for (const [kw, mType] of masterTypeMapping) {
+        if (lower.includes(kw)) {
+          return mType;
+        }
+      }
+      return null;
+    };
+
+    // If requestedType === "ALL", inspect and consolidate all sheets
+    if (requestedType === "ALL") {
       const multiResults: Record<string, ImportValidationResult> = {};
       let totalValid = 0;
       let totalInvalid = 0;
       let totalDuplicates = 0;
       let totalRowsCombined = 0;
 
-      const masterTypeMapping: Record<string, Exclude<MasterImportType, "ALL">> = {
-        package: "PACKAGES",
-        discipline: "PACKAGES",
-        category: "PACKAGES",
-        sub_package: "SUB_PACKAGES",
-        subpackage: "SUB_PACKAGES",
-        deliverable: "SUB_PACKAGES",
-        project: "PROJECTS",
-        sub_project: "SUB_PROJECTS",
-        subproject: "SUB_PROJECTS",
-        tower: "SUB_PROJECTS",
-        wing: "SUB_PROJECTS",
-        consultant: "CONSULTANTS"
-      };
-
       for (const sheet of workbook.worksheets) {
-        const lowerName = sheet.name.toLowerCase().replace(/[^a-z0-9]/g, "_");
-        if (lowerName.includes("instruction") || lowerName.includes("readme")) continue;
-
-        let detectedType: Exclude<MasterImportType, "ALL"> | null = null;
-        for (const [kw, mType] of Object.entries(masterTypeMapping)) {
-          if (lowerName.includes(kw)) {
-            detectedType = mType;
-            break;
-          }
-        }
-
+        const detectedType = detectSheetType(sheet.name);
         if (detectedType) {
           const res = this.parseWorksheet(sheet, detectedType, fileName);
           multiResults[detectedType] = res;
@@ -557,10 +603,30 @@ export class MasterImportExportService {
       }
     }
 
-    // Single sheet targeted parse
+    // Specific master requested (e.g. "SUB_PACKAGES", "PACKAGES", "PROJECTS", etc.)
     const targetType = requestedType === "ALL" ? "PACKAGES" : requestedType;
-    const worksheet = workbook.worksheets[0];
-    return this.parseWorksheet(worksheet, targetType, fileName);
+
+    // Find the worksheet that matches the requested type, or fallback to the sheet with the most rows
+    let targetWorksheet = workbook.worksheets[0];
+
+    if (workbook.worksheets.length > 1) {
+      const matchingSheet = workbook.worksheets.find(ws => detectSheetType(ws.name) === targetType);
+      if (matchingSheet) {
+        targetWorksheet = matchingSheet;
+      } else {
+        // Choose sheet with highest row count (excluding instructions)
+        let maxRows = 0;
+        for (const ws of workbook.worksheets) {
+          const lower = ws.name.toLowerCase();
+          if (!lower.includes("instruction") && !lower.includes("readme") && ws.rowCount > maxRows) {
+            maxRows = ws.rowCount;
+            targetWorksheet = ws;
+          }
+        }
+      }
+    }
+
+    return this.parseWorksheet(targetWorksheet, targetType, fileName);
   }
 
   /**
@@ -572,42 +638,88 @@ export class MasterImportExportService {
     fileName: string
   ): ImportValidationResult {
     const schema = MASTER_SCHEMAS[type];
-    const headerRow = worksheet.getRow(1);
-    const headerCells: string[] = [];
 
-    headerRow.eachCell((cell, colNumber) => {
-      headerCells[colNumber - 1] = String(cell.value || "");
-    });
+    // Helper to safely extract string content from any cell type (richText, formulas, numbers, etc.)
+    const extractCellText = (cell: ExcelJS.Cell): string => {
+      const v = cell.value;
+      if (v === null || v === undefined) return "";
+      if (typeof v === "object") {
+        if ("richText" in v && Array.isArray((v as any).richText)) {
+          return (v as any).richText.map((t: any) => t.text || "").join("").trim();
+        }
+        if ("text" in v) return String((v as any).text || "").trim();
+        if ("result" in v) return String((v as any).result || "").trim();
+      }
+      return String(v).trim();
+    };
 
-    const keyMapping = this.resolveHeaderMapping(headerCells, schema);
+    // Scan first 15 rows to find the row that has the best matching schema headers
+    let bestHeaderRowNumber = 1;
+    let bestKeyMapping: Record<string, number | undefined> = {};
+    let maxMatchCount = 0;
+
+    const maxScanRows = Math.min(worksheet.rowCount, 15);
+    for (let r = 1; r <= maxScanRows; r++) {
+      const row = worksheet.getRow(r);
+      const cells: string[] = [];
+      row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+        cells[colNumber - 1] = extractCellText(cell);
+      });
+      const mapping = this.resolveHeaderMapping(cells, schema);
+      const matchCount = Object.keys(mapping).length;
+      if (matchCount > maxMatchCount) {
+        maxMatchCount = matchCount;
+        bestHeaderRowNumber = r;
+        bestKeyMapping = mapping;
+      }
+    }
+
+    // Fallback if no matching headers found: map first column to primary name key
+    if (maxMatchCount === 0) {
+      bestHeaderRowNumber = 1;
+      const primaryKey = type === "SUB_PACKAGES" ? "subPackageName" : "name";
+      bestKeyMapping = { [primaryKey]: 0 };
+    }
+
     const rows: ImportRowValidation[] = [];
+    const seenBatchKeys = new Set<string>();
 
-    worksheet.eachRow((row, rowNumber) => {
-      if (rowNumber === 1) return; // Skip header
-
+    for (let r = bestHeaderRowNumber + 1; r <= worksheet.rowCount; r++) {
+      const row = worksheet.getRow(r);
       const rowData: Record<string, any> = {};
       let hasData = false;
 
-      Object.entries(keyMapping).forEach(([colKey, cIdx]) => {
+      Object.entries(bestKeyMapping).forEach(([colKey, cIdx]) => {
         if (cIdx !== undefined) {
           const cell = row.getCell(cIdx + 1);
-          let cellVal = cell.value;
-          if (typeof cellVal === "object" && cellVal !== null) {
-            if ("text" in cellVal) cellVal = (cellVal as any).text;
-            else if ("result" in cellVal) cellVal = (cellVal as any).result;
-          }
-          if (cellVal !== undefined && cellVal !== null && String(cellVal).trim() !== "") {
+          const cellVal = extractCellText(cell);
+          if (cellVal !== "") {
             hasData = true;
-            rowData[colKey] = String(cellVal).trim();
+            rowData[colKey] = cellVal;
           }
         }
       });
 
-      if (hasData) {
-        const validation = this.validateRecord(rowData, rowNumber, type);
-        rows.push(validation);
+      // If deliverable was pasted into parent column and subPackageName is empty
+      if (!rowData.subPackageName && rowData.parentPackageName) {
+        rowData.subPackageName = rowData.parentPackageName;
+        rowData.parentPackageName = "";
       }
-    });
+
+      const checkName = (rowData.subPackageName || rowData.name || "").trim().toLowerCase();
+      // Ignore empty or summary "Total" / "Grand Total" rows
+      if (!hasData || !checkName || checkName === "total" || checkName === "grand total") {
+        continue;
+      }
+
+      // Check for duplicate rows within the same uploaded file
+      const batchKey = `${(rowData.parentPackageName || "").trim().toLowerCase()}:::${checkName}`;
+      const isBatchDuplicate = seenBatchKeys.has(batchKey);
+      seenBatchKeys.add(batchKey);
+
+      const validation = this.validateRecord(rowData, r, type, isBatchDuplicate);
+      rows.push(validation);
+    }
 
     return {
       masterType: type,
@@ -627,7 +739,8 @@ export class MasterImportExportService {
   private static validateRecord(
     data: Record<string, any>,
     rowNumber: number,
-    type: Exclude<MasterImportType, "ALL">
+    type: Exclude<MasterImportType, "ALL">,
+    isBatchDuplicate: boolean = false
   ): ImportRowValidation {
     const schema = MASTER_SCHEMAS[type];
     const errors: string[] = [];
@@ -640,7 +753,7 @@ export class MasterImportExportService {
       }
     }
 
-    let isDuplicate = false;
+    let isDuplicate = isBatchDuplicate;
     let existingId: string | undefined = undefined;
 
     // 2. Entity-specific validation and duplicate resolution
@@ -659,21 +772,34 @@ export class MasterImportExportService {
       const subName = (data.subPackageName || "").trim().toLowerCase();
       const subCode = (data.subPackageCode || "").trim().toLowerCase();
 
-      // Check if parent package exists or is recognized
-      const hasParent = (store.disciplines || []).some(
-        d => d.name.toLowerCase() === parentName || d.code.toLowerCase() === parentName
-      );
-      if (parentName && !hasParent) {
-        // Warning / auto-create allowed
-      }
+      const isStandalonePackage = !parentName || parentName === subName;
 
-      const existing = (store.packages || []).find(
-        p => (p.disciplineName.toLowerCase() === parentName && (p.subPackageName || p.packageName).toLowerCase() === subName) ||
-             (subCode && (p.subPackageCode || p.packageCode || "").toLowerCase() === subCode)
-      );
-      if (existing) {
-        isDuplicate = true;
-        existingId = existing.id;
+      if (isStandalonePackage) {
+        // No parent (or self-parent): Consider as Package in Package Master
+        const existingInPackages = (store.disciplines || []).find(
+          d => d.name.toLowerCase() === subName || (subCode && d.code.toLowerCase() === subCode)
+        );
+        if (existingInPackages) {
+          isDuplicate = true;
+          existingId = existingInPackages.id;
+        }
+      } else {
+        // Has parent: check Sub-Package Master
+        const parentDisc = (store.disciplines || []).find(
+          d => d.name.toLowerCase() === parentName || d.code.toLowerCase() === parentName
+        );
+        const parentId = parentDisc?.id;
+        const parentCanonicalName = parentDisc ? parentDisc.name.toLowerCase() : parentName;
+
+        const existing = (store.packages || []).find(
+          p => (((parentId && p.disciplineId === parentId) || (p.disciplineName && p.disciplineName.toLowerCase() === parentCanonicalName)) &&
+                ((p.subPackageName || p.packageName || "").trim().toLowerCase() === subName)) ||
+               (subCode && (p.subPackageCode || p.packageCode || "").trim().toLowerCase() === subCode)
+        );
+        if (existing) {
+          isDuplicate = true;
+          existingId = existing.id;
+        }
       }
     } else if (type === "PROJECTS") {
       const name = (data.name || "").trim().toLowerCase();
@@ -797,8 +923,8 @@ export class MasterImportExportService {
 
     if (mType === "PACKAGES") {
       const items = validRows.map(r => ({
-        name: String(r.data.name).trim(),
-        code: String(r.data.code || r.data.name.slice(0, 4)).trim().toUpperCase(),
+        name: String(r.data.name || r.data.subPackageName || "").trim(),
+        code: String(r.data.code || r.data.subPackageCode || (r.data.name || r.data.subPackageName || "").slice(0, 4)).trim().toUpperCase(),
         description: r.data.description ? String(r.data.description).trim() : undefined,
         icon: r.data.icon ? String(r.data.icon).trim() : "📁",
         color: r.data.color ? String(r.data.color).trim() : "purple"
@@ -809,8 +935,8 @@ export class MasterImportExportService {
 
     if (mType === "SUB_PACKAGES") {
       const items = validRows.map(r => ({
-        parentPackageName: String(r.data.parentPackageName).trim(),
-        subPackageName: String(r.data.subPackageName).trim(),
+        parentPackageName: r.data.parentPackageName ? String(r.data.parentPackageName).trim() : "",
+        subPackageName: r.data.subPackageName ? String(r.data.subPackageName).trim() : (r.data.parentPackageName ? String(r.data.parentPackageName).trim() : ""),
         subPackageCode: r.data.subPackageCode ? String(r.data.subPackageCode).trim() : undefined,
         description: r.data.description ? String(r.data.description).trim() : undefined
       }));

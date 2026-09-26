@@ -1983,27 +1983,94 @@ export class DesignMasterStore {
     let updated = 0;
     let skipped = 0;
 
-    subPackages.forEach(sp => {
-      const pName = (sp.parentPackageName || "Architectural").trim();
-      const subName = sp.subPackageName.trim();
-      if (!subName) return;
+    const generatePackageCode = (name: string, idx: number): string => {
+      const words = name.split(/[\s_\-]+/).filter(Boolean);
+      if (words.length >= 2) {
+        const code = words.slice(0, 3).map(w => w[0]).join("").toUpperCase();
+        if (code.length >= 2) return `${code}-${(idx + 1).toString().padStart(2, "0")}`;
+      }
+      const clean = name.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+      const prefix = clean.slice(0, 4) || "PKG";
+      return `${prefix}-${(idx + 1).toString().padStart(2, "0")}`;
+    };
 
+    const packageColors = ["purple", "blue", "teal", "amber", "emerald", "rose", "indigo"];
+
+    subPackages.forEach(sp => {
+      const rawParent = (sp.parentPackageName || "").trim();
+      let subName = (sp.subPackageName || "").trim();
+
+      // If deliverable name is empty but parent was provided, treat parent as the deliverable
+      if (!subName && rawParent) {
+        subName = rawParent;
+      }
+
+      if (!subName || subName.toLowerCase() === "total" || subName.toLowerCase() === "grand total") return;
+
+      const hasNoParent = !rawParent || rawParent.toLowerCase() === subName.toLowerCase();
+
+      // =========================================================================
+      // RULE: When there is no parent, consider as Package and insert into Package Master
+      // Check duplicate: if duplicate ignore / skip, if genuine then insert
+      // =========================================================================
+      if (hasNoParent) {
+        const cleanPkgName = subName;
+        const cleanPkgCode = (sp.subPackageCode || generatePackageCode(cleanPkgName, state.disciplines.length + added)).toUpperCase();
+
+        const existingDiscIdx = (state.disciplines || []).findIndex(
+          d => d.name.toLowerCase() === cleanPkgName.toLowerCase() || (cleanPkgCode && d.code.toLowerCase() === cleanPkgCode.toLowerCase())
+        );
+
+        if (existingDiscIdx !== -1) {
+          if (duplicateStrategy === "OVERWRITE") {
+            const old = state.disciplines[existingDiscIdx];
+            state.disciplines[existingDiscIdx] = {
+              ...old,
+              name: cleanPkgName,
+              code: cleanPkgCode || old.code,
+              description: sp.description !== undefined ? sp.description : old.description
+            };
+            updated++;
+          } else {
+            // Duplicate: IGNORE / SKIP
+            skipped++;
+          }
+        } else {
+          // Genuine: INSERT into Package Master
+          const newPkg: PackageMaster = {
+            id: `disc-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+            name: cleanPkgName,
+            code: cleanPkgCode,
+            description: sp.description || "Imported Package Master",
+            icon: "📁",
+            color: packageColors[(state.disciplines.length + added) % packageColors.length],
+            createdAt: new Date().toISOString()
+          };
+          state.disciplines.push(newPkg);
+          added++;
+        }
+        return;
+      }
+
+      // =========================================================================
+      // HAS PARENT: Standard Sub-Package deliverable insertion under parent
+      // =========================================================================
       let parent = state.disciplines.find(
-        d => d.name.toLowerCase() === pName.toLowerCase() || d.code.toLowerCase() === pName.toLowerCase()
+        d => d.name.toLowerCase() === rawParent.toLowerCase() || d.code.toLowerCase() === rawParent.toLowerCase()
       );
       if (!parent) {
         parent = {
           id: `disc-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
-          name: pName,
-          code: pName.slice(0, 4).toUpperCase(),
+          name: rawParent,
+          code: generatePackageCode(rawParent, state.disciplines.length),
           icon: "📁",
-          color: "purple",
+          color: packageColors[state.disciplines.length % packageColors.length],
           createdAt: new Date().toISOString()
         };
         state.disciplines.push(parent);
       }
 
-      const generatedCode = (sp.subPackageCode || `PKG-${(state.packages.length + added + 1).toString().padStart(2, "0")}`).trim().toUpperCase();
+      const generatedCode = (sp.subPackageCode || `${parent.code}-${(state.packages.length + added + 1).toString().padStart(2, "0")}`).trim().toUpperCase();
 
       const existingIdx = (state.packages || []).findIndex(
         p => (p.disciplineName.toLowerCase() === parent!.name.toLowerCase() && (p.subPackageName || p.packageName).toLowerCase() === subName.toLowerCase()) ||
