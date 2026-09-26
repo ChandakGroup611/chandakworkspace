@@ -217,6 +217,30 @@ export interface VehicleDashboardStats {
   activeTrips: number;
 }
 
+export interface VehicleDocumentRecord {
+  id: string;
+  vehicle_id?: string;
+  doc_type: string;
+  title: string;
+  file_name: string;
+  file_size?: string | number | null;
+  uploaded_at?: string;
+  expiry_date?: string | null;
+  status?: string;
+  document_number?: string | null;
+  file_url: string;
+  file_type?: string;
+}
+
+export function resolveMimeFromName(fileName: string): string {
+  const ext = fileName.split(".").pop()?.toLowerCase() || "";
+  if (["png", "jpg", "jpeg", "webp", "gif", "svg"].includes(ext)) return `image/${ext === "jpg" ? "jpeg" : ext}`;
+  if (ext === "pdf") return "application/pdf";
+  if (["xls", "xlsx", "csv"].includes(ext)) return "application/vnd.ms-excel";
+  if (["doc", "docx"].includes(ext)) return "application/msword";
+  return "application/octet-stream";
+}
+
 export interface VehicleRecord {
   id: string;
   category: string;
@@ -257,6 +281,7 @@ export interface VehicleRecord {
     pucExpiry?: string | null;
     insuranceExpiry?: string | null;
   };
+  documents?: VehicleDocumentRecord[];
 }
 
 export interface InsuranceVendorRecord {
@@ -662,7 +687,26 @@ export async function fetchVehiclesList(params?: {
       }
     });
 
-    // Merge driver assignments and compute live expiration countdowns
+    // Controlled Batch Lookup: Documents attached to these vehicles (eliminates N+1)
+    const { data: docsData } = await supabaseAdmin
+      .from("vehicle_documents")
+      .select("*")
+      .in("vehicle_id", vehicleIds)
+      .order("uploaded_at", { ascending: false });
+
+    const docsMap = new Map<string, VehicleDocumentRecord[]>();
+    (docsData || []).forEach((doc: any) => {
+      if (doc.vehicle_id) {
+        const list = docsMap.get(doc.vehicle_id) || [];
+        list.push({
+          ...doc,
+          file_type: doc.file_type || resolveMimeFromName(doc.file_name)
+        });
+        docsMap.set(doc.vehicle_id, list);
+      }
+    });
+
+    // Merge driver assignments, documents, and compute live expiration countdowns
     const enrichedVehicles = vehiclesList.map((v) => {
       const isEv = isElectricFuel(v.fuel_type);
       return {
@@ -670,7 +714,8 @@ export async function fetchVehiclesList(params?: {
         puc_expiry_date: isEv ? null : v.puc_expiry_date,
         puc_expire_days: isEv ? null : calculateDaysRemaining(v.puc_expiry_date),
         insurance_expire_days: calculateDaysRemaining(v.insurance_expiry_date),
-        assignedDriver: driverMap.get(v.id) || null
+        assignedDriver: driverMap.get(v.id) || null,
+        documents: docsMap.get(v.id) || []
       };
     });
 
@@ -1978,6 +2023,7 @@ export async function createVehicleAction(formData: {
   fitness_expiry_date?: string;
   has_roadside_assistance?: boolean;
   has_hsrp_plate?: boolean;
+  documents?: (VehicleDocumentRecord | any)[];
 }): Promise<{
   success: boolean;
   vehicle?: VehicleRecord;
@@ -2152,10 +2198,50 @@ export async function createVehicleAction(formData: {
         change_summary: `Initial registration of vehicle ${regNum} (${make} ${model} ${variant || ""})`,
         old_data: {},
         new_data: newRecord,
-        changed_fields: Object.keys(newRecord)
       });
 
-    return { success: true, vehicle: inserted as VehicleRecord };
+    // Insert attached documents into vehicle_documents vault if provided
+    let insertedDocs: VehicleDocumentRecord[] = [];
+    if (Array.isArray(formData.documents) && formData.documents.length > 0) {
+      const docRows = formData.documents
+        .filter((d: any) => d && d.file_name && d.file_url)
+        .map((d: any) => ({
+          id: (d.id && !d.id.startsWith("temp-") && !d.id.startsWith("vdoc-temp-") && !d.id.startsWith("doc-") && !d.id.startsWith("att-")) ? d.id : `vdoc-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          vehicle_id: vehicleId,
+          doc_type: (d.doc_type || "OTHER").toUpperCase(),
+          title: d.title?.trim() || d.file_name || "Vehicle Document",
+          file_name: d.file_name,
+          file_size: typeof d.file_size === "number" ? `${Math.round(d.file_size / 1024)} KB` : (d.file_size || null),
+          uploaded_at: new Date().toISOString(),
+          expiry_date: d.expiry_date ? d.expiry_date : null,
+          status: d.status || "VALID",
+          document_number: d.document_number?.trim() || null,
+          file_url: d.file_url
+        }));
+
+      if (docRows.length > 0) {
+        const { data: createdDocs, error: docErr } = await supabaseAdmin
+          .from("vehicle_documents")
+          .insert(docRows)
+          .select("*");
+
+        if (docErr) {
+          console.error("[vehicle-actions] createVehicleAction documents insert error:", docErr);
+        } else if (createdDocs) {
+          insertedDocs = createdDocs.map((doc: any) => ({
+            ...doc,
+            file_type: resolveMimeFromName(doc.file_name)
+          }));
+        }
+      }
+    }
+
+    const completeVehRecord: VehicleRecord = {
+      ...(inserted as VehicleRecord),
+      documents: insertedDocs
+    };
+
+    return { success: true, vehicle: completeVehRecord };
   } catch (err: any) {
     console.error("[vehicle-actions] createVehicleAction exception:", err);
     return { success: false, error: err.message || "Failed to create vehicle" };
@@ -2190,6 +2276,7 @@ export async function updateVehicleAction(
     fitness_expiry_date?: string;
     has_roadside_assistance?: boolean;
     has_hsrp_plate?: boolean;
+    documents?: (VehicleDocumentRecord | any)[];
   }
 ): Promise<{
   success: boolean;
@@ -2517,10 +2604,141 @@ export async function updateVehicleAction(
       console.warn("[vehicle-actions] History log insert error (non-fatal):", histErr);
     }
 
+    // 8. Synchronize Legal & Compliance Documents Vault
+    if (formData.documents !== undefined && Array.isArray(formData.documents)) {
+      try {
+        const { data: existingDocs } = await supabaseAdmin
+          .from("vehicle_documents")
+          .select("id")
+          .eq("vehicle_id", id);
+
+        const existingDocIds = new Set((existingDocs || []).map((d: any) => d.id));
+        const incomingDocIds = new Set(
+          formData.documents
+            .map((d: any) => d?.id)
+            .filter((docId: any): docId is string => Boolean(docId && existingDocIds.has(docId)))
+        );
+
+        // Delete documents that user removed
+        const docIdsToDelete = (existingDocs || [])
+          .map((d: any) => d.id)
+          .filter((docId: string) => !incomingDocIds.has(docId));
+
+        if (docIdsToDelete.length > 0) {
+          await supabaseAdmin
+            .from("vehicle_documents")
+            .delete()
+            .in("id", docIdsToDelete);
+        }
+
+        // Insert new documents that were added
+        const newDocsToInsert = formData.documents
+          .filter((d: any) => d && d.file_name && d.file_url && (!d.id || !existingDocIds.has(d.id)))
+          .map((d: any) => ({
+            id: (d.id && !d.id.startsWith("temp-") && !d.id.startsWith("vdoc-temp-") && !d.id.startsWith("doc-") && !d.id.startsWith("att-")) ? d.id : `vdoc-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+            vehicle_id: id,
+            doc_type: (d.doc_type || "OTHER").toUpperCase(),
+            title: d.title?.trim() || d.file_name || "Vehicle Document",
+            file_name: d.file_name,
+            file_size: typeof d.file_size === "number" ? `${Math.round(d.file_size / 1024)} KB` : (d.file_size || null),
+            uploaded_at: new Date().toISOString(),
+            expiry_date: d.expiry_date ? d.expiry_date : null,
+            status: d.status || "VALID",
+            document_number: d.document_number?.trim() || null,
+            file_url: d.file_url
+          }));
+
+        if (newDocsToInsert.length > 0) {
+          const { error: insDocErr } = await supabaseAdmin
+            .from("vehicle_documents")
+            .insert(newDocsToInsert);
+
+          if (insDocErr) {
+            console.error("[vehicle-actions] updateVehicleAction documents insert error:", insDocErr);
+          }
+        }
+      } catch (docSyncErr) {
+        console.error("[vehicle-actions] updateVehicleAction documents sync error:", docSyncErr);
+      }
+    }
+
     return { success: true };
   } catch (err: any) {
     console.error("[vehicle-actions] updateVehicleAction exception:", err);
     return { success: false, error: err.message || "Failed to update vehicle specifications." };
+  }
+}
+
+/**
+ * Fetch all legal & compliance documents for a specific vehicle
+ */
+export async function fetchVehicleDocumentsAction(vehicleId: string): Promise<{
+  success: boolean;
+  documents: VehicleDocumentRecord[];
+  error?: string;
+}> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) {
+      return { success: false, documents: [], error: "Unauthenticated" };
+    }
+    if (!vehicleId) {
+      return { success: false, documents: [], error: "Vehicle ID is required" };
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from("vehicle_documents")
+      .select("*")
+      .eq("vehicle_id", vehicleId)
+      .order("uploaded_at", { ascending: false });
+
+    if (error) {
+      console.error("[vehicle-actions] fetchVehicleDocumentsAction error:", error);
+      return { success: false, documents: [], error: error.message };
+    }
+
+    const docs = (data || []).map((d: any) => ({
+      ...d,
+      file_type: d.file_type || resolveMimeFromName(d.file_name)
+    })) as VehicleDocumentRecord[];
+
+    return { success: true, documents: docs };
+  } catch (err: any) {
+    console.error("[vehicle-actions] fetchVehicleDocumentsAction exception:", err);
+    return { success: false, documents: [], error: err.message || "Failed to fetch vehicle documents" };
+  }
+}
+
+/**
+ * Delete a specific vehicle document from vault
+ */
+export async function deleteVehicleDocumentAction(documentId: string): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) {
+      return { success: false, error: "Unauthenticated" };
+    }
+    if (!documentId) {
+      return { success: false, error: "Document ID is required" };
+    }
+
+    const { error } = await supabaseAdmin
+      .from("vehicle_documents")
+      .delete()
+      .eq("id", documentId);
+
+    if (error) {
+      console.error("[vehicle-actions] deleteVehicleDocumentAction error:", error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    console.error("[vehicle-actions] deleteVehicleDocumentAction exception:", err);
+    return { success: false, error: err.message || "Failed to delete vehicle document" };
   }
 }
 
