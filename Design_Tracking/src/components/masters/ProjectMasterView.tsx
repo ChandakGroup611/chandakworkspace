@@ -609,7 +609,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                             handleOpenEdit(proj);
                             setFormTab("CONSULTANTS_CATEGORIES");
                           }}
-                          className="text-[10px] text-purple-600 dark:text-purple-400 hover:underline font-semibold cursor-pointer"
+                          className="h-5 px-2 rounded-md bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/25 text-[10px] font-bold inline-flex items-center transition-colors cursor-pointer"
                         >
                           Manage
                         </button>
@@ -664,9 +664,10 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                   <button
                     type="button"
                     onClick={() => onNavigateToSubProjects ? onNavigateToSubProjects(proj.id) : handleOpenEdit(proj)}
-                    className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline font-bold cursor-pointer"
+                    className="h-6 px-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold inline-flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
                   >
-                    View Wings →
+                    <span>View Wings</span>
+                    <span className="text-[10px]">→</span>
                   </button>
                 </div>
               </div>
@@ -1056,9 +1057,9 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                           <button
                             type="button"
                             onClick={() => setShowAllMasterCategories(true)}
-                            className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold hover:underline cursor-pointer pt-1 inline-block"
+                            className="h-6 px-2.5 rounded-lg border border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20 text-blue-700 dark:text-blue-300 text-[10px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer mt-1"
                           >
-                            Or browse all {categories.length} Package Master packages →
+                            Browse all {categories.length} Package Master packages →
                           </button>
                         </div>
                       ) : (
@@ -1110,7 +1111,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                       <button
                         type="button"
                         onClick={() => setShowAllMasterCategories(!showAllMasterCategories)}
-                        className="text-blue-600 dark:text-blue-400 font-semibold hover:underline cursor-pointer"
+                        className="h-5 px-2 rounded-md border border-border bg-surface hover:bg-surface-hover text-foreground text-[10px] font-bold inline-flex items-center transition-colors cursor-pointer"
                       >
                         {showAllMasterCategories ? "Filter by selected consultants" : "View all master packages"}
                       </button>
@@ -1126,7 +1127,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                     <button
                       type="button"
                       onClick={() => setFormTab("CONSULTANTS_CATEGORIES")}
-                      className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline cursor-pointer"
+                      className="h-7 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs inline-flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
                     >
                       Next: Map Consultants & Packages →
                     </button>
@@ -1134,7 +1135,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                     <button
                       type="button"
                       onClick={() => setFormTab("SPECS")}
-                      className="text-muted-foreground font-semibold hover:underline cursor-pointer"
+                      className="h-7 px-3 rounded-lg border border-border bg-surface hover:bg-surface-hover text-foreground font-semibold text-xs inline-flex items-center gap-1 transition-colors cursor-pointer"
                     >
                       ← Back to Specs
                     </button>

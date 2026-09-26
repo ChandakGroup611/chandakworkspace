@@ -4273,10 +4273,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         </div>
         <div className="space-y-1">
           <h2 className="text-xl font-bold text-foreground">Fleet Desk Access Restricted</h2>
-          <p className="text-xs text-muted-foreground max-w-md mx-auto">
-            You do not currently have an assigned Fleet Role or access policies enabled for the Vehicle Desk. Please contact your System Administrator to request access.
-          </p>
-        </div>
+          </div>
         <AppButton variant="primary" size="sm" onClick={() => router.push("/")}>
           Return to Workspace
         </AppButton>
@@ -4420,10 +4417,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           </div>
           <div>
             <h2 className="text-lg font-bold text-foreground">Access Restricted</h2>
-            <p className="text-xs text-muted-foreground mt-1 max-w-md">
-              You do not have permission (`VEHICLES_CREATE`) to register new fleet assets. Please contact your Fleet Administrator.
-            </p>
-          </div>
+            </div>
           <AppButton variant="primary" size="sm" onClick={() => router.push("/vehicle/inventory")}>
             Return to Fleet Inventory
           </AppButton>
@@ -4734,13 +4728,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         </span>
                       )}
                     </div>
-                    <p className="text-[11px] opacity-85 mt-1">
-                      {portalLookupMsg.type === "info" 
-                        ? "RTO Passing Jurisdiction has been verified. Now select or enter the vehicle Make & Model below."
-                        : "Official records verified. You can review or adjust any details before saving."
-                      }
-                    </p>
-                  </div>
+                    </div>
                 </div>
               )}
             </div>
@@ -4836,7 +4824,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   </datalist>
 
                   {/* Model Quick-Pick Chips */}
-                  {POPULAR_BRANDS[newVehicleMake]?.models ? (
+                  {POPULAR_BRANDS[newVehicleMake]?.models && (
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {POPULAR_BRANDS[newVehicleMake].models.slice(0, 6).map((m) => {
                         const isSelected = newVehicleModel.trim().toLowerCase() === m.toLowerCase();
@@ -4869,10 +4857,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         );
                       })}
                     </div>
-                  ) : (
-                    <p className="text-[11px] text-muted-foreground mt-1.5 italic">
-                      Pick a brand above to view suggested models or type custom model.
-                    </p>
                   )}
                 </div>
               </div>
@@ -5029,11 +5013,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     onChange={(e) => setNewVehicleRtoRmn(e.target.value)} 
                     required
                   />
-                  <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
-                    <span className="text-amber-500 font-semibold">🔒 Protected:</span>
-                    <span>Parivahan privacy rules conceal personal phone numbers on public portals. Enter owner's genuine 10-digit mobile number.</span>
-                  </p>
-                </div>
+                  </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
@@ -5102,10 +5082,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     onChange={(e) => setNewVehiclePurchasePrice(e.target.value)} 
                     className="font-mono text-xs"
                   />
-                  <p className="text-[10px] text-muted-foreground mt-1">
-                    Acquisition cost / ex-showroom capitalized asset value of the vehicle.
-                  </p>
-                </div>
+                  </div>
               </div>
             </div>
 
@@ -5127,10 +5104,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     </label>
                     <AppButton
                       type="button"
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
                       onClick={openCreateVendorModal}
-                      className="p-0 h-auto text-[11px] font-semibold text-theme-btn-primary hover:underline flex items-center gap-1"
+                      className="h-6 px-2 text-[10px] font-bold rounded-lg border-border hover:bg-surface-hover flex items-center gap-1"
                     >
                       <Plus className="h-3 w-3" />
                       <span>New Vendor</span>
@@ -5195,10 +5172,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           <span>PUC Not Required (Zero Emission)</span>
                           <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 font-mono font-bold">CMVR Exempt</span>
                         </div>
-                        <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
-                          Electric Vehicles (EVs) produce zero tailpipe emissions and are legally exempt from PUC certificate requirements under Parivahan CMVR rules.
-                        </p>
-                      </div>
+                        </div>
                     </div>
                   ) : (
                     <>
@@ -5630,10 +5604,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   
                 </div>
                 <AppButton
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
                   onClick={() => router.push("/vehicle/trips")}
-                  className="text-xs text-theme-btn-primary hover:underline h-7"
+                  className="text-xs font-bold rounded-lg border-border hover:bg-surface-hover h-7 px-2.5"
                 >
                   View All ({trips.length})
                 </AppButton>
@@ -5641,16 +5615,17 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <AppCardContent className="p-0">
                 {trips.length === 0 ? (
                   <div className="p-8 text-center text-xs text-muted-foreground">
-                    No trip movements logged yet. Click{" "}
-                    <AppButton
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsDispatchTripOpen(true)}
-                      className="p-0 h-auto text-xs font-bold text-theme-btn-primary hover:underline inline"
-                    >
-                      Dispatch Trip
-                    </AppButton>{" "}
-                    to schedule a movement.
+                    <div className="flex flex-col items-center gap-2">
+                      <span>No trip movements logged yet.</span>
+                      <AppButton
+                        variant="primary"
+                        size="sm"
+                        onClick={() => setIsDispatchTripOpen(true)}
+                        className="h-7 px-3 text-xs font-bold rounded-lg"
+                      >
+                        Dispatch Trip
+                      </AppButton>
+                    </div>
                   </div>
                 ) : (
                   <div className="divide-y divide-border/60">
@@ -5730,10 +5705,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   
                 </div>
                 <AppButton
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
                   onClick={() => router.push("/vehicle/inventory")}
-                  className="text-xs text-theme-btn-primary hover:underline h-7"
+                  className="text-xs font-bold rounded-lg border-border hover:bg-surface-hover h-7 px-2.5"
                 >
                   Manage Fleet ({vehicles.length})
                 </AppButton>
@@ -5741,16 +5716,17 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <AppCardContent className="p-0">
                 {vehicles.length === 0 ? (
                   <div className="p-8 text-center text-xs text-muted-foreground">
-                    No vehicles enrolled in fleet master. Click{" "}
-                    <AppButton
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => router.push("/vehicle/register")}
-                      className="p-0 h-auto text-xs font-bold text-theme-btn-primary hover:underline inline"
-                    >
-                      Add Vehicle
-                    </AppButton>{" "}
-                    to register a vehicle.
+                    <div className="flex flex-col items-center gap-2">
+                      <span>No vehicles enrolled in fleet master.</span>
+                      <AppButton
+                        variant="primary"
+                        size="sm"
+                        onClick={() => router.push("/vehicle/register")}
+                        className="h-7 px-3 text-xs font-bold rounded-lg"
+                      >
+                        Add Vehicle
+                      </AppButton>
+                    </div>
                   </div>
                 ) : (
                   <div className="divide-y divide-border/60">
@@ -5995,16 +5971,17 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   {filteredVehicles.length === 0 ? (
                     <AppTableRow>
                       <AppTableCell colSpan={showInventoryFinancials ? 10 : 9} className="text-center py-12 text-muted-foreground">
-                        No vehicles found matching criteria. Click{" "}
-                        <AppButton
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => router.push("/vehicle/register")}
-                          className="p-0 h-auto text-xs font-bold text-theme-btn-primary hover:underline inline"
-                        >
-                          Add Vehicle
-                        </AppButton>{" "}
-                        to enroll a new vehicle.
+                        <div className="flex flex-col items-center gap-2">
+                          <span>No vehicles found matching criteria.</span>
+                          <AppButton
+                            variant="primary"
+                            size="sm"
+                            onClick={() => router.push("/vehicle/register")}
+                            className="h-7 px-3 text-xs font-bold rounded-lg"
+                          >
+                            Add Vehicle
+                          </AppButton>
+                        </div>
                       </AppTableCell>
                     </AppTableRow>
                   ) : (
@@ -8164,40 +8141,28 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                     <span>1. Chauffeur Code of Conduct & Punctuality</span>
                   </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    All enterprise drivers must report in corporate uniform 15 minutes prior to scheduled departure. Chauffeurs must maintain a zero-tolerance policy towards mobile usage while operating vehicles.
-                  </p>
-                </div>
+                  </div>
 
                 <div className="p-4 rounded-xl border border-border/70 bg-card shadow-2xs space-y-2">
                   <div className="flex items-center gap-2 font-bold text-foreground text-sm">
                     <Gauge className="h-4 w-4 text-blue-500" />
                     <span>2. Speed Caps & Highway Safety Regulations</span>
                   </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Strict adherence to speed limits: City transit capped at 50 km/h; Arterial highways capped at 80 km/h; Expressways capped at 100 km/h. High-speed alerts are audited weekly.
-                  </p>
-                </div>
+                  </div>
 
                 <div className="p-4 rounded-xl border border-border/70 bg-card shadow-2xs space-y-2">
                   <div className="flex items-center gap-2 font-bold text-foreground text-sm">
                     <AlertTriangle className="h-4 w-4 text-amber-500" />
                     <span>3. Breakdown & Accident Emergency Protocol</span>
                   </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    In case of roadside breakdown, immediately position hazard cones 15 meters behind the vehicle, activate hazard flashers, ensure passenger safety, and dial the 24x7 Fleet RSA Helpdesk.
-                  </p>
-                </div>
+                  </div>
 
                 <div className="p-4 rounded-xl border border-border/70 bg-card shadow-2xs space-y-2">
                   <div className="flex items-center gap-2 font-bold text-foreground text-sm">
                     <Fuel className="h-4 w-4 text-purple-500" />
                     <span>4. Fuel Card Billing & Logbook Submissions</span>
                   </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    All fuel refills must be processed through designated corporate IndianOil / BPCL fleet smart cards. Odometer readings before and after refill must be logged in Daily Trip Sheets.
-                  </p>
-                </div>
+                  </div>
               </div>
             </AppCardContent>
           </AppCard>

@@ -759,7 +759,7 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                       <button
                         type="button"
                         onClick={() => handleOpenEdit(c)}
-                        className="text-[11px] font-semibold text-purple-600 dark:text-purple-400 hover:underline cursor-pointer"
+                        className="h-6 px-2.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/25 text-[11px] font-bold inline-flex items-center transition-colors cursor-pointer"
                       >
                         Edit Packages
                       </button>

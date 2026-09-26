@@ -1159,7 +1159,7 @@ export const TenderDesignMatrix: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setIsReassigningConsultant(!isReassigningConsultant)}
-                      className="text-[11px] font-bold text-purple-600 dark:text-purple-400 hover:underline cursor-pointer flex items-center gap-1"
+                      className="h-6 px-2.5 rounded-lg border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 text-[10px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
                     >
                       {isReassigningConsultant ? "Keep Designated Partner" : "Change / Reassign"}
                     </button>
@@ -1202,7 +1202,7 @@ export const TenderDesignMatrix: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setIsReassigningConsultant(true)}
-                        className="text-purple-600 dark:text-purple-400 font-bold hover:underline cursor-pointer"
+                        className="h-6 px-2.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-[10px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
                       >
                         + Assign Partner
                       </button>

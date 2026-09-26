@@ -541,10 +541,14 @@ export const LookAheadDashboard: React.FC = () => {
 
               <div className="pt-3 border-t border-border flex items-center justify-between text-[11px] text-muted-foreground">
                 <span>{items.length} {items.length === 1 ? "deliverable" : "deliverables"} queued</span>
-                <span className="text-emerald-500 font-bold flex items-center gap-1 cursor-pointer hover:underline">
+                <button
+                  type="button"
+                  onClick={() => setSelectedItem(items[0])}
+                  className="h-6 px-2.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 text-[11px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                >
                   <span>Manage Milestones</span>
                   <ArrowRight className="h-3 w-3" />
-                </span>
+                </button>
               </div>
             </div>
           );

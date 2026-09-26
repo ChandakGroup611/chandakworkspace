@@ -565,7 +565,7 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
                   <button
                     type="button"
                     onClick={() => handleOpenEdit(twr)}
-                    className="text-[11px] font-semibold text-purple-600 dark:text-purple-400 hover:underline cursor-pointer"
+                    className="h-6 px-2.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/25 text-[11px] font-bold inline-flex items-center transition-colors cursor-pointer"
                   >
                     Configure Mappings
                   </button>
@@ -912,9 +912,9 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
                           <button
                             type="button"
                             onClick={() => setShowAllMasterCategories(true)}
-                            className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold hover:underline cursor-pointer pt-1 inline-block"
+                            className="h-6 px-2.5 rounded-lg border border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20 text-blue-700 dark:text-blue-300 text-[10px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer mt-1"
                           >
-                            Or browse all {categories.length} Package Master packages →
+                            Browse all {categories.length} Package Master packages →
                           </button>
                         </div>
                       ) : (
@@ -966,7 +966,7 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
                       <button
                         type="button"
                         onClick={() => setShowAllMasterCategories(!showAllMasterCategories)}
-                        className="text-blue-600 dark:text-blue-400 font-semibold hover:underline cursor-pointer"
+                        className="h-5 px-2 rounded-md border border-border bg-surface hover:bg-surface-hover text-foreground text-[10px] font-bold inline-flex items-center transition-colors cursor-pointer"
                       >
                         {showAllMasterCategories ? "Filter by selected consultants" : "View all master packages"}
                       </button>
@@ -982,7 +982,7 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
                     <button
                       type="button"
                       onClick={() => setFormTab("MAPPINGS")}
-                      className="text-purple-600 dark:text-purple-400 font-bold hover:underline cursor-pointer"
+                      className="h-7 px-3 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs inline-flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
                     >
                       Next: Map Consultants & Packages →
                     </button>
@@ -990,7 +990,7 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
                     <button
                       type="button"
                       onClick={() => setFormTab("SPECS")}
-                      className="text-muted-foreground font-semibold hover:underline cursor-pointer"
+                      className="h-7 px-3 rounded-lg border border-border bg-surface hover:bg-surface-hover text-foreground font-semibold text-xs inline-flex items-center gap-1 transition-colors cursor-pointer"
                     >
                       ← Back to Specs
                     </button>

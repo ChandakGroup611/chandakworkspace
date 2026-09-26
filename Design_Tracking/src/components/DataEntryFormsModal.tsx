@@ -354,9 +354,10 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                           });
                           setPkgTowerId(newTwr.id);
                         }}
-                        className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold hover:underline cursor-pointer"
+                        className="h-5 px-2 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 text-[10px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
                       >
-                        + Quick Add Wing A
+                        <Plus className="h-3 w-3" />
+                        <span>Quick Add Wing A</span>
                       </button>
                     )}
                   </div>
@@ -442,11 +443,10 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                     <span>Actual / Certified Delivery Date * (Mandatory)</span>
                   </label>
                   <input
-                    type="text"
+                    type="date"
                     required
                     value={pkgActualDate}
                     onChange={e => setPkgActualDate(e.target.value)}
-                    placeholder="YYYY-MM-DD or DD/MM/YYYY"
                     className="w-full px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-mono focus:outline-hidden focus:ring-1 focus:ring-primary"
                   />
                 </div>
@@ -525,9 +525,10 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                           });
                           setLaTowerId(newTwr.id);
                         }}
-                        className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold hover:underline cursor-pointer"
+                        className="h-5 px-2 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 text-[10px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
                       >
-                        + Quick Add Wing A
+                        <Plus className="h-3 w-3" />
+                        <span>Quick Add Wing A</span>
                       </button>
                     )}
                   </div>
@@ -632,9 +633,10 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
                           });
                           setLiaisonTowerId(newTwr.id);
                         }}
-                        className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold hover:underline cursor-pointer"
+                        className="h-5 px-2 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 text-[10px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
                       >
-                        + Quick Add Wing A
+                        <Plus className="h-3 w-3" />
+                        <span>Quick Add Wing A</span>
                       </button>
                     )}
                   </div>
