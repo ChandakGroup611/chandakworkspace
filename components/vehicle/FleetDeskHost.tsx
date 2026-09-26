@@ -1765,28 +1765,39 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     const files = Array.from(fileList);
     if (!files.length) return;
 
-    const file = files[0];
     const MAX_FILE_SIZE = 25 * 1024 * 1024;
     const BLOCKED_EXTS = ["exe", "bat", "cmd", "sh", "vbs", "js", "scr", "msi", "dll"];
-    const ext = file.name.split(".").pop()?.toLowerCase() || "";
-    if (BLOCKED_EXTS.includes(ext)) {
-      triggerToast(`Executable/script files (.${ext}) are not permitted.`, true);
-      return;
-    }
-    if (file.size > MAX_FILE_SIZE) {
-      triggerToast(`File "${file.name}" exceeds maximum allowed size (25MB).`, true);
-      return;
-    }
+
+    const validFiles = files.filter((f) => {
+      const ext = f.name.split(".").pop()?.toLowerCase() || "";
+      if (BLOCKED_EXTS.includes(ext)) {
+        triggerToast(`Executable/script files (.${ext}) are not permitted.`, true);
+        return false;
+      }
+      if (f.size > MAX_FILE_SIZE) {
+        triggerToast(`File "${f.name}" exceeds maximum allowed size (25MB).`, true);
+        return false;
+      }
+      return true;
+    });
+
+    if (!validFiles.length) return;
 
     setDossierUploadingDoc(true);
-    try {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const base64Url = e.target?.result as string;
+    const newlyAddedDocs: VehicleDocumentRecord[] = [];
+
+    for (const file of validFiles) {
+      try {
+        const base64Url = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve((e.target?.result as string) || "");
+          reader.onerror = (e) => reject(e);
+          reader.readAsDataURL(file);
+        });
+
         if (!base64Url) {
-          triggerToast("Failed to read file.", true);
-          setDossierUploadingDoc(false);
-          return;
+          triggerToast(`Failed to read file: ${file.name}`, true);
+          continue;
         }
 
         const typeOption = VEHICLE_DOC_TYPES.find((t) => t.value === dossierNewDocType);
@@ -1805,34 +1816,44 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         });
 
         if (res.success && res.document) {
-          const updatedDoc = res.document;
-          setViewingVehicle((prev) => {
-            if (!prev) return null;
-            const updatedDocs = [updatedDoc, ...(prev.documents || [])];
-            return { ...prev, documents: updatedDocs };
-          });
-          setVehicles((prev) =>
-            prev.map((v) =>
-              v.id === viewingVehicle.id
-                ? { ...v, documents: [updatedDoc, ...(v.documents || [])] }
-                : v
-            )
-          );
-          triggerToast("Document successfully archived into vehicle vault.");
-          setDossierNewDocTitle("");
-          setDossierNewDocNumber("");
-          setDossierNewDocExpiry("");
-          setIsDossierAddDocOpen(false);
+          newlyAddedDocs.push(res.document);
         } else {
-          triggerToast(res.error || "Failed to save document to vehicle vault.", true);
+          triggerToast(res.error || `Failed to save ${file.name} to vehicle vault.`, true);
         }
-        setDossierUploadingDoc(false);
-      };
-      reader.readAsDataURL(file);
-    } catch (err: any) {
-      triggerToast(err.message || "Error reading file", true);
-      setDossierUploadingDoc(false);
+      } catch (err: any) {
+        triggerToast(err.message || `Error reading ${file.name}`, true);
+      }
     }
+
+    if (newlyAddedDocs.length > 0) {
+      setViewingVehicle((prev) => {
+        if (!prev) return null;
+        const updatedDocs = [...newlyAddedDocs, ...(prev.documents || [])];
+        return { ...prev, documents: updatedDocs };
+      });
+      setVehicles((prev) =>
+        prev.map((v) =>
+          v.id === viewingVehicle.id
+            ? { ...v, documents: [...newlyAddedDocs, ...(v.documents || [])] }
+            : v
+        )
+      );
+      triggerToast(
+        newlyAddedDocs.length === 1
+          ? "Document successfully archived into vehicle vault."
+          : `${newlyAddedDocs.length} documents successfully archived into vehicle vault.`
+      );
+      setDossierNewDocTitle("");
+      setDossierNewDocNumber("");
+      setDossierNewDocExpiry("");
+      setIsDossierAddDocOpen(false);
+    }
+
+    setDossierUploadingDoc(false);
+
+    // Reset input element value so re-selecting same file triggers change
+    const fileInput = document.getElementById("dossier-direct-doc-file-input") as HTMLInputElement;
+    if (fileInput) fileInput.value = "";
   };
 
   const handleDossierDeleteDocument = async (docId: string) => {

@@ -2815,7 +2815,6 @@ export async function createVehicleDocumentAction(
       title: doc.title?.trim() || doc.file_name || "Vehicle Document",
       file_name: doc.file_name,
       file_size: doc.file_size || null,
-      file_type: doc.file_type || resolveMimeFromName(doc.file_name),
       file_url: doc.file_url,
       document_number: doc.document_number?.trim() || null,
       expiry_date: doc.expiry_date || null,
@@ -2838,7 +2837,7 @@ export async function createVehicleDocumentAction(
       success: true,
       document: {
         ...data,
-        file_type: data.file_type || resolveMimeFromName(data.file_name)
+        file_type: resolveMimeFromName(data.file_name)
       } as VehicleDocumentRecord
     };
   } catch (err: any) {
