@@ -232,7 +232,7 @@ export interface VehicleDocumentRecord {
   file_type?: string;
 }
 
-export function resolveMimeFromName(fileName: string): string {
+function resolveMimeFromName(fileName: string): string {
   const ext = fileName.split(".").pop()?.toLowerCase() || "";
   if (["png", "jpg", "jpeg", "webp", "gif", "svg"].includes(ext)) return `image/${ext === "jpg" ? "jpeg" : ext}`;
   if (ext === "pdf") return "application/pdf";
