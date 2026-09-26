@@ -2322,8 +2322,8 @@ export class DesignMasterStore {
   public static bulkImportConsultants(
     consultants: Array<{
       name: string;
-      leadContact: string;
-      email: string;
+      leadContact?: string;
+      email?: string;
       phone?: string;
       categories?: string[];
       rating?: number;
@@ -2340,13 +2340,13 @@ export class DesignMasterStore {
     consultants.forEach(c => {
       const cleanName = (c.name || "").trim();
       const cleanEmail = (c.email || "").trim().toLowerCase();
-      if (!cleanName || !cleanEmail) return;
+      if (!cleanName) return;
 
       const existingIdx = (state.consultants || []).findIndex(
-        ec => ec.name.toLowerCase() === cleanName.toLowerCase() || ec.email.toLowerCase() === cleanEmail
+        ec => ec.name.toLowerCase() === cleanName.toLowerCase() || (cleanEmail !== "" && ec.email && ec.email.toLowerCase() === cleanEmail)
       );
 
-      const cats = c.categories || ["Architectural Design"];
+      const cats = c.categories && c.categories.length > 0 ? c.categories : ["Architectural Design"];
 
       if (existingIdx !== -1) {
         if (duplicateStrategy === "OVERWRITE") {
@@ -2354,13 +2354,14 @@ export class DesignMasterStore {
           state.consultants[existingIdx] = {
             ...old,
             name: cleanName,
-            leadContact: c.leadContact || old.leadContact,
-            email: cleanEmail,
-            phone: c.phone || old.phone,
+            leadContact: c.leadContact || old.leadContact || cleanName,
+            email: cleanEmail || old.email || "",
+            phone: c.phone || old.phone || "",
             category: cats[0] || old.category,
-            categories: cats,
-            rating: c.rating !== undefined ? c.rating : old.rating,
-            averageTatDays: c.averageTatDays !== undefined ? c.averageTatDays : old.averageTatDays,
+            categories: cats.length > 0 ? cats : old.categories,
+            expertise: cats.length > 0 ? cats : old.expertise,
+            rating: c.rating !== undefined && !isNaN(c.rating) ? c.rating : old.rating,
+            averageTatDays: c.averageTatDays !== undefined && !isNaN(c.averageTatDays) ? c.averageTatDays : old.averageTatDays,
             onboardingStatus: c.onboardingStatus || old.onboardingStatus
           };
           updated++;
@@ -2371,8 +2372,8 @@ export class DesignMasterStore {
         const newCons: ConsultantPartner = {
           id: `cons-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
           name: cleanName,
-          leadContact: c.leadContact,
-          email: cleanEmail,
+          leadContact: c.leadContact || cleanName || "Main Office",
+          email: cleanEmail || "",
           phone: c.phone || "",
           totalDrawingsSubmitted: 0,
           category: cats[0] || "Architectural Design",
@@ -2380,8 +2381,8 @@ export class DesignMasterStore {
           expertise: cats,
           activeProjects: [],
           onboardingStatus: c.onboardingStatus || "Onboard",
-          rating: c.rating || 4.8,
-          averageTatDays: c.averageTatDays || 3.0
+          rating: c.rating && !isNaN(c.rating) ? c.rating : 4.8,
+          averageTatDays: c.averageTatDays && !isNaN(c.averageTatDays) ? c.averageTatDays : 3.0
         };
         state.consultants.push(newCons);
         added++;

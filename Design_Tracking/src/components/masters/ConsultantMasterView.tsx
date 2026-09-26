@@ -134,12 +134,8 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
       toast.error("Consultant firm name is required.");
       return;
     }
-    if (!formLeadContact.trim()) {
-      toast.error("Lead contact person name is required.");
-      return;
-    }
-    if (!formEmail.trim() || !formEmail.includes("@")) {
-      toast.error("Valid official email address is required.");
+    if (formEmail.trim() && !formEmail.includes("@")) {
+      toast.error("Please enter a valid official email address or leave blank.");
       return;
     }
     if (formSelectedCategories.length === 0) {
@@ -148,13 +144,16 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
     }
 
     const primaryCategory = formSelectedCategories[0] || "Architectural";
+    const leadContact = formLeadContact.trim() || formName.trim() || "Main Office";
+    const email = formEmail.trim();
+    const phone = formPhone.trim();
 
     if (editingId) {
       DesignMasterStore.updateConsultant(editingId, {
         name: formName.trim(),
-        leadContact: formLeadContact.trim(),
-        email: formEmail.trim(),
-        phone: formPhone.trim() || "+91 22 0000 0000",
+        leadContact,
+        email,
+        phone,
         category: primaryCategory as any,
         categories: formSelectedCategories,
         averageTatDays: parseFloat(formTatDays) || 3.0,
@@ -164,9 +163,9 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
     } else {
       DesignMasterStore.addConsultant({
         name: formName.trim(),
-        leadContact: formLeadContact.trim(),
-        email: formEmail.trim(),
-        phone: formPhone.trim() || "+91 22 0000 0000",
+        leadContact,
+        email,
+        phone,
         category: primaryCategory as any,
         categories: formSelectedCategories,
         expertise: [],
@@ -291,14 +290,13 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
 
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-foreground">
-                    Lead Contact Person <span className="text-rose-500">*</span>
+                    Lead Contact Person <span className="text-muted-foreground text-[10px] font-normal">(Optional)</span>
                   </label>
                   <input
                     type="text"
-                    required
                     value={formLeadContact}
                     onChange={e => setFormLeadContact(e.target.value)}
-                    placeholder="e.g., Er. Rajesh Sharma"
+                    placeholder="e.g., Er. Rajesh Sharma (Optional)"
                     className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
                   />
                 </div>
@@ -307,14 +305,13 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-foreground">
-                    Official Email <span className="text-rose-500">*</span>
+                    Official Email <span className="text-muted-foreground text-[10px] font-normal">(Optional)</span>
                   </label>
                   <input
                     type="email"
-                    required
                     value={formEmail}
                     onChange={e => setFormEmail(e.target.value)}
-                    placeholder="e.g., r.sharma@sterlingconsultants.in"
+                    placeholder="e.g., r.sharma@sterlingconsultants.in (Optional)"
                     className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-border bg-background text-foreground focus:outline-hidden focus:ring-1 focus:ring-purple-500"
                   />
                 </div>

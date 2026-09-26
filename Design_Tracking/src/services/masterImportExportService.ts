@@ -103,14 +103,14 @@ export const MASTER_SCHEMAS: Record<Exclude<MasterImportType, "ALL">, MasterColu
     { key: "description", label: "Description", required: false, example: "Residential 3BHK and 4BHK luxury units", description: "Wing notes", aliases: ["desc", "remarks"] }
   ],
   CONSULTANTS: [
-    { key: "name", label: "Consultant Firm Name", required: true, example: "Sterling Engineering & Structural", description: "Registered firm name", aliases: ["firm_name", "consultant", "consultant_name", "company"] },
-    { key: "leadContact", label: "Lead Contact Person", required: true, example: "Er. Rajesh Sharma", description: "Principal engineer or architect", aliases: ["contact_person", "lead_contact", "contact", "partner"] },
-    { key: "email", label: "Official Email", required: true, example: "r.sharma@sterlingconsultants.in", description: "Official business email", aliases: ["email_address", "mail"] },
-    { key: "phone", label: "Phone Number", required: false, example: "+91 98200 12345", description: "Direct contact number", aliases: ["phone_number", "mobile", "tel"] },
-    { key: "categories", label: "Tagged Packages", required: false, example: "Structural, Geotechnical & Soil", description: "Comma-separated packages from Package Master", aliases: ["packages", "disciplines", "categories"] },
-    { key: "rating", label: "Quality Rating (1.0 - 5.0)", required: false, example: "4.8", description: "Performance score", aliases: ["rating", "score"] },
-    { key: "averageTatDays", label: "Average TAT (Days)", required: false, example: "3.5", description: "Turnaround time in days", aliases: ["tat", "tat_days", "turnaround_days"] },
-    { key: "onboardingStatus", label: "Onboarding Status", required: false, example: "Onboard", description: "Onboard or Not Onboard", aliases: ["status", "onboarding"] }
+    { key: "name", label: "Consultant Firm Name", required: false, example: "Sterling Engineering & Structural", description: "Registered firm name or partner name", aliases: ["firm_name", "consultant", "consultant_name", "company", "agency", "partner", "name", "title"] },
+    { key: "leadContact", label: "Lead Contact Person", required: false, example: "Er. Rajesh Sharma", description: "Principal engineer or contact person (Optional)", aliases: ["contact_person", "lead_contact", "contact", "partner", "person", "representative"] },
+    { key: "email", label: "Official Email", required: false, example: "r.sharma@sterlingconsultants.in", description: "Official business email (Optional)", aliases: ["email_address", "mail", "email"] },
+    { key: "phone", label: "Phone Number", required: false, example: "+91 98200 12345", description: "Direct contact or mobile number (Optional)", aliases: ["phone_number", "mobile", "tel", "contact_no", "phone"] },
+    { key: "categories", label: "Tagged Packages", required: false, example: "Structural Engineering", description: "Comma-separated packages from Package Master (Optional)", aliases: ["packages", "disciplines", "categories", "package"] },
+    { key: "rating", label: "Quality Rating (1.0 - 5.0)", required: false, example: "4.8", description: "Performance score (Optional, default 4.8)", aliases: ["rating", "score"] },
+    { key: "averageTatDays", label: "Average TAT (Days)", required: false, example: "3.5", description: "Turnaround time in days (Optional, default 3.0)", aliases: ["tat", "tat_days", "turnaround_days"] },
+    { key: "onboardingStatus", label: "Onboarding Status", required: false, example: "Onboard", description: "Onboard or Not Onboard (Optional, default Onboard)", aliases: ["status", "onboarding"] }
   ],
   AUTHORITIES: [
     { key: "authorityName", label: "Authority / Body Name", required: true, example: "MCGM Fire Brigade", description: "Statutory authority or municipal body", aliases: ["authority", "name", "body", "authority_name"] },
@@ -233,9 +233,9 @@ export const SAMPLE_DATA: Record<Exclude<MasterImportType, "ALL">, Record<string
     },
     {
       name: "RSP Design Consultants India",
-      leadContact: "Ar. Priya Nair",
-      email: "priya.nair@rspindia.com",
-      phone: "+91 98201 88990",
+      leadContact: "",
+      email: "",
+      phone: "",
       categories: "Architectural Design, Landscape & External Works",
       rating: 4.8,
       averageTatDays: 3.5,
@@ -244,7 +244,7 @@ export const SAMPLE_DATA: Record<Exclude<MasterImportType, "ALL">, Record<string
     {
       name: "Spectral MEP Services",
       leadContact: "Er. Amit Deshmukh",
-      email: "amit.d@spectralmep.com",
+      email: "",
       phone: "+91 98202 33445",
       categories: "MEPF Services",
       rating: 4.7,
@@ -297,7 +297,7 @@ export class MasterImportExportService {
 
       const instructions = [
         ["Hierarchy Rules", "1. Package Master (Parent) -> 2. Sub-Package Master (Child Deliverables) -> 3. Project Master -> 4. Sub-Project / Towers -> 5. Consultant Partners"],
-        ["Required Fields", "Fields with asterisk (*) in headers are strictly mandatory. Missing required fields will be flagged."],
+        ["Required Fields", "Fields with asterisk (*) in headers are strictly mandatory. For Consultant Master, all contact details (contact person, email, phone) are completely optional and can be left blank."],
         ["Parent Linkages", "When creating Sub-Packages, the 'Parent Package Name' must match an existing or newly created Package Master."],
         ["Towers Linkages", "When creating Sub-Projects / Towers, the 'Parent Project Name' must match an existing Project Master."],
         ["Duplicate Handling", "During import, you can choose to 'Skip Duplicates' or 'Update Existing Records' seamlessly."]
@@ -503,7 +503,11 @@ export class MasterImportExportService {
         rowData.parentPackageName = "";
       }
 
-      const checkName = (rowData.subPackageName || rowData.name || "").trim().toLowerCase();
+      if (targetType === "CONSULTANTS" && !rowData.name && rowData.leadContact) {
+        rowData.name = rowData.leadContact;
+      }
+
+      const checkName = (rowData.subPackageName || rowData.name || rowData.leadContact || "").trim().toLowerCase();
       if (!hasData || !checkName || checkName === "total" || checkName === "grand total") {
         continue;
       }
@@ -706,7 +710,11 @@ export class MasterImportExportService {
         rowData.parentPackageName = "";
       }
 
-      const checkName = (rowData.subPackageName || rowData.name || "").trim().toLowerCase();
+      if (type === "CONSULTANTS" && !rowData.name && rowData.leadContact) {
+        rowData.name = rowData.leadContact;
+      }
+
+      const checkName = (rowData.subPackageName || rowData.name || rowData.leadContact || "").trim().toLowerCase();
       // Ignore empty or summary "Total" / "Grand Total" rows
       if (!hasData || !checkName || checkName === "total" || checkName === "grand total") {
         continue;
@@ -833,15 +841,19 @@ export class MasterImportExportService {
         }
       }
     } else if (type === "CONSULTANTS") {
-      const name = (data.name || "").trim().toLowerCase();
+      const name = (data.name || data.leadContact || "").trim().toLowerCase();
       const email = (data.email || "").trim().toLowerCase();
 
+      if (!name) {
+        errors.push(`Consultant firm or partner name is required`);
+      }
+
       if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        errors.push(`Invalid email address: "${data.email}"`);
+        errors.push(`Invalid email address format: "${data.email}"`);
       }
 
       const existing = (store.consultants || []).find(
-        c => c.name.toLowerCase() === name || (email && c.email.toLowerCase() === email)
+        c => c.name.toLowerCase() === name || (email !== "" && c.email && c.email.toLowerCase() === email)
       );
       if (existing) {
         isDuplicate = true;
@@ -1007,14 +1019,19 @@ export class MasterImportExportService {
           ? String(r.data.categories).split(",").map((s: string) => s.trim()).filter(Boolean)
           : [];
 
+        const firmName = String(r.data.name || r.data.leadContact || "").trim();
+        const contactPerson = r.data.leadContact ? String(r.data.leadContact).trim() : (firmName || "Main Office");
+        const contactEmail = r.data.email ? String(r.data.email).trim() : "";
+        const contactPhone = r.data.phone ? String(r.data.phone).trim() : "";
+
         return {
-          name: String(r.data.name).trim(),
-          leadContact: String(r.data.leadContact).trim(),
-          email: String(r.data.email).trim(),
-          phone: r.data.phone ? String(r.data.phone).trim() : undefined,
+          name: firmName,
+          leadContact: contactPerson,
+          email: contactEmail,
+          phone: contactPhone,
           categories,
-          rating: r.data.rating ? parseFloat(r.data.rating) : 4.8,
-          averageTatDays: r.data.averageTatDays ? parseFloat(r.data.averageTatDays) : 3.0,
+          rating: r.data.rating && !isNaN(parseFloat(r.data.rating)) ? parseFloat(r.data.rating) : 4.8,
+          averageTatDays: r.data.averageTatDays && !isNaN(parseFloat(r.data.averageTatDays)) ? parseFloat(r.data.averageTatDays) : 3.0,
           onboardingStatus: (r.data.onboardingStatus && String(r.data.onboardingStatus).toLowerCase().includes("not"))
             ? ("Not Onboard" as const)
             : ("Onboard" as const)
