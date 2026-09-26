@@ -64,7 +64,11 @@ import {
   Ticket,
   BadgePercent,
   Percent,
-  Calculator
+  Calculator,
+  Columns,
+  Layers,
+  ExternalLink,
+  ChevronRight
 } from "lucide-react";
 import { 
   POPULAR_BRANDS, 
@@ -117,6 +121,7 @@ import {
   VehicleRecord,
   VehicleDocumentRecord,
   fetchVehicleDocumentsAction,
+  createVehicleDocumentAction,
   deleteVehicleDocumentAction,
   DriverRecord,
   TripRecord,
@@ -621,6 +626,18 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   const [viewingTrip, setViewingTrip] = useState<TripRecord | null>(null);
   const [viewingPart, setViewingPart] = useState<PartAccessoryRecord | null>(null);
   const [viewingVendor, setViewingVendor] = useState<InsuranceVendorRecord | null>(null);
+
+  // Vehicle Master Dossier Multi-Column / Tab View States
+  const [vehicleDossierTab, setVehicleDossierTab] = useState<
+    "OVERVIEW" | "SERVICES" | "PARTS" | "DOCS" | "COMPLIANCE" | "TRIPS" | "ALL"
+  >("OVERVIEW");
+  const [dossierOriginVehicle, setDossierOriginVehicle] = useState<VehicleRecord | null>(null);
+  const [isDossierAddDocOpen, setIsDossierAddDocOpen] = useState(false);
+  const [dossierNewDocType, setDossierNewDocType] = useState("PUC");
+  const [dossierNewDocTitle, setDossierNewDocTitle] = useState("");
+  const [dossierNewDocNumber, setDossierNewDocNumber] = useState("");
+  const [dossierNewDocExpiry, setDossierNewDocExpiry] = useState("");
+  const [dossierUploadingDoc, setDossierUploadingDoc] = useState(false);
 
   // Modal Dialog States
   const [isEditVehicleOpen, setIsEditVehicleOpen] = useState(false);
@@ -1625,6 +1642,201 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       });
     }
   }, [viewingVehicle?.id]);
+
+  // Vehicle Dossier Computed Statistics and Subsystem Entities
+  const dossierData = useMemo(() => {
+    if (!viewingVehicle) {
+      return {
+        services: [] as MaintenanceRecord[],
+        parts: [] as PartAccessoryRecord[],
+        trips: [] as TripRecord[],
+        docs: [] as VehicleDocumentRecord[],
+        totalServiceSpend: 0,
+        lastService: null as MaintenanceRecord | null,
+        totalPartsValue: 0,
+        activeWarrantiesCount: 0,
+        expiredDocsCount: 0,
+        completedTripsCount: 0,
+        activeTripsCount: 0,
+        hasPuc: false,
+        hasInsurance: false,
+        hasRc: false,
+        hasFitness: false,
+        hasPermit: false
+      };
+    }
+
+    const normReg = (reg?: string | null) => (reg || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+    const targetId = viewingVehicle.id;
+    const targetPlate = normReg(viewingVehicle.registration_number);
+
+    // 1. Service / Maintenance Records
+    const vServices = maintenance.filter(
+      (m) =>
+        (m.vehicle_id && m.vehicle_id === targetId) ||
+        (m.vehicle_reg && normReg(m.vehicle_reg) === targetPlate)
+    ).sort((a, b) => new Date(b.service_date).getTime() - new Date(a.service_date).getTime());
+
+    const totalServiceSpend = vServices.reduce((sum, s) => sum + (Number(s.cost) || 0), 0);
+    const lastService = vServices[0] || null;
+
+    // 2. Mounted Spare Parts & Accessories
+    const vParts = parts.filter(
+      (p) =>
+        (p.vehicle_id && p.vehicle_id === targetId) ||
+        (p.assigned_vehicle_reg && normReg(p.assigned_vehicle_reg) === targetPlate)
+    );
+
+    const totalPartsValue = vParts.reduce((sum, p) => sum + (Number(p.purchase_amount) || 0), 0);
+    const activeWarrantiesCount = vParts.filter((p) => {
+      if (!p.warranty_expiry_date) return false;
+      const days = calculateDaysRemaining(p.warranty_expiry_date);
+      return days !== null && days >= 0;
+    }).length;
+
+    // 3. Trips Log
+    const vTrips = trips.filter(
+      (t) =>
+        (t.vehicle_id && t.vehicle_id === targetId) ||
+        (t.vehicle_reg && normReg(t.vehicle_reg) === targetPlate)
+    ).sort((a, b) => new Date(b.plan_date || b.created_at || "").getTime() - new Date(a.plan_date || a.created_at || "").getTime());
+
+    const completedTripsCount = vTrips.filter((t) => t.status === "COMPLETED").length;
+    const activeTripsCount = vTrips.filter((t) => t.status === "ON_ROUTE" || t.status === "SCHEDULED").length;
+
+    // 4. Documents & Compliance Status
+    const vDocs = viewingVehicle.documents || [];
+    const expiredDocsCount = vDocs.filter((d) => {
+      if (!d.expiry_date) return false;
+      const days = calculateDaysRemaining(d.expiry_date);
+      return days !== null && days < 0;
+    }).length;
+
+    const hasPuc = Boolean(vDocs.some((d) => d.doc_type === "PUC") || viewingVehicle.puc_certificate_number);
+    const hasInsurance = Boolean(vDocs.some((d) => d.doc_type === "INSURANCE") || viewingVehicle.insurance_policy_number);
+    const hasRc = Boolean(vDocs.some((d) => d.doc_type === "RC") || viewingVehicle.vin_chassis_number);
+    const hasFitness = Boolean(vDocs.some((d) => d.doc_type === "FITNESS") || viewingVehicle.fitness_expiry_date);
+    const hasPermit = Boolean(vDocs.some((d) => d.doc_type === "PERMIT"));
+
+    return {
+      services: vServices,
+      parts: vParts,
+      trips: vTrips,
+      docs: vDocs,
+      totalServiceSpend,
+      lastService,
+      totalPartsValue,
+      activeWarrantiesCount,
+      expiredDocsCount,
+      completedTripsCount,
+      activeTripsCount,
+      hasPuc,
+      hasInsurance,
+      hasRc,
+      hasFitness,
+      hasPermit
+    };
+  }, [viewingVehicle, maintenance, parts, trips]);
+
+  const handleDossierDirectDocUpload = async (fileList: FileList | File[]) => {
+    if (!viewingVehicle) return;
+    const files = Array.from(fileList);
+    if (!files.length) return;
+
+    const file = files[0];
+    const MAX_FILE_SIZE = 25 * 1024 * 1024;
+    const BLOCKED_EXTS = ["exe", "bat", "cmd", "sh", "vbs", "js", "scr", "msi", "dll"];
+    const ext = file.name.split(".").pop()?.toLowerCase() || "";
+    if (BLOCKED_EXTS.includes(ext)) {
+      triggerToast(`Executable/script files (.${ext}) are not permitted.`, true);
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      triggerToast(`File "${file.name}" exceeds maximum allowed size (25MB).`, true);
+      return;
+    }
+
+    setDossierUploadingDoc(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64Url = e.target?.result as string;
+        if (!base64Url) {
+          triggerToast("Failed to read file.", true);
+          setDossierUploadingDoc(false);
+          return;
+        }
+
+        const typeOption = VEHICLE_DOC_TYPES.find((t) => t.value === dossierNewDocType);
+        const resolvedTitle = dossierNewDocTitle.trim() || `${typeOption?.label || "Vehicle Document"} - ${file.name.replace(/\.[^/.]+$/, "")}`;
+
+        const res = await createVehicleDocumentAction(viewingVehicle.id, {
+          doc_type: dossierNewDocType,
+          title: resolvedTitle,
+          document_number: dossierNewDocNumber.trim() || null,
+          expiry_date: dossierNewDocExpiry || null,
+          file_name: file.name,
+          file_size: formatFileSize(file.size),
+          file_type: file.type || resolveMimeFromName(file.name),
+          file_url: base64Url,
+          status: "VALID"
+        });
+
+        if (res.success && res.document) {
+          const updatedDoc = res.document;
+          setViewingVehicle((prev) => {
+            if (!prev) return null;
+            const updatedDocs = [updatedDoc, ...(prev.documents || [])];
+            return { ...prev, documents: updatedDocs };
+          });
+          setVehicles((prev) =>
+            prev.map((v) =>
+              v.id === viewingVehicle.id
+                ? { ...v, documents: [updatedDoc, ...(v.documents || [])] }
+                : v
+            )
+          );
+          triggerToast("Document successfully archived into vehicle vault.");
+          setDossierNewDocTitle("");
+          setDossierNewDocNumber("");
+          setDossierNewDocExpiry("");
+          setIsDossierAddDocOpen(false);
+        } else {
+          triggerToast(res.error || "Failed to save document to vehicle vault.", true);
+        }
+        setDossierUploadingDoc(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (err: any) {
+      triggerToast(err.message || "Error reading file", true);
+      setDossierUploadingDoc(false);
+    }
+  };
+
+  const handleDossierDeleteDocument = async (docId: string) => {
+    if (!viewingVehicle) return;
+    if (!confirm("Are you sure you want to permanently delete this document from the vehicle vault?")) {
+      return;
+    }
+    const res = await deleteVehicleDocumentAction(docId);
+    if (res.success) {
+      setViewingVehicle((prev) => {
+        if (!prev) return null;
+        return { ...prev, documents: (prev.documents || []).filter((d) => d.id !== docId) };
+      });
+      setVehicles((prev) =>
+        prev.map((v) =>
+          v.id === viewingVehicle.id
+            ? { ...v, documents: (v.documents || []).filter((d) => d.id !== docId) }
+            : v
+        )
+      );
+      triggerToast("Document removed from vehicle vault.");
+    } else {
+      triggerToast(res.error || "Failed to delete document.", true);
+    }
+  };
+
 
   const handleCreateVehicle = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -5694,6 +5906,20 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                               </span>
                             )}
                           </div>
+                          <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-400 px-1.5 py-0.2 rounded border border-amber-500/20" title="Logged Workshop Services">
+                              <Wrench className="h-2.5 w-2.5 text-amber-500" />
+                              <span>{maintenance.filter(m => (m.vehicle_id && m.vehicle_id === veh.id) || (m.vehicle_reg && m.vehicle_reg.replace(/[^a-zA-Z0-9]/g, "").toUpperCase() === veh.registration_number.replace(/[^a-zA-Z0-9]/g, "").toUpperCase())).length} Svc</span>
+                            </span>
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-blue-500/10 text-blue-700 dark:text-blue-400 px-1.5 py-0.2 rounded border border-blue-500/20" title="Mounted Spare Parts">
+                              <Package className="h-2.5 w-2.5 text-blue-500" />
+                              <span>{parts.filter(p => (p.vehicle_id && p.vehicle_id === veh.id) || (p.assigned_vehicle_reg && p.assigned_vehicle_reg.replace(/[^a-zA-Z0-9]/g, "").toUpperCase() === veh.registration_number.replace(/[^a-zA-Z0-9]/g, "").toUpperCase())).length} Parts</span>
+                            </span>
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.2 rounded border border-emerald-500/20" title="Archived Documents">
+                              <FileCheck className="h-2.5 w-2.5 text-emerald-500" />
+                              <span>{veh.documents?.length || 0} Docs</span>
+                            </span>
+                          </div>
                         </AppTableCell>
 
                         {/* 2. Owner Name & RTO RMN */}
@@ -5807,6 +6033,19 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         {/* 9. Actions */}
                         <AppTableCell className="p-3.5 text-right">
                           <div className="flex items-center justify-end gap-1.5">
+                            <AppButton
+                              variant="primary"
+                              size="sm"
+                              title="Inspect Complete Vehicle Master Dossier"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setViewingVehicle(veh);
+                              }}
+                              className="h-7 px-2.5 text-xs gap-1 font-semibold bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white shadow-2xs"
+                            >
+                              <Car className="h-3 w-3" />
+                              <span>360° Dossier</span>
+                            </AppButton>
                             <AppButton
                               variant="outline"
                               size="sm"
@@ -13763,74 +14002,1358 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         <WorkingDocumentLayout
           title={`Vehicle Master Dossier: ${viewingVehicle.registration_number}`}
           badge={viewingVehicle.status}
-          badgeColor="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-          category="Fleet Operations"
+          badgeColor={
+            viewingVehicle.status === "IN_STOCK"
+              ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
+              : viewingVehicle.status === "IN_SERVICE"
+              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+              : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+          }
+          category="Fleet Operations & Asset Management"
           icon={Car}
           iconBg="bg-theme-btn-primary/15 text-theme-btn-primary border-theme-btn-primary/25"
-          description="Comprehensive vehicle master dossier, RTO registration, powertrain specifications, compliance documents & active assignment."
+          description="Complete 360° vehicle asset dossier: Technical powertrain specifications, workshop service logs, mounted spare parts & warranties, compliance document vault, insurance/PUC policies & trip dispatch movements."
           breadcrumbs={[
             { label: "Fleet Inventory", onClick: () => setViewingVehicle(null) },
             { label: `Vehicle Dossier (${viewingVehicle.registration_number})` }
           ]}
           onBack={() => setViewingVehicle(null)}
           backLabel="Back to Fleet"
+          headerActions={
+            <div className="flex items-center gap-2 flex-wrap">
+              {canEditVehicle && (
+                <AppButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setDossierOriginVehicle(viewingVehicle);
+                    openEditVehicleModal(viewingVehicle);
+                  }}
+                  className="text-xs h-9 px-3 gap-1.5 font-semibold text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                >
+                  <Edit2 className="h-3.5 w-3.5" />
+                  <span>Edit Vehicle</span>
+                </AppButton>
+              )}
+              {canManageMaintenance && (
+                <AppButton
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  onClick={() => {
+                    setDossierOriginVehicle(viewingVehicle);
+                    resetMaintenanceForm();
+                    setNewMaintVehicleId(viewingVehicle.id);
+                    setIsAddMaintenanceOpen(true);
+                  }}
+                  className="bg-amber-600 hover:bg-amber-700 text-white text-xs h-9 px-3 gap-1.5 font-semibold shadow-2xs"
+                >
+                  <Wrench className="h-3.5 w-3.5" />
+                  <span>+ Log Service</span>
+                </AppButton>
+              )}
+              <AppButton
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setDossierOriginVehicle(viewingVehicle);
+                  openCreatePartModal();
+                  setPartFormVehicleId(viewingVehicle.id);
+                  setPartFormAssignedVehicleReg(viewingVehicle.registration_number);
+                }}
+                className="text-xs h-9 px-3 gap-1.5 font-semibold text-blue-600 dark:text-blue-400 border-blue-500/30 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+              >
+                <Package className="h-3.5 w-3.5" />
+                <span>+ Mount Part</span>
+              </AppButton>
+              <AppButton
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setVehicleDossierTab("DOCS");
+                  setIsDossierAddDocOpen(true);
+                }}
+                className="text-xs h-9 px-3 gap-1.5 font-semibold text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+              >
+                <UploadCloud className="h-3.5 w-3.5" />
+                <span>+ Attach Document</span>
+              </AppButton>
+              <AppButton
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => window.print()}
+                className="text-xs h-9 px-3 gap-1.5 font-semibold"
+              >
+                <Printer className="h-3.5 w-3.5" />
+                <span>Print Dossier</span>
+              </AppButton>
+            </div>
+          }
         >
-              {/* Primary Specs & Identity */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="p-3 rounded-xl border border-border/70 bg-slate-50/50 dark:bg-slate-900/40 space-y-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Category / Body</span>
-                  <div className="font-semibold text-foreground text-sm">{viewingVehicle.category || "Standard"}</div>
+          {/* 1. HERO BANNER: Identity, Plate, Make & Key Assignment Specs */}
+          <div className="p-5 rounded-2xl border border-border bg-gradient-to-r from-slate-50 via-surface to-slate-50/50 dark:from-slate-900/60 dark:via-surface dark:to-slate-900/40 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+            <div className="flex items-start gap-4">
+              <div className="shrink-0 pt-0.5">
+                {renderHsrpPlate(viewingVehicle.registration_number)}
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-xl font-bold tracking-tight text-foreground">
+                    {viewingVehicle.make} {viewingVehicle.model} {viewingVehicle.year ? `(${viewingVehicle.year})` : ""}
+                  </h2>
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-200/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-border">
+                    {viewingVehicle.category || "Standard Car"}
+                  </span>
+                  {viewingVehicle.fuel_type && (
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 flex items-center gap-1">
+                      <Fuel className="h-3 w-3 text-amber-500" />
+                      <span>{viewingVehicle.fuel_type}</span>
+                    </span>
+                  )}
+                  {viewingVehicle.nickname && (
+                    <span className="text-[11px] font-medium text-muted-foreground italic">
+                      "{viewingVehicle.nickname}"
+                    </span>
+                  )}
                 </div>
-                <div className="p-3 rounded-xl border border-border/70 bg-slate-50/50 dark:bg-slate-900/40 space-y-1">
+                <div className="text-xs text-muted-foreground flex items-center gap-3 flex-wrap">
+                  <span className="flex items-center gap-1 font-mono">
+                    <Hash className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span>VIN: {viewingVehicle.vin_chassis_number || "Not Recorded"}</span>
+                  </span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
+                    <Building2 className="h-3.5 w-3.5 text-blue-500" />
+                    <span>RTO: {viewingVehicle.rto_office || "State Transport"}</span>
+                  </span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
+                    <UserCheck className="h-3.5 w-3.5 text-emerald-500" />
+                    <span>Owner: {viewingVehicle.registered_owner || "Corporate Fleet"}</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 shrink-0 flex-wrap">
+              <div className="p-3 rounded-xl border border-border bg-surface shadow-2xs space-y-0.5 min-w-[130px]">
+                <div className="text-[10px] uppercase font-bold text-muted-foreground flex items-center gap-1">
+                  <Gauge className="h-3 w-3 text-theme-btn-primary" />
+                  <span>Odometer</span>
+                </div>
+                <div className="text-sm font-mono font-bold text-foreground">
+                  {viewingVehicle.odometer_km ? `${viewingVehicle.odometer_km.toLocaleString()} km` : "0 km"}
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl border border-border bg-surface shadow-2xs space-y-0.5 min-w-[160px]">
+                <div className="text-[10px] uppercase font-bold text-muted-foreground flex items-center gap-1">
+                  <Users className="h-3 w-3 text-purple-500" />
+                  <span>Primary Chauffeur</span>
+                </div>
+                <div className="text-xs font-semibold text-foreground truncate max-w-[150px]">
+                  {viewingVehicle.assignedDriver?.full_name || "Unassigned Pool"}
+                </div>
+                {viewingVehicle.assignedDriver?.phone && (
+                  <div className="text-[10px] text-blue-600 dark:text-blue-400 font-mono">
+                    <a href={`tel:${viewingVehicle.assignedDriver.phone}`} className="hover:underline">
+                      {viewingVehicle.assignedDriver.phone}
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* 2. CLICKABLE METRIC JUMP TILES (Fast overview & quick navigation) */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {/* Tile 1: Services */}
+            <button
+              type="button"
+              onClick={() => setVehicleDossierTab("SERVICES")}
+              className={`p-3.5 rounded-xl border text-left transition-all relative overflow-hidden group ${
+                vehicleDossierTab === "SERVICES"
+                  ? "border-amber-500/60 bg-amber-500/10 dark:bg-amber-950/20 shadow-xs ring-1 ring-amber-500/30"
+                  : "border-border bg-surface hover:border-amber-500/40 hover:bg-slate-50/50 dark:hover:bg-slate-900/40"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                  <Wrench className="h-4 w-4" />
+                  <span>Workshop Services</span>
+                </span>
+                <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300">
+                  {dossierData.services.length}
+                </span>
+              </div>
+              <div className="text-lg font-bold text-foreground mt-2 font-mono">
+                ₹{dossierData.totalServiceSpend.toLocaleString("en-IN")}
+              </div>
+              <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
+                {dossierData.lastService ? `Last: ${dossierData.lastService.service_date}` : "No service logs yet"}
+              </div>
+            </button>
+
+            {/* Tile 2: Mounted Spare Parts */}
+            <button
+              type="button"
+              onClick={() => setVehicleDossierTab("PARTS")}
+              className={`p-3.5 rounded-xl border text-left transition-all relative overflow-hidden group ${
+                vehicleDossierTab === "PARTS"
+                  ? "border-blue-500/60 bg-blue-500/10 dark:bg-blue-950/20 shadow-xs ring-1 ring-blue-500/30"
+                  : "border-border bg-surface hover:border-blue-500/40 hover:bg-slate-50/50 dark:hover:bg-slate-900/40"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400 flex items-center gap-1.5">
+                  <Package className="h-4 w-4" />
+                  <span>Spare Parts & Assets</span>
+                </span>
+                <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-700 dark:text-blue-300">
+                  {dossierData.parts.length}
+                </span>
+              </div>
+              <div className="text-lg font-bold text-foreground mt-2 font-mono">
+                ₹{dossierData.totalPartsValue.toLocaleString("en-IN")}
+              </div>
+              <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
+                {dossierData.activeWarrantiesCount} mounted parts under warranty
+              </div>
+            </button>
+
+            {/* Tile 3: Document Vault */}
+            <button
+              type="button"
+              onClick={() => setVehicleDossierTab("DOCS")}
+              className={`p-3.5 rounded-xl border text-left transition-all relative overflow-hidden group ${
+                vehicleDossierTab === "DOCS"
+                  ? "border-emerald-500/60 bg-emerald-500/10 dark:bg-emerald-950/20 shadow-xs ring-1 ring-emerald-500/30"
+                  : "border-border bg-surface hover:border-emerald-500/40 hover:bg-slate-50/50 dark:hover:bg-slate-900/40"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+                  <FileCheck className="h-4 w-4" />
+                  <span>Legal Document Vault</span>
+                </span>
+                <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
+                  {dossierData.docs.length}
+                </span>
+              </div>
+              <div className="text-lg font-bold text-foreground mt-2">
+                {dossierData.expiredDocsCount > 0 ? (
+                  <span className="text-rose-600 dark:text-rose-400 text-sm font-semibold">
+                    {dossierData.expiredDocsCount} Expired
+                  </span>
+                ) : dossierData.docs.length > 0 ? (
+                  <span className="text-emerald-600 dark:text-emerald-400 text-sm font-semibold">
+                    All Valid & Archived
+                  </span>
+                ) : (
+                  <span className="text-amber-600 dark:text-amber-400 text-sm font-semibold">
+                    No Files Attached
+                  </span>
+                )}
+              </div>
+              <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
+                PUC, Insurance, RC Smart Card & Permits
+              </div>
+            </button>
+
+            {/* Tile 4: Trips Movement */}
+            <button
+              type="button"
+              onClick={() => setVehicleDossierTab("TRIPS")}
+              className={`p-3.5 rounded-xl border text-left transition-all relative overflow-hidden group ${
+                vehicleDossierTab === "TRIPS"
+                  ? "border-purple-500/60 bg-purple-500/10 dark:bg-purple-950/20 shadow-xs ring-1 ring-purple-500/30"
+                  : "border-border bg-surface hover:border-purple-500/40 hover:bg-slate-50/50 dark:hover:bg-slate-900/40"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-400 flex items-center gap-1.5">
+                  <MapPin className="h-4 w-4" />
+                  <span>Trip Movements</span>
+                </span>
+                <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-700 dark:text-purple-300">
+                  {dossierData.trips.length}
+                </span>
+              </div>
+              <div className="text-lg font-bold text-foreground mt-2">
+                {dossierData.completedTripsCount} <span className="text-xs text-muted-foreground font-normal">Completed</span>
+              </div>
+              <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
+                {dossierData.activeTripsCount} scheduled or en-route
+              </div>
+            </button>
+          </div>
+
+          {/* 3. DOSSIER COLUMNS / SECTIONS TAB NAVIGATION BAR */}
+          <div className="flex items-center gap-1.5 border-b border-border pb-2 overflow-x-auto">
+            <button
+              type="button"
+              onClick={() => setVehicleDossierTab("OVERVIEW")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-colors ${
+                vehicleDossierTab === "OVERVIEW"
+                  ? "bg-theme-btn-primary text-white shadow-2xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+              }`}
+            >
+              <Car className="h-3.5 w-3.5" />
+              <span>Overview & Specs</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setVehicleDossierTab("SERVICES")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-colors ${
+                vehicleDossierTab === "SERVICES"
+                  ? "bg-amber-600 text-white shadow-2xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+              }`}
+            >
+              <Wrench className="h-3.5 w-3.5" />
+              <span>Service Records</span>
+              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                vehicleDossierTab === "SERVICES" ? "bg-white/20 text-white" : "bg-slate-200 dark:bg-slate-700 text-foreground"
+              }`}>
+                {dossierData.services.length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setVehicleDossierTab("PARTS")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-colors ${
+                vehicleDossierTab === "PARTS"
+                  ? "bg-blue-600 text-white shadow-2xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+              }`}
+            >
+              <Package className="h-3.5 w-3.5" />
+              <span>Spare Parts & Assets</span>
+              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                vehicleDossierTab === "PARTS" ? "bg-white/20 text-white" : "bg-slate-200 dark:bg-slate-700 text-foreground"
+              }`}>
+                {dossierData.parts.length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setVehicleDossierTab("DOCS")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-colors ${
+                vehicleDossierTab === "DOCS"
+                  ? "bg-emerald-600 text-white shadow-2xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+              }`}
+            >
+              <FileCheck className="h-3.5 w-3.5" />
+              <span>Document Vault</span>
+              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                vehicleDossierTab === "DOCS" ? "bg-white/20 text-white" : "bg-slate-200 dark:bg-slate-700 text-foreground"
+              }`}>
+                {dossierData.docs.length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setVehicleDossierTab("COMPLIANCE")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-colors ${
+                vehicleDossierTab === "COMPLIANCE"
+                  ? "bg-cyan-600 text-white shadow-2xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+              }`}
+            >
+              <ShieldCheck className="h-3.5 w-3.5" />
+              <span>Compliance & Renewals</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setVehicleDossierTab("TRIPS")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-colors ${
+                vehicleDossierTab === "TRIPS"
+                  ? "bg-purple-600 text-white shadow-2xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+              }`}
+            >
+              <MapPin className="h-3.5 w-3.5" />
+              <span>Trip Movements</span>
+              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                vehicleDossierTab === "TRIPS" ? "bg-white/20 text-white" : "bg-slate-200 dark:bg-slate-700 text-foreground"
+              }`}>
+                {dossierData.trips.length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setVehicleDossierTab("ALL")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-colors ${
+                vehicleDossierTab === "ALL"
+                  ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-2xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+              }`}
+            >
+              <Layers className="h-3.5 w-3.5" />
+              <span>Complete 360° Dossier (All Columns)</span>
+            </button>
+          </div>
+
+          {/* ========================================================================= */}
+          {/* TAB 1: OVERVIEW & TECHNICAL SPECIFICATIONS */}
+          {/* ========================================================================= */}
+          {(vehicleDossierTab === "OVERVIEW" || vehicleDossierTab === "ALL") && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between border-b border-border pb-2">
+                <div className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <Gauge className="h-4 w-4 text-theme-btn-primary" />
+                  <span>Technical Powertrain & Identity Specifications</span>
+                </div>
+              </div>
+
+              {/* Technical Specifications Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Category / Body Type</span>
+                  <div className="font-semibold text-foreground text-xs">{viewingVehicle.category || "Standard"}</div>
+                </div>
+                <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Fuel / Powertrain</span>
-                  <div className="font-semibold text-foreground text-sm flex items-center gap-1.5">
+                  <div className="font-semibold text-foreground text-xs flex items-center gap-1">
                     <Fuel className="h-3.5 w-3.5 text-amber-500" />
                     <span>{viewingVehicle.fuel_type || "Petrol"}</span>
                   </div>
                 </div>
-                <div className="p-3 rounded-xl border border-border/70 bg-slate-50/50 dark:bg-slate-900/40 space-y-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Current Odometer</span>
-                  <div className="font-mono font-bold text-foreground text-sm">
-                    {viewingVehicle.odometer_km ? `${viewingVehicle.odometer_km.toLocaleString()} km` : "0 km"}
+                <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Seating Capacity</span>
+                  <div className="font-semibold text-foreground text-xs">{viewingVehicle.seating_capacity ? `${viewingVehicle.seating_capacity} Seater` : "5 Seater"}</div>
+                </div>
+                <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Transmission</span>
+                  <div className="font-semibold text-foreground text-xs">{viewingVehicle.transmission || "Manual"}</div>
+                </div>
+                <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Chassis / VIN Number</span>
+                  <div className="font-mono font-bold text-foreground text-xs">{viewingVehicle.vin_chassis_number || "—"}</div>
+                </div>
+                <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Engine Number</span>
+                  <div className="font-mono font-bold text-foreground text-xs">{viewingVehicle.engine_number || "—"}</div>
+                </div>
+                <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Exterior Paint Color</span>
+                  <div className="font-semibold text-foreground text-xs flex items-center gap-1.5">
+                    <span className="h-3.5 w-3.5 rounded-full border border-border" style={{ backgroundColor: viewingVehicle.paint_color || "#334155" }} />
+                    <span>{viewingVehicle.paint_color || "Standard"}</span>
                   </div>
                 </div>
-                <div className="p-3 rounded-xl border border-border/70 bg-slate-50/50 dark:bg-slate-900/40 space-y-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Assigned Chauffeur</span>
-                  <div className="font-semibold text-foreground text-sm truncate">
-                    {viewingVehicle.assignedDriver?.full_name || "Unassigned Pool"}
-                  </div>
-                </div>
-              </div>
-
-              {/* Technical Specifications */}
-              <div className="p-4 rounded-xl border border-border bg-surface space-y-3">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                  <Gauge className="h-4 w-4 text-theme-btn-primary" />
-                  <span>Technical & Powertrain Details</span>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                  <div>
-                    <span className="text-muted-foreground block text-[11px]">Chassis / VIN:</span>
-                    <span className="font-mono font-semibold text-foreground">{viewingVehicle.vin_chassis_number || "—"}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground block text-[11px]">Engine Number:</span>
-                    <span className="font-mono font-semibold text-foreground">{viewingVehicle.engine_number || "—"}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground block text-[11px]">Paint Color:</span>
-                    <span className="font-semibold text-foreground">{viewingVehicle.paint_color || "—"}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground block text-[11px]">Registration Date:</span>
-                    <span className="font-mono font-semibold text-foreground">{viewingVehicle.registration_date || "—"}</span>
-                  </div>
+                <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Registration Date</span>
+                  <div className="font-mono font-semibold text-foreground text-xs">{viewingVehicle.registration_date ? String(viewingVehicle.registration_date).split("T")[0] : "—"}</div>
                 </div>
               </div>
 
-              {/* Statutory Compliance: Insurance & PUC Snapshots */}
+              {/* RTO & Chauffeur Details Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Insurance Policy Card */}
+                {/* RTO Office & Ownership */}
+                <div className="p-4 rounded-xl border border-border bg-surface space-y-3">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                    <Building2 className="h-4 w-4 text-blue-500" />
+                    <span>RTO Jurisdiction & Registered Ownership</span>
+                  </div>
+                  <div className="space-y-2 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">RTO Jurisdiction:</span>
+                      <span className="font-semibold text-foreground">{viewingVehicle.rto_office || "—"}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Registered Owner:</span>
+                      <span className="font-semibold text-foreground">{viewingVehicle.registered_owner || "Corporate Fleet"}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">RTO Registered Mobile:</span>
+                      <span className="font-mono font-semibold text-blue-600 dark:text-blue-400">{viewingVehicle.rto_rmn || "—"}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Fitness Expiry:</span>
+                      <span className="font-mono font-semibold text-foreground">{viewingVehicle.fitness_expiry_date || "—"}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Assigned Chauffeur & Personnel Details */}
+                <div className="p-4 rounded-xl border border-border bg-surface space-y-3">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                    <Users className="h-4 w-4 text-purple-500" />
+                    <span>Assigned Chauffeur & Duty Assignment</span>
+                  </div>
+                  {(() => {
+                    const assignedDriverFull = viewingVehicle.assignedDriver?.id
+                      ? drivers.find(d => d.id === viewingVehicle.assignedDriver?.id)
+                      : null;
+                    return viewingVehicle.assignedDriver ? (
+                      <div className="space-y-2 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Driver Name:</span>
+                          <span className="font-bold text-foreground">{viewingVehicle.assignedDriver.full_name}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Contact Phone:</span>
+                          <a href={`tel:${viewingVehicle.assignedDriver.phone}`} className="font-mono font-bold text-theme-btn-primary hover:underline">
+                            {viewingVehicle.assignedDriver.phone}
+                          </a>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Driving License:</span>
+                          <span className="font-mono font-semibold text-foreground">{assignedDriverFull?.license_number || "—"}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">DL Expiry:</span>
+                          <span className="font-mono font-semibold text-foreground">{assignedDriverFull?.license_expiry_date || "—"}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="py-4 text-center text-xs text-muted-foreground italic">
+                        No designated chauffeur assigned. This vehicle is in the unassigned corporate pool.
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* TAB 2: VEHICLE SERVICE DETAILS (Workshop & Job Sheets) */}
+          {/* ========================================================================= */}
+          {(vehicleDossierTab === "SERVICES" || vehicleDossierTab === "ALL") && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between border-b border-border pb-2 flex-wrap gap-2">
+                <div>
+                  <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                    <Wrench className="h-4 w-4 text-amber-500" />
+                    <span>Vehicle Service Details & Workshop History</span>
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Historical workshop visits, periodic maintenance, billings, labor charges & parts replaced
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {canManageMaintenance && (
+                    <AppButton
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      onClick={() => {
+                        setDossierOriginVehicle(viewingVehicle);
+                        resetMaintenanceForm();
+                        setNewMaintVehicleId(viewingVehicle.id);
+                        setIsAddMaintenanceOpen(true);
+                      }}
+                      className="bg-amber-600 hover:bg-amber-700 text-white text-xs h-8 px-3 gap-1.5 font-semibold shadow-2xs"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      <span>Log Service Job Card</span>
+                    </AppButton>
+                  )}
+                </div>
+              </div>
+
+              {/* Service Summary KPI Cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="p-3 rounded-xl border border-amber-500/20 bg-amber-500/5 space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">Lifetime Spend</span>
+                  <div className="text-base font-mono font-bold text-foreground">
+                    ₹{dossierData.totalServiceSpend.toLocaleString("en-IN")}
+                  </div>
+                </div>
+                <div className="p-3 rounded-xl border border-border bg-surface space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Logged Services</span>
+                  <div className="text-base font-mono font-bold text-foreground">
+                    {dossierData.services.length} Job Cards
+                  </div>
+                </div>
+                <div className="p-3 rounded-xl border border-border bg-surface space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Last Service Date</span>
+                  <div className="text-xs font-mono font-bold text-foreground">
+                    {dossierData.lastService ? dossierData.lastService.service_date : "No History"}
+                  </div>
+                </div>
+                <div className="p-3 rounded-xl border border-border bg-surface space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Next Service Due</span>
+                  <div className="text-xs font-mono font-bold text-foreground">
+                    {viewingVehicle.next_service_due_date || "Not Scheduled"}
+                  </div>
+                </div>
+              </div>
+
+              {/* Service Records List */}
+              {dossierData.services.length === 0 ? (
+                <div className="p-8 text-center rounded-xl border border-dashed border-border bg-slate-50/50 dark:bg-slate-900/30 space-y-2">
+                  <Wrench className="h-8 w-8 text-muted-foreground mx-auto opacity-50" />
+                  <p className="text-xs font-semibold text-foreground">No service records logged for this vehicle</p>
+                  <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                    Track all authorized dealership visits, scheduled oil changes, tire rotations and mechanical repairs.
+                  </p>
+                  {canManageMaintenance && (
+                    <div className="pt-2">
+                      <AppButton
+                        type="button"
+                        variant="primary"
+                        size="sm"
+                        onClick={() => {
+                          setDossierOriginVehicle(viewingVehicle);
+                          resetMaintenanceForm();
+                          setNewMaintVehicleId(viewingVehicle.id);
+                          setIsAddMaintenanceOpen(true);
+                        }}
+                        className="bg-amber-600 hover:bg-amber-700 text-white text-xs h-8 px-3 gap-1.5 font-semibold"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        <span>Log First Service Job Card</span>
+                      </AppButton>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {dossierData.services.map((svc) => {
+                    const partsData = (svc.parts_replaced && typeof svc.parts_replaced === "object") ? svc.parts_replaced : null;
+                    const attachments = Array.isArray(partsData?.attachments) ? partsData.attachments : [];
+                    return (
+                      <div
+                        key={svc.id}
+                        className="p-4 rounded-xl border border-border bg-surface hover:border-amber-500/40 transition-colors shadow-2xs space-y-3"
+                      >
+                        <div className="flex items-start justify-between gap-3 flex-wrap">
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-border text-foreground">
+                                WO#{svc.id.slice(0, 8)}
+                              </span>
+                              <span className="text-xs font-bold text-foreground">
+                                {svc.service_type || "Routine Maintenance"}
+                              </span>
+                              <span className="px-2 py-0.2 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
+                                {partsData?.category || "PERIODIC_SERVICE"}
+                              </span>
+                              {partsData?.payment_status && (
+                                <span className={`px-2 py-0.2 rounded-full text-[10px] font-bold ${
+                                  partsData.payment_status === "PAID"
+                                    ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20"
+                                    : "bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/20"
+                                }`}>
+                                  {partsData.payment_status}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-xs text-muted-foreground flex items-center gap-3 mt-1 flex-wrap">
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                                <span className="font-mono font-medium">{svc.service_date}</span>
+                              </span>
+                              <span>•</span>
+                              <span className="flex items-center gap-1">
+                                <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                                <span>{svc.service_center || "Authorized Workshop"}</span>
+                              </span>
+                              {svc.technician_name && (
+                                <>
+                                  <span>•</span>
+                                  <span>Technician: <strong className="text-foreground font-medium">{svc.technician_name}</strong></span>
+                                </>
+                              )}
+                              <span>•</span>
+                              <span className="font-mono text-muted-foreground">Odo: <strong>{svc.odometer_km ? `${svc.odometer_km.toLocaleString()} km` : "—"}</strong></span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <div className="text-right">
+                              <div className="text-base font-bold text-foreground font-mono">
+                                ₹{Number(svc.cost || 0).toLocaleString("en-IN")}
+                              </div>
+                              {partsData?.invoice_number && (
+                                <div className="text-[10px] font-mono text-muted-foreground">
+                                  Inv #{partsData.invoice_number}
+                                </div>
+                              )}
+                            </div>
+                            <AppButton
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setDossierOriginVehicle(viewingVehicle);
+                                setSelectedMaintenanceForView(svc);
+                              }}
+                              className="h-8 text-xs px-2.5 text-amber-700 dark:text-amber-300 border-amber-500/30 hover:bg-amber-500/10 gap-1 font-semibold"
+                            >
+                              <Eye className="h-3.5 w-3.5" />
+                              <span>View Job Sheet</span>
+                            </AppButton>
+                          </div>
+                        </div>
+
+                        {/* Breakdown Pills */}
+                        <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/40 border border-border/70 flex items-center gap-4 text-xs flex-wrap">
+                          <div>
+                            <span className="text-[10px] text-muted-foreground block">Labour Cost:</span>
+                            <span className="font-mono font-semibold text-foreground">₹{Number(partsData?.labour_cost || 0).toLocaleString("en-IN")}</span>
+                          </div>
+                          <div className="border-l border-border pl-4">
+                            <span className="text-[10px] text-muted-foreground block">Parts Cost:</span>
+                            <span className="font-mono font-semibold text-foreground">₹{Number(partsData?.parts_cost || 0).toLocaleString("en-IN")}</span>
+                          </div>
+                          <div className="border-l border-border pl-4">
+                            <span className="text-[10px] text-muted-foreground block">Taxes / GST:</span>
+                            <span className="font-mono font-semibold text-foreground">₹{Number(partsData?.tax_cost || 0).toLocaleString("en-IN")}</span>
+                          </div>
+                          {partsData?.notes && (
+                            <div className="border-l border-border pl-4 flex-1 min-w-[200px]">
+                              <span className="text-[10px] text-muted-foreground block">Service Notes:</span>
+                              <span className="text-foreground text-[11px] truncate block" title={partsData.notes}>
+                                {partsData.notes}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Service Invoices & Bills Attachments */}
+                        {attachments.length > 0 && (
+                          <div className="space-y-1.5 pt-1 border-t border-border">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                              <Paperclip className="h-3 w-3 text-amber-500" />
+                              <span>Attached Invoices & Work Orders ({attachments.length})</span>
+                            </span>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {attachments.map((att: any, attIdx: number) => (
+                                <div
+                                  key={att.id || attIdx}
+                                  className="px-2.5 py-1 rounded-lg border border-border bg-surface text-xs flex items-center gap-2 hover:border-theme-btn-primary/40"
+                                >
+                                  <span className="font-medium text-foreground truncate max-w-[150px]" title={att.file_name}>
+                                    {att.file_name}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setPreviewAttachment({
+                                        id: att.id || String(attIdx),
+                                        file_name: att.file_name,
+                                        file_size: formatFileSize(att.file_size || 0),
+                                        file_type: att.file_type || resolveMimeFromName(att.file_name),
+                                        file_url: att.file_url,
+                                        uploaded_at: att.uploaded_at || new Date().toISOString()
+                                      });
+                                      setPreviewZoom(1);
+                                      setPreviewRotation(0);
+                                    }}
+                                    className="text-blue-600 dark:text-blue-400 hover:underline text-[11px] font-semibold"
+                                  >
+                                    View
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => downloadAttachment(att)}
+                                    className="text-emerald-600 dark:text-emerald-400 hover:underline text-[11px] font-semibold"
+                                  >
+                                    Download
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* TAB 3: SPARE PARTS & MOUNTED ASSETS */}
+          {/* ========================================================================= */}
+          {(vehicleDossierTab === "PARTS" || vehicleDossierTab === "ALL") && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between border-b border-border pb-2 flex-wrap gap-2">
+                <div>
+                  <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                    <Package className="h-4 w-4 text-blue-500" />
+                    <span>Mounted Spare Parts, Tires, Batteries & Accessories</span>
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Hardware components mounted to this vehicle, serial numbers, warranties & IoT recharge policies
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <AppButton
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    onClick={() => {
+                      setDossierOriginVehicle(viewingVehicle);
+                      openCreatePartModal();
+                      setPartFormVehicleId(viewingVehicle.id);
+                      setPartFormAssignedVehicleReg(viewingVehicle.registration_number);
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 px-3 gap-1.5 font-semibold shadow-2xs"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>+ Mount Spare Part / Asset</span>
+                  </AppButton>
+                </div>
+              </div>
+
+              {/* Spare Parts Summary Bar */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="p-3 rounded-xl border border-blue-500/20 bg-blue-500/5 space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-blue-800 dark:text-blue-300">Total Mounted Assets</span>
+                  <div className="text-base font-mono font-bold text-foreground">
+                    {dossierData.parts.length} Units
+                  </div>
+                </div>
+                <div className="p-3 rounded-xl border border-border bg-surface space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total Parts Value</span>
+                  <div className="text-base font-mono font-bold text-foreground">
+                    ₹{dossierData.totalPartsValue.toLocaleString("en-IN")}
+                  </div>
+                </div>
+                <div className="p-3 rounded-xl border border-border bg-surface space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Under Active Warranty</span>
+                  <div className="text-base font-mono font-bold text-foreground">
+                    {dossierData.activeWarrantiesCount} Parts
+                  </div>
+                </div>
+                <div className="p-3 rounded-xl border border-border bg-surface space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">IoT & GPS Trackers</span>
+                  <div className="text-base font-mono font-bold text-foreground">
+                    {dossierData.parts.filter(p => p.has_renewal_policy || p.item_type === "GPS_TRACKER").length} Devices
+                  </div>
+                </div>
+              </div>
+
+              {/* Spare Parts Cards */}
+              {dossierData.parts.length === 0 ? (
+                <div className="p-8 text-center rounded-xl border border-dashed border-border bg-slate-50/50 dark:bg-slate-900/30 space-y-2">
+                  <Package className="h-8 w-8 text-muted-foreground mx-auto opacity-50" />
+                  <p className="text-xs font-semibold text-foreground">No spare parts or accessories mounted to this vehicle</p>
+                  <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                    Track mounted tires with serial numbers, battery warranty cards, GPS trackers, dashcams and toolkits.
+                  </p>
+                  <div className="pt-2">
+                    <AppButton
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      onClick={() => {
+                        setDossierOriginVehicle(viewingVehicle);
+                        openCreatePartModal();
+                        setPartFormVehicleId(viewingVehicle.id);
+                        setPartFormAssignedVehicleReg(viewingVehicle.registration_number);
+                      }}
+                      className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 px-3 gap-1.5 font-semibold"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      <span>Mount First Spare Part</span>
+                    </AppButton>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {dossierData.parts.map((p) => {
+                    const daysRemaining = p.warranty_expiry_date ? calculateDaysRemaining(p.warranty_expiry_date) : null;
+                    return (
+                      <div
+                        key={p.id}
+                        className="p-4 rounded-xl border border-border bg-surface hover:border-blue-500/40 transition-colors shadow-2xs space-y-3"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="px-2 py-0.2 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20">
+                                {p.item_type || "SPARE_PART"}
+                              </span>
+                              {p.part_number && (
+                                <span className="font-mono text-[10px] font-semibold text-muted-foreground px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 border border-border">
+                                  #{p.part_number}
+                                </span>
+                              )}
+                              <span className="px-2 py-0.2 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-foreground border border-border">
+                                {p.condition || "NEW"}
+                              </span>
+                            </div>
+                            <h4 className="text-sm font-bold text-foreground mt-1">
+                              {p.name}
+                            </h4>
+                            <div className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5">
+                              <span>Brand: <strong className="text-foreground">{p.brand || "OEM"}</strong></span>
+                              {p.serial_number && (
+                                <>
+                                  <span>•</span>
+                                  <span className="font-mono">S/N: {p.serial_number}</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="text-right shrink-0">
+                            <div className="text-sm font-mono font-bold text-foreground">
+                              ₹{Number(p.purchase_amount || 0).toLocaleString("en-IN")}
+                            </div>
+                            <div className="text-[10px] text-muted-foreground">
+                              Qty: {p.quantity || 1}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Installation & Warranty Details */}
+                        <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/40 border border-border/70 text-xs space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Installed Date & Odo:</span>
+                            <span className="font-mono font-semibold text-foreground">
+                              {p.installation_date || "—"} {p.installed_odometer_km ? `(${p.installed_odometer_km.toLocaleString()} km)` : ""}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Warranty Status:</span>
+                            {p.warranty_expiry_date ? (
+                              daysRemaining !== null && daysRemaining < 0 ? (
+                                <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400">
+                                  Expired ({Math.abs(daysRemaining)}d ago)
+                                </span>
+                              ) : daysRemaining !== null && daysRemaining <= 30 ? (
+                                <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400">
+                                  Expires in {daysRemaining}d
+                                </span>
+                              ) : (
+                                <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                                  Valid ({daysRemaining}d remaining)
+                                </span>
+                              )
+                            ) : (
+                              <span className="text-muted-foreground italic">No Warranty Registered</span>
+                            )}
+                          </div>
+                          {p.has_renewal_policy && (
+                            <div className="flex items-center justify-between pt-1 border-t border-border">
+                              <span className="text-muted-foreground">IoT SIM Recharge:</span>
+                              <span className="text-theme-btn-primary font-semibold">
+                                {p.renewal_policy_type || "GPS"} (Due: {p.renewal_date || "—"})
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Part Card Actions */}
+                        <div className="flex items-center justify-end gap-1.5 pt-1">
+                          <AppButton
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setDossierOriginVehicle(viewingVehicle);
+                              setViewingPart(p);
+                            }}
+                            className="h-7 text-xs px-2.5 text-blue-600 dark:text-blue-400 border-blue-500/30 hover:bg-blue-500/10 gap-1 font-semibold"
+                          >
+                            <Eye className="h-3 w-3" />
+                            <span>Inspect Part</span>
+                          </AppButton>
+                          <AppButton
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setDossierOriginVehicle(viewingVehicle);
+                              openEditPartModal(p);
+                            }}
+                            className="h-7 text-xs px-2.5 text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 gap-1 font-semibold"
+                          >
+                            <Edit2 className="h-3 w-3" />
+                            <span>Edit Part</span>
+                          </AppButton>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* TAB 4: LEGAL & COMPLIANCE DOCUMENT VAULT */}
+          {/* ========================================================================= */}
+          {(vehicleDossierTab === "DOCS" || vehicleDossierTab === "ALL") && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between border-b border-border pb-2 flex-wrap gap-2">
+                <div>
+                  <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                    <FileCheck className="h-4 w-4 text-emerald-500" />
+                    <span>Legal & Compliance Documents Vault</span>
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Archived certificates, RC smart cards, pollution clearances, insurance policies & purchase bills
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <AppButton
+                    type="button"
+                    variant={isDossierAddDocOpen ? "outline" : "primary"}
+                    size="sm"
+                    onClick={() => setIsDossierAddDocOpen(!isDossierAddDocOpen)}
+                    className={
+                      isDossierAddDocOpen
+                        ? "text-xs h-8 px-3 gap-1.5 font-semibold"
+                        : "bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 px-3 gap-1.5 font-semibold shadow-2xs"
+                    }
+                  >
+                    {isDossierAddDocOpen ? (
+                      <>
+                        <X className="h-3.5 w-3.5" />
+                        <span>Cancel Upload</span>
+                      </>
+                    ) : (
+                      <>
+                        <UploadCloud className="h-3.5 w-3.5" />
+                        <span>+ Upload Document</span>
+                      </>
+                    )}
+                  </AppButton>
+                </div>
+              </div>
+
+              {/* Compliance Checklist Summary Pills */}
+              <div className="p-3 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/40 flex items-center justify-between gap-3 flex-wrap text-xs">
+                <span className="font-bold text-foreground">Compliance Checklist:</span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1 ${
+                    dossierData.hasRc
+                      ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/25"
+                      : "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/25"
+                  }`}>
+                    <CheckCircle2 className="h-3 w-3" />
+                    <span>RC Smart Card: {dossierData.hasRc ? "Archived" : "Missing"}</span>
+                  </span>
+
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1 ${
+                    dossierData.hasInsurance
+                      ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/25"
+                      : "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/25"
+                  }`}>
+                    <ShieldCheck className="h-3 w-3" />
+                    <span>Insurance: {dossierData.hasInsurance ? "Covered" : "Missing"}</span>
+                  </span>
+
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1 ${
+                    dossierData.hasPuc
+                      ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/25"
+                      : "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/25"
+                  }`}>
+                    <Wind className="h-3 w-3" />
+                    <span>PUC: {dossierData.hasPuc ? "Valid" : "Pending"}</span>
+                  </span>
+
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1 ${
+                    dossierData.hasFitness
+                      ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/25"
+                      : "bg-slate-200 dark:bg-slate-700 text-muted-foreground border-border"
+                  }`}>
+                    <FileText className="h-3 w-3" />
+                    <span>Fitness: {dossierData.hasFitness ? "Valid" : "N/A"}</span>
+                  </span>
+                </div>
+              </div>
+
+              {/* INLINE DOCUMENT UPLOAD FORM (Directly inside dossier screen) */}
+              {isDossierAddDocOpen && (
+                <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 space-y-4 animate-in fade-in duration-200">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                      <UploadCloud className="h-4 w-4" />
+                      <span>Archive New Document to Vehicle Vault</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setIsDossierAddDocOpen(false)}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                    <div>
+                      <label className="text-[11px] font-semibold text-foreground block mb-1">Document Category</label>
+                      <select
+                        value={dossierNewDocType}
+                        onChange={(e) => setDossierNewDocType(e.target.value)}
+                        className="w-full text-xs py-1.5 px-2.5 rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:border-theme-btn-primary"
+                      >
+                        {VEHICLE_DOC_TYPES.map((t) => (
+                          <option key={t.value} value={t.value}>{t.label}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-semibold text-foreground block mb-1">Document Title (Optional)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 2026-27 Comprehensive Policy"
+                        value={dossierNewDocTitle}
+                        onChange={(e) => setDossierNewDocTitle(e.target.value)}
+                        className="w-full text-xs py-1.5 px-2.5 rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:border-theme-btn-primary"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-semibold text-foreground block mb-1">Document / Certificate #</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. POL-8941203"
+                        value={dossierNewDocNumber}
+                        onChange={(e) => setDossierNewDocNumber(e.target.value)}
+                        className="w-full text-xs py-1.5 px-2.5 rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:border-theme-btn-primary font-mono"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-semibold text-foreground block mb-1">Expiry Date (Optional)</label>
+                      <input
+                        type="date"
+                        value={dossierNewDocExpiry}
+                        onChange={(e) => setDossierNewDocExpiry(e.target.value)}
+                        className="w-full text-xs py-1.5 px-2.5 rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:border-theme-btn-primary font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Drag and Drop Upload Zone */}
+                  <div
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      if (e.dataTransfer.files) {
+                        handleDossierDirectDocUpload(e.dataTransfer.files);
+                      }
+                    }}
+                    className="p-6 border-2 border-dashed border-emerald-500/40 rounded-xl bg-surface text-center hover:border-emerald-500 transition-colors cursor-pointer"
+                    onClick={() => {
+                      const input = document.getElementById("dossier-direct-doc-file-input") as HTMLInputElement;
+                      if (input) input.click();
+                    }}
+                  >
+                    <input
+                      id="dossier-direct-doc-file-input"
+                      type="file"
+                      className="hidden"
+                      accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx"
+                      onChange={(e) => {
+                        if (e.target.files) {
+                          handleDossierDirectDocUpload(e.target.files);
+                        }
+                      }}
+                    />
+                    <div className="flex flex-col items-center justify-center gap-1.5">
+                      <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                        {dossierUploadingDoc ? (
+                          <RotateCw className="h-5 w-5 animate-spin" />
+                        ) : (
+                          <UploadCloud className="h-5 w-5" />
+                        )}
+                      </div>
+                      <span className="text-xs font-bold text-foreground">
+                        {dossierUploadingDoc ? "Saving document to vault..." : "Click or drag document to archive"}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">
+                        Supports PDF, PNG, JPG, WEBP (Max 25MB). Auto-archives into vehicle vault.
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Documents Grid */}
+              {dossierData.docs.length === 0 ? (
+                <div className="p-8 text-center rounded-xl border border-dashed border-border bg-slate-50/50 dark:bg-slate-900/30 space-y-2">
+                  <FileCheck className="h-8 w-8 text-muted-foreground mx-auto opacity-50" />
+                  <p className="text-xs font-semibold text-foreground">No documents currently archived for this vehicle</p>
+                  <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                    Attach PUC certificates, insurance policy schedules, RC smart cards, fitness certificates or state permits.
+                  </p>
+                  <div className="pt-2">
+                    <AppButton
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      onClick={() => setIsDossierAddDocOpen(true)}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 px-3 gap-1.5 font-semibold"
+                    >
+                      <UploadCloud className="h-3.5 w-3.5" />
+                      <span>Upload First Document</span>
+                    </AppButton>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {dossierData.docs.map((doc, idx) => {
+                    const typeConfig = VEHICLE_DOC_TYPES.find((t) => t.value === doc.doc_type) || {
+                      label: doc.doc_type,
+                      badgeColor: "bg-slate-500/10 text-slate-600 border-slate-500/20"
+                    };
+                    const daysRemaining = doc.expiry_date ? calculateDaysRemaining(doc.expiry_date) : null;
+                    return (
+                      <div
+                        key={doc.id || idx}
+                        className="p-3.5 rounded-xl border border-border bg-surface hover:border-emerald-500/40 transition-colors shadow-2xs space-y-2.5 flex flex-col justify-between"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-border shrink-0">
+                            {renderAttachmentIcon(doc.file_type || resolveMimeFromName(doc.file_name), doc.file_name)}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full border ${typeConfig.badgeColor}`}>
+                                {typeConfig.label}
+                              </span>
+                              {doc.document_number && (
+                                <span className="text-[9px] font-mono font-semibold px-1 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-muted-foreground border border-border">
+                                  #{doc.document_number}
+                                </span>
+                              )}
+                            </div>
+                            <h4 className="font-bold text-foreground text-xs truncate mt-1" title={doc.title || doc.file_name}>
+                              {doc.title || doc.file_name}
+                            </h4>
+                            <div className="text-[10px] text-muted-foreground flex items-center gap-1.5 mt-0.5 truncate">
+                              <span className="truncate max-w-[110px]">{doc.file_name}</span>
+                              <span>•</span>
+                              <span>{formatFileSize(doc.file_size)}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Expiry Pill */}
+                        <div className="pt-2 border-t border-border flex items-center justify-between text-xs">
+                          <div>
+                            {doc.expiry_date ? (
+                              daysRemaining !== null && daysRemaining < 0 ? (
+                                <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400">
+                                  Expired {Math.abs(daysRemaining)}d ago
+                                </span>
+                              ) : daysRemaining !== null && daysRemaining <= 30 ? (
+                                <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400">
+                                  Expires in {daysRemaining}d
+                                </span>
+                              ) : (
+                                <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                                  Valid ({daysRemaining}d)
+                                </span>
+                              )
+                            ) : (
+                              <span className="text-[10px] text-muted-foreground italic">No expiry set</span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-1 shrink-0">
+                            <AppButton
+                              type="button"
+                              variant="outline"
+                              size="icon-sm"
+                              onClick={() => {
+                                setPreviewAttachment({
+                                  id: doc.id,
+                                  file_name: doc.file_name,
+                                  file_size: doc.file_size || "0 B",
+                                  file_type: doc.file_type || resolveMimeFromName(doc.file_name),
+                                  file_url: doc.file_url,
+                                  uploaded_at: doc.uploaded_at
+                                });
+                                setPreviewZoom(1);
+                                setPreviewRotation(0);
+                              }}
+                              className="h-7 w-7 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
+                              title="View / Preview Document"
+                            >
+                              <Eye className="h-3.5 w-3.5" />
+                            </AppButton>
+                            <AppButton
+                              type="button"
+                              variant="outline"
+                              size="icon-sm"
+                              onClick={() => downloadAttachment(doc)}
+                              className="h-7 w-7 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+                              title="Download Document"
+                            >
+                              <Download className="h-3.5 w-3.5" />
+                            </AppButton>
+                            {canEditVehicle && (
+                              <AppButton
+                                type="button"
+                                variant="outline"
+                                size="icon-sm"
+                                onClick={() => handleDossierDeleteDocument(doc.id)}
+                                className="h-7 w-7 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10"
+                                title="Delete Document"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </AppButton>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* TAB 5: STATUTORY COMPLIANCE, INSURANCE & PUC */}
+          {/* ========================================================================= */}
+          {(vehicleDossierTab === "COMPLIANCE" || vehicleDossierTab === "ALL") && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between border-b border-border pb-2 flex-wrap gap-2">
+                <div>
+                  <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-cyan-600" />
+                    <span>Motor Insurance Policy & PUC Clearances</span>
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Statutory coverage, policy renewal audit trail, and pollution emission test validity
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <AppButton
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setDossierOriginVehicle(viewingVehicle);
+                      handleOpenVehicleUnifiedRenewalsModal(viewingVehicle);
+                    }}
+                    className="h-8 text-xs px-2.5 text-theme-btn-primary border-theme-btn-primary/30 hover:bg-theme-btn-primary/10 gap-1 font-semibold"
+                  >
+                    <CalendarSync className="h-3.5 w-3.5" />
+                    <span>Unified Renewals Timeline</span>
+                  </AppButton>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Motor Insurance Policy Card */}
                 <div className="p-4 rounded-xl border border-cyan-500/20 bg-cyan-500/5 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="text-[11px] font-bold uppercase tracking-wider text-cyan-800 dark:text-cyan-300 flex items-center gap-1.5">
@@ -13868,6 +15391,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       <span className="text-muted-foreground">Expiry Date:</span>
                       <span className="font-mono font-bold text-foreground">{viewingVehicle.insurance_expiry_date || "—"}</span>
                     </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">24x7 Roadside Assistance:</span>
+                      <span className="font-semibold text-foreground">{viewingVehicle.has_roadside_assistance !== false ? "Covered" : "Not Opted"}</span>
+                    </div>
                   </div>
                   <div className="pt-2 border-t border-cyan-500/20 flex items-center justify-end gap-2">
                     <AppButton
@@ -13875,6 +15402,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       size="sm"
                       onClick={() => {
                         const v = viewingVehicle;
+                        setDossierOriginVehicle(v);
                         setViewingVehicle(null);
                         handleOpenVehiclePolicyHistoryModal(v);
                       }}
@@ -13888,6 +15416,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       size="sm"
                       onClick={() => {
                         const v = viewingVehicle;
+                        setDossierOriginVehicle(v);
                         setViewingVehicle(null);
                         handleOpenVehiclePolicyRenewModal(v);
                       }}
@@ -13944,6 +15473,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       size="sm"
                       onClick={() => {
                         const v = viewingVehicle;
+                        setDossierOriginVehicle(v);
                         setViewingVehicle(null);
                         handleOpenVehiclePucHistoryModal(v);
                       }}
@@ -13957,6 +15487,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       size="sm"
                       onClick={() => {
                         const v = viewingVehicle;
+                        setDossierOriginVehicle(v);
                         setViewingVehicle(null);
                         handleOpenVehiclePucRenewModal(v);
                       }}
@@ -13968,146 +15499,94 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   </div>
                 </div>
               </div>
+            </div>
+          )}
 
-              {/* RTO & Statutory Compliance */}
-              <div className="p-4 rounded-xl border border-border bg-surface space-y-3">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                  <Building2 className="h-4 w-4 text-blue-500" />
-                  <span>RTO Registration Details</span>
+          {/* ========================================================================= */}
+          {/* TAB 6: TRIP MOVEMENTS & DISPATCH HISTORY */}
+          {/* ========================================================================= */}
+          {(vehicleDossierTab === "TRIPS" || vehicleDossierTab === "ALL") && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between border-b border-border pb-2 flex-wrap gap-2">
+                <div>
+                  <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-purple-500" />
+                    <span>Trip Movements & Fleet Dispatches</span>
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Movement history, scheduled dispatches, traveler itineraries & designated chauffeurs
+                  </p>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
-                  <div>
-                    <span className="text-muted-foreground block text-[11px]">RTO Office:</span>
-                    <span className="font-semibold text-foreground">{viewingVehicle.rto_office || "—"}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground block text-[11px]">Registered Owner:</span>
-                    <span className="font-semibold text-foreground">{viewingVehicle.registered_owner || "—"}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground block text-[11px]">RTO Registered Mobile:</span>
-                    <span className="font-mono font-semibold text-foreground">{viewingVehicle.rto_rmn || "—"}</span>
+                <div className="flex items-center gap-2">
+                  <div className="text-xs text-muted-foreground">
+                    Total: <strong className="text-foreground">{dossierData.trips.length} Trips</strong>
                   </div>
                 </div>
               </div>
 
-              {/* Vehicle Legal & Compliance Documents Vault */}
-              <div className="p-4 rounded-xl border border-border bg-surface space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                    <FileCheck className="h-4 w-4 text-emerald-500" />
-                    <span>Legal & Compliance Documents Vault</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-border">
-                      {viewingVehicle.documents?.length || 0} Attached
-                    </span>
-                    {canEditVehicle && (
-                      <AppButton
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          const target = viewingVehicle;
-                          setViewingVehicle(null);
-                          openEditVehicleModal(target);
-                        }}
-                        className="h-6 text-[10px] px-2 text-theme-btn-primary hover:underline gap-1"
-                      >
-                        <Edit2 className="h-3 w-3" />
-                        <span>Manage Documents</span>
-                      </AppButton>
-                    )}
-                  </div>
+              {dossierData.trips.length === 0 ? (
+                <div className="p-8 text-center rounded-xl border border-dashed border-border bg-slate-50/50 dark:bg-slate-900/30 space-y-2">
+                  <MapPin className="h-8 w-8 text-muted-foreground mx-auto opacity-50" />
+                  <p className="text-xs font-semibold text-foreground">No trip movements logged for this vehicle</p>
+                  <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                    Dispatches and scheduled corporate trips assigned to this vehicle will appear here.
+                  </p>
                 </div>
-
-                {!viewingVehicle.documents || viewingVehicle.documents.length === 0 ? (
-                  <div className="p-5 text-center text-xs text-muted-foreground border border-dashed border-border rounded-lg bg-slate-50/50 dark:bg-slate-900/30">
-                    No documents currently archived for this vehicle. Click "Manage Documents" or "Edit Vehicle" to attach PUC, Insurance, RC Smart Card, or Permits.
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    {viewingVehicle.documents.map((doc, idx) => {
-                      const typeConfig = VEHICLE_DOC_TYPES.find(t => t.value === doc.doc_type) || {
-                        label: doc.doc_type,
-                        badgeColor: "bg-slate-500/10 text-slate-600 border-slate-500/20"
-                      };
-                      return (
-                        <div
-                          key={doc.id || idx}
-                          className="p-3 rounded-lg border border-border bg-slate-50/50 dark:bg-slate-900/40 flex items-center justify-between gap-3 text-xs hover:border-theme-btn-primary/40 transition-colors"
-                        >
-                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                            <div className="h-9 w-9 rounded-lg bg-surface flex items-center justify-center border border-border shrink-0">
-                              {renderAttachmentIcon(doc.file_type || resolveMimeFromName(doc.file_name), doc.file_name)}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full border ${typeConfig.badgeColor}`}>
-                                  {typeConfig.label}
-                                </span>
-                                {doc.document_number && (
-                                  <span className="text-[9px] font-mono font-semibold px-1 py-0.2 rounded bg-surface border border-border text-muted-foreground">
-                                    #{doc.document_number}
-                                  </span>
-                                )}
-                              </div>
-                              <div className="font-bold text-foreground truncate mt-0.5" title={doc.title || doc.file_name}>
-                                {doc.title || doc.file_name}
-                              </div>
-                              <div className="text-[10px] text-muted-foreground flex items-center gap-2 mt-0.5">
-                                <span className="truncate max-w-[120px]">{doc.file_name}</span>
-                                <span>•</span>
-                                <span>{formatFileSize(doc.file_size)}</span>
-                                {doc.expiry_date && (
-                                  <>
-                                    <span>•</span>
-                                    <span className="text-amber-600 dark:text-amber-400 font-semibold">Exp: {doc.expiry_date}</span>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-1 shrink-0">
-                            <AppButton
-                              type="button"
-                              variant="outline"
-                              size="icon-sm"
-                              onClick={() => {
-                                setPreviewAttachment({
-                                  id: doc.id,
-                                  file_name: doc.file_name,
-                                  file_size: doc.file_size || "0 B",
-                                  file_type: doc.file_type || resolveMimeFromName(doc.file_name),
-                                  file_url: doc.file_url,
-                                  uploaded_at: doc.uploaded_at
-                                });
-                                setPreviewZoom(1);
-                                setPreviewRotation(0);
-                              }}
-                              className="h-7 w-7 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
-                              title="View / Preview Document"
-                            >
-                              <Eye className="h-3.5 w-3.5" />
-                            </AppButton>
-                            <AppButton
-                              type="button"
-                              variant="outline"
-                              size="icon-sm"
-                              onClick={() => downloadAttachment(doc)}
-                              className="h-7 w-7 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
-                              title="Download Document"
-                            >
-                              <Download className="h-3.5 w-3.5" />
-                            </AppButton>
-                          </div>
+              ) : (
+                <div className="space-y-2.5">
+                  {dossierData.trips.map((t) => (
+                    <div
+                      key={t.id}
+                      className="p-3.5 rounded-xl border border-border bg-surface hover:border-purple-500/40 transition-colors shadow-2xs flex items-center justify-between gap-3 flex-wrap text-xs"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-mono font-bold px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 border border-border text-foreground">
+                            {t.trip_code || `#${t.id.slice(0, 6)}`}
+                          </span>
+                          <span className="font-bold text-foreground">
+                            {t.traveler_name || "Executive Traveler"}
+                          </span>
+                          <span className={`px-2 py-0.2 rounded-full text-[10px] font-bold ${
+                            t.status === "COMPLETED"
+                              ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20"
+                              : t.status === "ON_ROUTE"
+                              ? "bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20"
+                              : "bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20"
+                          }`}>
+                            {t.status}
+                          </span>
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+                        <div className="text-muted-foreground flex items-center gap-2 text-[11px] flex-wrap">
+                          <span>Route: <strong className="text-foreground">{t.origin}</strong> → <strong className="text-foreground">{t.destination}</strong></span>
+                          <span>•</span>
+                          <span>Chauffeur: <strong className="text-foreground">{t.driver_name || "Assigned Driver"}</strong></span>
+                          <span>•</span>
+                          <span className="font-mono">Date: {t.plan_date || t.planned_start_time?.split("T")[0] || "—"}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <AppButton
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setDossierOriginVehicle(viewingVehicle);
+                            setViewingTrip(t);
+                          }}
+                          className="h-7 text-xs px-2.5 text-purple-700 dark:text-purple-300 border-purple-500/30 hover:bg-purple-500/10 gap-1 font-semibold"
+                        >
+                          <Eye className="h-3 w-3" />
+                          <span>Inspect Trip</span>
+                        </AppButton>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </WorkingDocumentLayout>
       )}
 

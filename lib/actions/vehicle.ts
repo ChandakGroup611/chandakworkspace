@@ -271,6 +271,12 @@ export interface VehicleRecord {
   rto_rmn?: string | null;
   puc_expire_days?: number | null;
   insurance_expire_days?: number | null;
+  year?: number | string | null;
+  seating_capacity?: number | string | null;
+  transmission?: string | null;
+  next_service_due_date?: string | null;
+  next_service_due_odometer?: number | null;
+  assigned_driver_id?: string | null;
   created_at?: string;
   assignedDriver?: {
     id: string;
@@ -2741,6 +2747,80 @@ export async function deleteVehicleDocumentAction(documentId: string): Promise<{
     return { success: false, error: err.message || "Failed to delete vehicle document" };
   }
 }
+
+/**
+ * Add / upload a single vehicle document directly to vault
+ */
+export async function createVehicleDocumentAction(
+  vehicleId: string,
+  doc: {
+    doc_type: string;
+    title?: string;
+    document_number?: string | null;
+    file_name: string;
+    file_url: string;
+    file_size?: string | null;
+    file_type?: string | null;
+    expiry_date?: string | null;
+    status?: string | null;
+  }
+): Promise<{
+  success: boolean;
+  document?: VehicleDocumentRecord;
+  error?: string;
+}> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) {
+      return { success: false, error: "Unauthenticated" };
+    }
+    if (!vehicleId) {
+      return { success: false, error: "Vehicle ID is required" };
+    }
+    if (!doc.file_name || !doc.file_url) {
+      return { success: false, error: "File name and file content are required" };
+    }
+
+    const newDocId = `vdoc-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const newDocRow = {
+      id: newDocId,
+      vehicle_id: vehicleId,
+      doc_type: (doc.doc_type || "OTHER").toUpperCase(),
+      title: doc.title?.trim() || doc.file_name || "Vehicle Document",
+      file_name: doc.file_name,
+      file_size: doc.file_size || null,
+      file_type: doc.file_type || resolveMimeFromName(doc.file_name),
+      file_url: doc.file_url,
+      document_number: doc.document_number?.trim() || null,
+      expiry_date: doc.expiry_date || null,
+      status: doc.status || "VALID",
+      uploaded_at: new Date().toISOString()
+    };
+
+    const { data, error } = await supabaseAdmin
+      .from("vehicle_documents")
+      .insert([newDocRow])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("[vehicle-actions] createVehicleDocumentAction error:", error);
+      return { success: false, error: error.message };
+    }
+
+    return {
+      success: true,
+      document: {
+        ...data,
+        file_type: data.file_type || resolveMimeFromName(data.file_name)
+      } as VehicleDocumentRecord
+    };
+  } catch (err: any) {
+    console.error("[vehicle-actions] createVehicleDocumentAction exception:", err);
+    return { success: false, error: err.message || "Failed to save vehicle document" };
+  }
+}
+
 
 export async function deleteVehicleAction(id: string): Promise<{
   success: boolean;
