@@ -2024,7 +2024,6 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-foreground">Manage Task Ownership & Executors</h3>
-                  <p className="text-xs text-muted">Assign the Primary Owner and collaborating Executors for this task.</p>
                 </div>
               </div>
               <AppButton 

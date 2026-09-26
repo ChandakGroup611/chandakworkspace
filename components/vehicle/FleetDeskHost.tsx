@@ -432,7 +432,7 @@ interface WorkingDocumentLayoutProps {
   category?: string;
   icon: React.ElementType;
   iconBg?: string;
-  description: string;
+  description?: string;
   breadcrumbs: Array<{ label: string; onClick?: () => void }>;
   onBack: () => void;
   backLabel: string;
@@ -5880,9 +5880,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <AppCardTitle className="text-lg">Fleet Master Inventory</AppCardTitle>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Complete database of company-owned and executive fleet vehicles
-              </p>
             </div>
 
             <div className="flex items-center gap-2.5 w-full sm:w-auto flex-wrap">
@@ -6294,9 +6291,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <AppCardTitle className="text-lg">Drivers Directory & Roster</AppCardTitle>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Roster of authorized enterprise drivers, license validity & vehicle assignments
-              </p>
             </div>
 
             <div className="flex items-center gap-2.5 w-full sm:w-auto">
@@ -6438,9 +6432,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <AppCardTitle className="text-lg">Daily Trip Dispatch Sheets</AppCardTitle>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Movement logs across Chandak corporate offices, development sites, and vendor locations
-              </p>
             </div>
 
             <div className="flex items-center gap-2.5 w-full sm:w-auto">
@@ -6593,9 +6584,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <AppCardTitle className="text-lg">Workshop Maintenance & Service Records</AppCardTitle>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Scheduled periodic services, repairs, and vendor job card tracking
-              </p>
             </div>
 
             <div className="flex items-center gap-2.5 w-full sm:w-auto">
@@ -6808,9 +6796,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <UserCheck className="h-5 w-5 text-indigo-500" />
                   <span>Traveler Allocations & Passenger Manifest</span>
                 </AppCardTitle>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Corporate personnel, site engineers, and executive vehicle transit schedules
-                </p>
               </div>
 
               <div className="flex items-center gap-2.5 w-full sm:w-auto">
@@ -7033,9 +7018,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <ShieldAlert className="h-5 w-5 text-amber-500" />
                   <span>Statutory Compliance & Expiry Master Audit</span>
                 </AppCardTitle>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Proactive monitoring of Vehicle Insurance, PUC, Fitness, Road Tax and Chauffeur Commercial Licenses
-                </p>
               </div>
             </AppCardHeader>
 
@@ -7273,7 +7255,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <Gauge className="h-4 w-4 text-theme-btn-primary" />
                   <span>High-Mileage Fleet Units</span>
                 </AppCardTitle>
-                <p className="text-[11px] text-muted-foreground">Leaderboard of highest operational odometer distances</p>
               </AppCardHeader>
               <AppCardContent className="p-0">
                 <div className="divide-y divide-border/60">
@@ -7309,7 +7290,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <Fuel className="h-4 w-4 text-emerald-500" />
                   <span>Fleet Powertrain Distribution</span>
                 </AppCardTitle>
-                <p className="text-[11px] text-muted-foreground">Breakdown by propulsion & fuel technologies</p>
               </AppCardHeader>
               <AppCardContent className="p-4 space-y-4">
                 {Object.entries(fleetReportsData.fuelCounts).map(([fuel, count]) => {
@@ -8076,9 +8056,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <LifeBuoy className="h-5 w-5 text-theme-btn-primary" />
                   <span>Assigned Vehicles & Corporate Pool</span>
                 </AppCardTitle>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Vehicles configured for executive transit, site dispatch, and corporate movements
-                </p>
               </div>
               <AppButton
                 variant="primary"
@@ -8179,9 +8156,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <BookOpen className="h-5 w-5 text-indigo-500" />
                 <span>Chandak Fleet Guidelines & Standard Operating Procedures (SOPs)</span>
               </AppCardTitle>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Official operational policies for corporate chauffeurs, transit managers, and passengers
-              </p>
             </AppCardHeader>
             <AppCardContent className="p-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -8241,9 +8215,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <Settings className="h-5 w-5 text-muted-foreground" />
                 <span>Fleet Management System Configuration</span>
               </AppCardTitle>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                RTO Gov gateway, statutory threshold windows, and periodic maintenance automation
-              </p>
             </AppCardHeader>
             <AppCardContent className="p-5 space-y-5">
               <div className="p-4 rounded-xl border border-border/70 bg-card shadow-2xs flex items-center justify-between">
@@ -8286,9 +8257,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <ShieldCheck className="h-5 w-5 text-blue-500" />
                   <span>Fleet Insurance Vendors Master</span>
                 </AppCardTitle>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Authorized motor insurance companies, underwriters, and toll-free emergency contacts
-                </p>
               </div>
 
               <AppButton
@@ -14185,7 +14153,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           category="Fleet Operations & Asset Management"
           icon={Car}
           iconBg="bg-theme-btn-primary/15 text-theme-btn-primary border-theme-btn-primary/25"
-          description="Complete 360° vehicle asset dossier: Technical powertrain specifications, workshop service logs, mounted spare parts & warranties, compliance document vault, insurance/PUC policies & trip dispatch movements."
           breadcrumbs={[
             { label: "Fleet Inventory", onClick: () => setViewingVehicle(null) },
             { label: `Vehicle Dossier (${viewingVehicle.registration_number})` }
@@ -14366,9 +14333,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="text-base font-bold text-foreground mt-1.5 font-mono">
                 ₹{dossierData.totalServiceSpend.toLocaleString("en-IN")} <span className="text-[10px] font-normal text-muted-foreground font-sans">Spend</span>
               </div>
-              <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
-                {dossierData.lastService ? `Last: ${dossierData.lastService.service_date}` : "No service logs yet"}
-              </div>
             </button>
 
             {/* 2. Spare Parts */}
@@ -14392,9 +14356,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               </div>
               <div className="text-base font-bold text-foreground mt-1.5 font-mono">
                 ₹{dossierData.totalPartsValue.toLocaleString("en-IN")} <span className="text-[10px] font-normal text-muted-foreground font-sans">Value</span>
-              </div>
-              <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
-                {dossierData.activeWarrantiesCount} mounted parts under warranty
               </div>
             </button>
 
@@ -14432,9 +14393,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   </span>
                 )}
               </div>
-              <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
-                PUC, Insurance & RC Smart Card
-              </div>
             </button>
 
             {/* 4. Trips & Dispatches */}
@@ -14459,22 +14417,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="text-base font-bold text-foreground mt-1.5">
                 {dossierData.completedTripsCount} <span className="text-xs text-muted-foreground font-normal">Completed</span>
               </div>
-              <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
-                {viewingVehicle.assignedDriver?.full_name || "Unassigned Pool"}
-              </div>
             </button>
           </div>
 
-          {/* 3. VEHICLE OPTIONS & SECTIONS HUB (RICH OPTION SELECTOR LIST ABOVE DETAILS) */}
+          {/* 3. VEHICLE OPTIONS & SECTIONS HUB (COMPACT BADGE/TITLE OPTION BUTTONS) */}
           <div className="space-y-2.5">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <Layers className="h-3.5 w-3.5 text-theme-btn-primary" />
-                <span>Vehicle Options & Details:</span>
-              </div>
-              <div className="text-[11px] text-muted-foreground">
-                Select an option below to filter sections or choose 360° All Columns
-              </div>
+            <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <Layers className="h-3.5 w-3.5 text-theme-btn-primary" />
+              <span>Vehicle Options & Details:</span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
@@ -14483,37 +14433,30 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <button
                 type="button"
                 onClick={() => setVehicleDossierTab("ALL")}
-                className={`p-3 rounded-xl border text-left transition-all group flex items-start gap-3 shadow-2xs cursor-pointer ${
+                className={`p-3 rounded-xl border text-left transition-all group flex items-center gap-3 shadow-2xs cursor-pointer ${
                   vehicleDossierTab === "ALL"
                     ? "border-slate-900 dark:border-slate-100 bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 ring-2 ring-slate-900/20"
                     : "border-border bg-surface hover:border-theme-btn-primary hover:bg-slate-50/60 dark:hover:bg-slate-900/40"
                 }`}
               >
-                <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-transform group-hover:scale-105 shadow-2xs ${
+                <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 shadow-2xs ${
                   vehicleDossierTab === "ALL"
                     ? "bg-white/20 text-white dark:bg-slate-900/20 dark:text-slate-900"
                     : "bg-theme-btn-primary/10 border border-theme-btn-primary/20 text-theme-btn-primary"
                 }`}>
                   <Layers className="h-4 w-4" />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <div className="font-bold text-xs flex items-center justify-between">
-                    <span className={vehicleDossierTab === "ALL" ? "" : "text-foreground group-hover:text-theme-btn-primary"}>
-                      360° All Columns
-                    </span>
-                    <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded ${
-                      vehicleDossierTab === "ALL"
-                        ? "bg-white/20 text-white dark:bg-slate-900/20 dark:text-slate-900"
-                        : "bg-theme-btn-primary/10 text-theme-btn-primary"
-                    }`}>
-                      Full Dossier
-                    </span>
-                  </div>
-                  <p className={`text-[11px] mt-0.5 leading-snug line-clamp-2 ${
-                    vehicleDossierTab === "ALL" ? "text-slate-200 dark:text-slate-700" : "text-muted-foreground"
+                <div className="min-w-0 flex-1 flex items-center justify-between">
+                  <span className={`font-bold text-xs ${vehicleDossierTab === "ALL" ? "" : "text-foreground group-hover:text-theme-btn-primary"}`}>
+                    360° All Columns
+                  </span>
+                  <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded ${
+                    vehicleDossierTab === "ALL"
+                      ? "bg-white/20 text-white dark:bg-slate-900/20 dark:text-slate-900"
+                      : "bg-theme-btn-primary/10 text-theme-btn-primary"
                   }`}>
-                    Complete dossier with powertrain specs, workshop logs, spare parts, document vault & trips.
-                  </p>
+                    Full Dossier
+                  </span>
                 </div>
               </button>
 
@@ -14521,35 +14464,28 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <button
                 type="button"
                 onClick={() => setVehicleDossierTab("SERVICES")}
-                className={`p-3 rounded-xl border text-left transition-all group flex items-start gap-3 shadow-2xs cursor-pointer ${
+                className={`p-3 rounded-xl border text-left transition-all group flex items-center gap-3 shadow-2xs cursor-pointer ${
                   vehicleDossierTab === "SERVICES"
                     ? "border-amber-600 bg-amber-600 text-white ring-2 ring-amber-600/20"
                     : "border-border bg-surface hover:border-amber-500 hover:bg-amber-500/5"
                 }`}
               >
-                <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-transform group-hover:scale-105 shadow-2xs ${
+                <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 shadow-2xs ${
                   vehicleDossierTab === "SERVICES"
                     ? "bg-white/20 text-white"
                     : "bg-amber-500/10 border border-amber-500/25 text-amber-600"
                 }`}>
                   <Wrench className="h-4 w-4" />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <div className="font-bold text-xs flex items-center justify-between">
-                    <span className={vehicleDossierTab === "SERVICES" ? "" : "text-foreground group-hover:text-amber-600"}>
-                      Vehicle Service Details
-                    </span>
-                    <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded ${
-                      vehicleDossierTab === "SERVICES" ? "bg-white/20 text-white" : "bg-amber-500/15 text-amber-700 dark:text-amber-300"
-                    }`}>
-                      {dossierData.services.length} Svc
-                    </span>
-                  </div>
-                  <p className={`text-[11px] mt-0.5 leading-snug line-clamp-2 ${
-                    vehicleDossierTab === "SERVICES" ? "text-amber-100" : "text-muted-foreground"
+                <div className="min-w-0 flex-1 flex items-center justify-between">
+                  <span className={`font-bold text-xs ${vehicleDossierTab === "SERVICES" ? "" : "text-foreground group-hover:text-amber-600"}`}>
+                    Vehicle Service Details
+                  </span>
+                  <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded ${
+                    vehicleDossierTab === "SERVICES" ? "bg-white/20 text-white" : "bg-amber-500/15 text-amber-700 dark:text-amber-300"
                   }`}>
-                    View workshop repair logs, job sheets, technicians, invoice numbers, spend & log new services.
-                  </p>
+                    {dossierData.services.length} Svc
+                  </span>
                 </div>
               </button>
 
@@ -14557,35 +14493,28 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <button
                 type="button"
                 onClick={() => setVehicleDossierTab("PARTS")}
-                className={`p-3 rounded-xl border text-left transition-all group flex items-start gap-3 shadow-2xs cursor-pointer ${
+                className={`p-3 rounded-xl border text-left transition-all group flex items-center gap-3 shadow-2xs cursor-pointer ${
                   vehicleDossierTab === "PARTS"
                     ? "border-blue-600 bg-blue-600 text-white ring-2 ring-blue-600/20"
                     : "border-border bg-surface hover:border-blue-500 hover:bg-blue-500/5"
                 }`}
               >
-                <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-transform group-hover:scale-105 shadow-2xs ${
+                <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 shadow-2xs ${
                   vehicleDossierTab === "PARTS"
                     ? "bg-white/20 text-white"
                     : "bg-blue-500/10 border border-blue-500/25 text-blue-600"
                 }`}>
                   <Package className="h-4 w-4" />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <div className="font-bold text-xs flex items-center justify-between">
-                    <span className={vehicleDossierTab === "PARTS" ? "" : "text-foreground group-hover:text-blue-600"}>
-                      Spare Parts Details
-                    </span>
-                    <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded ${
-                      vehicleDossierTab === "PARTS" ? "bg-white/20 text-white" : "bg-blue-500/15 text-blue-700 dark:text-blue-300"
-                    }`}>
-                      {dossierData.parts.length} Parts
-                    </span>
-                  </div>
-                  <p className={`text-[11px] mt-0.5 leading-snug line-clamp-2 ${
-                    vehicleDossierTab === "PARTS" ? "text-blue-100" : "text-muted-foreground"
+                <div className="min-w-0 flex-1 flex items-center justify-between">
+                  <span className={`font-bold text-xs ${vehicleDossierTab === "PARTS" ? "" : "text-foreground group-hover:text-blue-600"}`}>
+                    Spare Parts Details
+                  </span>
+                  <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded ${
+                    vehicleDossierTab === "PARTS" ? "bg-white/20 text-white" : "bg-blue-500/15 text-blue-700 dark:text-blue-300"
                   }`}>
-                    View mounted tires, batteries, GPS units, warranty counters, serial numbers & mount new parts.
-                  </p>
+                    {dossierData.parts.length} Parts
+                  </span>
                 </div>
               </button>
 
@@ -14593,35 +14522,28 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <button
                 type="button"
                 onClick={() => setVehicleDossierTab("DOCS")}
-                className={`p-3 rounded-xl border text-left transition-all group flex items-start gap-3 shadow-2xs cursor-pointer ${
+                className={`p-3 rounded-xl border text-left transition-all group flex items-center gap-3 shadow-2xs cursor-pointer ${
                   vehicleDossierTab === "DOCS"
                     ? "border-emerald-600 bg-emerald-600 text-white ring-2 ring-emerald-600/20"
                     : "border-border bg-surface hover:border-emerald-500 hover:bg-emerald-500/5"
                 }`}
               >
-                <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-transform group-hover:scale-105 shadow-2xs ${
+                <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 shadow-2xs ${
                   vehicleDossierTab === "DOCS"
                     ? "bg-white/20 text-white"
                     : "bg-emerald-500/10 border border-emerald-500/25 text-emerald-600"
                 }`}>
                   <FileCheck className="h-4 w-4" />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <div className="font-bold text-xs flex items-center justify-between">
-                    <span className={vehicleDossierTab === "DOCS" ? "" : "text-foreground group-hover:text-emerald-600"}>
-                      Document Details
-                    </span>
-                    <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded ${
-                      vehicleDossierTab === "DOCS" ? "bg-white/20 text-white" : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-                    }`}>
-                      {dossierData.docs.length} Docs
-                    </span>
-                  </div>
-                  <p className={`text-[11px] mt-0.5 leading-snug line-clamp-2 ${
-                    vehicleDossierTab === "DOCS" ? "text-emerald-100" : "text-muted-foreground"
+                <div className="min-w-0 flex-1 flex items-center justify-between">
+                  <span className={`font-bold text-xs ${vehicleDossierTab === "DOCS" ? "" : "text-foreground group-hover:text-emerald-600"}`}>
+                    Document Details
+                  </span>
+                  <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded ${
+                    vehicleDossierTab === "DOCS" ? "bg-white/20 text-white" : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
                   }`}>
-                    PUC, Insurance, RC Book Smart Card, Fitness, with Lightbox Preview, Download & Upload.
-                  </p>
+                    {dossierData.docs.length} Docs
+                  </span>
                 </div>
               </button>
 
@@ -14629,35 +14551,28 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <button
                 type="button"
                 onClick={() => setVehicleDossierTab("COMPLIANCE")}
-                className={`p-3 rounded-xl border text-left transition-all group flex items-start gap-3 shadow-2xs cursor-pointer ${
+                className={`p-3 rounded-xl border text-left transition-all group flex items-center gap-3 shadow-2xs cursor-pointer ${
                   vehicleDossierTab === "COMPLIANCE"
                     ? "border-cyan-600 bg-cyan-600 text-white ring-2 ring-cyan-600/20"
                     : "border-border bg-surface hover:border-cyan-500 hover:bg-cyan-500/5"
                 }`}
               >
-                <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-transform group-hover:scale-105 shadow-2xs ${
+                <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 shadow-2xs ${
                   vehicleDossierTab === "COMPLIANCE"
                     ? "bg-white/20 text-white"
                     : "bg-cyan-500/10 border border-cyan-500/25 text-cyan-600"
                 }`}>
                   <ShieldCheck className="h-4 w-4" />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <div className="font-bold text-xs flex items-center justify-between">
-                    <span className={vehicleDossierTab === "COMPLIANCE" ? "" : "text-foreground group-hover:text-cyan-600"}>
-                      Compliance & Renewals
-                    </span>
-                    <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded ${
-                      vehicleDossierTab === "COMPLIANCE" ? "bg-white/20 text-white" : "bg-cyan-500/15 text-cyan-700 dark:text-cyan-300"
-                    }`}>
-                      Active
-                    </span>
-                  </div>
-                  <p className={`text-[11px] mt-0.5 leading-snug line-clamp-2 ${
-                    vehicleDossierTab === "COMPLIANCE" ? "text-cyan-100" : "text-muted-foreground"
+                <div className="min-w-0 flex-1 flex items-center justify-between">
+                  <span className={`font-bold text-xs ${vehicleDossierTab === "COMPLIANCE" ? "" : "text-foreground group-hover:text-cyan-600"}`}>
+                    Compliance & Renewals
+                  </span>
+                  <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded ${
+                    vehicleDossierTab === "COMPLIANCE" ? "bg-white/20 text-white" : "bg-cyan-500/15 text-cyan-700 dark:text-cyan-300"
                   }`}>
-                    Motor insurance policies, PUC validity, fitness certificates, RSA status & renewal ledger.
-                  </p>
+                    Active
+                  </span>
                 </div>
               </button>
 
@@ -14665,35 +14580,28 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <button
                 type="button"
                 onClick={() => setVehicleDossierTab("TRIPS")}
-                className={`p-3 rounded-xl border text-left transition-all group flex items-start gap-3 shadow-2xs cursor-pointer ${
+                className={`p-3 rounded-xl border text-left transition-all group flex items-center gap-3 shadow-2xs cursor-pointer ${
                   vehicleDossierTab === "TRIPS"
                     ? "border-purple-600 bg-purple-600 text-white ring-2 ring-purple-600/20"
                     : "border-border bg-surface hover:border-purple-500 hover:bg-purple-500/5"
                 }`}
               >
-                <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-transform group-hover:scale-105 shadow-2xs ${
+                <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 shadow-2xs ${
                   vehicleDossierTab === "TRIPS"
                     ? "bg-white/20 text-white"
                     : "bg-purple-500/10 border border-purple-500/25 text-purple-600"
                 }`}>
                   <MapPin className="h-4 w-4" />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <div className="font-bold text-xs flex items-center justify-between">
-                    <span className={vehicleDossierTab === "TRIPS" ? "" : "text-foreground group-hover:text-purple-600"}>
-                      Trip Movements
-                    </span>
-                    <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded ${
-                      vehicleDossierTab === "TRIPS" ? "bg-white/20 text-white" : "bg-purple-500/15 text-purple-700 dark:text-purple-300"
-                    }`}>
-                      {dossierData.trips.length} Trips
-                    </span>
-                  </div>
-                  <p className={`text-[11px] mt-0.5 leading-snug line-clamp-2 ${
-                    vehicleDossierTab === "TRIPS" ? "text-purple-100" : "text-muted-foreground"
+                <div className="min-w-0 flex-1 flex items-center justify-between">
+                  <span className={`font-bold text-xs ${vehicleDossierTab === "TRIPS" ? "" : "text-foreground group-hover:text-purple-600"}`}>
+                    Trip Movements
+                  </span>
+                  <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded ${
+                    vehicleDossierTab === "TRIPS" ? "bg-white/20 text-white" : "bg-purple-500/15 text-purple-700 dark:text-purple-300"
                   }`}>
-                    Passenger transit history, route logs, chauffeur assignments, and dispatch schedules.
-                  </p>
+                    {dossierData.trips.length} Trips
+                  </span>
                 </div>
               </button>
 
@@ -14701,35 +14609,28 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <button
                 type="button"
                 onClick={() => setVehicleDossierTab("OVERVIEW")}
-                className={`p-3 rounded-xl border text-left transition-all group flex items-start gap-3 shadow-2xs cursor-pointer ${
+                className={`p-3 rounded-xl border text-left transition-all group flex items-center gap-3 shadow-2xs cursor-pointer ${
                   vehicleDossierTab === "OVERVIEW"
                     ? "border-indigo-600 bg-indigo-600 text-white ring-2 ring-indigo-600/20"
                     : "border-border bg-surface hover:border-indigo-500 hover:bg-indigo-500/5"
                 }`}
               >
-                <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-transform group-hover:scale-105 shadow-2xs ${
+                <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 shadow-2xs ${
                   vehicleDossierTab === "OVERVIEW"
                     ? "bg-white/20 text-white"
                     : "bg-indigo-500/10 border border-indigo-500/25 text-indigo-600"
                 }`}>
                   <Gauge className="h-4 w-4" />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <div className="font-bold text-xs flex items-center justify-between">
-                    <span className={vehicleDossierTab === "OVERVIEW" ? "" : "text-foreground group-hover:text-indigo-600"}>
-                      Specifications & Identity
-                    </span>
-                    <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded ${
-                      vehicleDossierTab === "OVERVIEW" ? "bg-white/20 text-white" : "bg-indigo-500/15 text-indigo-700 dark:text-indigo-300"
-                    }`}>
-                      Specs
-                    </span>
-                  </div>
-                  <p className={`text-[11px] mt-0.5 leading-snug line-clamp-2 ${
-                    vehicleDossierTab === "OVERVIEW" ? "text-indigo-100" : "text-muted-foreground"
+                <div className="min-w-0 flex-1 flex items-center justify-between">
+                  <span className={`font-bold text-xs ${vehicleDossierTab === "OVERVIEW" ? "" : "text-foreground group-hover:text-indigo-600"}`}>
+                    Specifications & Identity
+                  </span>
+                  <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded ${
+                    vehicleDossierTab === "OVERVIEW" ? "bg-white/20 text-white" : "bg-indigo-500/15 text-indigo-700 dark:text-indigo-300"
                   }`}>
-                    VIN/Chassis #, Engine #, Purchase Price (₹), Custom Extended Expiry, RTO Jurisdiction.
-                  </p>
+                    Specs
+                  </span>
                 </div>
               </button>
 
@@ -14998,9 +14899,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <Wrench className="h-4 w-4 text-amber-500" />
                     <span>Vehicle Service Details & Workshop History</span>
                   </h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Historical workshop visits, periodic maintenance, billings, labor charges & parts replaced
-                  </p>
                 </div>
                 <div className="flex items-center gap-2">
                   {canManageMaintenance && (
@@ -15248,9 +15146,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <Package className="h-4 w-4 text-blue-500" />
                     <span>Mounted Spare Parts, Tires, Batteries & Accessories</span>
                   </h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Hardware components mounted to this vehicle, serial numbers, warranties & IoT recharge policies
-                  </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <AppButton
@@ -15459,9 +15354,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <FileCheck className="h-4 w-4 text-emerald-500" />
                     <span>Legal & Compliance Documents Vault</span>
                   </h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Archived certificates, RC smart cards, pollution clearances, insurance policies & purchase bills
-                  </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <AppButton
@@ -15788,9 +15680,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <ShieldCheck className="h-4 w-4 text-cyan-600" />
                     <span>Motor Insurance Policy & PUC Clearances</span>
                   </h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Statutory coverage, policy renewal audit trail, and pollution emission test validity
-                  </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <AppButton
@@ -16036,9 +15925,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <MapPin className="h-4 w-4 text-purple-500" />
                     <span>Trip Movements & Fleet Dispatches</span>
                   </h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Movement history, scheduled dispatches, traveler itineraries & designated chauffeurs
-                  </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="text-xs text-muted-foreground">

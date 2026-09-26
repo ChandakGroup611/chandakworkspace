@@ -90,8 +90,7 @@ export default function TemplateManager({ workspaceId, onClose }: { workspaceId:
 
         <div className="p-6 overflow-y-auto flex-1 space-y-6">
           {!isCreating && (
-            <div className="flex justify-between items-center">
-              <p className="text-sm text-muted">Standardize your team's workflow by creating reusable task blueprints.</p>
+            <div className="flex justify-end items-center">
               {canCreate && (
                 <AppButton onClick={() => setIsCreating(true)} variant="primary" className="bg-theme-btn-primary hover:opacity-90">
                   <Plus className="h-4 w-4 mr-1" /> New Template

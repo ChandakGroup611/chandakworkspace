@@ -393,7 +393,6 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
                     );
                   })}
                 </div>
-                <p className={`theme-label text-muted`}>Select departments in the order they should approve this requirement.</p>
 
                 {formData.impacted_departments.length > 0 && (
                   <div className="mt-4 space-y-3">
@@ -434,7 +433,6 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
                             })}
                             {deptUsers.length === 0 && <span className="theme-label text-muted">No users found in this department.</span>}
                           </div>
-                          <p className="text-[9px] text-muted mt-2">Select users in the order they should approve (1st = Approver, 2nd = Executive, etc).</p>
                         </div>
                       );
                     })}

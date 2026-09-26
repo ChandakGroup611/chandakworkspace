@@ -164,7 +164,6 @@ export const DesignReportsAnalytics: React.FC<DesignReportsAnalyticsProps> = ({
           <div className="flex items-center justify-between border-b border-border pb-3">
             <div>
               <h4 className="text-sm font-bold text-foreground">Discipline-wise Delivery Progress</h4>
-              <p className="text-xs text-muted-foreground">Distribution of issued drawings per engineering domain</p>
             </div>
             <span className="text-xs font-mono font-bold text-emerald-500">Live Metric</span>
           </div>
@@ -195,7 +194,6 @@ export const DesignReportsAnalytics: React.FC<DesignReportsAnalyticsProps> = ({
           <div className="flex items-center justify-between border-b border-border pb-3">
             <div>
               <h4 className="text-sm font-bold text-foreground">Project Readiness Breakdown</h4>
-              <p className="text-xs text-muted-foreground">Drawing release status for current development projects</p>
             </div>
             <Building2 className="h-4 w-4 text-blue-500" />
           </div>
@@ -231,7 +229,6 @@ export const DesignReportsAnalytics: React.FC<DesignReportsAnalyticsProps> = ({
         <div className="flex items-center justify-between border-b border-border pb-3">
           <div>
             <h4 className="text-sm font-bold text-foreground">Consultant Performance & TAT Scoreboard</h4>
-            <p className="text-xs text-muted-foreground">Turnaround time, quality ratings, and sheet volume per engineering firm</p>
           </div>
         </div>
 

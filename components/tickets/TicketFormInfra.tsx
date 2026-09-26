@@ -372,7 +372,6 @@ export function TicketFormInfra({ scope, onCancel, onDiscard, onSubmit }: Ticket
                   <div className="flex items-center justify-between">
                     <div>
                       <h5 className="font-bold text-accent">Infrastructure Specifications</h5>
-                      <p className="text-xs text-muted">Itemize the exact hardware/software licenses, qty, and unit cost required.</p>
                     </div>
                     <AppButton type="button" size="sm" variant="outline" onClick={handleAddSpec} className="gap-2 text-xs h-8">
                       <span className="text-lg leading-none">+</span> Add Spec

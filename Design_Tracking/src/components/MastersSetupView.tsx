@@ -323,7 +323,6 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h4 className="text-sm font-bold text-foreground">Sub-Package Deliverables Master</h4>
-                <p className="text-xs text-muted-foreground">Manage granular engineering deliverable packages linked under parent Packages</p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <button
@@ -459,7 +458,6 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h4 className="text-sm font-bold text-foreground">Statutory Authorities & NOC Clearance Bodies</h4>
-              <p className="text-xs text-muted-foreground">Municipal, fire, environmental, and regulatory authorities</p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <button
@@ -524,7 +522,6 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
         <div className="space-y-4 max-w-2xl">
           <div className="p-4 rounded-xl border border-border bg-surface space-y-3">
             <h4 className="text-sm font-bold text-foreground">Workspace State Management</h4>
-            <p className="text-xs text-muted-foreground">Export your configured masters or reset to clean state.</p>
             
             <div className="flex flex-wrap gap-2 pt-2">
               <button
