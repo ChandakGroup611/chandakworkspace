@@ -67,8 +67,9 @@ import {
   Calculator,
   Columns,
   Layers,
-  ExternalLink,
-  ChevronRight
+  ChevronRight,
+  IndianRupee,
+  CalendarClock
 } from "lucide-react";
 import { 
   POPULAR_BRANDS, 
@@ -854,6 +855,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   const [newVehicleFitnessExpiry, setNewVehicleFitnessExpiry] = useState("");
   const [newVehicleHsrp, setNewVehicleHsrp] = useState(true);
   const [newVehicleRsa, setNewVehicleRsa] = useState(true);
+  const [newVehiclePurchasePrice, setNewVehiclePurchasePrice] = useState<string | number>("");
+  const [newVehicleCustomExtendedExpiryDate, setNewVehicleCustomExtendedExpiryDate] = useState<string>("");
 
   // New Vehicle Document Vault States
   const [newVehicleDocs, setNewVehicleDocs] = useState<VehicleDocumentRecord[]>([]);
@@ -901,6 +904,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   const [editVehicleFitnessExpiry, setEditVehicleFitnessExpiry] = useState("");
   const [editVehicleHsrp, setEditVehicleHsrp] = useState(true);
   const [editVehicleRsa, setEditVehicleRsa] = useState(true);
+  const [editVehiclePurchasePrice, setEditVehiclePurchasePrice] = useState<string | number>("");
+  const [editVehicleCustomExtendedExpiryDate, setEditVehicleCustomExtendedExpiryDate] = useState<string>("");
 
   // Edit Vehicle Document Vault States
   const [editVehicleDocs, setEditVehicleDocs] = useState<VehicleDocumentRecord[]>([]);
@@ -1607,6 +1612,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     setNewVehicleFitnessExpiry("");
     setNewVehicleHsrp(true);
     setNewVehicleRsa(true);
+    setNewVehiclePurchasePrice("");
+    setNewVehicleCustomExtendedExpiryDate("");
     setNewVehicleDocs([]);
     setNewDocTitle("");
     setNewDocNumber("");
@@ -1943,6 +1950,9 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         fitness_expiry_date: fitExp || undefined,
         has_roadside_assistance: newVehicleRsa,
         has_hsrp_plate: newVehicleHsrp,
+        purchase_price: Number(newVehiclePurchasePrice) || 0,
+        purchase_cost: Number(newVehiclePurchasePrice) || 0,
+        custom_extended_expiry_date: newVehicleCustomExtendedExpiryDate ? newVehicleCustomExtendedExpiryDate : undefined,
         documents: newVehicleDocs
       });
 
@@ -1990,6 +2000,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     setEditVehicleFitnessExpiry(normalizeDateToInputFormat(veh.fitness_expiry_date));
     setEditVehicleHsrp(veh.has_hsrp_plate !== undefined ? veh.has_hsrp_plate : true);
     setEditVehicleRsa(veh.has_roadside_assistance !== undefined ? veh.has_roadside_assistance : true);
+    setEditVehiclePurchasePrice(veh.purchase_price ?? veh.purchase_cost ?? "");
+    setEditVehicleCustomExtendedExpiryDate(normalizeDateToInputFormat(veh.custom_extended_expiry_date));
     setEditVehicleDocs(veh.documents || []);
     setEditDocTitle("");
     setEditDocNumber("");
@@ -2101,6 +2113,9 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         fitness_expiry_date: editVehicleFitnessExpiry || undefined,
         has_roadside_assistance: editVehicleRsa,
         has_hsrp_plate: editVehicleHsrp,
+        purchase_price: Number(editVehiclePurchasePrice) || 0,
+        purchase_cost: Number(editVehiclePurchasePrice) || 0,
+        custom_extended_expiry_date: editVehicleCustomExtendedExpiryDate ? editVehicleCustomExtendedExpiryDate : null,
         documents: editVehicleDocs
       });
 
@@ -2124,6 +2139,9 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               odometer_km: Number(editVehicleOdometer) || 0,
               nickname: editVehicleNickname.trim() || v.nickname,
               paint_color: editVehicleColor,
+              purchase_price: Number(editVehiclePurchasePrice) || 0,
+              purchase_cost: Number(editVehiclePurchasePrice) || 0,
+              custom_extended_expiry_date: editVehicleCustomExtendedExpiryDate || null,
               vin_chassis_number: editVehicleVin.trim() || v.vin_chassis_number,
               engine_number: editVehicleEngine.trim() || v.engine_number,
               fuel_type: editVehicleFuel,
@@ -2147,7 +2165,13 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         }));
 
         if (viewingVehicle?.id === updatedVehId) {
-          setViewingVehicle(prev => prev ? { ...prev, documents: editVehicleDocs } : null);
+          setViewingVehicle(prev => prev ? { 
+            ...prev, 
+            purchase_price: Number(editVehiclePurchasePrice) || 0,
+            purchase_cost: Number(editVehiclePurchasePrice) || 0,
+            custom_extended_expiry_date: editVehicleCustomExtendedExpiryDate || null,
+            documents: editVehicleDocs 
+          } : null);
         }
 
         setSelectedVehicleForEdit(null);
@@ -5044,6 +5068,27 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   </div>
                 </div>
               </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
+                <div>
+                  <label className="text-xs font-semibold text-foreground block mb-1.5 flex items-center gap-1">
+                    <IndianRupee className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <span>Purchase Price (₹)</span>
+                  </label>
+                  <AppInput 
+                    type="number"
+                    min="0"
+                    step="1"
+                    placeholder="e.g. 1250000"
+                    value={newVehiclePurchasePrice} 
+                    onChange={(e) => setNewVehiclePurchasePrice(e.target.value)} 
+                    className="font-mono text-xs"
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Acquisition cost / ex-showroom capitalized asset value of the vehicle.
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* 4. STATUTORY COMPLIANCE & VALIDITY */}
@@ -5166,6 +5211,22 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     type="date"
                     value={newVehicleFitnessExpiry} 
                     onChange={(e) => setNewVehicleFitnessExpiry(e.target.value)} 
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-semibold text-foreground flex items-center gap-1">
+                      <CalendarClock className="h-3.5 w-3.5 text-indigo-500" />
+                      <span>Custom Extended Expiry Date</span>
+                    </label>
+                    {newVehicleCustomExtendedExpiryDate && (
+                      <div>{renderExpiryBadge(calculateDaysRemaining(newVehicleCustomExtendedExpiryDate))}</div>
+                    )}
+                  </div>
+                  <AppInput 
+                    type="date"
+                    value={newVehicleCustomExtendedExpiryDate} 
+                    onChange={(e) => setNewVehicleCustomExtendedExpiryDate(e.target.value)} 
                   />
                 </div>
               </div>
@@ -8750,6 +8811,24 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     />
                   </div>
                 </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-semibold block mb-1 flex items-center gap-1">
+                      <IndianRupee className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                      <span>Purchase Price (₹)</span>
+                    </label>
+                    <AppInput 
+                      type="number"
+                      min="0"
+                      step="1"
+                      placeholder="e.g. 1250000"
+                      value={editVehiclePurchasePrice} 
+                      onChange={(e) => setEditVehiclePurchasePrice(e.target.value)} 
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* SECTION 3: STATUTORY COMPLIANCE & VALIDITY */}
@@ -8862,6 +8941,22 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       type="date"
                       value={editVehicleFitnessExpiry} 
                       onChange={(e) => setEditVehicleFitnessExpiry(e.target.value)} 
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="font-semibold flex items-center gap-1">
+                        <CalendarClock className="h-3.5 w-3.5 text-indigo-500" />
+                        <span>Custom Extended Expiry Date</span>
+                      </label>
+                      {editVehicleCustomExtendedExpiryDate && (
+                        <div>{renderExpiryBadge(calculateDaysRemaining(editVehicleCustomExtendedExpiryDate))}</div>
+                      )}
+                    </div>
+                    <AppInput 
+                      type="date"
+                      value={editVehicleCustomExtendedExpiryDate} 
+                      onChange={(e) => setEditVehicleCustomExtendedExpiryDate(e.target.value)} 
                     />
                   </div>
                 </div>
@@ -14458,6 +14553,31 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Registration Date</span>
                   <div className="font-mono font-semibold text-foreground text-xs">{viewingVehicle.registration_date ? String(viewingVehicle.registration_date).split("T")[0] : "—"}</div>
                 </div>
+                <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                    <IndianRupee className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                    <span>Purchase Price</span>
+                  </span>
+                  <div className="font-mono font-bold text-emerald-700 dark:text-emerald-300 text-xs">
+                    {viewingVehicle.purchase_price || viewingVehicle.purchase_cost
+                      ? `₹${Number(viewingVehicle.purchase_price || viewingVehicle.purchase_cost).toLocaleString("en-IN")}`
+                      : "—"}
+                  </div>
+                </div>
+                <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                      <CalendarClock className="h-3 w-3 text-indigo-500" />
+                      <span>Extended Expiry</span>
+                    </span>
+                    {viewingVehicle.custom_extended_expiry_date && (
+                      <div>{renderExpiryBadge(calculateDaysRemaining(viewingVehicle.custom_extended_expiry_date))}</div>
+                    )}
+                  </div>
+                  <div className="font-mono font-semibold text-foreground text-xs">
+                    {viewingVehicle.custom_extended_expiry_date ? String(viewingVehicle.custom_extended_expiry_date).split("T")[0] : "—"}
+                  </div>
+                </div>
               </div>
 
               {/* RTO & Chauffeur Details Grid */}
@@ -14484,6 +14604,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">Fitness Expiry:</span>
                       <span className="font-mono font-semibold text-foreground">{viewingVehicle.fitness_expiry_date || "—"}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Purchase Asset Cost:</span>
+                      <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                        {viewingVehicle.purchase_price || viewingVehicle.purchase_cost
+                          ? `₹${Number(viewingVehicle.purchase_price || viewingVehicle.purchase_cost).toLocaleString("en-IN")}`
+                          : "—"}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -15495,6 +15623,72 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     >
                       <Wind className="h-3 w-3" />
                       <span>Renew PUC</span>
+                    </AppButton>
+                  </div>
+                </div>
+
+                {/* Statutory Fitness & Extended Validity Card */}
+                <div className="p-4 rounded-xl border border-indigo-500/20 bg-indigo-500/5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-indigo-800 dark:text-indigo-300 flex items-center gap-1.5">
+                      <CalendarClock className="h-4 w-4 text-indigo-600" />
+                      <span>Statutory Fitness & Extended Expiry</span>
+                    </div>
+                    {viewingVehicle.custom_extended_expiry_date && (() => {
+                      const days = calculateDaysRemaining(viewingVehicle.custom_extended_expiry_date);
+                      if (days === null) return null;
+                      return days < 0 ? (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/25">
+                          Expired {Math.abs(days)}d ago
+                        </span>
+                      ) : days <= 30 ? (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25">
+                          Expires in {days}d
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 border border-indigo-500/25">
+                          Valid ({days}d)
+                        </span>
+                      );
+                    })()}
+                  </div>
+                  <div className="space-y-1.5 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Custom Extended Expiry:</span>
+                      <span className="font-mono font-bold text-foreground">
+                        {viewingVehicle.custom_extended_expiry_date
+                          ? String(viewingVehicle.custom_extended_expiry_date).split("T")[0]
+                          : "Not Scheduled"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Fitness Certificate Expiry:</span>
+                      <span className="font-mono font-bold text-foreground">{viewingVehicle.fitness_expiry_date || "—"}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">HSRP Plate Status:</span>
+                      <span className="font-semibold text-foreground">
+                        {viewingVehicle.has_hsrp_plate !== false ? "Laser-Etched HSRP Fitted" : "Standard Plate"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Capitalized Asset Value:</span>
+                      <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                        {viewingVehicle.purchase_price || viewingVehicle.purchase_cost
+                          ? `₹${Number(viewingVehicle.purchase_price || viewingVehicle.purchase_cost).toLocaleString("en-IN")}`
+                          : "—"}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t border-indigo-500/20 flex items-center justify-end gap-2">
+                    <AppButton
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openEditVehicleModal(viewingVehicle)}
+                      className="h-7 text-xs px-2.5 text-indigo-700 dark:text-indigo-300 border-indigo-500/30 gap-1 font-semibold"
+                    >
+                      <Edit2 className="h-3 w-3" />
+                      <span>Update Compliance Dates</span>
                     </AppButton>
                   </div>
                 </div>

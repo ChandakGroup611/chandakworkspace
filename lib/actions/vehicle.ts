@@ -250,6 +250,9 @@ export interface VehicleRecord {
   registration_number: string;
   status: string;
   odometer_km: number;
+  purchase_price?: number | null;
+  purchase_cost?: number | null;
+  custom_extended_expiry_date?: string | null;
   paint_color?: string | null;
   image_url?: string | null;
   nickname?: string | null;
@@ -645,6 +648,9 @@ export async function fetchVehiclesList(params?: {
         puc_expiry_date,
         fitness_expiry_date,
         rto_rmn,
+        purchase_price,
+        purchase_cost,
+        custom_extended_expiry_date,
         created_at
       `, { count: "exact" })
       .order("created_at", { ascending: false })
@@ -2029,6 +2035,9 @@ export async function createVehicleAction(formData: {
   fitness_expiry_date?: string;
   has_roadside_assistance?: boolean;
   has_hsrp_plate?: boolean;
+  purchase_price?: number;
+  purchase_cost?: number;
+  custom_extended_expiry_date?: string;
   documents?: (VehicleDocumentRecord | any)[];
 }): Promise<{
   success: boolean;
@@ -2166,6 +2175,9 @@ export async function createVehicleAction(formData: {
       fitness_expiry_date: fit_exp || null,
       status: formData.status || "IN_STOCK",
       odometer_km: Number(odo) || 0,
+      purchase_price: formData.purchase_price !== undefined ? (Number(formData.purchase_price) || 0) : (formData.purchase_cost !== undefined ? (Number(formData.purchase_cost) || 0) : 0),
+      purchase_cost: formData.purchase_cost !== undefined ? (Number(formData.purchase_cost) || 0) : (formData.purchase_price !== undefined ? (Number(formData.purchase_price) || 0) : 0),
+      custom_extended_expiry_date: formData.custom_extended_expiry_date?.trim() || null,
       nickname: vehicleName,
       paint_color: paint_color || "#1e293b",
       ownership_type: "DEALERSHIP_STOCK",
@@ -2282,6 +2294,9 @@ export async function updateVehicleAction(
     fitness_expiry_date?: string;
     has_roadside_assistance?: boolean;
     has_hsrp_plate?: boolean;
+    purchase_price?: number;
+    purchase_cost?: number;
+    custom_extended_expiry_date?: string | null;
     documents?: (VehicleDocumentRecord | any)[];
   }
 ): Promise<{
@@ -2416,6 +2431,17 @@ export async function updateVehicleAction(
     }
     if (formData.has_hsrp_plate !== undefined) {
       updates.has_hsrp_plate = Boolean(formData.has_hsrp_plate);
+    }
+    if (formData.purchase_price !== undefined) {
+      updates.purchase_price = Number(formData.purchase_price) || 0;
+      updates.purchase_cost = Number(formData.purchase_price) || 0;
+    } else if (formData.purchase_cost !== undefined) {
+      updates.purchase_price = Number(formData.purchase_cost) || 0;
+      updates.purchase_cost = Number(formData.purchase_cost) || 0;
+    }
+    if (formData.custom_extended_expiry_date !== undefined) {
+      const extTrim = typeof formData.custom_extended_expiry_date === 'string' ? formData.custom_extended_expiry_date.trim() : null;
+      updates.custom_extended_expiry_date = extTrim && extTrim !== "" ? extTrim : null;
     }
 
     // 3. Execute update on vehicles table
