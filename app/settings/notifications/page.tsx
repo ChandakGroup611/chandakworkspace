@@ -32,10 +32,7 @@ export default async function NotificationsSettingsPage() {
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Notification Triggers
         </h1>
-        <p className="text-sm text-muted mt-2 max-w-2xl">
-          Granularly define which system events trigger notifications. Disabling events here provides a performance boost by bypassing the routing engine entirely. Note: Set up your email provider first in the Email settings.
-        </p>
-      </header>
+        </header>
 
       <div className="space-y-8">
         <EventTriggerMatrix configList={triggerConfig || []} />

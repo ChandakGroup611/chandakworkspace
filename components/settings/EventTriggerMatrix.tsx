@@ -50,8 +50,6 @@ export default function EventTriggerMatrix({ configList }: { configList: any[] }
   return (
     <div className="theme-card-structural /5 border-border p-6 rounded-xl animate-in fade-in slide-in-from-bottom-6 duration-700 delay-150">
       <h2 className="text-xl font-bold text-foreground mb-2">Event Trigger Controls</h2>
-      <p className="text-sm text-muted mb-6">Granular control over which system events trigger notifications. Disabling here bypasses backend processing for maximum performance.</p>
-
       <div className="space-y-8">
         {modules.map(mod => {
           const modConfigs = configs.filter(c => c.module_code === mod);

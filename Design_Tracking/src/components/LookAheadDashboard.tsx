@@ -470,9 +470,7 @@ export const LookAheadDashboard: React.FC = () => {
         <div className="p-12 text-center rounded-2xl border border-dashed border-border bg-surface space-y-3">
           <Calendar className="h-10 w-10 text-muted-foreground/40 mx-auto" />
           <h4 className="text-sm font-bold text-foreground">No Look-Ahead Milestones Configured</h4>
-          <p className="text-xs text-muted-foreground max-w-md mx-auto">
-            Your workspace is master-driven. You can add look-ahead milestones using &ldquo;Quick Fill Entry&rdquo; above or restore the EY reference template from the &ldquo;Masters Setup&rdquo; tab.
-          </p>
+          
         </div>
       )}
 

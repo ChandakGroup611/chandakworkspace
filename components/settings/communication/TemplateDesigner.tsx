@@ -295,8 +295,7 @@ export default function TemplateDesigner() {
               <div className="text-center py-12">
                 <LayoutTemplate className="w-12 h-12 text-subtle mx-auto mb-4" />
                 <h3 className="text-lg font-bold text-muted">No Templates Designed</h3>
-                <p className="text-sm text-muted mt-1">Click 'Add Template' to create your first email payload.</p>
-              </div>
+                </div>
             ) : (
               <AppTable className="w-full text-left text-sm">
                 <thead className="bg-background border-b border-border">

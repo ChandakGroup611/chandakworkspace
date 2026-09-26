@@ -115,7 +115,7 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
               {requirement.status?.status_name === 'UAT' && (
                 <section className="bg-amber-900/20 rounded-2xl p-6 border border-amber-500/20">
                   <h3 className="theme-label text-amber-500 mb-2">User Acceptance Testing (UAT)</h3>
-                  <p className="text-xs text-muted mb-4">Implementation complete. Please verify the requirement meets the business justification.</p>
+                  
                   
                   {canPerformUAT ? (
                     <>

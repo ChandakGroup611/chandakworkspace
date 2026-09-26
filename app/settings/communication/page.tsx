@@ -74,10 +74,7 @@ export default function CommunicationCenterHub() {
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Communication Center
         </h1>
-        <p className="text-sm text-muted mt-2 max-w-2xl">
-          Enterprise routing engine for automated notifications. All communications are processed asynchronously via background queues to ensure zero performance degradation.
-        </p>
-      </header>
+        </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {MODULES.map((mod) => (

@@ -58,8 +58,7 @@ export default function DeliveryLogs() {
       <AppCard className="flex justify-between items-center p-4">
         <div>
           <h2 className="text-lg font-bold text-foreground">Transmission Logs</h2>
-          <p className="text-xs text-muted-foreground">View recent async email dispatch attempts and delivery receipts.</p>
-        </div>
+          </div>
         <AppButton
           onClick={fetchLogs}
           disabled={loading}

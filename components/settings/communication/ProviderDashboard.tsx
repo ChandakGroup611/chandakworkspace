@@ -116,8 +116,7 @@ export default function ProviderDashboard() {
       <div className="flex justify-between items-center bg-card border border-border p-4 rounded-xl shadow-sm">
         <div>
           <h2 className="text-lg font-bold text-foreground">Routing Infrastructure</h2>
-          <p className="text-xs text-muted-foreground">Configure Primary and Fallback SMTP/API gateways for high-availability delivery.</p>
-        </div>
+          </div>
       </div>
 
       <div className="space-y-6">

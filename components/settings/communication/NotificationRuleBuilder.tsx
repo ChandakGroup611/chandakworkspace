@@ -142,8 +142,7 @@ export default function NotificationRuleBuilder() {
       <div className="flex justify-between items-center theme-card-structural dark:bg-[#0A0D14] dark: p-4 rounded-xl shadow-lg">
         <div>
           <h2 className="text-lg font-bold text-foreground">Rule Engine</h2>
-          <p className="text-xs text-muted">Configure declarative IF-THEN routing constraints.</p>
-        </div>
+          </div>
         <AppButton
           onClick={handleAddRule}
           className="flex items-center gap-2 bg-success hover:bg-success text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg shadow-emerald-500/20 transition-all"
@@ -288,8 +287,7 @@ export default function NotificationRuleBuilder() {
           <div className="text-center py-12 border-2 border-dashed border-border rounded-xl">
             <Workflow className="w-12 h-12 text-subtle mx-auto mb-4" />
             <h3 className="text-lg font-bold text-muted">No Routing Rules Configured</h3>
-            <p className="text-sm text-muted mt-1">Events will not trigger any notifications until rules are defined.</p>
-          </div>
+            </div>
         )}
       </div>
 

@@ -235,8 +235,7 @@ export function PortfolioCharts({ items = [] }: PortfolioChartsProps) {
               </div>
               <h3 className="text-sm font-bold text-foreground tracking-tight">Priority & Risk Breakdown</h3>
             </div>
-            <p className="text-xs text-muted mt-1">Open, Overdue & Upcoming due tasks grouped by urgency tier</p>
-          </div>
+            </div>
 
           <div className="flex items-center gap-1 bg-background/50 p-1 rounded-lg border border-border/40">
             <AppButton

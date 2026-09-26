@@ -338,9 +338,7 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
             <h3 className="text-sm sm:text-base font-bold text-foreground">
               Sub Project Master (Tower Wings & Phases)
             </h3>
-            <p className="text-xs text-muted-foreground">
-              Manage discrete tower wings, execution phases, and their specific consultant & package mappings
-            </p>
+            
           </div>
         </div>
 

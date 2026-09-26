@@ -439,9 +439,7 @@ export const LiaisoningTracker: React.FC = () => {
         <div className="p-12 text-center rounded-2xl border border-dashed border-border bg-surface space-y-3">
           <Shield className="h-10 w-10 text-muted-foreground/40 mx-auto" />
           <h4 className="text-sm font-bold text-foreground">No Statutory Authorities Configured</h4>
-          <p className="text-xs text-muted-foreground max-w-md mx-auto">
-            You can add statutory bodies from the &ldquo;Masters Setup&rdquo; tab or load the EY Reference Template.
-          </p>
+          
         </div>
       )}
 

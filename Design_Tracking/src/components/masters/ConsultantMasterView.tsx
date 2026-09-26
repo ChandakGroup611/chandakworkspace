@@ -482,9 +482,6 @@ export const ConsultantMasterView: React.FC<ConsultantMasterViewProps> = () => {
                 <h3 className="text-sm sm:text-base font-bold text-foreground">
                   Consultant Master (Partner Directory)
                 </h3>
-                <p className="text-xs text-muted-foreground">
-                  Register consultant firms and map their specialized engineering packages from Package Master
-                </p>
               </div>
             </div>
 

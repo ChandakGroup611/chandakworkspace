@@ -356,9 +356,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
             <h3 className="text-sm sm:text-base font-bold text-foreground">
               Project Master (Parent Development Projects)
             </h3>
-            <p className="text-xs text-muted-foreground">
-              Master real estate developments with specifications, consultant mappings, and package scopes
-            </p>
+            
           </div>
         </div>
 

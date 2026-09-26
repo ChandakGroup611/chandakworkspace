@@ -589,8 +589,7 @@ export function AMCExecutiveDashboard({
             </div>
             <div>
               <h3 className="text-sm font-bold text-foreground">Upcoming Renewal Forecast & Action Queue</h3>
-              <p className="text-xs text-muted">Contracts nearing expiry organized by timeline and risk classification.</p>
-            </div>
+              </div>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">

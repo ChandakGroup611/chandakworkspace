@@ -100,9 +100,7 @@ export const DesignStagesRoadmap: React.FC = () => {
         <div className="p-12 text-center rounded-2xl border border-dashed border-border bg-surface space-y-3">
           <Layers className="h-10 w-10 text-muted-foreground/40 mx-auto" />
           <h4 className="text-sm font-bold text-foreground">No Design Stage Deliverables Configured</h4>
-          <p className="text-xs text-muted-foreground max-w-md mx-auto">
-            Design stages are dynamically populated as deliverables are added to your project.
-          </p>
+          
         </div>
       ) : (
         <div className="p-3 sm:p-4 rounded-2xl border border-border bg-surface shadow-xs overflow-x-auto custom-scrollbar">

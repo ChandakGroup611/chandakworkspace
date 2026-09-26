@@ -172,9 +172,6 @@ export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
             <h3 className="text-sm sm:text-base font-bold text-foreground">
               Package Master (Engineering Packages)
             </h3>
-            <p className="text-xs text-muted-foreground">
-              Master parent package dictionary mapped to Consultant Firms, Projects, and Sub-Packages
-            </p>
           </div>
         </div>
 

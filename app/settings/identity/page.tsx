@@ -30,10 +30,7 @@ export default async function IdentitySettingsPage() {
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Identity & Access Management
         </h1>
-        <p className="text-sm text-muted mt-2 max-w-2xl">
-          Control enterprise authentication settings, configure Microsoft Entra ID (Azure AD), and manage Just-In-Time (JIT) provisioning rules.
-        </p>
-      </header>
+        </header>
 
       <div className="space-y-8">
         <IdentityProviderForm />

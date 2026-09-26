@@ -295,7 +295,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
           <div className="bg-card w-full max-w-2xl rounded-2xl shadow-xl flex flex-col max-h-[90vh]">
             <div className="p-6 border-b border-border flex-shrink-0">
               <h2 className="text-xl font-bold text-foreground">Transfer Tasks</h2>
-              <p className="text-sm text-muted-foreground mt-1">Move {selectedTaskIds.size} selected tasks to a new workspace.</p>
+              
             </div>
             
             <div className="p-6 overflow-y-auto flex-1 space-y-4">
@@ -343,7 +343,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
               {targetWorkspaceId && (
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-foreground">Target Parent Task</label>
-                    <p className="text-[10px] text-muted mb-1 leading-tight">If selected, the transferred tasks will become subtasks of this parent task.</p>
+                    
                     <select
                       value={targetParentTaskId}
                       onChange={(e) => setTargetParentTaskId(e.target.value)}

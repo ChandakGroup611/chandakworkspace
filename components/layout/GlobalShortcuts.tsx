@@ -178,7 +178,7 @@ export default function GlobalShortcuts() {
             </div>
             <div>
               <h2 className="text-lg font-bold text-foreground tracking-tight">Keyboard Shortcuts</h2>
-              <p className="text-xs text-muted-foreground">Speed up your workflow with these hotkeys</p>
+              
             </div>
           </div>
           <AppButton 

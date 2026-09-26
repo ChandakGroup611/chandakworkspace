@@ -51,7 +51,7 @@ export function WorkspaceConsole({ workspace, tasks }: { workspace: any, tasks: 
       <header className="p-6 border-b flex justify-between items-center theme-card-structural /20">
         <div>
           <h1 className="text-2xl font-bold text-foreground">{workspace.workspace_name}</h1>
-          <p className="text-sm text-muted mt-1">Workspace operations and execution center</p>
+          
         </div>
         <div className="flex gap-4">
           <AppButton variant="secondary" className=" theme-tab-standard  rounded-xl   transition-colors" leftIcon={<Activity className="h-4 w-4" />}>

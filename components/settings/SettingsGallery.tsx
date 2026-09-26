@@ -381,8 +381,7 @@ export default function SettingsGallery() {
                 <Type className={`h-4 w-4 text-muted`} />
               </div>
             </div>
-            <p className="text-xs text-muted mt-3 font-medium">Choose a font family from standard system styles or loaded web fonts, just like in a word processor.</p>
-          </div>
+            </div>
         </div>
 
         {/* Sub-grid B: Custom Font Sizer */}
@@ -413,8 +412,7 @@ export default function SettingsGallery() {
                   className={`w-14 px-2 py-1 text-xs rounded text-center theme-card-structural`}
                 />
               </div>
-              <p className="text-xs text-muted mt-2 font-medium">Controls the root scaling of the entire application.</p>
-            </div>
+              </div>
 
             <div className={`p-4 rounded-xl border transition-all duration-200 theme-card-structural border-border`}>
               <div className="flex items-center justify-between pb-2 border-b border-inherit/10 mb-3">
@@ -439,8 +437,7 @@ export default function SettingsGallery() {
                   className={`w-14 px-2 py-1 text-xs rounded text-center theme-card-structural`}
                 />
               </div>
-              <p className="text-xs text-muted mt-2 font-medium">Controls the sizes of secondary labels and badges.</p>
-            </div>
+              </div>
 
           </div>
         </div>

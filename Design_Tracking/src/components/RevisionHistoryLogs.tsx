@@ -582,7 +582,7 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
                       <div className="space-y-1.5">
                         <History className="h-8 w-8 mx-auto text-muted-foreground/40" />
                         <p className="font-semibold text-xs">No Audit Trail Events Found</p>
-                        <p className="text-[11px]">Audit records will be created automatically whenever entities or matrix cells are created, updated, or deleted.</p>
+                        
                       </div>
                     </td>
                   </tr>

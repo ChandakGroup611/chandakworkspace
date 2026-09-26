@@ -14,7 +14,7 @@ export function SlaGovernanceView({ slaStats }: { slaStats: any }) {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-sm font-bold tracking-tight">SLA Governance Heatmap</h3>
-          <p className="text-xs text-muted-foreground mt-1">Operational service level distribution</p>
+          
         </div>
       </div>
 

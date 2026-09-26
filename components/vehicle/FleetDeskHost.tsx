@@ -5627,7 +5627,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <Calendar className="h-4 w-4 text-theme-btn-primary" />
                     <span>Recent Trip Movement</span>
                   </AppCardTitle>
-                  <p className="text-[11px] text-muted-foreground">Active and recent vehicle assignments</p>
+                  
                 </div>
                 <AppButton
                   variant="ghost"
@@ -5727,7 +5727,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <Car className="h-4 w-4 text-theme-btn-primary" />
                     <span>Fleet Depot Availability</span>
                   </AppCardTitle>
-                  <p className="text-[11px] text-muted-foreground">Ready vehicles for allocation</p>
+                  
                 </div>
                 <AppButton
                   variant="ghost"
@@ -7835,7 +7835,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           {vendorSearch || vendorStatusFilter !== "ALL" ? (
                             <div className="space-y-2">
                               <p className="font-semibold text-foreground">No matching insurance vendors found.</p>
-                              <p className="text-xs text-muted-foreground">Try adjusting your search or status filter.</p>
+                              
                               <AppButton
                                 variant="outline"
                                 size="sm"
@@ -7851,7 +7851,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           ) : (
                             <div className="space-y-2">
                               <p className="font-semibold text-foreground">No insurance vendors registered yet.</p>
-                              <p className="text-xs text-muted-foreground">Click "Add Insurance Vendor" above to register an underwriter.</p>
+                              
                               <AppButton
                                 variant="primary"
                                 size="sm"
@@ -8220,7 +8220,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="p-4 rounded-xl border border-border/70 bg-card shadow-2xs flex items-center justify-between">
                 <div>
                   <h4 className="text-sm font-bold text-foreground">Government Parivahan / RTO RC API Gateway</h4>
-                  <p className="text-xs text-muted-foreground mt-0.5">Real-time Surepass verification for Indian registration plates</p>
+                  
                 </div>
                 <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
                   Online & Active
@@ -8230,7 +8230,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="p-4 rounded-xl border border-border/70 bg-card shadow-2xs flex items-center justify-between">
                 <div>
                   <h4 className="text-sm font-bold text-foreground">Statutory Expiry Warning Window</h4>
-                  <p className="text-xs text-muted-foreground mt-0.5">Proactive alerts for Insurance, PUC and Driving License expirations</p>
+                  
                 </div>
                 <span className="font-mono text-xs font-bold text-foreground bg-surface px-3 py-1 rounded border border-border">
                   30 Days Prior
@@ -8240,7 +8240,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="p-4 rounded-xl border border-border/70 bg-card shadow-2xs flex items-center justify-between">
                 <div>
                   <h4 className="text-sm font-bold text-foreground">Periodic Maintenance Trigger</h4>
-                  <p className="text-xs text-muted-foreground mt-0.5">Automated workshop service interval based on odometer thresholds</p>
+                  
                 </div>
                 <span className="font-mono text-xs font-bold text-foreground bg-surface px-3 py-1 rounded border border-border">
                   Every 10,000 km
@@ -9951,7 +9951,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           </div>
                           <div>
                             <h4 className="font-bold text-xs text-foreground">Workshop Invoice & Statutory Tax Breakdown</h4>
-                            <p className="text-[10px] text-muted-foreground">Itemized charges, GST additions, and TDS withholding deductions</p>
+                            
                           </div>
                         </div>
 
@@ -10773,7 +10773,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           </div>
                           <div>
                             <h4 className="font-bold text-xs text-foreground">Workshop Invoice & Statutory Tax Breakdown</h4>
-                            <p className="text-[10px] text-muted-foreground">Itemized charges, GST additions, and TDS withholding deductions</p>
+                            
                           </div>
                         </div>
 
@@ -14954,9 +14954,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div className="p-8 text-center rounded-xl border border-dashed border-border bg-slate-50/50 dark:bg-slate-900/30 space-y-2">
                   <Wrench className="h-8 w-8 text-muted-foreground mx-auto opacity-50" />
                   <p className="text-xs font-semibold text-foreground">No service records logged for this vehicle</p>
-                  <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                    Track all authorized dealership visits, scheduled oil changes, tire rotations and mechanical repairs.
-                  </p>
+                  
                   {canManageMaintenance && (
                     <div className="pt-2">
                       <AppButton
@@ -15538,9 +15536,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div className="p-8 text-center rounded-xl border border-dashed border-border bg-slate-50/50 dark:bg-slate-900/30 space-y-2">
                   <FileCheck className="h-8 w-8 text-muted-foreground mx-auto opacity-50" />
                   <p className="text-xs font-semibold text-foreground">No documents currently archived for this vehicle</p>
-                  <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                    Attach PUC certificates, insurance policy schedules, RC smart cards, fitness certificates or state permits.
-                  </p>
+                  
                   <div className="pt-2">
                     <AppButton
                       type="button"
@@ -15937,9 +15933,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div className="p-8 text-center rounded-xl border border-dashed border-border bg-slate-50/50 dark:bg-slate-900/30 space-y-2">
                   <MapPin className="h-8 w-8 text-muted-foreground mx-auto opacity-50" />
                   <p className="text-xs font-semibold text-foreground">No trip movements logged for this vehicle</p>
-                  <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                    Dispatches and scheduled corporate trips assigned to this vehicle will appear here.
-                  </p>
+                  
                 </div>
               ) : (
                 <div className="space-y-2.5">

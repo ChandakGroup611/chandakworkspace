@@ -563,7 +563,7 @@ export function UserPerformanceWorkingSheetModal({
                   <div className="p-5 theme-card-structural dark:bg-[#111625] rounded-2xl space-y-6">
                     <div>
                       <h4 className="text-sm font-bold text-foreground">Monthly Output & Resolution Velocity</h4>
-                      <p className="text-xs text-muted-foreground mt-0.5">Historical activity volume and resolution performance over the last 6 months.</p>
+                      
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">

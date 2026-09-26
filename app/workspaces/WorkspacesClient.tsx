@@ -1511,7 +1511,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         <div className="flex flex-col items-center justify-center py-24 mx-4 my-8 rounded-xl border-dashed /60 theme-card-structural /30">
           <FolderKanban className="h-10 w-10 text-muted opacity-40 mb-4" />
           <h2 className="text-[15px] font-semibold tracking-tight text-foreground mb-1">No Active Workspaces Found</h2>
-          <p className="text-[13px] text-muted max-w-sm text-center mb-6">Initialize a new enterprise workspace to begin orchestrating tasks and collaborating with your team.</p>
+          
           <AppButton variant="primary" onClick={() => setWsModalMode('ROOT')} disabled={!hasPermission("WORKSPACES_CREATE")} leftIcon={<Plus className="h-4 w-4" />}>
             Create Workspace
           </AppButton>

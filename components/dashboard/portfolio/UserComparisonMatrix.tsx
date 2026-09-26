@@ -274,8 +274,7 @@ export function UserComparisonMatrix({
           <div className="flex items-center justify-between pb-4 border-b border-border/50">
             <div>
               <h4 className="text-sm font-bold text-foreground">Output Velocity Comparison</h4>
-              <p className="text-xs text-muted mt-0.5">Created vs Closed vs Active task output per user</p>
-            </div>
+              </div>
             <div className="p-1.5 rounded-lg bg-theme-btn-primary/10 text-theme-icon">
               <Zap className="h-4 w-4" />
             </div>
@@ -324,8 +323,7 @@ export function UserComparisonMatrix({
           <div className="flex items-center justify-between pb-4 border-b border-border/50">
             <div>
               <h4 className="text-sm font-bold text-foreground">Risk & Deadline Breaches Comparison</h4>
-              <p className="text-xs text-muted mt-0.5">Overdue count, due-not-completed & critical load per user</p>
-            </div>
+              </div>
             <div className="p-1.5 rounded-lg bg-danger/10 text-danger">
               <AlertTriangle className="h-4 w-4" />
             </div>

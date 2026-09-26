@@ -22,7 +22,7 @@ export default function ReportsPage() {
     <div className="w-full space-y-3 animate-in fade-in-50 duration-500">
       <header className="pb-1">
         <h1 className="text-xl font-bold">Reports & Analytics</h1>
-        <p className="text-xs text-muted mt-0.5">Generate filtered analytical reports for workspaces and tasks with export capabilities.</p>
+        
       </header>
 
       <main>

@@ -158,8 +158,7 @@ export function AMCAllocationsTab({ amcId, isLightMode, onUpdate }: AMCAllocatio
       <div className={`p-4 rounded-xl border flex items-center justify-between bg-theme-btn-primary/10 border-theme-btn-primary/30 text-theme-icon-secondary`}>
         <div>
           <h4 className="font-bold">License Utilization</h4>
-          <p className="text-sm mt-1">Assign available licenses to users. The master record will automatically track usage.</p>
-        </div>
+          </div>
         <div className="text-right">
           <div className="text-2xl font-black">{allocations.length} / {totalLicenses > 0 ? totalLicenses : 'Unlimited'}</div>
           <div className="text-xs font-semibold uppercase opacity-70">Licenses Assigned</div>

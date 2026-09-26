@@ -110,8 +110,7 @@ export default function IdentityProviderForm() {
             </div>
             <div>
               <h2 className="text-xl font-semibold text-foreground">Microsoft Entra ID (Azure AD)</h2>
-              <p className="text-sm text-muted">Configure Microsoft 365 Single Sign-On and auto-provisioning.</p>
-            </div>
+              </div>
           </div>
           <div className="flex items-center space-x-2">
             <span className="text-sm font-medium text-muted">Status</span>
@@ -159,8 +158,7 @@ export default function IdentityProviderForm() {
               />
               <Key className="w-4 h-4 text-muted absolute left-3 top-3.5" />
             </div>
-            <p className="text-xs text-muted mt-1">This value is encrypted at rest and never exposed to the frontend after saving.</p>
-          </div>
+            </div>
 
           <div className="space-y-2 md:col-span-2">
             <label className="text-sm font-medium text-muted">Authority URL</label>
@@ -186,8 +184,7 @@ export default function IdentityProviderForm() {
           </div>
           <div>
             <h2 className="text-xl font-semibold text-foreground">Auto-Provisioning Settings</h2>
-            <p className="text-sm text-muted">Control how users are mapped when they log in via SSO for the first time.</p>
-          </div>
+            </div>
         </div>
 
         <div className="space-y-4">

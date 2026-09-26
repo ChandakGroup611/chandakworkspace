@@ -947,7 +947,7 @@ export const TenderDesignMatrix: React.FC = () => {
                     <div className="max-w-xs mx-auto space-y-2">
                       <Info className="h-8 w-8 text-muted-foreground/50 mx-auto" />
                       <p className="font-semibold text-foreground">No matching packages found</p>
-                      <p className="text-xs">Adjust filters or add packages in Masters Setup</p>
+                      
                     </div>
                   </td>
                 </tr>

@@ -1193,7 +1193,7 @@ export default function FleetRbacGovernance() {
             <div className="flex items-center justify-between pb-3 border-b border-border/50">
               <div>
                 <h3 className="text-sm font-bold text-foreground">Global Vehicle Policy Matrix</h3>
-                <p className="text-xs text-muted-foreground">Comprehensive role-to-action capabilities across all Fleet submodules.</p>
+                
               </div>
             </div>
 

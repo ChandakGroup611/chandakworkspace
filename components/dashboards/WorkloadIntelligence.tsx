@@ -10,7 +10,7 @@ export function WorkloadIntelligence({ workload }: { workload: any }) {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-sm font-bold tracking-tight">Tactical Workload</h3>
-          <p className="text-xs text-muted-foreground mt-1">Your active assignments</p>
+          
         </div>
         <div className="p-2 bg-theme-btn-primary/10 text-theme-icon rounded-lg">
           <Briefcase className="w-5 h-5" />

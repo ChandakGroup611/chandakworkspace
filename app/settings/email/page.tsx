@@ -30,10 +30,7 @@ export default async function EmailSettingsPage() {
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Email Provider Setup
         </h1>
-        <p className="text-sm text-muted mt-2 max-w-2xl">
-          Control outgoing email integrations (Gmail, Office 365, Resend). Ensure these are verified before configuring your notification triggers.
-        </p>
-      </header>
+        </header>
 
       <div className="space-y-8">
         <NotificationProviderForm initialData={emailConfig || {}} />

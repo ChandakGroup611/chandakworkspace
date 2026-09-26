@@ -253,8 +253,7 @@ export default function CustomFieldsConfigurator() {
                 <AppCardTitle className="text-foreground">
                   Active Dictionaries: <strong className="text-theme-icon capitalize">{activeModule}</strong>
                 </AppCardTitle>
-                <p className="text-[0.8rem] text-muted">Values ingest seamlessly via runtime custom form mutators.</p>
-              </div>
+                </div>
               <span className="text-xs font-mono font-bold theme-card-structural /5 px-2 py-0.5 rounded text-muted border-border">
                 Target Schema: JSONB Map
               </span>

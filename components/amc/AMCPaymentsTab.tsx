@@ -218,7 +218,7 @@ export function AMCPaymentsTab({ amcId, isLightMode, currency = 'INR' }: AMCPaym
             </div>
             <div>
               <h3 className="text-lg font-bold text-foreground">Payment Schedule & Invoicing Ledger</h3>
-              <p className="text-xs text-muted">Track upcoming payouts, release milestones, and record payment confirmations.</p>
+              
             </div>
           </div>
         </div>
