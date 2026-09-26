@@ -305,7 +305,6 @@ function TransactionFormLayout({
                   </span>
                 )}
               </h1>
-              <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
             </div>
           </div>
         </div>
@@ -500,7 +499,6 @@ function WorkingDocumentLayout({
                   </span>
                 )}
               </h1>
-              <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
             </div>
           </div>
         </div>
@@ -4362,9 +4360,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <h1 className="text-2xl font-bold tracking-tight text-foreground mt-0.5">
                     {moduleMeta.title}
                   </h1>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {moduleMeta.description}
-                  </p>
                 </div>
               </div>
             </div>
@@ -4396,7 +4391,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <div>
                       <p className="text-xs font-semibold text-muted-foreground">{kpi.title}</p>
                       <h3 className="text-2xl font-bold mt-1 text-foreground">{kpi.value}</h3>
-                      <span className="text-[10px] text-muted-foreground">{kpi.subtext}</span>
                     </div>
                     <div className={`h-10 w-10 rounded-xl flex items-center justify-center border ${kpi.iconBg} ${kpi.iconColor}`}>
                       <IconComp className="h-5 w-5" />
@@ -4465,9 +4459,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       Vehicle Master Form
                     </span>
                   </h1>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Enroll a new vehicle with instant RTO plate analysis, powertrain specs, statutory compliance & driver assignment
-                  </p>
                 </div>
               </div>
             </div>
@@ -4516,9 +4507,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <span className="flex h-6 w-6 items-center justify-center rounded-full bg-theme-btn-primary/10 text-theme-btn-primary text-xs font-bold">1</span>
                     <span>Registration Plate & Instant Intelligence</span>
                   </h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Enter the Indian vehicle registration number (e.g. MH02FE4281). Passing authority, district jurisdiction, and state are verified in real-time.
-                  </p>
                 </div>
                 <div className="hidden sm:flex items-center gap-1.5 text-xs text-theme-btn-primary font-semibold px-2.5 py-1 rounded-md bg-theme-btn-primary/10 border border-theme-btn-primary/20">
                   <Zap className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
@@ -4764,9 +4752,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-theme-btn-primary/10 text-theme-btn-primary text-xs font-bold">2</span>
                   <span>Vehicle Specifications & Powertrain</span>
                 </h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Select or type the manufacturer, model, body category and powertrain configuration
-                </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
@@ -5020,9 +5005,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-theme-btn-primary/10 text-theme-btn-primary text-xs font-bold">3</span>
                   <span>Legal Ownership & Identification Numbers</span>
                 </h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Corporate entity registration, VIN chassis stamp, engine serial number, and RTO jurisdiction
-                </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
@@ -5134,9 +5116,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-theme-btn-primary/10 text-theme-btn-primary text-xs font-bold">4</span>
                   <span>Statutory Compliance & Document Validity</span>
                 </h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Motor insurance, pollution certificate (PUC), fitness certificate, and highway assistance status
-                </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 pt-2">
@@ -5303,9 +5282,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-theme-btn-primary/10 text-theme-btn-primary text-xs font-bold">5</span>
                   <span>Fleet Operations & Driver Assignment</span>
                 </h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Initial meter distance, operational availability state, and chauffeur allocation
-                </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
@@ -5368,9 +5344,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <span className="flex h-6 w-6 items-center justify-center rounded-full bg-theme-btn-primary/10 text-theme-btn-primary text-xs font-bold">6</span>
                     <span>Vehicle Legal & Compliance Documents Vault</span>
                   </h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Attach and archive mandatory certificates & compliance records (PUC, Insurance Policy, RC Book Smart Card, Fitness Certificate, Permits, Purchase Invoice & others) with instant preview and download.
-                  </p>
                 </div>
                 <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-theme-btn-primary/10 text-theme-btn-primary border border-theme-btn-primary/20 shrink-0">
                   {newVehicleDocs.length} {newVehicleDocs.length === 1 ? "document attached" : "documents attached"}

@@ -92,7 +92,6 @@ export function TransactionFormLayout({
                   </span>
                 )}
               </h1>
-              <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
             </div>
           </div>
         </div>
@@ -287,7 +286,6 @@ export function WorkingDocumentLayout({
                   </span>
                 )}
               </h1>
-              <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
             </div>
           </div>
         </div>

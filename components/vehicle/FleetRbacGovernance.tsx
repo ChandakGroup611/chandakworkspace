@@ -672,9 +672,6 @@ export default function FleetRbacGovernance() {
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
             Vehicle RBAC Access Policies
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Role-based authorization matrix, vehicle dispatch scopes, and chauffeur permissions.
-          </p>
         </div>
 
         {/* Action Controls */}

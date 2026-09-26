@@ -361,9 +361,6 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
               <h2 className="text-base sm:text-lg font-black text-foreground">
                 Revision History & Audit Logs
               </h2>
-              <p className="text-xs text-muted-foreground">
-                Full immutable audit trail with foreign key relationship tracking, delete/update cascades, and drawing delta logs
-              </p>
             </div>
           </div>
 

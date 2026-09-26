@@ -219,7 +219,6 @@ export function TransmittalManager() {
         <div className="p-4 rounded-xl bg-card border border-border">
           <div className="text-[11px] font-bold text-muted-foreground uppercase">Total Transmittals</div>
           <div className="text-xl font-black text-foreground mt-1">{transmittals.length}</div>
-          <div className="text-[10px] text-muted-foreground mt-0.5">Formal issuance packages</div>
         </div>
 
         <div className="p-4 rounded-xl bg-card border border-border">
@@ -227,7 +226,6 @@ export function TransmittalManager() {
           <div className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
             {transmittals.filter(t => t.purpose === "GOOD_FOR_CONSTRUCTION").length}
           </div>
-          <div className="text-[10px] text-muted-foreground mt-0.5">Site execution certified</div>
         </div>
 
         <div className="p-4 rounded-xl bg-card border border-border">
@@ -235,7 +233,6 @@ export function TransmittalManager() {
           <div className="text-xl font-black text-blue-600 dark:text-blue-400 mt-1">
             {transmittals.filter(t => t.status === "ACKNOWLEDGED").length}
           </div>
-          <div className="text-[10px] text-muted-foreground mt-0.5">Signed by recipient site team</div>
         </div>
 
         <div className="p-4 rounded-xl bg-card border border-border">
@@ -243,7 +240,6 @@ export function TransmittalManager() {
           <div className="text-xl font-black text-amber-600 dark:text-amber-400 mt-1">
             {transmittals.filter(t => t.status === "ISSUED").length}
           </div>
-          <div className="text-[10px] text-muted-foreground mt-0.5">In transit / verification</div>
         </div>
       </div>
 

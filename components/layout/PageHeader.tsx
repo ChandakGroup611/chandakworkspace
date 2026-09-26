@@ -33,11 +33,6 @@ export function PageHeader({ title, description, icon, badge, actions, children 
           </h1>
           {badge && <div className="shrink-0">{badge}</div>}
         </div>
-        {description && (
-          <p className={`text-xs sm:text-[0.85rem] leading-relaxed line-clamp-2 sm:truncate text-muted`}>
-            {description}
-          </p>
-        )}
         {children}
       </div>
 

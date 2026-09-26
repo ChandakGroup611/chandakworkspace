@@ -295,22 +295,9 @@ export default function SelectModulePage() {
                       </div>
                     </div>
 
-                    <h3 className="text-lg font-bold text-foreground mb-1.5 group-hover:text-theme-btn-primary transition-colors">
+                    <h3 className="text-lg font-bold text-foreground mb-4 group-hover:text-theme-btn-primary transition-colors">
                       {module.name}
                     </h3>
-                    <p className="text-xs text-muted line-clamp-2 mb-4 leading-relaxed">
-                      {module.description || "Operational suite for enterprise workflows."}
-                    </p>
-
-                    {/* Feature Highlights */}
-                    <div className="space-y-1.5 border-t border-border pt-3 mb-4">
-                      {meta.features.map((feat, idx) => (
-                        <div key={idx} className="flex items-start gap-2 text-xs text-subtle">
-                          <span className="h-1.5 w-1.5 rounded-full bg-theme-btn-primary/50 mt-1.5 shrink-0" />
-                          <span className="leading-snug">{feat}</span>
-                        </div>
-                      ))}
-                    </div>
                   </div>
 
                   {/* Card Footer Button */}

@@ -191,7 +191,6 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
             </div>
             <div>
               <AppCardTitle className={`text-xl text-foreground`}>Requirement Analysis</AppCardTitle>
-              <p className={`text-xs mt-1 text-muted`}>Complete the business and technical analysis for {requirement?.code}</p>
             </div>
           </div>
         </AppCardHeader>

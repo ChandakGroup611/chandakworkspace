@@ -763,9 +763,6 @@ export const DesignRbacGovernance: React.FC = () => {
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
               Design & Tracking RBAC Governance
             </h1>
-            <p className="text-xs text-muted">
-              Role permissions, ticket-based scopes, and user project access.
-            </p>
           </div>
         </div>
 

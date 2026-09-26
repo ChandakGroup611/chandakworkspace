@@ -55,10 +55,7 @@ export function TicketScopeSelector({ onSelect, onDiscard }: TicketScopeSelector
   return (
     <div className="flex flex-col items-center justify-center space-y-6 py-4 animate-in fade-in zoom-in duration-500">
       <div className="text-center space-y-1">
-        <h2 className={`text-2xl font-bold text-foreground"}`}>Select Operational Scope</h2>
-        <p className="text-sm text-muted max-w-md mx-auto">
-          Choose the appropriate category to route your ticket correctly.
-        </p>
+        <h2 className="text-2xl font-bold text-foreground">Select Operational Scope</h2>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full px-4">
@@ -85,9 +82,6 @@ export function TicketScopeSelector({ onSelect, onDiscard }: TicketScopeSelector
                     <h3 className="text-[17px] font-semibold text-foreground group-hover:text-foreground/90 transition-colors">
                       {scope.name}
                     </h3>
-                    <p className="text-sm text-muted leading-relaxed line-clamp-2">
-                      {scope.description}
-                    </p>
                   </div>
 
                   <div className="flex items-center justify-between text-[11px] font-bold tracking-wider uppercase transition-colors pt-4 border-t border-border/50 text-muted group-hover:text-foreground">

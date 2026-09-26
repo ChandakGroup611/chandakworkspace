@@ -630,29 +630,25 @@ export const TenderDesignMatrix: React.FC = () => {
         value: "RECEIVED",
         label: "Received",
         count: matrixStats.received,
-        colorDot: "#10b981",
-        subtitle: "Drawings approved & received"
+        colorDot: "#10b981"
       },
       {
         value: "IN_PROGRESS",
         label: "In Progress / Onboard",
         count: matrixStats.inProgress,
-        colorDot: "#f59e0b",
-        subtitle: "Drawings in production"
+        colorDot: "#f59e0b"
       },
       {
         value: "PENDING",
         label: "Pending / Not Onboard",
         count: matrixStats.pending,
-        colorDot: "#f43f5e",
-        subtitle: "Consultant / drawing pending"
+        colorDot: "#f43f5e"
       },
       {
         value: "TARGET_DATE",
         label: "Target Dates",
         count: matrixStats.targetDates,
-        colorDot: "#0ea5e9",
-        subtitle: "Scheduled target timeline"
+        colorDot: "#0ea5e9"
       }
     ];
   }, [matrixStats]);

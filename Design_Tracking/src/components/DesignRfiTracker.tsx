@@ -265,7 +265,6 @@ export function DesignRfiTracker() {
         <div className="p-4 rounded-xl bg-card border border-border">
           <div className="text-[11px] font-bold text-muted-foreground uppercase">Total RFIs Logged</div>
           <div className="text-xl font-black text-foreground mt-1">{rfis.length}</div>
-          <div className="text-[10px] text-muted-foreground mt-0.5">Site queries & clashes</div>
         </div>
 
         <div className="p-4 rounded-xl bg-card border border-border">
@@ -273,7 +272,6 @@ export function DesignRfiTracker() {
           <div className="text-xl font-black text-rose-600 dark:text-rose-400 mt-1">
             {rfis.filter(r => r.status === "OPEN" || r.status === "UNDER_REVIEW").length}
           </div>
-          <div className="text-[10px] text-muted-foreground mt-0.5">Awaiting consultant reply</div>
         </div>
 
         <div className="p-4 rounded-xl bg-card border border-border">
@@ -281,7 +279,6 @@ export function DesignRfiTracker() {
           <div className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
             {rfis.filter(r => r.status === "CLARIFIED" || r.status === "CLOSED").length}
           </div>
-          <div className="text-[10px] text-muted-foreground mt-0.5">Resolved with revisions</div>
         </div>
 
         <div className="p-4 rounded-xl bg-card border border-border">
@@ -289,7 +286,6 @@ export function DesignRfiTracker() {
           <div className="text-xl font-black text-amber-600 dark:text-amber-400 mt-1">
             {rfis.filter(r => r.priority === "URGENT").length}
           </div>
-          <div className="text-[10px] text-muted-foreground mt-0.5">Critical path bottlenecks</div>
         </div>
       </div>
 
