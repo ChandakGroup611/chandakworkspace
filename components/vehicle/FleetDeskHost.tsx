@@ -423,7 +423,7 @@ function TransactionFormLayout({
               size="sm"
               disabled={isSubmitting || isSaveDisabled}
               onClick={(e) => onSave?.(e)}
-              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs px-5"
+              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-9 font-semibold gap-1.5 shadow-xs px-5"
             >
               {isSubmitting ? (
                 <RefreshCw className="h-3.5 w-3.5 animate-spin" />
@@ -488,7 +488,7 @@ function TransactionFormLayout({
               size="sm"
               disabled={isSubmitting || isSaveDisabled}
               onClick={(e) => onSave?.(e)}
-              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs px-5"
+              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-9 font-semibold gap-1.5 shadow-xs px-5"
             >
               {isSubmitting ? (
                 <RefreshCw className="h-3.5 w-3.5 animate-spin" />
@@ -4759,7 +4759,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 resetMaintenanceForm();
                 setIsAddMaintenanceOpen(true);
               }}
-              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs"
+              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-9 font-semibold gap-1.5 shadow-xs"
             >
               <Plus className="h-4 w-4" />
               <span>Log Service Job Card</span>
@@ -4815,7 +4815,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               variant="primary"
               size="sm"
               onClick={openCreatePartModal}
-              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs"
+              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-9 font-semibold gap-1.5 shadow-xs"
             >
               <Plus className="h-4 w-4" />
               <span>Register Part / Accessory</span>
@@ -4871,7 +4871,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               variant="primary"
               size="sm"
               onClick={() => setIsDispatchTripOpen(true)}
-              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs"
+              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-9 font-semibold gap-1.5 shadow-xs"
             >
               <Plus className="h-4 w-4" />
               <span>Dispatch Trip</span>
@@ -4927,7 +4927,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               variant="primary"
               size="sm"
               onClick={() => setIsAddDriverOpen(true)}
-              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs"
+              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-9 font-semibold gap-1.5 shadow-xs"
             >
               <Plus className="h-4 w-4" />
               <span>Add Driver</span>
@@ -4983,7 +4983,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               variant="primary"
               size="sm"
               onClick={openCreateVendorModal}
-              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs"
+              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-9 font-semibold gap-1.5 shadow-xs"
             >
               <Plus className="h-4 w-4" />
               <span>Add Insurance Vendor</span>
@@ -5131,7 +5131,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               variant="primary"
               size="sm"
               onClick={() => setIsDispatchTripOpen(true)}
-              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs"
+              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-9 font-semibold gap-1.5 shadow-xs"
             >
               <Plus className="h-4 w-4" />
               <span>Dispatch Trip</span>
@@ -5187,7 +5187,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               variant="primary"
               size="sm"
               onClick={() => router.push("/vehicle/register")}
-              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs"
+              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-9 font-semibold gap-1.5 shadow-xs"
             >
               <Plus className="h-4 w-4" />
               <span>Add Vehicle</span>
@@ -5243,7 +5243,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               variant="primary"
               size="sm"
               onClick={() => router.push("/vehicle/register")}
-              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs"
+              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-9 font-semibold gap-1.5 shadow-xs"
             >
               <Plus className="h-4 w-4" />
               <span>Add Vehicle</span>
@@ -5660,7 +5660,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 size="sm"
                 disabled={modalSubmitting || !newVehiclePlate.trim()}
                 onClick={handleCreateVehicle}
-                className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs px-5"
+                className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-9 font-semibold gap-1.5 shadow-xs px-5"
               >
                 {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                 <span>Save & Register Vehicle</span>
@@ -5997,7 +5997,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           }}
                           className={`h-7 px-2.5 text-xs font-medium ${
                             isSelected
-                              ? "bg-theme-btn-primary text-white border-theme-btn-primary font-semibold shadow-xs"
+                              ? "bg-theme-btn-primary text-theme-btn-primary-text border-theme-btn-primary font-semibold shadow-xs"
                               : "border-border text-foreground hover:border-theme-btn-primary/40 bg-surface"
                           }`}
                         >
@@ -6057,7 +6057,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             }}
                             className={`h-7 px-2.5 text-xs font-medium ${
                               isSelected
-                                ? "bg-theme-btn-primary text-white border-theme-btn-primary font-semibold shadow-xs"
+                                ? "bg-theme-btn-primary text-theme-btn-primary-text border-theme-btn-primary font-semibold shadow-xs"
                                 : "border-border text-foreground hover:border-theme-btn-primary/40 bg-surface"
                             }`}
                           >
@@ -6777,7 +6777,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   type="submit" 
                   variant="primary"
                   disabled={modalSubmitting || !newVehiclePlate.trim()}
-                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white font-semibold text-xs h-9 px-6 gap-1.5 shadow-xs w-full sm:w-auto"
+                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text font-semibold text-xs h-9 px-6 gap-1.5 shadow-xs w-full sm:w-auto"
                 >
                   {modalSubmitting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                   <span>Save & Register Vehicle</span>
@@ -6925,7 +6925,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           size="sm"
                           variant="primary"
                           onClick={() => handleOpenVehiclePolicyRenewModal(alert.vehicle!)}
-                          className="text-[11px] h-6 px-2 bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white shrink-0 font-semibold"
+                          className="text-[11px] h-6 px-2 bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text shrink-0 font-semibold"
                         >
                           Renew
                         </AppButton>
@@ -7312,24 +7312,24 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 </AppButton>
               </AppCardHeader>
               <AppCardContent className="p-5">
-                {/* SVG Visual Bar/Trend Chart */}
+                {/* Visual Bar/Trend Chart */}
                 <div className="space-y-4">
-                  <div className="h-44 w-full flex items-end justify-between gap-3 pt-6 pb-2 px-2 border-b border-border/60">
+                  <div className="h-48 w-full flex items-end justify-between gap-3 pt-4 pb-2 px-3 border-b border-border/60">
                     {monthlySpendHistory.data.map((item, idx) => {
-                      const heightPct = Math.max(8, Math.round((item.spend / monthlySpendHistory.maxSpend) * 100));
+                      const heightPct = Math.max(10, Math.round((item.spend / monthlySpendHistory.maxSpend) * 100));
                       return (
-                        <div key={idx} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
-                          <span className="text-[10px] font-bold text-muted-foreground group-hover:text-theme-btn-primary transition-colors">
+                        <div key={idx} className="flex-1 flex flex-col items-center gap-2 h-full group min-w-0">
+                          <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 group-hover:bg-blue-500/10 group-hover:text-blue-600 dark:group-hover:text-blue-400 border border-border/50 transition-colors whitespace-nowrap">
                             {item.spend > 0 ? `₹${(item.spend / 1000).toFixed(1)}k` : "₹0"}
                           </span>
-                          <div className="w-full max-w-[48px] bg-muted/50 rounded-t-lg overflow-hidden flex flex-col justify-end h-full">
+                          <div className="flex-1 w-full max-w-[42px] bg-slate-100 dark:bg-slate-800/70 rounded-t-xl overflow-hidden flex flex-col justify-end p-0.5 border border-slate-200/60 dark:border-slate-700/60 shadow-inner">
                             <div
                               style={{ height: `${heightPct}%` }}
-                              className="w-full bg-gradient-to-t from-theme-btn-primary to-theme-btn-primary/70 group-hover:from-theme-btn-primary group-hover:to-cyan-400 transition-all rounded-t-lg shadow-xs"
+                              className="w-full bg-gradient-to-t from-blue-600 via-indigo-500 to-indigo-400 dark:from-blue-500 dark:via-indigo-500 dark:to-cyan-400 group-hover:brightness-110 transition-all duration-500 rounded-t-lg shadow-sm"
                               title={`${item.month} ${item.year}: ₹${item.spend.toLocaleString()} (${item.count} services)`}
                             />
                           </div>
-                          <span className="text-xs font-semibold text-foreground">
+                          <span className="text-xs font-bold text-foreground">
                             {item.month}
                           </span>
                         </div>
@@ -7339,8 +7339,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
                   <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
                     <span className="flex items-center gap-1.5">
-                      <span className="h-2.5 w-2.5 rounded bg-theme-btn-primary"></span>
-                      <span>Authorized Workshop Job Cards</span>
+                      <span className="h-2.5 w-2.5 rounded-full bg-indigo-500 inline-block shadow-xs"></span>
+                      <span className="font-medium text-foreground">Authorized Workshop Job Cards</span>
                     </span>
                     <span>Total Aggregate Spend: <strong className="text-foreground">₹{fleetReportsData.totalMaintenanceSpend.toLocaleString("en-IN")}</strong></span>
                   </div>
@@ -7423,10 +7423,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         key={st}
                         type="button"
                         onClick={() => setDashboardTripFilter(st)}
-                        className={`px-2 py-0.5 font-bold rounded transition-all cursor-pointer ${
+                        className={`px-2.5 py-1 font-bold rounded-md transition-all cursor-pointer ${
                           dashboardTripFilter === st
-                            ? "bg-surface text-theme-btn-primary shadow-2xs"
-                            : "text-muted-foreground hover:text-foreground"
+                            ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-xs"
+                            : "text-muted-foreground hover:text-foreground hover:bg-surface/50"
                         }`}
                       >
                         {st === "ALL" ? "All" : st === "IN_PROGRESS" ? "On Route" : "Planned"}
@@ -7436,12 +7436,12 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
                   {canDispatchTrips && (
                     <AppButton
-                      variant="ghost"
+                      variant="primary"
                       size="sm"
                       onClick={() => setIsDispatchTripOpen(true)}
-                      className="text-xs h-7 px-2 font-bold text-theme-btn-primary hover:bg-theme-btn-primary/10"
+                      className="text-xs h-7 px-2.5 font-semibold gap-1"
                     >
-                      <Plus className="h-3.5 w-3.5 mr-1" />
+                      <Plus className="h-3.5 w-3.5" />
                       <span>Dispatch</span>
                     </AppButton>
                   )}
@@ -7468,7 +7468,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           variant="primary"
                           size="sm"
                           onClick={() => setIsDispatchTripOpen(true)}
-                          className="h-7 px-3 text-xs font-bold rounded-lg bg-theme-btn-primary text-white"
+                          className="h-8 px-4 text-xs font-semibold rounded-lg"
                         >
                           Dispatch First Trip
                         </AppButton>
@@ -7572,10 +7572,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         key={st}
                         type="button"
                         onClick={() => setDashboardVehicleFilter(st)}
-                        className={`px-2 py-0.5 font-bold rounded transition-all cursor-pointer ${
+                        className={`px-2.5 py-1 font-bold rounded-md transition-all cursor-pointer ${
                           dashboardVehicleFilter === st
-                            ? "bg-surface text-theme-btn-primary shadow-2xs"
-                            : "text-muted-foreground hover:text-foreground"
+                            ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-xs"
+                            : "text-muted-foreground hover:text-foreground hover:bg-surface/50"
                         }`}
                       >
                         {st === "ALL" ? "All" : st === "IN_STOCK" ? "Available" : "Workshop"}
@@ -7585,12 +7585,12 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
                   {canCreateVehicle && (
                     <AppButton
-                      variant="ghost"
+                      variant="primary"
                       size="sm"
                       onClick={() => router.push("/vehicle/register")}
-                      className="text-xs h-7 px-2 font-bold text-theme-btn-primary hover:bg-theme-btn-primary/10"
+                      className="text-xs h-7 px-2.5 font-semibold gap-1"
                     >
-                      <Plus className="h-3.5 w-3.5 mr-1" />
+                      <Plus className="h-3.5 w-3.5" />
                       <span>Add Vehicle</span>
                     </AppButton>
                   )}
@@ -7617,7 +7617,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           variant="primary"
                           size="sm"
                           onClick={() => router.push("/vehicle/register")}
-                          className="h-7 px-3 text-xs font-bold rounded-lg bg-theme-btn-primary text-white"
+                          className="h-8 px-4 text-xs font-semibold rounded-lg"
                         >
                           Register Vehicle
                         </AppButton>
@@ -7749,7 +7749,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             resetMaintenanceForm();
                             setIsAddMaintenanceOpen(true);
                           }}
-                          className="h-7 px-3 text-xs font-bold rounded-lg bg-theme-btn-primary text-white"
+                          className="h-7 px-3 text-xs font-bold rounded-lg bg-theme-btn-primary text-theme-btn-primary-text"
                         >
                           Create Job Card
                         </AppButton>
@@ -7839,7 +7839,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           variant="primary"
                           size="sm"
                           onClick={() => setIsAddDriverOpen(true)}
-                          className="h-7 px-3 text-xs font-bold rounded-lg bg-theme-btn-primary text-white"
+                          className="h-7 px-3 text-xs font-bold rounded-lg bg-theme-btn-primary text-theme-btn-primary-text"
                         >
                           Onboard Driver
                         </AppButton>
@@ -8102,7 +8102,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   variant="primary"
                   size="sm"
                   onClick={() => router.push("/vehicle/register")}
-                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-8 font-semibold gap-1.5 shadow-xs shrink-0"
+                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-8 font-semibold gap-1.5 shadow-xs shrink-0"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   <span>Register Vehicle</span>
@@ -8345,7 +8345,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                   setViewingVehicle(veh);
                                   setVehicleDossierTab("ALL");
                                 }}
-                                className="h-7 px-2.5 text-xs gap-1 font-semibold bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white shadow-2xs"
+                                className="h-7 px-2.5 text-xs gap-1 font-semibold bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text shadow-2xs"
                               >
                                 <Eye className="h-3 w-3" />
                                 <span>View Details</span>
@@ -8461,7 +8461,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   variant="primary"
                   size="sm"
                   onClick={() => setIsAddDriverOpen(true)}
-                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-8 font-semibold gap-1.5 shadow-xs shrink-0"
+                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-8 font-semibold gap-1.5 shadow-xs shrink-0"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   <span>Onboard Driver</span>
@@ -8794,7 +8794,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     resetMaintenanceForm();
                     setIsAddMaintenanceOpen(true);
                   }}
-                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs shrink-0"
+                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-9 font-semibold gap-1.5 shadow-xs shrink-0"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   <span>Log Service Job Card</span>
@@ -9003,7 +9003,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   variant="primary"
                   size="sm"
                   onClick={() => setIsDispatchTripOpen(true)}
-                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs shrink-0"
+                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-9 font-semibold gap-1.5 shadow-xs shrink-0"
                 >
                   <Plus className="h-4 w-4" />
                   <span>Dispatch Trip</span>
@@ -9572,7 +9572,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     onClick={() => setPartsExpiryFilter(tab.id)}
                     className={`px-2.5 py-1 text-xs font-semibold rounded-lg shrink-0 transition-colors ${
                       partsExpiryFilter === tab.id
-                        ? "bg-theme-btn-primary text-white shadow-2xs"
+                        ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-2xs"
                         : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
                     }`}
                   >
@@ -9612,7 +9612,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             variant="primary"
                             size="sm"
                             onClick={openCreatePartModal}
-                            className="mt-3 bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs font-semibold gap-1.5"
+                            className="mt-3 bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs font-semibold gap-1.5"
                           >
                             <Plus className="h-3.5 w-3.5" />
                             <span>Add New Part</span>
@@ -10033,7 +10033,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                 variant="primary"
                                 size="sm"
                                 onClick={openCreateVendorModal}
-                                className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs mt-2"
+                                className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs mt-2"
                               >
                                 <Plus className="h-3.5 w-3.5 mr-1" />
                                 <span>Add Insurance Vendor</span>
@@ -10221,7 +10221,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 variant="primary"
                 size="sm"
                 onClick={() => setIsDispatchTripOpen(true)}
-                className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs"
+                className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-9 font-semibold gap-1.5 shadow-xs"
               >
                 <Calendar className="h-4 w-4" />
                 <span>Book Movement</span>
@@ -10416,7 +10416,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 variant="primary"
                 size="sm"
                 onClick={openCreateVendorModal}
-                className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-8 font-semibold gap-1.5 shadow-xs shrink-0"
+                className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-8 font-semibold gap-1.5 shadow-xs shrink-0"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span>Add Insurance Vendor</span>
@@ -10756,7 +10756,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             }}
                             className={`h-7 px-2.5 text-xs font-medium ${
                               isSelected
-                                ? "bg-theme-btn-primary text-white border-theme-btn-primary shadow-xs font-semibold"
+                                ? "bg-theme-btn-primary text-theme-btn-primary-text border-theme-btn-primary shadow-xs font-semibold"
                                 : "border-border text-foreground hover:border-theme-btn-primary/40 bg-surface"
                             }`}
                           >
@@ -10812,7 +10812,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                               }}
                               className={`h-7 px-2.5 text-xs font-medium ${
                                 isSelected
-                                  ? "bg-theme-btn-primary text-white border-theme-btn-primary shadow-xs font-semibold"
+                                  ? "bg-theme-btn-primary text-theme-btn-primary-text border-theme-btn-primary shadow-xs font-semibold"
                                   : "border-border text-foreground hover:border-theme-btn-primary/40 bg-surface"
                               }`}
                             >
@@ -12078,7 +12078,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         type="button"
                         variant="primary"
                         onClick={() => setNewMaintActiveSection("BILLING_FORECAST")}
-                        className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs font-semibold gap-1.5 h-9"
+                        className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs font-semibold gap-1.5 h-9"
                       >
                         <span>Proceed to Billing, Taxes & Attachments</span>
                         <ArrowRight className="h-4 w-4" />
@@ -12888,7 +12888,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         type="button"
                         variant="primary"
                         onClick={() => setEditMaintActiveSection("BILLING_FORECAST")}
-                        className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs font-semibold gap-1.5 h-9"
+                        className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs font-semibold gap-1.5 h-9"
                       >
                         <span>Proceed to Billing, Taxes & Attachments</span>
                         <ArrowRight className="h-4 w-4" />
@@ -13522,7 +13522,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     setSelectedMaintenanceForView(null);
                     openEditMaintenanceModal(m);
                   }}
-                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 px-3 gap-1.5 font-semibold"
+                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-9 px-3 gap-1.5 font-semibold"
                 >
                   <Edit2 className="h-3.5 w-3.5" />
                   <span>Edit Job Card</span>
@@ -15937,7 +15937,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               variant="primary"
               size="sm"
               onClick={() => handleOpenAddEntitlementModal(selectedVehicleForRenewals)}
-              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 font-semibold gap-1.5 shadow-xs px-3.5"
+              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-9 font-semibold gap-1.5 shadow-xs px-3.5"
             >
               <Gift className="h-3.5 w-3.5" />
               <span>Add Entitlement Voucher</span>
@@ -18319,7 +18319,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 setViewingPart(null);
                 openEditPartModal(p);
               }}
-              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-9 px-3 gap-1.5 font-semibold"
+              className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-9 px-3 gap-1.5 font-semibold"
             >
               <Edit2 className="h-3.5 w-3.5" />
               <span>Edit Part</span>
@@ -18996,7 +18996,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       <div className="flex items-center gap-3 min-w-0">
                         <div
                           className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${
-                            isSelected ? "bg-theme-btn-primary text-white" : "bg-muted text-muted-foreground"
+                            isSelected ? "bg-theme-btn-primary text-theme-btn-primary-text" : "bg-muted text-muted-foreground"
                           }`}
                         >
                           <IconComp className="h-4 w-4" />
