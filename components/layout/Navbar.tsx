@@ -25,7 +25,8 @@ import {
   Settings,
   Terminal,
   FileText,
-  CheckSquare
+  CheckSquare,
+  Car
 } from "lucide-react";
 import { globalSearch } from "@/lib/actions/search";
 import type { SearchResult } from "@/lib/repositories/search";
@@ -249,6 +250,16 @@ export default function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => 
                         </div>
                         <kbd className="inline-flex items-center rounded border border-border px-1.5 font-mono text-[10px] font-medium text-muted">T</kbd>
                       </button>
+                      <button
+                        className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition-colors ${activeIndex === 2 ? 'bg-surface-hover text-foreground' : 'hover:bg-surface-hover hover:text-foreground text-muted'}`}
+                        onClick={() => { setSearchOpen(false); router.push('/vehicle'); }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Car className="h-4 w-4 text-theme-icon" />
+                          <span className="font-medium text-foreground">Fleet & Logistics Desk</span>
+                        </div>
+                        <kbd className="inline-flex items-center rounded border border-border px-1.5 font-mono text-[10px] font-medium text-muted">V</kbd>
+                      </button>
                     </div>
                   </>
                 ) : (
@@ -265,7 +276,15 @@ export default function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => 
                             onClick={() => { setSearchOpen(false); router.push(r.url); }}
                           >
                             <div className="flex items-center gap-3">
-                              {r.type === 'TASK' ? <CheckSquare className="h-4 w-4 text-theme-icon" /> : r.type === 'TICKET' ? <FileText className="h-4 w-4 text-theme-icon" /> : <Terminal className="h-4 w-4 text-theme-icon" />}
+                              {r.type === 'TASK' ? (
+                                <CheckSquare className="h-4 w-4 text-theme-icon" />
+                              ) : r.type === 'TICKET' ? (
+                                <FileText className="h-4 w-4 text-theme-icon" />
+                              ) : r.type === 'VEHICLE' ? (
+                                <Car className="h-4 w-4 text-emerald-500" />
+                              ) : (
+                                <Terminal className="h-4 w-4 text-theme-icon" />
+                              )}
                               <span className="font-medium text-foreground">{`${r.code ? r.code + ': ' : ''}${r.title}`}</span>
                             </div>
                           </button>

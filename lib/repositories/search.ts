@@ -1,10 +1,11 @@
 import { getVisibleTickets } from './tickets';
 import { getVisibleTasks } from './tasks';
 import { getVisibleRequirements } from './requirements';
+import { supabaseAdmin } from '@/lib/supabase/service_role';
 
 export interface SearchResult {
   id: string;
-  type: 'TICKET' | 'TASK' | 'REQUIREMENT';
+  type: 'TICKET' | 'TASK' | 'REQUIREMENT' | 'VEHICLE';
   title: string;
   code?: string;
   status: string;
@@ -22,10 +23,11 @@ export async function executeGlobalSearch(userId: string, query: string): Promis
   const searchTerm = query.toLowerCase().trim();
   if (!searchTerm) return [];
 
-  const [tickets, tasks, requirements] = await Promise.all([
+  const [tickets, tasks, requirements, vehiclesRes] = await Promise.all([
     getVisibleTickets(userId, 'id, title, code, description, status:status_master(status_name)'),
     getVisibleTasks(userId, 'id, subject, task_code, description, status:status_master(status_name)'),
-    getVisibleRequirements(userId, 'id, title, code, objective, requirement_details, status:status_master(status_name)')
+    getVisibleRequirements(userId, 'id, title, code, objective, requirement_details, status:status_master(status_name)'),
+    supabaseAdmin.from('vehicles').select('id, registration_number, make, model, variant, status, fuel_type').limit(100)
   ]);
 
   const results: SearchResult[] = [];
@@ -90,6 +92,29 @@ export async function executeGlobalSearch(userId: string, query: string): Promis
         status: r.status?.status_name || 'UNKNOWN',
         url: `/requirements/${r.id}`,
         metadata: { priority: r.priority?.priority_name, analyst: r.analyst?.full_name }
+      });
+    }
+  }
+
+  // Filter Vehicles
+  const vehicles = vehiclesRes.data || [];
+  for (const v of vehicles) {
+    const plate = v.registration_number || '';
+    const makeModel = `${v.make || ''} ${v.model || ''}`;
+    if (
+      plate.toLowerCase().includes(searchTerm) ||
+      makeModel.toLowerCase().includes(searchTerm) ||
+      (v.variant || '').toLowerCase().includes(searchTerm) ||
+      (v.fuel_type || '').toLowerCase().includes(searchTerm)
+    ) {
+      results.push({
+        id: v.id,
+        type: 'VEHICLE',
+        title: `${plate} — ${makeModel}`,
+        code: plate,
+        status: v.status || 'IN_STOCK',
+        url: `/vehicle/inventory`,
+        metadata: { fuel: v.fuel_type, variant: v.variant }
       });
     }
   }
