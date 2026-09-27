@@ -4271,12 +4271,13 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
   const filteredVehicles = useMemo(() => {
     return vehicles.filter(v => {
-      const q = searchQuery.toLowerCase().trim();
+      const q = (searchQuery || "").toLowerCase().trim();
       const matchesSearch = !q ||
-        v.registration_number.toLowerCase().includes(q) ||
-        v.make.toLowerCase().includes(q) ||
-        v.model.toLowerCase().includes(q) ||
+        (v.registration_number && v.registration_number.toLowerCase().includes(q)) ||
+        (v.make && v.make.toLowerCase().includes(q)) ||
+        (v.model && v.model.toLowerCase().includes(q)) ||
         (v.nickname && v.nickname.toLowerCase().includes(q)) ||
+        (v.vin_chassis_number && v.vin_chassis_number.toLowerCase().includes(q)) ||
         (v.assignedDriver?.full_name && v.assignedDriver.full_name.toLowerCase().includes(q));
       const matchesStatus = selectedStatus === "ALL" || v.status === selectedStatus;
       return matchesSearch && matchesStatus;
@@ -4285,33 +4286,34 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
   const filteredDrivers = useMemo(() => {
     return drivers.filter(d => {
-      const q = searchQuery.toLowerCase().trim();
+      const q = (searchQuery || "").toLowerCase().trim();
       return !q ||
-        d.full_name.toLowerCase().includes(q) ||
-        d.phone.toLowerCase().includes(q) ||
-        d.license_number.toLowerCase().includes(q);
+        (d.full_name && d.full_name.toLowerCase().includes(q)) ||
+        (d.phone && d.phone.toLowerCase().includes(q)) ||
+        (d.license_number && d.license_number.toLowerCase().includes(q));
     });
   }, [drivers, searchQuery]);
 
   const filteredTrips = useMemo(() => {
     return trips.filter(t => {
-      const q = searchQuery.toLowerCase().trim();
+      const q = (searchQuery || "").toLowerCase().trim();
       return !q ||
         (t.vehicle_reg && t.vehicle_reg.toLowerCase().includes(q)) ||
         (t.driver_name && t.driver_name.toLowerCase().includes(q)) ||
-        t.traveler_name.toLowerCase().includes(q) ||
-        t.destination.toLowerCase().includes(q) ||
-        t.purpose.toLowerCase().includes(q);
+        (t.traveler_name && t.traveler_name.toLowerCase().includes(q)) ||
+        (t.destination && t.destination.toLowerCase().includes(q)) ||
+        (t.origin && t.origin.toLowerCase().includes(q)) ||
+        (t.purpose && t.purpose.toLowerCase().includes(q));
     });
   }, [trips, searchQuery]);
 
   const filteredMaintenance = useMemo(() => {
     return maintenance.filter(m => {
-      const q = searchQuery.toLowerCase().trim();
+      const q = (searchQuery || "").toLowerCase().trim();
       return !q ||
         (m.vehicle_reg && m.vehicle_reg.toLowerCase().includes(q)) ||
-        m.service_type.toLowerCase().includes(q) ||
-        m.service_center.toLowerCase().includes(q);
+        (m.service_type && m.service_type.toLowerCase().includes(q)) ||
+        (m.service_center && m.service_center.toLowerCase().includes(q));
     });
   }, [maintenance, searchQuery]);
 
@@ -8536,15 +8538,28 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         onClick={() => setViewingTrip(trp)}
                         className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
                       >
-                        <AppTableCell className="p-3.5 font-mono text-muted-foreground">{trp.plan_date}</AppTableCell>
+                        <AppTableCell className="p-3.5 font-mono text-muted-foreground">{trp.plan_date || "-"}</AppTableCell>
                         <AppTableCell className="p-3.5 font-bold text-foreground">
                           {renderHsrpPlate(trp.vehicle_reg)}
                         </AppTableCell>
                         <AppTableCell className="p-3.5 text-muted-foreground">
-                          <div className="font-medium text-foreground">{trp.driver_name}</div>
+                          <div className="font-medium text-foreground">{trp.driver_name || "Unassigned"}</div>
+                        </AppTableCell>
+                        <AppTableCell className="p-3.5 text-muted-foreground">
+                          <div className="font-medium text-foreground">{trp.traveler_name || "Official Commute"}</div>
+                          {trp.purpose && (
+                            <div className="text-[11px] text-muted-foreground truncate max-w-[160px]">{trp.purpose}</div>
+                          )}
+                        </AppTableCell>
+                        <AppTableCell className="p-3.5 text-muted-foreground">
+                          <div className="flex items-center gap-1.5 text-xs text-foreground">
+                            <span className="font-medium">{trp.origin || "Origin"}</span>
+                            <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                            <span className="font-medium">{trp.destination || "Destination"}</span>
+                          </div>
                         </AppTableCell>
                         <AppTableCell className="p-3.5 text-muted-foreground font-mono text-xs">
-                          {trp.planned_start_time} - {trp.planned_end_time}
+                          {trp.planned_start_time || "00:00"} - {trp.planned_end_time || "00:00"}
                         </AppTableCell>
                         <AppTableCell className="p-3.5 text-center">
                           <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase inline-block ${
@@ -8918,24 +8933,24 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
                         >
                           <AppTableCell className="p-3.5">
-                            <div className="font-semibold text-foreground">{trp.traveler_name}</div>
-                            <div className="text-xs text-muted-foreground mt-0.5">{trp.purpose || "Official Corporate Transit"}</div>
+                            <div className="font-semibold text-foreground">{trp.traveler_name || "Official Commute"}</div>
+                            <div className="text-xs text-muted-foreground mt-0.5">{trp.purpose || "Corporate Transit"}</div>
                           </AppTableCell>
                           <AppTableCell className="p-3.5">
                             <div className="flex items-center gap-1.5 text-xs text-foreground font-medium">
-                              <span>{trp.origin}</span>
+                              <span>{trp.origin || "Depot"}</span>
                               <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
-                              <span className="text-theme-btn-primary font-semibold">{trp.destination}</span>
+                              <span className="text-theme-btn-primary font-semibold">{trp.destination || "Destination"}</span>
                             </div>
                           </AppTableCell>
                           <AppTableCell className="p-3.5 font-bold text-foreground">
                             {renderHsrpPlate(trp.vehicle_reg)}
                           </AppTableCell>
                           <AppTableCell className="p-3.5 text-muted-foreground">
-                            <div className="font-medium text-foreground">{trp.driver_name}</div>
+                            <div className="font-medium text-foreground">{trp.driver_name || "Unassigned"}</div>
                           </AppTableCell>
                           <AppTableCell className="p-3.5 text-muted-foreground font-mono text-xs">
-                            {trp.planned_start_time} - {trp.planned_end_time}
+                            {trp.planned_start_time || "00:00"} - {trp.planned_end_time || "00:00"}
                           </AppTableCell>
                           <AppTableCell className="p-3.5 text-center">
                             <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase inline-block ${
