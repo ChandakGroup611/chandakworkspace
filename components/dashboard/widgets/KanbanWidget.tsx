@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useMemo } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { LayoutDashboard, ArrowUpRight } from "lucide-react";
 import { BaseWidget } from "./BaseWidget";
 
@@ -10,6 +12,7 @@ interface KanbanWidgetProps {
 }
 
 export function KanbanWidget({ metrics = [], onOpenList }: KanbanWidgetProps) {
+  const router = useRouter();
   const board = useMemo(() => {
     const backlog: any[] = [];
     const inProgress: any[] = [];
@@ -50,7 +53,7 @@ export function KanbanWidget({ metrics = [], onOpenList }: KanbanWidgetProps) {
     const initials = m.user ? m.user.substring(0,2).toUpperCase() : 'UN';
 
     return (
-      <a 
+      <Link 
         key={m.id} 
         href={href}
         className={`block p-3 rounded-xl border bg-surface/60 hover:bg-surface transition-all cursor-pointer shadow-xs min-w-0 overflow-hidden ${isProgress ? 'border-primary/40 ring-1 ring-primary/20 bg-primary/5' : 'border-border/60 hover:border-border'}`}
@@ -81,7 +84,7 @@ export function KanbanWidget({ metrics = [], onOpenList }: KanbanWidgetProps) {
             </div>
           </div>
         )}
-      </a>
+      </Link>
     );
   };
 
@@ -102,7 +105,7 @@ export function KanbanWidget({ metrics = [], onOpenList }: KanbanWidgetProps) {
       collapsible={true}
       headerRight={
         <div className="flex items-center gap-3">
-          <span className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors flex items-center gap-1" onClick={onOpenList || (() => window.location.href = '/workspaces/tasks')}>
+          <span className="text-xs text-primary hover:text-primary/80 cursor-pointer font-semibold transition-colors flex items-center gap-1" onClick={onOpenList || (() => router.push('/workspaces/tasks'))}>
             Full Board <ArrowUpRight className="w-3.5 h-3.5" />
           </span>
         </div>

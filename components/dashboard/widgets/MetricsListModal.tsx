@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AppTable, AppTableHeader, AppTableRow, AppTableHead, AppTableBody, AppTableCell } from "@/components/ui/AppTable";
 import { ListChecks, Search, Download, Filter, X, ArrowUpDown, Clock, Building2 } from "lucide-react";
@@ -26,6 +27,7 @@ interface MetricsListModalProps {
 }
 
 export function MetricsListModal({ isOpen, onClose, metrics = [], filter }: MetricsListModalProps) {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedModule, setSelectedModule] = useState<string>("ALL");
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
@@ -253,11 +255,12 @@ export function MetricsListModal({ isOpen, onClose, metrics = [], filter }: Metr
                   const initials = m.user ? m.user.substring(0,2).toUpperCase() : 'UN';
 
                   const handleRowClick = () => {
-                    if (m.module === 'Tickets') window.location.href = `/tickets/${m.id}`;
-                    else if (m.module === 'Tasks' || m.module === 'Sub Tasks') window.location.href = `/tasks/${m.id}`;
-                    else if (m.module === 'Requirements') window.location.href = `/requirements/${m.id}`;
-                    else if (m.module === 'Workspaces' || m.module === 'Sub Workspaces') window.location.href = `/workspaces?workspace=${m.id}`;
-                    else window.location.href = `/${m.module.toLowerCase()}`;
+                    onClose();
+                    if (m.module === 'Tickets') router.push(`/tickets/${m.id}`);
+                    else if (m.module === 'Tasks' || m.module === 'Sub Tasks') router.push(`/tasks/${m.id}`);
+                    else if (m.module === 'Requirements') router.push(`/requirements/${m.id}`);
+                    else if (m.module === 'Workspaces' || m.module === 'Sub Workspaces') router.push(`/workspaces?workspace=${m.id}`);
+                    else router.push(`/${m.module.toLowerCase()}`);
                   };
 
                   return (

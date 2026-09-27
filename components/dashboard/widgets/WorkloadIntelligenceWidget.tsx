@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import { Briefcase, ListTodo, Layers, ArrowUpRight } from "lucide-react";
 import { BaseWidget } from "./BaseWidget";
 import { AppButton } from "@/components/ui/AppButton";
@@ -12,6 +13,7 @@ interface WorkloadIntelligenceWidgetProps {
 }
 
 export function WorkloadIntelligenceWidget({ analytics, kpis: globalKpis }: WorkloadIntelligenceWidgetProps) {
+  const router = useRouter();
   const kpis = globalKpis || analytics?.kpis || analytics || {};
   const workload = kpis.workload || { active_tickets: 0, active_tasks: 0, active_requirements: 0 };
 
@@ -81,7 +83,7 @@ export function WorkloadIntelligenceWidget({ analytics, kpis: globalKpis }: Work
       <AppButton 
         variant="primary" 
         className="w-full mt-6 flex items-center justify-center gap-2 text-[11px] font-bold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors py-2.5 bg-primary/5 hover:bg-primary/10 rounded-xl"
-        onClick={() => window.location.href = '/workspaces/tasks'}
+        onClick={() => router.push('/workspaces/tasks')}
       >
         View Assignment Queue <ArrowUpRight className="w-3 h-3" />
       </AppButton>
