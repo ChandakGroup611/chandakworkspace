@@ -717,7 +717,7 @@ export default function FleetRbacGovernance() {
         >
           <Shield className="h-3.5 w-3.5 text-amber-500" />
           <span>Roles & Permissions</span>
-          <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-500/10 text-amber-500 font-bold border border-amber-500/20">
+          <span className="px-2 py-0.5 rounded-full text-xs bg-amber-500/10 text-amber-500 font-bold border border-amber-500/20">
             {allRoles.length}
           </span>
         </button>
@@ -733,7 +733,7 @@ export default function FleetRbacGovernance() {
         >
           <Users className="h-3.5 w-3.5 text-blue-500" />
           <span>Personnel Directory</span>
-          <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-blue-500/10 text-blue-500 font-bold border border-blue-500/20">
+          <span className="px-2 py-0.5 rounded-full text-xs bg-blue-500/10 text-blue-500 font-bold border border-blue-500/20">
             {workspaceUsers.length}
           </span>
         </button>
@@ -774,7 +774,7 @@ export default function FleetRbacGovernance() {
               <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 Defined Fleet Roles
               </span>
-              <span className="text-[11px] text-muted-foreground font-medium">
+              <span className="text-xs text-muted-foreground font-semibold">
                 {allRoles.length} Active
               </span>
             </div>
@@ -798,7 +798,7 @@ export default function FleetRbacGovernance() {
                       <span className="text-xs font-bold text-foreground truncate">
                         {role.label}
                       </span>
-                      <span className="text-[10px] text-muted-foreground font-mono mt-0.5">
+                      <span className="text-xs text-muted-foreground font-mono mt-0.5">
                         {role.code}
                       </span>
                     </div>
@@ -823,10 +823,10 @@ export default function FleetRbacGovernance() {
                     <h2 className="text-lg font-bold text-foreground">
                       {selectedRoleDef.label}
                     </h2>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${selectedRoleDef.badgeColor}`}>
+                    <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold border ${selectedRoleDef.badgeColor}`}>
                       {selectedRoleDef.code}
                     </span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                    <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
                       <Sparkles className="h-3 w-3" />
                       <span>Live Reactive</span>
                     </span>
@@ -841,7 +841,7 @@ export default function FleetRbacGovernance() {
                   <button
                     type="button"
                     onClick={handleGrantAllForRole}
-                    className="text-[11px] font-bold px-2.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/20 transition-all cursor-pointer shadow-2xs"
+                    className="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/20 transition-all cursor-pointer shadow-2xs"
                     title="Grant all CRUD and approval permissions to this role"
                   >
                     Grant All (Full)
@@ -849,7 +849,7 @@ export default function FleetRbacGovernance() {
                   <button
                     type="button"
                     onClick={handleSetReadOnlyForRole}
-                    className="text-[11px] font-bold px-2.5 py-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/25 hover:bg-blue-500/20 transition-all cursor-pointer shadow-2xs"
+                    className="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/25 hover:bg-blue-500/20 transition-all cursor-pointer shadow-2xs"
                     title="Set view only permissions for this role"
                   >
                     Set Read Only
@@ -857,7 +857,7 @@ export default function FleetRbacGovernance() {
                   <button
                     type="button"
                     onClick={handleResetRoleDefaults}
-                    className="text-[11px] font-medium px-2.5 py-1.5 rounded-lg bg-surface text-muted-foreground border border-border hover:bg-surface/80 hover:text-foreground transition-all cursor-pointer"
+                    className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-surface text-muted-foreground border border-border hover:bg-surface/80 hover:text-foreground transition-all cursor-pointer"
                     title="Reset this role to standard defaults"
                   >
                     Reset Defaults
@@ -871,14 +871,14 @@ export default function FleetRbacGovernance() {
                   <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                     <span>Module Permissions & Movement Scopes</span>
                   </h3>
-                  <span className="text-[11px] text-muted-foreground italic">
+                  <span className="text-xs text-muted-foreground italic">
                     Click any cell to tick/untick. Changes take effect immediately.
                   </span>
                 </div>
 
                 <div className="overflow-x-auto rounded-xl border border-border/60">
                   <table className="w-full text-xs text-left">
-                    <thead className="bg-surface/80 text-muted-foreground uppercase font-bold text-[10px] tracking-wider border-b border-border/50">
+                    <thead className="bg-surface/80 text-muted-foreground uppercase font-bold text-xs tracking-wider border-b border-border/50">
                       <tr>
                         <th className="py-3 px-4">Module</th>
                         <th className="py-3 px-3 text-center">View</th>
@@ -1079,7 +1079,7 @@ export default function FleetRbacGovernance() {
           {/* Personnel Table */}
           <div className="overflow-x-auto rounded-2xl border border-border bg-card">
             <table className="w-full text-xs text-left">
-              <thead className="bg-surface/80 text-muted-foreground uppercase font-bold text-[10px] tracking-wider border-b border-border/50">
+              <thead className="bg-surface/80 text-muted-foreground uppercase font-bold text-xs tracking-wider border-b border-border/50">
                 <tr>
                   <th className="py-3.5 px-4">Personnel</th>
                   <th className="py-3.5 px-4">Department & Designation</th>
@@ -1117,7 +1117,7 @@ export default function FleetRbacGovernance() {
                               <span className="text-xs font-bold text-foreground truncate">
                                 {user.fullName}
                               </span>
-                              <span className="text-[11px] text-muted-foreground truncate">
+                              <span className="text-xs text-muted-foreground truncate">
                                 {user.email}
                               </span>
                             </div>
@@ -1129,7 +1129,7 @@ export default function FleetRbacGovernance() {
                             <span className="text-xs text-foreground font-semibold truncate">
                               {user.departmentName || "General Operations"}
                             </span>
-                            <span className="text-[10px] text-muted-foreground truncate">
+                            <span className="text-xs text-muted-foreground truncate">
                               {user.designationName || "Personnel"}
                             </span>
                           </div>
@@ -1140,7 +1140,7 @@ export default function FleetRbacGovernance() {
                             type="button"
                             disabled={togglingUserId === user.id}
                             onClick={() => handleToggleModuleAccess(user)}
-                            className={`px-2.5 py-1 rounded-full text-[10px] font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
+                            className={`px-2.5 py-1 rounded-full text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5 ${
                               user.hasModuleAccess
                                 ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20"
                                 : "bg-surface text-muted-foreground border-border hover:bg-surface/80"
@@ -1153,12 +1153,12 @@ export default function FleetRbacGovernance() {
 
                         <td className="py-3.5 px-4">
                           {user.hasModuleAccess ? (
-                            <span className={`text-[10px] px-2.5 py-1 rounded-lg font-bold border inline-flex items-center gap-1.5 ${roleDef?.badgeColor || 'bg-surface text-muted-foreground border-border'}`}>
-                              <ShieldCheck className="h-3 w-3" />
+                            <span className={`text-xs px-2.5 py-1 rounded-lg font-semibold border inline-flex items-center gap-1.5 ${roleDef?.badgeColor || 'bg-surface text-muted-foreground border-border'}`}>
+                              <ShieldCheck className="h-3.5 w-3.5" />
                               <span>{roleDef?.label || assignedRoleCode}</span>
                             </span>
                           ) : (
-                            <span className="text-[11px] text-muted-foreground italic">
+                            <span className="text-xs text-muted-foreground italic">
                               Module Not Assigned
                             </span>
                           )}
@@ -1199,7 +1199,7 @@ export default function FleetRbacGovernance() {
 
             <div className="overflow-x-auto rounded-xl border border-border/60">
               <table className="w-full text-xs text-left">
-                <thead className="bg-surface/80 text-muted-foreground uppercase font-bold text-[10px] tracking-wider border-b border-border/50">
+                <thead className="bg-surface/80 text-muted-foreground uppercase font-bold text-xs tracking-wider border-b border-border/50">
                   <tr>
                     <th className="py-3 px-4">Fleet Role</th>
                     {FLEET_MODULE_LIST.map(m => (
@@ -1211,7 +1211,7 @@ export default function FleetRbacGovernance() {
                   {allRoles.map(role => (
                     <tr key={role.code} className="hover:bg-surface/50 transition-colors">
                       <td className="py-3 px-4 font-bold text-foreground flex items-center gap-2">
-                        <span className={`text-[10px] px-2 py-0.5 rounded font-bold border ${role.badgeColor}`}>
+                        <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold border ${role.badgeColor}`}>
                           {role.label}
                         </span>
                       </td>
@@ -1223,11 +1223,11 @@ export default function FleetRbacGovernance() {
                         return (
                           <td key={m.code} className="py-3 px-3 text-center">
                             {hasFull ? (
-                              <span className="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Full (CRUD)</span>
+                              <span className="text-xs font-semibold text-emerald-500 bg-emerald-500/10 px-2.5 py-0.5 rounded border border-emerald-500/20">Full (CRUD)</span>
                             ) : hasRead ? (
-                              <span className="text-[10px] font-bold text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">View Only</span>
+                              <span className="text-xs font-semibold text-blue-500 bg-blue-500/10 px-2.5 py-0.5 rounded border border-blue-500/20">View Only</span>
                             ) : (
-                              <span className="text-[10px] text-muted-foreground/40">—</span>
+                              <span className="text-xs text-muted-foreground/40">—</span>
                             )}
                           </td>
                         );
@@ -1294,10 +1294,10 @@ export default function FleetRbacGovernance() {
                   <span className="text-xs font-bold text-foreground">{activeSimUser.fullName}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold border ${activeSimRoleDef?.badgeColor || 'bg-surface text-muted-foreground border-border'}`}>
+                  <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold border ${activeSimRoleDef?.badgeColor || 'bg-surface text-muted-foreground border-border'}`}>
                     {activeSimRoleDef?.label || activeSimRoleCode}
                   </span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold border border-purple-500/20">
+                  <span className="text-xs px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold border border-purple-500/20">
                     Scope: {activeSimPolicy.movementAccessScope || "ALL"}
                   </span>
                 </div>
@@ -1305,42 +1305,42 @@ export default function FleetRbacGovernance() {
 
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 text-center">
                 <div className={`p-3 rounded-xl border ${activeSimPolicy.canRead ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-surface/60 border-border/60'}`}>
-                  <span className="text-[10px] text-muted-foreground uppercase font-bold block mb-1">View / Read</span>
+                  <span className="text-xs text-muted-foreground uppercase font-bold block mb-1">View / Read</span>
                   <span className={`text-xs font-bold ${activeSimPolicy.canRead ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground/60'}`}>
                     {activeSimPolicy.canRead ? 'ALLOWED' : 'DENIED'}
                   </span>
                 </div>
 
                 <div className={`p-3 rounded-xl border ${activeSimPolicy.canCreate ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-surface/60 border-border/60'}`}>
-                  <span className="text-[10px] text-muted-foreground uppercase font-bold block mb-1">Create / Add</span>
+                  <span className="text-xs text-muted-foreground uppercase font-bold block mb-1">Create / Add</span>
                   <span className={`text-xs font-bold ${activeSimPolicy.canCreate ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground/60'}`}>
                     {activeSimPolicy.canCreate ? 'ALLOWED' : 'DENIED'}
                   </span>
                 </div>
 
                 <div className={`p-3 rounded-xl border ${activeSimPolicy.canUpdate ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-surface/60 border-border/60'}`}>
-                  <span className="text-[10px] text-muted-foreground uppercase font-bold block mb-1">Update / Edit</span>
+                  <span className="text-xs text-muted-foreground uppercase font-bold block mb-1">Update / Edit</span>
                   <span className={`text-xs font-bold ${activeSimPolicy.canUpdate ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground/60'}`}>
                     {activeSimPolicy.canUpdate ? 'ALLOWED' : 'DENIED'}
                   </span>
                 </div>
 
                 <div className={`p-3 rounded-xl border ${activeSimPolicy.canDelete ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-surface/60 border-border/60'}`}>
-                  <span className="text-[10px] text-muted-foreground uppercase font-bold block mb-1">Delete / Remove</span>
+                  <span className="text-xs text-muted-foreground uppercase font-bold block mb-1">Delete / Remove</span>
                   <span className={`text-xs font-bold ${activeSimPolicy.canDelete ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground/60'}`}>
                     {activeSimPolicy.canDelete ? 'ALLOWED' : 'DENIED'}
                   </span>
                 </div>
 
                 <div className={`p-3 rounded-xl border ${activeSimPolicy.canApprove ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-surface/60 border-border/60'}`}>
-                  <span className="text-[10px] text-muted-foreground uppercase font-bold block mb-1">Approve</span>
+                  <span className="text-xs text-muted-foreground uppercase font-bold block mb-1">Approve</span>
                   <span className={`text-xs font-bold ${activeSimPolicy.canApprove ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground/60'}`}>
                     {activeSimPolicy.canApprove ? 'ALLOWED' : 'DENIED'}
                   </span>
                 </div>
 
                 <div className={`p-3 rounded-xl border ${activeSimPolicy.canExport ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-surface/60 border-border/60'}`}>
-                  <span className="text-[10px] text-muted-foreground uppercase font-bold block mb-1">Export Logs</span>
+                  <span className="text-xs text-muted-foreground uppercase font-bold block mb-1">Export Logs</span>
                   <span className={`text-xs font-bold ${activeSimPolicy.canExport ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground/60'}`}>
                     {activeSimPolicy.canExport ? 'ALLOWED' : 'DENIED'}
                   </span>
@@ -1367,7 +1367,7 @@ export default function FleetRbacGovernance() {
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-foreground">{activeDrawerUser.fullName}</h3>
-                  <p className="text-[11px] text-muted-foreground">{activeDrawerUser.email}</p>
+                  <p className="text-xs text-muted-foreground">{activeDrawerUser.email}</p>
                 </div>
               </div>
               <button 
@@ -1406,7 +1406,7 @@ export default function FleetRbacGovernance() {
                       />
                       <div className="flex flex-col">
                         <span className="text-xs font-bold text-foreground">{role.label}</span>
-                        <span className="text-[11px] text-muted-foreground">{role.description}</span>
+                        <span className="text-xs text-muted-foreground">{role.description}</span>
                       </div>
                     </label>
                   ))}
