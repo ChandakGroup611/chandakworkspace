@@ -223,6 +223,70 @@ let fleetDataCache: {
 
 
 // ============================================================================
+// FAULT-TOLERANT MODULE & TAB ERROR BOUNDARY
+// ============================================================================
+
+interface FleetErrorBoundaryProps {
+  children: React.ReactNode;
+  tabName?: string;
+  onReset?: () => void;
+}
+
+interface FleetErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+export class FleetErrorBoundary extends React.Component<FleetErrorBoundaryProps, FleetErrorBoundaryState> {
+  constructor(props: FleetErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error): FleetErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error(`[FleetErrorBoundary] Caught error in ${this.props.tabName || "FleetDesk"}:`, error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-8 rounded-2xl border border-danger/30 bg-danger/5 text-center space-y-4 my-6 shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-danger/10 text-danger flex items-center justify-center mx-auto">
+            <AlertTriangle className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-foreground">
+              {this.props.tabName ? `${this.props.tabName} View Temporarily Unavailable` : "Module Section Error"}
+            </h3>
+            <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">
+              {this.state.error?.message || "An unexpected error occurred while rendering this tab."}
+            </p>
+          </div>
+          <div className="flex items-center justify-center gap-2 pt-2">
+            <AppButton
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                this.setState({ hasError: false, error: null });
+                if (this.props.onReset) this.props.onReset();
+              }}
+              className="text-xs h-8 px-3"
+            >
+              Retry Tab
+            </AppButton>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// ============================================================================
 // TRANSACTION FORM LAYOUT & WORKING DOCUMENT CANVAS (ENTERPRISE ERP VIEWPORT)
 // ============================================================================
 
@@ -5403,18 +5467,21 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/50 pb-6">
             <div>
               <div className="flex items-center gap-3">
-                <div className={`h-11 w-11 rounded-xl flex items-center justify-center border shadow-2xs ${moduleMeta.iconBg}`}>
-                  <moduleMeta.icon className="h-5 w-5" />
+                <div className={`h-11 w-11 rounded-xl flex items-center justify-center border shadow-2xs ${moduleMeta?.iconBg || "bg-emerald-500/15 text-emerald-600 border-emerald-500/25"}`}>
+                  {(() => {
+                    const HeaderIcon = moduleMeta?.icon || LayoutDashboard;
+                    return <HeaderIcon className="h-5 w-5" />;
+                  })()}
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${moduleMeta.badgeColor}`}>
-                      {moduleMeta.badge}
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${moduleMeta?.badgeColor || ""}`}>
+                      {moduleMeta?.badge || "Fleet Operations"}
                     </span>
-                    <span className="text-xs text-muted-foreground font-medium hidden sm:inline">• {moduleMeta.category}</span>
+                    <span className="text-xs text-muted-foreground font-medium hidden sm:inline">• {moduleMeta?.category || "Fleet Operations"}</span>
                   </div>
                   <h1 className="text-2xl font-bold tracking-tight text-foreground mt-0.5">
-                    {moduleMeta.title}
+                    {moduleMeta?.title || "Enterprise Fleet Management Desk"}
                   </h1>
                 </div>
               </div>
@@ -5451,16 +5518,16 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <span>Sync</span>
               </AppButton>
 
-              {moduleMeta.actionBtn}
+              {moduleMeta?.actionBtn}
             </div>
           </div>
 
           {/* Dynamic Module KPI Cards (Interactive Drill-Downs) */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {moduleMeta.kpis.map((kpi, idx) => {
-              const IconComp = kpi.icon;
+            {(moduleMeta?.kpis || []).map((kpi, idx) => {
+              const IconComp = kpi?.icon || LayoutDashboard;
               const handleKpiClick = () => {
-                const title = kpi.title.toLowerCase();
+                const title = (kpi?.title || "").toLowerCase();
                 if (title.includes("fleet") || title.includes("available") || title.includes("registered") || title.includes("depot")) {
                   if (title.includes("available") || title.includes("depot")) setSelectedStatus("IN_STOCK");
                   else setSelectedStatus("ALL");
@@ -5488,13 +5555,13 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 >
                   <AppCardContent className="p-4 flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-semibold text-muted-foreground group-hover:text-foreground transition-colors">{kpi.title}</p>
-                      <h3 className="text-2xl font-bold mt-1 text-foreground group-hover:text-theme-btn-primary transition-colors">{kpi.value}</h3>
-                      {kpi.subtext && (
+                      <p className="text-xs font-semibold text-muted-foreground group-hover:text-foreground transition-colors">{kpi?.title}</p>
+                      <h3 className="text-2xl font-bold mt-1 text-foreground group-hover:text-theme-btn-primary transition-colors">{kpi?.value}</h3>
+                      {kpi?.subtext && (
                         <p className="text-[10px] text-muted-foreground mt-0.5">{kpi.subtext}</p>
                       )}
                     </div>
-                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center border ${kpi.iconBg} ${kpi.iconColor} group-hover:scale-110 transition-transform`}>
+                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center border ${kpi?.iconBg || "bg-muted text-muted-foreground border-border"} ${kpi?.iconColor || ""} group-hover:scale-110 transition-transform`}>
                       <IconComp className="h-5 w-5" />
                     </div>
                   </AppCardContent>
@@ -5509,33 +5576,38 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       {/* VEHICLE RBAC ACCESS POLICIES & GOVERNANCE VIEW */}
       {/* ---------------------------------------------------------------------- */}
       {activeTab === "rbac" && (
-        <FleetRbacGovernance />
+        <FleetErrorBoundary tabName="Vehicle RBAC Governance">
+          <FleetRbacGovernance />
+        </FleetErrorBoundary>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* REGISTER VEHICLE FULL-PAGE FORM (DEDICATED FORM VIEW) */}
       {/* ---------------------------------------------------------------------- */}
       {activeTab === "register" && !canCreateVehicle && (
-        <div className="w-full flex-1 flex flex-col items-center justify-center p-12 text-center space-y-4">
-          <div className="h-14 w-14 rounded-2xl bg-rose-500/10 text-rose-600 flex items-center justify-center border border-rose-500/20">
-            <ShieldAlert className="h-7 w-7" />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-foreground">Access Restricted</h2>
+        <FleetErrorBoundary tabName="Vehicle Registration">
+          <div className="w-full flex-1 flex flex-col items-center justify-center p-12 text-center space-y-4">
+            <div className="h-14 w-14 rounded-2xl bg-rose-500/10 text-rose-600 flex items-center justify-center border border-rose-500/20">
+              <ShieldAlert className="h-7 w-7" />
             </div>
-          <AppButton variant="primary" size="sm" onClick={() => router.push("/vehicle/inventory")}>
-            Return to Fleet Inventory
-          </AppButton>
-        </div>
+            <div>
+              <h2 className="text-lg font-bold text-foreground">Access Restricted</h2>
+            </div>
+            <AppButton variant="primary" size="sm" onClick={() => router.push("/vehicle/inventory")}>
+              Return to Fleet Inventory
+            </AppButton>
+          </div>
+        </FleetErrorBoundary>
       )}
 
       {activeTab === "register" && canCreateVehicle && (
-        <div className="w-full flex-1 flex flex-col space-y-8 animate-in fade-in duration-200">
-          {/* Top Form Navigation Bar */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-6">
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <AppButton
+        <FleetErrorBoundary tabName="Vehicle Registration Form">
+          <div className="w-full flex-1 flex flex-col space-y-8 animate-in fade-in duration-200">
+            {/* Top Form Navigation Bar */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-6">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <AppButton
                   variant="ghost"
                   size="sm"
                   onClick={() => router.push("/vehicle/inventory")}
@@ -6714,13 +6786,15 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             </div>
           </form>
         </div>
+        </FleetErrorBoundary>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* OVERVIEW / EXECUTIVE COMMAND CENTER DASHBOARD (10/10 TELEMETRY GRADE) */}
       {/* ---------------------------------------------------------------------- */}
       {!isAnyTransactionFormOpen && activeTab === "dashboard" && (
-        <div className="space-y-6 animate-in fade-in duration-300">
+        <FleetErrorBoundary tabName="Fleet Executive Dashboard" onReset={() => loadAllData(true)}>
+          <div className="space-y-6 animate-in fade-in duration-300">
 
           {/* 1. EXECUTIVE TELEMETRY CONTROL BAR & TIMEFRAME SELECTOR */}
           <div className="p-4 rounded-2xl bg-surface/90 border border-border/80 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4 backdrop-blur-xs">
@@ -7921,15 +7995,16 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               </button>
             </div>
           </div>
-
-        </div>
+          </div>
+        </FleetErrorBoundary>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* INVENTORY / FLEET MASTER TAB */}
       {/* ---------------------------------------------------------------------- */}
       {!isAnyTransactionFormOpen && activeTab === "inventory" && (
-        <AppCard className="border-border shadow-xs overflow-hidden">
+        <FleetErrorBoundary tabName="Vehicle Inventory & Master Registry" onReset={() => loadAllData(true)}>
+          <AppCard className="border-border shadow-xs overflow-hidden">
           <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <AppCardTitle className="text-lg">Fleet Master Inventory</AppCardTitle>
@@ -8346,13 +8421,15 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             </AppTableContainer>
           </AppCardContent>
         </AppCard>
+        </FleetErrorBoundary>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* DRIVERS DIRECTORY TAB */}
       {/* ---------------------------------------------------------------------- */}
       {!isAnyTransactionFormOpen && activeTab === "drivers" && (
-        <AppCard className="border-border shadow-xs overflow-hidden">
+        <FleetErrorBoundary tabName="Driver Roster & Licensing" onReset={() => loadAllData(true)}>
+          <AppCard className="border-border shadow-xs overflow-hidden">
           <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <AppCardTitle className="text-lg">Drivers Directory & Roster</AppCardTitle>
@@ -8508,13 +8585,15 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             </AppTableContainer>
           </AppCardContent>
         </AppCard>
+        </FleetErrorBoundary>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* TRIPS / DISPATCH TAB */}
       {/* ---------------------------------------------------------------------- */}
       {!isAnyTransactionFormOpen && activeTab === "trips" && (
-        <AppCard className="border-border shadow-xs overflow-hidden">
+        <FleetErrorBoundary tabName="Daily Trip Sheets & Dispatch" onReset={() => loadAllData(true)}>
+          <AppCard className="border-border shadow-xs overflow-hidden">
           <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <AppCardTitle className="text-lg">Daily Trip Dispatch Sheets</AppCardTitle>
@@ -8672,13 +8751,15 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             </AppTableContainer>
           </AppCardContent>
         </AppCard>
+        </FleetErrorBoundary>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* MAINTENANCE TAB */}
       {/* ---------------------------------------------------------------------- */}
       {!isAnyTransactionFormOpen && activeTab === "maintenance" && (
-        <AppCard className="border-border shadow-xs overflow-hidden">
+        <FleetErrorBoundary tabName="Service Records & Workshop Job Cards" onReset={() => loadAllData(true)}>
+          <AppCard className="border-border shadow-xs overflow-hidden">
           <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <AppCardTitle className="text-lg">Workshop Maintenance & Service Records</AppCardTitle>
@@ -8890,14 +8971,16 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             </AppTableContainer>
           </AppCardContent>
         </AppCard>
+        </FleetErrorBoundary>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* TRAVELERS TAB */}
       {/* ---------------------------------------------------------------------- */}
       {!isAnyTransactionFormOpen && activeTab === "travelers" && (
-        <div className="space-y-6">
-          <AppCard className="border-border shadow-xs overflow-hidden">
+        <FleetErrorBoundary tabName="Traveler Allocations & Commute" onReset={() => loadAllData(true)}>
+          <div className="space-y-6">
+            <AppCard className="border-border shadow-xs overflow-hidden">
             <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <AppCardTitle className="text-lg flex items-center gap-2">
@@ -9064,13 +9147,15 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             </AppCardContent>
           </AppCard>
         </div>
+        </FleetErrorBoundary>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* COMPLIANCE & ALERTS TAB */}
       {/* ---------------------------------------------------------------------- */}
       {!isAnyTransactionFormOpen && activeTab === "alerts" && (
-        <div className="space-y-6">
+        <FleetErrorBoundary tabName="Compliance & Renewal Radar" onReset={() => loadAllData(true)}>
+          <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <AppCard className="border-border shadow-xs">
               <AppCardContent className="p-4 flex items-center justify-between">
@@ -9307,13 +9392,15 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             </AppCardContent>
           </AppCard>
         </div>
+        </FleetErrorBoundary>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* FLEET REPORTS & ANALYTICS TAB */}
       {/* ---------------------------------------------------------------------- */}
       {!isAnyTransactionFormOpen && activeTab === "reports" && (
-        <div className="space-y-6">
+        <FleetErrorBoundary tabName="Fleet Analytics & Reports" onReset={() => loadAllData(true)}>
+          <div className="space-y-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <AppCard className="border-border shadow-xs">
               <AppCardContent className="p-4">
@@ -9423,14 +9510,16 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             </AppCard>
           </div>
         </div>
+        </FleetErrorBoundary>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* PARTS & CONSUMABLES TAB — ENHANCED DATES, EXPIRIES & RENEWAL POLICIES */}
       {/* ---------------------------------------------------------------------- */}
       {!isAnyTransactionFormOpen && activeTab === "parts" && (
-        <div className="space-y-6">
-          <AppCard className="border-border shadow-xs overflow-hidden">
+        <FleetErrorBoundary tabName="Parts & Accessories Master" onReset={() => loadAllData(true)}>
+          <div className="space-y-6">
+            <AppCard className="border-border shadow-xs overflow-hidden">
             {/* Filter Bar & Tabs */}
             <div className="p-4 border-b border-border/50 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
               <div className="flex flex-1 items-center gap-2">
@@ -9859,12 +9948,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             </AppCardContent>
           </AppCard>
         </div>
+        </FleetErrorBoundary>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* INSURANCE VENDORS MASTER TAB */}
       {!isAnyTransactionFormOpen && activeTab === "vendors" && (
-        <div className="space-y-6">
+        <FleetErrorBoundary tabName="Insurance & Workshop Vendors" onReset={() => loadAllData(true)}>
+          <div className="space-y-6">
           <AppCard className="border-border shadow-xs overflow-hidden">
             {/* Filter Bar */}
             <div className="p-4 border-b border-border/50 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
@@ -10109,13 +10200,15 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             </AppCardContent>
           </AppCard>
         </div>
+        </FleetErrorBoundary>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* MY GARAGE / ASSIGNED VEHICLES TAB */}
       {/* ---------------------------------------------------------------------- */}
       {!isAnyTransactionFormOpen && activeTab === "my-garage" && (
-        <div className="space-y-6">
+        <FleetErrorBoundary tabName="My Garage" onReset={() => loadAllData(true)}>
+          <div className="space-y-6">
           <AppCard className="border-border shadow-xs">
             <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex items-center justify-between">
               <div>
@@ -10210,13 +10303,15 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             </AppCardContent>
           </AppCard>
         </div>
+        </FleetErrorBoundary>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* LEARNING / FLEET SOPS TAB */}
       {/* ---------------------------------------------------------------------- */}
       {!isAnyTransactionFormOpen && activeTab === "learning" && (
-        <div className="space-y-6">
+        <FleetErrorBoundary tabName="Fleet Knowledge Base & SOPs" onReset={() => loadAllData(true)}>
+          <div className="space-y-6">
           <AppCard className="border-border shadow-xs">
             <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50">
               <AppCardTitle className="text-lg flex items-center gap-2">
@@ -10257,13 +10352,15 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             </AppCardContent>
           </AppCard>
         </div>
+        </FleetErrorBoundary>
       )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* SETTINGS TAB */}
       {/* ---------------------------------------------------------------------- */}
       {!isAnyTransactionFormOpen && activeTab === "settings" && (
-        <div className="space-y-6">
+        <FleetErrorBoundary tabName="Fleet System Configuration" onReset={() => loadAllData(true)}>
+          <div className="space-y-6">
           <AppCard className="border-border shadow-xs">
             <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50">
               <AppCardTitle className="text-lg flex items-center gap-2">
@@ -10431,6 +10528,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             </AppCardContent>
           </AppCard>
         </div>
+        </FleetErrorBoundary>
       )}
 
       {/* ---------------------------------------------------------------------- */}
