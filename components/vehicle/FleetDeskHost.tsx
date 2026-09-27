@@ -71,7 +71,8 @@ import {
   ChevronDown,
   ExternalLink,
   IndianRupee,
-  CalendarClock
+  CalendarClock,
+  Command
 } from "lucide-react";
 import { 
   POPULAR_BRANDS, 
@@ -97,6 +98,7 @@ import {
   AppTableCell 
 } from "@/components/ui/AppTable";
 import ChandakLoader from "@/components/ui/ChandakLoader";
+import { AppSkeleton, AppTableSkeleton, AppCardSkeleton } from "@/components/ui/AppSkeleton";
 import {
   fetchVehicleDashboardStats,
   fetchVehiclesList,
@@ -928,6 +930,29 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   const [isDraggingEditVehicleDoc, setIsDraggingEditVehicleDoc] = useState<boolean>(false);
   const editVehicleDocFileInputRef = React.useRef<HTMLInputElement>(null);
 
+  // Command Palette & Quick Navigation HUD States
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [commandQuery, setCommandQuery] = useState("");
+  const [commandSelectedIndex, setCommandSelectedIndex] = useState(0);
+
+  // Enterprise Form Draft Auto-Save Storage Keys & Flags
+  const VEHICLE_DRAFT_KEY = "fleet_draft_vehicle_v1";
+  const MAINT_DRAFT_KEY = "fleet_draft_maint_v1";
+  const [hasVehicleDraft, setHasVehicleDraft] = useState(false);
+  const [hasMaintDraft, setHasMaintDraft] = useState(false);
+
+  // Check for existing drafts on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const vDraft = sessionStorage.getItem(VEHICLE_DRAFT_KEY);
+        if (vDraft) setHasVehicleDraft(true);
+        const mDraft = sessionStorage.getItem(MAINT_DRAFT_KEY);
+        if (mDraft) setHasMaintDraft(true);
+      } catch {}
+    }
+  }, []);
+
   // Dynamic Expiry Badge Helper
   const renderExpiryBadge = (days?: number | null) => {
     if (days === null || days === undefined) return null;
@@ -1368,6 +1393,656 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         else if (/TATA/i.test(sel.make)) setNewMaintVendor("Tata Motors Authorized Service Center");
         else if (/MAHINDRA/i.test(sel.make)) setNewMaintVendor("Mahindra Authorized Center");
         else setNewMaintVendor(`${sel.make} Authorized Service Center`);
+      }
+    }
+  };
+
+  // Auto-save Vehicle Registration Draft to sessionStorage
+  useEffect(() => {
+    if (typeof window === "undefined" || activeTab !== "register") return;
+    if (newVehiclePlate || newVehicleMake || newVehicleModel || newVehicleVin || newVehicleEngine) {
+      const draft = {
+        newVehiclePlate,
+        newVehicleMake,
+        newVehicleModel,
+        newVehicleVariant,
+        newVehicleCategory,
+        newVehicleStatus,
+        newVehicleOdometer,
+        newVehicleDriverId,
+        newVehicleNickname,
+        newVehicleColor,
+        newVehicleVin,
+        newVehicleEngine,
+        newVehicleFuel,
+        newVehicleRegDate,
+        newVehicleRtoOffice,
+        newVehicleOwner,
+        newVehicleRtoRmn,
+        newVehicleInsuranceVendorId,
+        newVehicleInsuranceVendor,
+        newVehicleInsurancePolicy,
+        newVehicleInsuranceExpiry,
+        newVehiclePucExpiry,
+        newVehicleFitnessExpiry,
+        newVehicleHsrp,
+        newVehicleRsa,
+        newVehiclePurchasePrice,
+        newVehicleCustomExtendedExpiryDate
+      };
+      try {
+        sessionStorage.setItem(VEHICLE_DRAFT_KEY, JSON.stringify(draft));
+      } catch {}
+    }
+  }, [
+    activeTab,
+    newVehiclePlate,
+    newVehicleMake,
+    newVehicleModel,
+    newVehicleVariant,
+    newVehicleCategory,
+    newVehicleStatus,
+    newVehicleOdometer,
+    newVehicleDriverId,
+    newVehicleNickname,
+    newVehicleColor,
+    newVehicleVin,
+    newVehicleEngine,
+    newVehicleFuel,
+    newVehicleRegDate,
+    newVehicleRtoOffice,
+    newVehicleOwner,
+    newVehicleRtoRmn,
+    newVehicleInsuranceVendorId,
+    newVehicleInsuranceVendor,
+    newVehicleInsurancePolicy,
+    newVehicleInsuranceExpiry,
+    newVehiclePucExpiry,
+    newVehicleFitnessExpiry,
+    newVehicleHsrp,
+    newVehicleRsa,
+    newVehiclePurchasePrice,
+    newVehicleCustomExtendedExpiryDate
+  ]);
+
+  const restoreVehicleDraft = () => {
+    try {
+      const raw = sessionStorage.getItem(VEHICLE_DRAFT_KEY);
+      if (!raw) return;
+      const draft = JSON.parse(raw);
+      if (draft.newVehiclePlate) setNewVehiclePlate(draft.newVehiclePlate);
+      if (draft.newVehicleMake) setNewVehicleMake(draft.newVehicleMake);
+      if (draft.newVehicleModel) setNewVehicleModel(draft.newVehicleModel);
+      if (draft.newVehicleVariant) setNewVehicleVariant(draft.newVehicleVariant);
+      if (draft.newVehicleCategory) setNewVehicleCategory(draft.newVehicleCategory);
+      if (draft.newVehicleStatus) setNewVehicleStatus(draft.newVehicleStatus);
+      if (draft.newVehicleOdometer !== undefined) setNewVehicleOdometer(draft.newVehicleOdometer);
+      if (draft.newVehicleDriverId) setNewVehicleDriverId(draft.newVehicleDriverId);
+      if (draft.newVehicleNickname) setNewVehicleNickname(draft.newVehicleNickname);
+      if (draft.newVehicleColor) setNewVehicleColor(draft.newVehicleColor);
+      if (draft.newVehicleVin) setNewVehicleVin(draft.newVehicleVin);
+      if (draft.newVehicleEngine) setNewVehicleEngine(draft.newVehicleEngine);
+      if (draft.newVehicleFuel) setNewVehicleFuel(draft.newVehicleFuel);
+      if (draft.newVehicleRegDate) setNewVehicleRegDate(draft.newVehicleRegDate);
+      if (draft.newVehicleRtoOffice) setNewVehicleRtoOffice(draft.newVehicleRtoOffice);
+      if (draft.newVehicleOwner) setNewVehicleOwner(draft.newVehicleOwner);
+      if (draft.newVehicleRtoRmn) setNewVehicleRtoRmn(draft.newVehicleRtoRmn);
+      if (draft.newVehicleInsuranceVendorId) setNewVehicleInsuranceVendorId(draft.newVehicleInsuranceVendorId);
+      if (draft.newVehicleInsuranceVendor) setNewVehicleInsuranceVendor(draft.newVehicleInsuranceVendor);
+      if (draft.newVehicleInsurancePolicy) setNewVehicleInsurancePolicy(draft.newVehicleInsurancePolicy);
+      if (draft.newVehicleInsuranceExpiry) setNewVehicleInsuranceExpiry(draft.newVehicleInsuranceExpiry);
+      if (draft.newVehiclePucExpiry) setNewVehiclePucExpiry(draft.newVehiclePucExpiry);
+      if (draft.newVehicleFitnessExpiry) setNewVehicleFitnessExpiry(draft.newVehicleFitnessExpiry);
+      if (draft.newVehicleHsrp !== undefined) setNewVehicleHsrp(draft.newVehicleHsrp);
+      if (draft.newVehicleRsa !== undefined) setNewVehicleRsa(draft.newVehicleRsa);
+      if (draft.newVehiclePurchasePrice !== undefined) setNewVehiclePurchasePrice(draft.newVehiclePurchasePrice);
+      if (draft.newVehicleCustomExtendedExpiryDate) setNewVehicleCustomExtendedExpiryDate(draft.newVehicleCustomExtendedExpiryDate);
+      setHasVehicleDraft(false);
+      triggerToast("Vehicle registration draft restored!");
+    } catch (err) {
+      console.error("Vehicle draft restore error:", err);
+    }
+  };
+
+  const discardVehicleDraft = () => {
+    try {
+      sessionStorage.removeItem(VEHICLE_DRAFT_KEY);
+      setHasVehicleDraft(false);
+      triggerToast("Vehicle draft discarded");
+    } catch {}
+  };
+
+  // Native CSV Export Utilities (Excel-compatible UTF-8 BOM)
+  const exportVehiclesCSV = () => {
+    if (!vehicles || vehicles.length === 0) {
+      triggerToast("No vehicle records available to export");
+      return;
+    }
+    const headers = [
+      "Registration Plate",
+      "Make",
+      "Model",
+      "Variant",
+      "Category",
+      "Fuel Type",
+      "Current Odometer (km)",
+      "Operational Status",
+      "VIN / Chassis Number",
+      "Engine Number",
+      "RTO Office",
+      "Registered Owner",
+      "Insurance Vendor",
+      "Policy Number",
+      "Insurance Expiry Date",
+      "PUC Expiry Date",
+      "Fitness Expiry Date",
+      "Purchase Price (INR)",
+      "HSRP Plate Fitted",
+      "RSA Active"
+    ];
+
+    const escapeCSV = (val: any) => {
+      if (val === null || val === undefined) return '""';
+      const str = String(val).replace(/"/g, '""');
+      return `"${str}"`;
+    };
+
+    const rows = vehicles.map((v) => [
+      escapeCSV(v.registration_number),
+      escapeCSV(v.make),
+      escapeCSV(v.model),
+      escapeCSV(v.variant || "Standard"),
+      escapeCSV(v.category),
+      escapeCSV(v.fuel_type),
+      escapeCSV(v.odometer_km || 0),
+      escapeCSV(v.status),
+      escapeCSV(v.vin_chassis_number || ""),
+      escapeCSV(v.engine_number || ""),
+      escapeCSV(v.rto_office || ""),
+      escapeCSV(v.registered_owner || ""),
+      escapeCSV(v.insurance_vendor || ""),
+      escapeCSV(v.insurance_policy_number || ""),
+      escapeCSV(v.insurance_expiry_date ? v.insurance_expiry_date.split("T")[0] : ""),
+      escapeCSV(v.puc_expiry_date ? v.puc_expiry_date.split("T")[0] : ""),
+      escapeCSV(v.fitness_expiry_date ? v.fitness_expiry_date.split("T")[0] : ""),
+      escapeCSV(v.purchase_price || 0),
+      escapeCSV(v.has_hsrp_plate ? "Yes" : "No"),
+      escapeCSV(v.has_roadside_assistance ? "Yes" : "No")
+    ].join(","));
+
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\r\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Fleet_Vehicles_Register_${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    triggerToast("Fleet vehicle register exported successfully!");
+  };
+
+  const exportMaintenanceCSV = () => {
+    if (!maintenance || maintenance.length === 0) {
+      triggerToast("No maintenance logs available to export");
+      return;
+    }
+    const headers = [
+      "Job / Record ID",
+      "Vehicle Plate",
+      "Category",
+      "Service Description",
+      "Workshop / Vendor",
+      "Service Date",
+      "Odometer (km)",
+      "Status",
+      "Labour Cost (INR)",
+      "Parts Cost (INR)",
+      "Discount (INR)",
+      "Tax Rate (%)",
+      "Total Invoice Cost (INR)",
+      "Payment Mode",
+      "Payment Status",
+      "Next Due Date",
+      "Next Due Odometer (km)"
+    ];
+
+    const escapeCSV = (val: any) => {
+      if (val === null || val === undefined) return '""';
+      const str = String(val).replace(/"/g, '""');
+      return `"${str}"`;
+    };
+
+    const rows = maintenance.map((m) => {
+      const partsData = typeof m.parts_replaced === "object" && m.parts_replaced !== null ? m.parts_replaced : {};
+      return [
+        escapeCSV(m.id),
+        escapeCSV(m.vehicle_reg || m.vehicle_id || ""),
+        escapeCSV(partsData.category || "PERIODIC_SERVICE"),
+        escapeCSV(m.service_type || "Maintenance / Repair"),
+        escapeCSV(m.service_center || "Authorized Workshop"),
+        escapeCSV(m.service_date ? m.service_date.split("T")[0] : ""),
+        escapeCSV(m.odometer_km || 0),
+        escapeCSV("COMPLETED"),
+        escapeCSV(partsData.labour_cost || 0),
+        escapeCSV(partsData.parts_cost || 0),
+        escapeCSV(partsData.discount || 0),
+        escapeCSV(partsData.tax_rate || 18),
+        escapeCSV(m.cost || 0),
+        escapeCSV(partsData.payment_mode || "UPI / Bank Transfer"),
+        escapeCSV(partsData.payment_status || "PAID"),
+        escapeCSV(m.next_service_due_date ? m.next_service_due_date.split("T")[0] : ""),
+        escapeCSV(m.next_service_due_odometer || 0)
+      ].join(",");
+    });
+
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\r\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Fleet_Maintenance_Ledger_${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    triggerToast("Maintenance ledger exported successfully!");
+  };
+
+  const exportDriversCSV = () => {
+    if (!drivers || drivers.length === 0) {
+      triggerToast("No driver records available to export");
+      return;
+    }
+    const headers = [
+      "Driver Full Name",
+      "Contact Phone",
+      "License Number",
+      "License Expiry Date",
+      "Experience (Years)",
+      "Emergency Contact",
+      "Assigned Vehicle",
+      "Status"
+    ];
+
+    const escapeCSV = (val: any) => {
+      if (val === null || val === undefined) return '""';
+      const str = String(val).replace(/"/g, '""');
+      return `"${str}"`;
+    };
+
+    const rows = drivers.map((d) => [
+      escapeCSV(d.full_name),
+      escapeCSV(d.phone),
+      escapeCSV(d.license_number),
+      escapeCSV(d.license_expiry_date ? d.license_expiry_date.split("T")[0] : ""),
+      escapeCSV(d.experience_years || 0),
+      escapeCSV(d.emergency_contact || ""),
+      escapeCSV(d.assigned_vehicle_id ? "Assigned" : "Unassigned"),
+      escapeCSV(d.is_active ? "ACTIVE" : "INACTIVE")
+    ].join(","));
+
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\r\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Fleet_Drivers_Roster_${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    triggerToast("Drivers directory roster exported successfully!");
+  };
+
+  // Global Keyboard Shortcuts (Ctrl+K / Cmd+K, Escape)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Toggle Command Palette
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setIsCommandPaletteOpen((prev) => !prev);
+        setCommandQuery("");
+        setCommandSelectedIndex(0);
+        return;
+      }
+
+      // Universal Escape Handler
+      if (e.key === "Escape") {
+        if (isCommandPaletteOpen) {
+          e.preventDefault();
+          setIsCommandPaletteOpen(false);
+          return;
+        }
+        if (isColumnOptionsOpen) {
+          setIsColumnOptionsOpen(false);
+          return;
+        }
+        if (isEditVehicleOpen) {
+          setIsEditVehicleOpen(false);
+          return;
+        }
+        if (isAddDriverOpen) {
+          setIsAddDriverOpen(false);
+          return;
+        }
+        if (isEditDriverOpen) {
+          setIsEditDriverOpen(false);
+          return;
+        }
+        if (isDispatchTripOpen) {
+          setIsDispatchTripOpen(false);
+          return;
+        }
+        if (isAddMaintenanceOpen) {
+          setIsAddMaintenanceOpen(false);
+          return;
+        }
+        if (isEditMaintenanceOpen) {
+          setIsEditMaintenanceOpen(false);
+          return;
+        }
+        if (isVendorModalOpen) {
+          setIsVendorModalOpen(false);
+          return;
+        }
+        if (isAddPartOpen) {
+          setIsAddPartOpen(false);
+          return;
+        }
+        if (isEditPartOpen) {
+          setIsEditPartOpen(false);
+          return;
+        }
+        if (isRenewPartOpen) {
+          setIsRenewPartOpen(false);
+          return;
+        }
+        if (isRenewPolicyModalOpen) {
+          setIsRenewPolicyModalOpen(false);
+          return;
+        }
+        if (isPolicyHistoryModalOpen) {
+          setIsPolicyHistoryModalOpen(false);
+          return;
+        }
+        if (isRenewPucModalOpen) {
+          setIsRenewPucModalOpen(false);
+          return;
+        }
+        if (isPucHistoryModalOpen) {
+          setIsPucHistoryModalOpen(false);
+          return;
+        }
+        if (isSpecHistoryModalOpen) {
+          setIsSpecHistoryModalOpen(false);
+          return;
+        }
+        if (isUnifiedRenewalsModalOpen) {
+          setIsUnifiedRenewalsModalOpen(false);
+          return;
+        }
+        if (isAddEntitlementModalOpen) {
+          setIsAddEntitlementModalOpen(false);
+          return;
+        }
+        if (isRedeemEntitlementModalOpen) {
+          setIsRedeemEntitlementModalOpen(false);
+          return;
+        }
+        if (previewAttachment) {
+          setPreviewAttachment(null);
+          return;
+        }
+        if (viewingVehicle) {
+          setViewingVehicle(null);
+          return;
+        }
+        if (viewingDriver) {
+          setViewingDriver(null);
+          return;
+        }
+        if (viewingTrip) {
+          setViewingTrip(null);
+          return;
+        }
+        if (viewingPart) {
+          setViewingPart(null);
+          return;
+        }
+        if (viewingVendor) {
+          setViewingVendor(null);
+          return;
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [
+    isCommandPaletteOpen,
+    isColumnOptionsOpen,
+    isEditVehicleOpen,
+    isAddDriverOpen,
+    isEditDriverOpen,
+    isDispatchTripOpen,
+    isAddMaintenanceOpen,
+    isEditMaintenanceOpen,
+    isVendorModalOpen,
+    isAddPartOpen,
+    isEditPartOpen,
+    isRenewPartOpen,
+    isRenewPolicyModalOpen,
+    isPolicyHistoryModalOpen,
+    isRenewPucModalOpen,
+    isPucHistoryModalOpen,
+    isSpecHistoryModalOpen,
+    isUnifiedRenewalsModalOpen,
+    isAddEntitlementModalOpen,
+    isRedeemEntitlementModalOpen,
+    previewAttachment,
+    viewingVehicle,
+    viewingDriver,
+    viewingTrip,
+    viewingPart,
+    viewingVendor
+  ]);
+
+  // Command Palette Search Results Filter
+  const commandResults = useMemo(() => {
+    const q = commandQuery.trim().toLowerCase();
+    const results: Array<{
+      id: string;
+      type: "ACTION" | "VEHICLE" | "DRIVER" | "VENDOR" | "MAINTENANCE";
+      title: string;
+      subtitle: string;
+      badge?: string;
+      icon: any;
+      onSelect: () => void;
+    }> = [];
+
+    const actions = [
+      {
+        id: "act-register",
+        title: "Register New Vehicle",
+        subtitle: "Add a new commercial or fleet vehicle to inventory",
+        badge: "Form",
+        icon: PlusCircle,
+        onSelect: () => {
+          setIsCommandPaletteOpen(false);
+          router.push("/vehicle/register");
+        }
+      },
+      {
+        id: "act-log-maint",
+        title: "Log Workshop Maintenance",
+        subtitle: "Create service job card, record spare parts & invoices",
+        badge: "Service",
+        icon: Wrench,
+        onSelect: () => {
+          setIsCommandPaletteOpen(false);
+          resetMaintenanceForm();
+          setIsAddMaintenanceOpen(true);
+        }
+      },
+      {
+        id: "act-add-driver",
+        title: "Onboard New Driver",
+        subtitle: "Add licensed driver to fleet roster",
+        badge: "Driver",
+        icon: Users,
+        onSelect: () => {
+          setIsCommandPaletteOpen(false);
+          setIsAddDriverOpen(true);
+        }
+      },
+      {
+        id: "act-export-vehicles",
+        title: "Export Vehicle Register (CSV)",
+        subtitle: "Download complete fleet master spreadsheet",
+        badge: "Export",
+        icon: FileSpreadsheet,
+        onSelect: () => {
+          setIsCommandPaletteOpen(false);
+          exportVehiclesCSV();
+        }
+      },
+      {
+        id: "act-export-maint",
+        title: "Export Maintenance Ledger (CSV)",
+        subtitle: "Download workshop bills, GST & parts ledger",
+        badge: "Export",
+        icon: Download,
+        onSelect: () => {
+          setIsCommandPaletteOpen(false);
+          exportMaintenanceCSV();
+        }
+      },
+      {
+        id: "act-export-drivers",
+        title: "Export Drivers Directory (CSV)",
+        subtitle: "Download active drivers directory & license roster",
+        badge: "Export",
+        icon: Users,
+        onSelect: () => {
+          setIsCommandPaletteOpen(false);
+          exportDriversCSV();
+        }
+      }
+    ];
+
+    if (!q) {
+      actions.forEach((a) => results.push({ ...a, type: "ACTION" }));
+      vehicles.slice(0, 5).forEach((v) => {
+        results.push({
+          id: `veh-${v.id}`,
+          type: "VEHICLE",
+          title: `${v.registration_number} — ${v.make} ${v.model}`,
+          subtitle: `${v.fuel_type || "Petrol"} • ${v.status} • Odometer: ${(v.odometer_km || 0).toLocaleString()} km`,
+          badge: v.status,
+          icon: Car,
+          onSelect: () => {
+            setIsCommandPaletteOpen(false);
+            setViewingVehicle(v);
+          }
+        });
+      });
+      return results;
+    }
+
+    actions
+      .filter((a) => a.title.toLowerCase().includes(q) || a.subtitle.toLowerCase().includes(q))
+      .forEach((a) => {
+        results.push({ ...a, type: "ACTION" });
+      });
+
+    vehicles
+      .filter(
+        (v) =>
+          v.registration_number.toLowerCase().includes(q) ||
+          v.make.toLowerCase().includes(q) ||
+          v.model.toLowerCase().includes(q) ||
+          (v.nickname && v.nickname.toLowerCase().includes(q)) ||
+          (v.vin_chassis_number && v.vin_chassis_number.toLowerCase().includes(q))
+      )
+      .slice(0, 8)
+      .forEach((v) => {
+        results.push({
+          id: `veh-${v.id}`,
+          type: "VEHICLE",
+          title: `${v.registration_number} — ${v.make} ${v.model}`,
+          subtitle: `${v.fuel_type || "Petrol"} • ${v.status} • Odometer: ${(v.odometer_km || 0).toLocaleString()} km`,
+          badge: v.status,
+          icon: Car,
+          onSelect: () => {
+            setIsCommandPaletteOpen(false);
+            setViewingVehicle(v);
+          }
+        });
+      });
+
+    drivers
+      .filter(
+        (d) =>
+          d.full_name.toLowerCase().includes(q) ||
+          d.phone.toLowerCase().includes(q) ||
+          d.license_number.toLowerCase().includes(q)
+      )
+      .slice(0, 5)
+      .forEach((d) => {
+        results.push({
+          id: `drv-${d.id}`,
+          type: "DRIVER",
+          title: d.full_name,
+          subtitle: `Phone: ${d.phone} • License: ${d.license_number} • Exp: ${d.experience_years || 0} yrs`,
+          badge: d.is_active ? "ACTIVE" : "INACTIVE",
+          icon: Users,
+          onSelect: () => {
+            setIsCommandPaletteOpen(false);
+            setViewingDriver(d);
+          }
+        });
+      });
+
+    insuranceVendors
+      .filter(
+        (ven) =>
+          ven.name.toLowerCase().includes(q) ||
+          (ven.code && ven.code.toLowerCase().includes(q)) ||
+          (ven.contact_person && ven.contact_person.toLowerCase().includes(q))
+      )
+      .slice(0, 5)
+      .forEach((ven) => {
+        results.push({
+          id: `ven-${ven.id}`,
+          type: "VENDOR",
+          title: ven.name,
+          subtitle: `Code: ${ven.code || "N/A"} • Contact: ${ven.contact_phone || ven.support_toll_free || "N/A"}`,
+          badge: ven.is_active ? "ACTIVE" : "INACTIVE",
+          icon: ShieldCheck,
+          onSelect: () => {
+            setIsCommandPaletteOpen(false);
+            setViewingVendor(ven);
+          }
+        });
+      });
+
+    return results;
+  }, [commandQuery, vehicles, drivers, insuranceVendors, router]);
+
+  const handleCommandKeyDown = (e: React.KeyboardEvent) => {
+    if (commandResults.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setCommandSelectedIndex((prev) => (prev + 1) % commandResults.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setCommandSelectedIndex((prev) => (prev - 1 + commandResults.length) % commandResults.length);
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (commandResults[commandSelectedIndex]) {
+        commandResults[commandSelectedIndex].onSelect();
       }
     }
   };
@@ -4372,11 +5047,45 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
   if (loading) {
     return (
-      <div className="w-full min-h-[60vh] flex flex-col items-center justify-center p-8 space-y-4">
-        <ChandakLoader size="lg" />
-        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground animate-pulse">
-          Connecting to Vehicle Backend & Records...
-        </p>
+      <div className="w-full flex-1 flex flex-col space-y-6 min-w-0 animate-in fade-in duration-300">
+        {/* Top Header Skeleton */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/50 pb-6">
+          <div className="flex items-center gap-3">
+            <AppSkeleton className="h-11 w-11 rounded-xl" />
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <AppSkeleton className="h-4 w-24 rounded-full" />
+                <AppSkeleton className="h-4 w-32 rounded" />
+              </div>
+              <AppSkeleton className="h-7 w-64 rounded-lg" />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <AppSkeleton className="h-9 w-24 rounded-lg" />
+            <AppSkeleton className="h-9 w-28 rounded-lg" />
+          </div>
+        </div>
+
+        {/* Dynamic Bento KPI Cards Skeleton (4 Columns) */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <AppCardSkeleton key={i} />
+          ))}
+        </div>
+
+        {/* Table & Search Bar Skeleton */}
+        <AppCard className="border-border shadow-xs overflow-hidden">
+          <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <AppSkeleton className="h-6 w-48 rounded" />
+            <div className="flex items-center gap-2.5 w-full sm:w-auto">
+              <AppSkeleton className="h-8 w-64 rounded-lg" />
+              <AppSkeleton className="h-8 w-28 rounded-lg" />
+            </div>
+          </AppCardHeader>
+          <AppCardContent className="p-4">
+            <AppTableSkeleton rows={6} />
+          </AppCardContent>
+        </AppCard>
       </div>
     );
   }
@@ -4478,6 +5187,24 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             </div>
 
             <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+              <AppButton
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setIsCommandPaletteOpen(true);
+                  setCommandQuery("");
+                  setCommandSelectedIndex(0);
+                }}
+                className="text-xs h-9 px-3 font-medium gap-2 border-border/70 hover:border-theme-btn-primary/40 hidden sm:flex items-center text-muted-foreground hover:text-foreground shadow-2xs"
+                title="Press Ctrl+K to search records and actions"
+              >
+                <Search className="h-3.5 w-3.5" />
+                <span>Quick Search</span>
+                <kbd className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-surface/80 border border-border text-muted-foreground font-semibold">
+                  Ctrl K
+                </kbd>
+              </AppButton>
+
               <AppButton
                 variant="secondary"
                 size="sm"
@@ -4606,6 +5333,40 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               </AppButton>
             </div>
           </div>
+
+          {/* Unsaved Form Draft Recovery Banner */}
+          {hasVehicleDraft && (
+            <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs animate-in fade-in duration-200">
+              <div className="flex items-center gap-2.5">
+                <div className="h-7 w-7 rounded-lg bg-amber-500/20 text-amber-700 dark:text-amber-300 flex items-center justify-center shrink-0">
+                  <Clock className="h-4 w-4" />
+                </div>
+                <span>
+                  <strong>Unsaved Draft Detected:</strong> You have an unsaved vehicle registration draft from your current session.
+                </span>
+              </div>
+              <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                <AppButton
+                  type="button"
+                  size="sm"
+                  variant="primary"
+                  onClick={restoreVehicleDraft}
+                  className="text-xs h-7 px-3 bg-amber-600 hover:bg-amber-700 text-white font-semibold"
+                >
+                  Restore Draft
+                </AppButton>
+                <AppButton
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={discardVehicleDraft}
+                  className="text-xs h-7 px-2 text-muted-foreground hover:text-foreground"
+                >
+                  Discard
+                </AppButton>
+              </div>
+            </div>
+          )}
 
           {/* Form Body: Clean full-width responsive form sections with zero card boxes */}
           <form onSubmit={handleCreateVehicle} className="space-y-10 w-full max-w-5xl mx-auto pb-16">
@@ -6040,6 +6801,18 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 )}
               </div>
 
+              <AppButton
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={exportVehiclesCSV}
+                className="text-xs h-8 px-2.5 gap-1.5 font-semibold text-foreground hover:border-theme-btn-primary/50"
+                title="Export Fleet Register as CSV spreadsheet"
+              >
+                <Download className="h-3.5 w-3.5" />
+                <span>Export CSV</span>
+              </AppButton>
+
               {canCreateVehicle && (
                 <AppButton
                   variant="primary"
@@ -6376,7 +7149,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <AppCardTitle className="text-lg">Drivers Directory & Roster</AppCardTitle>
             </div>
 
-            <div className="flex items-center gap-2.5 w-full sm:w-auto">
+            <div className="flex items-center gap-2.5 w-full sm:w-auto flex-wrap">
               <div className="relative flex-1 sm:w-64">
                 <Search className="h-4 w-4 absolute left-3 top-2.5 text-muted-foreground pointer-events-none" />
                 <input
@@ -6386,6 +7159,28 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:border-theme-btn-primary shadow-2xs"
                 />
               </div>
+              <AppButton
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={exportDriversCSV}
+                className="text-xs h-8 px-2.5 gap-1.5 font-semibold text-foreground hover:border-theme-btn-primary/50"
+                title="Export Drivers Directory as CSV spreadsheet"
+              >
+                <Download className="h-3.5 w-3.5" />
+                <span>Export Roster</span>
+              </AppButton>
+              {canManageDrivers && (
+                <AppButton
+                  variant="primary"
+                  size="sm"
+                  onClick={() => setIsAddDriverOpen(true)}
+                  className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-white text-xs h-8 font-semibold gap-1.5 shadow-xs shrink-0"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>Onboard Driver</span>
+                </AppButton>
+              )}
             </div>
           </AppCardHeader>
 
@@ -6667,7 +7462,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <AppCardTitle className="text-lg">Workshop Maintenance & Service Records</AppCardTitle>
             </div>
 
-            <div className="flex items-center gap-2.5 w-full sm:w-auto">
+            <div className="flex items-center gap-2.5 w-full sm:w-auto flex-wrap">
               <div className="relative flex-1 sm:w-64">
                 <Search className="h-4 w-4 absolute left-3 top-2.5 text-muted-foreground pointer-events-none" />
                 <input
@@ -6677,6 +7472,17 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:border-theme-btn-primary shadow-2xs"
                 />
               </div>
+              <AppButton
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={exportMaintenanceCSV}
+                className="text-xs h-9 px-3 gap-1.5 font-semibold text-foreground hover:border-theme-btn-primary/50"
+                title="Export Maintenance Ledger as CSV spreadsheet"
+              >
+                <Download className="h-3.5 w-3.5" />
+                <span>Export Ledger</span>
+              </AppButton>
               {canManageMaintenance && (
                 <AppButton
                   variant="primary"
@@ -16849,6 +17655,106 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   </AppButton>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------------------------- */}
+      {/* ENTERPRISE COMMAND PALETTE & QUICK SEARCH HUD (CTRL+K / CMD+K) */}
+      {/* ---------------------------------------------------------------------- */}
+      {isCommandPaletteOpen && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-start justify-center pt-20 px-4 animate-in fade-in duration-150">
+          <div
+            className="fixed inset-0"
+            onClick={() => setIsCommandPaletteOpen(false)}
+          />
+          <div className="relative w-full max-w-2xl bg-surface border border-border/80 shadow-2xl rounded-2xl overflow-hidden flex flex-col z-10 animate-in zoom-in-95 duration-150">
+            {/* Search Input Bar */}
+            <div className="flex items-center px-4 border-b border-border/60 bg-surface/50">
+              <Search className="h-5 w-5 text-muted-foreground mr-3 shrink-0" />
+              <input
+                autoFocus
+                type="text"
+                value={commandQuery}
+                onChange={(e) => {
+                  setCommandQuery(e.target.value);
+                  setCommandSelectedIndex(0);
+                }}
+                onKeyDown={handleCommandKeyDown}
+                placeholder="Search vehicles, drivers, vendors, maintenance, or actions..."
+                className="w-full py-4 text-sm bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground"
+              />
+              <kbd className="text-[10px] font-mono px-2 py-0.5 rounded bg-muted text-muted-foreground border border-border shrink-0">
+                ESC
+              </kbd>
+            </div>
+
+            {/* Filtered Records & Fast Actions List */}
+            <div className="max-h-96 overflow-y-auto p-2 space-y-1">
+              {commandResults.length === 0 ? (
+                <div className="p-8 text-center text-xs text-muted-foreground">
+                  No matching vehicle records, drivers, or quick actions found for &quot;{commandQuery}&quot;.
+                </div>
+              ) : (
+                commandResults.map((item, idx) => {
+                  const IconComp = item.icon;
+                  const isSelected = idx === commandSelectedIndex;
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={item.onSelect}
+                      onMouseEnter={() => setCommandSelectedIndex(idx)}
+                      className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-colors text-xs ${
+                        isSelected
+                          ? "bg-theme-btn-primary/10 text-theme-btn-primary border border-theme-btn-primary/20"
+                          : "hover:bg-surface/80 text-foreground border border-transparent"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div
+                          className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${
+                            isSelected ? "bg-theme-btn-primary text-white" : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          <IconComp className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-semibold truncate text-foreground">{item.title}</p>
+                          <p className="text-[11px] text-muted-foreground truncate">{item.subtitle}</p>
+                        </div>
+                      </div>
+                      {item.badge && (
+                        <span
+                          className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full shrink-0 border ${
+                            isSelected
+                              ? "bg-theme-btn-primary/20 text-theme-btn-primary border-theme-btn-primary/30"
+                              : "bg-muted text-muted-foreground border-border"
+                          }`}
+                        >
+                          {item.badge}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Shortcut Legend Footer */}
+            <div className="p-2.5 bg-surface/50 border-t border-border/60 flex items-center justify-between text-[11px] text-muted-foreground px-4">
+              <div className="flex items-center gap-4">
+                <span className="flex items-center gap-1">
+                  <kbd className="px-1.5 py-0.5 rounded bg-muted border border-border text-[10px]">↑↓</kbd> Navigate
+                </span>
+                <span className="flex items-center gap-1">
+                  <kbd className="px-1.5 py-0.5 rounded bg-muted border border-border text-[10px]">↵</kbd> Select
+                </span>
+                <span className="flex items-center gap-1">
+                  <kbd className="px-1.5 py-0.5 rounded bg-muted border border-border text-[10px]">ESC</kbd> Close
+                </span>
+              </div>
+              <span className="font-medium text-theme-btn-primary">Fleet Command HUD</span>
             </div>
           </div>
         </div>
