@@ -21,6 +21,7 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
   const isZeroPaddingRoute = isAuthRoute || isRequirementDetailsRoute || isDashboardRoute;
   const [isSidebarCompact, setIsSidebarCompact] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const mainRef = React.useRef<HTMLElement>(null);
 
   useEffect(() => {
     const handler = (e: any) => {
@@ -36,10 +37,41 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
     };
   }, []);
 
-  // Close mobile drawer on route change
+  // Close mobile drawer and scroll to top on route change
   useEffect(() => {
     setIsMobileMenuOpen(false);
+    if (mainRef.current) {
+      mainRef.current.scrollTop = 0;
+    }
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }
   }, [pathname]);
+
+  // Global scroll-to-top event listener for sub-navigation and modals
+  useEffect(() => {
+    const handleScrollTop = () => {
+      if (mainRef.current) {
+        mainRef.current.scrollTop = 0;
+      }
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      }
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("app:scroll-top", handleScrollTop);
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("app:scroll-top", handleScrollTop);
+      }
+    };
+  }, []);
 
   return (
     <div 
@@ -66,7 +98,9 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
         )}
 
         {/* Dynamic Scrollable Content Workspace */}
-        <main className={`flex-1 flex flex-col min-w-0 min-h-0 relative overflow-y-auto ${
+        <main
+          ref={mainRef}
+          className={`flex-1 flex flex-col min-w-0 min-h-0 relative overflow-y-auto ${
           isZeroPaddingRoute 
             ? 'p-0 pb-16 md:pb-0' 
             : isDesignRoute

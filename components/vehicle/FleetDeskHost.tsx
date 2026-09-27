@@ -267,6 +267,16 @@ function TransactionFormLayout({
   headerActions,
   children
 }: TransactionFormLayoutProps) {
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      const mainEl = document.querySelector("main");
+      if (mainEl) mainEl.scrollTop = 0;
+    }
+  }, []);
+
   return (
     <div className="w-full flex-1 flex flex-col space-y-8 animate-in fade-in duration-200">
       {/* Top Navigation & Action Header */}
@@ -461,6 +471,16 @@ function WorkingDocumentLayout({
   headerActions,
   children
 }: WorkingDocumentLayoutProps) {
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      const mainEl = document.querySelector("main");
+      if (mainEl) mainEl.scrollTop = 0;
+    }
+  }, []);
+
   return (
     <div className="w-full flex-1 flex flex-col space-y-6 animate-in fade-in duration-200">
       {/* Top Navigation & Header */}
@@ -5282,6 +5302,45 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     viewingPart ||
     viewingVendor
   );
+
+  // Scroll to top whenever tab, sub-route, or any transaction form / inspector opens
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("app:scroll-top"));
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      const mainEl = document.querySelector("main");
+      if (mainEl) mainEl.scrollTop = 0;
+    }
+  }, [
+    activeTab,
+    isAnyTransactionFormOpen,
+    viewingVehicle,
+    viewingDriver,
+    viewingTrip,
+    viewingPart,
+    viewingVendor,
+    selectedMaintenanceForView,
+    isEditVehicleOpen,
+    isAddDriverOpen,
+    isEditDriverOpen,
+    isDispatchTripOpen,
+    isAddMaintenanceOpen,
+    isEditMaintenanceOpen,
+    isVendorModalOpen,
+    isAddPartOpen,
+    isEditPartOpen,
+    isRenewPartOpen,
+    isRenewPolicyModalOpen,
+    isPolicyHistoryModalOpen,
+    isRenewPucModalOpen,
+    isPucHistoryModalOpen,
+    isSpecHistoryModalOpen,
+    isUnifiedRenewalsModalOpen,
+    isAddEntitlementModalOpen,
+    isRedeemEntitlementModalOpen
+  ]);
 
   return (
     <div className="w-full flex-1 flex flex-col space-y-6 min-w-0 animate-in fade-in duration-300">
