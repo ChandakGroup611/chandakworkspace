@@ -92,8 +92,11 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
   const pathname = usePathname() || "/design";
   const router = useRouter();
 
-  // Set user context in master store
+  // Set user context in master store and active_module cookie
   useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.cookie = "active_module=DESIGN_TRACKING; path=/; max-age=2592000; SameSite=Lax";
+    }
     if (currentUser) {
       DesignMasterStore.setCurrentUser(
         currentUser.id,

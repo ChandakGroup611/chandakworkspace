@@ -40,19 +40,7 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
   // Close mobile drawer and scroll to top on route change
   useEffect(() => {
     setIsMobileMenuOpen(false);
-    if (mainRef.current) {
-      mainRef.current.scrollTop = 0;
-    }
-    if (typeof window !== "undefined") {
-      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-    }
-  }, [pathname]);
-
-  // Global scroll-to-top event listener for sub-navigation and modals
-  useEffect(() => {
-    const handleScrollTop = () => {
+    const resetScroll = () => {
       if (mainRef.current) {
         mainRef.current.scrollTop = 0;
       }
@@ -61,6 +49,34 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
         document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;
       }
+    };
+
+    resetScroll();
+    const frameId = requestAnimationFrame(resetScroll);
+    const timerId = setTimeout(resetScroll, 50);
+    return () => {
+      cancelAnimationFrame(frameId);
+      clearTimeout(timerId);
+    };
+  }, [pathname]);
+
+  // Global scroll-to-top event listener for sub-navigation and modals
+  useEffect(() => {
+    const handleScrollTop = () => {
+      const resetScroll = () => {
+        if (mainRef.current) {
+          mainRef.current.scrollTop = 0;
+        }
+        if (typeof window !== "undefined") {
+          window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+          document.documentElement.scrollTop = 0;
+          document.body.scrollTop = 0;
+        }
+      };
+
+      resetScroll();
+      requestAnimationFrame(resetScroll);
+      setTimeout(resetScroll, 50);
     };
 
     if (typeof window !== "undefined") {

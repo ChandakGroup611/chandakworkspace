@@ -2145,6 +2145,9 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   }, []);
 
   useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.cookie = "active_module=VEHICLE_DESK; path=/; max-age=2592000; SameSite=Lax";
+    }
     loadAllData();
   }, [loadAllData]);
 
@@ -4319,12 +4322,12 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
   const filteredParts = useMemo(() => {
     return parts.filter((p) => {
-      const q = partsSearch.toLowerCase().trim();
+      const q = (partsSearch || "").toLowerCase().trim();
       const matchesSearch =
         !q ||
-        p.name.toLowerCase().includes(q) ||
+        (p.name && p.name.toLowerCase().includes(q)) ||
         (p.part_number && p.part_number.toLowerCase().includes(q)) ||
-        p.brand.toLowerCase().includes(q) ||
+        (p.brand && p.brand.toLowerCase().includes(q)) ||
         (p.serial_number && p.serial_number.toLowerCase().includes(q)) ||
         (p.assigned_vehicle_reg && p.assigned_vehicle_reg.toLowerCase().includes(q)) ||
         (p.vendor_name && p.vendor_name.toLowerCase().includes(q)) ||
@@ -4354,6 +4357,27 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       return matchesSearch && matchesType && matchesExpiry;
     });
   }, [parts, partsSearch, partsItemTypeFilter, partsExpiryFilter]);
+
+  const filteredVendors = useMemo(() => {
+    return insuranceVendors.filter((v) => {
+      const q = (vendorSearch || "").toLowerCase().trim();
+      const matchesSearch =
+        !q ||
+        (v.name && v.name.toLowerCase().includes(q)) ||
+        (v.code && v.code.toLowerCase().includes(q)) ||
+        (v.contact_person && v.contact_person.toLowerCase().includes(q)) ||
+        (v.contact_number && v.contact_number.toLowerCase().includes(q)) ||
+        (v.email && v.email.toLowerCase().includes(q)) ||
+        (v.support_toll_free && v.support_toll_free.toLowerCase().includes(q));
+
+      const matchesStatus =
+        vendorStatusFilter === "ALL" ||
+        (vendorStatusFilter === "ACTIVE" && v.is_active !== false) ||
+        (vendorStatusFilter === "DISABLED" && v.is_active === false);
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [insuranceVendors, vendorSearch, vendorStatusFilter]);
 
   const partsKpis = useMemo(() => {
     const totalCount = parts.length;
@@ -4616,8 +4640,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     if (dashboardTripFilter !== "ALL") {
       list = list.filter(t => t.status === dashboardTripFilter);
     }
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
+    if ((searchQuery || "").trim()) {
+      const q = (searchQuery || "").toLowerCase().trim();
       list = list.filter(t => 
         (t.vehicle_reg || "").toLowerCase().includes(q) ||
         (t.traveler_name || "").toLowerCase().includes(q) ||
@@ -4636,10 +4660,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       list = list.filter(v => v.status === dashboardVehicleFilter);
     }
     if (dashboardFuelFilter) {
-      list = list.filter(v => (v.fuel_type || "").toUpperCase() === dashboardFuelFilter.toUpperCase());
+      list = list.filter(v => (v.fuel_type || "").toUpperCase() === (dashboardFuelFilter || "").toUpperCase());
     }
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
+    if ((searchQuery || "").trim()) {
+      const q = (searchQuery || "").toLowerCase().trim();
       list = list.filter(v => 
         (v.registration_number || "").toLowerCase().includes(q) ||
         (v.make || "").toLowerCase().includes(q) ||
@@ -5879,7 +5903,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   {/* Brand Quick-Pick Chips */}
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {TOP_BRAND_NAMES.map((brand) => {
-                      const isSelected = newVehicleMake.trim().toLowerCase() === brand.toLowerCase();
+                      const isSelected = (newVehicleMake || "").trim().toLowerCase() === brand.toLowerCase();
                       return (
                         <AppButton
                           key={brand}
@@ -5940,7 +5964,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   {POPULAR_BRANDS[newVehicleMake]?.models && (
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {POPULAR_BRANDS[newVehicleMake].models.slice(0, 6).map((m) => {
-                        const isSelected = newVehicleModel.trim().toLowerCase() === m.toLowerCase();
+                        const isSelected = (newVehicleModel || "").trim().toLowerCase() === m.toLowerCase();
                         return (
                           <AppButton
                             key={m}
@@ -9891,26 +9915,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     </AppTableRow>
                   </AppTableHeader>
                   <AppTableBody className="divide-y divide-border/60">
-                    {insuranceVendors
-                      .filter((v) => {
-                        const q = vendorSearch.toLowerCase().trim();
-                        const matchesSearch =
-                          !q ||
-                          (v.name && v.name.toLowerCase().includes(q)) ||
-                          (v.code && v.code.toLowerCase().includes(q)) ||
-                          (v.contact_person && v.contact_person.toLowerCase().includes(q)) ||
-                          (v.contact_number && v.contact_number.toLowerCase().includes(q)) ||
-                          (v.email && v.email.toLowerCase().includes(q)) ||
-                          (v.support_toll_free && v.support_toll_free.toLowerCase().includes(q));
-
-                        const matchesStatus =
-                          vendorStatusFilter === "ALL" ||
-                          (vendorStatusFilter === "ACTIVE" && v.is_active !== false) ||
-                          (vendorStatusFilter === "DISABLED" && v.is_active === false);
-
-                        return matchesSearch && matchesStatus;
-                      })
-                      .length === 0 ? (
+                    {filteredVendors.length === 0 ? (
                       <AppTableRow>
                         <AppTableCell colSpan={8} className="text-center py-12 text-muted-foreground">
                           {vendorSearch || vendorStatusFilter !== "ALL" ? (
@@ -9947,29 +9952,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         </AppTableCell>
                       </AppTableRow>
                     ) : (
-                      insuranceVendors
-                        .filter((v) => {
-                          const q = vendorSearch.toLowerCase().trim();
-                          const matchesSearch =
-                            !q ||
-                            (v.name && v.name.toLowerCase().includes(q)) ||
-                            (v.code && v.code.toLowerCase().includes(q)) ||
-                            (v.contact_person && v.contact_person.toLowerCase().includes(q)) ||
-                            (v.contact_number && v.contact_number.toLowerCase().includes(q)) ||
-                            (v.email && v.email.toLowerCase().includes(q)) ||
-                            (v.support_toll_free && v.support_toll_free.toLowerCase().includes(q));
-
-                          const matchesStatus =
-                            vendorStatusFilter === "ALL" ||
-                            (vendorStatusFilter === "ACTIVE" && v.is_active !== false) ||
-                            (vendorStatusFilter === "DISABLED" && v.is_active === false);
-
-                          return matchesSearch && matchesStatus;
-                        })
-                        .map((vendor) => {
-                          const linkedVehiclesCount = vehicles.filter(
-                            (v) => v.insurance_vendor_id === vendor.id || (v.insurance_vendor && v.insurance_vendor.toLowerCase() === vendor.name.toLowerCase())
-                          ).length;
+                      filteredVendors.map((vendor) => {
+                        const linkedVehiclesCount = vehicles.filter(
+                          (v) => v.insurance_vendor_id === vendor.id || (v.insurance_vendor && vendor.name && v.insurance_vendor.toLowerCase() === vendor.name.toLowerCase())
+                        ).length;
 
                           return (
                             <AppTableRow 
@@ -10653,7 +10639,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     {/* Brand Quick-Pick Chips */}
                     <div className="mt-1.5 flex flex-wrap gap-1">
                       {TOP_BRAND_NAMES.map((brand) => {
-                        const isSelected = editVehicleMake.trim().toLowerCase() === brand.toLowerCase();
+                        const isSelected = (editVehicleMake || "").trim().toLowerCase() === brand.toLowerCase();
                         return (
                           <AppButton
                             key={brand}
@@ -10710,7 +10696,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     {POPULAR_BRANDS[editVehicleMake]?.models && (
                       <div className="mt-1.5 flex flex-wrap gap-1">
                         {POPULAR_BRANDS[editVehicleMake].models.slice(0, 6).map((m) => {
-                          const isSelected = editVehicleModel.trim().toLowerCase() === m.toLowerCase();
+                          const isSelected = (editVehicleModel || "").trim().toLowerCase() === m.toLowerCase();
                           return (
                             <AppButton
                               key={m}
@@ -18645,7 +18631,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               {/* Insured Fleet Summary */}
               {(() => {
                 const coveredVehs = vehicles.filter(
-                  v => v.insurance_vendor_id === viewingVendor.id || (v.insurance_vendor && v.insurance_vendor.toLowerCase() === viewingVendor.name.toLowerCase())
+                  v => v.insurance_vendor_id === viewingVendor.id || (v.insurance_vendor && viewingVendor.name && v.insurance_vendor.toLowerCase() === viewingVendor.name.toLowerCase())
                 );
                 return (
                   <div className="p-4 rounded-xl border border-border bg-surface space-y-2.5">

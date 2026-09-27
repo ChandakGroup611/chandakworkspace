@@ -1,6 +1,5 @@
 import React from "react";
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { getUserAllowedModules } from "@/lib/actions/module-switcher";
 import DesignTrackingHost from "@/components/design/DesignTrackingHost";
@@ -29,18 +28,6 @@ export default async function DesignModulePage({ params }: PageProps) {
 
   if (!hasDesignAccess) {
     redirect("/select-module");
-  }
-
-  // Ensure active_module cookie is set to DESIGN_TRACKING
-  const cookieStore = await cookies();
-  const currentCookie = cookieStore.get("active_module")?.value;
-  if (currentCookie !== "DESIGN_TRACKING") {
-    cookieStore.set("active_module", "DESIGN_TRACKING", {
-      path: "/",
-      maxAge: 60 * 60 * 24 * 30,
-      sameSite: "lax",
-      httpOnly: false
-    });
   }
 
   const resolvedParams = await params;
