@@ -218,12 +218,12 @@ export interface AggregatedVehicleDoc {
   file_name: string;
   file_size?: string | number | null;
   file_type?: string;
-  file_url: string;
+  file_url?: string | null;
   uploaded_at?: string;
   expiry_date?: string | null;
   document_number?: string | null;
   status?: string;
-  sourceModule: "VAULT" | "MASTER" | "SERVICE" | "PART" | "TRIP" | "DRIVER" | string;
+  sourceModule: "VAULT" | "MASTER" | "SERVICE" | "PART" | "TRIP" | "DRIVER" | "REGISTRATION" | "INSURANCE" | "PUC" | string;
   sourceLabel: string;
   isDirectVaultDoc: boolean;
 }
@@ -1045,6 +1045,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   const [editDocExpiry, setEditDocExpiry] = useState<string>("");
   const [isDraggingEditVehicleDoc, setIsDraggingEditVehicleDoc] = useState<boolean>(false);
   const editVehicleDocFileInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Viewing Vehicle Historical Policies & PUC Certificates for complete 360° documents hub
+  const [viewingVehiclePolicies, setViewingVehiclePolicies] = useState<VehicleInsurancePolicyRecord[]>([]);
+  const [viewingVehiclePucs, setViewingVehiclePucs] = useState<VehiclePucCertificateRecord[]>([]);
 
   // Command Palette & Quick Navigation HUD States
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
@@ -2445,10 +2449,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     }
   }, [newVehiclePlate, activeTab]);
 
-  // Auto-fetch documents for viewingVehicle dossier if not already populated
+  // Auto-fetch documents, historical insurance policies, and PUC certificates for viewingVehicle dossier
   useEffect(() => {
-    if (viewingVehicle?.id && (!viewingVehicle.documents || viewingVehicle.documents.length === 0)) {
+    if (viewingVehicle?.id) {
       const vId = viewingVehicle.id;
+      // 1. Fetch vault documents
       fetchVehicleDocumentsAction(vId).then((res) => {
         if (res.success && res.documents && res.documents.length > 0) {
           setViewingVehicle((prev) => (prev && prev.id === vId ? { ...prev, documents: res.documents } : prev));
@@ -2457,8 +2462,450 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           );
         }
       });
+      // 2. Fetch insurance policies (renewals & history)
+      fetchVehicleInsurancePoliciesAction(vId).then((res) => {
+        if (res.success && res.policies) {
+          setViewingVehiclePolicies(res.policies);
+        }
+      });
+      // 3. Fetch PUC certificates (renewals & history)
+      fetchVehiclePucCertificatesAction(vId).then((res) => {
+        if (res.success && res.certificates) {
+          setViewingVehiclePucs(res.certificates);
+        }
+      });
+    } else {
+      setViewingVehiclePolicies([]);
+      setViewingVehiclePucs([]);
     }
   }, [viewingVehicle?.id]);
+
+  /**
+   * Universal 360-Degree Vehicle Document Aggregator
+   * Unifies direct vault uploads, master compliance documents (RC, Insurance, PUC, Fitness, Permit, Tax, Invoices),
+   * workshop maintenance invoices & job card attachments, spare parts warranty cards & purchase bills,
+   * transit trip sheets, toll receipts, fuel slips, chauffeur licenses, and renewed policies history.
+   */
+  const computeVehicleAggregatedDocs = useCallback((
+    veh: VehicleRecord,
+    allMaintenance: MaintenanceRecord[],
+    allParts: PartAccessoryRecord[],
+    allTrips: TripRecord[],
+    allDrivers: DriverRecord[],
+    additionalPolicies: VehicleInsurancePolicyRecord[] = [],
+    additionalPucs: VehiclePucCertificateRecord[] = []
+  ): AggregatedVehicleDoc[] => {
+    const norm = (s?: string | null) => (s || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+    const targetId = veh.id;
+    const targetPlate = norm(veh.registration_number);
+
+    const vServices = allMaintenance.filter(
+      (m) => (m.vehicle_id && m.vehicle_id === targetId) || (m.vehicle_reg && norm(m.vehicle_reg) === targetPlate)
+    ).sort((a, b) => new Date(b.service_date).getTime() - new Date(a.service_date).getTime());
+
+    const vParts = allParts.filter(
+      (p) => (p.vehicle_id && p.vehicle_id === targetId) || (p.assigned_vehicle_reg && norm(p.assigned_vehicle_reg) === targetPlate)
+    );
+
+    const vTrips = allTrips.filter(
+      (t) => (t.vehicle_id && t.vehicle_id === targetId) || (t.vehicle_reg && norm(t.vehicle_reg) === targetPlate)
+    ).sort((a, b) => new Date(b.plan_date || b.created_at || "").getTime() - new Date(a.plan_date || a.created_at || "").getTime());
+
+    const assignedDriver: any = allDrivers.find((d: any) => d.id === veh.assigned_driver_id || (veh.assignedDriver && d.id === veh.assignedDriver.id)) || veh.assignedDriver;
+
+    const docs: AggregatedVehicleDoc[] = [];
+    const existingKeys = new Set<string>();
+
+    const pushDoc = (doc: AggregatedVehicleDoc) => {
+      const key = doc.file_url ? `url:${doc.file_url}` : `type:${doc.doc_type}:${doc.document_number || doc.title}`;
+      if (existingKeys.has(key)) return;
+      existingKeys.add(key);
+      docs.push(doc);
+    };
+
+    // 1. Direct Vault Documents
+    (veh.documents || []).forEach((d) => {
+      pushDoc({
+        id: d.id,
+        doc_type: d.doc_type || "OTHER",
+        categoryLabel: VEHICLE_DOC_TYPES.find((t) => t.value === d.doc_type)?.label || d.doc_type || "Vault Document",
+        title: d.title || d.file_name || "Vehicle Document",
+        file_name: d.file_name || "document.pdf",
+        file_size: d.file_size || null,
+        file_type: d.file_type || resolveMimeFromName(d.file_name || ""),
+        file_url: d.file_url,
+        uploaded_at: d.uploaded_at || veh.created_at,
+        expiry_date: d.expiry_date || null,
+        document_number: d.document_number || null,
+        status: d.status || "VALID",
+        sourceModule: "VAULT",
+        sourceLabel: "Vehicle Document Vault",
+        isDirectVaultDoc: true
+      });
+    });
+
+    // 2. RC Smart Card & Vehicle Identity
+    pushDoc({
+      id: `master-doc-rc-${targetId}`,
+      doc_type: "RC",
+      categoryLabel: "RC Smart Card",
+      title: `RC Smart Card (${veh.registration_number})`,
+      file_name: `RC_${targetPlate}.pdf`,
+      file_size: "Official Certificate",
+      file_type: "application/pdf",
+      file_url: (veh as any).rc_doc_url || (veh as any).rc_document_url || null,
+      uploaded_at: veh.registration_date || veh.created_at,
+      expiry_date: null,
+      document_number: veh.vin_chassis_number || veh.registration_number,
+      status: "VALID",
+      sourceModule: "MASTER",
+      sourceLabel: `RTO Transport Registry (${veh.rto_office || "State RTO"})`,
+      isDirectVaultDoc: false
+    });
+
+    // 3. Insurance Policies (Master + Historical Policies)
+    if (veh.insurance_policy_number || (veh as any).insurance_doc_url || (veh as any).policy_document_url || veh.insurance_expiry_date) {
+      pushDoc({
+        id: `master-doc-ins-${targetId}`,
+        doc_type: "INSURANCE",
+        categoryLabel: "Motor Insurance Policy",
+        title: `Insurance Policy: ${veh.insurance_vendor || "Comprehensive"} (${veh.insurance_policy_number || targetPlate})`,
+        file_name: `Insurance_${targetPlate}.pdf`,
+        file_size: "Policy Document",
+        file_type: "application/pdf",
+        file_url: (veh as any).insurance_doc_url || (veh as any).policy_document_url || null,
+        uploaded_at: veh.registration_date || veh.created_at,
+        expiry_date: veh.insurance_expiry_date || null,
+        document_number: veh.insurance_policy_number || null,
+        status: "VALID",
+        sourceModule: "INSURANCE",
+        sourceLabel: `Insurance Policy (${veh.insurance_vendor || "Authorized Provider"})`,
+        isDirectVaultDoc: false
+      });
+    }
+
+    additionalPolicies.forEach((pol) => {
+      pushDoc({
+        id: `ins-pol-${pol.id}`,
+        doc_type: "INSURANCE",
+        categoryLabel: "Insurance Renewal Policy & Bill",
+        title: `Insurance Renewal: ${pol.insurer_name} (₹${(Number(pol.premium_amount) || 0).toLocaleString()} Premium)`,
+        file_name: `Insurance_Policy_${pol.policy_number}.pdf`,
+        file_size: "Renewal Bill",
+        file_type: "application/pdf",
+        file_url: pol.policy_document_url || (pol as any).document_url || null,
+        uploaded_at: pol.start_date || pol.created_at,
+        expiry_date: pol.end_date || null,
+        document_number: pol.policy_number || null,
+        status: pol.is_active ? "VALID" : "EXPIRED",
+        sourceModule: "INSURANCE",
+        sourceLabel: `Policy Term (${pol.start_date} → ${pol.end_date})`,
+        isDirectVaultDoc: false
+      });
+    });
+
+    // 4. PUC Emission Certificates (Master + Historical Certificates)
+    if (veh.puc_certificate_number || (veh as any).puc_doc_url || (veh as any).certificate_doc_url || veh.puc_expiry_date) {
+      pushDoc({
+        id: `master-doc-puc-${targetId}`,
+        doc_type: "PUC",
+        categoryLabel: "PUC Certificate",
+        title: `PUC Certificate (${veh.puc_certificate_number || targetPlate})`,
+        file_name: `PUC_${targetPlate}.pdf`,
+        file_size: "Emission Certificate",
+        file_type: "application/pdf",
+        file_url: (veh as any).puc_doc_url || (veh as any).certificate_doc_url || null,
+        uploaded_at: veh.registration_date || veh.created_at,
+        expiry_date: veh.puc_expiry_date || null,
+        document_number: veh.puc_certificate_number || null,
+        status: "VALID",
+        sourceModule: "PUC",
+        sourceLabel: `Emission Clearance (${veh.puc_expiry_date ? "Valid upto " + veh.puc_expiry_date : "RTO Approved"})`,
+        isDirectVaultDoc: false
+      });
+    }
+
+    additionalPucs.forEach((puc) => {
+      pushDoc({
+        id: `puc-test-${puc.id}`,
+        doc_type: "PUC",
+        categoryLabel: "PUC Renewal & Test Bill",
+        title: `PUC Certificate: ${puc.certificate_number} (${puc.testing_center_name || "Emission Center"})`,
+        file_name: `PUC_Certificate_${puc.certificate_number}.pdf`,
+        file_size: "Emission Slip",
+        file_type: "application/pdf",
+        file_url: puc.document_url || null,
+        uploaded_at: puc.valid_from || puc.created_at,
+        expiry_date: puc.valid_upto || null,
+        document_number: puc.certificate_number || null,
+        status: puc.is_active ? "VALID" : "EXPIRED",
+        sourceModule: "PUC",
+        sourceLabel: `Test Center (${puc.testing_center_name || "Authorized"} • ${puc.emission_norm || "BS-VI"})`,
+        isDirectVaultDoc: false
+      });
+    });
+
+    // 5. Workshop Services & Maintenance Bills
+    vServices.forEach((m: any) => {
+      const sCenter = m.service_center || "Authorized Workshop";
+      const sDate = m.service_date ? new Date(m.service_date).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" }) : "";
+      const jobNum = m.job_card_number || `JOB-${m.id.slice(0, 8).toUpperCase()}`;
+
+      pushDoc({
+        id: `svc-job-${m.id}`,
+        doc_type: "MAINTENANCE",
+        categoryLabel: "Workshop Service Bill",
+        title: `Service Bill: ${m.service_type || "Periodic Inspection"} (${sCenter} • ₹${(Number(m.cost) || 0).toLocaleString()})`,
+        file_name: `Service_Bill_${jobNum}.pdf`,
+        file_size: `₹${(Number(m.cost) || 0).toLocaleString()}`,
+        file_type: "application/pdf",
+        file_url: m.invoice_url || null,
+        uploaded_at: m.service_date || m.created_at,
+        expiry_date: null,
+        document_number: jobNum,
+        status: "VALID",
+        sourceModule: "SERVICE",
+        sourceLabel: `Service Event (${sCenter} • ${sDate})`,
+        isDirectVaultDoc: false
+      });
+
+      if (m.attachments && Array.isArray(m.attachments)) {
+        m.attachments.forEach((att: any, attIdx: number) => {
+          if (att.file_url) {
+            pushDoc({
+              id: `svc-att-${m.id}-${att.id || attIdx}`,
+              doc_type: "MAINTENANCE",
+              categoryLabel: "Job Card Attachment",
+              title: `${att.file_name || "Job Card Scan"} - ${sCenter}`,
+              file_name: att.file_name || "service_document.pdf",
+              file_size: att.file_size || null,
+              file_type: att.file_type || resolveMimeFromName(att.file_name || ""),
+              file_url: att.file_url,
+              uploaded_at: att.uploaded_at || m.service_date,
+              expiry_date: null,
+              document_number: jobNum,
+              status: "VALID",
+              sourceModule: "SERVICE",
+              sourceLabel: `Attachment (${sCenter} • ${sDate})`,
+              isDirectVaultDoc: false
+            });
+          }
+        });
+      }
+    });
+
+    // 6. Installed Spare Parts Warranties & Bills
+    vParts.forEach((p: any) => {
+      const pNum = p.part_number || `PART-${p.id.slice(0, 6).toUpperCase()}`;
+      const pDocUrl = p.warranty_policy_doc_url || p.invoice_url || p.document_url || null;
+
+      pushDoc({
+        id: `part-doc-${p.id}`,
+        doc_type: "PART",
+        categoryLabel: "Part Warranty & Bill",
+        title: `Part Warranty & Bill: ${p.name} (${pNum})`,
+        file_name: `Part_Warranty_${pNum}.pdf`,
+        file_size: `₹${(Number(p.purchase_amount) || 0).toLocaleString()}`,
+        file_type: "application/pdf",
+        file_url: pDocUrl,
+        uploaded_at: p.created_at,
+        expiry_date: p.warranty_expiry_date || null,
+        document_number: pNum,
+        status: "VALID",
+        sourceModule: "PART",
+        sourceLabel: `Mounted Part (${p.name} • ₹${(Number(p.purchase_amount) || 0).toLocaleString()})`,
+        isDirectVaultDoc: false
+      });
+    });
+
+    // 7. Trips Sheets, Toll Slips & Fuel Bills
+    vTrips.forEach((t: any) => {
+      const routeStr = `${t.origin} → ${t.destination}`;
+      const tripNum = `TRIP-${t.id.slice(0, 8).toUpperCase()}`;
+
+      pushDoc({
+        id: `trip-sheet-${t.id}`,
+        doc_type: "TRIP",
+        categoryLabel: "Trip Sheet Voucher",
+        title: `Trip Movement Sheet: ${t.traveler_name || "Corporate"} (${routeStr})`,
+        file_name: `Trip_Sheet_${tripNum}.pdf`,
+        file_size: "Movement Voucher",
+        file_type: "application/pdf",
+        file_url: t.trip_sheet_url || null,
+        uploaded_at: t.plan_date || t.created_at,
+        expiry_date: null,
+        document_number: tripNum,
+        status: "VALID",
+        sourceModule: "TRIP",
+        sourceLabel: `Transit Route (${routeStr})`,
+        isDirectVaultDoc: false
+      });
+
+      if (t.toll_receipt_url) {
+        pushDoc({
+          id: `trip-toll-${t.id}`,
+          doc_type: "TRIP",
+          categoryLabel: "Toll / Fastag Slip",
+          title: `Toll Receipt: ${t.traveler_name || "Chauffeur"} (${routeStr})`,
+          file_name: `Toll_Slip_${tripNum}.pdf`,
+          file_size: "Receipt Slip",
+          file_type: "application/pdf",
+          file_url: t.toll_receipt_url,
+          uploaded_at: t.plan_date || t.created_at,
+          expiry_date: null,
+          document_number: tripNum,
+          status: "VALID",
+          sourceModule: "TRIP",
+          sourceLabel: `Toll Expense (${routeStr})`,
+          isDirectVaultDoc: false
+        });
+      }
+
+      if (t.fuel_receipt_url) {
+        pushDoc({
+          id: `trip-fuel-${t.id}`,
+          doc_type: "TRIP",
+          categoryLabel: "Fuel Pump Slip",
+          title: `Fuel Card / Pump Bill: ${t.traveler_name || targetPlate}`,
+          file_name: `Fuel_Bill_${tripNum}.pdf`,
+          file_size: "Fuel Slip",
+          file_type: "application/pdf",
+          file_url: t.fuel_receipt_url,
+          uploaded_at: t.plan_date || t.created_at,
+          expiry_date: null,
+          document_number: tripNum,
+          status: "VALID",
+          sourceModule: "TRIP",
+          sourceLabel: `Fuel Expense (${routeStr})`,
+          isDirectVaultDoc: false
+        });
+      }
+    });
+
+    // 8. Chauffeur ID & License
+    if (assignedDriver) {
+      pushDoc({
+        id: `drv-lic-${assignedDriver.id}`,
+        doc_type: "DRIVER",
+        categoryLabel: "Chauffeur Driving License",
+        title: `Driving License: ${assignedDriver.full_name} (${assignedDriver.license_number || "Driver"})`,
+        file_name: `License_${(assignedDriver.full_name || "driver").replace(/\s+/g, "_")}.pdf`,
+        file_size: "License Document",
+        file_type: "application/pdf",
+        file_url: assignedDriver.license_doc_url || null,
+        uploaded_at: assignedDriver.created_at,
+        expiry_date: assignedDriver.license_expiry_date || null,
+        document_number: assignedDriver.license_number || null,
+        status: "VALID",
+        sourceModule: "DRIVER",
+        sourceLabel: `Assigned Chauffeur (${assignedDriver.full_name})`,
+        isDirectVaultDoc: false
+      });
+
+      if (assignedDriver.identity_doc_url) {
+        pushDoc({
+          id: `drv-id-${assignedDriver.id}`,
+          doc_type: "DRIVER",
+          categoryLabel: "Chauffeur Identity Proof",
+          title: `Chauffeur Identity Card: ${assignedDriver.full_name}`,
+          file_name: `Identity_${(assignedDriver.full_name || "driver").replace(/\s+/g, "_")}.pdf`,
+          file_size: "Identity Proof",
+          file_type: "application/pdf",
+          file_url: assignedDriver.identity_doc_url,
+          uploaded_at: assignedDriver.created_at,
+          expiry_date: null,
+          document_number: null,
+          status: "VALID",
+          sourceModule: "DRIVER",
+          sourceLabel: `Identity Verification (${assignedDriver.full_name})`,
+          isDirectVaultDoc: false
+        });
+      }
+    }
+
+    // 9. Fitness, Commercial Permit, Road Tax, Purchase Invoice
+    if (veh.fitness_expiry_date || (veh as any).fitness_doc_url) {
+      pushDoc({
+        id: `master-doc-fitness-${targetId}`,
+        doc_type: "FITNESS",
+        categoryLabel: "Fitness Certificate",
+        title: `Transport Fitness Certificate (${targetPlate})`,
+        file_name: `Fitness_${targetPlate}.pdf`,
+        file_size: "Fitness Certificate",
+        file_type: "application/pdf",
+        file_url: (veh as any).fitness_doc_url || null,
+        uploaded_at: veh.registration_date || veh.created_at,
+        expiry_date: veh.fitness_expiry_date || null,
+        document_number: null,
+        status: "VALID",
+        sourceModule: "MASTER",
+        sourceLabel: `Commercial Transport Fitness`,
+        isDirectVaultDoc: false
+      });
+    }
+
+    if ((veh as any).permit_doc_url) {
+      pushDoc({
+        id: `master-doc-permit-${targetId}`,
+        doc_type: "PERMIT",
+        categoryLabel: "Commercial Permit",
+        title: `Commercial Tourist Permit (${targetPlate})`,
+        file_name: `Permit_${targetPlate}.pdf`,
+        file_size: "Tourist Permit",
+        file_type: "application/pdf",
+        file_url: (veh as any).permit_doc_url,
+        uploaded_at: veh.registration_date || veh.created_at,
+        expiry_date: null,
+        document_number: null,
+        status: "VALID",
+        sourceModule: "MASTER",
+        sourceLabel: `Commercial RTO Permit`,
+        isDirectVaultDoc: false
+      });
+    }
+
+    if ((veh as any).road_tax_doc_url) {
+      pushDoc({
+        id: `master-doc-roadtax-${targetId}`,
+        doc_type: "ROAD_TAX",
+        categoryLabel: "Road Tax Receipt",
+        title: `Motor Vehicle Road Tax Payment Receipt (${targetPlate})`,
+        file_name: `Road_Tax_${targetPlate}.pdf`,
+        file_size: "Tax Receipt",
+        file_type: "application/pdf",
+        file_url: (veh as any).road_tax_doc_url,
+        uploaded_at: veh.registration_date || veh.created_at,
+        expiry_date: null,
+        document_number: null,
+        status: "VALID",
+        sourceModule: "MASTER",
+        sourceLabel: `State Motor Vehicle Tax`,
+        isDirectVaultDoc: false
+      });
+    }
+
+    if ((veh as any).invoice_doc_url || veh.purchase_cost || veh.purchase_price) {
+      pushDoc({
+        id: `master-doc-invoice-${targetId}`,
+        doc_type: "INVOICE",
+        categoryLabel: "Purchase Invoice & Challan",
+        title: `Purchase Invoice & Delivery Challan (${targetPlate})`,
+        file_name: `Invoice_${targetPlate}.pdf`,
+        file_size: `₹${(Number(veh.purchase_cost || veh.purchase_price || 0)).toLocaleString()}`,
+        file_type: "application/pdf",
+        file_url: (veh as any).invoice_doc_url || null,
+        uploaded_at: veh.registration_date || veh.created_at,
+        expiry_date: null,
+        document_number: veh.vin_chassis_number || null,
+        status: "VALID",
+        sourceModule: "MASTER",
+        sourceLabel: `OEM Acquisition (₹${(Number(veh.purchase_cost || veh.purchase_price || 0)).toLocaleString()})`,
+        isDirectVaultDoc: false
+      });
+    }
+
+    return docs;
+  }, []);
 
   // Vehicle Dossier Computed Statistics and Subsystem Entities
   const dossierData = useMemo(() => {
@@ -2521,258 +2968,16 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     const completedTripsCount = vTrips.filter((t) => t.status === "COMPLETED").length;
     const activeTripsCount = vTrips.filter((t) => t.status === "ON_ROUTE" || t.status === "SCHEDULED").length;
 
-    // 4. Unified All-Module Vehicle Documents & Compliance Aggregation
-    const rawVaultDocs: AggregatedVehicleDoc[] = (viewingVehicle.documents || []).map((d) => ({
-      id: d.id,
-      doc_type: d.doc_type || "OTHER",
-      categoryLabel: VEHICLE_DOC_TYPES.find((t) => t.value === d.doc_type)?.label || d.doc_type || "Vault Document",
-      title: d.title || d.file_name || "Vehicle Document",
-      file_name: d.file_name || "document.pdf",
-      file_size: d.file_size || null,
-      file_type: d.file_type || resolveMimeFromName(d.file_name || ""),
-      file_url: d.file_url,
-      uploaded_at: d.uploaded_at || viewingVehicle.created_at,
-      expiry_date: d.expiry_date || null,
-      document_number: d.document_number || null,
-      status: d.status || "VALID",
-      sourceModule: "VAULT",
-      sourceLabel: "Vehicle Document Vault",
-      isDirectVaultDoc: true
-    }));
-
-    // Direct Vehicle Master document attachments (e.g. uploaded during vehicle registration/RTO sync)
-    const masterDocs: AggregatedVehicleDoc[] = [];
-    const existingUrls = new Set(rawVaultDocs.map(d => d.file_url).filter(Boolean));
-
-    const checkAndPushMaster = (url?: string | null, docType = "OTHER", title = "Vehicle Master Document", docNumber?: string | null, expDate?: string | null, defaultFileName = "document.pdf") => {
-      if (!url || existingUrls.has(url)) return;
-      existingUrls.add(url);
-      masterDocs.push({
-        id: `master-doc-${docType.toLowerCase()}-${targetId}`,
-        doc_type: docType,
-        categoryLabel: VEHICLE_DOC_TYPES.find((t) => t.value === docType)?.label || docType,
-        title,
-        file_name: defaultFileName,
-        file_size: "Standard Archive",
-        file_type: resolveMimeFromName(defaultFileName),
-        file_url: url,
-        uploaded_at: viewingVehicle.registration_date || viewingVehicle.created_at,
-        expiry_date: expDate || null,
-        document_number: docNumber || null,
-        status: "VALID",
-        sourceModule: "MASTER",
-        sourceLabel: "Vehicle Master Registry",
-        isDirectVaultDoc: false
-      });
-    };
-
-    checkAndPushMaster((viewingVehicle as any).rc_doc_url || (viewingVehicle as any).rc_document_url, "RC", `RC Smart Card (${viewingVehicle.registration_number})`, viewingVehicle.vin_chassis_number, null, `RC_${targetPlate}.pdf`);
-    checkAndPushMaster((viewingVehicle as any).insurance_doc_url || (viewingVehicle as any).policy_document_url, "INSURANCE", `Insurance Policy (${viewingVehicle.insurance_policy_number || targetPlate})`, viewingVehicle.insurance_policy_number, viewingVehicle.insurance_expiry_date, `Insurance_${targetPlate}.pdf`);
-    checkAndPushMaster((viewingVehicle as any).puc_doc_url || (viewingVehicle as any).certificate_doc_url, "PUC", `PUC Certificate (${viewingVehicle.puc_certificate_number || targetPlate})`, viewingVehicle.puc_certificate_number, viewingVehicle.puc_expiry_date, `PUC_${targetPlate}.pdf`);
-    checkAndPushMaster((viewingVehicle as any).fitness_doc_url, "FITNESS", `Transport Fitness Certificate (${targetPlate})`, null, viewingVehicle.fitness_expiry_date, `Fitness_${targetPlate}.pdf`);
-    checkAndPushMaster((viewingVehicle as any).permit_doc_url, "PERMIT", `Commercial Tourist Permit (${targetPlate})`, null, null, `Permit_${targetPlate}.pdf`);
-    checkAndPushMaster((viewingVehicle as any).road_tax_doc_url, "ROAD_TAX", `Motor Vehicle Road Tax Receipt`, null, null, `Road_Tax_${targetPlate}.pdf`);
-    checkAndPushMaster((viewingVehicle as any).invoice_doc_url, "INVOICE", `Purchase Invoice & Delivery Challan`, null, null, `Invoice_${targetPlate}.pdf`);
-
-    // Workshop Maintenance Invoices & Job Card Bills
-    const serviceDocs: AggregatedVehicleDoc[] = [];
-    vServices.forEach((m: any) => {
-      const sCenter = m.service_center || "Authorized Workshop";
-      const sDate = m.service_date ? new Date(m.service_date).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" }) : "";
-      
-      if (m.invoice_url && !existingUrls.has(m.invoice_url)) {
-        existingUrls.add(m.invoice_url);
-        serviceDocs.push({
-          id: `svc-inv-${m.id}`,
-          doc_type: "MAINTENANCE",
-          categoryLabel: "Workshop Service Invoice",
-          title: `Service Bill: ${sCenter} (₹${(Number(m.cost) || 0).toLocaleString()})`,
-          file_name: `Service_Bill_${m.job_card_number || m.id.slice(0, 8)}.pdf`,
-          file_size: null,
-          file_type: "application/pdf",
-          file_url: m.invoice_url,
-          uploaded_at: m.service_date || m.created_at,
-          expiry_date: null,
-          document_number: m.job_card_number || m.invoice_number || null,
-          status: "VALID",
-          sourceModule: "SERVICE",
-          sourceLabel: `Service Event (${sCenter} • ${sDate})`,
-          isDirectVaultDoc: false
-        });
-      }
-
-      if (m.attachments && Array.isArray(m.attachments)) {
-        m.attachments.forEach((att: any, attIdx: number) => {
-          if (att.file_url && !existingUrls.has(att.file_url)) {
-            existingUrls.add(att.file_url);
-            serviceDocs.push({
-              id: `svc-att-${m.id}-${att.id || attIdx}`,
-              doc_type: "MAINTENANCE",
-              categoryLabel: "Workshop Job Card Attachment",
-              title: `${att.file_name || "Job Card Scan"} - ${sCenter}`,
-              file_name: att.file_name || "service_document.pdf",
-              file_size: att.file_size || null,
-              file_type: att.file_type || resolveMimeFromName(att.file_name || ""),
-              file_url: att.file_url,
-              uploaded_at: att.uploaded_at || m.service_date,
-              expiry_date: null,
-              document_number: m.job_card_number || null,
-              status: "VALID",
-              sourceModule: "SERVICE",
-              sourceLabel: `Job Card Attachment (${sCenter} • ${sDate})`,
-              isDirectVaultDoc: false
-            });
-          }
-        });
-      }
-    });
-
-    // Installed Parts Invoices & Warranty Documents
-    const partDocs: AggregatedVehicleDoc[] = [];
-    vParts.forEach((p: any) => {
-      const pDocUrl = p.warranty_policy_doc_url || p.invoice_url || p.document_url;
-      if (pDocUrl && !existingUrls.has(pDocUrl)) {
-        existingUrls.add(pDocUrl);
-        partDocs.push({
-          id: `part-doc-${p.id}`,
-          doc_type: "PART",
-          categoryLabel: "Part Warranty Card & Bill",
-          title: `Warranty & Bill: ${p.name} (${p.part_number || "Part"})`,
-          file_name: `Part_Warranty_${p.part_number || p.name.replace(/\s+/g, "_")}.pdf`,
-          file_size: null,
-          file_type: "application/pdf",
-          file_url: pDocUrl,
-          uploaded_at: p.created_at,
-          expiry_date: p.warranty_expiry_date || null,
-          document_number: p.part_number || null,
-          status: "VALID",
-          sourceModule: "PART",
-          sourceLabel: `Mounted Part (${p.name})`,
-          isDirectVaultDoc: false
-        });
-      }
-    });
-
-    // Trip Sheets, Toll Slips & Fuel Receipts
-    const tripDocs: AggregatedVehicleDoc[] = [];
-    vTrips.forEach((t: any) => {
-      const routeStr = `${t.origin} → ${t.destination}`;
-      if (t.trip_sheet_url && !existingUrls.has(t.trip_sheet_url)) {
-        existingUrls.add(t.trip_sheet_url);
-        tripDocs.push({
-          id: `trip-sheet-${t.id}`,
-          doc_type: "TRIP",
-          categoryLabel: "Transit Trip Sheet",
-          title: `Trip Sheet: ${t.traveler_name || "Employee"} (${routeStr})`,
-          file_name: `Trip_Sheet_${t.id.slice(0, 8)}.pdf`,
-          file_size: null,
-          file_type: "application/pdf",
-          file_url: t.trip_sheet_url,
-          uploaded_at: t.plan_date || t.created_at,
-          expiry_date: null,
-          document_number: t.id.slice(0, 8),
-          status: "VALID",
-          sourceModule: "TRIP",
-          sourceLabel: `Transit Route (${routeStr})`,
-          isDirectVaultDoc: false
-        });
-      }
-      if (t.toll_receipt_url && !existingUrls.has(t.toll_receipt_url)) {
-        existingUrls.add(t.toll_receipt_url);
-        tripDocs.push({
-          id: `trip-toll-${t.id}`,
-          doc_type: "TRIP",
-          categoryLabel: "Toll / Fastag Receipt",
-          title: `Toll Slip: ${t.traveler_name || "Chauffeur"} (${routeStr})`,
-          file_name: `Toll_Slip_${t.id.slice(0, 8)}.pdf`,
-          file_size: null,
-          file_type: "application/pdf",
-          file_url: t.toll_receipt_url,
-          uploaded_at: t.plan_date || t.created_at,
-          expiry_date: null,
-          document_number: null,
-          status: "VALID",
-          sourceModule: "TRIP",
-          sourceLabel: `Toll Expense (${routeStr})`,
-          isDirectVaultDoc: false
-        });
-      }
-      if (t.fuel_receipt_url && !existingUrls.has(t.fuel_receipt_url)) {
-        existingUrls.add(t.fuel_receipt_url);
-        tripDocs.push({
-          id: `trip-fuel-${t.id}`,
-          doc_type: "TRIP",
-          categoryLabel: "Fuel Pump Slip",
-          title: `Fuel Card / Pump Bill: ${t.traveler_name || targetPlate}`,
-          file_name: `Fuel_Bill_${t.id.slice(0, 8)}.pdf`,
-          file_size: null,
-          file_type: "application/pdf",
-          file_url: t.fuel_receipt_url,
-          uploaded_at: t.plan_date || t.created_at,
-          expiry_date: null,
-          document_number: null,
-          status: "VALID",
-          sourceModule: "TRIP",
-          sourceLabel: `Fuel Slip (${routeStr})`,
-          isDirectVaultDoc: false
-        });
-      }
-    });
-
-    // Assigned Driver Documents & Badges
-    const driverDocs: AggregatedVehicleDoc[] = [];
-    const assignedDriver: any = drivers.find((d: any) => d.id === viewingVehicle.assigned_driver_id || (viewingVehicle.assignedDriver && d.id === viewingVehicle.assignedDriver.id)) || viewingVehicle.assignedDriver;
-    if (assignedDriver) {
-      if (assignedDriver.license_doc_url && !existingUrls.has(assignedDriver.license_doc_url)) {
-        existingUrls.add(assignedDriver.license_doc_url);
-        driverDocs.push({
-          id: `drv-lic-${assignedDriver.id}`,
-          doc_type: "DRIVER",
-          categoryLabel: "Chauffeur Driving License",
-          title: `Driving License: ${assignedDriver.full_name} (${assignedDriver.license_number || ""})`,
-          file_name: `License_${(assignedDriver.full_name || "driver").replace(/\s+/g, "_")}.pdf`,
-          file_size: null,
-          file_type: "application/pdf",
-          file_url: assignedDriver.license_doc_url,
-          uploaded_at: assignedDriver.created_at,
-          expiry_date: assignedDriver.license_expiry_date || null,
-          document_number: assignedDriver.license_number || null,
-          status: "VALID",
-          sourceModule: "DRIVER",
-          sourceLabel: `Assigned Chauffeur (${assignedDriver.full_name})`,
-          isDirectVaultDoc: false
-        });
-      }
-      if (assignedDriver.identity_doc_url && !existingUrls.has(assignedDriver.identity_doc_url)) {
-        existingUrls.add(assignedDriver.identity_doc_url);
-        driverDocs.push({
-          id: `drv-id-${assignedDriver.id}`,
-          doc_type: "DRIVER",
-          categoryLabel: "Chauffeur Identity / Aadhaar",
-          title: `Chauffeur Identity Proof: ${assignedDriver.full_name}`,
-          file_name: `Identity_${(assignedDriver.full_name || "driver").replace(/\s+/g, "_")}.pdf`,
-          file_size: null,
-          file_type: "application/pdf",
-          file_url: assignedDriver.identity_doc_url,
-          uploaded_at: assignedDriver.created_at,
-          expiry_date: null,
-          document_number: null,
-          status: "VALID",
-          sourceModule: "DRIVER",
-          sourceLabel: `Assigned Chauffeur (${assignedDriver.full_name})`,
-          isDirectVaultDoc: false
-        });
-      }
-    }
-
-    const allAggregatedDocs: AggregatedVehicleDoc[] = [
-      ...rawVaultDocs,
-      ...masterDocs,
-      ...serviceDocs,
-      ...partDocs,
-      ...tripDocs,
-      ...driverDocs
-    ];
+    // 4. Unified 360° All-Module Vehicle Documents & Compliance Aggregation
+    const allAggregatedDocs = computeVehicleAggregatedDocs(
+      viewingVehicle,
+      maintenance,
+      parts,
+      trips,
+      drivers,
+      viewingVehiclePolicies,
+      viewingVehiclePucs
+    );
 
     const expiredDocsCount = allAggregatedDocs.filter((d) => {
       if (!d.expiry_date) return false;
@@ -2804,7 +3009,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       hasFitness,
       hasPermit
     };
-  }, [viewingVehicle, maintenance, parts, trips, drivers]);
+  }, [viewingVehicle, maintenance, parts, trips, drivers, viewingVehiclePolicies, viewingVehiclePucs, computeVehicleAggregatedDocs]);
 
   const handleDossierDirectDocUpload = async (fileList: FileList | File[]) => {
     if (!viewingVehicle) return;
@@ -8435,7 +8640,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           (p.vehicle_id && p.vehicle_id === targetId) ||
                           (p.assigned_vehicle_reg && norm(p.assigned_vehicle_reg) === targetPlate)
                       );
-                      const vDocs = veh.documents || [];
+                      const vDocs = computeVehicleAggregatedDocs(veh, maintenance, parts, trips, drivers);
 
                       return (
                         <AppTableRow 
@@ -8462,18 +8667,45 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             </div>
                             {showInventoryRelations && (
                               <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                                <span className="inline-flex items-center gap-1 text-xs font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded border border-amber-500/20" title="Logged Workshop Services">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setViewingVehicle(veh);
+                                    setVehicleDossierTab("SERVICES");
+                                  }}
+                                  className="inline-flex items-center gap-1 text-xs font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded border border-amber-500/20 hover:bg-amber-500/20 transition-colors cursor-pointer"
+                                  title="View Logged Workshop Services"
+                                >
                                   <Wrench className="h-3 w-3 text-amber-500" />
                                   <span>{vServices.length} Svc</span>
-                                </span>
-                                <span className="inline-flex items-center gap-1 text-xs font-semibold bg-blue-500/10 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded border border-blue-500/20" title="Mounted Spare Parts">
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setViewingVehicle(veh);
+                                    setVehicleDossierTab("PARTS");
+                                  }}
+                                  className="inline-flex items-center gap-1 text-xs font-semibold bg-blue-500/10 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded border border-blue-500/20 hover:bg-blue-500/20 transition-colors cursor-pointer"
+                                  title="View Mounted Spare Parts"
+                                >
                                   <Package className="h-3 w-3 text-blue-500" />
                                   <span>{vParts.length} Parts</span>
-                                </span>
-                                <span className="inline-flex items-center gap-1 text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20" title="Archived Documents">
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setViewingVehicle(veh);
+                                    setVehicleDossierTab("DOCS");
+                                  }}
+                                  className="inline-flex items-center gap-1 text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors cursor-pointer"
+                                  title="Open 360° Archived Documents Vault (RC, Insurance, PUC, Service Bills, Parts, Renewals)"
+                                >
                                   <FileCheck className="h-3 w-3 text-emerald-500" />
                                   <span>{vDocs.length} Docs</span>
-                                </span>
+                                </button>
                               </div>
                             )}
                           </AppTableCell>
@@ -8634,6 +8866,20 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                               >
                                 <RotateCcw className="h-3 w-3" />
                                 <span>Renew</span>
+                              </AppButton>
+                              <AppButton
+                                variant="outline"
+                                size="sm"
+                                title="Open 360° Documents Vault & Compliance"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setViewingVehicle(veh);
+                                  setVehicleDossierTab("DOCS");
+                                }}
+                                className="h-7 px-2 text-xs gap-1 font-semibold text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 shadow-2xs"
+                              >
+                                <FileCheck className="h-3 w-3" />
+                                <span>Docs</span>
                               </AppButton>
                               <AppButton
                                 variant="outline"
@@ -18009,9 +18255,20 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           <div className="space-y-2">
                             {/* Header Category & Origin Source Pill */}
                             <div className="flex items-center justify-between gap-2 flex-wrap">
-                              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${typeConfig.badgeColor}`}>
-                                {doc.categoryLabel || typeConfig.label}
-                              </span>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${typeConfig.badgeColor}`}>
+                                  {doc.categoryLabel || typeConfig.label}
+                                </span>
+                                {doc.file_url ? (
+                                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25">
+                                    Archived File
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/25">
+                                    Digital Record
+                                  </span>
+                                )}
+                              </div>
                               {doc.sourceLabel && (
                                 <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-border truncate max-w-[170px]" title={doc.sourceLabel}>
                                   {doc.sourceLabel}
@@ -18047,7 +18304,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           </div>
 
                           {/* Expiry Pill & Actions */}
-                          <div className="pt-2 border-t border-border flex items-center justify-between text-xs">
+                          <div className="pt-2 border-t border-border flex items-center justify-between text-xs gap-2">
                             <div>
                               {doc.expiry_date ? (
                                 daysRemaining !== null && daysRemaining < 0 ? (
@@ -18069,37 +18326,62 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             </div>
 
                             <div className="flex items-center gap-1 shrink-0">
-                              <AppButton
-                                type="button"
-                                variant="outline"
-                                size="icon-sm"
-                                onClick={() => {
-                                  setPreviewAttachment({
-                                    id: doc.id,
-                                    file_name: doc.file_name,
-                                    file_size: doc.file_size || "0 B",
-                                    file_type: doc.file_type || resolveMimeFromName(doc.file_name),
-                                    file_url: doc.file_url,
-                                    uploaded_at: doc.uploaded_at
-                                  });
-                                  setPreviewZoom(1);
-                                  setPreviewRotation(0);
-                                }}
-                                className="h-7 w-7 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
-                                title="View / Preview Document"
-                              >
-                                <Eye className="h-3.5 w-3.5" />
-                              </AppButton>
-                              <AppButton
-                                type="button"
-                                variant="outline"
-                                size="icon-sm"
-                                onClick={() => downloadAttachment(doc)}
-                                className="h-7 w-7 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
-                                title="Download Document"
-                              >
-                                <Download className="h-3.5 w-3.5" />
-                              </AppButton>
+                              {doc.file_url ? (
+                                <>
+                                  <AppButton
+                                    type="button"
+                                    variant="outline"
+                                    size="icon-sm"
+                                    onClick={() => {
+                                      setPreviewAttachment({
+                                        id: doc.id,
+                                        file_name: doc.file_name,
+                                        file_size: doc.file_size || "0 B",
+                                        file_type: doc.file_type || resolveMimeFromName(doc.file_name),
+                                        file_url: doc.file_url!,
+                                        uploaded_at: doc.uploaded_at
+                                      });
+                                      setPreviewZoom(1);
+                                      setPreviewRotation(0);
+                                    }}
+                                    className="h-7 w-7 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
+                                    title="View / Preview Document"
+                                  >
+                                    <Eye className="h-3.5 w-3.5" />
+                                  </AppButton>
+                                  <AppButton
+                                    type="button"
+                                    variant="outline"
+                                    size="icon-sm"
+                                    onClick={() => downloadAttachment({ file_name: doc.file_name, file_url: doc.file_url! })}
+                                    className="h-7 w-7 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+                                    title="Download Document"
+                                  >
+                                    <Download className="h-3.5 w-3.5" />
+                                  </AppButton>
+                                </>
+                              ) : (
+                                <AppButton
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setDossierNewDocType(doc.doc_type || "OTHER");
+                                    setDossierNewDocTitle(doc.title || "");
+                                    setDossierNewDocNumber(doc.document_number || "");
+                                    setDossierNewDocExpiry(doc.expiry_date || "");
+                                    setIsDossierAddDocOpen(true);
+                                    const el = document.getElementById("dossier-direct-doc-file-input");
+                                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                                  }}
+                                  className="h-7 px-2 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 gap-1"
+                                  title="Upload and attach scanned document file"
+                                >
+                                  <UploadCloud className="h-3 w-3" />
+                                  <span>+ Attach Scan</span>
+                                </AppButton>
+                              )}
+
                               {doc.isDirectVaultDoc && canEditVehicle && (
                                 <AppButton
                                   type="button"
