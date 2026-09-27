@@ -5304,67 +5304,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     canCreateVehicle
   ]);
 
-  if (loading) {
-    return (
-      <div className="w-full flex-1 flex flex-col space-y-6 min-w-0 animate-in fade-in duration-300">
-        {/* Top Header Skeleton */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/50 pb-6">
-          <div className="flex items-center gap-3">
-            <AppSkeleton className="h-11 w-11 rounded-xl" />
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <AppSkeleton className="h-4 w-24 rounded-full" />
-                <AppSkeleton className="h-4 w-32 rounded" />
-              </div>
-              <AppSkeleton className="h-7 w-64 rounded-lg" />
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <AppSkeleton className="h-9 w-24 rounded-lg" />
-            <AppSkeleton className="h-9 w-28 rounded-lg" />
-          </div>
-        </div>
-
-        {/* Dynamic Bento KPI Cards Skeleton (4 Columns) */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <AppCardSkeleton key={i} />
-          ))}
-        </div>
-
-        {/* Table & Search Bar Skeleton */}
-        <AppCard className="border-border shadow-xs overflow-hidden">
-          <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <AppSkeleton className="h-6 w-48 rounded" />
-            <div className="flex items-center gap-2.5 w-full sm:w-auto">
-              <AppSkeleton className="h-8 w-64 rounded-lg" />
-              <AppSkeleton className="h-8 w-28 rounded-lg" />
-            </div>
-          </AppCardHeader>
-          <AppCardContent className="p-4">
-            <AppTableSkeleton rows={6} />
-          </AppCardContent>
-        </AppCard>
-      </div>
-    );
-  }
-
-  if (!hasAnyFleetAccess && !isSuperAdmin) {
-    return (
-      <div className="w-full min-h-[60vh] flex flex-col items-center justify-center p-8 space-y-4 text-center">
-        <div className="h-16 w-16 rounded-2xl bg-rose-500/10 text-rose-600 flex items-center justify-center border border-rose-500/20 shadow-sm">
-          <ShieldAlert className="h-8 w-8" />
-        </div>
-        <div className="space-y-1">
-          <h2 className="text-xl font-bold text-foreground">Fleet Desk Access Restricted</h2>
-          </div>
-        <AppButton variant="primary" size="sm" onClick={() => router.push("/")}>
-          Return to Workspace
-        </AppButton>
-      </div>
-    );
-  }
-
   // Transaction Form & Full-Page Working View State
   const isAnyTransactionFormOpen = Boolean(
     isEditVehicleOpen ||
@@ -5431,6 +5370,67 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     isAddEntitlementModalOpen,
     isRedeemEntitlementModalOpen
   ]);
+
+  if (loading) {
+    return (
+      <div className="w-full flex-1 flex flex-col space-y-6 min-w-0 animate-in fade-in duration-300">
+        {/* Top Header Skeleton */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/50 pb-6">
+          <div className="flex items-center gap-3">
+            <AppSkeleton className="h-11 w-11 rounded-xl" />
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <AppSkeleton className="h-4 w-24 rounded-full" />
+                <AppSkeleton className="h-4 w-32 rounded" />
+              </div>
+              <AppSkeleton className="h-7 w-64 rounded-lg" />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <AppSkeleton className="h-9 w-24 rounded-lg" />
+            <AppSkeleton className="h-9 w-28 rounded-lg" />
+          </div>
+        </div>
+
+        {/* Dynamic Bento KPI Cards Skeleton (4 Columns) */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <AppCardSkeleton key={i} />
+          ))}
+        </div>
+
+        {/* Table & Search Bar Skeleton */}
+        <AppCard className="border-border shadow-xs overflow-hidden">
+          <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <AppSkeleton className="h-6 w-48 rounded" />
+            <div className="flex items-center gap-2.5 w-full sm:w-auto">
+              <AppSkeleton className="h-8 w-64 rounded-lg" />
+              <AppSkeleton className="h-8 w-28 rounded-lg" />
+            </div>
+          </AppCardHeader>
+          <AppCardContent className="p-4">
+            <AppTableSkeleton rows={6} />
+          </AppCardContent>
+        </AppCard>
+      </div>
+    );
+  }
+
+  if (!hasAnyFleetAccess && !isSuperAdmin) {
+    return (
+      <div className="w-full min-h-[60vh] flex flex-col items-center justify-center p-8 space-y-4 text-center">
+        <div className="h-16 w-16 rounded-2xl bg-rose-500/10 text-rose-600 flex items-center justify-center border border-rose-500/20 shadow-sm">
+          <ShieldAlert className="h-8 w-8" />
+        </div>
+        <div className="space-y-1">
+          <h2 className="text-xl font-bold text-foreground">Fleet Desk Access Restricted</h2>
+          </div>
+        <AppButton variant="primary" size="sm" onClick={() => router.push("/")}>
+          Return to Workspace
+        </AppButton>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full flex-1 flex flex-col space-y-6 min-w-0 animate-in fade-in duration-300">
