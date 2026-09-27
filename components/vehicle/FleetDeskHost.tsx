@@ -5833,7 +5833,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         <p className="text-[10px] text-muted-foreground mt-0.5">{kpi.subtext}</p>
                       )}
                     </div>
-                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center border ${kpi?.iconBg || "bg-muted text-muted-foreground border-border"} ${kpi?.iconColor || ""} group-hover:scale-110 transition-transform`}>
+                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center border ${kpi?.iconBg || "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-border"} ${kpi?.iconColor || ""} group-hover:scale-110 transition-transform`}>
                       <IconComp className="h-5 w-5" />
                     </div>
                   </AppCardContent>
@@ -7095,7 +7095,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
             {/* Timeframe Switcher & Search Bar */}
             <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-              <div className="flex items-center p-1 bg-muted/60 dark:bg-muted/40 rounded-xl border border-border/60">
+              <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-border">
                 {(["24H", "7D", "30D", "FY"] as const).map((tf) => (
                   <button
                     key={tf}
@@ -7103,8 +7103,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     onClick={() => setDashboardTimeframe(tf)}
                     className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                       dashboardTimeframe === tf
-                        ? "bg-surface text-theme-btn-primary shadow-2xs font-bold"
-                        : "text-muted-foreground hover:text-foreground"
+                        ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs font-bold"
+                        : "text-slate-600 dark:text-slate-400 hover:text-foreground hover:bg-surface/50"
                     }`}
                   >
                     {tf === "24H" ? "24H Live" : tf === "7D" ? "7 Days" : tf === "30D" ? "30 Days" : "FY 25-26"}
@@ -7332,7 +7332,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <Wrench className="h-3 w-3" />
                   <span>{maintenance.length} total job cards</span>
                 </div>
-                <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded font-medium">
+                <span className="text-[10px] text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-border/60 px-1.5 py-0.5 rounded font-medium">
                   {maintenance.length > 0 ? `Avg ₹${Math.round(fleetReportsData.totalMaintenanceSpend / maintenance.length).toLocaleString()}` : "No bills"}
                 </span>
               </div>
@@ -7431,7 +7431,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             </AppCardHeader>
             <AppCardContent className="p-5 space-y-4">
               {/* Segmented Stacked Progress Bar */}
-              <div className="h-3 w-full bg-muted rounded-full overflow-hidden flex shadow-inner">
+              <div className="h-3 w-full bg-slate-200 dark:bg-slate-700/80 rounded-full overflow-hidden flex shadow-inner">
                 {fuelMixBreakdown.petrol.pct > 0 && (
                   <div
                     style={{ width: `${fuelMixBreakdown.petrol.pct}%` }}
@@ -7689,7 +7689,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   {/* Status Pills */}
-                  <div className="flex items-center p-0.5 bg-muted/60 rounded-lg border border-border/60 text-[11px]">
+                  <div className="flex items-center p-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg border border-border text-[11px]">
                     {(["ALL", "IN_PROGRESS", "PLANNED"] as const).map((st) => (
                       <button
                         key={st}
@@ -7697,8 +7697,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         onClick={() => setDashboardTripFilter(st)}
                         className={`px-2.5 py-1 font-bold rounded-md transition-all cursor-pointer ${
                           dashboardTripFilter === st
-                            ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-xs"
-                            : "text-muted-foreground hover:text-foreground hover:bg-surface/50"
+                            ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs font-bold"
+                            : "text-slate-600 dark:text-slate-400 hover:text-foreground hover:bg-surface/50"
                         }`}
                       >
                         {st === "ALL" ? "All" : st === "IN_PROGRESS" ? "On Route" : "Planned"}
@@ -7731,7 +7731,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 {filteredDashboardTrips.length === 0 ? (
                   <div className="p-10 text-center text-xs text-muted-foreground">
                     <div className="flex flex-col items-center gap-2.5">
-                      <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center text-muted-foreground">
+                      <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 border border-border/60">
                         <MapPin className="h-5 w-5" />
                       </div>
                       <span>No transit dispatches matching current filter.</span>
@@ -7762,7 +7762,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                               {trp.traveler_name}
                             </span>
                             {trp.driver_name && (
-                              <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.2 rounded font-medium">
+                              <span className="text-[10px] text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-border/60 px-2 py-0.5 rounded-full font-medium">
                                 Driver: {trp.driver_name}
                               </span>
                             )}
@@ -7838,7 +7838,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   {/* Vehicle Status Filter */}
-                  <div className="flex items-center p-0.5 bg-muted/60 rounded-lg border border-border/60 text-[11px]">
+                  <div className="flex items-center p-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg border border-border text-[11px]">
                     {(["ALL", "IN_STOCK", "MAINTENANCE"] as const).map((st) => (
                       <button
                         key={st}
@@ -7846,8 +7846,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         onClick={() => setDashboardVehicleFilter(st)}
                         className={`px-2.5 py-1 font-bold rounded-md transition-all cursor-pointer ${
                           dashboardVehicleFilter === st
-                            ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-xs"
-                            : "text-muted-foreground hover:text-foreground hover:bg-surface/50"
+                            ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs font-bold"
+                            : "text-slate-600 dark:text-slate-400 hover:text-foreground hover:bg-surface/50"
                         }`}
                       >
                         {st === "ALL" ? "All" : st === "IN_STOCK" ? "Available" : "Workshop"}
@@ -7880,7 +7880,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 {filteredDashboardVehicles.length === 0 ? (
                   <div className="p-10 text-center text-xs text-muted-foreground">
                     <div className="flex flex-col items-center gap-2.5">
-                      <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center text-muted-foreground">
+                      <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 border border-border/60">
                         <Car className="h-5 w-5" />
                       </div>
                       <span>No vehicles matching selected filter.</span>
@@ -7911,7 +7911,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                               {veh.make} {veh.model}
                             </span>
                             {veh.fuel_type && (
-                              <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.2 rounded font-medium">
+                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full border bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/25">
                                 {veh.fuel_type}
                               </span>
                             )}
@@ -8009,7 +8009,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 {maintenance.length === 0 ? (
                   <div className="p-10 text-center text-xs text-muted-foreground">
                     <div className="flex flex-col items-center gap-2.5">
-                      <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center text-muted-foreground">
+                      <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 border border-border/60">
                         <Wrench className="h-5 w-5" />
                       </div>
                       <span>No maintenance job cards recorded yet.</span>
@@ -8102,7 +8102,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 {drivers.length === 0 ? (
                   <div className="p-10 text-center text-xs text-muted-foreground">
                     <div className="flex flex-col items-center gap-2.5">
-                      <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center text-muted-foreground">
+                      <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 border border-border/60">
                         <Users className="h-5 w-5" />
                       </div>
                       <span>No drivers registered in fleet roster.</span>
@@ -8147,7 +8147,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           }`}>
                             {drv.is_active ? "Active" : "Inactive"}
                           </span>
-                          <span className="text-[10px] text-muted-foreground font-medium bg-muted px-1.5 py-0.5 rounded">
+                          <span className="text-[10px] text-slate-700 dark:text-slate-300 font-medium bg-slate-100 dark:bg-slate-800 border border-border/60 px-2 py-0.5 rounded-full">
                             {drv.experience_years || 0}y Exp
                           </span>
                         </div>
@@ -16478,7 +16478,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                               <div className="flex items-start justify-between gap-2">
                                 <div>
                                   <div className="flex items-center gap-1.5 flex-wrap">
-                                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-muted text-foreground border border-border">
+                                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-foreground border border-border">
                                       {ent.voucher_number || `VOUCHER-${ent.id.slice(0, 6).toUpperCase()}`}
                                     </span>
                                     <span className="px-2 py-0.5 rounded text-xs font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
@@ -17902,15 +17902,15 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       onClick={() => setDossierDocCategoryFilter(cat.id)}
                       className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
                         dossierDocCategoryFilter === cat.id
-                          ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-xs"
-                          : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                          ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs"
+                          : "text-slate-600 dark:text-slate-400 hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
                       }`}
                     >
                       <span>{cat.label}</span>
-                      <span className={`text-[10px] font-mono px-1 py-0.2 rounded-full ${
+                      <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
                         dossierDocCategoryFilter === cat.id
-                          ? "bg-white/20 text-white dark:bg-slate-900/20 dark:text-slate-900"
-                          : "bg-muted text-muted-foreground"
+                          ? "bg-black/10 text-theme-btn-primary-text dark:bg-white/20"
+                          : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
                       }`}>
                         {cat.count}
                       </span>
@@ -18013,7 +18013,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                 {doc.categoryLabel || typeConfig.label}
                               </span>
                               {doc.sourceLabel && (
-                                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground truncate max-w-[170px]" title={doc.sourceLabel}>
+                                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-border truncate max-w-[170px]" title={doc.sourceLabel}>
                                   {doc.sourceLabel}
                                 </span>
                               )}
@@ -19369,7 +19369,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 placeholder="Search vehicles, drivers, vendors, maintenance, or actions..."
                 className="w-full py-4 text-sm bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground"
               />
-              <kbd className="text-[10px] font-mono px-2 py-0.5 rounded bg-muted text-muted-foreground border border-border shrink-0">
+              <kbd className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-border shrink-0">
                 ESC
               </kbd>
             </div>
@@ -19398,7 +19398,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       <div className="flex items-center gap-3 min-w-0">
                         <div
                           className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${
-                            isSelected ? "bg-theme-btn-primary text-theme-btn-primary-text" : "bg-muted text-muted-foreground"
+                            isSelected ? "bg-theme-btn-primary text-theme-btn-primary-text" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-border/50"
                           }`}
                         >
                           <IconComp className="h-4 w-4" />
@@ -19413,7 +19413,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full shrink-0 border ${
                             isSelected
                               ? "bg-theme-btn-primary/20 text-theme-btn-primary border-theme-btn-primary/30"
-                              : "bg-muted text-muted-foreground border-border"
+                              : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-border"
                           }`}
                         >
                           {item.badge}
@@ -19429,13 +19429,13 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             <div className="p-2.5 bg-surface/50 border-t border-border/60 flex items-center justify-between text-[11px] text-muted-foreground px-4">
               <div className="flex items-center gap-4">
                 <span className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 rounded bg-muted border border-border text-[10px]">↑↓</kbd> Navigate
+                  <kbd className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-border text-[10px] text-slate-700 dark:text-slate-300">↑↓</kbd> Navigate
                 </span>
                 <span className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 rounded bg-muted border border-border text-[10px]">↵</kbd> Select
+                  <kbd className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-border text-[10px] text-slate-700 dark:text-slate-300">↵</kbd> Select
                 </span>
                 <span className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 rounded bg-muted border border-border text-[10px]">ESC</kbd> Close
+                  <kbd className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-border text-[10px] text-slate-700 dark:text-slate-300">ESC</kbd> Close
                 </span>
               </div>
               <span className="font-medium text-theme-btn-primary">Fleet Command HUD</span>
