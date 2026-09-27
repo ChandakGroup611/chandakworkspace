@@ -455,18 +455,19 @@ function WorkingDocumentLayout({
   children
 }: WorkingDocumentLayoutProps) {
   return (
-    <div className="w-full flex-1 flex flex-col space-y-8 animate-in fade-in duration-200">
+    <div className="w-full flex-1 flex flex-col space-y-6 animate-in fade-in duration-200">
       {/* Top Navigation & Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-6">
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-border pb-5">
+        <div className="min-w-0 flex-1 space-y-2">
+          {/* Breadcrumbs */}
+          <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
             <AppButton
               variant="ghost"
               size="sm"
               onClick={onBack}
-              className="text-xs h-8 px-2.5 gap-1.5 text-muted-foreground hover:text-foreground font-semibold"
+              className="text-xs h-7 px-2 gap-1.5 text-muted-foreground hover:text-foreground font-semibold"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-3.5 w-3.5" />
               <span>{backLabel}</span>
             </AppButton>
             {breadcrumbs.map((bc, idx) => (
@@ -481,42 +482,41 @@ function WorkingDocumentLayout({
                     {bc.label}
                   </button>
                 ) : (
-                  <span className="text-xs text-muted-foreground font-medium">{bc.label}</span>
+                  <span className="text-xs text-foreground font-semibold truncate max-w-[240px] sm:max-w-none">{bc.label}</span>
                 )}
               </React.Fragment>
             ))}
           </div>
-          <div className="flex items-center gap-3 pt-1">
-            <div className={`h-11 w-11 rounded-xl flex items-center justify-center border shrink-0 ${iconBg || "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"}`}>
+
+          {/* Title + Icon + Badge */}
+          <div className="flex items-center gap-3">
+            <div className={`h-11 w-11 rounded-xl flex items-center justify-center border shrink-0 shadow-2xs ${iconBg || "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"}`}>
               <Icon className="h-6 w-6" />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2.5 flex-wrap">
-                <span>{title}</span>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground truncate">
+                  {title}
+                </h1>
                 {badge && (
-                  <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${badgeColor || "bg-theme-btn-primary/10 text-theme-btn-primary border-theme-btn-primary/20"}`}>
+                  <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border whitespace-nowrap ${badgeColor || "bg-theme-btn-primary/10 text-theme-btn-primary border-theme-btn-primary/20"}`}>
                     {badge}
                   </span>
                 )}
-              </h1>
+              </div>
+              {description && (
+                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{description}</p>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Top Actions */}
-        <div className="flex items-center gap-2.5 flex-wrap self-end md:self-center">
-          {headerActions}
-          <AppButton
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={onBack}
-            className="text-xs h-9 px-4 gap-1.5 font-semibold"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span>{backLabel}</span>
-          </AppButton>
-        </div>
+        {/* Top Action Toolbar */}
+        {headerActions && (
+          <div className="shrink-0 flex items-center gap-2 flex-wrap sm:flex-nowrap">
+            {headerActions}
+          </div>
+        )}
       </div>
 
       {/* Working Document Canvas */}
@@ -537,7 +537,7 @@ function WorkingDocumentLayout({
           <span>{backLabel}</span>
         </AppButton>
         {headerActions && (
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             {headerActions}
           </div>
         )}
@@ -14125,7 +14125,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           onBack={() => setViewingVehicle(null)}
           backLabel="Back to Fleet"
           headerActions={
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
               {canEditVehicle && (
                 <AppButton
                   type="button"
@@ -14135,7 +14135,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     setDossierOriginVehicle(viewingVehicle);
                     openEditVehicleModal(viewingVehicle);
                   }}
-                  className="text-xs h-9 px-3 gap-1.5 font-semibold text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="text-xs h-8 px-2.5 gap-1.5 font-semibold text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
                   <Edit2 className="h-3.5 w-3.5" />
                   <span>Edit Vehicle</span>
@@ -14152,7 +14152,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     setNewMaintVehicleId(viewingVehicle.id);
                     setIsAddMaintenanceOpen(true);
                   }}
-                  className="bg-amber-600 hover:bg-amber-700 text-white text-xs h-9 px-3 gap-1.5 font-semibold shadow-2xs"
+                  className="bg-amber-600 hover:bg-amber-700 text-white text-xs h-8 px-2.5 gap-1.5 font-semibold shadow-2xs"
                 >
                   <Wrench className="h-3.5 w-3.5" />
                   <span>+ Log Service</span>
@@ -14168,7 +14168,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   setPartFormVehicleId(viewingVehicle.id);
                   setPartFormAssignedVehicleReg(viewingVehicle.registration_number);
                 }}
-                className="text-xs h-9 px-3 gap-1.5 font-semibold text-blue-600 dark:text-blue-400 border-blue-500/30 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+                className="text-xs h-8 px-2.5 gap-1.5 font-semibold text-blue-600 dark:text-blue-400 border-blue-500/30 hover:bg-blue-50 dark:hover:bg-blue-950/30"
               >
                 <Package className="h-3.5 w-3.5" />
                 <span>+ Mount Part</span>
@@ -14181,33 +14181,34 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   setVehicleDossierTab("DOCS");
                   setIsDossierAddDocOpen(true);
                 }}
-                className="text-xs h-9 px-3 gap-1.5 font-semibold text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                className="text-xs h-8 px-2.5 gap-1.5 font-semibold text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
               >
                 <UploadCloud className="h-3.5 w-3.5" />
-                <span>+ Attach Document</span>
+                <span>+ Attach Doc</span>
               </AppButton>
               <AppButton
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => window.print()}
-                className="text-xs h-9 px-3 gap-1.5 font-semibold"
+                className="text-xs h-8 px-2.5 gap-1.5 font-semibold"
+                title="Print Vehicle Dossier"
               >
                 <Printer className="h-3.5 w-3.5" />
-                <span>Print Dossier</span>
+                <span>Print</span>
               </AppButton>
             </div>
           }
         >
-          {/* 1. HERO BANNER: Identity, Plate, Make & Key Assignment Specs */}
-          <div className="p-5 rounded-2xl border border-border bg-gradient-to-r from-slate-50 via-surface to-slate-50/50 dark:from-slate-900/60 dark:via-surface dark:to-slate-900/40 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-            <div className="flex items-start gap-4">
+          {/* 1. HERO IDENTITY & ASSET TELEMETRY HUD */}
+          <div className="p-4 sm:p-5 rounded-2xl border border-border bg-gradient-to-r from-slate-50 via-surface to-slate-50/50 dark:from-slate-900/60 dark:via-surface dark:to-slate-900/40 shadow-xs flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+            <div className="flex items-start gap-3.5 min-w-0 flex-1">
               <div className="shrink-0 pt-0.5">
                 {renderHsrpPlate(viewingVehicle.registration_number)}
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1 min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-xl font-bold tracking-tight text-foreground">
+                  <h2 className="text-lg sm:text-xl font-bold tracking-tight text-foreground truncate">
                     {viewingVehicle.make} {viewingVehicle.model} {viewingVehicle.year ? `(${viewingVehicle.year})` : ""}
                   </h2>
                   <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-200/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-border">
@@ -14220,22 +14221,22 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     </span>
                   )}
                   {viewingVehicle.nickname && (
-                    <span className="text-xs font-medium text-muted-foreground italic">
+                    <span className="text-xs font-medium text-muted-foreground italic truncate">
                       "{viewingVehicle.nickname}"
                     </span>
                   )}
                 </div>
-                <div className="text-xs text-muted-foreground flex items-center gap-3 flex-wrap">
+                <div className="text-xs text-muted-foreground flex items-center gap-2.5 flex-wrap">
                   <span className="flex items-center gap-1 font-mono">
                     <Hash className="h-3.5 w-3.5 text-muted-foreground" />
                     <span>VIN: {viewingVehicle.vin_chassis_number || "Not Recorded"}</span>
                   </span>
-                  <span>•</span>
+                  <span className="text-border">•</span>
                   <span className="flex items-center gap-1">
                     <Building2 className="h-3.5 w-3.5 text-blue-500" />
                     <span>RTO: {viewingVehicle.rto_office || "State Transport"}</span>
                   </span>
-                  <span>•</span>
+                  <span className="text-border">•</span>
                   <span className="flex items-center gap-1">
                     <UserCheck className="h-3.5 w-3.5 text-emerald-500" />
                     <span>Owner: {viewingVehicle.registered_owner || "Corporate Fleet"}</span>
@@ -14244,8 +14245,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               </div>
             </div>
 
-            <div className="flex items-center gap-3 shrink-0 flex-wrap">
-              <div className="p-3 rounded-xl border border-border bg-surface shadow-2xs space-y-0.5 min-w-[130px]">
+            <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+              <div className="p-2.5 sm:p-3 rounded-xl border border-border bg-surface shadow-2xs space-y-0.5 min-w-[120px]">
                 <div className="text-xs uppercase font-bold text-muted-foreground flex items-center gap-1">
                   <Gauge className="h-3 w-3 text-theme-btn-primary" />
                   <span>Odometer</span>
@@ -14255,12 +14256,12 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 </div>
               </div>
 
-              <div className="p-3 rounded-xl border border-border bg-surface shadow-2xs space-y-0.5 min-w-[160px]">
+              <div className="p-2.5 sm:p-3 rounded-xl border border-border bg-surface shadow-2xs space-y-0.5 min-w-[150px]">
                 <div className="text-xs uppercase font-bold text-muted-foreground flex items-center gap-1">
                   <Users className="h-3 w-3 text-purple-500" />
-                  <span>Primary Chauffeur</span>
+                  <span>Chauffeur</span>
                 </div>
-                <div className="text-xs font-semibold text-foreground truncate max-w-[150px]">
+                <div className="text-xs font-semibold text-foreground truncate max-w-[140px]">
                   {viewingVehicle.assignedDriver?.full_name || "Unassigned Pool"}
                 </div>
                 {viewingVehicle.assignedDriver?.phone && (
@@ -14274,13 +14275,13 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             </div>
           </div>
 
-          {/* 2. TOP METRICS & ASSET SUMMARY BADGES */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {/* 1. Workshop Services */}
+          {/* 2. TELEMETRY & SPEND SUMMARY HUD */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
+            {/* Workshop Services */}
             <button
               type="button"
               onClick={() => setVehicleDossierTab("SERVICES")}
-              className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer shadow-2xs group ${
+              className={`p-3 rounded-xl border text-left transition-all cursor-pointer shadow-2xs group ${
                 vehicleDossierTab === "SERVICES"
                   ? "border-amber-500 bg-amber-500/10 dark:bg-amber-950/30 ring-2 ring-amber-500/30 shadow-xs"
                   : "border-border bg-surface hover:border-amber-500/40 hover:bg-amber-500/5"
@@ -14292,19 +14293,19 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <span>Workshop Services</span>
                 </span>
                 <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300">
-                  {dossierData.services.length} Records
+                  {dossierData.services.length}
                 </span>
               </div>
-              <div className="text-base font-bold text-foreground mt-1.5 font-mono">
+              <div className="text-sm sm:text-base font-bold text-foreground mt-1 font-mono truncate">
                 ₹{dossierData.totalServiceSpend.toLocaleString("en-IN")} <span className="text-xs font-normal text-muted-foreground font-sans">Spend</span>
               </div>
             </button>
 
-            {/* 2. Spare Parts */}
+            {/* Spare Parts */}
             <button
               type="button"
               onClick={() => setVehicleDossierTab("PARTS")}
-              className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer shadow-2xs group ${
+              className={`p-3 rounded-xl border text-left transition-all cursor-pointer shadow-2xs group ${
                 vehicleDossierTab === "PARTS"
                   ? "border-blue-500 bg-blue-500/10 dark:bg-blue-950/30 ring-2 ring-blue-500/30 shadow-xs"
                   : "border-border bg-surface hover:border-blue-500/40 hover:bg-blue-500/5"
@@ -14313,22 +14314,22 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400 flex items-center gap-1.5">
                   <Package className="h-3.5 w-3.5" />
-                  <span>Spare Parts</span>
+                  <span>Mounted Parts</span>
                 </span>
                 <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-700 dark:text-blue-300">
-                  {dossierData.parts.length} Mounted
+                  {dossierData.parts.length}
                 </span>
               </div>
-              <div className="text-base font-bold text-foreground mt-1.5 font-mono">
-                ₹{dossierData.totalPartsValue.toLocaleString("en-IN")} <span className="text-xs font-normal text-muted-foreground font-sans">Value</span>
+              <div className="text-sm sm:text-base font-bold text-foreground mt-1 font-mono truncate">
+                ₹{dossierData.totalPartsValue.toLocaleString("en-IN")} <span className="text-xs font-normal text-muted-foreground font-sans">Valuation</span>
               </div>
             </button>
 
-            {/* 3. Document Vault */}
+            {/* Document Vault */}
             <button
               type="button"
               onClick={() => setVehicleDossierTab("DOCS")}
-              className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer shadow-2xs group ${
+              className={`p-3 rounded-xl border text-left transition-all cursor-pointer shadow-2xs group ${
                 vehicleDossierTab === "DOCS"
                   ? "border-emerald-500 bg-emerald-500/10 dark:bg-emerald-950/30 ring-2 ring-emerald-500/30 shadow-xs"
                   : "border-border bg-surface hover:border-emerald-500/40 hover:bg-emerald-500/5"
@@ -14340,31 +14341,31 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <span>Document Vault</span>
                 </span>
                 <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
-                  {dossierData.docs.length} Archived
+                  {dossierData.docs.length}
                 </span>
               </div>
-              <div className="text-base font-bold text-foreground mt-1.5 flex items-center gap-1.5">
+              <div className="text-xs sm:text-sm font-bold text-foreground mt-1 truncate">
                 {dossierData.expiredDocsCount > 0 ? (
-                  <span className="text-rose-600 dark:text-rose-400 text-xs font-bold">
+                  <span className="text-rose-600 dark:text-rose-400 font-bold">
                     {dossierData.expiredDocsCount} Expired Doc(s)
                   </span>
                 ) : dossierData.docs.length > 0 ? (
-                  <span className="text-emerald-600 dark:text-emerald-400 text-xs font-bold">
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">
                     All Valid & Archived
                   </span>
                 ) : (
-                  <span className="text-amber-600 dark:text-amber-400 text-xs font-bold">
+                  <span className="text-muted-foreground font-medium">
                     No Files Attached
                   </span>
                 )}
               </div>
             </button>
 
-            {/* 4. Trips & Dispatches */}
+            {/* Trips & Dispatches */}
             <button
               type="button"
               onClick={() => setVehicleDossierTab("TRIPS")}
-              className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer shadow-2xs group ${
+              className={`p-3 rounded-xl border text-left transition-all cursor-pointer shadow-2xs group ${
                 vehicleDossierTab === "TRIPS"
                   ? "border-purple-500 bg-purple-500/10 dark:bg-purple-950/30 ring-2 ring-purple-500/30 shadow-xs"
                   : "border-border bg-surface hover:border-purple-500/40 hover:bg-purple-500/5"
@@ -14373,293 +14374,89 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-purple-700 dark:text-purple-400 flex items-center gap-1.5">
                   <MapPin className="h-3.5 w-3.5" />
-                  <span>Trips & Dispatches</span>
+                  <span>Trips & Journeys</span>
                 </span>
                 <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-700 dark:text-purple-300">
-                  {dossierData.trips.length} Journeys
+                  {dossierData.trips.length}
                 </span>
               </div>
-              <div className="text-base font-bold text-foreground mt-1.5">
+              <div className="text-sm sm:text-base font-bold text-foreground mt-1 truncate">
                 {dossierData.completedTripsCount} <span className="text-xs text-muted-foreground font-normal">Completed</span>
               </div>
             </button>
           </div>
 
-          {/* 3. VEHICLE OPTIONS & SECTIONS HUB (COMPACT BADGE/TITLE OPTION BUTTONS) */}
-          <div className="space-y-2.5">
-            <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-              <Layers className="h-3.5 w-3.5 text-theme-btn-primary" />
-              <span>Vehicle Options & Details:</span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
-              
-              {/* Option 0: 360° All Columns */}
-              <button
-                type="button"
-                onClick={() => setVehicleDossierTab("ALL")}
-                className={`p-3 rounded-xl border text-left transition-all group flex items-center gap-3 shadow-2xs cursor-pointer ${
-                  vehicleDossierTab === "ALL"
-                    ? "border-slate-900 dark:border-slate-100 bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 ring-2 ring-slate-900/20"
-                    : "border-border bg-surface hover:border-theme-btn-primary hover:bg-slate-50/60 dark:hover:bg-slate-900/40"
-                }`}
-              >
-                <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 shadow-2xs ${
-                  vehicleDossierTab === "ALL"
-                    ? "bg-white/20 text-white dark:bg-slate-900/20 dark:text-slate-900"
-                    : "bg-theme-btn-primary/10 border border-theme-btn-primary/20 text-theme-btn-primary"
-                }`}>
-                  <Layers className="h-4 w-4" />
-                </div>
-                <div className="min-w-0 flex-1 flex items-center justify-between">
-                  <span className={`font-bold text-xs ${vehicleDossierTab === "ALL" ? "" : "text-foreground group-hover:text-theme-btn-primary"}`}>
-                    360° All Columns
-                  </span>
-                  <span className={`text-xs font-mono font-bold px-1.5 py-0.5 rounded ${
-                    vehicleDossierTab === "ALL"
-                      ? "bg-white/20 text-white dark:bg-slate-900/20 dark:text-slate-900"
-                      : "bg-theme-btn-primary/10 text-theme-btn-primary"
-                  }`}>
-                    Full Dossier
-                  </span>
-                </div>
-              </button>
-
-              {/* Option 1: Vehicle Service Details */}
-              <button
-                type="button"
-                onClick={() => setVehicleDossierTab("SERVICES")}
-                className={`p-3 rounded-xl border text-left transition-all group flex items-center gap-3 shadow-2xs cursor-pointer ${
-                  vehicleDossierTab === "SERVICES"
-                    ? "border-amber-600 bg-amber-600 text-white ring-2 ring-amber-600/20"
-                    : "border-border bg-surface hover:border-amber-500 hover:bg-amber-500/5"
-                }`}
-              >
-                <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 shadow-2xs ${
-                  vehicleDossierTab === "SERVICES"
-                    ? "bg-white/20 text-white"
-                    : "bg-amber-500/10 border border-amber-500/25 text-amber-600"
-                }`}>
-                  <Wrench className="h-4 w-4" />
-                </div>
-                <div className="min-w-0 flex-1 flex items-center justify-between">
-                  <span className={`font-bold text-xs ${vehicleDossierTab === "SERVICES" ? "" : "text-foreground group-hover:text-amber-600"}`}>
-                    Vehicle Service Details
-                  </span>
-                  <span className={`text-xs font-mono font-bold px-1.5 py-0.5 rounded ${
-                    vehicleDossierTab === "SERVICES" ? "bg-white/20 text-white" : "bg-amber-500/15 text-amber-700 dark:text-amber-300"
-                  }`}>
-                    {dossierData.services.length} Svc
-                  </span>
-                </div>
-              </button>
-
-              {/* Option 2: Spare Parts Details */}
-              <button
-                type="button"
-                onClick={() => setVehicleDossierTab("PARTS")}
-                className={`p-3 rounded-xl border text-left transition-all group flex items-center gap-3 shadow-2xs cursor-pointer ${
-                  vehicleDossierTab === "PARTS"
-                    ? "border-blue-600 bg-blue-600 text-white ring-2 ring-blue-600/20"
-                    : "border-border bg-surface hover:border-blue-500 hover:bg-blue-500/5"
-                }`}
-              >
-                <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 shadow-2xs ${
-                  vehicleDossierTab === "PARTS"
-                    ? "bg-white/20 text-white"
-                    : "bg-blue-500/10 border border-blue-500/25 text-blue-600"
-                }`}>
-                  <Package className="h-4 w-4" />
-                </div>
-                <div className="min-w-0 flex-1 flex items-center justify-between">
-                  <span className={`font-bold text-xs ${vehicleDossierTab === "PARTS" ? "" : "text-foreground group-hover:text-blue-600"}`}>
-                    Spare Parts Details
-                  </span>
-                  <span className={`text-xs font-mono font-bold px-1.5 py-0.5 rounded ${
-                    vehicleDossierTab === "PARTS" ? "bg-white/20 text-white" : "bg-blue-500/15 text-blue-700 dark:text-blue-300"
-                  }`}>
-                    {dossierData.parts.length} Parts
-                  </span>
-                </div>
-              </button>
-
-              {/* Option 3: Document Details */}
-              <button
-                type="button"
-                onClick={() => setVehicleDossierTab("DOCS")}
-                className={`p-3 rounded-xl border text-left transition-all group flex items-center gap-3 shadow-2xs cursor-pointer ${
-                  vehicleDossierTab === "DOCS"
-                    ? "border-emerald-600 bg-emerald-600 text-white ring-2 ring-emerald-600/20"
-                    : "border-border bg-surface hover:border-emerald-500 hover:bg-emerald-500/5"
-                }`}
-              >
-                <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 shadow-2xs ${
-                  vehicleDossierTab === "DOCS"
-                    ? "bg-white/20 text-white"
-                    : "bg-emerald-500/10 border border-emerald-500/25 text-emerald-600"
-                }`}>
-                  <FileCheck className="h-4 w-4" />
-                </div>
-                <div className="min-w-0 flex-1 flex items-center justify-between">
-                  <span className={`font-bold text-xs ${vehicleDossierTab === "DOCS" ? "" : "text-foreground group-hover:text-emerald-600"}`}>
-                    Document Details
-                  </span>
-                  <span className={`text-xs font-mono font-bold px-1.5 py-0.5 rounded ${
-                    vehicleDossierTab === "DOCS" ? "bg-white/20 text-white" : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-                  }`}>
-                    {dossierData.docs.length} Docs
-                  </span>
-                </div>
-              </button>
-
-              {/* Option 4: Compliance & Renewals */}
-              <button
-                type="button"
-                onClick={() => setVehicleDossierTab("COMPLIANCE")}
-                className={`p-3 rounded-xl border text-left transition-all group flex items-center gap-3 shadow-2xs cursor-pointer ${
-                  vehicleDossierTab === "COMPLIANCE"
-                    ? "border-cyan-600 bg-cyan-600 text-white ring-2 ring-cyan-600/20"
-                    : "border-border bg-surface hover:border-cyan-500 hover:bg-cyan-500/5"
-                }`}
-              >
-                <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 shadow-2xs ${
-                  vehicleDossierTab === "COMPLIANCE"
-                    ? "bg-white/20 text-white"
-                    : "bg-cyan-500/10 border border-cyan-500/25 text-cyan-600"
-                }`}>
-                  <ShieldCheck className="h-4 w-4" />
-                </div>
-                <div className="min-w-0 flex-1 flex items-center justify-between">
-                  <span className={`font-bold text-xs ${vehicleDossierTab === "COMPLIANCE" ? "" : "text-foreground group-hover:text-cyan-600"}`}>
-                    Compliance & Renewals
-                  </span>
-                  <span className={`text-xs font-mono font-bold px-1.5 py-0.5 rounded ${
-                    vehicleDossierTab === "COMPLIANCE" ? "bg-white/20 text-white" : "bg-cyan-500/15 text-cyan-700 dark:text-cyan-300"
-                  }`}>
-                    Active
-                  </span>
-                </div>
-              </button>
-
-              {/* Option 5: Trip Movements */}
-              <button
-                type="button"
-                onClick={() => setVehicleDossierTab("TRIPS")}
-                className={`p-3 rounded-xl border text-left transition-all group flex items-center gap-3 shadow-2xs cursor-pointer ${
-                  vehicleDossierTab === "TRIPS"
-                    ? "border-purple-600 bg-purple-600 text-white ring-2 ring-purple-600/20"
-                    : "border-border bg-surface hover:border-purple-500 hover:bg-purple-500/5"
-                }`}
-              >
-                <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 shadow-2xs ${
-                  vehicleDossierTab === "TRIPS"
-                    ? "bg-white/20 text-white"
-                    : "bg-purple-500/10 border border-purple-500/25 text-purple-600"
-                }`}>
-                  <MapPin className="h-4 w-4" />
-                </div>
-                <div className="min-w-0 flex-1 flex items-center justify-between">
-                  <span className={`font-bold text-xs ${vehicleDossierTab === "TRIPS" ? "" : "text-foreground group-hover:text-purple-600"}`}>
-                    Trip Movements
-                  </span>
-                  <span className={`text-xs font-mono font-bold px-1.5 py-0.5 rounded ${
-                    vehicleDossierTab === "TRIPS" ? "bg-white/20 text-white" : "bg-purple-500/15 text-purple-700 dark:text-purple-300"
-                  }`}>
-                    {dossierData.trips.length} Trips
-                  </span>
-                </div>
-              </button>
-
-              {/* Option 6: Technical Specifications & Identity */}
-              <button
-                type="button"
-                onClick={() => setVehicleDossierTab("OVERVIEW")}
-                className={`p-3 rounded-xl border text-left transition-all group flex items-center gap-3 shadow-2xs cursor-pointer ${
-                  vehicleDossierTab === "OVERVIEW"
-                    ? "border-indigo-600 bg-indigo-600 text-white ring-2 ring-indigo-600/20"
-                    : "border-border bg-surface hover:border-indigo-500 hover:bg-indigo-500/5"
-                }`}
-              >
-                <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 shadow-2xs ${
-                  vehicleDossierTab === "OVERVIEW"
-                    ? "bg-white/20 text-white"
-                    : "bg-indigo-500/10 border border-indigo-500/25 text-indigo-600"
-                }`}>
-                  <Gauge className="h-4 w-4" />
-                </div>
-                <div className="min-w-0 flex-1 flex items-center justify-between">
-                  <span className={`font-bold text-xs ${vehicleDossierTab === "OVERVIEW" ? "" : "text-foreground group-hover:text-indigo-600"}`}>
-                    Specifications & Identity
-                  </span>
-                  <span className={`text-xs font-mono font-bold px-1.5 py-0.5 rounded ${
-                    vehicleDossierTab === "OVERVIEW" ? "bg-white/20 text-white" : "bg-indigo-500/15 text-indigo-700 dark:text-indigo-300"
-                  }`}>
-                    Specs
-                  </span>
-                </div>
-              </button>
-
-            </div>
-          </div>
-
-          {/* 4. STICKY QUICK TAB SWITCHER BAR */}
-          <div className="bg-surface/90 backdrop-blur-md p-1.5 rounded-xl border border-border shadow-2xs flex items-center gap-1.5 overflow-x-auto no-scrollbar sticky top-0 z-20">
+          {/* 3. STICKY DOSSIER NAVIGATION BAR */}
+          <div className="bg-surface/95 backdrop-blur-md p-1.5 rounded-xl border border-border shadow-2xs flex items-center gap-1 overflow-x-auto no-scrollbar sticky top-0 z-20">
             <button
               type="button"
               onClick={() => setVehicleDossierTab("ALL")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
                 vehicleDossierTab === "ALL"
                   ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-2xs"
                   : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
               }`}
             >
               <Layers className="h-3.5 w-3.5 text-theme-btn-primary" />
-              <span>360° All Columns</span>
+              <span>360° All</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setVehicleDossierTab("OVERVIEW")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
+                vehicleDossierTab === "OVERVIEW"
+                  ? "bg-indigo-600 text-white shadow-2xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+              }`}
+            >
+              <Gauge className="h-3.5 w-3.5" />
+              <span>Overview & Specs</span>
             </button>
 
             <button
               type="button"
               onClick={() => setVehicleDossierTab("SERVICES")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
                 vehicleDossierTab === "SERVICES"
                   ? "bg-amber-600 text-white shadow-2xs"
                   : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
               }`}
             >
               <Wrench className="h-3.5 w-3.5" />
-              <span>Service Details ({dossierData.services.length})</span>
+              <span>Services ({dossierData.services.length})</span>
             </button>
 
             <button
               type="button"
               onClick={() => setVehicleDossierTab("PARTS")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
                 vehicleDossierTab === "PARTS"
                   ? "bg-blue-600 text-white shadow-2xs"
                   : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
               }`}
             >
               <Package className="h-3.5 w-3.5" />
-              <span>Spare Parts ({dossierData.parts.length})</span>
+              <span>Parts ({dossierData.parts.length})</span>
             </button>
 
             <button
               type="button"
               onClick={() => setVehicleDossierTab("DOCS")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
                 vehicleDossierTab === "DOCS"
                   ? "bg-emerald-600 text-white shadow-2xs"
                   : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
               }`}
             >
               <FileCheck className="h-3.5 w-3.5" />
-              <span>Document Vault ({dossierData.docs.length})</span>
+              <span>Documents ({dossierData.docs.length})</span>
             </button>
 
             <button
               type="button"
               onClick={() => setVehicleDossierTab("COMPLIANCE")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
                 vehicleDossierTab === "COMPLIANCE"
                   ? "bg-cyan-600 text-white shadow-2xs"
                   : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -14672,27 +14469,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             <button
               type="button"
               onClick={() => setVehicleDossierTab("TRIPS")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
                 vehicleDossierTab === "TRIPS"
                   ? "bg-purple-600 text-white shadow-2xs"
                   : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
               }`}
             >
               <MapPin className="h-3.5 w-3.5" />
-              <span>Trip Movements ({dossierData.trips.length})</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setVehicleDossierTab("OVERVIEW")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all ${
-                vehicleDossierTab === "OVERVIEW"
-                  ? "bg-indigo-600 text-white shadow-2xs"
-                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-              }`}
-            >
-              <Gauge className="h-3.5 w-3.5" />
-              <span>Overview & Specs</span>
+              <span>Trips ({dossierData.trips.length})</span>
             </button>
           </div>
 
