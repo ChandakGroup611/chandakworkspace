@@ -1862,22 +1862,29 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     if (!confirm("Are you sure you want to permanently delete this document from the vehicle vault?")) {
       return;
     }
-    const res = await deleteVehicleDocumentAction(docId);
-    if (res.success) {
-      setViewingVehicle((prev) => {
-        if (!prev) return null;
-        return { ...prev, documents: (prev.documents || []).filter((d) => d.id !== docId) };
-      });
-      setVehicles((prev) =>
-        prev.map((v) =>
-          v.id === viewingVehicle.id
-            ? { ...v, documents: (v.documents || []).filter((d) => d.id !== docId) }
-            : v
-        )
-      );
-      triggerToast("Document removed from vehicle vault.");
-    } else {
-      triggerToast(res.error || "Failed to delete document.", true);
+    setDossierUploadingDoc(true);
+    try {
+      const res = await deleteVehicleDocumentAction(docId);
+      if (res.success) {
+        setViewingVehicle((prev) => {
+          if (!prev) return null;
+          return { ...prev, documents: (prev.documents || []).filter((d) => d.id !== docId) };
+        });
+        setVehicles((prev) =>
+          prev.map((v) =>
+            v.id === viewingVehicle.id
+              ? { ...v, documents: (v.documents || []).filter((d) => d.id !== docId) }
+              : v
+          )
+        );
+        triggerToast("Document removed from vehicle vault.");
+      } else {
+        triggerToast(res.error || "Failed to delete document.", true);
+      }
+    } catch (err: any) {
+      triggerToast(err.message || "Failed to delete document.", true);
+    } finally {
+      setDossierUploadingDoc(false);
     }
   };
 
@@ -2202,11 +2209,37 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         }));
 
         if (viewingVehicle?.id === updatedVehId) {
+          const matchedDriver = drivers.find(d => d.id === editVehicleDriverId);
           setViewingVehicle(prev => prev ? { 
             ...prev, 
+            registration_number: editVehiclePlate.trim().toUpperCase(),
+            make: editVehicleMake.trim(),
+            model: editVehicleModel.trim(),
+            variant: editVehicleVariant.trim() || "Standard",
+            category: editVehicleCategory,
+            status: editVehicleStatus,
+            odometer_km: Number(editVehicleOdometer) || 0,
+            nickname: editVehicleNickname.trim() || prev.nickname,
+            paint_color: editVehicleColor,
+            vin_chassis_number: editVehicleVin.trim() || prev.vin_chassis_number,
+            engine_number: editVehicleEngine.trim() || prev.engine_number,
+            fuel_type: editVehicleFuel,
+            registration_date: editVehicleRegDate || prev.registration_date,
+            rto_office: editVehicleRtoOffice.trim() || prev.rto_office,
+            registered_owner: editVehicleOwner.trim() || prev.registered_owner,
+            rto_rmn: editVehicleRtoRmn.trim() || prev.rto_rmn,
+            insurance_vendor_id: editVehicleInsuranceVendorId || null,
+            insurance_vendor: editVehicleInsuranceVendor || null,
+            insurance_policy_number: editVehicleInsurancePolicy.trim() || prev.insurance_policy_number,
+            insurance_expiry_date: editVehicleInsuranceExpiry || prev.insurance_expiry_date,
+            puc_expiry_date: editVehiclePucExpiry || prev.puc_expiry_date,
+            fitness_expiry_date: editVehicleFitnessExpiry || prev.fitness_expiry_date,
+            has_roadside_assistance: editVehicleRsa,
+            has_hsrp_plate: editVehicleHsrp,
             purchase_price: Number(editVehiclePurchasePrice) || 0,
             purchase_cost: Number(editVehiclePurchasePrice) || 0,
             custom_extended_expiry_date: editVehicleCustomExtendedExpiryDate || null,
+            assignedDriver: matchedDriver ? { id: matchedDriver.id, full_name: matchedDriver.full_name, phone: matchedDriver.phone } : null,
             documents: editVehicleDocs 
           } : null);
         } else if (dossierOriginVehicle) {
@@ -2350,6 +2383,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   };
 
   const handleDeleteVendor = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to delete insurance vendor '${name}'?`)) return;
     try {
       const res = await deleteInsuranceVendorAction(id);
       if (res.success) {
@@ -2441,6 +2475,20 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       if (res.success) {
         triggerToast(`Driver ${editDriverName} updated successfully!`);
         setIsEditDriverOpen(false);
+        const updatedDriverId = selectedDriverForEdit.id;
+        if (viewingDriver?.id === updatedDriverId) {
+          setViewingDriver(prev => prev ? {
+            ...prev,
+            full_name: editDriverName.trim(),
+            phone: editDriverPhone.trim(),
+            license_number: editDriverLicense.trim(),
+            license_expiry_date: editDriverLicenseExpiry || prev.license_expiry_date,
+            experience_years: Number(editDriverExperience) || 0,
+            emergency_contact: editDriverEmergency.trim() || undefined,
+            assigned_vehicle_id: editDriverVehicleId || null,
+            is_active: editDriverActive
+          } : null);
+        }
         setSelectedDriverForEdit(null);
         fleetDataCache = null;
         loadAllData(true, true);
@@ -5342,8 +5390,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <AppInput 
                     type="number"
                     min="0" 
-                    value={newVehicleOdometer} 
-                    onChange={(e) => setNewVehicleOdometer(Number(e.target.value))} 
+                    value={newVehicleOdometer || ""} 
+                    onChange={(e) => setNewVehicleOdometer(e.target.value === "" ? 0 : Number(e.target.value) || 0)} 
                   />
                 </div>
               </div>
@@ -9096,8 +9144,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     </label>
                     <AppInput 
                       type="number" 
-                      value={editVehicleOdometer} 
-                      onChange={(e) => setEditVehicleOdometer(Number(e.target.value))} 
+                      value={editVehicleOdometer || ""} 
+                      onChange={(e) => setEditVehicleOdometer(e.target.value === "" ? 0 : Number(e.target.value) || 0)} 
                     />
                   </div>
                 </div>
@@ -9424,8 +9472,9 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <label className="font-semibold block mb-1">Driving Experience (Years)</label>
                   <AppInput 
                     type="number" 
-                    value={newDriverExperience} 
-                    onChange={(e) => setNewDriverExperience(Number(e.target.value))} 
+                    min="0"
+                    value={newDriverExperience || ""} 
+                    onChange={(e) => setNewDriverExperience(e.target.value === "" ? 0 : Number(e.target.value) || 0)} 
                   />
                 </div>
                 <div>
@@ -9524,8 +9573,9 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <label className="font-semibold block mb-1">Experience (Years)</label>
                   <AppInput 
                     type="number"
-                    value={editDriverExperience} 
-                    onChange={(e) => setEditDriverExperience(Number(e.target.value))} 
+                    min="0"
+                    value={editDriverExperience || ""} 
+                    onChange={(e) => setEditDriverExperience(e.target.value === "" ? 0 : Number(e.target.value) || 0)} 
                   />
                 </div>
                 <div>
@@ -13275,7 +13325,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     step="0.001"
                     min="0"
                     value={renewPucCo !== undefined ? renewPucCo : ""}
-                    onChange={(e) => setRenewPucCo(Number(e.target.value))}
+                    onChange={(e) => setRenewPucCo(e.target.value === "" ? 0 : Number(e.target.value) || 0)}
                     className="font-mono"
                   />
                 </div>
@@ -13287,7 +13337,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     step="0.1"
                     min="0"
                     value={renewPucHc !== undefined ? renewPucHc : ""}
-                    onChange={(e) => setRenewPucHc(Number(e.target.value))}
+                    onChange={(e) => setRenewPucHc(e.target.value === "" ? 0 : Number(e.target.value) || 0)}
                     className="font-mono"
                   />
                 </div>
