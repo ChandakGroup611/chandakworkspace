@@ -10079,207 +10079,176 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         </div>
                       </div>
 
-                      {/* 1. Base Cost Components & Trade Discount */}
-                      <div className="space-y-1.5">
-                        <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                          <span className="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
-                          <span>1. Base Charges & Discount</span>
+                      {/* Direct Tax & Cost Breakdown Fields (4x2 Balanced Grid) */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+                        <div>
+                          <label className="text-xs font-semibold block mb-1 text-muted-foreground">
+                            Labour Charges (₹)
+                          </label>
+                          <AppInput
+                            type="number"
+                            min="0"
+                            value={newMaintLabourCost || ""}
+                            onChange={(e) => {
+                              const val = Number(e.target.value) || 0;
+                              setNewMaintLabourCost(val);
+                              const gross = val + (Number(newMaintPartsCost) || 0);
+                              const taxable = Math.max(0, gross - (Number(newMaintDiscount) || 0));
+                              const taxAmt = newMaintTaxRate > 0 ? Math.round(taxable * (newMaintTaxRate / 100)) : (Number(newMaintTaxCost) || 0);
+                              const tdsAmt = newMaintTdsRate > 0 ? Math.round(taxable * (newMaintTdsRate / 100)) : (Number(newMaintTdsAmount) || 0);
+                              setNewMaintCost(Math.max(0, taxable + taxAmt - tdsAmt - (Number(newMaintOtherDeductions) || 0)));
+                            }}
+                            className="h-9 text-xs font-mono font-semibold"
+                          />
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          <div>
-                            <label className="text-xs font-semibold block mb-1 text-muted-foreground">
-                              Labour Charges (₹)
-                            </label>
-                            <AppInput
-                              type="number"
-                              min="0"
-                              value={newMaintLabourCost || ""}
-                              onChange={(e) => {
-                                const val = Number(e.target.value) || 0;
-                                setNewMaintLabourCost(val);
-                                const gross = val + (Number(newMaintPartsCost) || 0);
-                                const taxable = Math.max(0, gross - (Number(newMaintDiscount) || 0));
-                                const taxAmt = newMaintTaxRate > 0 ? Math.round(taxable * (newMaintTaxRate / 100)) : (Number(newMaintTaxCost) || 0);
-                                const tdsAmt = newMaintTdsRate > 0 ? Math.round(taxable * (newMaintTdsRate / 100)) : (Number(newMaintTdsAmount) || 0);
-                                setNewMaintCost(Math.max(0, taxable + taxAmt - tdsAmt - (Number(newMaintOtherDeductions) || 0)));
-                              }}
-                              className="h-9 text-xs font-mono font-semibold"
-                            />
-                          </div>
 
-                          <div>
-                            <label className="text-xs font-semibold block mb-1 text-muted-foreground">
-                              Consumables / Spares (₹)
-                            </label>
-                            <AppInput
-                              type="number"
-                              min="0"
-                              value={newMaintPartsCost || ""}
-                              onChange={(e) => {
-                                const val = Number(e.target.value) || 0;
-                                setNewMaintPartsCost(val);
-                                const gross = (Number(newMaintLabourCost) || 0) + val;
-                                const taxable = Math.max(0, gross - (Number(newMaintDiscount) || 0));
-                                const taxAmt = newMaintTaxRate > 0 ? Math.round(taxable * (newMaintTaxRate / 100)) : (Number(newMaintTaxCost) || 0);
-                                const tdsAmt = newMaintTdsRate > 0 ? Math.round(taxable * (newMaintTdsRate / 100)) : (Number(newMaintTdsAmount) || 0);
-                                setNewMaintCost(Math.max(0, taxable + taxAmt - tdsAmt - (Number(newMaintOtherDeductions) || 0)));
-                              }}
-                              className="h-9 text-xs font-mono font-semibold"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="text-xs font-semibold block mb-1 text-muted-foreground">
-                              Discount (₹)
-                            </label>
-                            <AppInput
-                              type="number"
-                              min="0"
-                              value={newMaintDiscount || ""}
-                              onChange={(e) => {
-                                const val = Number(e.target.value) || 0;
-                                setNewMaintDiscount(val);
-                                const gross = (Number(newMaintLabourCost) || 0) + (Number(newMaintPartsCost) || 0);
-                                const taxable = Math.max(0, gross - val);
-                                const taxAmt = newMaintTaxRate > 0 ? Math.round(taxable * (newMaintTaxRate / 100)) : (Number(newMaintTaxCost) || 0);
-                                const tdsAmt = newMaintTdsRate > 0 ? Math.round(taxable * (newMaintTdsRate / 100)) : (Number(newMaintTdsAmount) || 0);
-                                setNewMaintCost(Math.max(0, taxable + taxAmt - tdsAmt - (Number(newMaintOtherDeductions) || 0)));
-                              }}
-                              className="h-9 text-xs font-mono font-semibold text-rose-600 dark:text-rose-400"
-                            />
-                          </div>
+                        <div>
+                          <label className="text-xs font-semibold block mb-1 text-muted-foreground">
+                            Consumables / Spares (₹)
+                          </label>
+                          <AppInput
+                            type="number"
+                            min="0"
+                            value={newMaintPartsCost || ""}
+                            onChange={(e) => {
+                              const val = Number(e.target.value) || 0;
+                              setNewMaintPartsCost(val);
+                              const gross = (Number(newMaintLabourCost) || 0) + val;
+                              const taxable = Math.max(0, gross - (Number(newMaintDiscount) || 0));
+                              const taxAmt = newMaintTaxRate > 0 ? Math.round(taxable * (newMaintTaxRate / 100)) : (Number(newMaintTaxCost) || 0);
+                              const tdsAmt = newMaintTdsRate > 0 ? Math.round(taxable * (newMaintTdsRate / 100)) : (Number(newMaintTdsAmount) || 0);
+                              setNewMaintCost(Math.max(0, taxable + taxAmt - tdsAmt - (Number(newMaintOtherDeductions) || 0)));
+                            }}
+                            className="h-9 text-xs font-mono font-semibold"
+                          />
                         </div>
-                      </div>
 
-                      {/* 2. Tax Addition (GST Rate & Taxes) */}
-                      <div className="space-y-1.5 pt-1 border-t border-border/50">
-                        <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
-                          <span className="flex items-center gap-1">
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                            <span>2. GST / Tax</span>
-                          </span>
-                          {newMaintTaxCost > 0 && (
-                            <span className="font-mono text-xs text-muted-foreground font-normal">
-                              CGST: ₹{Math.round(newMaintTaxCost / 2).toLocaleString("en-IN")} + SGST: ₹{Math.round(newMaintTaxCost / 2).toLocaleString("en-IN")} (or IGST)
-                            </span>
-                          )}
+                        <div>
+                          <label className="text-xs font-semibold block mb-1 text-muted-foreground">
+                            Discount (₹)
+                          </label>
+                          <AppInput
+                            type="number"
+                            min="0"
+                            value={newMaintDiscount || ""}
+                            onChange={(e) => {
+                              const val = Number(e.target.value) || 0;
+                              setNewMaintDiscount(val);
+                              const gross = (Number(newMaintLabourCost) || 0) + (Number(newMaintPartsCost) || 0);
+                              const taxable = Math.max(0, gross - val);
+                              const taxAmt = newMaintTaxRate > 0 ? Math.round(taxable * (newMaintTaxRate / 100)) : (Number(newMaintTaxCost) || 0);
+                              const tdsAmt = newMaintTdsRate > 0 ? Math.round(taxable * (newMaintTdsRate / 100)) : (Number(newMaintTdsAmount) || 0);
+                              setNewMaintCost(Math.max(0, taxable + taxAmt - tdsAmt - (Number(newMaintOtherDeductions) || 0)));
+                            }}
+                            className="h-9 text-xs font-mono font-semibold text-rose-600 dark:text-rose-400"
+                          />
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          <div>
-                            <label className="text-xs font-semibold block mb-1 text-muted-foreground">
-                              GST Rate (%)
-                            </label>
-                            <select
-                              value={newMaintTaxRate}
-                              onChange={(e) => {
-                                const rate = Number(e.target.value) || 0;
-                                setNewMaintTaxRate(rate);
-                                const gross = (Number(newMaintLabourCost) || 0) + (Number(newMaintPartsCost) || 0);
-                                const taxable = Math.max(0, gross - (Number(newMaintDiscount) || 0));
-                                const taxAmt = Math.round(taxable * (rate / 100));
-                                setNewMaintTaxCost(taxAmt);
-                                setNewMaintCost(Math.max(0, taxable + taxAmt - (Number(newMaintTdsAmount) || 0) - (Number(newMaintOtherDeductions) || 0)));
-                              }}
-                              className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs font-medium text-foreground focus:outline-none focus:border-theme-btn-primary"
-                            >
-                              <option value={0}>0% (Tax Exempt / Nil)</option>
-                              <option value={5}>5% GST</option>
-                              <option value={12}>12% GST</option>
-                              <option value={18}>18% GST (Standard)</option>
-                              <option value={28}>28% GST (Luxury/Heavy)</option>
-                            </select>
-                          </div>
 
-                          <div className="sm:col-span-2">
-                            <label className="text-xs font-semibold block mb-1 text-muted-foreground">
-                              GST Amount (₹)
-                            </label>
-                            <AppInput
-                              type="number"
-                              min="0"
-                              value={newMaintTaxCost || ""}
-                              onChange={(e) => {
-                                const val = Number(e.target.value) || 0;
-                                setNewMaintTaxCost(val);
-                                const gross = (Number(newMaintLabourCost) || 0) + (Number(newMaintPartsCost) || 0);
-                                const taxable = Math.max(0, gross - (Number(newMaintDiscount) || 0));
-                                setNewMaintCost(Math.max(0, taxable + val - (Number(newMaintTdsAmount) || 0) - (Number(newMaintOtherDeductions) || 0)));
-                              }}
-                              className="h-9 text-xs font-mono font-semibold text-emerald-600 dark:text-emerald-400"
-                            />
-                          </div>
+                        <div>
+                          <label className="text-xs font-semibold block mb-1 text-muted-foreground">
+                            Other Deductions / Advance Adj (₹)
+                          </label>
+                          <AppInput
+                            type="number"
+                            min="0"
+                            value={newMaintOtherDeductions || ""}
+                            onChange={(e) => {
+                              const val = Number(e.target.value) || 0;
+                              setNewMaintOtherDeductions(val);
+                              const gross = (Number(newMaintLabourCost) || 0) + (Number(newMaintPartsCost) || 0);
+                              const taxable = Math.max(0, gross - (Number(newMaintDiscount) || 0));
+                              setNewMaintCost(Math.max(0, taxable + (Number(newMaintTaxCost) || 0) - (Number(newMaintTdsAmount) || 0) - val));
+                            }}
+                            className="h-9 text-xs font-mono font-semibold"
+                          />
                         </div>
-                      </div>
 
-                      {/* 3. Tax Deductions & Withholding (TDS / Retentions) */}
-                      <div className="space-y-1.5 pt-1 border-t border-border/50">
-                        <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                          <span className="h-1.5 w-1.5 rounded-full bg-purple-500"></span>
-                          <span>3. TDS & Deductions</span>
+                        <div>
+                          <label className="text-xs font-semibold block mb-1 text-muted-foreground">
+                            GST Rate (%)
+                          </label>
+                          <select
+                            value={newMaintTaxRate}
+                            onChange={(e) => {
+                              const rate = Number(e.target.value) || 0;
+                              setNewMaintTaxRate(rate);
+                              const gross = (Number(newMaintLabourCost) || 0) + (Number(newMaintPartsCost) || 0);
+                              const taxable = Math.max(0, gross - (Number(newMaintDiscount) || 0));
+                              const taxAmt = Math.round(taxable * (rate / 100));
+                              setNewMaintTaxCost(taxAmt);
+                              setNewMaintCost(Math.max(0, taxable + taxAmt - (Number(newMaintTdsAmount) || 0) - (Number(newMaintOtherDeductions) || 0)));
+                            }}
+                            className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs font-medium text-foreground focus:outline-none focus:border-theme-btn-primary"
+                          >
+                            <option value={0}>0% (Tax Exempt / Nil)</option>
+                            <option value={5}>5% GST</option>
+                            <option value={12}>12% GST</option>
+                            <option value={18}>18% GST (Standard)</option>
+                            <option value={28}>28% GST (Luxury/Heavy)</option>
+                          </select>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          <div>
-                            <label className="text-xs font-semibold block mb-1 text-muted-foreground">
-                              TDS Withholding Rate (%)
-                            </label>
-                            <select
-                              value={newMaintTdsRate}
-                              onChange={(e) => {
-                                const rate = Number(e.target.value) || 0;
-                                setNewMaintTdsRate(rate);
-                                const gross = (Number(newMaintLabourCost) || 0) + (Number(newMaintPartsCost) || 0);
-                                const taxable = Math.max(0, gross - (Number(newMaintDiscount) || 0));
-                                const tdsAmt = Math.round(taxable * (rate / 100));
-                                setNewMaintTdsAmount(tdsAmt);
-                                setNewMaintCost(Math.max(0, taxable + (Number(newMaintTaxCost) || 0) - tdsAmt - (Number(newMaintOtherDeductions) || 0)));
-                              }}
-                              className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs font-medium text-foreground focus:outline-none focus:border-theme-btn-primary"
-                            >
-                              <option value={0}>0% (No TDS Withholding)</option>
-                              <option value={1}>1% (TDS Sec 194C - Individual/HUF)</option>
-                              <option value={2}>2% (TDS Sec 194C - Company/Firm / 194J)</option>
-                              <option value={5}>5% (TDS Sec 194H / Misc)</option>
-                              <option value={10}>10% (TDS Sec 194J Professional)</option>
-                            </select>
-                          </div>
 
-                          <div>
-                            <label className="text-xs font-semibold block mb-1 text-muted-foreground">
-                              TDS Deduction Amount (₹)
-                            </label>
-                            <AppInput
-                              type="number"
-                              min="0"
-                              value={newMaintTdsAmount || ""}
-                              onChange={(e) => {
-                                const val = Number(e.target.value) || 0;
-                                setNewMaintTdsAmount(val);
-                                const gross = (Number(newMaintLabourCost) || 0) + (Number(newMaintPartsCost) || 0);
-                                const taxable = Math.max(0, gross - (Number(newMaintDiscount) || 0));
-                                setNewMaintCost(Math.max(0, taxable + (Number(newMaintTaxCost) || 0) - val - (Number(newMaintOtherDeductions) || 0)));
-                              }}
-                              className="h-9 text-xs font-mono font-semibold text-purple-600 dark:text-purple-400"
-                            />
-                          </div>
+                        <div>
+                          <label className="text-xs font-semibold block mb-1 text-muted-foreground">
+                            GST Amount (₹)
+                          </label>
+                          <AppInput
+                            type="number"
+                            min="0"
+                            value={newMaintTaxCost || ""}
+                            onChange={(e) => {
+                              const val = Number(e.target.value) || 0;
+                              setNewMaintTaxCost(val);
+                              const gross = (Number(newMaintLabourCost) || 0) + (Number(newMaintPartsCost) || 0);
+                              const taxable = Math.max(0, gross - (Number(newMaintDiscount) || 0));
+                              setNewMaintCost(Math.max(0, taxable + val - (Number(newMaintTdsAmount) || 0) - (Number(newMaintOtherDeductions) || 0)));
+                            }}
+                            className="h-9 text-xs font-mono font-semibold text-emerald-600 dark:text-emerald-400"
+                          />
+                        </div>
 
-                          <div>
-                            <label className="text-xs font-semibold block mb-1 text-muted-foreground">
-                              Other Deductions / Advance Adj (₹)
-                            </label>
-                            <AppInput
-                              type="number"
-                              min="0"
-                              value={newMaintOtherDeductions || ""}
-                              onChange={(e) => {
-                                const val = Number(e.target.value) || 0;
-                                setNewMaintOtherDeductions(val);
-                                const gross = (Number(newMaintLabourCost) || 0) + (Number(newMaintPartsCost) || 0);
-                                const taxable = Math.max(0, gross - (Number(newMaintDiscount) || 0));
-                                setNewMaintCost(Math.max(0, taxable + (Number(newMaintTaxCost) || 0) - (Number(newMaintTdsAmount) || 0) - val));
-                              }}
-                              className="h-9 text-xs font-mono font-semibold"
-                            />
-                          </div>
+                        <div>
+                          <label className="text-xs font-semibold block mb-1 text-muted-foreground">
+                            TDS Withholding Rate (%)
+                          </label>
+                          <select
+                            value={newMaintTdsRate}
+                            onChange={(e) => {
+                              const rate = Number(e.target.value) || 0;
+                              setNewMaintTdsRate(rate);
+                              const gross = (Number(newMaintLabourCost) || 0) + (Number(newMaintPartsCost) || 0);
+                              const taxable = Math.max(0, gross - (Number(newMaintDiscount) || 0));
+                              const tdsAmt = Math.round(taxable * (rate / 100));
+                              setNewMaintTdsAmount(tdsAmt);
+                              setNewMaintCost(Math.max(0, taxable + (Number(newMaintTaxCost) || 0) - tdsAmt - (Number(newMaintOtherDeductions) || 0)));
+                            }}
+                            className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs font-medium text-foreground focus:outline-none focus:border-theme-btn-primary"
+                          >
+                            <option value={0}>0% (No TDS Withholding)</option>
+                            <option value={1}>1% (TDS Sec 194C - Individual/HUF)</option>
+                            <option value={2}>2% (TDS Sec 194C - Company/Firm / 194J)</option>
+                            <option value={5}>5% (TDS Sec 194H / Misc)</option>
+                            <option value={10}>10% (TDS Sec 194J Professional)</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-semibold block mb-1 text-muted-foreground">
+                            TDS Deduction Amount (₹)
+                          </label>
+                          <AppInput
+                            type="number"
+                            min="0"
+                            value={newMaintTdsAmount || ""}
+                            onChange={(e) => {
+                              const val = Number(e.target.value) || 0;
+                              setNewMaintTdsAmount(val);
+                              const gross = (Number(newMaintLabourCost) || 0) + (Number(newMaintPartsCost) || 0);
+                              const taxable = Math.max(0, gross - (Number(newMaintDiscount) || 0));
+                              setNewMaintCost(Math.max(0, taxable + (Number(newMaintTaxCost) || 0) - val - (Number(newMaintOtherDeductions) || 0)));
+                            }}
+                            className="h-9 text-xs font-mono font-semibold text-purple-600 dark:text-purple-400"
+                          />
                         </div>
                       </div>
 
@@ -10914,207 +10883,176 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         </div>
                       </div>
 
-                      {/* 1. Base Cost Components & Trade Discount */}
-                      <div className="space-y-1.5">
-                        <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                          <span className="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
-                          <span>1. Base Charges & Discount</span>
+                      {/* Direct Tax & Cost Breakdown Fields (4x2 Balanced Grid) */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+                        <div>
+                          <label className="text-xs font-semibold block mb-1 text-muted-foreground">
+                            Labour Charges (₹)
+                          </label>
+                          <AppInput
+                            type="number"
+                            min="0"
+                            value={editMaintLabourCost || ""}
+                            onChange={(e) => {
+                              const val = Number(e.target.value) || 0;
+                              setEditMaintLabourCost(val);
+                              const gross = val + (Number(editMaintPartsCost) || 0);
+                              const taxable = Math.max(0, gross - (Number(editMaintDiscount) || 0));
+                              const taxAmt = editMaintTaxRate > 0 ? Math.round(taxable * (editMaintTaxRate / 100)) : (Number(editMaintTaxCost) || 0);
+                              const tdsAmt = editMaintTdsRate > 0 ? Math.round(taxable * (editMaintTdsRate / 100)) : (Number(editMaintTdsAmount) || 0);
+                              setEditMaintCost(Math.max(0, taxable + taxAmt - tdsAmt - (Number(editMaintOtherDeductions) || 0)));
+                            }}
+                            className="h-9 text-xs font-mono font-semibold"
+                          />
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          <div>
-                            <label className="text-xs font-semibold block mb-1 text-muted-foreground">
-                              Labour Charges (₹)
-                            </label>
-                            <AppInput
-                              type="number"
-                              min="0"
-                              value={editMaintLabourCost || ""}
-                              onChange={(e) => {
-                                const val = Number(e.target.value) || 0;
-                                setEditMaintLabourCost(val);
-                                const gross = val + (Number(editMaintPartsCost) || 0);
-                                const taxable = Math.max(0, gross - (Number(editMaintDiscount) || 0));
-                                const taxAmt = editMaintTaxRate > 0 ? Math.round(taxable * (editMaintTaxRate / 100)) : (Number(editMaintTaxCost) || 0);
-                                const tdsAmt = editMaintTdsRate > 0 ? Math.round(taxable * (editMaintTdsRate / 100)) : (Number(editMaintTdsAmount) || 0);
-                                setEditMaintCost(Math.max(0, taxable + taxAmt - tdsAmt - (Number(editMaintOtherDeductions) || 0)));
-                              }}
-                              className="h-9 text-xs font-mono font-semibold"
-                            />
-                          </div>
 
-                          <div>
-                            <label className="text-xs font-semibold block mb-1 text-muted-foreground">
-                              Consumables / Spares (₹)
-                            </label>
-                            <AppInput
-                              type="number"
-                              min="0"
-                              value={editMaintPartsCost || ""}
-                              onChange={(e) => {
-                                const val = Number(e.target.value) || 0;
-                                setEditMaintPartsCost(val);
-                                const gross = (Number(editMaintLabourCost) || 0) + val;
-                                const taxable = Math.max(0, gross - (Number(editMaintDiscount) || 0));
-                                const taxAmt = editMaintTaxRate > 0 ? Math.round(taxable * (editMaintTaxRate / 100)) : (Number(editMaintTaxCost) || 0);
-                                const tdsAmt = editMaintTdsRate > 0 ? Math.round(taxable * (editMaintTdsRate / 100)) : (Number(editMaintTdsAmount) || 0);
-                                setEditMaintCost(Math.max(0, taxable + taxAmt - tdsAmt - (Number(editMaintOtherDeductions) || 0)));
-                              }}
-                              className="h-9 text-xs font-mono font-semibold"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="text-xs font-semibold block mb-1 text-muted-foreground">
-                              Discount (₹)
-                            </label>
-                            <AppInput
-                              type="number"
-                              min="0"
-                              value={editMaintDiscount || ""}
-                              onChange={(e) => {
-                                const val = Number(e.target.value) || 0;
-                                setEditMaintDiscount(val);
-                                const gross = (Number(editMaintLabourCost) || 0) + (Number(editMaintPartsCost) || 0);
-                                const taxable = Math.max(0, gross - val);
-                                const taxAmt = editMaintTaxRate > 0 ? Math.round(taxable * (editMaintTaxRate / 100)) : (Number(editMaintTaxCost) || 0);
-                                const tdsAmt = editMaintTdsRate > 0 ? Math.round(taxable * (editMaintTdsRate / 100)) : (Number(editMaintTdsAmount) || 0);
-                                setEditMaintCost(Math.max(0, taxable + taxAmt - tdsAmt - (Number(editMaintOtherDeductions) || 0)));
-                              }}
-                              className="h-9 text-xs font-mono font-semibold text-rose-600 dark:text-rose-400"
-                            />
-                          </div>
+                        <div>
+                          <label className="text-xs font-semibold block mb-1 text-muted-foreground">
+                            Consumables / Spares (₹)
+                          </label>
+                          <AppInput
+                            type="number"
+                            min="0"
+                            value={editMaintPartsCost || ""}
+                            onChange={(e) => {
+                              const val = Number(e.target.value) || 0;
+                              setEditMaintPartsCost(val);
+                              const gross = (Number(editMaintLabourCost) || 0) + val;
+                              const taxable = Math.max(0, gross - (Number(editMaintDiscount) || 0));
+                              const taxAmt = editMaintTaxRate > 0 ? Math.round(taxable * (editMaintTaxRate / 100)) : (Number(editMaintTaxCost) || 0);
+                              const tdsAmt = editMaintTdsRate > 0 ? Math.round(taxable * (editMaintTdsRate / 100)) : (Number(editMaintTdsAmount) || 0);
+                              setEditMaintCost(Math.max(0, taxable + taxAmt - tdsAmt - (Number(editMaintOtherDeductions) || 0)));
+                            }}
+                            className="h-9 text-xs font-mono font-semibold"
+                          />
                         </div>
-                      </div>
 
-                      {/* 2. Tax Addition (GST Rate & Taxes) */}
-                      <div className="space-y-1.5 pt-1 border-t border-border/50">
-                        <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
-                          <span className="flex items-center gap-1">
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                            <span>2. GST / Tax</span>
-                          </span>
-                          {editMaintTaxCost > 0 && (
-                            <span className="font-mono text-xs text-muted-foreground font-normal">
-                              CGST: ₹{Math.round(editMaintTaxCost / 2).toLocaleString("en-IN")} + SGST: ₹{Math.round(editMaintTaxCost / 2).toLocaleString("en-IN")} (or IGST)
-                            </span>
-                          )}
+                        <div>
+                          <label className="text-xs font-semibold block mb-1 text-muted-foreground">
+                            Discount (₹)
+                          </label>
+                          <AppInput
+                            type="number"
+                            min="0"
+                            value={editMaintDiscount || ""}
+                            onChange={(e) => {
+                              const val = Number(e.target.value) || 0;
+                              setEditMaintDiscount(val);
+                              const gross = (Number(editMaintLabourCost) || 0) + (Number(editMaintPartsCost) || 0);
+                              const taxable = Math.max(0, gross - val);
+                              const taxAmt = editMaintTaxRate > 0 ? Math.round(taxable * (editMaintTaxRate / 100)) : (Number(editMaintTaxCost) || 0);
+                              const tdsAmt = editMaintTdsRate > 0 ? Math.round(taxable * (editMaintTdsRate / 100)) : (Number(editMaintTdsAmount) || 0);
+                              setEditMaintCost(Math.max(0, taxable + taxAmt - tdsAmt - (Number(editMaintOtherDeductions) || 0)));
+                            }}
+                            className="h-9 text-xs font-mono font-semibold text-rose-600 dark:text-rose-400"
+                          />
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          <div>
-                            <label className="text-xs font-semibold block mb-1 text-muted-foreground">
-                              GST Rate (%)
-                            </label>
-                            <select
-                              value={editMaintTaxRate}
-                              onChange={(e) => {
-                                const rate = Number(e.target.value) || 0;
-                                setEditMaintTaxRate(rate);
-                                const gross = (Number(editMaintLabourCost) || 0) + (Number(editMaintPartsCost) || 0);
-                                const taxable = Math.max(0, gross - (Number(editMaintDiscount) || 0));
-                                const taxAmt = Math.round(taxable * (rate / 100));
-                                setEditMaintTaxCost(taxAmt);
-                                setEditMaintCost(Math.max(0, taxable + taxAmt - (Number(editMaintTdsAmount) || 0) - (Number(editMaintOtherDeductions) || 0)));
-                              }}
-                              className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs font-medium text-foreground focus:outline-none focus:border-theme-btn-primary"
-                            >
-                              <option value={0}>0% (Tax Exempt / Nil)</option>
-                              <option value={5}>5% GST</option>
-                              <option value={12}>12% GST</option>
-                              <option value={18}>18% GST (Standard)</option>
-                              <option value={28}>28% GST (Luxury/Heavy)</option>
-                            </select>
-                          </div>
 
-                          <div className="sm:col-span-2">
-                            <label className="text-xs font-semibold block mb-1 text-muted-foreground">
-                              GST Amount (₹)
-                            </label>
-                            <AppInput
-                              type="number"
-                              min="0"
-                              value={editMaintTaxCost || ""}
-                              onChange={(e) => {
-                                const val = Number(e.target.value) || 0;
-                                setEditMaintTaxCost(val);
-                                const gross = (Number(editMaintLabourCost) || 0) + (Number(editMaintPartsCost) || 0);
-                                const taxable = Math.max(0, gross - (Number(editMaintDiscount) || 0));
-                                setNewMaintCost(Math.max(0, taxable + val - (Number(editMaintTdsAmount) || 0) - (Number(editMaintOtherDeductions) || 0)));
-                              }}
-                              className="h-9 text-xs font-mono font-semibold text-emerald-600 dark:text-emerald-400"
-                            />
-                          </div>
+                        <div>
+                          <label className="text-xs font-semibold block mb-1 text-muted-foreground">
+                            Other Deductions / Advance Adj (₹)
+                          </label>
+                          <AppInput
+                            type="number"
+                            min="0"
+                            value={editMaintOtherDeductions || ""}
+                            onChange={(e) => {
+                              const val = Number(e.target.value) || 0;
+                              setEditMaintOtherDeductions(val);
+                              const gross = (Number(editMaintLabourCost) || 0) + (Number(editMaintPartsCost) || 0);
+                              const taxable = Math.max(0, gross - (Number(editMaintDiscount) || 0));
+                              setEditMaintCost(Math.max(0, taxable + (Number(editMaintTaxCost) || 0) - (Number(editMaintTdsAmount) || 0) - val));
+                            }}
+                            className="h-9 text-xs font-mono font-semibold"
+                          />
                         </div>
-                      </div>
 
-                      {/* 3. Tax Deductions & Withholding (TDS / Retentions) */}
-                      <div className="space-y-1.5 pt-1 border-t border-border/50">
-                        <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                          <span className="h-1.5 w-1.5 rounded-full bg-purple-500"></span>
-                          <span>3. TDS & Deductions</span>
+                        <div>
+                          <label className="text-xs font-semibold block mb-1 text-muted-foreground">
+                            GST Rate (%)
+                          </label>
+                          <select
+                            value={editMaintTaxRate}
+                            onChange={(e) => {
+                              const rate = Number(e.target.value) || 0;
+                              setEditMaintTaxRate(rate);
+                              const gross = (Number(editMaintLabourCost) || 0) + (Number(editMaintPartsCost) || 0);
+                              const taxable = Math.max(0, gross - (Number(editMaintDiscount) || 0));
+                              const taxAmt = Math.round(taxable * (rate / 100));
+                              setEditMaintTaxCost(taxAmt);
+                              setEditMaintCost(Math.max(0, taxable + taxAmt - (Number(editMaintTdsAmount) || 0) - (Number(editMaintOtherDeductions) || 0)));
+                            }}
+                            className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs font-medium text-foreground focus:outline-none focus:border-theme-btn-primary"
+                          >
+                            <option value={0}>0% (Tax Exempt / Nil)</option>
+                            <option value={5}>5% GST</option>
+                            <option value={12}>12% GST</option>
+                            <option value={18}>18% GST (Standard)</option>
+                            <option value={28}>28% GST (Luxury/Heavy)</option>
+                          </select>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          <div>
-                            <label className="text-xs font-semibold block mb-1 text-muted-foreground">
-                              TDS Withholding Rate (%)
-                            </label>
-                            <select
-                              value={editMaintTdsRate}
-                              onChange={(e) => {
-                                const rate = Number(e.target.value) || 0;
-                                setEditMaintTdsRate(rate);
-                                const gross = (Number(editMaintLabourCost) || 0) + (Number(editMaintPartsCost) || 0);
-                                const taxable = Math.max(0, gross - (Number(editMaintDiscount) || 0));
-                                const tdsAmt = Math.round(taxable * (rate / 100));
-                                setEditMaintTdsAmount(tdsAmt);
-                                setEditMaintCost(Math.max(0, taxable + (Number(editMaintTaxCost) || 0) - tdsAmt - (Number(editMaintOtherDeductions) || 0)));
-                              }}
-                              className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs font-medium text-foreground focus:outline-none focus:border-theme-btn-primary"
-                            >
-                              <option value={0}>0% (No TDS Withholding)</option>
-                              <option value={1}>1% (TDS Sec 194C - Individual/HUF)</option>
-                              <option value={2}>2% (TDS Sec 194C - Company/Firm / 194J)</option>
-                              <option value={5}>5% (TDS Sec 194H / Misc)</option>
-                              <option value={10}>10% (TDS Sec 194J Professional)</option>
-                            </select>
-                          </div>
 
-                          <div>
-                            <label className="text-xs font-semibold block mb-1 text-muted-foreground">
-                              TDS Deduction Amount (₹)
-                            </label>
-                            <AppInput
-                              type="number"
-                              min="0"
-                              value={editMaintTdsAmount || ""}
-                              onChange={(e) => {
-                                const val = Number(e.target.value) || 0;
-                                setEditMaintTdsAmount(val);
-                                const gross = (Number(editMaintLabourCost) || 0) + (Number(editMaintPartsCost) || 0);
-                                const taxable = Math.max(0, gross - (Number(editMaintDiscount) || 0));
-                                setEditMaintCost(Math.max(0, taxable + (Number(editMaintTaxCost) || 0) - val - (Number(editMaintOtherDeductions) || 0)));
-                              }}
-                              className="h-9 text-xs font-mono font-semibold text-purple-600 dark:text-purple-400"
-                            />
-                          </div>
+                        <div>
+                          <label className="text-xs font-semibold block mb-1 text-muted-foreground">
+                            GST Amount (₹)
+                          </label>
+                          <AppInput
+                            type="number"
+                            min="0"
+                            value={editMaintTaxCost || ""}
+                            onChange={(e) => {
+                              const val = Number(e.target.value) || 0;
+                              setEditMaintTaxCost(val);
+                              const gross = (Number(editMaintLabourCost) || 0) + (Number(editMaintPartsCost) || 0);
+                              const taxable = Math.max(0, gross - (Number(editMaintDiscount) || 0));
+                              setEditMaintCost(Math.max(0, taxable + val - (Number(editMaintTdsAmount) || 0) - (Number(editMaintOtherDeductions) || 0)));
+                            }}
+                            className="h-9 text-xs font-mono font-semibold text-emerald-600 dark:text-emerald-400"
+                          />
+                        </div>
 
-                          <div>
-                            <label className="text-xs font-semibold block mb-1 text-muted-foreground">
-                              Other Deductions / Advance Adj (₹)
-                            </label>
-                            <AppInput
-                              type="number"
-                              min="0"
-                              value={editMaintOtherDeductions || ""}
-                              onChange={(e) => {
-                                const val = Number(e.target.value) || 0;
-                                setEditMaintOtherDeductions(val);
-                                const gross = (Number(editMaintLabourCost) || 0) + (Number(editMaintPartsCost) || 0);
-                                const taxable = Math.max(0, gross - (Number(editMaintDiscount) || 0));
-                                setEditMaintCost(Math.max(0, taxable + (Number(editMaintTaxCost) || 0) - (Number(editMaintTdsAmount) || 0) - val));
-                              }}
-                              className="h-9 text-xs font-mono font-semibold"
-                            />
-                          </div>
+                        <div>
+                          <label className="text-xs font-semibold block mb-1 text-muted-foreground">
+                            TDS Withholding Rate (%)
+                          </label>
+                          <select
+                            value={editMaintTdsRate}
+                            onChange={(e) => {
+                              const rate = Number(e.target.value) || 0;
+                              setEditMaintTdsRate(rate);
+                              const gross = (Number(editMaintLabourCost) || 0) + (Number(editMaintPartsCost) || 0);
+                              const taxable = Math.max(0, gross - (Number(editMaintDiscount) || 0));
+                              const tdsAmt = Math.round(taxable * (rate / 100));
+                              setEditMaintTdsAmount(tdsAmt);
+                              setEditMaintCost(Math.max(0, taxable + (Number(editMaintTaxCost) || 0) - tdsAmt - (Number(editMaintOtherDeductions) || 0)));
+                            }}
+                            className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs font-medium text-foreground focus:outline-none focus:border-theme-btn-primary"
+                          >
+                            <option value={0}>0% (No TDS Withholding)</option>
+                            <option value={1}>1% (TDS Sec 194C - Individual/HUF)</option>
+                            <option value={2}>2% (TDS Sec 194C - Company/Firm / 194J)</option>
+                            <option value={5}>5% (TDS Sec 194H / Misc)</option>
+                            <option value={10}>10% (TDS Sec 194J Professional)</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-semibold block mb-1 text-muted-foreground">
+                            TDS Deduction Amount (₹)
+                          </label>
+                          <AppInput
+                            type="number"
+                            min="0"
+                            value={editMaintTdsAmount || ""}
+                            onChange={(e) => {
+                              const val = Number(e.target.value) || 0;
+                              setEditMaintTdsAmount(val);
+                              const gross = (Number(editMaintLabourCost) || 0) + (Number(editMaintPartsCost) || 0);
+                              const taxable = Math.max(0, gross - (Number(editMaintDiscount) || 0));
+                              setEditMaintCost(Math.max(0, taxable + (Number(editMaintTaxCost) || 0) - val - (Number(editMaintOtherDeductions) || 0)));
+                            }}
+                            className="h-9 text-xs font-mono font-semibold text-purple-600 dark:text-purple-400"
+                          />
                         </div>
                       </div>
 
@@ -14724,8 +14662,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 </div>
               </div>
 
-              {/* Technical Specifications Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {/* Technical Specifications Grid (5x2 Balanced Grid - 10 Items) */}
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-5 gap-3">
                 <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
                   <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Category / Body Type</span>
                   <div className="font-semibold text-foreground text-xs">{viewingVehicle.category || "Standard"}</div>
