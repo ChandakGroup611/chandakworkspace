@@ -209,6 +209,25 @@ export const VEHICLE_DOC_TYPES = [
   { value: "OTHER", label: "Other Legal / Transport Document", badgeColor: "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/25" }
 ];
 
+export interface AggregatedVehicleDoc {
+  id: string;
+  vehicle_id?: string;
+  doc_type: string;
+  categoryLabel: string;
+  title: string;
+  file_name: string;
+  file_size?: string | number | null;
+  file_type?: string;
+  file_url: string;
+  uploaded_at?: string;
+  expiry_date?: string | null;
+  document_number?: string | null;
+  status?: string;
+  sourceModule: "VAULT" | "MASTER" | "SERVICE" | "PART" | "TRIP" | "DRIVER" | string;
+  sourceLabel: string;
+  isDirectVaultDoc: boolean;
+}
+
 // Module-level in-memory cache for FleetDesk data
 let fleetDataCache: {
   stats?: VehicleDashboardStats;
@@ -739,6 +758,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   const [dossierNewDocNumber, setDossierNewDocNumber] = useState("");
   const [dossierNewDocExpiry, setDossierNewDocExpiry] = useState("");
   const [dossierUploadingDoc, setDossierUploadingDoc] = useState(false);
+  const [dossierDocCategoryFilter, setDossierDocCategoryFilter] = useState<string>("ALL");
+  const [dossierDocSearchQuery, setDossierDocSearchQuery] = useState<string>("");
 
   // Vehicle Inventory Inline Expandable Dossier & Column Options States
   const [expandedVehicleId, setExpandedVehicleId] = useState<string | null>(null);
@@ -2446,7 +2467,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         services: [] as MaintenanceRecord[],
         parts: [] as PartAccessoryRecord[],
         trips: [] as TripRecord[],
-        docs: [] as VehicleDocumentRecord[],
+        docs: [] as AggregatedVehicleDoc[],
         totalServiceSpend: 0,
         lastService: null as MaintenanceRecord | null,
         totalPartsValue: 0,
@@ -2500,25 +2521,276 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     const completedTripsCount = vTrips.filter((t) => t.status === "COMPLETED").length;
     const activeTripsCount = vTrips.filter((t) => t.status === "ON_ROUTE" || t.status === "SCHEDULED").length;
 
-    // 4. Documents & Compliance Status
-    const vDocs = viewingVehicle.documents || [];
-    const expiredDocsCount = vDocs.filter((d) => {
+    // 4. Unified All-Module Vehicle Documents & Compliance Aggregation
+    const rawVaultDocs: AggregatedVehicleDoc[] = (viewingVehicle.documents || []).map((d) => ({
+      id: d.id,
+      doc_type: d.doc_type || "OTHER",
+      categoryLabel: VEHICLE_DOC_TYPES.find((t) => t.value === d.doc_type)?.label || d.doc_type || "Vault Document",
+      title: d.title || d.file_name || "Vehicle Document",
+      file_name: d.file_name || "document.pdf",
+      file_size: d.file_size || null,
+      file_type: d.file_type || resolveMimeFromName(d.file_name || ""),
+      file_url: d.file_url,
+      uploaded_at: d.uploaded_at || viewingVehicle.created_at,
+      expiry_date: d.expiry_date || null,
+      document_number: d.document_number || null,
+      status: d.status || "VALID",
+      sourceModule: "VAULT",
+      sourceLabel: "Vehicle Document Vault",
+      isDirectVaultDoc: true
+    }));
+
+    // Direct Vehicle Master document attachments (e.g. uploaded during vehicle registration/RTO sync)
+    const masterDocs: AggregatedVehicleDoc[] = [];
+    const existingUrls = new Set(rawVaultDocs.map(d => d.file_url).filter(Boolean));
+
+    const checkAndPushMaster = (url?: string | null, docType = "OTHER", title = "Vehicle Master Document", docNumber?: string | null, expDate?: string | null, defaultFileName = "document.pdf") => {
+      if (!url || existingUrls.has(url)) return;
+      existingUrls.add(url);
+      masterDocs.push({
+        id: `master-doc-${docType.toLowerCase()}-${targetId}`,
+        doc_type: docType,
+        categoryLabel: VEHICLE_DOC_TYPES.find((t) => t.value === docType)?.label || docType,
+        title,
+        file_name: defaultFileName,
+        file_size: "Standard Archive",
+        file_type: resolveMimeFromName(defaultFileName),
+        file_url: url,
+        uploaded_at: viewingVehicle.registration_date || viewingVehicle.created_at,
+        expiry_date: expDate || null,
+        document_number: docNumber || null,
+        status: "VALID",
+        sourceModule: "MASTER",
+        sourceLabel: "Vehicle Master Registry",
+        isDirectVaultDoc: false
+      });
+    };
+
+    checkAndPushMaster((viewingVehicle as any).rc_doc_url || (viewingVehicle as any).rc_document_url, "RC", `RC Smart Card (${viewingVehicle.registration_number})`, viewingVehicle.vin_chassis_number, null, `RC_${targetPlate}.pdf`);
+    checkAndPushMaster((viewingVehicle as any).insurance_doc_url || (viewingVehicle as any).policy_document_url, "INSURANCE", `Insurance Policy (${viewingVehicle.insurance_policy_number || targetPlate})`, viewingVehicle.insurance_policy_number, viewingVehicle.insurance_expiry_date, `Insurance_${targetPlate}.pdf`);
+    checkAndPushMaster((viewingVehicle as any).puc_doc_url || (viewingVehicle as any).certificate_doc_url, "PUC", `PUC Certificate (${viewingVehicle.puc_certificate_number || targetPlate})`, viewingVehicle.puc_certificate_number, viewingVehicle.puc_expiry_date, `PUC_${targetPlate}.pdf`);
+    checkAndPushMaster((viewingVehicle as any).fitness_doc_url, "FITNESS", `Transport Fitness Certificate (${targetPlate})`, null, viewingVehicle.fitness_expiry_date, `Fitness_${targetPlate}.pdf`);
+    checkAndPushMaster((viewingVehicle as any).permit_doc_url, "PERMIT", `Commercial Tourist Permit (${targetPlate})`, null, null, `Permit_${targetPlate}.pdf`);
+    checkAndPushMaster((viewingVehicle as any).road_tax_doc_url, "ROAD_TAX", `Motor Vehicle Road Tax Receipt`, null, null, `Road_Tax_${targetPlate}.pdf`);
+    checkAndPushMaster((viewingVehicle as any).invoice_doc_url, "INVOICE", `Purchase Invoice & Delivery Challan`, null, null, `Invoice_${targetPlate}.pdf`);
+
+    // Workshop Maintenance Invoices & Job Card Bills
+    const serviceDocs: AggregatedVehicleDoc[] = [];
+    vServices.forEach((m: any) => {
+      const sCenter = m.service_center || "Authorized Workshop";
+      const sDate = m.service_date ? new Date(m.service_date).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" }) : "";
+      
+      if (m.invoice_url && !existingUrls.has(m.invoice_url)) {
+        existingUrls.add(m.invoice_url);
+        serviceDocs.push({
+          id: `svc-inv-${m.id}`,
+          doc_type: "MAINTENANCE",
+          categoryLabel: "Workshop Service Invoice",
+          title: `Service Bill: ${sCenter} (₹${(Number(m.cost) || 0).toLocaleString()})`,
+          file_name: `Service_Bill_${m.job_card_number || m.id.slice(0, 8)}.pdf`,
+          file_size: null,
+          file_type: "application/pdf",
+          file_url: m.invoice_url,
+          uploaded_at: m.service_date || m.created_at,
+          expiry_date: null,
+          document_number: m.job_card_number || m.invoice_number || null,
+          status: "VALID",
+          sourceModule: "SERVICE",
+          sourceLabel: `Service Event (${sCenter} • ${sDate})`,
+          isDirectVaultDoc: false
+        });
+      }
+
+      if (m.attachments && Array.isArray(m.attachments)) {
+        m.attachments.forEach((att: any, attIdx: number) => {
+          if (att.file_url && !existingUrls.has(att.file_url)) {
+            existingUrls.add(att.file_url);
+            serviceDocs.push({
+              id: `svc-att-${m.id}-${att.id || attIdx}`,
+              doc_type: "MAINTENANCE",
+              categoryLabel: "Workshop Job Card Attachment",
+              title: `${att.file_name || "Job Card Scan"} - ${sCenter}`,
+              file_name: att.file_name || "service_document.pdf",
+              file_size: att.file_size || null,
+              file_type: att.file_type || resolveMimeFromName(att.file_name || ""),
+              file_url: att.file_url,
+              uploaded_at: att.uploaded_at || m.service_date,
+              expiry_date: null,
+              document_number: m.job_card_number || null,
+              status: "VALID",
+              sourceModule: "SERVICE",
+              sourceLabel: `Job Card Attachment (${sCenter} • ${sDate})`,
+              isDirectVaultDoc: false
+            });
+          }
+        });
+      }
+    });
+
+    // Installed Parts Invoices & Warranty Documents
+    const partDocs: AggregatedVehicleDoc[] = [];
+    vParts.forEach((p: any) => {
+      const pDocUrl = p.warranty_policy_doc_url || p.invoice_url || p.document_url;
+      if (pDocUrl && !existingUrls.has(pDocUrl)) {
+        existingUrls.add(pDocUrl);
+        partDocs.push({
+          id: `part-doc-${p.id}`,
+          doc_type: "PART",
+          categoryLabel: "Part Warranty Card & Bill",
+          title: `Warranty & Bill: ${p.name} (${p.part_number || "Part"})`,
+          file_name: `Part_Warranty_${p.part_number || p.name.replace(/\s+/g, "_")}.pdf`,
+          file_size: null,
+          file_type: "application/pdf",
+          file_url: pDocUrl,
+          uploaded_at: p.created_at,
+          expiry_date: p.warranty_expiry_date || null,
+          document_number: p.part_number || null,
+          status: "VALID",
+          sourceModule: "PART",
+          sourceLabel: `Mounted Part (${p.name})`,
+          isDirectVaultDoc: false
+        });
+      }
+    });
+
+    // Trip Sheets, Toll Slips & Fuel Receipts
+    const tripDocs: AggregatedVehicleDoc[] = [];
+    vTrips.forEach((t: any) => {
+      const routeStr = `${t.origin} → ${t.destination}`;
+      if (t.trip_sheet_url && !existingUrls.has(t.trip_sheet_url)) {
+        existingUrls.add(t.trip_sheet_url);
+        tripDocs.push({
+          id: `trip-sheet-${t.id}`,
+          doc_type: "TRIP",
+          categoryLabel: "Transit Trip Sheet",
+          title: `Trip Sheet: ${t.traveler_name || "Employee"} (${routeStr})`,
+          file_name: `Trip_Sheet_${t.id.slice(0, 8)}.pdf`,
+          file_size: null,
+          file_type: "application/pdf",
+          file_url: t.trip_sheet_url,
+          uploaded_at: t.plan_date || t.created_at,
+          expiry_date: null,
+          document_number: t.id.slice(0, 8),
+          status: "VALID",
+          sourceModule: "TRIP",
+          sourceLabel: `Transit Route (${routeStr})`,
+          isDirectVaultDoc: false
+        });
+      }
+      if (t.toll_receipt_url && !existingUrls.has(t.toll_receipt_url)) {
+        existingUrls.add(t.toll_receipt_url);
+        tripDocs.push({
+          id: `trip-toll-${t.id}`,
+          doc_type: "TRIP",
+          categoryLabel: "Toll / Fastag Receipt",
+          title: `Toll Slip: ${t.traveler_name || "Chauffeur"} (${routeStr})`,
+          file_name: `Toll_Slip_${t.id.slice(0, 8)}.pdf`,
+          file_size: null,
+          file_type: "application/pdf",
+          file_url: t.toll_receipt_url,
+          uploaded_at: t.plan_date || t.created_at,
+          expiry_date: null,
+          document_number: null,
+          status: "VALID",
+          sourceModule: "TRIP",
+          sourceLabel: `Toll Expense (${routeStr})`,
+          isDirectVaultDoc: false
+        });
+      }
+      if (t.fuel_receipt_url && !existingUrls.has(t.fuel_receipt_url)) {
+        existingUrls.add(t.fuel_receipt_url);
+        tripDocs.push({
+          id: `trip-fuel-${t.id}`,
+          doc_type: "TRIP",
+          categoryLabel: "Fuel Pump Slip",
+          title: `Fuel Card / Pump Bill: ${t.traveler_name || targetPlate}`,
+          file_name: `Fuel_Bill_${t.id.slice(0, 8)}.pdf`,
+          file_size: null,
+          file_type: "application/pdf",
+          file_url: t.fuel_receipt_url,
+          uploaded_at: t.plan_date || t.created_at,
+          expiry_date: null,
+          document_number: null,
+          status: "VALID",
+          sourceModule: "TRIP",
+          sourceLabel: `Fuel Slip (${routeStr})`,
+          isDirectVaultDoc: false
+        });
+      }
+    });
+
+    // Assigned Driver Documents & Badges
+    const driverDocs: AggregatedVehicleDoc[] = [];
+    const assignedDriver: any = drivers.find((d: any) => d.id === viewingVehicle.assigned_driver_id || (viewingVehicle.assignedDriver && d.id === viewingVehicle.assignedDriver.id)) || viewingVehicle.assignedDriver;
+    if (assignedDriver) {
+      if (assignedDriver.license_doc_url && !existingUrls.has(assignedDriver.license_doc_url)) {
+        existingUrls.add(assignedDriver.license_doc_url);
+        driverDocs.push({
+          id: `drv-lic-${assignedDriver.id}`,
+          doc_type: "DRIVER",
+          categoryLabel: "Chauffeur Driving License",
+          title: `Driving License: ${assignedDriver.full_name} (${assignedDriver.license_number || ""})`,
+          file_name: `License_${(assignedDriver.full_name || "driver").replace(/\s+/g, "_")}.pdf`,
+          file_size: null,
+          file_type: "application/pdf",
+          file_url: assignedDriver.license_doc_url,
+          uploaded_at: assignedDriver.created_at,
+          expiry_date: assignedDriver.license_expiry_date || null,
+          document_number: assignedDriver.license_number || null,
+          status: "VALID",
+          sourceModule: "DRIVER",
+          sourceLabel: `Assigned Chauffeur (${assignedDriver.full_name})`,
+          isDirectVaultDoc: false
+        });
+      }
+      if (assignedDriver.identity_doc_url && !existingUrls.has(assignedDriver.identity_doc_url)) {
+        existingUrls.add(assignedDriver.identity_doc_url);
+        driverDocs.push({
+          id: `drv-id-${assignedDriver.id}`,
+          doc_type: "DRIVER",
+          categoryLabel: "Chauffeur Identity / Aadhaar",
+          title: `Chauffeur Identity Proof: ${assignedDriver.full_name}`,
+          file_name: `Identity_${(assignedDriver.full_name || "driver").replace(/\s+/g, "_")}.pdf`,
+          file_size: null,
+          file_type: "application/pdf",
+          file_url: assignedDriver.identity_doc_url,
+          uploaded_at: assignedDriver.created_at,
+          expiry_date: null,
+          document_number: null,
+          status: "VALID",
+          sourceModule: "DRIVER",
+          sourceLabel: `Assigned Chauffeur (${assignedDriver.full_name})`,
+          isDirectVaultDoc: false
+        });
+      }
+    }
+
+    const allAggregatedDocs: AggregatedVehicleDoc[] = [
+      ...rawVaultDocs,
+      ...masterDocs,
+      ...serviceDocs,
+      ...partDocs,
+      ...tripDocs,
+      ...driverDocs
+    ];
+
+    const expiredDocsCount = allAggregatedDocs.filter((d) => {
       if (!d.expiry_date) return false;
       const days = calculateDaysRemaining(d.expiry_date);
       return days !== null && days < 0;
     }).length;
 
-    const hasPuc = Boolean(vDocs.some((d) => d.doc_type === "PUC") || viewingVehicle.puc_certificate_number);
-    const hasInsurance = Boolean(vDocs.some((d) => d.doc_type === "INSURANCE") || viewingVehicle.insurance_policy_number);
-    const hasRc = Boolean(vDocs.some((d) => d.doc_type === "RC") || viewingVehicle.vin_chassis_number);
-    const hasFitness = Boolean(vDocs.some((d) => d.doc_type === "FITNESS") || viewingVehicle.fitness_expiry_date);
-    const hasPermit = Boolean(vDocs.some((d) => d.doc_type === "PERMIT"));
+    const hasPuc = Boolean(allAggregatedDocs.some((d) => d.doc_type === "PUC") || viewingVehicle.puc_certificate_number);
+    const hasInsurance = Boolean(allAggregatedDocs.some((d) => d.doc_type === "INSURANCE") || viewingVehicle.insurance_policy_number);
+    const hasRc = Boolean(allAggregatedDocs.some((d) => d.doc_type === "RC") || viewingVehicle.vin_chassis_number);
+    const hasFitness = Boolean(allAggregatedDocs.some((d) => d.doc_type === "FITNESS") || viewingVehicle.fitness_expiry_date);
+    const hasPermit = Boolean(allAggregatedDocs.some((d) => d.doc_type === "PERMIT"));
 
     return {
       services: vServices,
       parts: vParts,
       trips: vTrips,
-      docs: vDocs,
+      docs: allAggregatedDocs,
       totalServiceSpend,
       lastService,
       totalPartsValue,
@@ -2532,7 +2804,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       hasFitness,
       hasPermit
     };
-  }, [viewingVehicle, maintenance, parts, trips]);
+  }, [viewingVehicle, maintenance, parts, trips, drivers]);
 
   const handleDossierDirectDocUpload = async (fileList: FileList | File[]) => {
     if (!viewingVehicle) return;
@@ -17587,137 +17859,267 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 </div>
               )}
 
-              {/* Documents Grid */}
-              {dossierData.docs.length === 0 ? (
-                <div className="p-8 text-center rounded-xl border border-dashed border-border bg-slate-50/50 dark:bg-slate-900/30 space-y-2">
-                  <FileCheck className="h-8 w-8 text-muted-foreground mx-auto opacity-50" />
-                  <p className="text-xs font-semibold text-foreground">No documents currently archived for this vehicle</p>
-                  
-                  <div className="pt-2">
-                    <AppButton
+              {/* Category Filter Toolbar & Search Bar */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 rounded-xl border border-border bg-surface/50">
+                {/* Search in Documents */}
+                <div className="relative flex-1 max-w-md">
+                  <Search className="h-3.5 w-3.5 absolute left-3 top-2.5 text-muted-foreground pointer-events-none" />
+                  <input
+                    type="text"
+                    value={dossierDocSearchQuery}
+                    onChange={(e) => setDossierDocSearchQuery(e.target.value)}
+                    placeholder="Search documents by title, file name, # number or source..."
+                    className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-border bg-surface text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-theme-btn-primary shadow-2xs"
+                  />
+                  {dossierDocSearchQuery && (
+                    <button
                       type="button"
-                      variant="primary"
-                      size="sm"
-                      onClick={() => setIsDossierAddDocOpen(true)}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 px-3 gap-1.5 font-semibold"
+                      onClick={() => setDossierDocSearchQuery("")}
+                      className="absolute right-2.5 top-2 text-muted-foreground hover:text-foreground p-0.5"
                     >
-                      <UploadCloud className="h-3.5 w-3.5" />
-                      <span>Upload First Document</span>
-                    </AppButton>
-                  </div>
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {dossierData.docs.map((doc, idx) => {
-                    const typeConfig = VEHICLE_DOC_TYPES.find((t) => t.value === doc.doc_type) || {
-                      label: doc.doc_type,
-                      badgeColor: "bg-slate-500/10 text-slate-600 border-slate-500/20"
-                    };
-                    const daysRemaining = doc.expiry_date ? calculateDaysRemaining(doc.expiry_date) : null;
-                    return (
-                      <div
-                        key={doc.id || idx}
-                        className="p-3.5 rounded-xl border border-border bg-surface hover:border-emerald-500/40 transition-colors shadow-2xs space-y-2.5 flex flex-col justify-between"
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-border shrink-0">
-                            {renderAttachmentIcon(doc.file_type || resolveMimeFromName(doc.file_name), doc.file_name)}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full border ${typeConfig.badgeColor}`}>
-                                {typeConfig.label}
+
+                {/* Category Pills */}
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+                  {[
+                    { id: "ALL", label: "All Archives", count: dossierData.docs.length },
+                    { id: "RC", label: "RC Card", count: dossierData.docs.filter(d => d.doc_type === "RC").length },
+                    { id: "INSURANCE", label: "Insurance", count: dossierData.docs.filter(d => d.doc_type === "INSURANCE").length },
+                    { id: "PUC", label: "PUC", count: dossierData.docs.filter(d => d.doc_type === "PUC").length },
+                    { id: "MAINTENANCE", label: "Service & Bills", count: dossierData.docs.filter(d => d.doc_type === "MAINTENANCE" || d.sourceModule === "SERVICE").length },
+                    { id: "PART", label: "Part Warranties", count: dossierData.docs.filter(d => d.doc_type === "PART" || d.sourceModule === "PART").length },
+                    { id: "TRIP", label: "Trips & Fuel", count: dossierData.docs.filter(d => d.doc_type === "TRIP" || d.sourceModule === "TRIP").length },
+                    { id: "DRIVER", label: "Chauffeur IDs", count: dossierData.docs.filter(d => d.doc_type === "DRIVER" || d.sourceModule === "DRIVER").length },
+                    { id: "FITNESS", label: "Fitness / Permit", count: dossierData.docs.filter(d => d.doc_type === "FITNESS" || d.doc_type === "PERMIT").length },
+                    { id: "INVOICE", label: "Purchase Bills", count: dossierData.docs.filter(d => d.doc_type === "INVOICE" || d.doc_type === "ROAD_TAX").length }
+                  ].filter(cat => cat.id === "ALL" || cat.count > 0).map((cat) => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setDossierDocCategoryFilter(cat.id)}
+                      className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
+                        dossierDocCategoryFilter === cat.id
+                          ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-xs"
+                          : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                      }`}
+                    >
+                      <span>{cat.label}</span>
+                      <span className={`text-[10px] font-mono px-1 py-0.2 rounded-full ${
+                        dossierDocCategoryFilter === cat.id
+                          ? "bg-white/20 text-white dark:bg-slate-900/20 dark:text-slate-900"
+                          : "bg-muted text-muted-foreground"
+                      }`}>
+                        {cat.count}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Documents Grid */}
+              {(() => {
+                const filteredDossierDocs = dossierData.docs.filter((doc) => {
+                  if (dossierDocCategoryFilter !== "ALL") {
+                    if (dossierDocCategoryFilter === "MAINTENANCE") {
+                      if (doc.doc_type !== "MAINTENANCE" && doc.sourceModule !== "SERVICE") return false;
+                    } else if (dossierDocCategoryFilter === "PART") {
+                      if (doc.doc_type !== "PART" && doc.sourceModule !== "PART") return false;
+                    } else if (dossierDocCategoryFilter === "TRIP") {
+                      if (doc.doc_type !== "TRIP" && doc.sourceModule !== "TRIP") return false;
+                    } else if (dossierDocCategoryFilter === "DRIVER") {
+                      if (doc.doc_type !== "DRIVER" && doc.sourceModule !== "DRIVER") return false;
+                    } else if (dossierDocCategoryFilter === "FITNESS") {
+                      if (doc.doc_type !== "FITNESS" && doc.doc_type !== "PERMIT") return false;
+                    } else if (dossierDocCategoryFilter === "INVOICE") {
+                      if (doc.doc_type !== "INVOICE" && doc.doc_type !== "ROAD_TAX") return false;
+                    } else if (doc.doc_type !== dossierDocCategoryFilter) {
+                      return false;
+                    }
+                  }
+
+                  if (dossierDocSearchQuery.trim()) {
+                    const q = dossierDocSearchQuery.toLowerCase();
+                    const matchTitle = (doc.title || "").toLowerCase().includes(q);
+                    const matchFile = (doc.file_name || "").toLowerCase().includes(q);
+                    const matchNum = (doc.document_number || "").toLowerCase().includes(q);
+                    const matchLabel = (doc.categoryLabel || "").toLowerCase().includes(q);
+                    const matchSource = (doc.sourceLabel || "").toLowerCase().includes(q);
+                    if (!matchTitle && !matchFile && !matchNum && !matchLabel && !matchSource) return false;
+                  }
+                  return true;
+                });
+
+                if (filteredDossierDocs.length === 0) {
+                  return (
+                    <div className="p-8 text-center rounded-xl border border-dashed border-border bg-slate-50/50 dark:bg-slate-900/30 space-y-2">
+                      <FileCheck className="h-8 w-8 text-muted-foreground mx-auto opacity-50" />
+                      <p className="text-xs font-semibold text-foreground">
+                        {dossierDocSearchQuery || dossierDocCategoryFilter !== "ALL"
+                          ? "No documents match the current filter or search criteria"
+                          : "No documents currently archived for this vehicle"}
+                      </p>
+                      
+                      <div className="pt-2">
+                        {dossierDocSearchQuery || dossierDocCategoryFilter !== "ALL" ? (
+                          <AppButton
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setDossierDocCategoryFilter("ALL");
+                              setDossierDocSearchQuery("");
+                            }}
+                            className="text-xs h-8 px-3"
+                          >
+                            Clear Filters
+                          </AppButton>
+                        ) : (
+                          <AppButton
+                            type="button"
+                            variant="primary"
+                            size="sm"
+                            onClick={() => setIsDossierAddDocOpen(true)}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 px-3 gap-1.5 font-semibold"
+                          >
+                            <UploadCloud className="h-3.5 w-3.5" />
+                            <span>Upload First Document</span>
+                          </AppButton>
+                        )}
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {filteredDossierDocs.map((doc, idx) => {
+                      const typeConfig = VEHICLE_DOC_TYPES.find((t) => t.value === doc.doc_type) || {
+                        label: doc.doc_type,
+                        badgeColor: "bg-slate-500/10 text-slate-600 border-slate-500/20"
+                      };
+                      const daysRemaining = doc.expiry_date ? calculateDaysRemaining(doc.expiry_date) : null;
+                      return (
+                        <div
+                          key={doc.id || idx}
+                          className="p-3.5 rounded-xl border border-border bg-surface hover:border-emerald-500/40 transition-colors shadow-2xs space-y-2.5 flex flex-col justify-between group"
+                        >
+                          <div className="space-y-2">
+                            {/* Header Category & Origin Source Pill */}
+                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${typeConfig.badgeColor}`}>
+                                {doc.categoryLabel || typeConfig.label}
                               </span>
-                              {doc.document_number && (
-                                <span className="text-xs font-mono font-semibold px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-muted-foreground border border-border">
-                                  #{doc.document_number}
+                              {doc.sourceLabel && (
+                                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground truncate max-w-[170px]" title={doc.sourceLabel}>
+                                  {doc.sourceLabel}
                                 </span>
                               )}
                             </div>
-                            <h4 className="font-bold text-foreground text-xs truncate mt-1" title={doc.title || doc.file_name}>
-                              {doc.title || doc.file_name}
-                            </h4>
-                            <div className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5 truncate">
-                              <span className="truncate max-w-[110px]">{doc.file_name}</span>
-                              <span>•</span>
-                              <span>{formatFileSize(doc.file_size)}</span>
+
+                            <div className="flex items-start gap-3 pt-0.5">
+                              <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-border shrink-0 group-hover:scale-105 transition-transform">
+                                {renderAttachmentIcon(doc.file_type || resolveMimeFromName(doc.file_name), doc.file_name)}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <h4 className="font-bold text-foreground text-xs line-clamp-2" title={doc.title || doc.file_name}>
+                                  {doc.title || doc.file_name}
+                                </h4>
+                                {doc.document_number && (
+                                  <div className="text-[11px] font-mono text-muted-foreground mt-0.5 flex items-center gap-1 truncate">
+                                    <span>Doc #:</span>
+                                    <strong className="text-foreground font-semibold">{doc.document_number}</strong>
+                                  </div>
+                                )}
+                                <div className="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-0.5 truncate">
+                                  <span className="truncate max-w-[130px] font-mono">{doc.file_name}</span>
+                                  {doc.file_size && (
+                                    <>
+                                      <span>•</span>
+                                      <span>{formatFileSize(doc.file_size)}</span>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        {/* Expiry Pill */}
-                        <div className="pt-2 border-t border-border flex items-center justify-between text-xs">
-                          <div>
-                            {doc.expiry_date ? (
-                              daysRemaining !== null && daysRemaining < 0 ? (
-                                <span className="text-xs font-bold text-rose-600 dark:text-rose-400">
-                                  Expired {Math.abs(daysRemaining)}d ago
-                                </span>
-                              ) : daysRemaining !== null && daysRemaining <= 30 ? (
-                                <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
-                                  Expires in {daysRemaining}d
-                                </span>
+                          {/* Expiry Pill & Actions */}
+                          <div className="pt-2 border-t border-border flex items-center justify-between text-xs">
+                            <div>
+                              {doc.expiry_date ? (
+                                daysRemaining !== null && daysRemaining < 0 ? (
+                                  <span className="text-xs font-bold text-rose-600 dark:text-rose-400">
+                                    Expired {Math.abs(daysRemaining)}d ago
+                                  </span>
+                                ) : daysRemaining !== null && daysRemaining <= 30 ? (
+                                  <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
+                                    Expires in {daysRemaining}d
+                                  </span>
+                                ) : (
+                                  <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                                    Valid ({daysRemaining}d)
+                                  </span>
+                                )
                               ) : (
-                                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                                  Valid ({daysRemaining}d)
-                                </span>
-                              )
-                            ) : (
-                              <span className="text-xs text-muted-foreground italic">No expiry set</span>
-                            )}
-                          </div>
+                                <span className="text-xs text-muted-foreground italic">Lifetime Valid</span>
+                              )}
+                            </div>
 
-                          <div className="flex items-center gap-1 shrink-0">
-                            <AppButton
-                              type="button"
-                              variant="outline"
-                              size="icon-sm"
-                              onClick={() => {
-                                setPreviewAttachment({
-                                  id: doc.id,
-                                  file_name: doc.file_name,
-                                  file_size: doc.file_size || "0 B",
-                                  file_type: doc.file_type || resolveMimeFromName(doc.file_name),
-                                  file_url: doc.file_url,
-                                  uploaded_at: doc.uploaded_at
-                                });
-                                setPreviewZoom(1);
-                                setPreviewRotation(0);
-                              }}
-                              className="h-7 w-7 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
-                              title="View / Preview Document"
-                            >
-                              <Eye className="h-3.5 w-3.5" />
-                            </AppButton>
-                            <AppButton
-                              type="button"
-                              variant="outline"
-                              size="icon-sm"
-                              onClick={() => downloadAttachment(doc)}
-                              className="h-7 w-7 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
-                              title="Download Document"
-                            >
-                              <Download className="h-3.5 w-3.5" />
-                            </AppButton>
-                            {canEditVehicle && (
+                            <div className="flex items-center gap-1 shrink-0">
                               <AppButton
                                 type="button"
                                 variant="outline"
                                 size="icon-sm"
-                                onClick={() => handleDossierDeleteDocument(doc.id)}
-                                className="h-7 w-7 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10"
-                                title="Delete Document"
+                                onClick={() => {
+                                  setPreviewAttachment({
+                                    id: doc.id,
+                                    file_name: doc.file_name,
+                                    file_size: doc.file_size || "0 B",
+                                    file_type: doc.file_type || resolveMimeFromName(doc.file_name),
+                                    file_url: doc.file_url,
+                                    uploaded_at: doc.uploaded_at
+                                  });
+                                  setPreviewZoom(1);
+                                  setPreviewRotation(0);
+                                }}
+                                className="h-7 w-7 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
+                                title="View / Preview Document"
                               >
-                                <Trash2 className="h-3.5 w-3.5" />
+                                <Eye className="h-3.5 w-3.5" />
                               </AppButton>
-                            )}
+                              <AppButton
+                                type="button"
+                                variant="outline"
+                                size="icon-sm"
+                                onClick={() => downloadAttachment(doc)}
+                                className="h-7 w-7 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+                                title="Download Document"
+                              >
+                                <Download className="h-3.5 w-3.5" />
+                              </AppButton>
+                              {doc.isDirectVaultDoc && canEditVehicle && (
+                                <AppButton
+                                  type="button"
+                                  variant="outline"
+                                  size="icon-sm"
+                                  onClick={() => handleDossierDeleteDocument(doc.id)}
+                                  className="h-7 w-7 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10"
+                                  title="Delete Document from Vault"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </AppButton>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+                      );
+                    })}
+                  </div>
+                );
+              })()}
             </div>
           )}
 
