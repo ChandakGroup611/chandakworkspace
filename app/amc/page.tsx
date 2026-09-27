@@ -1342,7 +1342,7 @@ export default function AMCPage() {
           </div>
 
           <div class="section">
-            <div class="section-title">1. Contract & Vendor Profile</div>
+            <div class="section-title">Contract & Vendor Profile</div>
             <div class="grid">
               <div class="field"><div class="field-label">Vendor / Provider</div><div class="field-value">${vendor?.name || 'N/A'}</div></div>
               <div class="field"><div class="field-label">Contact Person</div><div class="field-value">${vendorContactName || 'N/A'} (${vendorContactPhone || 'N/A'})</div></div>
@@ -1357,7 +1357,7 @@ export default function AMCPage() {
           </div>
 
           <div class="section">
-            <div class="section-title">2. Solution Line Items & Commercials</div>
+            <div class="section-title">Solution Line Items & Commercials</div>
             <table>
               <thead>
                 <tr>
@@ -1394,7 +1394,7 @@ export default function AMCPage() {
           </div>
 
           <div class="section">
-            <div class="section-title">3. Governance, SLA & Payment Terms</div>
+            <div class="section-title">Governance, SLA & Payment Terms</div>
             <div class="grid">
               <div class="field"><div class="field-label">Payment Terms</div><div class="field-value">${formPaymentTerms || 'Standard'}</div></div>
               <div class="field"><div class="field-label">Support Tier</div><div class="field-value">${formSupportTier || 'Standard'}</div></div>

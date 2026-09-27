@@ -4565,9 +4565,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             <div className="space-y-6 border-b border-border/80 pb-8">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-theme-btn-primary/10 text-theme-btn-primary text-xs font-bold">1</span>
-                    <span>Registration Plate & Instant Intelligence</span>
+                  <h3 className="text-base font-bold text-foreground">
+                    Registration Plate & Instant Intelligence
                   </h3>
                 </div>
                 <div className="hidden sm:flex items-center gap-1.5 text-xs text-theme-btn-primary font-semibold px-2.5 py-1 rounded-md bg-theme-btn-primary/10 border border-theme-btn-primary/20">
@@ -4801,12 +4800,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               )}
             </div>
 
-            {/* 2. SPECIFICATIONS & POWERTRAIN */}
+            {/* SPECIFICATIONS & POWERTRAIN */}
             <div className="space-y-4 border-b border-border/80 pb-8">
               <div>
-                <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-theme-btn-primary/10 text-theme-btn-primary text-xs font-bold">2</span>
-                  <span>Vehicle Specifications & Powertrain</span>
+                <h3 className="text-base font-bold text-foreground">
+                  Vehicle Specifications & Powertrain
                 </h3>
               </div>
 
@@ -5050,12 +5048,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               </div>
             </div>
 
-            {/* 3. LEGAL OWNERSHIP & IDENTIFICATION */}
+            {/* LEGAL OWNERSHIP & IDENTIFICATION */}
             <div className="space-y-4 border-b border-border/80 pb-8">
               <div>
-                <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-theme-btn-primary/10 text-theme-btn-primary text-xs font-bold">3</span>
-                  <span>Legal Ownership & Identification Numbers</span>
+                <h3 className="text-base font-bold text-foreground">
+                  Legal Ownership & Identification Numbers
                 </h3>
               </div>
 
@@ -5153,12 +5150,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               </div>
             </div>
 
-            {/* 4. STATUTORY COMPLIANCE & VALIDITY */}
+            {/* STATUTORY COMPLIANCE & VALIDITY */}
             <div className="space-y-4 border-b border-border/80 pb-8">
               <div>
-                <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-theme-btn-primary/10 text-theme-btn-primary text-xs font-bold">4</span>
-                  <span>Statutory Compliance & Document Validity</span>
+                <h3 className="text-base font-bold text-foreground">
+                  Statutory Compliance & Document Validity
                 </h3>
               </div>
 
@@ -5316,12 +5312,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               </div>
             </div>
 
-            {/* 5. FLEET ASSIGNMENT & INITIAL TELEMATICS */}
+            {/* FLEET ASSIGNMENT & INITIAL TELEMATICS */}
             <div className="space-y-4 border-b border-border/80 pb-8">
               <div>
-                <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-theme-btn-primary/10 text-theme-btn-primary text-xs font-bold">5</span>
-                  <span>Fleet Operations & Driver Assignment</span>
+                <h3 className="text-base font-bold text-foreground">
+                  Fleet Operations & Driver Assignment
                 </h3>
               </div>
 
@@ -5377,13 +5372,12 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               </div>
             </div>
 
-            {/* 6. VEHICLE LEGAL & COMPLIANCE DOCUMENTS VAULT */}
+            {/* VEHICLE LEGAL & COMPLIANCE DOCUMENTS VAULT */}
             <div className="space-y-6 border-b border-border/80 pb-8">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-theme-btn-primary/10 text-theme-btn-primary text-xs font-bold">6</span>
-                    <span>Vehicle Legal & Compliance Documents Vault</span>
+                  <h3 className="text-base font-bold text-foreground">
+                    Vehicle Legal & Compliance Documents Vault
                   </h3>
                 </div>
                 <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-theme-btn-primary/10 text-theme-btn-primary border border-theme-btn-primary/20 shrink-0">
@@ -8197,30 +8191,30 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div className="p-4 rounded-xl border border-border/70 bg-card shadow-2xs space-y-2">
                   <div className="flex items-center gap-2 font-bold text-foreground text-sm">
                     <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                    <span>1. Chauffeur Code of Conduct & Punctuality</span>
+                    <span>Chauffeur Code of Conduct & Punctuality</span>
                   </div>
-                  </div>
+                </div>
 
                 <div className="p-4 rounded-xl border border-border/70 bg-card shadow-2xs space-y-2">
                   <div className="flex items-center gap-2 font-bold text-foreground text-sm">
                     <Gauge className="h-4 w-4 text-blue-500" />
-                    <span>2. Speed Caps & Highway Safety Regulations</span>
+                    <span>Speed Caps & Highway Safety Regulations</span>
                   </div>
-                  </div>
+                </div>
 
                 <div className="p-4 rounded-xl border border-border/70 bg-card shadow-2xs space-y-2">
                   <div className="flex items-center gap-2 font-bold text-foreground text-sm">
                     <AlertTriangle className="h-4 w-4 text-amber-500" />
-                    <span>3. Breakdown & Accident Emergency Protocol</span>
+                    <span>Breakdown & Accident Emergency Protocol</span>
                   </div>
-                  </div>
+                </div>
 
                 <div className="p-4 rounded-xl border border-border/70 bg-card shadow-2xs space-y-2">
                   <div className="flex items-center gap-2 font-bold text-foreground text-sm">
                     <Fuel className="h-4 w-4 text-purple-500" />
-                    <span>4. Fuel Card Billing & Logbook Submissions</span>
+                    <span>Fuel Card Billing & Logbook Submissions</span>
                   </div>
-                  </div>
+                </div>
               </div>
             </AppCardContent>
           </AppCard>
@@ -8485,7 +8479,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="rounded-xl border border-border bg-slate-50/70 dark:bg-slate-900/50 p-4 space-y-3.5">
                 <div className="flex items-center gap-2 pb-2 border-b border-border/60 text-foreground font-semibold text-xs">
                   <Car className="h-4 w-4 text-blue-500" />
-                  <span>1. Vehicle Identity</span>
+                  <span>Vehicle Identity</span>
                 </div>
 
                 <div className="space-y-1.5">
@@ -8820,7 +8814,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="rounded-xl border border-border bg-slate-50/70 dark:bg-slate-900/50 p-4 space-y-3.5">
                 <div className="flex items-center gap-2 pb-2 border-b border-border/60 text-foreground font-semibold text-xs">
                   <Building2 className="h-4 w-4 text-blue-500" />
-                  <span>2. Registration & Ownership</span>
+                  <span>Registration & Ownership</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -8919,7 +8913,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="rounded-xl border border-border bg-slate-50/70 dark:bg-slate-900/50 p-4 space-y-3.5">
                 <div className="flex items-center gap-2 pb-2 border-b border-border/60 text-foreground font-semibold text-xs">
                   <ShieldCheck className="h-4 w-4 text-emerald-500" />
-                  <span>3. Compliance & Insurance</span>
+                  <span>Compliance & Insurance</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -9078,7 +9072,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="rounded-xl border border-border bg-slate-50/70 dark:bg-slate-900/50 p-4 space-y-3.5">
                 <div className="flex items-center gap-2 pb-2 border-b border-border/60 text-foreground font-semibold text-xs">
                   <Gauge className="h-4 w-4 text-amber-500" />
-                  <span>4. Operations & Driver</span>
+                  <span>Operations & Driver</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -9137,7 +9131,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div className="flex items-center justify-between pb-2 border-b border-border/60">
                   <div className="flex items-center gap-2 text-foreground font-semibold text-xs">
                     <FileCheck className="h-4 w-4 text-emerald-500" />
-                    <span>5. Documents</span>
+                    <span>Documents</span>
                   </div>
                   <span className="text-xs font-semibold text-muted-foreground bg-surface px-2.5 py-0.5 rounded-md border border-border">
                     {editVehicleDocs.length} {editVehicleDocs.length === 1 ? "document archived" : "documents archived"}
@@ -9764,7 +9758,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     }`}
                   >
                     <Wrench className="h-4 w-4 text-amber-500" />
-                    <span>1. Service Scope</span>
+                    <span>Service Scope</span>
                   </button>
                   <button
                     type="button"
@@ -9776,7 +9770,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     }`}
                   >
                     <Receipt className="h-4 w-4 text-emerald-500" />
-                    <span>2. Billing & Attachments</span>
+                    <span>Billing & Attachments</span>
                     {newMaintAttachments.length > 0 && (
                       <span className="px-1.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">
                         {newMaintAttachments.length}
@@ -10595,7 +10589,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     }`}
                   >
                     <Wrench className="h-4 w-4 text-amber-500" />
-                    <span>1. Service Scope</span>
+                    <span>Service Scope</span>
                   </button>
                   <button
                     type="button"
@@ -10607,7 +10601,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     }`}
                   >
                     <Receipt className="h-4 w-4 text-emerald-500" />
-                    <span>2. Billing & Attachments</span>
+                    <span>Billing & Attachments</span>
                     {editMaintAttachments.length > 0 && (
                       <span className="px-1.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">
                         {editMaintAttachments.length}
@@ -11803,7 +11797,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="space-y-3">
                 <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border">
                   <Package className="h-3.5 w-3.5 text-theme-btn-primary" />
-                  <span>1. Item Identification</span>
+                  <span>Item Identification</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   <div className="sm:col-span-2">
@@ -11885,7 +11879,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-border">
                   <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                     <Receipt className="h-3.5 w-3.5 text-emerald-500" />
-                    <span>2. Procurement & Invoicing</span>
+                    <span>Procurement & Invoicing</span>
                   </div>
 
                   {/* Quick Presets */}
@@ -12150,7 +12144,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="space-y-3">
                 <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border">
                   <Clock className="h-3.5 w-3.5 text-amber-500" />
-                  <span>3. Manufacturing & Expiry</span>
+                  <span>Manufacturing & Expiry</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
@@ -12176,7 +12170,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="space-y-3">
                 <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border">
                   <ShieldCheck className="h-3.5 w-3.5 text-indigo-500" />
-                  <span>4. Warranty Coverage</span>
+                  <span>Warranty Coverage</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
@@ -12254,7 +12248,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div className="flex items-center justify-between">
                   <div className="text-xs font-bold uppercase tracking-wider text-cyan-800 dark:text-cyan-300 flex items-center gap-1.5">
                     <Zap className="h-3.5 w-3.5 text-cyan-500" />
-                    <span>5. Renewal Policy</span>
+                    <span>Renewal Policy</span>
                   </div>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -12340,7 +12334,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="space-y-3">
                 <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border">
                   <Car className="h-3.5 w-3.5 text-blue-500" />
-                  <span>6. Vehicle Assignment</span>
+                  <span>Vehicle Assignment</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>

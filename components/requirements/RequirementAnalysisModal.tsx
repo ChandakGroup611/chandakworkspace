@@ -280,7 +280,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className={labelClass}>Estimated Effort (Days) <span className="text-red-500">*</span></label>
                   <AppInput type="number" placeholder="e.g. 10" value={formData.estimated_effort} onChange={handleEffortChange} className={inputClass} required />
