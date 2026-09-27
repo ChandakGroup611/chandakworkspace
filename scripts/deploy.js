@@ -22,17 +22,22 @@ rl.question('📝 Enter your commit message (leave blank for auto-generated): ',
     console.log('\n🛡️ Running TypeScript verification (npx tsc --noEmit)...');
     execSync('npx tsc --noEmit', { stdio: 'inherit' });
 
-    console.log('\n🔍 Staging all changes...');
-    execSync('git add .', { stdio: 'inherit' });
-
-    console.log('\n💾 Committing changes...');
-    execSync(`git commit -m "${commitMessage}"`, { stdio: 'inherit' });
+    console.log('\n🔍 Checking git working tree...');
+    const status = execSync('git status --porcelain', { encoding: 'utf-8' }).trim();
+    if (status) {
+      console.log('Staging all changes...');
+      execSync('git add .', { stdio: 'inherit' });
+      console.log('\n💾 Committing changes...');
+      execSync(`git commit -m "${commitMessage}"`, { stdio: 'inherit' });
+    } else {
+      console.log('Working tree clean, no new uncommitted changes.');
+    }
 
     console.log('\n📤 Pushing to GitHub (origin main)...');
     execSync('git push origin main', { stdio: 'inherit' });
 
     console.log('\n\x1b[32m%s\x1b[0m', '✨ SUCCESS! Code is updated on GitHub! ✨');
-    console.log('\x1b[33m%s\x1b[0m', '⚡ Vercel is now automatically compiling and deploying your changes live! ⚡\n');
+    console.log('\x1b[33m%s\x1b[0m', '⚡ Auto-deployment pipeline triggered successfully! ⚡\n');
   } catch (error) {
     console.error('\n\x1b[31m%s\x1b[0m', '❌ Deployment failed during execution. Please check the Git logs above.');
   } finally {
