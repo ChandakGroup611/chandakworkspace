@@ -1043,7 +1043,6 @@ export default function FleetRbacGovernance() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <AppInput
                   type="text"
-                  placeholder="Search personnel by name or email..."
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   className="pl-9 h-9 text-xs"

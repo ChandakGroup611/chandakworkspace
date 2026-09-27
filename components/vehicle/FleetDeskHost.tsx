@@ -633,6 +633,9 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     "OVERVIEW" | "SERVICES" | "PARTS" | "DOCS" | "COMPLIANCE" | "TRIPS" | "ALL"
   >("ALL");
   const [dossierOriginVehicle, setDossierOriginVehicle] = useState<VehicleRecord | null>(null);
+  const [dossierOriginTab, setDossierOriginTab] = useState<
+    "OVERVIEW" | "SERVICES" | "PARTS" | "DOCS" | "COMPLIANCE" | "TRIPS" | "ALL"
+  >("ALL");
   const [isDossierAddDocOpen, setIsDossierAddDocOpen] = useState(false);
   const [dossierNewDocType, setDossierNewDocType] = useState("PUC");
   const [dossierNewDocTitle, setDossierNewDocTitle] = useState("");
@@ -2206,6 +2209,41 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             custom_extended_expiry_date: editVehicleCustomExtendedExpiryDate || null,
             documents: editVehicleDocs 
           } : null);
+        } else if (dossierOriginVehicle) {
+          const updatedVeh = {
+            ...dossierOriginVehicle,
+            registration_number: editVehiclePlate.trim().toUpperCase(),
+            make: editVehicleMake.trim(),
+            model: editVehicleModel.trim(),
+            variant: editVehicleVariant.trim() || "Standard",
+            category: editVehicleCategory,
+            status: editVehicleStatus,
+            odometer_km: Number(editVehicleOdometer) || 0,
+            nickname: editVehicleNickname.trim() || dossierOriginVehicle.nickname,
+            paint_color: editVehicleColor,
+            purchase_price: Number(editVehiclePurchasePrice) || 0,
+            purchase_cost: Number(editVehiclePurchasePrice) || 0,
+            custom_extended_expiry_date: editVehicleCustomExtendedExpiryDate || null,
+            vin_chassis_number: editVehicleVin.trim() || dossierOriginVehicle.vin_chassis_number,
+            engine_number: editVehicleEngine.trim() || dossierOriginVehicle.engine_number,
+            fuel_type: editVehicleFuel,
+            registration_date: editVehicleRegDate || dossierOriginVehicle.registration_date,
+            rto_office: editVehicleRtoOffice.trim() || dossierOriginVehicle.rto_office,
+            registered_owner: editVehicleOwner.trim() || dossierOriginVehicle.registered_owner,
+            rto_rmn: editVehicleRtoRmn.trim() || dossierOriginVehicle.rto_rmn,
+            insurance_vendor_id: editVehicleInsuranceVendorId || null,
+            insurance_vendor: editVehicleInsuranceVendor || null,
+            insurance_policy_number: editVehicleInsurancePolicy.trim() || dossierOriginVehicle.insurance_policy_number,
+            insurance_expiry_date: editVehicleInsuranceExpiry || dossierOriginVehicle.insurance_expiry_date,
+            puc_expiry_date: editVehiclePucExpiry || dossierOriginVehicle.puc_expiry_date,
+            fitness_expiry_date: editVehicleFitnessExpiry || dossierOriginVehicle.fitness_expiry_date,
+            has_roadside_assistance: editVehicleRsa,
+            has_hsrp_plate: editVehicleHsrp,
+            documents: editVehicleDocs
+          };
+          setViewingVehicle(updatedVeh);
+          if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+          setDossierOriginVehicle(null);
         }
 
         setSelectedVehicleForEdit(null);
@@ -2542,6 +2580,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         resetMaintenanceForm();
         fleetDataCache = null;
         loadAllData(true, true);
+        if (dossierOriginVehicle) {
+          setViewingVehicle(dossierOriginVehicle);
+          if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+          setDossierOriginVehicle(null);
+        }
       } else {
         triggerToast(res.error || "Failed to log maintenance", true);
       }
@@ -2617,6 +2660,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         setSelectedMaintenanceForEdit(null);
         fleetDataCache = null;
         loadAllData(true, true);
+        if (dossierOriginVehicle) {
+          setViewingVehicle(dossierOriginVehicle);
+          if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+          setDossierOriginVehicle(null);
+        }
       } else {
         triggerToast(res.error || "Failed to update maintenance record", true);
       }
@@ -2866,6 +2914,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         setSelectedPartForEdit(null);
         fleetDataCache = null;
         loadAllData(true, true);
+        if (dossierOriginVehicle) {
+          setViewingVehicle(dossierOriginVehicle);
+          if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+          setDossierOriginVehicle(null);
+        }
       } else {
         triggerToast(res.error || "Failed to save part record.", true);
       }
@@ -2913,6 +2966,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         setSelectedPartForRenew(null);
         fleetDataCache = null;
         loadAllData(true, true);
+        if (dossierOriginVehicle) {
+          setViewingVehicle(dossierOriginVehicle);
+          if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+          setDossierOriginVehicle(null);
+        }
       } else {
         triggerToast(res.error || "Failed to renew policy.", true);
       }
@@ -3030,6 +3088,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         setSelectedVehicleForPolicyRenew(null);
         fleetDataCache = null;
         loadAllData(true, true);
+        if (dossierOriginVehicle) {
+          setViewingVehicle(dossierOriginVehicle);
+          if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+          setDossierOriginVehicle(null);
+        }
         if (selectedVehicleForPolicyHistory?.id === selectedVehicleForPolicyRenew.id) {
           handleOpenVehiclePolicyHistoryModal(selectedVehicleForPolicyRenew);
         }
@@ -3160,6 +3223,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         setSelectedVehicleForPucRenew(null);
         fleetDataCache = null;
         loadAllData(true, true);
+        if (dossierOriginVehicle) {
+          setViewingVehicle(dossierOriginVehicle);
+          if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+          setDossierOriginVehicle(null);
+        }
         if (selectedVehicleForPucHistory?.id === selectedVehicleForPucRenew.id) {
           handleOpenVehiclePucHistoryModal(selectedVehicleForPucRenew);
         }
@@ -5077,7 +5145,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     type="number"
                     min="0"
                     step="1"
-                    placeholder="e.g. 1250000"
                     value={newVehiclePurchasePrice} 
                     onChange={(e) => setNewVehiclePurchasePrice(e.target.value)} 
                     className="font-mono text-xs"
@@ -5160,7 +5227,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 pt-2">
                 <div>
                   {isElectricFuel(newVehicleFuel) ? (
                     <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 flex items-start gap-3 shadow-2xs">
@@ -5349,7 +5416,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <div>
                     <label className="font-semibold text-foreground block mb-1">Document Title / Note</label>
                     <AppInput
-                      placeholder="e.g. Valid PUC 2026-2027"
                       value={newDocTitle}
                       onChange={(e) => setNewDocTitle(e.target.value)}
                       className="text-xs"
@@ -5358,7 +5424,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <div>
                     <label className="font-semibold text-foreground block mb-1">Certificate / Policy #</label>
                     <AppInput
-                      placeholder="e.g. MH02-PUC-98214"
                       value={newDocNumber}
                       onChange={(e) => setNewDocNumber(e.target.value)}
                       className="text-xs font-mono"
@@ -5863,7 +5928,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <Search className="h-4 w-4 absolute left-3 top-2.5 text-muted-foreground pointer-events-none" />
                 <input
                   type="text"
-                  placeholder="Search plate, make, model..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:border-theme-btn-primary shadow-2xs"
@@ -6275,7 +6339,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <Search className="h-4 w-4 absolute left-3 top-2.5 text-muted-foreground pointer-events-none" />
                 <input
                   type="text"
-                  placeholder="Search driver name, phone, license..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:border-theme-btn-primary shadow-2xs"
@@ -6416,7 +6479,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <Search className="h-4 w-4 absolute left-3 top-2.5 text-muted-foreground pointer-events-none" />
                 <input
                   type="text"
-                  placeholder="Search traveler, purpose, destination..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:border-theme-btn-primary shadow-2xs"
@@ -6568,7 +6630,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <Search className="h-4 w-4 absolute left-3 top-2.5 text-muted-foreground pointer-events-none" />
                 <input
                   type="text"
-                  placeholder="Search service work, vendor..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:border-theme-btn-primary shadow-2xs"
@@ -6780,7 +6841,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <Search className="h-4 w-4 absolute left-3 top-2.5 text-muted-foreground pointer-events-none" />
                   <input
                     type="text"
-                    placeholder="Search traveler, purpose, destination..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:border-theme-btn-primary shadow-2xs"
@@ -7307,7 +7367,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                   <AppInput
-                    placeholder="Search by part name, brand, SKU/part #, serial/IMEI, vehicle plate..."
                     value={partsSearch}
                     onChange={(e) => setPartsSearch(e.target.value)}
                     className="pl-9 text-xs h-9"
@@ -7742,7 +7801,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <AppInput
-                  placeholder="Search by vendor name, code, contact person, phone, email, toll-free..."
                   value={vendorSearch}
                   onChange={(e) => setVendorSearch(e.target.value)}
                   className="pl-9 text-xs h-9"
@@ -8355,11 +8413,28 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           iconBg="bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/25"
           description="Update official RTO RC records, technical powertrain specifications, statutory compliance dates or driver assignment."
           breadcrumbs={[
-            { label: "Fleet Inventory", onClick: () => setIsEditVehicleOpen(false) },
+            {
+              label: dossierOriginVehicle ? "Vehicle Dossier" : "Fleet Inventory",
+              onClick: () => {
+                setIsEditVehicleOpen(false);
+                if (dossierOriginVehicle) {
+                  setViewingVehicle(dossierOriginVehicle);
+                  if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+                  setDossierOriginVehicle(null);
+                }
+              }
+            },
             { label: `Edit Vehicle (${editVehiclePlate || selectedVehicleForEdit.registration_number})` }
           ]}
-          onBack={() => setIsEditVehicleOpen(false)}
-          backLabel="Back to Fleet"
+          onBack={() => {
+            setIsEditVehicleOpen(false);
+            if (dossierOriginVehicle) {
+              setViewingVehicle(dossierOriginVehicle);
+              if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+              setDossierOriginVehicle(null);
+            }
+          }}
+          backLabel={dossierOriginVehicle ? "Back to Dossier" : "Back to Fleet"}
           onReset={() => {
             if (selectedVehicleForEdit) openEditVehicleModal(selectedVehicleForEdit);
           }}
@@ -8410,14 +8485,13 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="rounded-xl border border-border bg-slate-50/70 dark:bg-slate-900/50 p-4 space-y-3.5">
                 <div className="flex items-center gap-2 pb-2 border-b border-border/60 text-foreground font-semibold text-xs">
                   <Car className="h-4 w-4 text-blue-500" />
-                  <span>1. Vehicle Identity & Powertrain</span>
+                  <span>1. Vehicle Identity</span>
                 </div>
 
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="font-semibold text-foreground flex items-center gap-1">
-                      <span>Registration Plate *</span>
-                      <span className="text-xs font-normal text-muted-foreground">(e.g. MH-02-FE-4281)</span>
+                    <label className="font-semibold text-foreground">
+                      Registration Plate *
                     </label>
                     <span className="text-xs text-theme-btn-primary font-medium flex items-center gap-1">
                       <Zap className="h-3 w-3 text-amber-500 fill-amber-500" />
@@ -8746,12 +8820,12 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="rounded-xl border border-border bg-slate-50/70 dark:bg-slate-900/50 p-4 space-y-3.5">
                 <div className="flex items-center gap-2 pb-2 border-b border-border/60 text-foreground font-semibold text-xs">
                   <Building2 className="h-4 w-4 text-blue-500" />
-                  <span>2. Identification & Legal Ownership</span>
+                  <span>2. Registration & Ownership</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="font-semibold block mb-1">Registered Owner / Corporate Entity *</label>
+                    <label className="font-semibold block mb-1">Registered Owner *</label>
                     <AppInput 
                       value={editVehicleOwner} 
                       onChange={(e) => setEditVehicleOwner(e.target.value)}
@@ -8761,7 +8835,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <div>
                     <label className="font-semibold block mb-1 flex items-center gap-1">
                       <Phone className="h-3.5 w-3.5 text-blue-500" />
-                      <span>RTO RMN (Registered Mobile Number) *</span>
+                      <span>Registered Mobile Number *</span>
                     </label>
                     <AppInput 
                       value={editVehicleRtoRmn} 
@@ -8833,7 +8907,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       type="number"
                       min="0"
                       step="1"
-                      placeholder="e.g. 1250000"
                       value={editVehiclePurchasePrice} 
                       onChange={(e) => setEditVehiclePurchasePrice(e.target.value)} 
                       className="font-mono text-xs"
@@ -8846,7 +8919,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="rounded-xl border border-border bg-slate-50/70 dark:bg-slate-900/50 p-4 space-y-3.5">
                 <div className="flex items-center gap-2 pb-2 border-b border-border/60 text-foreground font-semibold text-xs">
                   <ShieldCheck className="h-4 w-4 text-emerald-500" />
-                  <span>3. Statutory Compliance, Insurance & Validity</span>
+                  <span>3. Compliance & Insurance</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -8914,7 +8987,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
                     {isElectricFuel(editVehicleFuel) ? (
                       <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 flex items-start gap-2.5">
@@ -9005,7 +9078,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="rounded-xl border border-border bg-slate-50/70 dark:bg-slate-900/50 p-4 space-y-3.5">
                 <div className="flex items-center gap-2 pb-2 border-b border-border/60 text-foreground font-semibold text-xs">
                   <Gauge className="h-4 w-4 text-amber-500" />
-                  <span>4. Fleet Operations & Driver Assignment</span>
+                  <span>4. Operations & Driver</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -9064,7 +9137,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div className="flex items-center justify-between pb-2 border-b border-border/60">
                   <div className="flex items-center gap-2 text-foreground font-semibold text-xs">
                     <FileCheck className="h-4 w-4 text-emerald-500" />
-                    <span>5. Legal & Compliance Documents Vault</span>
+                    <span>5. Documents</span>
                   </div>
                   <span className="text-xs font-semibold text-muted-foreground bg-surface px-2.5 py-0.5 rounded-md border border-border">
                     {editVehicleDocs.length} {editVehicleDocs.length === 1 ? "document archived" : "documents archived"}
@@ -9094,7 +9167,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <div>
                     <label className="font-semibold text-foreground block mb-1">Document Title / Note</label>
                     <AppInput
-                      placeholder="e.g. Valid PUC 2026-2027"
                       value={editDocTitle}
                       onChange={(e) => setEditDocTitle(e.target.value)}
                       className="text-xs"
@@ -9103,7 +9175,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <div>
                     <label className="font-semibold text-foreground block mb-1">Certificate / Policy #</label>
                     <AppInput
-                      placeholder="e.g. POL-2026-98124"
                       value={editDocNumber}
                       onChange={(e) => setEditDocNumber(e.target.value)}
                       className="text-xs font-mono"
@@ -9649,11 +9720,28 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           iconBg="bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/25"
           description="Record scheduled service or breakdown repairs, vendor workshop invoices, parts cost & service tax breakdown."
           breadcrumbs={[
-            { label: "Maintenance Records", onClick: () => setIsAddMaintenanceOpen(false) },
+            {
+              label: dossierOriginVehicle ? "Vehicle Dossier" : "Maintenance Records",
+              onClick: () => {
+                setIsAddMaintenanceOpen(false);
+                if (dossierOriginVehicle) {
+                  setViewingVehicle(dossierOriginVehicle);
+                  if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+                  setDossierOriginVehicle(null);
+                }
+              }
+            },
             { label: "New Job Card" }
           ]}
-          onBack={() => setIsAddMaintenanceOpen(false)}
-          backLabel="Back to Maintenance"
+          onBack={() => {
+            setIsAddMaintenanceOpen(false);
+            if (dossierOriginVehicle) {
+              setViewingVehicle(dossierOriginVehicle);
+              if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+              setDossierOriginVehicle(null);
+            }
+          }}
+          backLabel={dossierOriginVehicle ? "Back to Dossier" : "Back to Maintenance"}
           onReset={() => {
             resetMaintenanceForm();
           }}
@@ -9676,7 +9764,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     }`}
                   >
                     <Wrench className="h-4 w-4 text-amber-500" />
-                    <span>1. Vehicle & Service Scope</span>
+                    <span>1. Service Scope</span>
                   </button>
                   <button
                     type="button"
@@ -9688,7 +9776,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     }`}
                   >
                     <Receipt className="h-4 w-4 text-emerald-500" />
-                    <span>2. Billing, Tax Breakdown & Attachments</span>
+                    <span>2. Billing & Attachments</span>
                     {newMaintAttachments.length > 0 && (
                       <span className="px-1.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">
                         {newMaintAttachments.length}
@@ -9849,7 +9937,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       <AppInput
                         value={newMaintTechnician}
                         onChange={(e) => setNewMaintTechnician(e.target.value)}
-                        placeholder="e.g. Ramesh Sharma (Lead Service Advisor)"
                         className="h-10 text-xs"
                       />
                     </div>
@@ -9996,12 +10083,12 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       <div className="space-y-1.5">
                         <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                           <span className="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
-                          <span>1. Gross Service Base & Trade Discount</span>
+                          <span>1. Base Charges & Discount</span>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                           <div>
                             <label className="text-xs font-semibold block mb-1 text-muted-foreground">
-                              Labour / Service Charges (₹)
+                              Labour Charges (₹)
                             </label>
                             <AppInput
                               type="number"
@@ -10022,7 +10109,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
                           <div>
                             <label className="text-xs font-semibold block mb-1 text-muted-foreground">
-                              Consumables & Workshop Misc (₹)
+                              Consumables / Spares (₹)
                             </label>
                             <AppInput
                               type="number"
@@ -10043,7 +10130,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
                           <div>
                             <label className="text-xs font-semibold block mb-1 text-muted-foreground">
-                              Trade Discount / Vendor Waiver (₹)
+                              Discount (₹)
                             </label>
                             <AppInput
                               type="number"
@@ -10059,7 +10146,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                 setNewMaintCost(Math.max(0, taxable + taxAmt - tdsAmt - (Number(newMaintOtherDeductions) || 0)));
                               }}
                               className="h-9 text-xs font-mono font-semibold text-rose-600 dark:text-rose-400"
-                              placeholder="0"
                             />
                           </div>
                         </div>
@@ -10070,7 +10156,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
                           <span className="flex items-center gap-1">
                             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                            <span>2. Statutory Tax Addition (GST / VAT)</span>
+                            <span>2. GST / Tax</span>
                           </span>
                           {newMaintTaxCost > 0 && (
                             <span className="font-mono text-xs text-muted-foreground font-normal">
@@ -10106,7 +10192,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
                           <div className="sm:col-span-2">
                             <label className="text-xs font-semibold block mb-1 text-muted-foreground">
-                              GST / Tax Addition Amount (₹)
+                              GST Amount (₹)
                             </label>
                             <AppInput
                               type="number"
@@ -10129,7 +10215,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       <div className="space-y-1.5 pt-1 border-t border-border/50">
                         <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                           <span className="h-1.5 w-1.5 rounded-full bg-purple-500"></span>
-                          <span>3. Statutory Tax Deductions & Withholding (TDS / Sec 194C / Other)</span>
+                          <span>3. TDS & Deductions</span>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                           <div>
@@ -10173,7 +10259,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                 setNewMaintCost(Math.max(0, taxable + (Number(newMaintTaxCost) || 0) - val - (Number(newMaintOtherDeductions) || 0)));
                               }}
                               className="h-9 text-xs font-mono font-semibold text-purple-600 dark:text-purple-400"
-                              placeholder="0"
                             />
                           </div>
 
@@ -10193,7 +10278,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                 setNewMaintCost(Math.max(0, taxable + (Number(newMaintTaxCost) || 0) - (Number(newMaintTdsAmount) || 0) - val));
                               }}
                               className="h-9 text-xs font-mono font-semibold"
-                              placeholder="0"
                             />
                           </div>
                         </div>
@@ -10498,11 +10582,28 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           iconBg="bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/25"
           description="Update workshop invoice details, spare part costs, odometer readings & service status."
           breadcrumbs={[
-            { label: "Maintenance Records", onClick: () => setIsEditMaintenanceOpen(false) },
+            {
+              label: dossierOriginVehicle ? "Vehicle Dossier" : "Maintenance Records",
+              onClick: () => {
+                setIsEditMaintenanceOpen(false);
+                if (dossierOriginVehicle) {
+                  setViewingVehicle(dossierOriginVehicle);
+                  if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+                  setDossierOriginVehicle(null);
+                }
+              }
+            },
             { label: `Edit Record #${selectedMaintenanceForEdit.id.slice(0, 8)}` }
           ]}
-          onBack={() => setIsEditMaintenanceOpen(false)}
-          backLabel="Back to Maintenance"
+          onBack={() => {
+            setIsEditMaintenanceOpen(false);
+            if (dossierOriginVehicle) {
+              setViewingVehicle(dossierOriginVehicle);
+              if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+              setDossierOriginVehicle(null);
+            }
+          }}
+          backLabel={dossierOriginVehicle ? "Back to Dossier" : "Back to Maintenance"}
           onReset={() => {
             if (selectedMaintenanceForEdit) openEditMaintenanceModal(selectedMaintenanceForEdit);
           }}
@@ -10525,7 +10626,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     }`}
                   >
                     <Wrench className="h-4 w-4 text-amber-500" />
-                    <span>1. Vehicle & Service Scope</span>
+                    <span>1. Service Scope</span>
                   </button>
                   <button
                     type="button"
@@ -10537,7 +10638,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     }`}
                   >
                     <Receipt className="h-4 w-4 text-emerald-500" />
-                    <span>2. Billing, Tax Breakdown & Attachments</span>
+                    <span>2. Billing & Attachments</span>
                     {editMaintAttachments.length > 0 && (
                       <span className="px-1.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">
                         {editMaintAttachments.length}
@@ -10677,7 +10778,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       <AppInput
                         value={editMaintTechnician}
                         onChange={(e) => setEditMaintTechnician(e.target.value)}
-                        placeholder="e.g. Ramesh Sharma (Lead Service Advisor)"
                         className="h-10 text-xs"
                       />
                     </div>
@@ -10818,12 +10918,12 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       <div className="space-y-1.5">
                         <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                           <span className="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
-                          <span>1. Gross Service Base & Trade Discount</span>
+                          <span>1. Base Charges & Discount</span>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                           <div>
                             <label className="text-xs font-semibold block mb-1 text-muted-foreground">
-                              Labour / Service Charges (₹)
+                              Labour Charges (₹)
                             </label>
                             <AppInput
                               type="number"
@@ -10844,7 +10944,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
                           <div>
                             <label className="text-xs font-semibold block mb-1 text-muted-foreground">
-                              Consumables & Workshop Misc (₹)
+                              Consumables / Spares (₹)
                             </label>
                             <AppInput
                               type="number"
@@ -10865,7 +10965,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
                           <div>
                             <label className="text-xs font-semibold block mb-1 text-muted-foreground">
-                              Trade Discount / Vendor Waiver (₹)
+                              Discount (₹)
                             </label>
                             <AppInput
                               type="number"
@@ -10881,7 +10981,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                 setEditMaintCost(Math.max(0, taxable + taxAmt - tdsAmt - (Number(editMaintOtherDeductions) || 0)));
                               }}
                               className="h-9 text-xs font-mono font-semibold text-rose-600 dark:text-rose-400"
-                              placeholder="0"
                             />
                           </div>
                         </div>
@@ -10892,7 +10991,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
                           <span className="flex items-center gap-1">
                             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                            <span>2. Statutory Tax Addition (GST / VAT)</span>
+                            <span>2. GST / Tax</span>
                           </span>
                           {editMaintTaxCost > 0 && (
                             <span className="font-mono text-xs text-muted-foreground font-normal">
@@ -10928,7 +11027,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
                           <div className="sm:col-span-2">
                             <label className="text-xs font-semibold block mb-1 text-muted-foreground">
-                              GST / Tax Addition Amount (₹)
+                              GST Amount (₹)
                             </label>
                             <AppInput
                               type="number"
@@ -10939,7 +11038,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                 setEditMaintTaxCost(val);
                                 const gross = (Number(editMaintLabourCost) || 0) + (Number(editMaintPartsCost) || 0);
                                 const taxable = Math.max(0, gross - (Number(editMaintDiscount) || 0));
-                                setEditMaintCost(Math.max(0, taxable + val - (Number(editMaintTdsAmount) || 0) - (Number(editMaintOtherDeductions) || 0)));
+                                setNewMaintCost(Math.max(0, taxable + val - (Number(editMaintTdsAmount) || 0) - (Number(editMaintOtherDeductions) || 0)));
                               }}
                               className="h-9 text-xs font-mono font-semibold text-emerald-600 dark:text-emerald-400"
                             />
@@ -10951,7 +11050,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       <div className="space-y-1.5 pt-1 border-t border-border/50">
                         <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                           <span className="h-1.5 w-1.5 rounded-full bg-purple-500"></span>
-                          <span>3. Statutory Tax Deductions & Withholding (TDS / Sec 194C / Other)</span>
+                          <span>3. TDS & Deductions</span>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                           <div>
@@ -10995,7 +11094,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                 setEditMaintCost(Math.max(0, taxable + (Number(editMaintTaxCost) || 0) - val - (Number(editMaintOtherDeductions) || 0)));
                               }}
                               className="h-9 text-xs font-mono font-semibold text-purple-600 dark:text-purple-400"
-                              placeholder="0"
                             />
                           </div>
 
@@ -11015,7 +11113,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                 setEditMaintCost(Math.max(0, taxable + (Number(editMaintTaxCost) || 0) - (Number(editMaintTdsAmount) || 0) - val));
                               }}
                               className="h-9 text-xs font-mono font-semibold"
-                              placeholder="0"
                             />
                           </div>
                         </div>
@@ -11321,11 +11418,28 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           iconBg="bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/25"
           description="Official service job card, cost ledger breakdown, workshop attachments & audit trail."
           breadcrumbs={[
-            { label: "Maintenance Records", onClick: () => setSelectedMaintenanceForView(null) },
+            {
+              label: dossierOriginVehicle ? "Vehicle Dossier" : "Maintenance Records",
+              onClick: () => {
+                setSelectedMaintenanceForView(null);
+                if (dossierOriginVehicle) {
+                  setViewingVehicle(dossierOriginVehicle);
+                  if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+                  setDossierOriginVehicle(null);
+                }
+              }
+            },
             { label: `Work Order #${selectedMaintenanceForView.id.slice(0, 8)}` }
           ]}
-          onBack={() => setSelectedMaintenanceForView(null)}
-          backLabel="Back to Maintenance"
+          onBack={() => {
+            setSelectedMaintenanceForView(null);
+            if (dossierOriginVehicle) {
+              setViewingVehicle(dossierOriginVehicle);
+              if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+              setDossierOriginVehicle(null);
+            }
+          }}
+          backLabel={dossierOriginVehicle ? "Back to Dossier" : "Back to Maintenance"}
           headerActions={
             <div className="flex items-center gap-2">
               {canManageMaintenance && (
@@ -11711,15 +11825,32 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           iconBg="bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/25"
           description="Register spare parts, batteries, tires, telematics GPS units & warranty schedules."
           breadcrumbs={[
-            { label: "Parts & Accessories", onClick: () => { setIsAddPartOpen(false); setIsEditPartOpen(false); } },
+            {
+              label: dossierOriginVehicle ? "Vehicle Dossier" : "Parts & Accessories",
+              onClick: () => {
+                setIsAddPartOpen(false);
+                setIsEditPartOpen(false);
+                setSelectedPartForEdit(null);
+                if (dossierOriginVehicle) {
+                  setViewingVehicle(dossierOriginVehicle);
+                  if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+                  setDossierOriginVehicle(null);
+                }
+              }
+            },
             { label: isEditPartOpen ? "Edit Part" : "New Part" }
           ]}
           onBack={() => {
             setIsAddPartOpen(false);
             setIsEditPartOpen(false);
             setSelectedPartForEdit(null);
+            if (dossierOriginVehicle) {
+              setViewingVehicle(dossierOriginVehicle);
+              if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+              setDossierOriginVehicle(null);
+            }
           }}
-          backLabel="Back to Parts"
+          backLabel={dossierOriginVehicle ? "Back to Dossier" : "Back to Parts"}
           onReset={() => {
             if (selectedPartForEdit) openEditPartModal(selectedPartForEdit);
             else openCreatePartModal();
@@ -11734,12 +11865,12 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="space-y-3">
                 <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border">
                   <Package className="h-3.5 w-3.5 text-theme-btn-primary" />
-                  <span>1. Item Identity & Classification</span>
+                  <span>1. Item Identification</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   <div className="sm:col-span-2">
                     <label className="font-semibold block mb-1">
-                      <span>Item / Part Name *</span>
+                      <span>Part Name *</span>
                     </label>
                     <AppInput
                       value={partFormName}
@@ -11748,7 +11879,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     />
                   </div>
                   <div>
-                    <label className="font-semibold block mb-1">Item Category Type</label>
+                    <label className="font-semibold block mb-1">Category</label>
                     <select
                       value={partFormItemType}
                       onChange={(e) => setPartFormItemType(e.target.value)}
@@ -11765,7 +11896,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     </select>
                   </div>
                   <div>
-                    <label className="font-semibold block mb-1">Brand / Manufacturer *</label>
+                    <label className="font-semibold block mb-1">Brand *</label>
                     <AppInput
                       value={partFormBrand}
                       onChange={(e) => setPartFormBrand(e.target.value)}
@@ -11773,7 +11904,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     />
                   </div>
                   <div>
-                    <label className="font-semibold block mb-1">Part Number / SKU</label>
+                    <label className="font-semibold block mb-1">Part Number</label>
                     <AppInput
                       value={partFormPartNumber}
                       onChange={(e) => setPartFormPartNumber(e.target.value)}
@@ -11781,7 +11912,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     />
                   </div>
                   <div>
-                    <label className="font-semibold block mb-1">Serial Number / IMEI</label>
+                    <label className="font-semibold block mb-1">Serial Number</label>
                     <AppInput
                       value={partFormSerialNumber}
                       onChange={(e) => setPartFormSerialNumber(e.target.value)}
@@ -11801,8 +11932,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       <option value="REBUILT">Rebuilt / Overhauled</option>
                     </select>
                   </div>
-                  <div>
-                    <label className="font-semibold block mb-1">Classification Sub-Group</label>
+                  <div className="sm:col-span-2">
+                    <label className="font-semibold block mb-1">Sub-Group</label>
                     <AppInput
                       value={partFormCategory}
                       onChange={(e) => setPartFormCategory(e.target.value)}
@@ -11816,7 +11947,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-border">
                   <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                     <Receipt className="h-3.5 w-3.5 text-emerald-500" />
-                    <span>2. Procurement, Invoicing & Statutory Tax Breakdown</span>
+                    <span>2. Procurement & Invoicing</span>
                   </div>
 
                   {/* Quick Presets */}
@@ -11905,20 +12036,18 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     />
                   </div>
                   <div>
-                    <label className="font-semibold block mb-1">Procurement Vendor / Supplier</label>
+                    <label className="font-semibold block mb-1">Vendor / Supplier</label>
                     <AppInput
                       value={partFormVendorName}
                       onChange={(e) => setPartFormVendorName(e.target.value)}
-                      placeholder="e.g. Bosch Authorized Distributor"
                     />
                   </div>
                   <div>
-                    <label className="font-semibold block mb-1">Invoice / Bill Number</label>
+                    <label className="font-semibold block mb-1">Invoice Number</label>
                     <AppInput
                       value={partFormInvoiceNumber}
                       onChange={(e) => setPartFormInvoiceNumber(e.target.value)}
                       className="font-mono"
-                      placeholder="e.g. INV-2026-889"
                     />
                   </div>
                 </div>
@@ -11963,7 +12092,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     />
                   </div>
                   <div>
-                    <label className="font-semibold block mb-1 text-xs">Trade Discount / Vendor Rebate (₹)</label>
+                    <label className="font-semibold block mb-1 text-xs">Discount (₹)</label>
                     <AppInput
                       type="number"
                       min="0"
@@ -11978,7 +12107,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         setPartFormPurchaseAmount(Math.max(0, taxable + taxAmt - tdsAmt - (Number(partFormOtherDeductions) || 0)));
                       }}
                       className="font-mono text-rose-600 dark:text-rose-400"
-                      placeholder="0"
                     />
                   </div>
                 </div>
@@ -12008,7 +12136,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     </select>
                   </div>
                   <div>
-                    <label className="font-semibold block mb-1 text-xs">GST Tax Amount (₹)</label>
+                    <label className="font-semibold block mb-1 text-xs">GST Amount (₹)</label>
                     <AppInput
                       type="number"
                       min="0"
@@ -12024,7 +12152,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     />
                   </div>
                   <div>
-                    <label className="font-semibold block mb-1 text-xs">TDS Deduction (₹)</label>
+                    <label className="font-semibold block mb-1 text-xs">TDS Amount (₹)</label>
                     <AppInput
                       type="number"
                       min="0"
@@ -12037,7 +12165,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         setPartFormPurchaseAmount(Math.max(0, taxable + (Number(partFormTaxAmount) || 0) - val - (Number(partFormOtherDeductions) || 0)));
                       }}
                       className="font-mono text-purple-600 dark:text-purple-400"
-                      placeholder="0"
                     />
                   </div>
                   <div>
@@ -12054,7 +12181,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         setPartFormPurchaseAmount(Math.max(0, taxable + (Number(partFormTaxAmount) || 0) - (Number(partFormTdsDeduction) || 0) - val));
                       }}
                       className="font-mono"
-                      placeholder="0"
                     />
                   </div>
                 </div>
@@ -12063,7 +12189,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div className="p-3 rounded-xl bg-theme-btn-primary/10 border border-theme-btn-primary/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-2">
                   <div>
                     <span className="text-xs font-bold text-foreground block">
-                      Total Net Purchase Invoiced Amount (₹)
+                      Total Net Amount (₹)
                     </span>
                     <span className="text-xs text-muted-foreground/90 font-mono font-medium block mt-1">
                       Gross: ₹{((Number(partFormUnitPrice) || 0) * (Number(partFormQuantity) || 1)).toLocaleString("en-IN")} • Taxable: ₹{Math.max(0, ((Number(partFormUnitPrice) || 0) * (Number(partFormQuantity) || 1)) - (Number(partFormDiscount) || 0)).toLocaleString("en-IN")} • GST: +₹{Number(partFormTaxAmount).toLocaleString("en-IN")} • TDS: -₹{Number(partFormTdsDeduction).toLocaleString("en-IN")}
@@ -12086,14 +12212,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="space-y-3">
                 <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border">
                   <Clock className="h-3.5 w-3.5 text-amber-500" />
-                  <span>3. Manufacturing Date (DOM) & Shelf-Life Expiry</span>
+                  <span>3. Manufacturing & Expiry</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="font-semibold block mb-1 flex items-center gap-1">
-                      <span>Date of Manufacturing (DOM)</span>
-                      <span className="text-xs text-muted-foreground font-normal">(Shelf age evaluation)</span>
-                    </label>
+                    <label className="font-semibold block mb-1">Date of Manufacturing (DOM)</label>
                     <AppInput
                       type="date"
                       value={partFormManufacturingDate}
@@ -12101,10 +12224,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     />
                   </div>
                   <div>
-                    <label className="font-semibold block mb-1 flex items-center gap-1">
-                      <span>Shelf-Life / Expiry Date</span>
-                      <span className="text-xs text-muted-foreground font-normal">(Fluids, oils, rubber components)</span>
-                    </label>
+                    <label className="font-semibold block mb-1">Shelf-Life / Expiry Date</label>
                     <AppInput
                       type="date"
                       value={partFormExpiryDate}
@@ -12118,7 +12238,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="space-y-3">
                 <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border">
                   <ShieldCheck className="h-3.5 w-3.5 text-indigo-500" />
-                  <span>4. OEM Warranty Coverage & Lifecycle Countdown</span>
+                  <span>4. Warranty Coverage</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
@@ -12182,7 +12302,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     />
                   </div>
                   <div className="sm:col-span-3">
-                    <label className="font-semibold block mb-1">Warranty Inclusions / Terms</label>
+                    <label className="font-semibold block mb-1">Warranty Terms</label>
                     <AppInput
                       value={partFormWarrantyTerms}
                       onChange={(e) => setPartFormWarrantyTerms(e.target.value)}
@@ -12196,7 +12316,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div className="flex items-center justify-between">
                   <div className="text-xs font-bold uppercase tracking-wider text-cyan-800 dark:text-cyan-300 flex items-center gap-1.5">
                     <Zap className="h-3.5 w-3.5 text-cyan-500" />
-                    <span>5. Recurring Renewal Policy (GPS SIM / AMC / Subscriptions)</span>
+                    <span>5. Renewal Policy</span>
                   </div>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -12250,14 +12370,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       />
                     </div>
                     <div>
-                      <label className="font-semibold block mb-1">Renewal Provider / Telco</label>
+                      <label className="font-semibold block mb-1">Renewal Provider</label>
                       <AppInput
                         value={partFormRenewalVendor}
                         onChange={(e) => setPartFormRenewalVendor(e.target.value)}
                       />
                     </div>
                     <div>
-                      <label className="font-semibold block mb-1">SIM / Policy / Account Number</label>
+                      <label className="font-semibold block mb-1">Policy / Account Number</label>
                       <AppInput
                         value={partFormRenewalPolicyNumber}
                         onChange={(e) => setPartFormRenewalPolicyNumber(e.target.value)}
@@ -12265,7 +12385,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       />
                     </div>
                     <div>
-                      <label className="font-semibold block mb-1">Advance Alert Reminder (Days)</label>
+                      <label className="font-semibold block mb-1">Reminder (Days)</label>
                       <AppInput
                         type="number"
                         min="1"
@@ -12282,7 +12402,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="space-y-3">
                 <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border">
                   <Car className="h-3.5 w-3.5 text-blue-500" />
-                  <span>6. Vehicle Mounting & Installation Status</span>
+                  <span>6. Vehicle Assignment</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
@@ -12338,14 +12458,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="font-semibold block mb-1">Installed By (Technician / Workshop)</label>
+                    <label className="font-semibold block mb-1">Installed By</label>
                     <AppInput
                       value={partFormInstalledBy}
                       onChange={(e) => setPartFormInstalledBy(e.target.value)}
                     />
                   </div>
                   <div>
-                    <label className="font-semibold block mb-1">Inventory Status</label>
+                    <label className="font-semibold block mb-1">Status</label>
                     <select
                       value={partFormStatus}
                       onChange={(e) => setPartFormStatus(e.target.value)}
@@ -12364,7 +12484,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       rows={2}
                       value={partFormNotes}
                       onChange={(e) => setPartFormNotes(e.target.value)}
-                      placeholder="Serial numbers, storage bin, workshop notes, fitting guidelines..."
                       className="w-full text-xs p-2.5 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
                     />
                   </div>
@@ -12522,14 +12641,30 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           iconBg="bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border-cyan-500/25"
           description="Extend replacement warranty, update inspection dates & purchase invoice records."
           breadcrumbs={[
-            { label: "Parts & Accessories", onClick: () => setIsRenewPartOpen(false) },
+            {
+              label: dossierOriginVehicle ? "Vehicle Dossier" : "Parts & Accessories",
+              onClick: () => {
+                setIsRenewPartOpen(false);
+                setSelectedPartForRenew(null);
+                if (dossierOriginVehicle) {
+                  setViewingVehicle(dossierOriginVehicle);
+                  if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+                  setDossierOriginVehicle(null);
+                }
+              }
+            },
             { label: `Renew Part (${selectedPartForRenew.name})` }
           ]}
           onBack={() => {
             setIsRenewPartOpen(false);
             setSelectedPartForRenew(null);
+            if (dossierOriginVehicle) {
+              setViewingVehicle(dossierOriginVehicle);
+              if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+              setDossierOriginVehicle(null);
+            }
           }}
-          backLabel="Back to Parts"
+          backLabel={dossierOriginVehicle ? "Back to Dossier" : "Back to Parts"}
           onSave={handleSaveRenewal}
           saveLabel="Save Part Renewal"
           saveIcon={Save}
@@ -12553,14 +12688,30 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           iconBg="bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border-cyan-500/25"
           description="Record newly issued insurance policy number, underwriting vendor, premium amount, coverage dates & policy document."
           breadcrumbs={[
-            { label: "Fleet Inventory", onClick: () => setIsRenewPolicyModalOpen(false) },
+            {
+              label: dossierOriginVehicle ? "Vehicle Dossier" : "Fleet Inventory",
+              onClick: () => {
+                setIsRenewPolicyModalOpen(false);
+                setSelectedVehicleForPolicyRenew(null);
+                if (dossierOriginVehicle) {
+                  setViewingVehicle(dossierOriginVehicle);
+                  if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+                  setDossierOriginVehicle(null);
+                }
+              }
+            },
             { label: `Renew Policy (${selectedVehicleForPolicyRenew.registration_number})` }
           ]}
           onBack={() => {
             setIsRenewPolicyModalOpen(false);
             setSelectedVehicleForPolicyRenew(null);
+            if (dossierOriginVehicle) {
+              setViewingVehicle(dossierOriginVehicle);
+              if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+              setDossierOriginVehicle(null);
+            }
           }}
-          backLabel="Back to Fleet"
+          backLabel={dossierOriginVehicle ? "Back to Dossier" : "Back to Fleet"}
           onSave={handleSaveVehiclePolicyRenewal}
           saveLabel="Save & Issue Insurance Policy"
           saveIcon={ShieldCheck}
@@ -12627,7 +12778,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div>
                   <label className="font-semibold block mb-1 flex items-center gap-1 text-foreground">
                     <Hash className="h-3.5 w-3.5 text-theme-btn-primary" />
-                    <span>New Policy / Cover Note # *</span>
+                    <span>New Policy Number *</span>
                   </label>
                   <AppInput
                     value={renewPolicyNumber}
@@ -12635,7 +12786,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     required
                     className="font-mono uppercase"
                   />
-                  <span className="text-xs text-muted-foreground mt-0.5 block">Official policy or e-cover note number</span>
                 </div>
               </div>
 
@@ -12685,7 +12835,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                     <Calendar className="h-3.5 w-3.5 text-cyan-500" />
-                    <span>Policy Validity Period (1-Year Cycle)</span>
+                    <span>Policy Validity Period</span>
                   </label>
                   <div className="flex items-center gap-1">
                     <button
@@ -12822,14 +12972,30 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           iconBg="bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border-cyan-500/25"
           description="Complete chronology of past insurance policies, premium costs, underwriters, claim contacts & certificate documents."
           breadcrumbs={[
-            { label: "Fleet Inventory", onClick: () => setIsPolicyHistoryModalOpen(false) },
+            {
+              label: dossierOriginVehicle ? "Vehicle Dossier" : "Fleet Inventory",
+              onClick: () => {
+                setIsPolicyHistoryModalOpen(false);
+                setSelectedVehicleForPolicyHistory(null);
+                if (dossierOriginVehicle) {
+                  setViewingVehicle(dossierOriginVehicle);
+                  if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+                  setDossierOriginVehicle(null);
+                }
+              }
+            },
             { label: `Policy Ledger (${selectedVehicleForPolicyHistory.registration_number})` }
           ]}
           onBack={() => {
             setIsPolicyHistoryModalOpen(false);
             setSelectedVehicleForPolicyHistory(null);
+            if (dossierOriginVehicle) {
+              setViewingVehicle(dossierOriginVehicle);
+              if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+              setDossierOriginVehicle(null);
+            }
           }}
-          backLabel="Back to Fleet"
+          backLabel={dossierOriginVehicle ? "Back to Dossier" : "Back to Fleet"}
         >
               {/* Summary Metric Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
@@ -13017,14 +13183,30 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           iconBg="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
           description="Record newly issued pollution control test certificate number, testing station, issue/expiry dates & certificate attachment."
           breadcrumbs={[
-            { label: "Fleet Inventory", onClick: () => setIsRenewPucModalOpen(false) },
+            {
+              label: dossierOriginVehicle ? "Vehicle Dossier" : "Fleet Inventory",
+              onClick: () => {
+                setIsRenewPucModalOpen(false);
+                setSelectedVehicleForPucRenew(null);
+                if (dossierOriginVehicle) {
+                  setViewingVehicle(dossierOriginVehicle);
+                  if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+                  setDossierOriginVehicle(null);
+                }
+              }
+            },
             { label: `Renew PUC (${selectedVehicleForPucRenew.registration_number})` }
           ]}
           onBack={() => {
             setIsRenewPucModalOpen(false);
             setSelectedVehicleForPucRenew(null);
+            if (dossierOriginVehicle) {
+              setViewingVehicle(dossierOriginVehicle);
+              if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+              setDossierOriginVehicle(null);
+            }
           }}
-          backLabel="Back to Fleet"
+          backLabel={dossierOriginVehicle ? "Back to Dossier" : "Back to Fleet"}
           onSave={handleSaveVehiclePucRenewal}
           saveLabel="Save & Issue PUC Certificate"
           saveIcon={Wind}
@@ -13065,13 +13247,12 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     required
                     className="font-mono uppercase"
                   />
-                  <span className="text-xs text-muted-foreground mt-0.5 block">Official RTO Parivahan PUC barcode / number</span>
                 </div>
 
                 <div>
                   <label className="font-semibold block mb-1 flex items-center gap-1 text-foreground">
                     <Building2 className="h-3.5 w-3.5 text-emerald-500" />
-                    <span>Testing Center / Station Name</span>
+                    <span>Testing Center</span>
                   </label>
                   <AppInput
                     value={renewPucTestingCenter}
@@ -13119,7 +13300,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-semibold block mb-1">Effective Test Date (Valid From) *</label>
+                    <label className="text-xs font-semibold block mb-1">Valid From *</label>
                     <AppInput
                       type="date"
                       value={renewPucValidFrom}
@@ -13128,7 +13309,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold block mb-1">Certificate Expiry Date (Valid Upto) *</label>
+                    <label className="text-xs font-semibold block mb-1">Valid Upto *</label>
                     <AppInput
                       type="date"
                       value={renewPucValidUpto}
@@ -13240,14 +13421,30 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           iconBg="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
           description="Chronological log of emission test certificates, test centers, compliance validity periods & audit records."
           breadcrumbs={[
-            { label: "Fleet Inventory", onClick: () => setIsPucHistoryModalOpen(false) },
+            {
+              label: dossierOriginVehicle ? "Vehicle Dossier" : "Fleet Inventory",
+              onClick: () => {
+                setIsPucHistoryModalOpen(false);
+                setSelectedVehicleForPucHistory(null);
+                if (dossierOriginVehicle) {
+                  setViewingVehicle(dossierOriginVehicle);
+                  if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+                  setDossierOriginVehicle(null);
+                }
+              }
+            },
             { label: `PUC History (${selectedVehicleForPucHistory.registration_number})` }
           ]}
           onBack={() => {
             setIsPucHistoryModalOpen(false);
             setSelectedVehicleForPucHistory(null);
+            if (dossierOriginVehicle) {
+              setViewingVehicle(dossierOriginVehicle);
+              if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+              setDossierOriginVehicle(null);
+            }
           }}
-          backLabel="Back to Fleet"
+          backLabel={dossierOriginVehicle ? "Back to Dossier" : "Back to Fleet"}
         >
               {/* Summary Metric Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
@@ -13429,14 +13626,30 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           iconBg="bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/25"
           description="Chronological audit trail of vehicle technical parameters, fuel type modifications, engine specifications & registration updates."
           breadcrumbs={[
-            { label: "Fleet Inventory", onClick: () => setIsSpecHistoryModalOpen(false) },
+            {
+              label: dossierOriginVehicle ? "Vehicle Dossier" : "Fleet Inventory",
+              onClick: () => {
+                setIsSpecHistoryModalOpen(false);
+                setSelectedVehicleForSpecHistory(null);
+                if (dossierOriginVehicle) {
+                  setViewingVehicle(dossierOriginVehicle);
+                  if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+                  setDossierOriginVehicle(null);
+                }
+              }
+            },
             { label: `Spec History (${selectedVehicleForSpecHistory.registration_number})` }
           ]}
           onBack={() => {
             setIsSpecHistoryModalOpen(false);
             setSelectedVehicleForSpecHistory(null);
+            if (dossierOriginVehicle) {
+              setViewingVehicle(dossierOriginVehicle);
+              if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+              setDossierOriginVehicle(null);
+            }
           }}
-          backLabel="Back to Fleet"
+          backLabel={dossierOriginVehicle ? "Back to Dossier" : "Back to Fleet"}
         >
               {/* Summary Metric Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
@@ -13624,14 +13837,30 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           iconBg="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
           description={`Combined chronology of insurance policies, PUC emission certificates, specification revisions & free service entitlement vouchers for ${selectedVehicleForRenewals.make} ${selectedVehicleForRenewals.model}.`}
           breadcrumbs={[
-            { label: "Fleet Inventory", onClick: () => setIsUnifiedRenewalsModalOpen(false) },
+            {
+              label: dossierOriginVehicle ? "Vehicle Dossier" : "Fleet Inventory",
+              onClick: () => {
+                setIsUnifiedRenewalsModalOpen(false);
+                setSelectedVehicleForRenewals(null);
+                if (dossierOriginVehicle) {
+                  setViewingVehicle(dossierOriginVehicle);
+                  if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+                  setDossierOriginVehicle(null);
+                }
+              }
+            },
             { label: `Unified Renewals (${selectedVehicleForRenewals.registration_number})` }
           ]}
           onBack={() => {
             setIsUnifiedRenewalsModalOpen(false);
             setSelectedVehicleForRenewals(null);
+            if (dossierOriginVehicle) {
+              setViewingVehicle(dossierOriginVehicle);
+              if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+              setDossierOriginVehicle(null);
+            }
           }}
-          backLabel="Back to Fleet"
+          backLabel={dossierOriginVehicle ? "Back to Dossier" : "Back to Fleet"}
           headerActions={
             <AppButton
               type="button"
@@ -14133,6 +14362,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   size="sm"
                   onClick={() => {
                     setDossierOriginVehicle(viewingVehicle);
+                    setDossierOriginTab(vehicleDossierTab);
                     openEditVehicleModal(viewingVehicle);
                   }}
                   className="text-xs h-8 px-2.5 gap-1.5 font-semibold text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -14148,6 +14378,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   size="sm"
                   onClick={() => {
                     setDossierOriginVehicle(viewingVehicle);
+                    setDossierOriginTab(vehicleDossierTab);
                     resetMaintenanceForm();
                     setNewMaintVehicleId(viewingVehicle.id);
                     setIsAddMaintenanceOpen(true);
@@ -14164,6 +14395,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 size="sm"
                 onClick={() => {
                   setDossierOriginVehicle(viewingVehicle);
+                  setDossierOriginTab(vehicleDossierTab);
                   openCreatePartModal();
                   setPartFormVehicleId(viewingVehicle.id);
                   setPartFormAssignedVehicleReg(viewingVehicle.registration_number);
@@ -14657,6 +14889,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       size="sm"
                       onClick={() => {
                         setDossierOriginVehicle(viewingVehicle);
+                        setDossierOriginTab(vehicleDossierTab);
                         resetMaintenanceForm();
                         setNewMaintVehicleId(viewingVehicle.id);
                         setIsAddMaintenanceOpen(true);
@@ -14712,6 +14945,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         size="sm"
                         onClick={() => {
                           setDossierOriginVehicle(viewingVehicle);
+                          setDossierOriginTab(vehicleDossierTab);
                           resetMaintenanceForm();
                           setNewMaintVehicleId(viewingVehicle.id);
                           setIsAddMaintenanceOpen(true);
@@ -14794,6 +15028,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                               size="sm"
                               onClick={() => {
                                 setDossierOriginVehicle(viewingVehicle);
+                                setDossierOriginTab(vehicleDossierTab);
                                 setSelectedMaintenanceForView(svc);
                               }}
                               className="h-8 text-xs px-2.5 text-amber-700 dark:text-amber-300 border-amber-500/30 hover:bg-amber-500/10 gap-1 font-semibold"
@@ -14901,6 +15136,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     size="sm"
                     onClick={() => {
                       setDossierOriginVehicle(viewingVehicle);
+                      setDossierOriginTab(vehicleDossierTab);
                       openCreatePartModal();
                       setPartFormVehicleId(viewingVehicle.id);
                       setPartFormAssignedVehicleReg(viewingVehicle.registration_number);
@@ -14956,6 +15192,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       size="sm"
                       onClick={() => {
                         setDossierOriginVehicle(viewingVehicle);
+                        setDossierOriginTab(vehicleDossierTab);
                         openCreatePartModal();
                         setPartFormVehicleId(viewingVehicle.id);
                         setPartFormAssignedVehicleReg(viewingVehicle.registration_number);
@@ -15061,6 +15298,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             size="sm"
                             onClick={() => {
                               setDossierOriginVehicle(viewingVehicle);
+                              setDossierOriginTab(vehicleDossierTab);
                               setViewingPart(p);
                             }}
                             className="h-7 text-xs px-2.5 text-blue-600 dark:text-blue-400 border-blue-500/30 hover:bg-blue-500/10 gap-1 font-semibold"
@@ -15074,6 +15312,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             size="sm"
                             onClick={() => {
                               setDossierOriginVehicle(viewingVehicle);
+                              setDossierOriginTab(vehicleDossierTab);
                               openEditPartModal(p);
                             }}
                             className="h-7 text-xs px-2.5 text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 gap-1 font-semibold"
@@ -15206,7 +15445,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       <label className="text-xs font-semibold text-foreground block mb-1">Document Title (Optional)</label>
                       <input
                         type="text"
-                        placeholder="e.g. 2026-27 Comprehensive Policy"
                         value={dossierNewDocTitle}
                         onChange={(e) => setDossierNewDocTitle(e.target.value)}
                         className="w-full text-xs py-1.5 px-2.5 rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:border-theme-btn-primary"
@@ -15217,7 +15455,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       <label className="text-xs font-semibold text-foreground block mb-1">Document / Certificate #</label>
                       <input
                         type="text"
-                        placeholder="e.g. POL-8941203"
                         value={dossierNewDocNumber}
                         onChange={(e) => setDossierNewDocNumber(e.target.value)}
                         className="w-full text-xs py-1.5 px-2.5 rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:border-theme-btn-primary font-mono"
@@ -15482,18 +15719,13 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       <span className="text-muted-foreground">Expiry Date:</span>
                       <span className="font-mono font-bold text-foreground">{viewingVehicle.insurance_expiry_date || "—"}</span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">24x7 Roadside Assistance:</span>
-                      <span className="font-semibold text-foreground">{viewingVehicle.has_roadside_assistance !== false ? "Covered" : "Not Opted"}</span>
-                    </div>
-                  </div>
-                  <div className="pt-2 border-t border-cyan-500/20 flex items-center justify-end gap-2">
-                    <AppButton
+                                    <AppButton
                       variant="outline"
                       size="sm"
                       onClick={() => {
                         const v = viewingVehicle;
                         setDossierOriginVehicle(v);
+                        setDossierOriginTab(vehicleDossierTab);
                         setViewingVehicle(null);
                         handleOpenVehiclePolicyHistoryModal(v);
                       }}
@@ -15508,6 +15740,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       onClick={() => {
                         const v = viewingVehicle;
                         setDossierOriginVehicle(v);
+                        setDossierOriginTab(vehicleDossierTab);
                         setViewingVehicle(null);
                         handleOpenVehiclePolicyRenewModal(v);
                       }}
@@ -15520,7 +15753,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 </div>
 
                 {/* PUC Certificate Card */}
-                <div className="p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 space-y-3">
+                <div className="p-4 rounded-xl border border-emerald-500/20 bg-emerald-50/5 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
                       <Wind className="h-4 w-4 text-emerald-600" />
@@ -15565,6 +15798,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       onClick={() => {
                         const v = viewingVehicle;
                         setDossierOriginVehicle(v);
+                        setDossierOriginTab(vehicleDossierTab);
                         setViewingVehicle(null);
                         handleOpenVehiclePucHistoryModal(v);
                       }}
@@ -15579,6 +15813,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       onClick={() => {
                         const v = viewingVehicle;
                         setDossierOriginVehicle(v);
+                        setDossierOriginTab(vehicleDossierTab);
                         setViewingVehicle(null);
                         handleOpenVehiclePucRenewModal(v);
                       }}
@@ -15647,7 +15882,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <AppButton
                       variant="outline"
                       size="sm"
-                      onClick={() => openEditVehicleModal(viewingVehicle)}
+                      onClick={() => {
+                        setDossierOriginVehicle(viewingVehicle);
+                        setDossierOriginTab(vehicleDossierTab);
+                        openEditVehicleModal(viewingVehicle);
+                      }}
                       className="h-7 text-xs px-2.5 text-indigo-700 dark:text-indigo-300 border-indigo-500/30 gap-1 font-semibold"
                     >
                       <Edit2 className="h-3 w-3" />
@@ -15725,6 +15964,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           size="sm"
                           onClick={() => {
                             setDossierOriginVehicle(viewingVehicle);
+                            setDossierOriginTab(vehicleDossierTab);
                             setViewingTrip(t);
                           }}
                           className="h-7 text-xs px-2.5 text-purple-700 dark:text-purple-300 border-purple-500/30 hover:bg-purple-500/10 gap-1 font-semibold"
@@ -15755,11 +15995,28 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           iconBg="bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/25"
           description="Driver personnel credentials, driving license validity, emergency contacts, primary vehicle assignment & duty history."
           breadcrumbs={[
-            { label: "Driver Management", onClick: () => setViewingDriver(null) },
+            {
+              label: dossierOriginVehicle ? "Vehicle Dossier" : "Driver Management",
+              onClick: () => {
+                setViewingDriver(null);
+                if (dossierOriginVehicle) {
+                  setViewingVehicle(dossierOriginVehicle);
+                  if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+                  setDossierOriginVehicle(null);
+                }
+              }
+            },
             { label: `Driver File (${viewingDriver.full_name})` }
           ]}
-          onBack={() => setViewingDriver(null)}
-          backLabel="Back to Drivers"
+          onBack={() => {
+            setViewingDriver(null);
+            if (dossierOriginVehicle) {
+              setViewingVehicle(dossierOriginVehicle);
+              if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+              setDossierOriginVehicle(null);
+            }
+          }}
+          backLabel={dossierOriginVehicle ? "Back to Dossier" : "Back to Drivers"}
         >
               {/* Contact & Profile */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -15853,11 +16110,28 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           iconBg="bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border-indigo-500/25"
           description="Transit route manifest, driver assignment, vehicle telemetry, destination itinerary & trip odometer logs."
           breadcrumbs={[
-            { label: "Trip Dispatches", onClick: () => setViewingTrip(null) },
+            {
+              label: dossierOriginVehicle ? "Vehicle Dossier" : "Trip Dispatches",
+              onClick: () => {
+                setViewingTrip(null);
+                if (dossierOriginVehicle) {
+                  setViewingVehicle(dossierOriginVehicle);
+                  if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+                  setDossierOriginVehicle(null);
+                }
+              }
+            },
             { label: `Trip #${viewingTrip.id.slice(0, 8)}` }
           ]}
-          onBack={() => setViewingTrip(null)}
-          backLabel="Back to Dispatches"
+          onBack={() => {
+            setViewingTrip(null);
+            if (dossierOriginVehicle) {
+              setViewingVehicle(dossierOriginVehicle);
+              if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+              setDossierOriginVehicle(null);
+            }
+          }}
+          backLabel={dossierOriginVehicle ? "Back to Dossier" : "Back to Dispatches"}
           headerActions={
             <div className="flex items-center gap-1.5">
               {canDispatchTrips && viewingTrip.status === "PLANNED" && (
@@ -15943,11 +16217,28 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           iconBg="bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/25"
           description="Spare part master parameters, brand, SKU code, stock balance, warranty timeline & vehicle fitment."
           breadcrumbs={[
-            { label: "Parts & Accessories", onClick: () => setViewingPart(null) },
+            {
+              label: dossierOriginVehicle ? "Vehicle Dossier" : "Parts & Accessories",
+              onClick: () => {
+                setViewingPart(null);
+                if (dossierOriginVehicle) {
+                  setViewingVehicle(dossierOriginVehicle);
+                  if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+                  setDossierOriginVehicle(null);
+                }
+              }
+            },
             { label: `Part Dossier (${viewingPart.name})` }
           ]}
-          onBack={() => setViewingPart(null)}
-          backLabel="Back to Parts"
+          onBack={() => {
+            setViewingPart(null);
+            if (dossierOriginVehicle) {
+              setViewingVehicle(dossierOriginVehicle);
+              if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+              setDossierOriginVehicle(null);
+            }
+          }}
+          backLabel={dossierOriginVehicle ? "Back to Dossier" : "Back to Parts"}
           headerActions={
             <AppButton
               type="button"
@@ -16260,11 +16551,28 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           iconBg="bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/25"
           description="Underwriter master profile, branch address, contact channels, portal links & active policy portfolio."
           breadcrumbs={[
-            { label: "Insurance Vendors", onClick: () => setViewingVendor(null) },
+            {
+              label: dossierOriginVehicle ? "Vehicle Dossier" : "Insurance Vendors",
+              onClick: () => {
+                setViewingVendor(null);
+                if (dossierOriginVehicle) {
+                  setViewingVehicle(dossierOriginVehicle);
+                  if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+                  setDossierOriginVehicle(null);
+                }
+              }
+            },
             { label: `Vendor Dossier (${viewingVendor.name})` }
           ]}
-          onBack={() => setViewingVendor(null)}
-          backLabel="Back to Vendors"
+          onBack={() => {
+            setViewingVendor(null);
+            if (dossierOriginVehicle) {
+              setViewingVehicle(dossierOriginVehicle);
+              if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+              setDossierOriginVehicle(null);
+            }
+          }}
+          backLabel={dossierOriginVehicle ? "Back to Dossier" : "Back to Vendors"}
         >
               {/* 24x7 Roadside Assistance Banner */}
               {viewingVendor.support_toll_free && (
