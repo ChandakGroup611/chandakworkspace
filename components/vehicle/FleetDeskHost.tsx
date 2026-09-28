@@ -12964,17 +12964,21 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         <label className="font-semibold text-xs text-foreground">
                           Service / Repair Scope Title *
                         </label>
-                        <span className="text-xs text-muted-foreground">Select a preset or enter details</span>
+                        <span className="text-xs text-muted-foreground">
+                          {newMaintServiceType.length > 0 ? `${newMaintServiceType.length} characters (unrestricted)` : "Select preset(s) or enter details"}
+                        </span>
                       </div>
-                      <AppInput
+                      <textarea
                         value={newMaintServiceType}
                         onChange={(e) => setNewMaintServiceType(e.target.value)}
                         required
-                        className="h-10 text-xs font-medium"
+                        rows={3}
+                        placeholder="e.g. 40,000 km Scheduled Service, Synthetic Engine Oil & Filter Change, Brake Pads Overhaul, AC Gas Refill & Wheel Alignment..."
+                        className="w-full min-h-[72px] rounded-lg border border-border bg-surface p-2.5 text-xs font-medium text-foreground focus:outline-none focus:border-theme-btn-primary resize-y"
                       />
 
                       {/* Quick Presets */}
-                      <div className="mt-2.5 flex flex-wrap gap-1.5 items-center">
+                      <div className="mt-2 flex flex-wrap gap-1.5 items-center">
                         <span className="text-xs uppercase font-bold text-muted-foreground mr-1">Quick Presets:</span>
                         {SERVICE_PRESETS.map((preset) => (
                           <AppButton
@@ -12982,7 +12986,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             type="button"
                             variant="outline"
                             size="sm"
-                            onClick={() => setNewMaintServiceType(preset)}
+                            onClick={() => setNewMaintServiceType(prev => {
+                              if (!prev || !prev.trim()) return preset;
+                              if (prev.includes(preset)) return prev;
+                              return `${prev.trim()}, ${preset}`;
+                            })}
                             className="h-7 px-2.5 text-xs bg-slate-100 dark:bg-slate-800/80 border-border text-muted-foreground hover:text-theme-btn-primary"
                           >
                             <span>+ {preset}</span>
@@ -13775,16 +13783,21 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         <label className="font-semibold text-xs text-foreground">
                           Service / Repair Scope Title *
                         </label>
+                        <span className="text-xs text-muted-foreground">
+                          {editMaintServiceType.length > 0 ? `${editMaintServiceType.length} characters (unrestricted)` : "Select preset(s) or enter details"}
+                        </span>
                       </div>
-                      <AppInput
+                      <textarea
                         value={editMaintServiceType}
                         onChange={(e) => setEditMaintServiceType(e.target.value)}
                         required
-                        className="h-10 text-xs font-medium"
+                        rows={3}
+                        placeholder="e.g. 40,000 km Scheduled Service, Synthetic Engine Oil & Filter Change, Brake Pads Overhaul, AC Gas Refill & Wheel Alignment..."
+                        className="w-full min-h-[72px] rounded-lg border border-border bg-surface p-2.5 text-xs font-medium text-foreground focus:outline-none focus:border-theme-btn-primary resize-y"
                       />
 
                       {/* Quick Presets */}
-                      <div className="mt-2.5 flex flex-wrap gap-1.5 items-center">
+                      <div className="mt-2 flex flex-wrap gap-1.5 items-center">
                         <span className="text-xs uppercase font-bold text-muted-foreground mr-1">Quick Presets:</span>
                         {SERVICE_PRESETS.map((preset) => (
                           <AppButton
@@ -13792,7 +13805,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             type="button"
                             variant="outline"
                             size="sm"
-                            onClick={() => setEditMaintServiceType(preset)}
+                            onClick={() => setEditMaintServiceType(prev => {
+                              if (!prev || !prev.trim()) return preset;
+                              if (prev.includes(preset)) return prev;
+                              return `${prev.trim()}, ${preset}`;
+                            })}
                             className="h-7 px-2.5 text-xs bg-slate-100 dark:bg-slate-800/80 border-border text-muted-foreground hover:text-theme-btn-primary"
                           >
                             <span>+ {preset}</span>
