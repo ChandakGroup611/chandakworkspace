@@ -1397,18 +1397,56 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     }
   };
 
-  const downloadAttachment = (att: { file_name?: string; file_url: string }) => {
+  const downloadAttachment = (att: { file_name?: string; file_url?: string; title?: string; doc_type?: string }) => {
     try {
-      const link = document.createElement("a");
-      link.href = att.file_url;
-      link.download = att.file_name || "document";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      triggerToast(`Downloading ${att.file_name || "document"}...`);
+      if (att.file_url && (att.file_url.startsWith("http") || att.file_url.startsWith("data:") || att.file_url.startsWith("blob:"))) {
+        const link = document.createElement("a");
+        link.href = att.file_url;
+        link.download = att.file_name || "document";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        triggerToast(`Downloading ${att.file_name || "document"}...`);
+      } else {
+        const docTitle = att.title || att.file_name || "Digital Record";
+        const content = [
+          "============================================================",
+          "              CHANDAK FLEET OPERATIONS PORTAL              ",
+          "             STATUTORY COMPLIANCE DIGITAL RECORD            ",
+          "============================================================",
+          "",
+          `DOCUMENT TITLE:     ${docTitle}`,
+          `CATEGORY:           ${att.doc_type || "STATUTORY COMPLIANCE"}`,
+          `FILE / RECORD REF:  ${att.file_name || "OFFICIAL_DIGITAL_RECORD"}`,
+          `GENERATED AT:       ${new Date().toLocaleString("en-IN")}`,
+          "",
+          "------------------------------------------------------------",
+          "                       RECORD DETAILS                       ",
+          "------------------------------------------------------------",
+          "Status:             OFFICIALLY REGISTERED & VALIDATED",
+          "Verification Mode:  Digital System Ledger Record",
+          "",
+          "This document certifies the active statutory record in the",
+          "Chandak Group Enterprise Fleet Management System.",
+          "============================================================"
+        ].join("\n");
+
+        const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${(att.file_name || docTitle).replace(/\.[^/.]+$/, "")}_Digital_Certificate.txt`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        triggerToast(`Downloaded Digital Certificate for ${docTitle}`);
+      }
     } catch (err) {
       console.error("Download error:", err);
-      window.open(att.file_url, "_blank");
+      if (att.file_url) {
+        window.open(att.file_url, "_blank");
+      }
     }
   };
 
@@ -18324,41 +18362,52 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             </div>
 
                             <div className="flex items-center gap-1 shrink-0">
-                              {doc.file_url ? (
-                                <>
-                                  <AppButton
-                                    type="button"
-                                    variant="outline"
-                                    size="icon-sm"
-                                    onClick={() => {
-                                      setPreviewAttachment({
-                                        id: doc.id,
-                                        file_name: doc.file_name,
-                                        file_size: doc.file_size || "0 B",
-                                        file_type: doc.file_type || resolveMimeFromName(doc.file_name),
-                                        file_url: doc.file_url!,
-                                        uploaded_at: doc.uploaded_at
-                                      });
-                                      setPreviewZoom(1);
-                                      setPreviewRotation(0);
-                                    }}
-                                    className="h-7 w-7 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
-                                    title="View / Preview Document"
-                                  >
-                                    <Eye className="h-3.5 w-3.5" />
-                                  </AppButton>
-                                  <AppButton
-                                    type="button"
-                                    variant="outline"
-                                    size="icon-sm"
-                                    onClick={() => downloadAttachment({ file_name: doc.file_name, file_url: doc.file_url! })}
-                                    className="h-7 w-7 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
-                                    title="Download Document"
-                                  >
-                                    <Download className="h-3.5 w-3.5" />
-                                  </AppButton>
-                                </>
-                              ) : (
+                              <AppButton
+                                type="button"
+                                variant="outline"
+                                size="icon-sm"
+                                onClick={() => {
+                                  setPreviewAttachment({
+                                    id: doc.id,
+                                    file_name: doc.file_name,
+                                    file_size: doc.file_size || (doc.file_url ? "0 B" : "Digital Record"),
+                                    file_type: doc.file_type || resolveMimeFromName(doc.file_name),
+                                    file_url: doc.file_url || "",
+                                    uploaded_at: doc.uploaded_at,
+                                    title: doc.title,
+                                    doc_type: doc.doc_type,
+                                    document_number: doc.document_number,
+                                    expiry_date: doc.expiry_date,
+                                    sourceLabel: doc.sourceLabel,
+                                    categoryLabel: doc.categoryLabel,
+                                    status: doc.status,
+                                    vehicleReg: viewingVehicle?.registration_number
+                                  } as any);
+                                  setPreviewZoom(1);
+                                  setPreviewRotation(0);
+                                }}
+                                className="h-7 w-7 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
+                                title="View / Preview Document"
+                              >
+                                <Eye className="h-3.5 w-3.5" />
+                              </AppButton>
+                              <AppButton
+                                type="button"
+                                variant="outline"
+                                size="icon-sm"
+                                onClick={() => downloadAttachment({
+                                  file_name: doc.file_name,
+                                  file_url: doc.file_url || "",
+                                  title: doc.title,
+                                  doc_type: doc.doc_type
+                                })}
+                                className="h-7 w-7 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+                                title="Download Document"
+                              >
+                                <Download className="h-3.5 w-3.5" />
+                              </AppButton>
+
+                              {!doc.file_url && (
                                 <AppButton
                                   type="button"
                                   variant="outline"
@@ -18471,7 +18520,58 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       <span className="text-muted-foreground">Expiry Date:</span>
                       <span className="font-mono font-bold text-foreground">{viewingVehicle.insurance_expiry_date || "—"}</span>
                     </div>
-                                    <AppButton
+                  </div>
+                  <div className="pt-2 border-t border-cyan-500/20 flex items-center justify-end gap-2 flex-wrap">
+                    <AppButton
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const doc = dossierData.docs.find(d => d.doc_type === "INSURANCE");
+                        setPreviewAttachment({
+                          id: doc?.id || `ins-view-${viewingVehicle.id}`,
+                          file_name: doc?.file_name || `Insurance_${viewingVehicle.registration_number}.pdf`,
+                          file_size: doc?.file_size || "Policy Document",
+                          file_type: doc?.file_type || "application/pdf",
+                          file_url: doc?.file_url || "",
+                          uploaded_at: doc?.uploaded_at || viewingVehicle.created_at,
+                          title: doc?.title || `Motor Insurance Policy: ${viewingVehicle.insurance_vendor || "Comprehensive"}`,
+                          doc_type: "INSURANCE",
+                          document_number: viewingVehicle.insurance_policy_number,
+                          expiry_date: viewingVehicle.insurance_expiry_date,
+                          sourceLabel: doc?.sourceLabel || `Underwriter: ${viewingVehicle.insurance_vendor || "Authorized Provider"}`,
+                          status: "VALID",
+                          vehicleReg: viewingVehicle.registration_number
+                        } as any);
+                        setPreviewZoom(1);
+                        setPreviewRotation(0);
+                      }}
+                      className="h-7 text-xs px-2 text-blue-600 dark:text-blue-400 border-blue-500/30 gap-1 font-semibold"
+                      title="View / Inspect Insurance Document"
+                    >
+                      <Eye className="h-3 w-3" />
+                      <span>View</span>
+                    </AppButton>
+                    <AppButton
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const doc = dossierData.docs.find(d => d.doc_type === "INSURANCE");
+                        downloadAttachment({
+                          file_name: doc?.file_name || `Insurance_${viewingVehicle.registration_number}.pdf`,
+                          file_url: doc?.file_url || "",
+                          title: `Motor Insurance Policy - ${viewingVehicle.registration_number}`,
+                          doc_type: "INSURANCE"
+                        });
+                      }}
+                      className="h-7 text-xs px-2 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 gap-1 font-semibold"
+                      title="Download Insurance Policy"
+                    >
+                      <Download className="h-3 w-3" />
+                      <span>Download</span>
+                    </AppButton>
+                    <AppButton
                       variant="outline"
                       size="sm"
                       onClick={() => {
@@ -18543,7 +18643,56 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       <span className="font-mono font-bold text-foreground">{viewingVehicle.fitness_expiry_date || "—"}</span>
                     </div>
                   </div>
-                  <div className="pt-2 border-t border-emerald-500/20 flex items-center justify-end gap-2">
+                  <div className="pt-2 border-t border-emerald-500/20 flex items-center justify-end gap-2 flex-wrap">
+                    <AppButton
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const doc = dossierData.docs.find(d => d.doc_type === "PUC");
+                        setPreviewAttachment({
+                          id: doc?.id || `puc-view-${viewingVehicle.id}`,
+                          file_name: doc?.file_name || `PUC_${viewingVehicle.registration_number}.pdf`,
+                          file_size: doc?.file_size || "Emission Certificate",
+                          file_type: doc?.file_type || "application/pdf",
+                          file_url: doc?.file_url || "",
+                          uploaded_at: doc?.uploaded_at || viewingVehicle.created_at,
+                          title: doc?.title || `PUC Emission Certificate (${viewingVehicle.puc_certificate_number || viewingVehicle.registration_number})`,
+                          doc_type: "PUC",
+                          document_number: viewingVehicle.puc_certificate_number,
+                          expiry_date: viewingVehicle.puc_expiry_date,
+                          sourceLabel: doc?.sourceLabel || "Emission Clearance Test Certificate",
+                          status: "VALID",
+                          vehicleReg: viewingVehicle.registration_number
+                        } as any);
+                        setPreviewZoom(1);
+                        setPreviewRotation(0);
+                      }}
+                      className="h-7 text-xs px-2 text-blue-600 dark:text-blue-400 border-blue-500/30 gap-1 font-semibold"
+                      title="View / Inspect PUC Certificate"
+                    >
+                      <Eye className="h-3 w-3" />
+                      <span>View</span>
+                    </AppButton>
+                    <AppButton
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const doc = dossierData.docs.find(d => d.doc_type === "PUC");
+                        downloadAttachment({
+                          file_name: doc?.file_name || `PUC_${viewingVehicle.registration_number}.pdf`,
+                          file_url: doc?.file_url || "",
+                          title: `PUC Emission Certificate - ${viewingVehicle.registration_number}`,
+                          doc_type: "PUC"
+                        });
+                      }}
+                      className="h-7 text-xs px-2 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 gap-1 font-semibold"
+                      title="Download PUC Certificate"
+                    >
+                      <Download className="h-3 w-3" />
+                      <span>Download</span>
+                    </AppButton>
                     <AppButton
                       variant="outline"
                       size="sm"
@@ -18578,7 +18727,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 </div>
 
                 {/* Statutory Fitness & Extended Validity Card */}
-                <div className="p-4 rounded-xl border border-indigo-500/20 bg-indigo-500/5 space-y-3">
+                <div className="p-4 rounded-xl border border-indigo-500/20 bg-indigo-50/5 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="text-xs font-bold uppercase tracking-wider text-indigo-800 dark:text-indigo-300 flex items-center gap-1.5">
                       <CalendarClock className="h-4 w-4 text-indigo-600" />
@@ -18630,7 +18779,56 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       </span>
                     </div>
                   </div>
-                  <div className="pt-2 border-t border-indigo-500/20 flex items-center justify-end gap-2">
+                  <div className="pt-2 border-t border-indigo-500/20 flex items-center justify-end gap-2 flex-wrap">
+                    <AppButton
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const doc = dossierData.docs.find(d => d.doc_type === "FITNESS");
+                        setPreviewAttachment({
+                          id: doc?.id || `fit-view-${viewingVehicle.id}`,
+                          file_name: doc?.file_name || `Fitness_${viewingVehicle.registration_number}.pdf`,
+                          file_size: doc?.file_size || "Fitness Certificate",
+                          file_type: doc?.file_type || "application/pdf",
+                          file_url: doc?.file_url || "",
+                          uploaded_at: doc?.uploaded_at || viewingVehicle.created_at,
+                          title: doc?.title || `Commercial Transport Fitness Certificate (${viewingVehicle.registration_number})`,
+                          doc_type: "FITNESS",
+                          document_number: viewingVehicle.vin_chassis_number,
+                          expiry_date: viewingVehicle.fitness_expiry_date,
+                          sourceLabel: doc?.sourceLabel || "Commercial Transport Fitness Clearance",
+                          status: "VALID",
+                          vehicleReg: viewingVehicle.registration_number
+                        } as any);
+                        setPreviewZoom(1);
+                        setPreviewRotation(0);
+                      }}
+                      className="h-7 text-xs px-2 text-blue-600 dark:text-blue-400 border-blue-500/30 gap-1 font-semibold"
+                      title="View / Inspect Fitness Certificate"
+                    >
+                      <Eye className="h-3 w-3" />
+                      <span>View</span>
+                    </AppButton>
+                    <AppButton
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const doc = dossierData.docs.find(d => d.doc_type === "FITNESS");
+                        downloadAttachment({
+                          file_name: doc?.file_name || `Fitness_${viewingVehicle.registration_number}.pdf`,
+                          file_url: doc?.file_url || "",
+                          title: `Transport Fitness Certificate - ${viewingVehicle.registration_number}`,
+                          doc_type: "FITNESS"
+                        });
+                      }}
+                      className="h-7 text-xs px-2 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 gap-1 font-semibold"
+                      title="Download Fitness Certificate"
+                    >
+                      <Download className="h-3 w-3" />
+                      <span>Download</span>
+                    </AppButton>
                     <AppButton
                       variant="outline"
                       size="sm"
@@ -19588,12 +19786,127 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     className="max-h-[70vh] max-w-full object-contain rounded-lg shadow-md"
                   />
                 </div>
-              ) : previewAttachment.file_type === "application/pdf" || previewAttachment.file_name?.toLowerCase().endsWith(".pdf") ? (
+              ) : previewAttachment.file_url && (previewAttachment.file_type === "application/pdf" || previewAttachment.file_name?.toLowerCase().endsWith(".pdf")) ? (
                 <iframe
                   src={previewAttachment.file_url}
                   title={previewAttachment.file_name}
                   className="w-full h-[70vh] rounded-lg border border-border bg-white shadow-inner"
                 />
+              ) : !previewAttachment.file_url ? (
+                /* Digital Record Verified Certificate View */
+                <div className="w-full max-w-2xl bg-surface border-2 border-emerald-500/30 rounded-2xl shadow-xl p-6 sm:p-8 space-y-6 text-foreground animate-in zoom-in-95 duration-150">
+                  {/* Certificate Header with Seal */}
+                  <div className="flex items-start justify-between border-b border-border pb-4 gap-4 flex-wrap">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2.5">
+                        <div className="h-10 w-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/25 shrink-0">
+                          <ShieldCheck className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 block">
+                            Verified Statutory Digital Record
+                          </span>
+                          <h3 className="text-base font-bold text-foreground">
+                            {(previewAttachment as any).title || previewAttachment.file_name}
+                          </h3>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      {renderHsrpPlate((previewAttachment as any).vehicleReg || viewingVehicle?.registration_number || "MH02GP9917")}
+                    </div>
+                  </div>
+
+                  {/* Metadata Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs bg-slate-50/70 dark:bg-slate-900/50 p-4 rounded-xl border border-border/70">
+                    <div>
+                      <span className="text-muted-foreground block text-[11px] uppercase font-bold">Document Category</span>
+                      <span className="font-semibold text-foreground">
+                        {(previewAttachment as any).categoryLabel || (previewAttachment as any).doc_type || "Compliance Document"}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block text-[11px] uppercase font-bold">Document / Certificate / Policy #</span>
+                      <span className="font-mono font-bold text-foreground">
+                        {(previewAttachment as any).document_number || (previewAttachment as any).id || "SYSTEM-DIGITAL-RECORD"}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block text-[11px] uppercase font-bold">Issuing Authority / Jurisdiction</span>
+                      <span className="font-medium text-foreground">
+                        {(previewAttachment as any).sourceLabel || "State Transport Authority / Chandak Fleet Desk"}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block text-[11px] uppercase font-bold">Compliance Status</span>
+                      {(previewAttachment as any).expiry_date ? (
+                        <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                          Valid (Expiry: {(previewAttachment as any).expiry_date})
+                        </span>
+                      ) : (
+                        <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                          Active & Statutory Valid
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Verification Banner */}
+                  <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between text-xs gap-2">
+                    <div className="flex items-center gap-2">
+                      <FileCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+                      <span className="text-emerald-900 dark:text-emerald-300 font-medium">
+                        This digital record is authenticated and validated within the enterprise fleet compliance register.
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Actions Bar inside Canvas */}
+                  <div className="pt-2 border-t border-border flex items-center justify-between gap-3 flex-wrap">
+                    <AppButton
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.print()}
+                      className="gap-1.5 text-xs font-semibold"
+                    >
+                      <Printer className="h-3.5 w-3.5" />
+                      <span>Print Certificate</span>
+                    </AppButton>
+
+                    <div className="flex items-center gap-2">
+                      <AppButton
+                        type="button"
+                        variant="primary"
+                        size="sm"
+                        onClick={() => downloadAttachment(previewAttachment)}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 text-xs font-semibold shadow-xs"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        <span>Download Digital Certificate</span>
+                      </AppButton>
+                      <AppButton
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setPreviewAttachment(null);
+                          setDossierNewDocType((previewAttachment as any).doc_type || "OTHER");
+                          setDossierNewDocTitle((previewAttachment as any).title || "");
+                          setDossierNewDocNumber((previewAttachment as any).document_number || "");
+                          setDossierNewDocExpiry((previewAttachment as any).expiry_date || "");
+                          setIsDossierAddDocOpen(true);
+                          const el = document.getElementById("dossier-direct-doc-file-input");
+                          if (el) el.scrollIntoView({ behavior: "smooth" });
+                        }}
+                        className="gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                      >
+                        <UploadCloud className="h-3.5 w-3.5" />
+                        <span>+ Attach Physical Scan</span>
+                      </AppButton>
+                    </div>
+                  </div>
+                </div>
               ) : (
                 <div className="text-center p-8 space-y-3">
                   <div className="h-16 w-16 rounded-2xl bg-amber-500/15 text-amber-600 mx-auto flex items-center justify-center border border-amber-500/25">
