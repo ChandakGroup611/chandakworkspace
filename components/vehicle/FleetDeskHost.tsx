@@ -15162,23 +15162,21 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         </div>
 
                         <div className="flex items-center gap-1 shrink-0">
-                          {att.file_type?.startsWith("image/") && (
-                            <AppButton
-                              type="button"
-                              variant="ghost"
-                              size="icon-sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setPreviewAttachment(att);
-                                setPreviewZoom(1);
-                                setPreviewRotation(0);
-                              }}
-                              className="h-7 w-7 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
-                              title="Preview Image"
-                            >
-                              <Eye className="h-3.5 w-3.5" />
-                            </AppButton>
-                          )}
+                          <AppButton
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPreviewAttachment(att);
+                              setPreviewZoom(1);
+                              setPreviewRotation(0);
+                            }}
+                            className="h-7 w-7 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
+                            title="View / Preview Document"
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                          </AppButton>
                           <AppButton
                             type="button"
                             variant="ghost"
@@ -19242,22 +19240,20 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                               </div>
 
                               <div className="flex items-center gap-1.5 shrink-0">
-                                {att.file_type?.startsWith("image/") && (
-                                  <AppButton
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon-sm"
-                                    onClick={() => {
-                                      setPreviewAttachment(att);
-                                      setPreviewZoom(1);
-                                      setPreviewRotation(0);
-                                    }}
-                                    className="h-7 w-7 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
-                                    title="Preview Image"
-                                  >
-                                    <Eye className="h-3.5 w-3.5" />
-                                  </AppButton>
-                                )}
+                                <AppButton
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  onClick={() => {
+                                    setPreviewAttachment(att);
+                                    setPreviewZoom(1);
+                                    setPreviewRotation(0);
+                                  }}
+                                  className="h-7 w-7 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
+                                  title="View / Preview Document"
+                                >
+                                  <Eye className="h-3.5 w-3.5" />
+                                </AppButton>
                                 <AppButton
                                   type="button"
                                   variant="ghost"

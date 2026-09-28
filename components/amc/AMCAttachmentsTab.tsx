@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { AppButton } from "@/components/ui/AppButton";
 import { toast } from 'react-toastify';
-import { Paperclip, Trash2, Download, Plus, Loader2, FileText, CheckCircle2 } from "lucide-react";
+import { Paperclip, Trash2, Download, Plus, Loader2, FileText, CheckCircle2, Eye, X } from "lucide-react";
 import { AppTable, AppTableHeader, AppTableBody, AppTableRow, AppTableHead, AppTableCell } from "@/components/ui/AppTable";
 
 interface Attachment {
@@ -165,6 +165,70 @@ export function AMCAttachmentsTab({ amcId, isLightMode }: { amcId: string, isLig
                 className="w-full text-sm text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-theme-btn-primary/10 file:text-theme-btn-primary hover:file:bg-theme-btn-primary/20"
               />
             </div>
+
+            {fileToUpload && (
+              <div className="flex items-center justify-between p-2.5 rounded-xl border border-border bg-surface text-xs">
+                <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
+                  <Paperclip className="h-4 w-4 text-theme-icon shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold truncate text-foreground" title={fileToUpload.name}>
+                      {fileToUpload.name}
+                    </p>
+                    <p className="text-[10px] text-muted">
+                      {(fileToUpload.size / 1024).toFixed(1)} KB • Staged for upload
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <AppButton
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    onClick={() => {
+                      const url = URL.createObjectURL(fileToUpload);
+                      window.open(url, '_blank');
+                    }}
+                    className="p-1 h-7 w-7 text-accent hover:bg-theme-btn-primary/10 rounded flex items-center justify-center"
+                    title="View Document"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                  </AppButton>
+                  <AppButton
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    onClick={() => {
+                      const url = URL.createObjectURL(fileToUpload);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = fileToUpload.name;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      URL.revokeObjectURL(url);
+                    }}
+                    className="p-1 h-7 w-7 text-theme-icon hover:bg-theme-btn-primary/10 rounded flex items-center justify-center"
+                    title="Download Document"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                  </AppButton>
+                  <AppButton
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    onClick={() => {
+                      setFileToUpload(null);
+                      const input = document.getElementById('file-upload') as HTMLInputElement;
+                      if (input) input.value = '';
+                    }}
+                    className="p-1 h-7 w-7 text-muted hover:text-danger hover:bg-danger/10 rounded flex items-center justify-center"
+                    title="Remove File"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </AppButton>
+                </div>
+              </div>
+            )}
             
             <AppButton 
               onClick={handleUpload} 
@@ -229,7 +293,25 @@ export function AMCAttachmentsTab({ amcId, isLightMode }: { amcId: string, isLig
                           variant="ghost" 
                           size="sm" 
                           onClick={() => window.open(file.file_url, '_blank')}
-                          title="Download/View"
+                          className="text-accent hover:text-accent hover:bg-theme-btn-primary/10"
+                          title="View Document"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </AppButton>
+                        <AppButton 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => {
+                            const a = document.createElement('a');
+                            a.href = file.file_url;
+                            a.download = file.file_name;
+                            a.target = '_blank';
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                          }}
+                          className="text-theme-icon hover:text-theme-icon hover:bg-theme-btn-primary/10"
+                          title="Download Document"
                         >
                           <Download className="h-4 w-4" />
                         </AppButton>
@@ -238,7 +320,7 @@ export function AMCAttachmentsTab({ amcId, isLightMode }: { amcId: string, isLig
                           size="sm" 
                           onClick={() => handleDelete(file.id, file.file_url)}
                           className="text-danger hover:text-danger hover:bg-danger/10"
-                          title="Delete"
+                          title="Delete Document"
                         >
                           <Trash2 className="h-4 w-4" />
                         </AppButton>

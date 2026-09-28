@@ -974,3 +974,15 @@ All user-facing messages, errors, warnings, and popups MUST be written in plain,
 * [ ] Never expose raw system errors, stack traces, or "machine words" to the end user.
 * [ ] Explain *what* went wrong and *how* the user can fix it, rather than simply stating that an operation failed.
 * [ ] Use a professional, helpful, and clear tone.
+
+---
+
+# 31. MANDATORY DOCUMENT VIEW & DOWNLOAD CAPABILITY (ZERO BLIND UPLOADS)
+
+Whenever any file, document, log, screenshot, or attachment capability is implemented or provided across the platform (intake forms, creation wizards, edit/amendment dialogs, collaboration chats, table listings, and detail views):
+
+* [ ] **Mandatory Dual Actions**: Every document must have both an explicit **View** (in-browser preview/modal/tab) and **Download** (direct file retrieval) action.
+* [ ] **Pre-Submission & Post-Submission Verification**: Users must be able to cross-check, preview, and download selected documents *before* submitting (staged local files) as well as *after* persistence. Blind uploads (where only a filename or nothing is shown) are strictly prohibited.
+* [ ] **Standardized Presentation**: Show appropriate file type icons (PDF, Sheet, Image, Doc, Archive), human-readable size, and distinct View & Download buttons/links.
+* [ ] **Consistent File Handling**: Use secure proxy/signed URL streaming endpoints (e.g. `/api/proxy-attachment/[id]`) to prevent expired URLs or cross-origin access blocks.
+

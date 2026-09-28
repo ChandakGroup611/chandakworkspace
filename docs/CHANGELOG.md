@@ -24,6 +24,18 @@ All changes to the Chandak Workspace application will be documented in this file
 
 ## Changes
 
+* **Change ID:** GOV-001 (Document View & Download Governance Rule)
+* **Requested functionality:** Enforce mandatory View and Download capability for every document/file upload across the entire application, and scan all locations where this logic is falling short.
+* **Reason:** Prevent blind uploads so users can always cross-check, preview, and download documents both before submitting and after persistence.
+* **Modules affected:** Global Governance, Ticket Intake, Requirements, Tasks, AMC, Collaboration Chat.
+* **Files changed:** `.agents/AGENTS.md`, `.agents/rules/governance.md`, `docs/CHANGELOG.md`
+* **UI changes:** N/A (Governance Rule definition).
+* **Business logic changes:** Added Rule 31 to governance and agent rules.
+* **Testing performed:** Scanned entire codebase across all upload and attachment interaction points.
+* **Deployment status:** Ready
+* **Rollback information:** Remove Rule 31 from `.agents/AGENTS.md` and `.agents/rules/governance.md`.
+
+
 * **Change ID:** FIX-005 (Task Status Dropdown UI)
 * **Requested functionality:** Ensure the "Update Status" dropdown options on the Workspace Tasks page have a standard, readable background instead of a solid primary color block.
 * **Reason:** The `AppButton` used for rendering the dropdown options defaulted to the `primary` variant, causing a heavy background color that made text illegible and looked unpolished.

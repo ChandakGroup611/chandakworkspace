@@ -41,5 +41,13 @@ NEVER deploy a change without first checking its global impact.
 - Keep automated security mechanisms active (Dependabot daily monitoring, daily scheduled CI security scans, and pre-deployment safety gates in `scripts/deploy.js`).
 - Never allow high or critical vulnerabilities into production code.
 
+## Mandatory Document View & Download Capability (Zero Blind Uploads)
+
+Whenever any file/document upload capability is implemented or available in the application (forms, wizards, modal dialogues, collaboration chats, detail views, and listings):
+- **Universal View & Download Requirement**: Every document/file uploaded or staged for upload MUST provide both a **View** (in-browser preview/modal/tab) and a **Download** (direct retrieval) option.
+- **Verification Before & After Submission**: Users must be able to cross-check, review, and verify documents both before submitting (staged local files) and after submission (persisted records). Never provide an upload mechanism where a user is left with only a filename or unable to cross-check/download the document.
+- **Standardized Presentation**: Every attachment representation must display appropriate file type indicators (PDF, Image, Spreadsheet, Document, Archive), human-readable file size, and dedicated, unambiguous "View" and "Download" triggers.
+
+
 
 

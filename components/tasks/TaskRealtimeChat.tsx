@@ -547,13 +547,58 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
         )}
 
         {selectedFiles.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-2 p-2 bg-surface dark:bg-surface/5 rounded-lg">
+          <div className="flex flex-wrap gap-2 mb-2 p-2 bg-surface dark:bg-surface/5 rounded-xl border border-border/50">
             {selectedFiles.map((file, idx) => (
-              <div key={idx} className="flex items-center gap-1 theme-card-structural dark:bg-surface/20 border-border dark:border-border px-2 py-1 rounded text-xs">
-                <span className="truncate max-w-[120px]">{file.name}</span>
-                <AppButton variant="secondary" type="button" onClick={() => removeFile(idx)} className="text-muted hover:text-danger ml-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                </AppButton>
+              <div key={idx} className="flex items-center gap-2 theme-card-structural border border-border px-2.5 py-1.5 rounded-lg text-xs">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <Paperclip className="h-3.5 w-3.5 text-theme-icon shrink-0" />
+                  <span className="truncate max-w-[140px] font-medium text-foreground" title={file.name}>{file.name}</span>
+                  <span className="text-[10px] text-muted font-mono">({(file.size / 1024).toFixed(0)} KB)</span>
+                </div>
+                <div className="flex items-center gap-1 shrink-0 ml-1 border-l border-border pl-1.5">
+                  <AppButton
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    onClick={() => {
+                      const url = URL.createObjectURL(file);
+                      window.open(url, '_blank');
+                    }}
+                    className="p-1 h-6 w-6 text-accent hover:bg-theme-btn-primary/10 rounded flex items-center justify-center"
+                    title="View Document"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                  </AppButton>
+                  <AppButton
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    onClick={() => {
+                      const url = URL.createObjectURL(file);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = file.name;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      URL.revokeObjectURL(url);
+                    }}
+                    className="p-1 h-6 w-6 text-theme-icon hover:bg-theme-btn-primary/10 rounded flex items-center justify-center"
+                    title="Download Document"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                  </AppButton>
+                  <AppButton
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    onClick={() => removeFile(idx)}
+                    className="p-1 h-6 w-6 text-muted hover:text-danger hover:bg-danger/10 rounded flex items-center justify-center"
+                    title="Remove File"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </AppButton>
+                </div>
               </div>
             ))}
           </div>

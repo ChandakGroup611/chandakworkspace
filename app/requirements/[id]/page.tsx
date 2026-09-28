@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
 import { AppBadge } from "@/components/ui/AppBadge";
-import { Users, Plus, RefreshCw, ArrowLeft, ShieldAlert, Trash2, Paperclip, Eye, Download, CheckCircle, PauseCircle, XCircle, FilePlus, Save, Edit2, AlertTriangle, Briefcase, Server, Calendar, Shield, Clock, FileText, Target, Hourglass, ChevronDown, ChevronRight } from "lucide-react";
+import { Users, Plus, RefreshCw, ArrowLeft, ShieldAlert, Trash2, Paperclip, Eye, Download, CheckCircle, PauseCircle, XCircle, FilePlus, Save, Edit2, AlertTriangle, Briefcase, Server, Calendar, Shield, Clock, FileText, Target, Hourglass, ChevronDown, ChevronRight, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 
@@ -800,16 +800,77 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
             </div>
             <div>
               <label className="block theme-data-value text-subtle dark:text-muted mb-1.5 uppercase tracking-wider">Attachment (Optional)</label>
-              <input 
-                type="file" 
-                className="w-full text-sm text-muted file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-theme-btn-primary file:text-white hover:file:bg-theme-btn-primary-secondary transition-all"
-                onChange={(e) => {
-                  if (e.target.files && e.target.files.length > 0) {
-                    setAmendmentFile(e.target.files[0]);
-                  }
-                }}
-              />
-              {amendmentFile && <p className="text-xs text-muted mt-1">Selected: {amendmentFile.name}</p>}
+              {!amendmentFile ? (
+                <input 
+                  type="file" 
+                  className="w-full text-sm text-muted file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-theme-btn-primary file:text-white hover:file:bg-theme-btn-primary-secondary transition-all"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                      setAmendmentFile(e.target.files[0]);
+                    }
+                  }}
+                />
+              ) : (
+                <div className="flex items-center justify-between p-3 rounded-xl border border-border bg-surface dark:bg-slate-900/50">
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
+                    <Paperclip className="h-4 w-4 text-theme-icon shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold truncate text-foreground" title={amendmentFile.name}>
+                        {amendmentFile.name}
+                      </p>
+                      <p className="text-[10px] text-muted">
+                        {(amendmentFile.size / 1024).toFixed(1)} KB • Staged for amendment
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <AppButton
+                      variant="ghost"
+                      size="sm"
+                      type="button"
+                      onClick={() => {
+                        const url = URL.createObjectURL(amendmentFile);
+                        window.open(url, '_blank');
+                      }}
+                      className="px-2 py-1 text-xs text-accent hover:bg-theme-btn-primary/10 rounded flex items-center gap-1 font-semibold"
+                      title="View Document"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                      <span>View</span>
+                    </AppButton>
+                    <AppButton
+                      variant="ghost"
+                      size="sm"
+                      type="button"
+                      onClick={() => {
+                        const url = URL.createObjectURL(amendmentFile);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = amendmentFile.name;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                      }}
+                      className="px-2 py-1 text-xs text-theme-icon hover:bg-theme-btn-primary/10 rounded flex items-center gap-1 font-semibold"
+                      title="Download Document"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                      <span>Download</span>
+                    </AppButton>
+                    <AppButton
+                      variant="ghost"
+                      size="sm"
+                      type="button"
+                      onClick={() => setAmendmentFile(null)}
+                      className="p-1 h-7 w-7 text-muted hover:text-danger hover:bg-danger/10 rounded flex items-center justify-center"
+                      title="Remove File"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </AppButton>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="flex items-center space-x-2">
               <input 

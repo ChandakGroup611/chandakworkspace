@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
-import { Monitor, Clock, Send, Paperclip, X, Loader2 } from "lucide-react";
+import { Monitor, Clock, Send, Paperclip, X, Loader2, Eye, Download } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { fetchMastersByScope, fetchDependentMasters } from "@/lib/actions/masters";
 import ChandakLoader from "@/components/ui/ChandakLoader";
@@ -364,33 +364,92 @@ export function TicketFormERP({ scope, onCancel, onDiscard, onSubmit }: TicketFo
               <div className={`relative group border-2 border-dashed rounded-2xl p-4 transition-all ${
                 "border-border hover:border-theme-btn-primary/30 bg-elevated/50"
               } ${isReqCategory && !formData.attachment ? 'border-red-500/50 bg-danger/5' : ''}`}>
-                <input 
-                  type="file" 
-                  className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                  onChange={(e) => setFormData({ ...formData, attachment: e.target.files?.[0] || null })}
-                />
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg bg-surface shadow-sm`}>
-                      <Paperclip className={`h-4 w-4 text-theme-icon`} />
+                {!formData.attachment ? (
+                  <>
+                    <input 
+                      type="file" 
+                      className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                      onChange={(e) => setFormData({ ...formData, attachment: e.target.files?.[0] || null })}
+                    />
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg bg-surface shadow-sm`}>
+                        <Paperclip className={`h-4 w-4 text-theme-icon`} />
+                      </div>
+                      <div>
+                        <p className={`text-xs font-medium ${"text-foreground"}`}>
+                          Attach Bug Evidence or Logs
+                        </p>
+                        <p className="text-xs text-muted uppercase tracking-tight">Max 10MB • PDF, JPG, PNG, LOG</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className={`text-xs font-medium ${"text-foreground"}`}>
-                        {formData.attachment ? formData.attachment.name : "Attach Bug Evidence or Logs"}
-                      </p>
-                      <p className="text-xs text-muted uppercase tracking-tight">Max 10MB • PDF, JPG, PNG, LOG</p>
+                  </>
+                ) : (
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className={`p-2 rounded-lg bg-surface shadow-sm shrink-0`}>
+                        <Paperclip className={`h-4 w-4 text-theme-icon`} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-semibold truncate text-foreground" title={formData.attachment.name}>
+                          {formData.attachment.name}
+                        </p>
+                        <p className="text-xs text-muted">
+                          {(formData.attachment.size / 1024).toFixed(1)} KB • Ready to upload
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0 z-20">
+                      <AppButton 
+                        variant="secondary" 
+                        size="sm"
+                        type="button"
+                        onClick={() => {
+                          if (formData.attachment) {
+                            const url = URL.createObjectURL(formData.attachment);
+                            window.open(url, '_blank');
+                          }
+                        }}
+                        className="px-2.5 py-1 text-xs text-accent hover:bg-theme-btn-primary/10 flex items-center gap-1 font-semibold"
+                        title="View Document"
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                        <span>View</span>
+                      </AppButton>
+                      <AppButton 
+                        variant="secondary" 
+                        size="sm"
+                        type="button"
+                        onClick={() => {
+                          if (formData.attachment) {
+                            const url = URL.createObjectURL(formData.attachment);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = formData.attachment.name;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            URL.revokeObjectURL(url);
+                          }
+                        }}
+                        className="px-2.5 py-1 text-xs text-theme-icon hover:bg-theme-btn-primary/10 flex items-center gap-1 font-semibold"
+                        title="Download Document"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        <span>Download</span>
+                      </AppButton>
+                      <AppButton 
+                        variant="secondary" 
+                        size="sm"
+                        type="button"
+                        onClick={() => setFormData({ ...formData, attachment: null })}
+                        className="p-1 rounded-md hover:bg-danger/10 text-danger transition-colors"
+                        title="Remove file"
+                      >
+                        <X className="h-4 w-4" />
+                      </AppButton>
                     </div>
                   </div>
-                  {formData.attachment && (
-                    <AppButton variant="secondary" 
-                      type="button"
-                      onClick={() => setFormData({ ...formData, attachment: null })}
-                      className="p-1 rounded-md hover:bg-danger/10 text-danger transition-colors relative z-20"
-                    >
-                      <X className="h-4 w-4" />
-                    </AppButton>
-                  )}
-                </div>
+                )}
               </div>
             </div>
 
