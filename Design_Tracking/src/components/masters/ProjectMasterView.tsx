@@ -59,16 +59,20 @@ const PROJECT_STATUS_OPTIONS = [
 
 export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigateToSubProjects }) => {
   const [mounted, setMounted] = useState(false);
-  const store = DesignMasterStore.getState();
+  const [store, setStore] = useState(() => DesignMasterStore.getState());
   // Filter ONLY main / parent projects (no subprojects mixed in)
   const projects = (store.projects || []).filter(p => !p.isSubProject);
   const consultants = store.consultants || [];
-  const categories = DesignMasterStore.getCategories();
+  const categories = useMemo(() => DesignMasterStore.getCategories(), [store.disciplines]);
+  const allTowers = store.towers || [];
 
   useEffect(() => {
     setMounted(true);
+    const unsubscribe = DesignMasterStore.subscribe(() => {
+      setStore({ ...DesignMasterStore.getState() });
+    });
+    return () => unsubscribe();
   }, []);
-  const allTowers = store.towers || [];
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatusFilter, setSelectedStatusFilter] = useState("ALL");

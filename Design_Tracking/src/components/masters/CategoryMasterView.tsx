@@ -47,13 +47,17 @@ const PRESET_ICONS = ["🏛️", "🏗️", "⚡", "🧱", "🏢", "🌳", "🛋
 
 export const CategoryMasterView: React.FC<CategoryMasterViewProps> = () => {
   const [mounted, setMounted] = useState(false);
-  const store = DesignMasterStore.getState();
+  const [store, setStore] = useState(() => DesignMasterStore.getState());
   const categories = store.disciplines || [];
   const consultants = store.consultants || [];
   const packages = store.packages || [];
 
   useEffect(() => {
     setMounted(true);
+    const unsubscribe = DesignMasterStore.subscribe(() => {
+      setStore({ ...DesignMasterStore.getState() });
+    });
+    return () => unsubscribe();
   }, []);
 
   const [searchQuery, setSearchQuery] = useState("");

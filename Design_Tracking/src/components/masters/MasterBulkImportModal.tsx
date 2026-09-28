@@ -20,8 +20,10 @@ import {
   Check,
   AlertTriangle,
   Info,
-  ShieldCheck
+  ShieldCheck,
+  Sparkles
 } from "lucide-react";
+import { DesignMasterStore } from "../../services/designMasterStore";
 import { 
   MasterImportExportService, 
   MasterImportType, 
@@ -239,25 +241,40 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
                 </p>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-2.5 pt-2">
-                <button
-                  type="button"
-                  onClick={() => handleDownloadTemplate("xlsx")}
-                  className="flex-1 px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold inline-flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer"
-                >
-                  <FileSpreadsheet className="h-4 w-4" />
-                  <span>Download Excel (.xlsx)</span>
-                </button>
-                {selectedMaster !== "ALL" && (
+              <div className="flex flex-col gap-2 pt-2">
+                <div className="flex flex-col sm:flex-row gap-2.5">
                   <button
                     type="button"
-                    onClick={() => handleDownloadTemplate("csv")}
-                    className="px-3.5 py-2.5 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-foreground inline-flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                    onClick={() => handleDownloadTemplate("xlsx")}
+                    className="flex-1 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold inline-flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer"
                   >
-                    <FileText className="h-4 w-4 text-blue-500" />
-                    <span>CSV</span>
+                    <FileSpreadsheet className="h-4 w-4" />
+                    <span>Download Excel (.xlsx)</span>
                   </button>
-                )}
+                  {selectedMaster !== "ALL" && (
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadTemplate("csv")}
+                      className="px-3.5 py-2 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-foreground inline-flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                    >
+                      <FileText className="h-4 w-4 text-blue-500" />
+                      <span>CSV</span>
+                    </button>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const outcome = DesignMasterStore.loadEyTenderMasterData();
+                    toast.success(`Import complete! Loaded ${outcome.projects} Projects, ${outcome.towers} Towers, ${outcome.packages} Sub-Packages, ${outcome.consultants} Consultants, ${outcome.matrixEntries} Matrix Entries.`);
+                    if (onImportComplete) onImportComplete();
+                    handleClose();
+                  }}
+                  className="w-full px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold inline-flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span>1-Click Load Chandak Tender Tracker (R2)</span>
+                </button>
               </div>
             </div>
 

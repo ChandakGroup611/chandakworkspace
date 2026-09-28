@@ -175,8 +175,8 @@ export const TenderDesignMatrix: React.FC = () => {
       // 4. Status Filter (Multi-select)
       if (selectedStatuses.length > 0) {
         const hasMatchingStatus = visibleColumns.some(col => {
-          const entry = storeState.packageStatuses[`${col.projectId}__${col.towerId}__${pkg.id}`];
-          const val = (entry ? (entry.status || entry.targetDate) : "NA").toLowerCase();
+          const entry = (storeState.packageStatuses || {})[`${col.projectId}__${col.towerId}__${pkg.id}`];
+          const val = (entry ? (entry.status || entry.targetDate || "NA") : "NA").toLowerCase();
           return selectedStatuses.some(st => {
             if (st === "RECEIVED" && val.includes("received")) return true;
             if (st === "PENDING" && (val.includes("pending") || val.includes("not onboard"))) return true;
@@ -202,8 +202,8 @@ export const TenderDesignMatrix: React.FC = () => {
 
     for (const pkg of filteredPackages) {
       for (const col of visibleColumns) {
-        const entry = storeState.packageStatuses[`${col.projectId}__${col.towerId}__${pkg.id}`];
-        const val = (entry ? (entry.status || entry.targetDate) : "NA").toLowerCase();
+        const entry = (storeState.packageStatuses || {})[`${col.projectId}__${col.towerId}__${pkg.id}`];
+        const val = (entry ? (entry.status || entry.targetDate || "NA") : "NA").toLowerCase();
         if (val === "na" || val === "-") continue;
         totalCells++;
         if (val.includes("received")) received++;

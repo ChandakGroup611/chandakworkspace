@@ -11,7 +11,11 @@ import {
   PackageMaster, 
   SubPackageMaster, 
   ProjectMaster, 
-  TowerMaster 
+  TowerMaster,
+  PackageStatusEntry,
+  LookAheadEntry,
+  StatutoryAuthorityMaster,
+  StatutoryClearanceEntry
 } from "../types/masterTypes";
 import { ConsultantPartner } from "../types";
 
@@ -53,6 +57,7 @@ export interface ImportValidationResult {
   columns: string[];
   rows: ImportRowValidation[];
   multiSheetResults?: Record<string, ImportValidationResult>;
+  matrixBundle?: any;
 }
 
 // ==============================================================================
@@ -543,6 +548,26 @@ export class MasterImportExportService {
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(buffer);
 
+    // 1. Check if workbook is a 2D Matrix Tracker (e.g. EY Tender Design Tracker with Projects, Summary, Liaisoning sheets)
+    const hasProjectsSheet = workbook.worksheets.some(w => w.name.toLowerCase().trim() === "projects");
+    const hasSummarySheet = workbook.worksheets.some(w => w.name.toLowerCase().trim() === "summary");
+    const hasLiaisoningSheet = workbook.worksheets.some(w => w.name.toLowerCase().trim().includes("liaison"));
+    
+    // Also check first worksheet row 3/4 if multiple project names exist across columns
+    const firstWs = workbook.worksheets[0];
+    const row3 = firstWs ? firstWs.getRow(3) : null;
+    let colProjectMatches = 0;
+    if (row3) {
+      for (let c = 3; c <= Math.min(row3.cellCount, 20); c++) {
+        const val = (row3.getCell(c).value || "").toString().trim();
+        if (val && val.length > 2 && val !== "CONSULTANT" && val !== "WORK PACKAGES") colProjectMatches++;
+      }
+    }
+
+    if ((hasProjectsSheet && (hasSummarySheet || hasLiaisoningSheet)) || colProjectMatches >= 3) {
+      return this.parseMatrixTrackerWorkbook(workbook, fileName);
+    }
+
     // Keyword detection mapping - ORDER MATTERS: Longer/specific keywords MUST be first!
     const masterTypeMapping: Array<[string, Exclude<MasterImportType, "ALL">]> = [
       ["sub_package", "SUB_PACKAGES"],
@@ -631,6 +656,371 @@ export class MasterImportExportService {
     }
 
     return this.parseWorksheet(targetWorksheet, targetType, fileName);
+  }
+
+  /**
+   * Parses 2D Chandak Matrix Tracker Workbooks (Projects, Towers, Disciplines, Deliverables, Statuses, Look-Aheads, Liaisoning)
+   */
+  private static parseMatrixTrackerWorkbook(
+    workbook: ExcelJS.Workbook,
+    fileName: string
+  ): ImportValidationResult {
+    const pSheet = workbook.getWorksheet("Projects") || workbook.worksheets[0];
+    const r3 = pSheet.getRow(3);
+    const r4 = pSheet.getRow(4);
+
+    const extractText = (cell: ExcelJS.Cell): string => {
+      const v = cell.value;
+      if (v === null || v === undefined) return "";
+      if (typeof v === "object") {
+        if ("richText" in v && Array.isArray((v as any).richText)) {
+          return (v as any).richText.map((t: any) => t.text || "").join("").trim();
+        }
+        if ("text" in v) return String((v as any).text || "").trim();
+        if ("result" in v) return String((v as any).result || "").trim();
+      }
+      return String(v).trim();
+    };
+
+    const rawColumns: Array<{ colIdx: number; projectName: string; towerName: string }> = [];
+    for (let c = 3; c <= pSheet.columnCount; c++) {
+      const rawP = extractText(r3.getCell(c)).replace(/\n/g, " ");
+      const rawT = extractText(r4.getCell(c));
+      if (rawP && rawT && rawP !== "CONSULTANT" && rawP !== "WORK PACKAGES" && rawT !== "CONSULTANT" && rawT !== "WORK PACKAGES") {
+        rawColumns.push({
+          colIdx: c,
+          projectName: rawP.replace(/\s+/g, " "),
+          towerName: rawT
+        });
+      }
+    }
+
+    const uniqueProjectNames = Array.from(new Set(rawColumns.map(c => c.projectName)));
+    const projects: ProjectMaster[] = uniqueProjectNames.map((name, idx) => {
+      const code = name.replace(/[^A-Za-z0-9]/g, "").slice(0, 4).toUpperCase() || `PRJ-${idx + 1}`;
+      return {
+        id: `proj-${name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`,
+        name,
+        code,
+        location: "Mumbai MMR",
+        projectType: "Residential High-Rise",
+        projectStatus: "Planning & Design",
+        createdAt: new Date().toISOString(),
+        isSubProject: false
+      };
+    });
+
+    const projectMap = new Map(projects.map(p => [p.name, p.id]));
+
+    const towers: TowerMaster[] = rawColumns.map((col, idx) => {
+      const pId = projectMap.get(col.projectName) || `proj-${idx}`;
+      const cleanTwr = col.towerName;
+      return {
+        id: `twr-${col.projectName.toLowerCase().replace(/[^a-z0-9]/g, "-")}-${cleanTwr.toLowerCase().replace(/[^a-z0-9]/g, "-")}-${idx}`,
+        projectId: pId,
+        projectName: col.projectName,
+        towerName: cleanTwr,
+        subProjectCode: `${cleanTwr.slice(0, 4).toUpperCase()}-${idx + 1}`,
+        towerType: cleanTwr.toLowerCase().includes("rehab") || cleanTwr.toLowerCase().includes("sra") ? "Rehab / SRA" : cleanTwr.toLowerCase().includes("comm") ? "Commercial" : cleanTwr.toLowerCase().includes("soc") ? "Society" : cleanTwr.toLowerCase().includes("hostel") || cleanTwr.toLowerCase().includes("ptc") ? "PTC / Hostel" : "Sale",
+        createdAt: new Date().toISOString()
+      };
+    });
+
+    const disciplinesMap = new Map<string, PackageMaster>();
+    const subPackages: any[] = [];
+    const consultantsMap = new Map<string, ConsultantPartner>();
+    const matrixEntries: Record<string, PackageStatusEntry> = {};
+
+    let currentCategory = "Civil & RCC";
+    const categoryColors: Record<string, string> = {
+      "Civil & RCC": "slate",
+      "Structural": "blue",
+      "MEPF Services": "amber",
+      "Architectural": "purple",
+      "Environmental & Green": "emerald",
+      "Traffic & Parking": "teal",
+      "Statutory & Liaisoning": "rose",
+      "Quality & PMC": "indigo"
+    };
+
+    for (let r = 5; r <= pSheet.rowCount; r++) {
+      const row = pSheet.getRow(r);
+      const col2Val = extractText(row.getCell(2));
+      const col3Val = extractText(row.getCell(3));
+
+      if (!col2Val && !col3Val) continue;
+
+      if (col2Val && (col2Val === col3Val || col2Val === "Civil Works" || col2Val === "MEP" || col2Val === "Architecture")) {
+        if (col2Val === "Civil Works") currentCategory = "Civil & RCC";
+        else if (col2Val === "MEP") currentCategory = "MEPF Services";
+        else if (col2Val === "Architecture") currentCategory = "Architectural";
+        else currentCategory = col2Val;
+        continue;
+      }
+
+      const consultantName = col2Val;
+      const deliverableName = col3Val || col2Val;
+
+      let derivedCategory = currentCategory;
+      if (consultantName.toLowerCase().includes("traffic")) derivedCategory = "Traffic & Parking";
+      else if (consultantName.toLowerCase().includes("flood") || consultantName.toLowerCase().includes("geotech") || consultantName.toLowerCase().includes("soil")) derivedCategory = "Geotechnical & Soil";
+      else if (consultantName.toLowerCase().includes("green") || consultantName.toLowerCase().includes("environment")) derivedCategory = "Environmental & Green";
+      else if (consultantName.toLowerCase().includes("structural")) derivedCategory = "Structural";
+      else if (consultantName.toLowerCase().includes("mep") || consultantName.toLowerCase().includes("plumb")) derivedCategory = "MEPF Services";
+      else if (consultantName.toLowerCase().includes("liaison") || consultantName.toLowerCase().includes("rera")) derivedCategory = "Statutory & Liaisoning";
+
+      if (consultantName && !consultantsMap.has(consultantName)) {
+        consultantsMap.set(consultantName, {
+          id: `cons-${consultantName.toLowerCase().replace(/[^a-z0-9]/g, "-")}`,
+          name: consultantName,
+          leadContact: consultantName,
+          email: "",
+          phone: "",
+          category: derivedCategory,
+          categories: [derivedCategory],
+          expertise: [derivedCategory],
+          rating: 4.8,
+          averageTatDays: 3.0,
+          onboardingStatus: "Onboard",
+          totalDrawingsSubmitted: 0,
+          activeProjects: []
+        });
+      }
+
+      const discId = `disc-${derivedCategory.toLowerCase().replace(/[^a-z0-9]/g, "-")}`;
+      if (!disciplinesMap.has(derivedCategory)) {
+        disciplinesMap.set(derivedCategory, {
+          id: discId,
+          name: derivedCategory,
+          code: derivedCategory.slice(0, 4).toUpperCase(),
+          icon: derivedCategory.toLowerCase().includes("struct") ? "🏗️" : derivedCategory.toLowerCase().includes("mep") ? "⚡" : derivedCategory.toLowerCase().includes("env") ? "🌱" : "📁",
+          color: categoryColors[derivedCategory] || "purple",
+          createdAt: new Date().toISOString()
+        });
+      }
+
+      const pkgId = `pkg-${deliverableName.toLowerCase().replace(/[^a-z0-9]/g, "-")}-${r}`;
+      subPackages.push({
+        id: pkgId,
+        disciplineId: discId,
+        disciplineName: derivedCategory,
+        packageName: deliverableName,
+        subPackageName: deliverableName,
+        packageCode: `PKG-${r.toString().padStart(2, "0")}`,
+        subPackageCode: `PKG-${r.toString().padStart(2, "0")}`,
+        description: `Deliverable scope for ${deliverableName}`,
+        defaultDurationDays: 30
+      });
+
+      rawColumns.forEach((col, cIdx) => {
+        const cell = row.getCell(col.colIdx);
+        const rawVal = extractText(cell);
+        if (!rawVal) return;
+
+        const pId = projectMap.get(col.projectName);
+        const tower = towers[cIdx];
+        if (pId && tower) {
+          const entryKey = `${pId}__${tower.id}__${pkgId}`;
+          let status: PackageStatusEntry["status"] = "Received";
+          const lower = rawVal.toLowerCase();
+          if (lower.includes("received")) status = "Received";
+          else if (lower.includes("pending") || lower.includes("not onboard")) status = "Pending";
+          else if (lower.includes("progress") || lower.includes("onboard")) status = "In Progress";
+          else if (lower === "na") status = "NA";
+          else status = "Under Review";
+
+          matrixEntries[entryKey] = {
+            id: entryKey,
+            entryKey,
+            projectId: pId,
+            projectName: col.projectName,
+            towerId: tower.id,
+            towerName: tower.towerName,
+            packageId: pkgId,
+            packageName: deliverableName,
+            disciplineName: derivedCategory,
+            status,
+            targetDate: rawVal,
+            consultantName: consultantName || undefined,
+            plannedDate: "2026-09-15",
+            actualDate: rawVal.includes("Received") ? "2026-09-10" : undefined,
+            remarks: rawVal,
+            updatedAt: new Date().toISOString(),
+            lastUpdated: new Date().toISOString(),
+            updatedBy: "Excel Matrix Import"
+          };
+        }
+      });
+    }
+
+    // Parse Summary (Look-Ahead)
+    const sSheet = workbook.getWorksheet("Summary");
+    const lookAheads: LookAheadEntry[] = [];
+    if (sSheet) {
+      for (let r = 4; r <= sSheet.rowCount; r++) {
+        const row = sSheet.getRow(r);
+        const projName = extractText(row.getCell(3));
+        const twrName = extractText(row.getCell(4));
+        const in30 = extractText(row.getCell(5));
+        const in60 = extractText(row.getCell(6));
+
+        if (!projName) continue;
+        const pId = projectMap.get(projName) || `proj-${projName.toLowerCase().replace(/[^a-z0-9]/g, "-")}`;
+        const matchTower = towers.find(t => t.projectName === projName && (t.towerName.toLowerCase() === twrName.toLowerCase() || twrName.toLowerCase().includes(t.towerName.toLowerCase())));
+        const towerId = matchTower ? matchTower.id : `twr-${pId}-${twrName.toLowerCase()}`;
+
+        if (in30 && in30 !== "-") {
+          lookAheads.push({
+            id: `la-30-${r}`,
+            projectId: pId,
+            projectName: projName,
+            towerId,
+            towerName: twrName,
+            timeframe: "30_DAYS",
+            deliverableDescription: in30,
+            targetDate: "2026-10-30",
+            priority: "CRITICAL",
+            status: "PENDING",
+            createdAt: new Date().toISOString()
+          });
+        }
+        if (in60 && in60 !== "-") {
+          lookAheads.push({
+            id: `la-60-${r}`,
+            projectId: pId,
+            projectName: projName,
+            towerId,
+            towerName: twrName,
+            timeframe: "60_DAYS",
+            deliverableDescription: in60,
+            targetDate: "2026-11-30",
+            priority: "HIGH",
+            status: "PENDING",
+            createdAt: new Date().toISOString()
+          });
+        }
+      }
+    }
+
+    // Parse Liaisoning
+    const lSheet = workbook.getWorksheet("Liaisoning");
+    const statutoryAuthorities: StatutoryAuthorityMaster[] = [];
+    const statutoryClearances: Record<string, StatutoryClearanceEntry> = {};
+    if (lSheet) {
+      for (let r = 5; r <= lSheet.rowCount; r++) {
+        const row = lSheet.getRow(r);
+        const authTitle = extractText(row.getCell(2));
+        const scopeDesc = extractText(row.getCell(3)) || authTitle;
+
+        if (!authTitle) continue;
+        const authId = `auth-${authTitle.toLowerCase().replace(/[^a-z0-9]/g, "-")}-${r}`;
+        statutoryAuthorities.push({
+          id: authId,
+          authorityName: authTitle,
+          category: authTitle.toLowerCase().includes("fire") ? "Fire & Safety" : authTitle.toLowerCase().includes("env") || authTitle.toLowerCase().includes("tree") ? "Environment" : authTitle.toLowerCase().includes("aviation") ? "Aviation & Defence" : authTitle.toLowerCase().includes("rera") ? "Legal & RERA" : "Municipal",
+          scope: scopeDesc
+        });
+
+        rawColumns.forEach((col, cIdx) => {
+          const cell = row.getCell(col.colIdx);
+          const val = extractText(cell);
+          if (!val) return;
+          const pId = projectMap.get(col.projectName);
+          const tower = towers[cIdx];
+          if (pId && tower) {
+            const key = `${pId}__${tower.id}__${authId}`;
+            statutoryClearances[key] = {
+              id: key,
+              authorityId: authId,
+              authorityName: authTitle,
+              projectId: pId,
+              projectName: col.projectName,
+              towerId: tower.id,
+              towerName: tower.towerName,
+              onboardingStatus: val,
+              applicationDate: "2026-08-01",
+              nocApprovalDate: val.toLowerCase().includes("onboard") ? "2026-09-01" : undefined,
+              remarks: `Status: ${val}`
+            };
+          }
+        });
+      }
+    }
+
+    // Build row validations for preview list
+    const previewRows: ImportRowValidation[] = [];
+    projects.forEach((p, idx) => {
+      previewRows.push({
+        rowNumber: idx + 1,
+        data: {
+          name: p.name,
+          code: p.code,
+          type: "Project Master",
+          location: p.location,
+          status: p.projectStatus
+        },
+        isValid: true,
+        errors: [],
+        isDuplicate: false,
+        action: "ADD"
+      });
+    });
+
+    subPackages.forEach((sp, idx) => {
+      previewRows.push({
+        rowNumber: projects.length + idx + 1,
+        data: {
+          name: sp.subPackageName,
+          code: sp.subPackageCode,
+          type: `Sub-Package (${sp.disciplineName})`,
+          description: sp.description
+        },
+        isValid: true,
+        errors: [],
+        isDuplicate: false,
+        action: "ADD"
+      });
+    });
+
+    consultantsMap.forEach((c) => {
+      previewRows.push({
+        rowNumber: previewRows.length + 1,
+        data: {
+          name: c.name,
+          type: "Consultant Partner",
+          category: c.category,
+          status: c.onboardingStatus
+        },
+        isValid: true,
+        errors: [],
+        isDuplicate: false,
+        action: "ADD"
+      });
+    });
+
+    const matrixBundle = {
+      projects,
+      towers,
+      disciplines: Array.from(disciplinesMap.values()),
+      packages: subPackages,
+      consultants: Array.from(consultantsMap.values()),
+      packageStatuses: matrixEntries,
+      lookAheads,
+      authorities: statutoryAuthorities,
+      statutoryClearances
+    };
+
+    return {
+      masterType: "ALL",
+      fileName,
+      totalRows: previewRows.length,
+      validCount: previewRows.length,
+      invalidCount: 0,
+      duplicateCount: 0,
+      columns: ["Entity Name", "Type / Category", "Code / Reference", "Status"],
+      rows: previewRows,
+      matrixBundle
+    };
   }
 
   /**
@@ -893,6 +1283,16 @@ export class MasterImportExportService {
     result: ImportValidationResult,
     duplicateStrategy: "SKIP" | "OVERWRITE" = "SKIP"
   ): Promise<{ added: number; updated: number; skipped: number; errors: number }> {
+    if (result.matrixBundle) {
+      const outcome = DesignMasterStore.bulkImportTrackerMatrix(result.matrixBundle);
+      return {
+        added: outcome.projects + outcome.packages + outcome.consultants,
+        updated: 0,
+        skipped: 0,
+        errors: 0
+      };
+    }
+
     if (result.masterType === "ALL" && result.multiSheetResults) {
       let grandAdded = 0;
       let grandUpdated = 0;

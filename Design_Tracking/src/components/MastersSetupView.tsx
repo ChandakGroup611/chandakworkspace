@@ -262,6 +262,18 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
               <button
                 type="button"
                 onClick={() => {
+                  const res = DesignMasterStore.loadEyTenderMasterData();
+                  toast.success(`Loaded Chandak Tender Tracker: ${res.projects} Projects, ${res.towers} Towers, ${res.packages} Sub-Packages, ${res.matrixEntries} Matrix Entries.`);
+                }}
+                className="px-3.5 py-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-xs font-bold inline-flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all shrink-0 whitespace-nowrap"
+                title="Reload the full Chandak Tender Design Tracker R2 master dataset"
+              >
+                <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                <span>Load Chandak Master Data (R2)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
                   const target = activeSubTab === "TEMPLATES" || activeSubTab === "RBAC" 
                     ? "ALL" 
                     : activeSubTab === "CATEGORIES" 

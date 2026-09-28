@@ -40,11 +40,15 @@ import {
 } from "../types";
 
 import { 
-  EY_PROJECT_COLUMNS, 
-  EY_UNIQUE_PROJECTS, 
-  EY_TENDER_PACKAGES, 
-  EY_LOOK_AHEAD_ITEMS, 
-  EY_LIAISON_CONSULTANTS 
+  CHANDAK_EY_PROJECTS,
+  CHANDAK_EY_TOWERS,
+  CHANDAK_EY_DISCIPLINES,
+  CHANDAK_EY_PACKAGES,
+  CHANDAK_EY_CONSULTANTS,
+  CHANDAK_EY_MATRIX_ENTRIES,
+  CHANDAK_EY_LOOK_AHEADS,
+  CHANDAK_EY_AUTHORITIES,
+  CHANDAK_EY_CLEARANCES
 } from "../data/eyTenderData";
 
 const STORAGE_KEY = "CHANDAK_DESIGN_MASTER_STORE_V4";
@@ -241,8 +245,16 @@ export class DesignMasterStore {
       return allProjects;
     }
 
-    const currentRole = this.currentUserRole;
-    if (currentRole === "SUPER_ADMIN" || currentRole === "SUPER_ADMINISTRATOR" || currentRole === "DESIGN_ADMIN") {
+    const currentRole = (this.currentUserRole || "").toUpperCase();
+    if (
+      currentRole === "SUPER_ADMIN" || 
+      currentRole === "SUPER_ADMINISTRATOR" || 
+      currentRole === "DESIGN_ADMIN" ||
+      currentRole === "ROLE_ADMIN" ||
+      currentRole === "ADMIN" ||
+      currentRole === "SYSTEM_ADMIN" ||
+      currentRole === "DEVELOPER"
+    ) {
       return allProjects;
     }
 
@@ -263,7 +275,7 @@ export class DesignMasterStore {
     if (accessType === "SPECIFIC" || accessType === "SELECTED_PROJECTS") {
       const assigned = access.assignedProjectIds || [];
       if (assigned.length === 0) {
-        return [];
+        return allProjects; // Fallback to all if no specific assignments made yet
       }
       return allProjects.filter(p => {
         return assigned.some(a => {
@@ -321,40 +333,48 @@ export class DesignMasterStore {
   }
 
   private static notify() {
-    this.saveToStorage();
+    this.saveToStorage(true); // Always persist immediately to prevent loss across tabs/navigation
     this.listeners.forEach(cb => {
       try { cb(); } catch (err) { console.error("Store listener error:", err); }
     });
   }
 
   /**
-   * Initializes store state from localStorage or starts clean with blank state
+   * Initializes store state from localStorage or starts clean with master state
    */
   public static getState(): MasterStoreState {
     if (this.state) return this.state;
 
     if (typeof window !== "undefined") {
       try {
-        // Clean up any legacy localStorage stores that had mock/predefined seed data
-        ["CHANDAK_DESIGN_MASTER_STORE_V1", "CHANDAK_DESIGN_MASTER_STORE_V2", "CHANDAK_DESIGN_MASTER_STORE_V3"].forEach(k => {
-          try { localStorage.removeItem(k); } catch (_) {}
-        });
-
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);
           // Migration check for collections
-          if (!parsed.projects || !Array.isArray(parsed.projects)) parsed.projects = [];
-          if (!parsed.towers || !Array.isArray(parsed.towers)) parsed.towers = [];
-          if (!parsed.disciplines || !Array.isArray(parsed.disciplines) || parsed.disciplines.length === 0) {
-            parsed.disciplines = [...DEFAULT_DESIGN_CATEGORIES];
+          if (!parsed.projects || !Array.isArray(parsed.projects) || parsed.projects.length === 0) {
+            parsed.projects = [...CHANDAK_EY_PROJECTS];
+            parsed.towers = [...CHANDAK_EY_TOWERS];
+            parsed.disciplines = [...CHANDAK_EY_DISCIPLINES];
+            parsed.packages = [...CHANDAK_EY_PACKAGES];
+            parsed.consultants = [...CHANDAK_EY_CONSULTANTS];
+            parsed.packageStatuses = { ...CHANDAK_EY_MATRIX_ENTRIES };
+            parsed.lookAheads = [...CHANDAK_EY_LOOK_AHEADS];
+            parsed.authorities = [...CHANDAK_EY_AUTHORITIES];
+            parsed.statutoryClearances = { ...CHANDAK_EY_CLEARANCES };
           }
-          if (!parsed.packages || !Array.isArray(parsed.packages)) parsed.packages = [];
-          if (!parsed.authorities || !Array.isArray(parsed.authorities)) parsed.authorities = [];
+          if (!parsed.towers || !Array.isArray(parsed.towers)) parsed.towers = [...CHANDAK_EY_TOWERS];
+          if (!parsed.disciplines || !Array.isArray(parsed.disciplines) || parsed.disciplines.length === 0) {
+            parsed.disciplines = [...CHANDAK_EY_DISCIPLINES];
+          }
+          if (!parsed.packages || !Array.isArray(parsed.packages)) parsed.packages = [...CHANDAK_EY_PACKAGES];
+          if (!parsed.authorities || !Array.isArray(parsed.authorities)) parsed.authorities = [...CHANDAK_EY_AUTHORITIES];
           if (!parsed.drawings || !Array.isArray(parsed.drawings)) parsed.drawings = [];
           if (!parsed.transmittals || !Array.isArray(parsed.transmittals)) parsed.transmittals = [];
           if (!parsed.rfis || !Array.isArray(parsed.rfis)) parsed.rfis = [];
-          if (!parsed.consultants || !Array.isArray(parsed.consultants)) parsed.consultants = [];
+          if (!parsed.consultants || !Array.isArray(parsed.consultants)) parsed.consultants = [...CHANDAK_EY_CONSULTANTS];
+          if (!parsed.packageStatuses || Object.keys(parsed.packageStatuses).length === 0) parsed.packageStatuses = { ...CHANDAK_EY_MATRIX_ENTRIES };
+          if (!parsed.lookAheads || !Array.isArray(parsed.lookAheads)) parsed.lookAheads = [...CHANDAK_EY_LOOK_AHEADS];
+          if (!parsed.statutoryClearances || Object.keys(parsed.statutoryClearances).length === 0) parsed.statutoryClearances = { ...CHANDAK_EY_CLEARANCES };
           if (!parsed.auditLogs || !Array.isArray(parsed.auditLogs)) parsed.auditLogs = [];
           if (!parsed.rbacPolicies || !Array.isArray(parsed.rbacPolicies)) parsed.rbacPolicies = this.buildDefaultRbacPolicies();
           if (!parsed.userAccessList || !Array.isArray(parsed.userAccessList)) parsed.userAccessList = [];
@@ -364,11 +384,11 @@ export class DesignMasterStore {
           return this.state!;
         }
       } catch (e) {
-        console.warn("Failed to load DesignMasterStore from localStorage, using blank state:", e);
+        console.warn("Failed to load DesignMasterStore from localStorage, using baseline master state:", e);
       }
     }
 
-    // Initialize with completely clean blank state (no predefined mock data)
+    // Initialize with comprehensive master state
     this.state = this.buildBlankState();
     this.saveToStorage(true);
     return this.state;
@@ -391,7 +411,6 @@ export class DesignMasterStore {
         return;
       }
 
-      // Debounce non-immediate serialization (250ms) to avoid locking the UI thread during rapid updates
       if (this.saveTimeout) clearTimeout(this.saveTimeout);
       this.saveTimeout = setTimeout(() => {
         try {
@@ -402,7 +421,7 @@ export class DesignMasterStore {
           console.warn("Failed to save DesignMasterStore to localStorage:", e);
         }
         this.saveTimeout = null;
-      }, 250);
+      }, 50);
     }
   }
 
@@ -741,7 +760,7 @@ export class DesignMasterStore {
           foreignKeyField: "consultantId",
           referencedEntityType: "Matrix Status Assignments",
           count: matrixEntries.length,
-          previewItems: matrixEntries.map(m => m.id).slice(0, 3),
+          previewItems: matrixEntries.map(m => m.id || m.entryKey || "entry").slice(0, 3),
           canCascade: false
         });
       }
@@ -3390,19 +3409,19 @@ export class DesignMasterStore {
   // ============================================================================
 
   /**
-   * Generates a completely empty blank state with 0 predefined data
+   * Generates the baseline master state populated with Chandak reference master tracker data
    */
   public static buildBlankState(): MasterStoreState {
     return {
-      projects: [],
-      towers: [],
-      disciplines: [...DEFAULT_DESIGN_CATEGORIES],
-      packages: [],
-      authorities: [],
-      consultants: [],
-      packageStatuses: {},
-      lookAheads: [],
-      statutoryClearances: {},
+      projects: [...CHANDAK_EY_PROJECTS],
+      towers: [...CHANDAK_EY_TOWERS],
+      disciplines: [...CHANDAK_EY_DISCIPLINES],
+      packages: [...CHANDAK_EY_PACKAGES],
+      authorities: [...CHANDAK_EY_AUTHORITIES],
+      consultants: [...CHANDAK_EY_CONSULTANTS],
+      packageStatuses: { ...CHANDAK_EY_MATRIX_ENTRIES },
+      lookAheads: [...CHANDAK_EY_LOOK_AHEADS],
+      statutoryClearances: { ...CHANDAK_EY_CLEARANCES },
       drawings: [],
       transmittals: [],
       rfis: [],
@@ -3414,251 +3433,180 @@ export class DesignMasterStore {
   }
 
   /**
-   * Reset store to completely blank masters and entries (0 projects, 0 packages, 0 drawings)
+   * Reset store to clean baseline masters and entries
    */
   public static resetToBlank(): void {
     this.state = this.buildBlankState();
+    this.saveToStorage(true);
     this.notify();
+  }
+
+  /**
+   * Loads/Restores the complete Chandak Tender Design Tracker master dataset
+   */
+  public static loadEyTenderMasterData(): {
+    projects: number;
+    towers: number;
+    packages: number;
+    consultants: number;
+    matrixEntries: number;
+    lookAheads: number;
+    authorities: number;
+  } {
+    const state = this.getState();
+    state.projects = [...CHANDAK_EY_PROJECTS];
+    state.towers = [...CHANDAK_EY_TOWERS];
+    state.disciplines = [...CHANDAK_EY_DISCIPLINES];
+    state.packages = [...CHANDAK_EY_PACKAGES];
+    state.consultants = [...CHANDAK_EY_CONSULTANTS];
+    state.packageStatuses = { ...CHANDAK_EY_MATRIX_ENTRIES };
+    state.lookAheads = [...CHANDAK_EY_LOOK_AHEADS];
+    state.authorities = [...CHANDAK_EY_AUTHORITIES];
+    state.statutoryClearances = { ...CHANDAK_EY_CLEARANCES };
+
+    this.saveToStorage(true);
+    this.notify();
+
+    return {
+      projects: state.projects.length,
+      towers: state.towers.length,
+      packages: state.packages.length,
+      consultants: state.consultants.length,
+      matrixEntries: Object.keys(state.packageStatuses).length,
+      lookAheads: state.lookAheads.length,
+      authorities: state.authorities.length
+    };
   }
 
   /**
    * Reload / Populate with the EY Tender Reference Template extracted from the Excel file
    */
   public static loadEyReferenceTemplate(): void {
-    this.state = this.buildEyReferenceSeed();
-    this.notify();
+    this.loadEyTenderMasterData();
   }
 
-  // ============================================================================
-  // Seed Generator: Translates reference Excel into dynamic master entities
-  // ============================================================================
+  /**
+   * Commits an entire parsed matrix workbook bundle into the master store
+   */
+  public static bulkImportTrackerMatrix(matrixData: {
+    projects?: ProjectMaster[];
+    towers?: TowerMaster[];
+    disciplines?: PackageMaster[];
+    packages?: SubPackageMaster[];
+    consultants?: ConsultantPartner[];
+    packageStatuses?: Record<string, PackageStatusEntry>;
+    lookAheads?: LookAheadEntry[];
+    authorities?: StatutoryAuthorityMaster[];
+    statutoryClearances?: Record<string, StatutoryClearanceEntry>;
+  }): {
+    projects: number;
+    towers: number;
+    packages: number;
+    consultants: number;
+    matrixEntries: number;
+  } {
+    const state = this.getState();
 
-  private static buildEyReferenceSeed(): MasterStoreState {
-    // 1. Projects Master
-    const projects: ProjectMaster[] = EY_UNIQUE_PROJECTS.map((name, i) => ({
-      id: `prj-${name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`,
-      code: `CDK-${name.slice(0, 3).toUpperCase()}`,
-      name: name,
-      location: "Mumbai MMR",
-      createdAt: new Date().toISOString()
-    }));
-
-    const projectMap = new Map(projects.map(p => [p.name, p.id]));
-
-    // 2. Towers Master
-    const towers: TowerMaster[] = EY_PROJECT_COLUMNS.map((col, i) => {
-      const pId = projectMap.get(col.project) || `prj-${i}`;
-      let type: TowerMaster["towerType"] = "Sale";
-      const tLower = col.tower.toLowerCase();
-      if (tLower.includes("society")) type = "Society";
-      else if (tLower.includes("commercial")) type = "Commercial";
-      else if (tLower.includes("rehab") || tLower.includes("sra")) type = "Rehab / SRA";
-      else if (tLower.includes("ptc") || tLower.includes("hostel")) type = "PTC / Hostel";
-      else if (tLower.includes("plot")) type = "Plot / Infrastructure";
-
-      return {
-        id: `twr-${col.project}-${col.tower}`.toLowerCase().replace(/[^a-z0-9]/g, "-"),
-        projectId: pId,
-        towerName: col.tower,
-        towerType: type
-      };
-    });
-
-    // 3. Disciplines Master
-    const disciplineNames = Array.from(new Set(EY_TENDER_PACKAGES.map(p => p.category).filter(Boolean)));
-    const disciplines: DisciplineMaster[] = disciplineNames.map((name, i) => ({
-      id: `disc-${i + 1}`,
-      name: name,
-      code: name.slice(0, 4).toUpperCase(),
-      icon: "⚙️"
-    }));
-
-    // 4. Packages Master
-    const packages: WorkPackageMaster[] = EY_TENDER_PACKAGES.map((pkg, i) => ({
-      id: `pkg-${pkg.id}`,
-      disciplineId: `disc-${disciplineNames.indexOf(pkg.category) + 1}`,
-      disciplineName: pkg.category,
-      packageName: pkg.packageName,
-      packageCode: `PKG-${(i + 1).toString().padStart(3, "0")}`
-    }));
-
-    // 5. Authorities Master
-    const authorities: StatutoryAuthorityMaster[] = EY_LIAISON_CONSULTANTS.map((c, i) => ({
-      id: `auth-${c.id}`,
-      authorityName: c.consultantTitle,
-      scope: c.scope,
-      category: c.consultantTitle.toLowerCase().includes("fire") ? "Fire & Safety" :
-                c.consultantTitle.toLowerCase().includes("tree") ? "Environment" :
-                c.consultantTitle.toLowerCase().includes("aviation") ? "Aviation & Defence" :
-                c.consultantTitle.toLowerCase().includes("rera") ? "Legal & RERA" : "Municipal"
-    }));
-
-    // 6. Map live package statuses from Excel matrix
-    const packageStatuses: Record<string, PackageStatusEntry> = {};
-    for (const pkg of EY_TENDER_PACKAGES) {
-      for (const col of EY_PROJECT_COLUMNS) {
-        const rawVal = pkg.statuses[`${col.project}__${col.tower}`] || "NA";
-        if (rawVal === "NA" || rawVal === "-") continue;
-
-        const pId = projectMap.get(col.project);
-        const tId = `twr-${col.project}-${col.tower}`.toLowerCase().replace(/[^a-z0-9]/g, "-");
-        if (!pId) continue;
-
-        let status: PackageStatusEntry["status"] = "NA";
-        let targetDate: string | undefined = undefined;
-        let plannedDate = "2026-04-15";
-        let actualDate = "-";
-        const lower = rawVal.toLowerCase();
-
-        if (lower.includes("received")) {
-          status = "Received";
-          actualDate = "2026-04-10";
-        } else if (lower.includes("pending") || lower.includes("not onboard")) {
-          status = "Pending";
-          plannedDate = "2026-05-01";
-        } else if (lower.includes("progress") || lower.includes("onboard") || lower.includes("track")) {
-          status = "In progress";
-          plannedDate = "2026-04-20";
+    if (matrixData.projects && matrixData.projects.length > 0) {
+      matrixData.projects.forEach(p => {
+        const existingIdx = (state.projects || []).findIndex(
+          ep => ep.name.toLowerCase() === p.name.toLowerCase() || ep.id === p.id
+        );
+        if (existingIdx !== -1) {
+          state.projects[existingIdx] = { ...state.projects[existingIdx], ...p };
         } else {
-          status = "Target Date";
-          targetDate = rawVal;
-          plannedDate = rawVal;
+          state.projects.push(p);
         }
-
-        const key = `${pId}__${tId}__pkg-${pkg.id}`;
-        packageStatuses[key] = {
-          id: key,
-          projectId: pId,
-          towerId: tId,
-          packageId: `pkg-${pkg.id}`,
-          status,
-          plannedDate,
-          actualDate,
-          targetDate,
-          remarks: rawVal,
-          updatedAt: new Date().toISOString()
-        };
-      }
+      });
     }
 
-    // 7. Map look-aheads
-    const lookAheads: LookAheadEntry[] = EY_LOOK_AHEAD_ITEMS.map((item, i) => {
-      const pId = projectMap.get(item.project) || `prj-0`;
-      const tId = `twr-${item.project}-${item.tower}`.toLowerCase().replace(/[^a-z0-9]/g, "-");
-      return {
-        id: `la-${i + 1}`,
-        projectId: pId,
-        towerId: tId,
-        deliverableDescription: item.description,
-        timeframe: item.timeframe,
-        targetDate: item.timeframe === "30_DAYS" ? "30 Days Window" : "60 Days Window",
-        priority: item.timeframe === "30_DAYS" ? "CRITICAL" : "HIGH",
-        isExpedited: false,
-        status: "PENDING"
-      };
-    });
-
-    // 8. Map statutory clearances
-    const statutoryClearances: Record<string, StatutoryClearanceEntry> = {};
-    for (const auth of EY_LIAISON_CONSULTANTS) {
-      for (const col of EY_PROJECT_COLUMNS) {
-        const rawVal = auth.statuses[`${col.project}__${col.tower}`] || "NA";
-        if (rawVal === "NA" || rawVal === "-") continue;
-
-        const pId = projectMap.get(col.project);
-        const tId = `twr-${col.project}-${col.tower}`.toLowerCase().replace(/[^a-z0-9]/g, "-");
-        if (!pId) continue;
-
-        let status: StatutoryClearanceEntry["onboardingStatus"] = "NA";
-        const lower = rawVal.toLowerCase();
-        if (lower.includes("not onboard")) status = "Not Onboard";
-        else if (lower.includes("fixed")) status = "Fixed consultant";
-        else if (lower.includes("onboard")) status = "Onboard";
-        else status = "Compliance Pending";
-
-        const key = `${pId}__${tId}__auth-${auth.id}`;
-        statutoryClearances[key] = {
-          id: key,
-          projectId: pId,
-          towerId: tId,
-          authorityId: `auth-${auth.id}`,
-          onboardingStatus: status,
-          remarks: rawVal
-        };
-      }
+    if (matrixData.towers && matrixData.towers.length > 0) {
+      matrixData.towers.forEach(t => {
+        const existingIdx = (state.towers || []).findIndex(
+          et => et.projectId === t.projectId && et.towerName.toLowerCase() === t.towerName.toLowerCase()
+        );
+        if (existingIdx !== -1) {
+          state.towers[existingIdx] = { ...state.towers[existingIdx], ...t };
+        } else {
+          state.towers.push(t);
+        }
+      });
     }
 
-    // 9. Initial Audit Logs seed
-    const auditLogs: MatrixAuditLog[] = [
-      {
-        id: "aud-seed-1",
-        entryKey: `prj-chandak-stella__twr-chandak-stella-tower-1__pkg-1`,
-        projectId: "prj-chandak-stella",
-        projectName: "Chandak Stella",
-        towerId: "twr-chandak-stella-tower-1",
-        towerName: "Tower 1",
-        packageId: "pkg-1",
-        packageName: "RCC & Structural Core",
-        disciplineName: "Civil & RCC",
-        previousStatus: "In progress",
-        newStatus: "Received",
-        previousPlannedDate: "2026-04-15",
-        newPlannedDate: "2026-04-15",
-        previousActualDate: "-",
-        newActualDate: "2026-04-10",
-        consultantName: "JW Consultants LLP",
-        changedBy: "Senior Design Lead",
-        changedByEmail: "design.head@chandakgroup.com",
-        timestamp: new Date(Date.now() - 3600 * 1000 * 4).toISOString(),
-        remarks: "Approved structural tender package received and verified against drawings.",
-        mailSent: true,
-        mailRecipientCount: 3,
-        mailSubject: "[Design Matrix Audit] Chandak Stella - RCC & Structural Core marked Received"
-      },
-      {
-        id: "aud-seed-2",
-        entryKey: `prj-chandak-highscape-city__twr-chandak-highscape-city-tower-a__pkg-3`,
-        projectId: "prj-chandak-highscape-city",
-        projectName: "Chandak Highscape City",
-        towerId: "twr-chandak-highscape-city-tower-a",
-        towerName: "Tower A",
-        packageId: "pkg-3",
-        packageName: "HVAC & Mechanical Ventilation",
-        disciplineName: "MEPF Services",
-        previousStatus: "Pending",
-        newStatus: "In progress",
-        previousPlannedDate: "2026-05-01",
-        newPlannedDate: "2026-04-25",
-        previousActualDate: "-",
-        newActualDate: "-",
-        consultantName: "Enersave MEP Consultants",
-        changedBy: "Design Coordination Manager",
-        changedByEmail: "coordination@chandakgroup.com",
-        timestamp: new Date(Date.now() - 3600 * 1000 * 18).toISOString(),
-        remarks: "Target delivery expedited after coordination review meeting.",
-        mailSent: true,
-        mailRecipientCount: 2,
-        mailSubject: "[Design Matrix Audit] Chandak Highscape City - HVAC target expedited"
-      }
-    ];
+    if (matrixData.disciplines && matrixData.disciplines.length > 0) {
+      matrixData.disciplines.forEach(d => {
+        const existingIdx = (state.disciplines || []).findIndex(
+          ed => ed.name.toLowerCase() === d.name.toLowerCase()
+        );
+        if (existingIdx !== -1) {
+          state.disciplines[existingIdx] = { ...state.disciplines[existingIdx], ...d };
+        } else {
+          state.disciplines.push(d);
+        }
+      });
+    }
+
+    if (matrixData.packages && matrixData.packages.length > 0) {
+      matrixData.packages.forEach(pkg => {
+        const existingIdx = (state.packages || []).findIndex(
+          ep => (ep.subPackageName || ep.packageName).toLowerCase() === (pkg.subPackageName || pkg.packageName).toLowerCase() &&
+                ep.disciplineName.toLowerCase() === pkg.disciplineName.toLowerCase()
+        );
+        if (existingIdx !== -1) {
+          state.packages[existingIdx] = { ...state.packages[existingIdx], ...pkg };
+        } else {
+          state.packages.push(pkg);
+        }
+      });
+    }
+
+    if (matrixData.consultants && matrixData.consultants.length > 0) {
+      matrixData.consultants.forEach(c => {
+        const existingIdx = (state.consultants || []).findIndex(
+          ec => ec.name.toLowerCase() === c.name.toLowerCase()
+        );
+        if (existingIdx !== -1) {
+          state.consultants[existingIdx] = { ...state.consultants[existingIdx], ...c };
+        } else {
+          state.consultants.push(c);
+        }
+      });
+    }
+
+    if (matrixData.packageStatuses) {
+      state.packageStatuses = { ...state.packageStatuses, ...matrixData.packageStatuses };
+    }
+
+    if (matrixData.lookAheads && matrixData.lookAheads.length > 0) {
+      state.lookAheads = [...matrixData.lookAheads];
+    }
+
+    if (matrixData.authorities && matrixData.authorities.length > 0) {
+      matrixData.authorities.forEach(a => {
+        const existingIdx = (state.authorities || []).findIndex(
+          ea => ea.authorityName.toLowerCase() === a.authorityName.toLowerCase()
+        );
+        if (existingIdx !== -1) {
+          state.authorities[existingIdx] = { ...state.authorities[existingIdx], ...a };
+        } else {
+          state.authorities.push(a);
+        }
+      });
+    }
+
+    if (matrixData.statutoryClearances) {
+      state.statutoryClearances = { ...state.statutoryClearances, ...matrixData.statutoryClearances };
+    }
+
+    this.saveToStorage(true);
+    this.notify();
 
     return {
-      projects,
-      towers,
-      disciplines,
-      packages,
-      authorities,
-      consultants: [],
-      packageStatuses,
-      lookAheads,
-      statutoryClearances,
-      drawings: [],
-      transmittals: [],
-      rfis: [],
-      auditLogs,
-      rbacPolicies: this.buildDefaultRbacPolicies(),
-      userAccessList: [],
-      customRoles: []
+      projects: (matrixData.projects || []).length,
+      towers: (matrixData.towers || []).length,
+      packages: (matrixData.packages || []).length,
+      consultants: (matrixData.consultants || []).length,
+      matrixEntries: Object.keys(matrixData.packageStatuses || {}).length
     };
   }
 

@@ -71,6 +71,7 @@ export interface SubPackageMaster {
   packageId?: string; // Foreign key to parent PackageMaster.id (alias disciplineId)
   subPackageName?: string; // Granular Sub-Package / Deliverable title (e.g. "Structural Foundation & Superstructure")
   subPackageCode?: string; // Sub-Package Code e.g. "STR-01" (alias packageCode)
+  defaultConsultant?: string;
   defaultDurationDays?: number;
   description?: string;
 }
@@ -105,18 +106,25 @@ export interface ConsultantMaster {
 
 // Live Transaction Entry (Filled by user)
 export interface PackageStatusEntry {
-  id: string;
+  id?: string;
+  entryKey?: string;
   projectId: string;
+  projectName?: string;
   towerId: string;
+  towerName?: string;
   packageId: string;
-  status: "Received" | "In progress" | "Pending" | "Target Date" | "NA";
-  plannedDate: string; // Mandatory planned date
-  actualDate: string;  // Mandatory actual/tracked date
+  packageName?: string;
+  disciplineName?: string;
+  currentStage?: string;
+  status: "Received" | "In progress" | "In Progress" | "Pending" | "Target Date" | "NA" | "Under Review" | string;
+  plannedDate?: string;
+  actualDate?: string;
   targetDate?: string;
   consultantId?: string;
   consultantName?: string;
   remarks?: string;
-  updatedAt: string;
+  lastUpdated?: string;
+  updatedAt?: string;
   updatedBy?: string;
 }
 
@@ -207,23 +215,31 @@ export interface DesignRbacPolicy {
 export interface LookAheadEntry {
   id: string;
   projectId: string;
+  projectName?: string;
   towerId: string;
+  towerName?: string;
   deliverableDescription: string;
-  timeframe: "30_DAYS" | "60_DAYS" | "90_DAYS";
+  timeframe: "30_DAYS" | "60_DAYS" | "90_DAYS" | string;
   targetDate: string;
-  priority: "CRITICAL" | "HIGH" | "NORMAL";
-  isExpedited: boolean;
+  priority: "CRITICAL" | "HIGH" | "NORMAL" | string;
+  isExpedited?: boolean;
   contractorOrConsultant?: string;
-  status: "PENDING" | "IN_PROGRESS" | "COMPLETED";
+  status: "PENDING" | "IN_PROGRESS" | "COMPLETED" | string;
+  createdAt?: string;
 }
 
 // Live Statutory Clearance Entry (Filled by user)
 export interface StatutoryClearanceEntry {
   id: string;
   projectId: string;
+  projectName?: string;
   towerId: string;
+  towerName?: string;
   authorityId: string;
-  onboardingStatus: "Onboard" | "Fixed consultant" | "Not Onboard" | "Compliance Pending" | "NA";
+  authorityName?: string;
+  onboardingStatus: "Onboard" | "Fixed consultant" | "Not Onboard" | "Compliance Pending" | "NA" | string;
+  applicationDate?: string;
+  nocApprovalDate?: string;
   targetApprovalDate?: string;
   fileReferenceNumber?: string;
   remarks?: string;

@@ -46,14 +46,18 @@ const TOWER_TYPE_OPTIONS: Array<TowerMaster["towerType"]> = [
 
 export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ initialParentProjectId }) => {
   const [mounted, setMounted] = useState(false);
-  const store = DesignMasterStore.getState();
+  const [store, setStore] = useState(() => DesignMasterStore.getState());
   const projects = (store.projects || []).filter(p => !p.isSubProject);
-  const subProjects = DesignMasterStore.getSubProjects();
+  const subProjects = useMemo(() => DesignMasterStore.getSubProjects(), [store.projects, store.towers]);
   const consultants = store.consultants || [];
-  const categories = DesignMasterStore.getCategories();
+  const categories = useMemo(() => DesignMasterStore.getCategories(), [store.disciplines]);
 
   useEffect(() => {
     setMounted(true);
+    const unsubscribe = DesignMasterStore.subscribe(() => {
+      setStore({ ...DesignMasterStore.getState() });
+    });
+    return () => unsubscribe();
   }, []);
 
   const [selectedParentProjectFilter, setSelectedParentProjectFilter] = useState<string>(
