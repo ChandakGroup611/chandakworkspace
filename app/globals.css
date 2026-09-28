@@ -65,11 +65,11 @@
 
   /* Universal Premium Typography for Labels & Data Fields */
   label, .theme-label {
-    font-size: 0.75rem !important; /* text-xs */
-    font-weight: 700 !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.05em !important;
-    color: var(--color-muted) !important;
+    font-size: 0.75rem; /* text-xs */
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-muted-foreground, var(--text-muted, #475569));
   }
 
   .theme-data-value {

@@ -2583,15 +2583,16 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     });
 
     // 2. RC Smart Card & Vehicle Identity
+    const rcUrl = (veh as any).rc_doc_url || (veh as any).rc_document_url || null;
     pushDoc({
       id: `master-doc-rc-${targetId}`,
       doc_type: "RC",
       categoryLabel: "RC Smart Card",
       title: `RC Smart Card (${veh.registration_number})`,
-      file_name: `RC_${targetPlate}.pdf`,
-      file_size: "Official Certificate",
+      file_name: rcUrl ? `RC_${targetPlate}.pdf` : "Scan Not Uploaded",
+      file_size: rcUrl ? "Official Certificate" : null,
       file_type: "application/pdf",
-      file_url: (veh as any).rc_doc_url || (veh as any).rc_document_url || null,
+      file_url: rcUrl,
       uploaded_at: veh.registration_date || veh.created_at,
       expiry_date: null,
       document_number: veh.vin_chassis_number || veh.registration_number,
@@ -2602,16 +2603,17 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     });
 
     // 3. Insurance Policies (Master + Historical Policies)
-    if (veh.insurance_policy_number || (veh as any).insurance_doc_url || (veh as any).policy_document_url || veh.insurance_expiry_date) {
+    const insUrl = (veh as any).insurance_doc_url || (veh as any).policy_document_url || null;
+    if (veh.insurance_policy_number || insUrl || veh.insurance_expiry_date) {
       pushDoc({
         id: `master-doc-ins-${targetId}`,
         doc_type: "INSURANCE",
         categoryLabel: "Motor Insurance Policy",
         title: `Insurance Policy: ${veh.insurance_vendor || "Comprehensive"} (${veh.insurance_policy_number || targetPlate})`,
-        file_name: `Insurance_${targetPlate}.pdf`,
-        file_size: "Policy Document",
+        file_name: insUrl ? `Insurance_${targetPlate}.pdf` : "Scan Not Uploaded",
+        file_size: insUrl ? "Policy Document" : null,
         file_type: "application/pdf",
-        file_url: (veh as any).insurance_doc_url || (veh as any).policy_document_url || null,
+        file_url: insUrl,
         uploaded_at: veh.registration_date || veh.created_at,
         expiry_date: veh.insurance_expiry_date || null,
         document_number: veh.insurance_policy_number || null,
@@ -2623,15 +2625,16 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     }
 
     additionalPolicies.forEach((pol) => {
+      const polDocUrl = pol.policy_document_url || (pol as any).document_url || null;
       pushDoc({
         id: `ins-pol-${pol.id}`,
         doc_type: "INSURANCE",
         categoryLabel: "Insurance Renewal Policy & Bill",
         title: `Insurance Renewal: ${pol.insurer_name} (₹${(Number(pol.premium_amount) || 0).toLocaleString()} Premium)`,
-        file_name: `Insurance_Policy_${pol.policy_number}.pdf`,
-        file_size: "Renewal Bill",
+        file_name: polDocUrl ? `Insurance_Policy_${pol.policy_number}.pdf` : "Scan Not Uploaded",
+        file_size: polDocUrl ? "Renewal Bill" : null,
         file_type: "application/pdf",
-        file_url: pol.policy_document_url || (pol as any).document_url || null,
+        file_url: polDocUrl,
         uploaded_at: pol.start_date || pol.created_at,
         expiry_date: pol.end_date || null,
         document_number: pol.policy_number || null,
@@ -2643,16 +2646,17 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     });
 
     // 4. PUC Emission Certificates (Master + Historical Certificates)
-    if (veh.puc_certificate_number || (veh as any).puc_doc_url || (veh as any).certificate_doc_url || veh.puc_expiry_date) {
+    const pucUrl = (veh as any).puc_doc_url || (veh as any).certificate_doc_url || null;
+    if (veh.puc_certificate_number || pucUrl || veh.puc_expiry_date) {
       pushDoc({
         id: `master-doc-puc-${targetId}`,
         doc_type: "PUC",
         categoryLabel: "PUC Certificate",
         title: `PUC Certificate (${veh.puc_certificate_number || targetPlate})`,
-        file_name: `PUC_${targetPlate}.pdf`,
-        file_size: "Emission Certificate",
+        file_name: pucUrl ? `PUC_${targetPlate}.pdf` : "Scan Not Uploaded",
+        file_size: pucUrl ? "Emission Certificate" : null,
         file_type: "application/pdf",
-        file_url: (veh as any).puc_doc_url || (veh as any).certificate_doc_url || null,
+        file_url: pucUrl,
         uploaded_at: veh.registration_date || veh.created_at,
         expiry_date: veh.puc_expiry_date || null,
         document_number: veh.puc_certificate_number || null,
@@ -2669,8 +2673,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         doc_type: "PUC",
         categoryLabel: "PUC Renewal & Test Bill",
         title: `PUC Certificate: ${puc.certificate_number} (${puc.testing_center_name || "Emission Center"})`,
-        file_name: `PUC_Certificate_${puc.certificate_number}.pdf`,
-        file_size: "Emission Slip",
+        file_name: puc.document_url ? `PUC_Certificate_${puc.certificate_number}.pdf` : "Scan Not Uploaded",
+        file_size: puc.document_url ? "Emission Slip" : null,
         file_type: "application/pdf",
         file_url: puc.document_url || null,
         uploaded_at: puc.valid_from || puc.created_at,
@@ -2694,8 +2698,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         doc_type: "MAINTENANCE",
         categoryLabel: "Workshop Service Bill",
         title: `Service Bill: ${m.service_type || "Periodic Inspection"} (${sCenter} • ₹${(Number(m.cost) || 0).toLocaleString()})`,
-        file_name: `Service_Bill_${jobNum}.pdf`,
-        file_size: `₹${(Number(m.cost) || 0).toLocaleString()}`,
+        file_name: m.invoice_url ? `Service_Bill_${jobNum}.pdf` : "Bill Not Attached",
+        file_size: m.invoice_url ? `₹${(Number(m.cost) || 0).toLocaleString()}` : null,
         file_type: "application/pdf",
         file_url: m.invoice_url || null,
         uploaded_at: m.service_date || m.created_at,
@@ -2742,8 +2746,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         doc_type: "PART",
         categoryLabel: "Part Warranty & Bill",
         title: `Part Warranty & Bill: ${p.name} (${pNum})`,
-        file_name: `Part_Warranty_${pNum}.pdf`,
-        file_size: `₹${(Number(p.purchase_amount) || 0).toLocaleString()}`,
+        file_name: pDocUrl ? `Part_Warranty_${pNum}.pdf` : "Scan Not Attached",
+        file_size: pDocUrl ? `₹${(Number(p.purchase_amount) || 0).toLocaleString()}` : null,
         file_type: "application/pdf",
         file_url: pDocUrl,
         uploaded_at: p.created_at,
@@ -3176,6 +3180,77 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     }
   };
 
+  const handleInlineViewerDocUpload = async (file: File) => {
+    if (!file) return;
+    const MAX_FILE_SIZE = 25 * 1024 * 1024;
+    const BLOCKED_EXTS = ["exe", "bat", "cmd", "sh", "vbs", "js", "scr", "msi", "dll"];
+    const ext = file.name.split(".").pop()?.toLowerCase() || "";
+    if (BLOCKED_EXTS.includes(ext)) {
+      triggerToast(`Executable/script files (.${ext}) are not permitted.`, true);
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      triggerToast(`File "${file.name}" exceeds maximum allowed size (25MB).`, true);
+      return;
+    }
+
+    try {
+      const base64Url = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve((e.target?.result as string) || "");
+        reader.onerror = (e) => reject(e);
+        reader.readAsDataURL(file);
+      });
+
+      if (!base64Url) {
+        triggerToast("Failed to read file", true);
+        return;
+      }
+
+      if (viewingVehicle && previewAttachment) {
+        const docType = (previewAttachment as any).doc_type || "OTHER";
+        const docTitle = (previewAttachment as any).title || file.name;
+        const res = await createVehicleDocumentAction(viewingVehicle.id, {
+          doc_type: docType,
+          title: docTitle,
+          document_number: (previewAttachment as any).document_number || null,
+          expiry_date: (previewAttachment as any).expiry_date || null,
+          file_name: file.name,
+          file_size: formatFileSize(file.size),
+          file_type: file.type || resolveMimeFromName(file.name),
+          file_url: base64Url,
+          status: "VALID"
+        });
+
+        if (res.success && res.document) {
+          setViewingVehicle((prev) => {
+            if (!prev) return null;
+            return { ...prev, documents: [res.document!, ...(prev.documents || [])] };
+          });
+          setVehicles((prev) =>
+            prev.map((v) =>
+              v.id === viewingVehicle.id
+                ? { ...v, documents: [res.document!, ...(v.documents || [])] }
+                : v
+            )
+          );
+        }
+      }
+
+      if (previewAttachment) {
+        setPreviewAttachment({
+          ...previewAttachment,
+          file_name: file.name,
+          file_size: formatFileSize(file.size),
+          file_type: file.type || resolveMimeFromName(file.name),
+          file_url: base64Url
+        });
+      }
+      triggerToast("Physical scan attached and loaded into document viewer successfully!");
+    } catch (err: any) {
+      triggerToast(err.message || "Error reading file", true);
+    }
+  };
 
   const handleCreateVehicle = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -19861,6 +19936,46 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     </div>
                   </div>
 
+                  {/* Direct In-Viewer Document Upload Dropzone */}
+                  <div
+                    onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                        handleInlineViewerDocUpload(e.dataTransfer.files[0]);
+                      }
+                    }}
+                    className="p-4 rounded-xl border-2 border-dashed border-border hover:border-theme-btn-primary/60 bg-muted/20 hover:bg-theme-btn-primary/5 transition-all text-center flex flex-col items-center justify-center gap-2 cursor-pointer group"
+                    onClick={() => {
+                      const input = document.getElementById("viewer-inline-file-picker") as HTMLInputElement;
+                      if (input) input.click();
+                    }}
+                  >
+                    <input
+                      type="file"
+                      id="viewer-inline-file-picker"
+                      accept=".pdf,image/*,.jpg,.jpeg,.png,.webp,.doc,.docx"
+                      className="hidden"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files.length > 0) {
+                          handleInlineViewerDocUpload(e.target.files[0]);
+                        }
+                      }}
+                    />
+                    <div className="h-10 w-10 rounded-full bg-theme-btn-primary/10 text-theme-btn-primary flex items-center justify-center group-hover:scale-105 transition-transform">
+                      <UploadCloud className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-foreground group-hover:text-theme-btn-primary transition-colors block">
+                        Drag & Drop or Click to Attach Scanned PDF / Image
+                      </span>
+                      <span className="text-[11px] text-muted-foreground block">
+                        Upload physical copy to view original document scan directly in this previewer (Max 25MB)
+                      </span>
+                    </div>
+                  </div>
+
                   {/* Actions Bar inside Canvas */}
                   <div className="pt-2 border-t border-border flex items-center justify-between gap-3 flex-wrap">
                     <AppButton
@@ -19890,14 +20005,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          setPreviewAttachment(null);
-                          setDossierNewDocType((previewAttachment as any).doc_type || "OTHER");
-                          setDossierNewDocTitle((previewAttachment as any).title || "");
-                          setDossierNewDocNumber((previewAttachment as any).document_number || "");
-                          setDossierNewDocExpiry((previewAttachment as any).expiry_date || "");
-                          setIsDossierAddDocOpen(true);
-                          const el = document.getElementById("dossier-direct-doc-file-input");
-                          if (el) el.scrollIntoView({ behavior: "smooth" });
+                          const input = document.getElementById("viewer-inline-file-picker") as HTMLInputElement;
+                          if (input) input.click();
                         }}
                         className="gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-50 dark:hover:bg-amber-950/30"
                       >
