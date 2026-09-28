@@ -240,6 +240,57 @@ let fleetDataCache: {
   timestamp: number;
 } | null = null;
 
+/**
+ * Calculates next document version and cleans candidate title
+ */
+function computeNextDocVersion(
+  candidateTitle: string,
+  existingDocs: any[],
+  docType: string
+): { currentVersion: string; nextVersion: string; baseTitle: string } {
+  const versionRegex = /\(v?(\d+(?:\.\d+)?)\)/i;
+  let baseTitle = candidateTitle.replace(/\s*\(v?\d+(?:\.\d+)?\)\s*$/i, "").trim();
+  if (!baseTitle) {
+    const typeLabel = VEHICLE_DOC_TYPES.find((t) => t.value === docType)?.label || docType;
+    baseTitle = `${typeLabel} Document`;
+  }
+
+  let maxMajor = 1;
+  let maxMinor = 0;
+  let foundAnyVersion = false;
+
+  (existingDocs || []).forEach((d) => {
+    const title = d.title || "";
+    const match = title.match(versionRegex);
+    if (match) {
+      foundAnyVersion = true;
+      const numStr = match[1].replace(/^v/i, "");
+      const parts = numStr.split(".").map((n: string) => parseInt(n, 10) || 0);
+      const major = parts[0] || 1;
+      const minor = parts[1] || 0;
+      if (major > maxMajor || (major === maxMajor && minor > maxMinor)) {
+        maxMajor = major;
+        maxMinor = minor;
+      }
+    }
+  });
+
+  const currentVersion = foundAnyVersion ? `v${maxMajor}.${maxMinor}` : "v1.0";
+  const nextVersion = `v${maxMajor + 1}.0`;
+
+  return { currentVersion, nextVersion, baseTitle };
+}
+
+/**
+ * Extracts version tag like "v2.0" from title if present
+ */
+function extractVersionFromTitle(title: string): string | null {
+  const match = (title || "").match(/\((v?\d+(?:\.\d+)?)\)/i);
+  if (!match) return null;
+  const v = match[1];
+  return v.toLowerCase().startsWith("v") ? v : `v${v}`;
+}
+
 
 // ============================================================================
 // FAULT-TOLERANT MODULE & TAB ERROR BOUNDARY
@@ -760,6 +811,18 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   const [dossierUploadingDoc, setDossierUploadingDoc] = useState(false);
   const [dossierDocCategoryFilter, setDossierDocCategoryFilter] = useState<string>("ALL");
   const [dossierDocSearchQuery, setDossierDocSearchQuery] = useState<string>("");
+  const [duplicateDocPrompt, setDuplicateDocPrompt] = useState<{
+    file: File;
+    base64Url: string;
+    docType: string;
+    docTitle: string;
+    documentNumber: string | null;
+    expiryDate: string | null;
+    existingDoc: any;
+    currentVersion: string;
+    nextVersion: string;
+    baseTitle: string;
+  } | null>(null);
 
   // Vehicle Inventory Inline Expandable Dossier & Column Options States
   const [expandedVehicleId, setExpandedVehicleId] = useState<string | null>(null);
@@ -2561,8 +2624,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       docs.push(doc);
     };
 
-    // 1. Direct Vault Documents
+    // 1. Direct Vault Documents (Top priority: Actual uploaded scanned files)
+    const vaultDocTypes = new Set<string>();
     (veh.documents || []).forEach((d) => {
+      if (d.doc_type) vaultDocTypes.add(d.doc_type.toUpperCase());
       pushDoc({
         id: d.id,
         doc_type: d.doc_type || "OTHER",
@@ -2582,35 +2647,37 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       });
     });
 
-    // 2. RC Smart Card & Vehicle Identity
+    // 2. RC Smart Card & Vehicle Identity (Only synthesize if no vault RC doc exists)
     const rcUrl = (veh as any).rc_doc_url || (veh as any).rc_document_url || null;
-    pushDoc({
-      id: `master-doc-rc-${targetId}`,
-      doc_type: "RC",
-      categoryLabel: "RC Smart Card",
-      title: `RC Smart Card (${veh.registration_number})`,
-      file_name: rcUrl ? `RC_${targetPlate}.pdf` : "Scan Not Uploaded",
-      file_size: rcUrl ? "Official Certificate" : null,
-      file_type: "application/pdf",
-      file_url: rcUrl,
-      uploaded_at: veh.registration_date || veh.created_at,
-      expiry_date: null,
-      document_number: veh.vin_chassis_number || veh.registration_number,
-      status: "VALID",
-      sourceModule: "MASTER",
-      sourceLabel: `RTO Transport Registry (${veh.rto_office || "State RTO"})`,
-      isDirectVaultDoc: false
-    });
+    if (!vaultDocTypes.has("RC")) {
+      pushDoc({
+        id: `master-doc-rc-${targetId}`,
+        doc_type: "RC",
+        categoryLabel: "RC Smart Card",
+        title: `RC Smart Card (${veh.registration_number})`,
+        file_name: rcUrl ? `RC_${targetPlate}.pdf` : `RC_${targetPlate}.pdf`,
+        file_size: rcUrl ? "Official Certificate" : null,
+        file_type: "application/pdf",
+        file_url: rcUrl,
+        uploaded_at: veh.registration_date || veh.created_at,
+        expiry_date: null,
+        document_number: veh.vin_chassis_number || veh.registration_number,
+        status: "VALID",
+        sourceModule: "MASTER",
+        sourceLabel: `RTO Transport Registry (${veh.rto_office || "State RTO"})`,
+        isDirectVaultDoc: false
+      });
+    }
 
     // 3. Insurance Policies (Master + Historical Policies)
     const insUrl = (veh as any).insurance_doc_url || (veh as any).policy_document_url || null;
-    if (veh.insurance_policy_number || insUrl || veh.insurance_expiry_date) {
+    if (!vaultDocTypes.has("INSURANCE") && (veh.insurance_policy_number || insUrl || veh.insurance_expiry_date)) {
       pushDoc({
         id: `master-doc-ins-${targetId}`,
         doc_type: "INSURANCE",
         categoryLabel: "Motor Insurance Policy",
         title: `Insurance Policy: ${veh.insurance_vendor || "Comprehensive"} (${veh.insurance_policy_number || targetPlate})`,
-        file_name: insUrl ? `Insurance_${targetPlate}.pdf` : "Scan Not Uploaded",
+        file_name: insUrl ? `Insurance_${targetPlate}.pdf` : `Insurance_${targetPlate}.pdf`,
         file_size: insUrl ? "Policy Document" : null,
         file_type: "application/pdf",
         file_url: insUrl,
@@ -2626,34 +2693,36 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
     additionalPolicies.forEach((pol) => {
       const polDocUrl = pol.policy_document_url || (pol as any).document_url || null;
-      pushDoc({
-        id: `ins-pol-${pol.id}`,
-        doc_type: "INSURANCE",
-        categoryLabel: "Insurance Renewal Policy & Bill",
-        title: `Insurance Renewal: ${pol.insurer_name} (₹${(Number(pol.premium_amount) || 0).toLocaleString()} Premium)`,
-        file_name: polDocUrl ? `Insurance_Policy_${pol.policy_number}.pdf` : "Scan Not Uploaded",
-        file_size: polDocUrl ? "Renewal Bill" : null,
-        file_type: "application/pdf",
-        file_url: polDocUrl,
-        uploaded_at: pol.start_date || pol.created_at,
-        expiry_date: pol.end_date || null,
-        document_number: pol.policy_number || null,
-        status: pol.is_active ? "VALID" : "EXPIRED",
-        sourceModule: "INSURANCE",
-        sourceLabel: `Policy Term (${pol.start_date} → ${pol.end_date})`,
-        isDirectVaultDoc: false
-      });
+      if (polDocUrl || !vaultDocTypes.has("INSURANCE")) {
+        pushDoc({
+          id: `ins-pol-${pol.id}`,
+          doc_type: "INSURANCE",
+          categoryLabel: "Insurance Renewal Policy & Bill",
+          title: `Insurance Renewal: ${pol.insurer_name} (₹${(Number(pol.premium_amount) || 0).toLocaleString()} Premium)`,
+          file_name: `Insurance_Policy_${pol.policy_number}.pdf`,
+          file_size: polDocUrl ? "Renewal Bill" : null,
+          file_type: "application/pdf",
+          file_url: polDocUrl,
+          uploaded_at: pol.start_date || pol.created_at,
+          expiry_date: pol.end_date || null,
+          document_number: pol.policy_number || null,
+          status: pol.is_active ? "VALID" : "EXPIRED",
+          sourceModule: "INSURANCE",
+          sourceLabel: `Policy Term (${pol.start_date} → ${pol.end_date})`,
+          isDirectVaultDoc: false
+        });
+      }
     });
 
     // 4. PUC Emission Certificates (Master + Historical Certificates)
     const pucUrl = (veh as any).puc_doc_url || (veh as any).certificate_doc_url || null;
-    if (veh.puc_certificate_number || pucUrl || veh.puc_expiry_date) {
+    if (!vaultDocTypes.has("PUC") && (veh.puc_certificate_number || pucUrl || veh.puc_expiry_date)) {
       pushDoc({
         id: `master-doc-puc-${targetId}`,
         doc_type: "PUC",
         categoryLabel: "PUC Certificate",
         title: `PUC Certificate (${veh.puc_certificate_number || targetPlate})`,
-        file_name: pucUrl ? `PUC_${targetPlate}.pdf` : "Scan Not Uploaded",
+        file_name: `PUC_${targetPlate}.pdf`,
         file_size: pucUrl ? "Emission Certificate" : null,
         file_type: "application/pdf",
         file_url: pucUrl,
@@ -2668,48 +2737,53 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     }
 
     additionalPucs.forEach((puc) => {
-      pushDoc({
-        id: `puc-test-${puc.id}`,
-        doc_type: "PUC",
-        categoryLabel: "PUC Renewal & Test Bill",
-        title: `PUC Certificate: ${puc.certificate_number} (${puc.testing_center_name || "Emission Center"})`,
-        file_name: puc.document_url ? `PUC_Certificate_${puc.certificate_number}.pdf` : "Scan Not Uploaded",
-        file_size: puc.document_url ? "Emission Slip" : null,
-        file_type: "application/pdf",
-        file_url: puc.document_url || null,
-        uploaded_at: puc.valid_from || puc.created_at,
-        expiry_date: puc.valid_upto || null,
-        document_number: puc.certificate_number || null,
-        status: puc.is_active ? "VALID" : "EXPIRED",
-        sourceModule: "PUC",
-        sourceLabel: `Test Center (${puc.testing_center_name || "Authorized"} • ${puc.emission_norm || "BS-VI"})`,
-        isDirectVaultDoc: false
-      });
+      const pucDocUrl = puc.document_url || null;
+      if (pucDocUrl) {
+        pushDoc({
+          id: `puc-test-${puc.id}`,
+          doc_type: "PUC",
+          categoryLabel: "PUC Renewal & Test Bill",
+          title: `PUC Certificate: ${puc.certificate_number} (${puc.testing_center_name || "Emission Center"})`,
+          file_name: `PUC_Certificate_${puc.certificate_number}.pdf`,
+          file_size: "Emission Slip",
+          file_type: "application/pdf",
+          file_url: pucDocUrl,
+          uploaded_at: puc.valid_from || puc.created_at,
+          expiry_date: puc.valid_upto || null,
+          document_number: puc.certificate_number || null,
+          status: puc.is_active ? "VALID" : "EXPIRED",
+          sourceModule: "PUC",
+          sourceLabel: `Test Center (${puc.testing_center_name || "Authorized"} • ${puc.emission_norm || "BS-VI"})`,
+          isDirectVaultDoc: false
+        });
+      }
     });
 
-    // 5. Workshop Services & Maintenance Bills
+    // 5. Workshop Services & Maintenance Bills (Only include if invoice or file exists)
     vServices.forEach((m: any) => {
       const sCenter = m.service_center || "Authorized Workshop";
       const sDate = m.service_date ? new Date(m.service_date).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" }) : "";
       const jobNum = m.job_card_number || `JOB-${m.id.slice(0, 8).toUpperCase()}`;
 
-      pushDoc({
-        id: `svc-job-${m.id}`,
-        doc_type: "MAINTENANCE",
-        categoryLabel: "Workshop Service Bill",
-        title: `Service Bill: ${m.service_type || "Periodic Inspection"} (${sCenter} • ₹${(Number(m.cost) || 0).toLocaleString()})`,
-        file_name: m.invoice_url ? `Service_Bill_${jobNum}.pdf` : "Bill Not Attached",
-        file_size: m.invoice_url ? `₹${(Number(m.cost) || 0).toLocaleString()}` : null,
-        file_type: "application/pdf",
-        file_url: m.invoice_url || null,
-        uploaded_at: m.service_date || m.created_at,
-        expiry_date: null,
-        document_number: jobNum,
-        status: "VALID",
-        sourceModule: "SERVICE",
-        sourceLabel: `Service Event (${sCenter} • ${sDate})`,
-        isDirectVaultDoc: false
-      });
+      if (m.invoice_url) {
+        pushDoc({
+          id: `svc-job-${m.id}`,
+          doc_type: "MAINTENANCE",
+          categoryLabel: "Workshop Service Bill",
+          title: `Service Bill: ${m.service_type || "Periodic Inspection"} (${sCenter} • ₹${(Number(m.cost) || 0).toLocaleString()})`,
+          file_name: `Service_Bill_${jobNum}.pdf`,
+          file_size: `₹${(Number(m.cost) || 0).toLocaleString()}`,
+          file_type: "application/pdf",
+          file_url: m.invoice_url,
+          uploaded_at: m.service_date || m.created_at,
+          expiry_date: null,
+          document_number: jobNum,
+          status: "VALID",
+          sourceModule: "SERVICE",
+          sourceLabel: `Service Event (${sCenter} • ${sDate})`,
+          isDirectVaultDoc: false
+        });
+      }
 
       if (m.attachments && Array.isArray(m.attachments)) {
         m.attachments.forEach((att: any, attIdx: number) => {
@@ -2736,52 +2810,56 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       }
     });
 
-    // 6. Installed Spare Parts Warranties & Bills
+    // 6. Installed Spare Parts Warranties & Bills (Only include if doc exists)
     vParts.forEach((p: any) => {
       const pNum = p.part_number || `PART-${p.id.slice(0, 6).toUpperCase()}`;
       const pDocUrl = p.warranty_policy_doc_url || p.invoice_url || p.document_url || null;
 
-      pushDoc({
-        id: `part-doc-${p.id}`,
-        doc_type: "PART",
-        categoryLabel: "Part Warranty & Bill",
-        title: `Part Warranty & Bill: ${p.name} (${pNum})`,
-        file_name: pDocUrl ? `Part_Warranty_${pNum}.pdf` : "Scan Not Attached",
-        file_size: pDocUrl ? `₹${(Number(p.purchase_amount) || 0).toLocaleString()}` : null,
-        file_type: "application/pdf",
-        file_url: pDocUrl,
-        uploaded_at: p.created_at,
-        expiry_date: p.warranty_expiry_date || null,
-        document_number: pNum,
-        status: "VALID",
-        sourceModule: "PART",
-        sourceLabel: `Mounted Part (${p.name} • ₹${(Number(p.purchase_amount) || 0).toLocaleString()})`,
-        isDirectVaultDoc: false
-      });
+      if (pDocUrl) {
+        pushDoc({
+          id: `part-doc-${p.id}`,
+          doc_type: "PART",
+          categoryLabel: "Part Warranty & Bill",
+          title: `Part Warranty & Bill: ${p.name} (${pNum})`,
+          file_name: `Part_Warranty_${pNum}.pdf`,
+          file_size: `₹${(Number(p.purchase_amount) || 0).toLocaleString()}`,
+          file_type: "application/pdf",
+          file_url: pDocUrl,
+          uploaded_at: p.created_at,
+          expiry_date: p.warranty_expiry_date || null,
+          document_number: pNum,
+          status: "VALID",
+          sourceModule: "PART",
+          sourceLabel: `Mounted Part (${p.name} • ₹${(Number(p.purchase_amount) || 0).toLocaleString()})`,
+          isDirectVaultDoc: false
+        });
+      }
     });
 
-    // 7. Trips Sheets, Toll Slips & Fuel Bills
+    // 7. Trips Sheets, Toll Slips & Fuel Bills (Only include if file exists)
     vTrips.forEach((t: any) => {
       const routeStr = `${t.origin} → ${t.destination}`;
       const tripNum = `TRIP-${t.id.slice(0, 8).toUpperCase()}`;
 
-      pushDoc({
-        id: `trip-sheet-${t.id}`,
-        doc_type: "TRIP",
-        categoryLabel: "Trip Sheet Voucher",
-        title: `Trip Movement Sheet: ${t.traveler_name || "Corporate"} (${routeStr})`,
-        file_name: `Trip_Sheet_${tripNum}.pdf`,
-        file_size: "Movement Voucher",
-        file_type: "application/pdf",
-        file_url: t.trip_sheet_url || null,
-        uploaded_at: t.plan_date || t.created_at,
-        expiry_date: null,
-        document_number: tripNum,
-        status: "VALID",
-        sourceModule: "TRIP",
-        sourceLabel: `Transit Route (${routeStr})`,
-        isDirectVaultDoc: false
-      });
+      if (t.trip_sheet_url) {
+        pushDoc({
+          id: `trip-sheet-${t.id}`,
+          doc_type: "TRIP",
+          categoryLabel: "Trip Sheet Voucher",
+          title: `Trip Movement Sheet: ${t.traveler_name || "Corporate"} (${routeStr})`,
+          file_name: `Trip_Sheet_${tripNum}.pdf`,
+          file_size: "Movement Voucher",
+          file_type: "application/pdf",
+          file_url: t.trip_sheet_url,
+          uploaded_at: t.plan_date || t.created_at,
+          expiry_date: null,
+          document_number: tripNum,
+          status: "VALID",
+          sourceModule: "TRIP",
+          sourceLabel: `Transit Route (${routeStr})`,
+          isDirectVaultDoc: false
+        });
+      }
 
       if (t.toll_receipt_url) {
         pushDoc({
@@ -2824,25 +2902,27 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       }
     });
 
-    // 8. Chauffeur ID & License
-    if (assignedDriver) {
-      pushDoc({
-        id: `drv-lic-${assignedDriver.id}`,
-        doc_type: "DRIVER",
-        categoryLabel: "Chauffeur Driving License",
-        title: `Driving License: ${assignedDriver.full_name} (${assignedDriver.license_number || "Driver"})`,
-        file_name: `License_${(assignedDriver.full_name || "driver").replace(/\s+/g, "_")}.pdf`,
-        file_size: "License Document",
-        file_type: "application/pdf",
-        file_url: assignedDriver.license_doc_url || null,
-        uploaded_at: assignedDriver.created_at,
-        expiry_date: assignedDriver.license_expiry_date || null,
-        document_number: assignedDriver.license_number || null,
-        status: "VALID",
-        sourceModule: "DRIVER",
-        sourceLabel: `Assigned Chauffeur (${assignedDriver.full_name})`,
-        isDirectVaultDoc: false
-      });
+    // 8. Chauffeur ID & License (Only include if file exists)
+    if (assignedDriver && (assignedDriver.license_doc_url || assignedDriver.identity_doc_url)) {
+      if (assignedDriver.license_doc_url) {
+        pushDoc({
+          id: `drv-lic-${assignedDriver.id}`,
+          doc_type: "DRIVER",
+          categoryLabel: "Chauffeur Driving License",
+          title: `Driving License: ${assignedDriver.full_name} (${assignedDriver.license_number || "Driver"})`,
+          file_name: `License_${(assignedDriver.full_name || "driver").replace(/\s+/g, "_")}.pdf`,
+          file_size: "License Document",
+          file_type: "application/pdf",
+          file_url: assignedDriver.license_doc_url,
+          uploaded_at: assignedDriver.created_at,
+          expiry_date: assignedDriver.license_expiry_date || null,
+          document_number: assignedDriver.license_number || null,
+          status: "VALID",
+          sourceModule: "DRIVER",
+          sourceLabel: `Assigned Chauffeur (${assignedDriver.full_name})`,
+          isDirectVaultDoc: false
+        });
+      }
 
       if (assignedDriver.identity_doc_url) {
         pushDoc({
@@ -2866,14 +2946,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     }
 
     // 9. Fitness, Commercial Permit, Road Tax, Purchase Invoice
-    if (veh.fitness_expiry_date || (veh as any).fitness_doc_url) {
+    if (!vaultDocTypes.has("FITNESS") && (veh.fitness_expiry_date || (veh as any).fitness_doc_url)) {
       pushDoc({
         id: `master-doc-fitness-${targetId}`,
         doc_type: "FITNESS",
         categoryLabel: "Fitness Certificate",
         title: `Transport Fitness Certificate (${targetPlate})`,
         file_name: `Fitness_${targetPlate}.pdf`,
-        file_size: "Fitness Certificate",
+        file_size: (veh as any).fitness_doc_url ? "Fitness Certificate" : null,
         file_type: "application/pdf",
         file_url: (veh as any).fitness_doc_url || null,
         uploaded_at: veh.registration_date || veh.created_at,
@@ -2886,7 +2966,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       });
     }
 
-    if ((veh as any).permit_doc_url) {
+    if (!vaultDocTypes.has("PERMIT") && (veh as any).permit_doc_url) {
       pushDoc({
         id: `master-doc-permit-${targetId}`,
         doc_type: "PERMIT",
@@ -2906,7 +2986,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       });
     }
 
-    if ((veh as any).road_tax_doc_url) {
+    if (!vaultDocTypes.has("ROAD_TAX") && (veh as any).road_tax_doc_url) {
       pushDoc({
         id: `master-doc-roadtax-${targetId}`,
         doc_type: "ROAD_TAX",
@@ -2926,7 +3006,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       });
     }
 
-    if ((veh as any).invoice_doc_url || veh.purchase_cost || veh.purchase_price) {
+    if (!vaultDocTypes.has("INVOICE") && ((veh as any).invoice_doc_url || veh.purchase_cost || veh.purchase_price)) {
       pushDoc({
         id: `master-doc-invoice-${targetId}`,
         doc_type: "INVOICE",
@@ -3098,6 +3178,71 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     return await deleteVehicleDocumentAction(documentId);
   };
 
+  const executeDirectDocUpload = async (params: {
+    file: File;
+    base64Url: string;
+    docType: string;
+    title: string;
+    documentNumber?: string | null;
+    expiryDate?: string | null;
+    replaceDocId?: string;
+  }) => {
+    if (!viewingVehicle) return;
+    setDossierUploadingDoc(true);
+
+    try {
+      if (params.replaceDocId) {
+        await deleteVehicleDocumentViaRestOrAction(params.replaceDocId);
+      }
+
+      const res = await uploadVehicleDocumentViaRestOrAction(viewingVehicle.id, {
+        doc_type: params.docType,
+        title: params.title,
+        document_number: params.documentNumber || null,
+        expiry_date: params.expiryDate || null,
+        file_name: params.file.name,
+        file_size: formatFileSize(params.file.size),
+        file_type: params.file.type || resolveMimeFromName(params.file.name),
+        file_url: params.base64Url,
+        status: "VALID"
+      });
+
+      if (res.success && res.document) {
+        setViewingVehicle((prev) => {
+          if (!prev) return null;
+          let updatedDocs = prev.documents || [];
+          if (params.replaceDocId) {
+            updatedDocs = updatedDocs.filter((d) => d.id !== params.replaceDocId);
+          }
+          return { ...prev, documents: [res.document!, ...updatedDocs] };
+        });
+        setVehicles((prev) =>
+          prev.map((v) => {
+            if (v.id !== viewingVehicle.id) return v;
+            let updatedDocs = v.documents || [];
+            if (params.replaceDocId) {
+              updatedDocs = updatedDocs.filter((d) => d.id !== params.replaceDocId);
+            }
+            return { ...v, documents: [res.document!, ...updatedDocs] };
+          })
+        );
+        triggerToast("Document successfully archived into vehicle vault.");
+        setDossierNewDocTitle("");
+        setDossierNewDocNumber("");
+        setDossierNewDocExpiry("");
+        setIsDossierAddDocOpen(false);
+      } else {
+        triggerToast(res.error || `Failed to save ${params.file.name} to vehicle vault.`, true);
+      }
+    } catch (err: any) {
+      triggerToast(err.message || `Error saving ${params.file.name}`, true);
+    } finally {
+      setDossierUploadingDoc(false);
+      const fileInput = document.getElementById("dossier-direct-doc-file-input") as HTMLInputElement;
+      if (fileInput) fileInput.value = "";
+    }
+  };
+
   const handleDossierDirectDocUpload = async (fileList: FileList | File[]) => {
     if (!viewingVehicle) return;
     const files = Array.from(fileList);
@@ -3121,102 +3266,184 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
     if (!validFiles.length) return;
 
-    setDossierUploadingDoc(true);
-    const newlyAddedDocs: VehicleDocumentRecord[] = [];
+    const file = validFiles[0];
+    const typeOption = VEHICLE_DOC_TYPES.find((t) => t.value === dossierNewDocType);
+    const resolvedTitle = dossierNewDocTitle.trim() || `${typeOption?.label || "Vehicle Document"} (${viewingVehicle.registration_number})`;
+    const docNumber = dossierNewDocNumber.trim() || null;
+    const expiryDate = dossierNewDocExpiry || null;
 
-    for (const file of validFiles) {
-      try {
-        const base64Url = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = (e) => resolve((e.target?.result as string) || "");
-          reader.onerror = (e) => reject(e);
-          reader.readAsDataURL(file);
-        });
-
-        if (!base64Url) {
-          triggerToast(`Failed to read file: ${file.name}`, true);
-          continue;
-        }
-
-        const typeOption = VEHICLE_DOC_TYPES.find((t) => t.value === dossierNewDocType);
-        const resolvedTitle = dossierNewDocTitle.trim() || `${typeOption?.label || "Vehicle Document"} - ${file.name.replace(/\.[^/.]+$/, "")}`;
-
-        const res = await uploadVehicleDocumentViaRestOrAction(viewingVehicle.id, {
-          doc_type: dossierNewDocType,
-          title: resolvedTitle,
-          document_number: dossierNewDocNumber.trim() || null,
-          expiry_date: dossierNewDocExpiry || null,
-          file_name: file.name,
-          file_size: formatFileSize(file.size),
-          file_type: file.type || resolveMimeFromName(file.name),
-          file_url: base64Url,
-          status: "VALID"
-        });
-
-        if (res.success && res.document) {
-          newlyAddedDocs.push(res.document);
-        } else {
-          triggerToast(res.error || `Failed to save ${file.name} to vehicle vault.`, true);
-        }
-      } catch (err: any) {
-        triggerToast(err.message || `Error reading ${file.name}`, true);
-      }
-    }
-
-    if (newlyAddedDocs.length > 0) {
-      setViewingVehicle((prev) => {
-        if (!prev) return null;
-        const updatedDocs = [...newlyAddedDocs, ...(prev.documents || [])];
-        return { ...prev, documents: updatedDocs };
+    let base64Url = "";
+    try {
+      base64Url = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve((e.target?.result as string) || "");
+        reader.onerror = (e) => reject(e);
+        reader.readAsDataURL(file);
       });
-      setVehicles((prev) =>
-        prev.map((v) =>
-          v.id === viewingVehicle.id
-            ? { ...v, documents: [...newlyAddedDocs, ...(v.documents || [])] }
-            : v
-        )
-      );
-      triggerToast(
-        newlyAddedDocs.length === 1
-          ? "Document successfully archived into vehicle vault."
-          : `${newlyAddedDocs.length} documents successfully archived into vehicle vault.`
-      );
-      setDossierNewDocTitle("");
-      setDossierNewDocNumber("");
-      setDossierNewDocExpiry("");
-      setIsDossierAddDocOpen(false);
+    } catch (err: any) {
+      triggerToast(err.message || `Error reading ${file.name}`, true);
+      return;
     }
 
-    setDossierUploadingDoc(false);
+    if (!base64Url) {
+      triggerToast(`Failed to read file: ${file.name}`, true);
+      return;
+    }
 
-    // Reset input element value so re-selecting same file triggers change
+    // Duplicate detection against existing vehicle documents
+    const existingDocs = viewingVehicle.documents || [];
+    const cleanBaseCandidate = resolvedTitle.replace(/\s*\(v?\d+(?:\.\d+)?\)\s*$/i, "").trim().toLowerCase();
+    
+    const matchedExisting = existingDocs.find((d) => {
+      const sameType = d.doc_type && d.doc_type.toUpperCase() === dossierNewDocType.toUpperCase();
+      const existingBase = (d.title || "").replace(/\s*\(v?\d+(?:\.\d+)?\)\s*$/i, "").trim().toLowerCase();
+      const sameTitle = existingBase && existingBase === cleanBaseCandidate;
+      const sameFileName = d.file_name && d.file_name.toLowerCase().trim() === file.name.toLowerCase().trim();
+      const sameDocNumber = docNumber && d.document_number && d.document_number.toLowerCase().trim() === docNumber.toLowerCase().trim();
+      return sameType || sameTitle || sameFileName || sameDocNumber;
+    });
+
+    if (matchedExisting) {
+      const versionInfo = computeNextDocVersion(
+        matchedExisting.title || resolvedTitle,
+        existingDocs.filter((d) => d.doc_type === dossierNewDocType),
+        dossierNewDocType
+      );
+
+      setDuplicateDocPrompt({
+        file,
+        base64Url,
+        docType: dossierNewDocType,
+        docTitle: resolvedTitle,
+        documentNumber: docNumber,
+        expiryDate,
+        existingDoc: matchedExisting,
+        currentVersion: versionInfo.currentVersion,
+        nextVersion: versionInfo.nextVersion,
+        baseTitle: versionInfo.baseTitle
+      });
+      return;
+    }
+
+    // No duplicate detected -> execute normal upload
+    await executeDirectDocUpload({
+      file,
+      base64Url,
+      docType: dossierNewDocType,
+      title: resolvedTitle,
+      documentNumber: docNumber,
+      expiryDate
+    });
+  };
+
+  const handleConfirmVersionUpload = async () => {
+    if (!duplicateDocPrompt) return;
+    const { file, base64Url, docType, baseTitle, nextVersion, documentNumber, expiryDate } = duplicateDocPrompt;
+    const versionedTitle = `${baseTitle} (${nextVersion})`;
+
+    setDuplicateDocPrompt(null);
+    await executeDirectDocUpload({
+      file,
+      base64Url,
+      docType,
+      title: versionedTitle,
+      documentNumber,
+      expiryDate
+    });
+    triggerToast(`Document uploaded successfully as Version ${nextVersion}`);
+  };
+
+  const handleConfirmReplaceUpload = async () => {
+    if (!duplicateDocPrompt) return;
+    const { file, base64Url, docType, docTitle, documentNumber, expiryDate, existingDoc } = duplicateDocPrompt;
+
+    setDuplicateDocPrompt(null);
+    await executeDirectDocUpload({
+      file,
+      base64Url,
+      docType,
+      title: docTitle,
+      documentNumber,
+      expiryDate,
+      replaceDocId: existingDoc.id
+    });
+    triggerToast("Existing document replaced successfully with new scan.");
+  };
+
+  const handleCancelDuplicateUpload = () => {
+    setDuplicateDocPrompt(null);
     const fileInput = document.getElementById("dossier-direct-doc-file-input") as HTMLInputElement;
     if (fileInput) fileInput.value = "";
   };
 
-  const handleDossierDeleteDocument = async (docId: string) => {
+  const handleUniversalDeleteDocument = async (doc: AggregatedVehicleDoc) => {
     if (!viewingVehicle) return;
-    if (!confirm("Are you sure you want to permanently delete this document from the vehicle vault?")) {
-      return;
-    }
+    const isVaultDoc = doc.isDirectVaultDoc || doc.id.startsWith("vdoc-");
+    const confirmMsg = `Are you sure you want to permanently delete "${doc.title || doc.file_name}" from the vehicle vault?`;
+    if (!confirm(confirmMsg)) return;
+
     setDossierUploadingDoc(true);
     try {
-      const res = await deleteVehicleDocumentViaRestOrAction(docId);
-      if (res.success) {
+      if (isVaultDoc) {
+        const res = await deleteVehicleDocumentViaRestOrAction(doc.id);
+        if (res.success) {
+          setViewingVehicle((prev) => {
+            if (!prev) return null;
+            return { ...prev, documents: (prev.documents || []).filter((d) => d.id !== doc.id) };
+          });
+          setVehicles((prev) =>
+            prev.map((v) =>
+              v.id === viewingVehicle.id
+                ? { ...v, documents: (v.documents || []).filter((d) => d.id !== doc.id) }
+                : v
+            )
+          );
+          triggerToast("Document deleted successfully from vehicle vault.");
+        } else {
+          triggerToast(res.error || "Failed to delete document.", true);
+        }
+      } else if (doc.id.startsWith("master-doc-")) {
+        const updates: any = {};
+        if (doc.doc_type === "RC") updates.rc_doc_url = null;
+        else if (doc.doc_type === "INSURANCE") updates.insurance_doc_url = null;
+        else if (doc.doc_type === "PUC") updates.puc_doc_url = null;
+        else if (doc.doc_type === "FITNESS") updates.fitness_doc_url = null;
+        else if (doc.doc_type === "PERMIT") updates.permit_doc_url = null;
+        else if (doc.doc_type === "ROAD_TAX") updates.road_tax_doc_url = null;
+        else if (doc.doc_type === "INVOICE") updates.invoice_doc_url = null;
+
+        const res = await updateVehicleAction(viewingVehicle.id, updates);
+        if (res.success) {
+          setViewingVehicle((prev) => prev ? { ...prev, ...updates } : null);
+          setVehicles((prev) => prev.map((v) => v.id === viewingVehicle.id ? { ...v, ...updates } : v));
+          triggerToast("Document removed successfully.");
+        } else {
+          triggerToast(res.error || "Failed to remove document.", true);
+        }
+      } else if (doc.id.startsWith("ins-pol-")) {
+        const polId = doc.id.replace("ins-pol-", "");
+        const res = await deleteVehicleInsurancePolicyAction(polId, viewingVehicle.id);
+        if (res.success) {
+          triggerToast("Insurance policy document deleted.");
+          loadAllData(true);
+        } else {
+          triggerToast(res.error || "Failed to delete policy.", true);
+        }
+      } else if (doc.id.startsWith("puc-test-")) {
+        const pucId = doc.id.replace("puc-test-", "");
+        const res = await deleteVehiclePucCertificateAction(pucId, viewingVehicle.id);
+        if (res.success) {
+          triggerToast("PUC certificate document deleted.");
+          loadAllData(true);
+        } else {
+          triggerToast(res.error || "Failed to delete certificate.", true);
+        }
+      } else {
         setViewingVehicle((prev) => {
           if (!prev) return null;
-          return { ...prev, documents: (prev.documents || []).filter((d) => d.id !== docId) };
+          return { ...prev, documents: (prev.documents || []).filter((d) => d.id !== doc.id) };
         });
-        setVehicles((prev) =>
-          prev.map((v) =>
-            v.id === viewingVehicle.id
-              ? { ...v, documents: (v.documents || []).filter((d) => d.id !== docId) }
-              : v
-          )
-        );
-        triggerToast("Document removed from vehicle vault.");
-      } else {
-        triggerToast(res.error || "Failed to delete document.", true);
+        triggerToast("Document removed.");
       }
     } catch (err: any) {
       triggerToast(err.message || "Failed to delete document.", true);
@@ -18403,6 +18630,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         badgeColor: "bg-slate-500/10 text-slate-600 border-slate-500/20"
                       };
                       const daysRemaining = doc.expiry_date ? calculateDaysRemaining(doc.expiry_date) : null;
+                      const versionTag = extractVersionFromTitle(doc.title || "");
+
                       return (
                         <div
                           key={doc.id || idx}
@@ -18415,6 +18644,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                 <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${typeConfig.badgeColor}`}>
                                   {doc.categoryLabel || typeConfig.label}
                                 </span>
+                                {versionTag && (
+                                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-700 dark:text-purple-400 border border-purple-500/25">
+                                    {versionTag}
+                                  </span>
+                                )}
                                 {doc.file_url ? (
                                   <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25">
                                     Archived File
@@ -18549,14 +18783,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                 </AppButton>
                               )}
 
-                              {doc.isDirectVaultDoc && canEditVehicle && (
+                              {canEditVehicle && (
                                 <AppButton
                                   type="button"
                                   variant="outline"
                                   size="icon-sm"
-                                  onClick={() => handleDossierDeleteDocument(doc.id)}
+                                  onClick={() => handleUniversalDeleteDocument(doc)}
                                   className="h-7 w-7 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10"
-                                  title="Delete Document from Vault"
+                                  title="Delete Document"
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
                                 </AppButton>
@@ -20084,6 +20318,120 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   </AppButton>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------------------------- */}
+      {/* DUPLICATE DOCUMENT VERSIONING PROMPT MODAL */}
+      {/* ---------------------------------------------------------------------- */}
+      {duplicateDocPrompt && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-surface border border-border rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="p-4 border-b border-border flex items-center justify-between bg-amber-500/10">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                  <Layers className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-foreground">Document Already Available</h3>
+                  <p className="text-[11px] text-muted-foreground">
+                    {viewingVehicle?.registration_number} • Duplicate Document Detected
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleCancelDuplicateUpload}
+                className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/5"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 space-y-4 overflow-y-auto">
+              <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-500/30 text-xs text-amber-900 dark:text-amber-200 leading-relaxed">
+                A document matching <strong className="font-bold text-foreground">{duplicateDocPrompt.baseTitle || duplicateDocPrompt.docType}</strong> is already archived for this vehicle. Do you want to continue and upload this file with Version number?
+              </div>
+
+              {/* Side-by-side / Comparison Box */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                {/* Existing Document */}
+                <div className="p-3 rounded-xl border border-border bg-slate-50/70 dark:bg-slate-900/40 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Currently on File</span>
+                    <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-foreground">
+                      {duplicateDocPrompt.currentVersion}
+                    </span>
+                  </div>
+                  <p className="font-semibold text-foreground truncate" title={duplicateDocPrompt.existingDoc.title || duplicateDocPrompt.existingDoc.file_name}>
+                    {duplicateDocPrompt.existingDoc.title || duplicateDocPrompt.existingDoc.file_name}
+                  </p>
+                  <div className="text-[11px] text-muted-foreground space-y-0.5">
+                    <div className="truncate font-mono">{duplicateDocPrompt.existingDoc.file_name}</div>
+                    {duplicateDocPrompt.existingDoc.uploaded_at && (
+                      <div>Archived: {new Date(duplicateDocPrompt.existingDoc.uploaded_at).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" })}</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* New Document to Upload */}
+                <div className="p-3 rounded-xl border border-emerald-500/40 bg-emerald-500/5 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 font-semibold">New Version</span>
+                    <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                      {duplicateDocPrompt.nextVersion}
+                    </span>
+                  </div>
+                  <p className="font-semibold text-foreground truncate" title={`${duplicateDocPrompt.baseTitle} (${duplicateDocPrompt.nextVersion})`}>
+                    {`${duplicateDocPrompt.baseTitle} (${duplicateDocPrompt.nextVersion})`}
+                  </p>
+                  <div className="text-[11px] text-muted-foreground space-y-0.5">
+                    <div className="truncate font-mono">{duplicateDocPrompt.file.name}</div>
+                    <div>Size: {formatFileSize(duplicateDocPrompt.file.size)}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="p-4 border-t border-border bg-slate-50/50 dark:bg-slate-900/30 flex items-center justify-end gap-2 flex-wrap">
+              <AppButton
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleCancelDuplicateUpload}
+                className="text-xs h-8 px-3"
+                disabled={dossierUploadingDoc}
+              >
+                Cancel
+              </AppButton>
+
+              <AppButton
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleConfirmReplaceUpload}
+                className="text-xs h-8 px-3 text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/10"
+                disabled={dossierUploadingDoc}
+              >
+                Replace Existing
+              </AppButton>
+
+              <AppButton
+                type="button"
+                variant="primary"
+                size="sm"
+                onClick={handleConfirmVersionUpload}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 px-3.5 gap-1.5 font-semibold shadow-xs"
+                disabled={dossierUploadingDoc}
+              >
+                <Layers className="h-3.5 w-3.5" />
+                <span>Upload as Version {duplicateDocPrompt.nextVersion}</span>
+              </AppButton>
             </div>
           </div>
         </div>
