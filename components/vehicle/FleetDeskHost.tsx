@@ -3053,6 +3053,51 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     };
   }, [viewingVehicle, maintenance, parts, trips, drivers, viewingVehiclePolicies, viewingVehiclePucs, computeVehicleAggregatedDocs]);
 
+  const uploadVehicleDocumentViaRestOrAction = async (
+    vehicleId: string,
+    doc: {
+      doc_type: string;
+      title?: string;
+      document_number?: string | null;
+      expiry_date?: string | null;
+      file_name: string;
+      file_size?: string | null;
+      file_type?: string | null;
+      file_url: string;
+      status?: string | null;
+    }
+  ): Promise<{ success: boolean; document?: VehicleDocumentRecord; error?: string }> => {
+    try {
+      const response = await fetch("/api/vehicle/documents/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vehicleId, doc })
+      });
+      if (response.ok) {
+        return await response.json();
+      }
+    } catch (restErr) {
+      console.warn("[FleetDeskHost] REST document upload failed, attempting action fallback:", restErr);
+    }
+    return await createVehicleDocumentAction(vehicleId, doc);
+  };
+
+  const deleteVehicleDocumentViaRestOrAction = async (documentId: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const response = await fetch("/api/vehicle/documents/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ documentId })
+      });
+      if (response.ok) {
+        return await response.json();
+      }
+    } catch (restErr) {
+      console.warn("[FleetDeskHost] REST document delete failed, attempting action fallback:", restErr);
+    }
+    return await deleteVehicleDocumentAction(documentId);
+  };
+
   const handleDossierDirectDocUpload = async (fileList: FileList | File[]) => {
     if (!viewingVehicle) return;
     const files = Array.from(fileList);
@@ -3096,7 +3141,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         const typeOption = VEHICLE_DOC_TYPES.find((t) => t.value === dossierNewDocType);
         const resolvedTitle = dossierNewDocTitle.trim() || `${typeOption?.label || "Vehicle Document"} - ${file.name.replace(/\.[^/.]+$/, "")}`;
 
-        const res = await createVehicleDocumentAction(viewingVehicle.id, {
+        const res = await uploadVehicleDocumentViaRestOrAction(viewingVehicle.id, {
           doc_type: dossierNewDocType,
           title: resolvedTitle,
           document_number: dossierNewDocNumber.trim() || null,
@@ -3156,7 +3201,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     }
     setDossierUploadingDoc(true);
     try {
-      const res = await deleteVehicleDocumentAction(docId);
+      const res = await deleteVehicleDocumentViaRestOrAction(docId);
       if (res.success) {
         setViewingVehicle((prev) => {
           if (!prev) return null;
@@ -3210,7 +3255,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       if (viewingVehicle && previewAttachment) {
         const docType = (previewAttachment as any).doc_type || "OTHER";
         const docTitle = (previewAttachment as any).title || file.name;
-        const res = await createVehicleDocumentAction(viewingVehicle.id, {
+        const res = await uploadVehicleDocumentViaRestOrAction(viewingVehicle.id, {
           doc_type: docType,
           title: docTitle,
           document_number: (previewAttachment as any).document_number || null,
