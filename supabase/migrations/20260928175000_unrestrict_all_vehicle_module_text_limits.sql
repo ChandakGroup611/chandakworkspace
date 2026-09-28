@@ -8,6 +8,9 @@
 --              so that descriptions, notes, scopes, and specifications have no character length restrictions.
 -- ==============================================================================
 
+-- 0. Drop dependent views first so column types can be altered cleanly
+DROP VIEW IF EXISTS public.v_vehicle_renewal_history CASCADE;
+
 -- 1. Vehicles (Fleet Master) Table
 DO $$
 BEGIN
