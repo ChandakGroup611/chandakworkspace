@@ -222,19 +222,66 @@ export const POPULAR_BRANDS: Record<string, BrandConfig> = {
       "iQube EV"
     ],
     variants: ["SmartXonnect", "Disc", "Race Edition", "Standard"]
+  },
+  "Kia": {
+    category: "CAR",
+    models: [
+      "Seltos",
+      "Sonet",
+      "Carens",
+      "EV6",
+      "Carnival"
+    ],
+    variants: ["GTX+ 1.5 Turbo DCT", "HTX+", "HTK+", "GT Line"]
+  },
+  "MG": {
+    category: "CAR",
+    models: [
+      "Hector",
+      "Hector Plus",
+      "ZS EV",
+      "Astor",
+      "Comet EV",
+      "Gloster",
+      "Windsor EV"
+    ],
+    variants: ["Savvy Pro", "Sharp Pro", "Smart", "Excite"]
+  },
+  "BYD": {
+    category: "CAR",
+    models: [
+      "Atto 3",
+      "Seal",
+      "e6"
+    ],
+    variants: ["Superior", "Dynamic", "Premium"]
+  },
+  "Ashok Leyland": {
+    category: "COMMERCIAL",
+    models: [
+      "Dost+",
+      "Bada Dost",
+      "Ecomet",
+      "Partner",
+      "AVTR 3120"
+    ],
+    variants: ["High Deck", "Cab Chassis", "Standard"]
   }
 };
 
 export const TOP_BRAND_NAMES = [
   "Toyota",
-  "Maruti Suzuki",
   "Tata",
   "Mahindra",
+  "Maruti Suzuki",
   "Hyundai",
+  "Kia",
   "Honda",
+  "MG",
   "Bajaj",
-  "Hero",
-  "Royal Enfield"
+  "Royal Enfield",
+  "TVS",
+  "Hero"
 ];
 
 // Standard Indian State Codes (All 28 States & 8 Union Territories)

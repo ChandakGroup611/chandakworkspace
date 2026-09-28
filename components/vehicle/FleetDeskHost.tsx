@@ -87,6 +87,7 @@ import {
   normalizeDateToInputFormat,
   isElectricFuel
 } from "./vehicleQuickPicks";
+import { VehicleBrandLogo } from "./VehicleBrandLogo";
 import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
@@ -6662,12 +6663,20 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   </div>
                 </div>
 
-                {/* Authentic HSRP Visual License Plate Mockup */}
-                <div className="lg:col-span-5 flex flex-col justify-center">
-                  <span className="text-xs font-semibold text-muted-foreground mb-1.5 flex items-center gap-1">
-                    <ShieldCheck className="h-3.5 w-3.5 text-blue-500" />
-                    <span>Official HSRP License Plate Preview</span>
-                  </span>
+                {/* Authentic HSRP Visual License Plate Mockup & Brand Badge */}
+                <div className="lg:col-span-5 flex flex-col justify-center space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                      <ShieldCheck className="h-3.5 w-3.5 text-blue-500" />
+                      <span>Official HSRP License Plate & Vehicle Preview</span>
+                    </span>
+                    {newVehicleMake && (
+                      <span className="text-[11px] font-bold text-theme-btn-primary flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-theme-btn-primary/10 border border-theme-btn-primary/20">
+                        <VehicleBrandLogo brand={newVehicleMake} size={14} />
+                        <span>{newVehicleMake}</span>
+                      </span>
+                    )}
+                  </div>
                   <div className="h-11 px-3 bg-white dark:bg-slate-100 border-2 border-slate-900 rounded-md flex items-center justify-between shadow-xs select-none">
                     <div className="flex items-center gap-2">
                       {/* Blue IND Badge */}
@@ -6680,8 +6689,13 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         {newPlateInfo.formattedPlate || newVehiclePlate || "MH-02-FE-4281"}
                       </span>
                     </div>
-                    {/* Laser Hologram Badge */}
-                    <div className="flex items-center gap-1.5">
+                    {/* Brand Logo & Laser Hologram Badge */}
+                    <div className="flex items-center gap-2">
+                      {newVehicleMake && (
+                        <div className="flex items-center" title={`Manufacturer: ${newVehicleMake}`}>
+                          <VehicleBrandLogo brand={newVehicleMake} size={20} />
+                        </div>
+                      )}
                       <span className="h-4 w-4 rounded-full bg-gradient-to-tr from-amber-400 via-teal-400 to-indigo-500 opacity-90 border border-slate-400/80 shadow-2xs" title="Authentic Parivahan Laser Hologram" />
                     </div>
                   </div>
@@ -6816,25 +6830,39 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-semibold text-foreground">Make / Brand *</label>
+                    <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                      {newVehicleMake ? (
+                        <VehicleBrandLogo brand={newVehicleMake} size={16} />
+                      ) : (
+                        <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                      )}
+                      <span>Make / Brand *</span>
+                    </label>
                     <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Sparkles className="h-3 w-3 text-amber-500" />
                       Quick-Pick Available
                     </span>
                   </div>
-                  <AppInput 
-                    value={newVehicleMake} 
-                    onChange={(e) => setNewVehicleMake(e.target.value)} 
-                    list="fleet-popular-makes-form"
-                    required
-                  />
+                  <div className="relative flex items-center">
+                    <AppInput 
+                      value={newVehicleMake} 
+                      onChange={(e) => setNewVehicleMake(e.target.value)} 
+                      list="fleet-popular-makes-form"
+                      required
+                      className={newVehicleMake ? "pr-9" : ""}
+                    />
+                    {newVehicleMake && (
+                      <div className="absolute right-2.5 flex items-center pointer-events-none">
+                        <VehicleBrandLogo brand={newVehicleMake} size={18} />
+                      </div>
+                    )}
+                  </div>
                   <datalist id="fleet-popular-makes-form">
                     {Object.keys(POPULAR_BRANDS).map((b) => (
                       <option key={b} value={b} />
                     ))}
                   </datalist>
 
-                  {/* Brand Quick-Pick Chips */}
+                  {/* Brand Quick-Pick Chips with Official Emblems */}
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {TOP_BRAND_NAMES.map((brand) => {
                       const isSelected = (newVehicleMake || "").trim().toLowerCase() === brand.toLowerCase();
@@ -6857,12 +6885,13 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                               }
                             }
                           }}
-                          className={`h-7 px-2.5 text-xs font-medium ${
+                          className={`h-7 px-2.5 text-xs font-medium inline-flex items-center gap-1.5 ${
                             isSelected
                               ? "bg-theme-btn-primary text-theme-btn-primary-text border-theme-btn-primary font-semibold shadow-xs"
                               : "border-border text-foreground hover:border-theme-btn-primary/40 bg-surface"
                           }`}
                         >
+                          <VehicleBrandLogo brand={brand} size={14} />
                           <span>{brand}</span>
                         </AppButton>
                       );
@@ -8497,9 +8526,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         <div className="min-w-0 pr-2">
                           <div className="flex items-center gap-2 flex-wrap">
                             {renderHsrpPlate(veh.registration_number)}
-                            <span className="font-semibold text-foreground group-hover:text-theme-btn-primary transition-colors truncate">
-                              {veh.make} {veh.model}
-                            </span>
+                            <div className="flex items-center gap-1.5 font-semibold text-foreground group-hover:text-theme-btn-primary transition-colors truncate">
+                              <VehicleBrandLogo brand={veh.make} size={16} />
+                              <span>{veh.make} {veh.model}</span>
+                            </div>
                             {veh.fuel_type && (
                               <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full border bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/25">
                                 {veh.fuel_type}
@@ -11620,17 +11650,31 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <label className="font-semibold block">Make (Brand)</label>
+                      <label className="font-semibold flex items-center gap-1.5">
+                        {editVehicleMake ? (
+                          <VehicleBrandLogo brand={editVehicleMake} size={15} />
+                        ) : (
+                          <Sparkles className="h-3 w-3 text-amber-500" />
+                        )}
+                        <span>Make (Brand)</span>
+                      </label>
                       <span className="text-xs text-muted-foreground flex items-center gap-0.5">
-                        <Sparkles className="h-2.5 w-2.5 text-amber-500" />
                         Quick-pick
                       </span>
                     </div>
-                    <AppInput 
-                      value={editVehicleMake} 
-                      onChange={(e) => setEditVehicleMake(e.target.value)} 
-                      list="fleet-popular-makes-edit"
-                    />
+                    <div className="relative flex items-center">
+                      <AppInput 
+                        value={editVehicleMake} 
+                        onChange={(e) => setEditVehicleMake(e.target.value)} 
+                        list="fleet-popular-makes-edit"
+                        className={editVehicleMake ? "pr-9" : ""}
+                      />
+                      {editVehicleMake && (
+                        <div className="absolute right-2.5 flex items-center pointer-events-none">
+                          <VehicleBrandLogo brand={editVehicleMake} size={16} />
+                        </div>
+                      )}
+                    </div>
                     <datalist id="fleet-popular-makes-edit">
                       {Object.keys(POPULAR_BRANDS).map((b) => (
                         <option key={b} value={b} />
@@ -11657,12 +11701,13 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                 }
                               }
                             }}
-                            className={`h-7 px-2.5 text-xs font-medium ${
+                            className={`h-7 px-2 text-xs font-medium inline-flex items-center gap-1 ${
                               isSelected
                                 ? "bg-theme-btn-primary text-theme-btn-primary-text border-theme-btn-primary shadow-xs font-semibold"
                                 : "border-border text-foreground hover:border-theme-btn-primary/40 bg-surface"
                             }`}
                           >
+                            <VehicleBrandLogo brand={brand} size={13} />
                             <span>{brand}</span>
                           </AppButton>
                         );

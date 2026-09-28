@@ -193,6 +193,16 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
     e.preventDefault();
     if (isLoading) return;
 
+    if (!title.trim()) {
+      toast.warning("Task Title is mandatory. Please enter a task title.");
+      return;
+    }
+
+    if (initialParentTaskId && !parentTaskId) {
+      toast.warning("Parent Task is mandatory for creating a Sub-Task. Please select or maintain a valid parent task.");
+      return;
+    }
+
     if (!description.trim()) {
       toast.warning("Execution Notes (Remark) is mandatory.");
       return;
@@ -304,16 +314,33 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
               <div className="space-y-1.5">
-                <label className="text-sm font-bold text-muted uppercase tracking-wider">Parent Task Link</label>
+                <label className="text-sm font-bold text-muted uppercase tracking-wider flex items-center justify-between">
+                  <span className="flex items-center gap-1">
+                    <span>Parent Task Link</span>
+                    {initialParentTaskId ? (
+                      <span className="text-danger font-bold">*</span>
+                    ) : (
+                      <span className="text-xs font-normal text-muted-foreground">(Optional)</span>
+                    )}
+                  </span>
+                  {initialParentTaskId && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 uppercase tracking-wider">
+                      Sub-Task Mode
+                    </span>
+                  )}
+                </label>
                 <select
-                  className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${ "theme-input-structural text-foreground" }`}
+                  className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed theme-input-structural text-foreground`}
                   value={parentTaskId}
                   onChange={e => setParentTaskId(e.target.value)}
                   disabled={!!initialParentTaskId}
+                  required={!!initialParentTaskId}
                 >
-                  <option value="">-- No Parent (Independent) --</option>
+                  {!initialParentTaskId && <option value="">-- No Parent (Independent Task) --</option>}
                   {availableParentTasks.map(t => (
-                    <option key={t.id} value={t.id}>{t.title || t.subject}</option>
+                    <option key={t.id} value={t.id}>
+                      {t.code ? `[${t.code}] ` : ""}{t.title || t.subject}
+                    </option>
                   ))}
                 </select>
               </div>
