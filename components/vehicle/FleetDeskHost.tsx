@@ -14849,7 +14849,111 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           isSubmitting={modalSubmitting}
         >
           <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="font-semibold block mb-1 text-xs text-foreground">
+                  Underwriter / Provider Name *
+                </label>
+                <AppInput
+                  value={vendorFormName}
+                  onChange={(e) => setVendorFormName(e.target.value)}
+                  placeholder="e.g. ICICI Lombard, Tata AIG, HDFC ERGO"
+                  required
+                  className="h-10 text-xs"
+                />
+              </div>
+              <div>
+                <label className="font-semibold block mb-1 text-xs text-foreground">
+                  Vendor Identifier Code
+                </label>
+                <AppInput
+                  value={vendorFormCode}
+                  onChange={(e) => setVendorFormCode(e.target.value)}
+                  placeholder="e.g. ICICI_LOMBARD (Auto-generated if blank)"
+                  className="h-10 text-xs uppercase"
+                />
+              </div>
+            </div>
 
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="font-semibold block mb-1 text-xs text-foreground">
+                  Contact Person / Broker RM
+                </label>
+                <AppInput
+                  value={vendorFormContactPerson}
+                  onChange={(e) => setVendorFormContactPerson(e.target.value)}
+                  placeholder="e.g. Rajesh Sharma"
+                  className="h-10 text-xs"
+                />
+              </div>
+              <div>
+                <label className="font-semibold block mb-1 text-xs text-foreground">
+                  Direct Phone / Mobile
+                </label>
+                <AppInput
+                  value={vendorFormContactNumber}
+                  onChange={(e) => setVendorFormContactNumber(e.target.value)}
+                  placeholder="e.g. +91 98200 12345"
+                  className="h-10 text-xs"
+                />
+              </div>
+              <div>
+                <label className="font-semibold block mb-1 text-xs text-foreground">
+                  Support / Claims Email
+                </label>
+                <AppInput
+                  value={vendorFormEmail}
+                  onChange={(e) => setVendorFormEmail(e.target.value)}
+                  placeholder="e.g. corporate.claims@insurer.com"
+                  type="email"
+                  className="h-10 text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="font-semibold block mb-1 text-xs text-foreground">
+                  24x7 Toll-Free Claim Helpline
+                </label>
+                <AppInput
+                  value={vendorFormSupportTollFree}
+                  onChange={(e) => setVendorFormSupportTollFree(e.target.value)}
+                  placeholder="e.g. 1800-2666 / 1800-209-5858"
+                  className="h-10 text-xs"
+                />
+              </div>
+              <div>
+                <label className="font-semibold block mb-1 text-xs text-foreground">
+                  Official Website / Portal URL
+                </label>
+                <AppInput
+                  value={vendorFormWebsite}
+                  onChange={(e) => setVendorFormWebsite(e.target.value)}
+                  placeholder="e.g. https://www.icicilombard.com"
+                  className="h-10 text-xs"
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="font-semibold block text-xs text-foreground">
+                  Underwriter Description, Branch Address & Notes
+                </label>
+                <span className="text-xs text-muted-foreground">
+                  {vendorFormDesc.length > 0 ? `${vendorFormDesc.length} characters (unrestricted)` : "Unrestricted text"}
+                </span>
+              </div>
+              <textarea
+                value={vendorFormDesc}
+                onChange={(e) => setVendorFormDesc(e.target.value)}
+                rows={3}
+                placeholder="Enter corporate tie-up terms, cashless garage networks, claim filing escalation matrix, branch address or key account details..."
+                className="w-full rounded-lg border border-border bg-surface p-2.5 text-xs font-medium text-foreground focus:outline-none focus:border-theme-btn-primary resize-y"
+              />
+            </div>
           </div>
         </TransactionFormLayout>
       )}
