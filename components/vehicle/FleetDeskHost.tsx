@@ -9068,9 +9068,12 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         >
                           {/* 1. Vehicle Name & Regn No */}
                           <AppTableCell className="p-3.5">
-                            {renderHsrpPlate(veh.registration_number)}
-                            <div className="font-semibold text-foreground mt-1.5 group-hover:text-theme-btn-primary transition-colors text-sm">
-                              {veh.nickname || `${veh.make} ${veh.model}`}
+                            <div className="flex items-center gap-2">
+                              {renderHsrpPlate(veh.registration_number)}
+                            </div>
+                            <div className="font-semibold text-foreground mt-1.5 group-hover:text-theme-btn-primary transition-colors text-sm flex items-center gap-1.5">
+                              <VehicleBrandLogo brand={veh.make} model={veh.model} size={16} />
+                              <span className="truncate">{veh.nickname || `${veh.make} ${veh.model}`}</span>
                             </div>
                             <div className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
                               <span>{veh.make} {veh.model}</span>
@@ -12893,7 +12896,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                               const sel = vehicles.find((v) => v.id === newMaintVehicleId);
                               if (!sel) return null;
                               return (
-                                <div className="text-xs text-muted-foreground flex items-center gap-2">
+                                <div className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
+                                  <VehicleBrandLogo brand={sel.make} model={sel.model} size={15} />
+                                  <span><strong className="text-foreground">{sel.make} {sel.model}</strong></span>
+                                  <span>•</span>
                                   <span>Current Odo: <strong className="text-foreground">{sel.odometer_km?.toLocaleString()} km</strong></span>
                                   <span>•</span>
                                   <span>Category: <strong className="text-foreground">{sel.category}</strong></span>
@@ -15741,8 +15747,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <Clock className="h-3 w-3" />
                     <span>Current Active Policy Info</span>
                   </div>
-                  <div className="text-xs font-semibold text-foreground">
-                    {selectedVehicleForPolicyRenew.insurance_policy_number || "No Policy Number on File"} 
+                  <div className="text-xs font-semibold text-foreground flex items-center gap-1.5 flex-wrap">
+                    <VehicleBrandLogo brand={selectedVehicleForPolicyRenew.make} model={selectedVehicleForPolicyRenew.model} size={15} />
+                    <span>{selectedVehicleForPolicyRenew.make} {selectedVehicleForPolicyRenew.model} —</span>
+                    <span>{selectedVehicleForPolicyRenew.insurance_policy_number || "No Policy Number on File"}</span>
                     <span className="text-muted-foreground font-normal"> ({selectedVehicleForPolicyRenew.insurance_vendor || "Vendor Not Assigned"})</span>
                   </div>
                 </div>
@@ -16236,8 +16244,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <Clock className="h-3 w-3" />
                     <span>Current Active PUC Info</span>
                   </div>
-                  <div className="text-xs font-semibold text-foreground">
-                    {selectedVehicleForPucRenew.puc_certificate_number || "No PUC Number on File"} 
+                  <div className="text-xs font-semibold text-foreground flex items-center gap-1.5 flex-wrap">
+                    <VehicleBrandLogo brand={selectedVehicleForPucRenew.make} model={selectedVehicleForPucRenew.model} size={15} />
+                    <span>{selectedVehicleForPucRenew.make} {selectedVehicleForPucRenew.model} —</span>
+                    <span>{selectedVehicleForPucRenew.puc_certificate_number || "No PUC Number on File"}</span>
                     <span className="text-muted-foreground font-normal"> ({selectedVehicleForPucRenew.fuel_type || "Standard Fuel"})</span>
                   </div>
                 </div>
@@ -17456,6 +17466,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               </div>
               <div className="space-y-1 min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
+                  <VehicleBrandLogo brand={viewingVehicle.make} model={viewingVehicle.model} size={22} />
                   <h2 className="text-lg sm:text-xl font-bold tracking-tight text-foreground truncate">
                     {viewingVehicle.make} {viewingVehicle.model} {viewingVehicle.year ? `(${viewingVehicle.year})` : ""}
                   </h2>

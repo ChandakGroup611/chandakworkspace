@@ -4,18 +4,59 @@ import React from "react";
 
 interface VehicleBrandLogoProps {
   brand?: string | null;
+  model?: string | null;
   className?: string;
   size?: "xs" | "sm" | "md" | "lg" | "xl" | number;
   showName?: boolean;
 }
 
+// Smart Automotive Brand Resolver: Automatically infers the vehicle brand
+// from Make, Model, Trims, Brand Aliases, or Composite text (e.g. "Toyota Fortuner", "Tata Nexon EV")
+export const resolveVehicleBrandKey = (input: string): string => {
+  const s = (input || "").trim().toLowerCase();
+  if (!s) return "";
+
+  if (s.includes("toyota") || /\b(innova|fortuner|corolla|glanza|hycross|hyryder|vellfire|hilux|camry|etios|yaris|land cruiser|urban cruiser)\b/i.test(s)) return "toyota";
+  if (s.includes("tata") || /\b(nexon|harrier|safari|punch|tiago|tigor|altroz|curvv|sierra|hexa|aria|indica|indigo|sumo|winger|magic|ace gold|ace)\b/i.test(s)) return "tata";
+  if (s.includes("mahindra") || /\b(scorpio|xuv700|xuv300|xuv400|xuv3xo|thar|bolero|marazzo|tuv300|xylo|verito|kuv100|supro|maxximo|jeeto)\b/i.test(s)) return "mahindra";
+  if (s.includes("maruti") || s.includes("suzuki") || /\b(swift|dzire|ertiga|brezza|grand vitara|baleno|wagonr|wagon r|ciaz|xl6|eeco|alto|celerio|ignis|s-presso|jimny|fronx|invicto|ritz|omni|gypsy)\b/i.test(s)) return "suzuki";
+  if (s.includes("hyundai") || /\b(creta|venue|verna|i20|i10|grand i10|alcazar|aura|tucson|exter|ioniq|kona|santro|elantra)\b/i.test(s)) return "hyundai";
+  if (s.includes("honda") || /\b(city|amaze|elevate|jazz|wr-v|brio|civic|cr-v|activa|dio|shine|unicorn|hornet)\b/i.test(s)) return "honda";
+  if (s.includes("kia") || /\b(seltos|sonet|carens|ev6|ev9|carnival)\b/i.test(s)) return "kia";
+  if (s.includes("mg") || s.includes("morris") || /\b(hector|zs|astor|comet|gloster|windsor)\b/i.test(s)) return "mg";
+  if (s.includes("skoda") || s.includes("škoda") || /\b(slavia|kushaq|kodiaq|superb|octavia|rapid|fabia|kylaq|yeti)\b/i.test(s)) return "skoda";
+  if (s.includes("volkswagen") || s === "vw" || /\b(virtus|taigun|tiguan|polo|vento|passat|jetta|t-roc)\b/i.test(s)) return "volkswagen";
+  if (s.includes("bmw") || /\b(3 series|5 series|7 series|x1|x3|x5|x7|m3|m5|i4|ix)\b/i.test(s)) return "bmw";
+  if (s.includes("mercedes") || s.includes("benz") || /\b(glc|gle|gls|c-class|e-class|s-class|cla|gla|amg|maybach)\b/i.test(s)) return "mercedes";
+  if (s.includes("audi") || /\b(a3|a4|a6|a8|q3|q5|q7|q8|e-tron)\b/i.test(s)) return "audi";
+  if (s.includes("volvo") || /\b(xc90|xc60|xc40|c40|recharge)\b/i.test(s)) return "volvo";
+  if (s.includes("royal enfield") || s.includes("enfield") || /\b(bullet|classic 350|hunter|meteor|himalayan|interceptor|continental gt|super meteor|shotgun)\b/i.test(s)) return "royal enfield";
+  if (s.includes("bajaj") || /\b(pulsar|platina|ct100|ct110|dominar|avenger|chetak)\b/i.test(s)) return "bajaj";
+  if (s.includes("hero") || /\b(splendor|hf deluxe|passion|glamour|xpulse|destini|vida|xtreme|pleasure|maestro)\b/i.test(s)) return "hero";
+  if (s.includes("tvs") || /\b(jupiter|apache|raider|ntorq|iqube|ronin|xl100|radeon|sport|star city)\b/i.test(s)) return "tvs";
+  if (s.includes("ashok") || s.includes("leyland") || /\b(dost|bada dost|ecomet|partner|boss|avtr)\b/i.test(s)) return "ashok leyland";
+  if (s.includes("ford") || /\b(ecosport|endeavour|figo|mustang|freestyle|aspire)\b/i.test(s)) return "ford";
+  if (s.includes("renault") || /\b(kwid|triber|kiger|duster|lodgy|pulse)\b/i.test(s)) return "renault";
+  if (s.includes("jeep") || /\b(compass|wrangler|meridian|cherokee|rubicon)\b/i.test(s)) return "jeep";
+  if (s.includes("byd") || /\b(atto|seal|e6|dolphin)\b/i.test(s)) return "byd";
+  if (s.includes("nissan") || /\b(magnite|kicks|terrano|sunny|micra|gtr)\b/i.test(s)) return "nissan";
+  if (s.includes("force") || /\b(gurkha|trax|cruiser|urbania)\b/i.test(s)) return "force";
+  if (s.includes("eicher") || /\b(pro 2000|pro 3000|pro 6000)\b/i.test(s)) return "eicher";
+  if (s.includes("ather") || /\b(450x|450s|rizta|450 apex)\b/i.test(s)) return "ather";
+  if (s.includes("ola") || /\b(s1 pro|s1 air|s1 x|roadster)\b/i.test(s)) return "ola";
+  
+  return s;
+};
+
 export const VehicleBrandLogo: React.FC<VehicleBrandLogoProps> = ({
   brand,
+  model,
   className = "",
   size = "md",
   showName = false,
 }) => {
-  const normalized = (brand || "").trim().toLowerCase();
+  const combinedText = [brand || "", model || ""].join(" ").trim();
+  const normalized = resolveVehicleBrandKey(combinedText || brand || "");
 
   // Dimension helpers
   let dim = 24;
