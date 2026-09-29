@@ -1454,8 +1454,21 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           uploaded_at: new Date().toISOString()
         };
 
-        setDocs((prev) => [...prev, newDoc]);
-        triggerToast(`Attached ${file.name}`);
+        setDocs((prev) => {
+          const existing = prev.find(
+            (d) =>
+              (d.file_name && d.file_name.toLowerCase() === file.name.toLowerCase()) ||
+              (d.doc_type === detectedType && (detectedType === "RC" || detectedType === "INSURANCE" || detectedType === "PUC" || detectedType === "FITNESS"))
+          );
+          if (existing) {
+            const versionInfo = computeNextDocVersion(existing.title || autoTitle, prev, detectedType);
+            const versionedTitle = `${versionInfo.baseTitle} (${versionInfo.nextVersion})`;
+            triggerToast(`Attached as ${versionInfo.nextVersion}: ${file.name}`);
+            return [...prev, { ...newDoc, title: versionedTitle }];
+          }
+          triggerToast(`Attached ${file.name}`);
+          return [...prev, newDoc];
+        });
       };
       reader.readAsDataURL(file);
     }
@@ -2618,17 +2631,69 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     const docs: AggregatedVehicleDoc[] = [];
     const existingKeys = new Set<string>();
 
+    // 1. Direct Vault Documents (Top priority: Actual uploaded scanned files)
+    const vaultDocTypes = new Set<string>();
+    const vaultDocTitles = new Set<string>();
+    const vaultDocNumbers = new Set<string>();
+
     const pushDoc = (doc: AggregatedVehicleDoc) => {
+      const cleanTitle = (doc.title || "").replace(/\s*\(v?\d+(?:\.\d+)?\)\s*$/i, "").trim().toLowerCase();
+      const docNum = (doc.document_number || "").trim().toLowerCase();
+
+      // If pushing a synthetic / master digital record (no file_url), do not push if vault already has this doc
+      if (!doc.file_url) {
+        if (vaultDocTitles.has(cleanTitle)) return;
+        if (docNum && vaultDocNumbers.has(docNum)) return;
+      }
+
       const key = doc.file_url ? `url:${doc.file_url}` : `type:${doc.doc_type}:${doc.document_number || doc.title}`;
       if (existingKeys.has(key)) return;
       existingKeys.add(key);
       docs.push(doc);
     };
 
-    // 1. Direct Vault Documents (Top priority: Actual uploaded scanned files)
-    const vaultDocTypes = new Set<string>();
     (veh.documents || []).forEach((d) => {
       if (d.doc_type) vaultDocTypes.add(d.doc_type.toUpperCase());
+      const cleanT = (d.title || "").replace(/\s*\(v?\d+(?:\.\d+)?\)\s*$/i, "").trim().toLowerCase();
+      if (cleanT) vaultDocTitles.add(cleanT);
+      if (d.document_number) vaultDocNumbers.add(d.document_number.trim().toLowerCase());
+
+      // Smart semantic detection of doc type from title/doc_number to reconcile mismatched category tags
+      const lowerTitle = (d.title || "").toLowerCase();
+      const lowerDocNum = (d.document_number || "").toLowerCase();
+      const normVin = (veh.vin_chassis_number || "").toLowerCase();
+      const normReg = (veh.registration_number || "").toLowerCase();
+
+      if (
+        lowerTitle.includes("rc smart card") ||
+        lowerTitle.includes("rc card") ||
+        lowerTitle.includes("registration certificate") ||
+        (normVin && lowerDocNum === normVin) ||
+        (normReg && lowerDocNum === normReg)
+      ) {
+        vaultDocTypes.add("RC");
+      }
+      if (
+        lowerTitle.includes("insurance") ||
+        lowerTitle.includes("policy") ||
+        (veh.insurance_policy_number && lowerDocNum === veh.insurance_policy_number.toLowerCase())
+      ) {
+        vaultDocTypes.add("INSURANCE");
+      }
+      if (
+        lowerTitle.includes("puc") ||
+        lowerTitle.includes("pollution") ||
+        (veh.puc_certificate_number && lowerDocNum === veh.puc_certificate_number.toLowerCase())
+      ) {
+        vaultDocTypes.add("PUC");
+      }
+      if (
+        lowerTitle.includes("fitness") ||
+        ((veh as any).fitness_certificate_number && lowerDocNum === ((veh as any).fitness_certificate_number || "").toLowerCase())
+      ) {
+        vaultDocTypes.add("FITNESS");
+      }
+
       pushDoc({
         id: d.id,
         doc_type: d.doc_type || "OTHER",
@@ -3268,7 +3333,45 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     if (!validFiles.length) return;
 
     const file = validFiles[0];
-    const typeOption = VEHICLE_DOC_TYPES.find((t) => t.value === dossierNewDocType);
+
+    // Smart semantic detection of document type from filename or user title
+    let targetDocType = dossierNewDocType;
+    const lowerFileName = file.name.toLowerCase();
+    const lowerTitle = (dossierNewDocTitle || "").toLowerCase();
+
+    if (
+      lowerFileName.includes("rc") ||
+      lowerFileName.includes("smartcard") ||
+      lowerFileName.includes("registration") ||
+      lowerTitle.includes("rc ") ||
+      lowerTitle.includes("smart card") ||
+      lowerTitle.includes("registration certificate")
+    ) {
+      targetDocType = "RC";
+    } else if (
+      lowerFileName.includes("insur") ||
+      lowerFileName.includes("policy") ||
+      lowerTitle.includes("insur") ||
+      lowerTitle.includes("policy")
+    ) {
+      targetDocType = "INSURANCE";
+    } else if (
+      lowerFileName.includes("puc") ||
+      lowerFileName.includes("pollution") ||
+      lowerFileName.includes("emission") ||
+      lowerTitle.includes("puc") ||
+      lowerTitle.includes("pollution")
+    ) {
+      targetDocType = "PUC";
+    } else if (lowerFileName.includes("fitness") || lowerTitle.includes("fitness")) {
+      targetDocType = "FITNESS";
+    } else if (lowerFileName.includes("permit") || lowerTitle.includes("permit")) {
+      targetDocType = "PERMIT";
+    } else if (lowerFileName.includes("tax") || lowerTitle.includes("tax")) {
+      targetDocType = "ROAD_TAX";
+    }
+
+    const typeOption = VEHICLE_DOC_TYPES.find((t) => t.value === targetDocType);
     const resolvedTitle = dossierNewDocTitle.trim() || `${typeOption?.label || "Vehicle Document"} (${viewingVehicle.registration_number})`;
     const docNumber = dossierNewDocNumber.trim() || null;
     const expiryDate = dossierNewDocExpiry || null;
@@ -3291,33 +3394,43 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       return;
     }
 
-    // Duplicate detection against existing vehicle documents
-    const existingDocs = viewingVehicle.documents || [];
+    // Comprehensive duplicate detection against existing vehicle vault docs & master compliance records
+    const allExistingDocs = (dossierData?.docs || []).length > 0
+      ? dossierData.docs
+      : (viewingVehicle.documents || []);
+
     const cleanBaseCandidate = resolvedTitle.replace(/\s*\(v?\d+(?:\.\d+)?\)\s*$/i, "").trim().toLowerCase();
-    
-    const matchedExisting = existingDocs.find((d) => {
-      const sameType = d.doc_type && d.doc_type.toUpperCase() === dossierNewDocType.toUpperCase();
+    const targetVin = (viewingVehicle.vin_chassis_number || "").toLowerCase().trim();
+
+    const matchedExisting = allExistingDocs.find((d: any) => {
       const existingBase = (d.title || "").replace(/\s*\(v?\d+(?:\.\d+)?\)\s*$/i, "").trim().toLowerCase();
-      const sameTitle = existingBase && existingBase === cleanBaseCandidate;
+      const sameTitle = existingBase && (existingBase === cleanBaseCandidate || existingBase.includes(cleanBaseCandidate) || cleanBaseCandidate.includes(existingBase));
       const sameFileName = d.file_name && d.file_name.toLowerCase().trim() === file.name.toLowerCase().trim();
       const sameDocNumber = docNumber && d.document_number && d.document_number.toLowerCase().trim() === docNumber.toLowerCase().trim();
-      return sameType || sameTitle || sameFileName || sameDocNumber;
+      const isRcMatch = targetDocType === "RC" && (
+        d.doc_type === "RC" ||
+        existingBase.includes("rc smart card") ||
+        (targetVin && (d.document_number || "").toLowerCase().trim() === targetVin)
+      );
+      const isStatutoryMatch = (targetDocType === "INSURANCE" || targetDocType === "PUC" || targetDocType === "FITNESS") && d.doc_type === targetDocType;
+
+      return sameDocNumber || sameFileName || (sameTitle && (sameDocNumber || d.file_url)) || isRcMatch || isStatutoryMatch;
     });
 
     if (matchedExisting) {
       const versionInfo = computeNextDocVersion(
         matchedExisting.title || resolvedTitle,
-        existingDocs.filter((d) => d.doc_type === dossierNewDocType),
-        dossierNewDocType
+        allExistingDocs.filter((d: any) => d.doc_type === targetDocType),
+        targetDocType
       );
 
       setDuplicateDocPrompt({
         file,
         base64Url,
-        docType: dossierNewDocType,
+        docType: targetDocType,
         docTitle: resolvedTitle,
-        documentNumber: docNumber,
-        expiryDate,
+        documentNumber: docNumber || (matchedExisting as any).document_number || null,
+        expiryDate: expiryDate || (matchedExisting as any).expiry_date || null,
         existingDoc: matchedExisting,
         currentVersion: versionInfo.currentVersion,
         nextVersion: versionInfo.nextVersion,
@@ -3330,7 +3443,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     await executeDirectDocUpload({
       file,
       base64Url,
-      docType: dossierNewDocType,
+      docType: targetDocType,
       title: resolvedTitle,
       documentNumber: docNumber,
       expiryDate
@@ -3358,6 +3471,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     if (!duplicateDocPrompt) return;
     const { file, base64Url, docType, docTitle, documentNumber, expiryDate, existingDoc } = duplicateDocPrompt;
 
+    const replaceId = existingDoc?.id && !existingDoc.id.startsWith("master-") ? existingDoc.id : undefined;
+
     setDuplicateDocPrompt(null);
     await executeDirectDocUpload({
       file,
@@ -3366,7 +3481,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       title: docTitle,
       documentNumber,
       expiryDate,
-      replaceDocId: existingDoc.id
+      replaceDocId: replaceId
     });
     triggerToast("Existing document replaced successfully with new scan.");
   };
