@@ -75,6 +75,8 @@ if (preg_match('/PassengerAppRoot\s+([^\s\r\n]+)/', $htaccessContent, $m)) {
 
 // Collect all target directories
 $targetDirs = [
+    dirname(__DIR__),
+    __DIR__,
     $domainRoot . '/public_html',
     $domainRoot . '/hbuilds/current/nodejs',
     $passengerAppRoot,
@@ -139,12 +141,14 @@ if (isset($_GET['info']) || isset($_GET['scan']) || isset($_GET['diag'])) {
 
 // Find deploy.zip
 $candidateZipPaths = [
-    '/home/u859582759/deploy.zip',
-    '/home/u859582759/public_html/deploy.zip',
-    $domainRoot . '/deploy.zip',
-    $domainRoot . '/public_html/deploy.zip',
     __DIR__ . '/deploy.zip',
     dirname(__DIR__) . '/deploy.zip',
+    '/home/u859582759/domains/chandakgroup.tech/hbuilds/versions/01a0e75f-5f5d-715a-9479-733f79592f9f/nodejs/public/deploy.zip',
+    '/home/u859582759/domains/chandakgroup.tech/hbuilds/versions/01a0e75f-5f5d-715a-9479-733f79592f9f/nodejs/deploy.zip',
+    $domainRoot . '/public_html/deploy.zip',
+    $domainRoot . '/deploy.zip',
+    '/home/u859582759/deploy.zip',
+    '/home/u859582759/public_html/deploy.zip',
 ];
 
 if ($versionedDirs && is_array($versionedDirs)) {
