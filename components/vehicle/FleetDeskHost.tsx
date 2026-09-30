@@ -9664,7 +9664,82 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       {/* ---------------------------------------------------------------------- */}
       {!isAnyTransactionFormOpen && activeTab === "inventory" && (
         <FleetErrorBoundary tabName="Vehicle Inventory & Master Registry" onReset={() => loadAllData(true)}>
-          <AppCard className="border-border shadow-xs overflow-hidden">
+          <div className="space-y-4">
+            {/* 5-Card Fleet Quotation & Financials Summary Ribbon */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+              {/* 1. Total Fleet Units */}
+              <div className="p-4 rounded-2xl border border-border/80 bg-surface shadow-xs space-y-1 relative overflow-hidden group">
+                <div className="flex items-center justify-between text-muted-foreground">
+                  <span className="text-xs font-bold uppercase tracking-wider">Fleet Registry</span>
+                  <Car className="h-4 w-4 text-blue-500" />
+                </div>
+                <div className="text-2xl font-black text-foreground font-mono">
+                  {vehicles.length}
+                </div>
+                <div className="text-[11px] text-muted-foreground flex items-center gap-1 font-medium">
+                  <span className="inline-block h-2 w-2 rounded-full bg-emerald-500"></span>
+                  <span>{vehicles.filter(v => v.status === "IN_STOCK" || v.status === "IN_SERVICE").length} Active Units</span>
+                </div>
+              </div>
+
+              {/* 2. Total Net On-Road Valuation */}
+              <div className="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-50/20 dark:bg-emerald-950/15 shadow-xs space-y-1 relative overflow-hidden">
+                <div className="flex items-center justify-between text-emerald-800 dark:text-emerald-400">
+                  <span className="text-xs font-bold uppercase tracking-wider">Net On-Road Asset Value</span>
+                  <IndianRupee className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div className="text-2xl font-black text-emerald-700 dark:text-emerald-300 font-mono">
+                  ₹{vehicles.reduce((acc, v) => acc + Number(v.on_road_price || v.purchase_price || v.purchase_cost || 0), 0).toLocaleString("en-IN")}
+                </div>
+                <div className="text-[11px] text-muted-foreground">
+                  Capitalized total fleet acquisition
+                </div>
+              </div>
+
+              {/* 3. Total Ex-Showroom Base */}
+              <div className="p-4 rounded-2xl border border-border/80 bg-surface shadow-xs space-y-1">
+                <div className="flex items-center justify-between text-muted-foreground">
+                  <span className="text-xs font-bold uppercase tracking-wider">Ex-Showroom Base</span>
+                  <Building2 className="h-4 w-4 text-indigo-500" />
+                </div>
+                <div className="text-xl font-bold text-foreground font-mono">
+                  ₹{vehicles.reduce((acc, v) => acc + Number(v.ex_showroom_price || v.purchase_price || 0), 0).toLocaleString("en-IN")}
+                </div>
+                <div className="text-[11px] text-muted-foreground">
+                  Catalog base acquisition
+                </div>
+              </div>
+
+              {/* 4. Total Statutory RTO & Taxes */}
+              <div className="p-4 rounded-2xl border border-border/80 bg-surface shadow-xs space-y-1">
+                <div className="flex items-center justify-between text-muted-foreground">
+                  <span className="text-xs font-bold uppercase tracking-wider">Statutory RTO &amp; Taxes</span>
+                  <ShieldCheck className="h-4 w-4 text-blue-500" />
+                </div>
+                <div className="text-xl font-bold text-foreground font-mono">
+                  ₹{vehicles.reduce((acc, v) => acc + Number(v.rto_road_tax || 0) + Number(v.tcs_amount || 0) + Number(v.gst_amount || 0) + Number(v.cess_amount || 0), 0).toLocaleString("en-IN")}
+                </div>
+                <div className="text-[11px] text-muted-foreground">
+                  Road tax, GST, Cess &amp; TCS 1%
+                </div>
+              </div>
+
+              {/* 5. Total Other, Insurance & Fitments */}
+              <div className="p-4 rounded-2xl border border-purple-500/30 bg-purple-50/20 dark:bg-purple-950/15 shadow-xs space-y-1">
+                <div className="flex items-center justify-between text-purple-800 dark:text-purple-400">
+                  <span className="text-xs font-bold uppercase tracking-wider">Other, Ins &amp; Fitments</span>
+                  <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div className="text-xl font-bold text-purple-700 dark:text-purple-300 font-mono">
+                  ₹{vehicles.reduce((acc, v) => acc + Number(v.other_charges || 0) + Number(v.insurance_cost || 0) + Number(v.accessories_cost || 0) + Number(v.extended_warranty_cost || 0) + Number(v.fastag_charges || 0) + Number(v.hsrp_smart_card_fee || 0), 0).toLocaleString("en-IN")}
+                </div>
+                <div className="text-[11px] text-muted-foreground">
+                  Incidental, warranty &amp; add-ons
+                </div>
+              </div>
+            </div>
+
+            <AppCard className="border-border shadow-xs overflow-hidden">
           <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <AppCardTitle className="text-lg">Fleet Master Inventory</AppCardTitle>
@@ -10151,6 +10226,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             </AppTableContainer>
           </AppCardContent>
         </AppCard>
+          </div>
         </FleetErrorBoundary>
       )}
 
@@ -19056,13 +19132,18 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
                   <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                     <IndianRupee className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-                    <span>Purchase Price</span>
+                    <span>On-Road Asset Cost</span>
                   </span>
                   <div className="font-mono font-bold text-emerald-700 dark:text-emerald-300 text-xs">
-                    {viewingVehicle.purchase_price || viewingVehicle.purchase_cost
-                      ? `₹${Number(viewingVehicle.purchase_price || viewingVehicle.purchase_cost).toLocaleString("en-IN")}`
+                    {viewingVehicle.on_road_price || viewingVehicle.purchase_price || viewingVehicle.purchase_cost
+                      ? `₹${Number(viewingVehicle.on_road_price || viewingVehicle.purchase_price || viewingVehicle.purchase_cost).toLocaleString("en-IN")}`
                       : "—"}
                   </div>
+                  {viewingVehicle.ex_showroom_price ? (
+                    <div className="text-[10px] text-muted-foreground font-mono">
+                      Ex-Show: ₹{Number(viewingVehicle.ex_showroom_price).toLocaleString("en-IN")}
+                    </div>
+                  ) : null}
                 </div>
                 <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
                   <div className="flex items-center justify-between gap-1">
@@ -19106,10 +19187,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       <span className="font-mono font-semibold text-foreground">{viewingVehicle.fitness_expiry_date || "—"}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Purchase Asset Cost:</span>
+                      <span className="text-muted-foreground">On-Road Asset Cost:</span>
                       <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                        {viewingVehicle.purchase_price || viewingVehicle.purchase_cost
-                          ? `₹${Number(viewingVehicle.purchase_price || viewingVehicle.purchase_cost).toLocaleString("en-IN")}`
+                        {viewingVehicle.on_road_price || viewingVehicle.purchase_price || viewingVehicle.purchase_cost
+                          ? `₹${Number(viewingVehicle.on_road_price || viewingVehicle.purchase_price || viewingVehicle.purchase_cost).toLocaleString("en-IN")}`
                           : "—"}
                       </span>
                     </div>
