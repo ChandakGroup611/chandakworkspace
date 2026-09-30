@@ -1052,6 +1052,25 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   const [newVehiclePurchasePrice, setNewVehiclePurchasePrice] = useState<string | number>("");
   const [newVehicleCustomExtendedExpiryDate, setNewVehicleCustomExtendedExpiryDate] = useState<string>("");
 
+  // Detailed Pricing Breakdown States - Add Vehicle
+  const [newVehicleBasicPrice, setNewVehicleBasicPrice] = useState<string | number>("");
+  const [newVehicleGstPercent, setNewVehicleGstPercent] = useState<string | number>(28);
+  const [newVehicleGstAmount, setNewVehicleGstAmount] = useState<string | number>("");
+  const [newVehicleCessPercent, setNewVehicleCessPercent] = useState<string | number>(0);
+  const [newVehicleCessAmount, setNewVehicleCessAmount] = useState<string | number>("");
+  const [newVehicleExShowroomPrice, setNewVehicleExShowroomPrice] = useState<string | number>("");
+  const [newVehicleRtoRoadTax, setNewVehicleRtoRoadTax] = useState<string | number>("");
+  const [newVehicleTcsAmount, setNewVehicleTcsAmount] = useState<string | number>("");
+  const [newVehicleInsuranceCost, setNewVehicleInsuranceCost] = useState<string | number>("");
+  const [newVehicleHsrpFee, setNewVehicleHsrpFee] = useState<string | number>("");
+  const [newVehicleFastagCharges, setNewVehicleFastagCharges] = useState<string | number>("");
+  const [newVehicleAccessoriesCost, setNewVehicleAccessoriesCost] = useState<string | number>("");
+  const [newVehicleExtendedWarrantyCost, setNewVehicleExtendedWarrantyCost] = useState<string | number>("");
+  const [newVehicleOtherCharges, setNewVehicleOtherCharges] = useState<string | number>("");
+  const [newVehicleDiscountAmount, setNewVehicleDiscountAmount] = useState<string | number>("");
+  const [newVehicleOnRoadPrice, setNewVehicleOnRoadPrice] = useState<string | number>("");
+  const [isPricingExpanded, setIsPricingExpanded] = useState<boolean>(true);
+
   // New Vehicle Document Vault States
   const [newVehicleDocs, setNewVehicleDocs] = useState<VehicleDocumentRecord[]>([]);
   const [newDocType, setNewDocType] = useState<string>("PUC");
@@ -1100,6 +1119,25 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   const [editVehicleRsa, setEditVehicleRsa] = useState(true);
   const [editVehiclePurchasePrice, setEditVehiclePurchasePrice] = useState<string | number>("");
   const [editVehicleCustomExtendedExpiryDate, setEditVehicleCustomExtendedExpiryDate] = useState<string>("");
+
+  // Detailed Pricing Breakdown States - Edit Vehicle
+  const [editVehicleBasicPrice, setEditVehicleBasicPrice] = useState<string | number>("");
+  const [editVehicleGstPercent, setEditVehicleGstPercent] = useState<string | number>(28);
+  const [editVehicleGstAmount, setEditVehicleGstAmount] = useState<string | number>("");
+  const [editVehicleCessPercent, setEditVehicleCessPercent] = useState<string | number>(0);
+  const [editVehicleCessAmount, setEditVehicleCessAmount] = useState<string | number>("");
+  const [editVehicleExShowroomPrice, setEditVehicleExShowroomPrice] = useState<string | number>("");
+  const [editVehicleRtoRoadTax, setEditVehicleRtoRoadTax] = useState<string | number>("");
+  const [editVehicleTcsAmount, setEditVehicleTcsAmount] = useState<string | number>("");
+  const [editVehicleInsuranceCost, setEditVehicleInsuranceCost] = useState<string | number>("");
+  const [editVehicleHsrpFee, setEditVehicleHsrpFee] = useState<string | number>("");
+  const [editVehicleFastagCharges, setEditVehicleFastagCharges] = useState<string | number>("");
+  const [editVehicleAccessoriesCost, setEditVehicleAccessoriesCost] = useState<string | number>("");
+  const [editVehicleExtendedWarrantyCost, setEditVehicleExtendedWarrantyCost] = useState<string | number>("");
+  const [editVehicleOtherCharges, setEditVehicleOtherCharges] = useState<string | number>("");
+  const [editVehicleDiscountAmount, setEditVehicleDiscountAmount] = useState<string | number>("");
+  const [editVehicleOnRoadPrice, setEditVehicleOnRoadPrice] = useState<string | number>("");
+  const [isEditPricingExpanded, setIsEditPricingExpanded] = useState<boolean>(true);
 
   // Edit Vehicle Document Vault States
   const [editVehicleDocs, setEditVehicleDocs] = useState<VehicleDocumentRecord[]>([]);
@@ -1771,7 +1809,20 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       "Insurance Expiry Date",
       "PUC Expiry Date",
       "Fitness Expiry Date",
-      "Purchase Price (INR)",
+      "Basic Price (INR)",
+      "GST Amount (INR)",
+      "Cess Amount (INR)",
+      "Ex-Showroom Price (INR)",
+      "RTO Road Tax (INR)",
+      "TCS (INR)",
+      "Insurance Cost (INR)",
+      "HSRP Fee (INR)",
+      "FASTag Charges (INR)",
+      "Accessories Cost (INR)",
+      "Extended Warranty (INR)",
+      "Other Charges (INR)",
+      "Discount (INR)",
+      "On-Road Capitalized Price (INR)",
       "HSRP Plate Fitted",
       "RSA Active"
     ];
@@ -1800,7 +1851,20 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       escapeCSV(v.insurance_expiry_date ? v.insurance_expiry_date.split("T")[0] : ""),
       escapeCSV(v.puc_expiry_date ? v.puc_expiry_date.split("T")[0] : ""),
       escapeCSV(v.fitness_expiry_date ? v.fitness_expiry_date.split("T")[0] : ""),
-      escapeCSV(v.purchase_price || 0),
+      escapeCSV(v.basic_price || 0),
+      escapeCSV(v.gst_amount || 0),
+      escapeCSV(v.cess_amount || 0),
+      escapeCSV(v.ex_showroom_price || v.purchase_price || 0),
+      escapeCSV(v.rto_road_tax || 0),
+      escapeCSV(v.tcs_amount || 0),
+      escapeCSV(v.insurance_cost || 0),
+      escapeCSV(v.hsrp_smart_card_fee || 0),
+      escapeCSV(v.fastag_charges || 0),
+      escapeCSV(v.accessories_cost || 0),
+      escapeCSV(v.extended_warranty_cost || 0),
+      escapeCSV(v.other_charges || 0),
+      escapeCSV(v.discount_amount || 0),
+      escapeCSV(v.on_road_price || v.purchase_price || v.purchase_cost || 0),
       escapeCSV(v.has_hsrp_plate ? "Yes" : "No"),
       escapeCSV(v.has_roadside_assistance ? "Yes" : "No")
     ].join(","));
@@ -2511,6 +2575,134 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     }
   };
 
+  // Live Pricing Calculation Handlers for New Vehicle Form
+  const syncNewVehicleOnRoad = (overrides?: {
+    basic?: string | number;
+    gstPercent?: string | number;
+    gstAmt?: string | number;
+    cessPercent?: string | number;
+    cessAmt?: string | number;
+    exShowroom?: string | number;
+    rto?: string | number;
+    tcs?: string | number;
+    insurance?: string | number;
+    hsrp?: string | number;
+    fastag?: string | number;
+    accessories?: string | number;
+    ew?: string | number;
+    other?: string | number;
+    discount?: string | number;
+  }) => {
+    const basic = Number(overrides?.basic !== undefined ? overrides.basic : newVehicleBasicPrice) || 0;
+    const gstP = Number(overrides?.gstPercent !== undefined ? overrides.gstPercent : newVehicleGstPercent) || 0;
+    const cessP = Number(overrides?.cessPercent !== undefined ? overrides.cessPercent : newVehicleCessPercent) || 0;
+
+    let gstAmt = overrides?.gstAmt !== undefined ? Number(overrides.gstAmt) || 0 : (basic > 0 ? (basic * gstP / 100) : 0);
+    let cessAmt = overrides?.cessAmt !== undefined ? Number(overrides.cessAmt) || 0 : (basic > 0 ? (basic * cessP / 100) : 0);
+
+    let exShowroom = Number(overrides?.exShowroom !== undefined ? overrides.exShowroom : newVehicleExShowroomPrice) || 0;
+    if (overrides?.basic !== undefined || overrides?.gstPercent !== undefined || overrides?.cessPercent !== undefined) {
+      if (basic > 0) {
+        exShowroom = basic + gstAmt + cessAmt;
+        setNewVehicleExShowroomPrice(exShowroom > 0 ? Math.round(exShowroom) : "");
+      }
+    }
+
+    if (overrides?.basic !== undefined || overrides?.gstPercent !== undefined) {
+      setNewVehicleGstAmount(gstAmt > 0 ? Math.round(gstAmt) : "");
+    }
+    if (overrides?.basic !== undefined || overrides?.cessPercent !== undefined) {
+      setNewVehicleCessAmount(cessAmt > 0 ? Math.round(cessAmt) : "");
+    }
+
+    let tcs = Number(overrides?.tcs !== undefined ? overrides.tcs : newVehicleTcsAmount) || 0;
+    if ((overrides?.exShowroom !== undefined || overrides?.basic !== undefined) && overrides?.tcs === undefined) {
+      if (exShowroom > 1000000) {
+        tcs = Math.round(exShowroom * 0.01);
+        setNewVehicleTcsAmount(tcs > 0 ? tcs : "");
+      } else if (newVehicleTcsAmount) {
+        tcs = Number(newVehicleTcsAmount) || 0;
+      }
+    }
+
+    const rto = Number(overrides?.rto !== undefined ? overrides.rto : newVehicleRtoRoadTax) || 0;
+    const ins = Number(overrides?.insurance !== undefined ? overrides.insurance : newVehicleInsuranceCost) || 0;
+    const hsrp = Number(overrides?.hsrp !== undefined ? overrides.hsrp : newVehicleHsrpFee) || 0;
+    const fastag = Number(overrides?.fastag !== undefined ? overrides.fastag : newVehicleFastagCharges) || 0;
+    const acc = Number(overrides?.accessories !== undefined ? overrides.accessories : newVehicleAccessoriesCost) || 0;
+    const ew = Number(overrides?.ew !== undefined ? overrides.ew : newVehicleExtendedWarrantyCost) || 0;
+    const other = Number(overrides?.other !== undefined ? overrides.other : newVehicleOtherCharges) || 0;
+    const disc = Number(overrides?.discount !== undefined ? overrides.discount : newVehicleDiscountAmount) || 0;
+
+    const onRoad = exShowroom + rto + tcs + ins + hsrp + fastag + acc + ew + other - disc;
+    setNewVehicleOnRoadPrice(onRoad > 0 ? Math.round(onRoad) : "");
+    setNewVehiclePurchasePrice(onRoad > 0 ? Math.round(onRoad) : (exShowroom > 0 ? Math.round(exShowroom) : ""));
+  };
+
+  // Live Pricing Calculation Handlers for Edit Vehicle Form
+  const syncEditVehicleOnRoad = (overrides?: {
+    basic?: string | number;
+    gstPercent?: string | number;
+    gstAmt?: string | number;
+    cessPercent?: string | number;
+    cessAmt?: string | number;
+    exShowroom?: string | number;
+    rto?: string | number;
+    tcs?: string | number;
+    insurance?: string | number;
+    hsrp?: string | number;
+    fastag?: string | number;
+    accessories?: string | number;
+    ew?: string | number;
+    other?: string | number;
+    discount?: string | number;
+  }) => {
+    const basic = Number(overrides?.basic !== undefined ? overrides.basic : editVehicleBasicPrice) || 0;
+    const gstP = Number(overrides?.gstPercent !== undefined ? overrides.gstPercent : editVehicleGstPercent) || 0;
+    const cessP = Number(overrides?.cessPercent !== undefined ? overrides.cessPercent : editVehicleCessPercent) || 0;
+
+    let gstAmt = overrides?.gstAmt !== undefined ? Number(overrides.gstAmt) || 0 : (basic > 0 ? (basic * gstP / 100) : 0);
+    let cessAmt = overrides?.cessAmt !== undefined ? Number(overrides.cessAmt) || 0 : (basic > 0 ? (basic * cessP / 100) : 0);
+
+    let exShowroom = Number(overrides?.exShowroom !== undefined ? overrides.exShowroom : editVehicleExShowroomPrice) || 0;
+    if (overrides?.basic !== undefined || overrides?.gstPercent !== undefined || overrides?.cessPercent !== undefined) {
+      if (basic > 0) {
+        exShowroom = basic + gstAmt + cessAmt;
+        setEditVehicleExShowroomPrice(exShowroom > 0 ? Math.round(exShowroom) : "");
+      }
+    }
+
+    if (overrides?.basic !== undefined || overrides?.gstPercent !== undefined) {
+      setEditVehicleGstAmount(gstAmt > 0 ? Math.round(gstAmt) : "");
+    }
+    if (overrides?.basic !== undefined || overrides?.cessPercent !== undefined) {
+      setEditVehicleCessAmount(cessAmt > 0 ? Math.round(cessAmt) : "");
+    }
+
+    let tcs = Number(overrides?.tcs !== undefined ? overrides.tcs : editVehicleTcsAmount) || 0;
+    if ((overrides?.exShowroom !== undefined || overrides?.basic !== undefined) && overrides?.tcs === undefined) {
+      if (exShowroom > 1000000) {
+        tcs = Math.round(exShowroom * 0.01);
+        setEditVehicleTcsAmount(tcs > 0 ? tcs : "");
+      } else if (editVehicleTcsAmount) {
+        tcs = Number(editVehicleTcsAmount) || 0;
+      }
+    }
+
+    const rto = Number(overrides?.rto !== undefined ? overrides.rto : editVehicleRtoRoadTax) || 0;
+    const ins = Number(overrides?.insurance !== undefined ? overrides.insurance : editVehicleInsuranceCost) || 0;
+    const hsrp = Number(overrides?.hsrp !== undefined ? overrides.hsrp : editVehicleHsrpFee) || 0;
+    const fastag = Number(overrides?.fastag !== undefined ? overrides.fastag : editVehicleFastagCharges) || 0;
+    const acc = Number(overrides?.accessories !== undefined ? overrides.accessories : editVehicleAccessoriesCost) || 0;
+    const ew = Number(overrides?.ew !== undefined ? overrides.ew : editVehicleExtendedWarrantyCost) || 0;
+    const other = Number(overrides?.other !== undefined ? overrides.other : editVehicleOtherCharges) || 0;
+    const disc = Number(overrides?.discount !== undefined ? overrides.discount : editVehicleDiscountAmount) || 0;
+
+    const onRoad = exShowroom + rto + tcs + ins + hsrp + fastag + acc + ew + other - disc;
+    setEditVehicleOnRoadPrice(onRoad > 0 ? Math.round(onRoad) : "");
+    setEditVehiclePurchasePrice(onRoad > 0 ? Math.round(onRoad) : (exShowroom > 0 ? Math.round(exShowroom) : ""));
+  };
+
   const handleResetVehicleForm = () => {
     setNewVehiclePlate("");
     setNewVehicleMake("");
@@ -2538,6 +2730,22 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     setNewVehicleHsrp(true);
     setNewVehicleRsa(true);
     setNewVehiclePurchasePrice("");
+    setNewVehicleBasicPrice("");
+    setNewVehicleGstPercent(28);
+    setNewVehicleGstAmount("");
+    setNewVehicleCessPercent(0);
+    setNewVehicleCessAmount("");
+    setNewVehicleExShowroomPrice("");
+    setNewVehicleRtoRoadTax("");
+    setNewVehicleTcsAmount("");
+    setNewVehicleInsuranceCost("");
+    setNewVehicleHsrpFee("");
+    setNewVehicleFastagCharges("");
+    setNewVehicleAccessoriesCost("");
+    setNewVehicleExtendedWarrantyCost("");
+    setNewVehicleOtherCharges("");
+    setNewVehicleDiscountAmount("");
+    setNewVehicleOnRoadPrice("");
     setNewVehicleCustomExtendedExpiryDate("");
     setNewVehicleDocs([]);
     setNewDocTitle("");
@@ -3745,8 +3953,24 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         fitness_expiry_date: fitExp || undefined,
         has_roadside_assistance: newVehicleRsa,
         has_hsrp_plate: newVehicleHsrp,
-        purchase_price: Number(newVehiclePurchasePrice) || 0,
-        purchase_cost: Number(newVehiclePurchasePrice) || 0,
+        basic_price: Number(newVehicleBasicPrice) || 0,
+        gst_percentage: Number(newVehicleGstPercent) || 0,
+        gst_amount: Number(newVehicleGstAmount) || 0,
+        cess_percentage: Number(newVehicleCessPercent) || 0,
+        cess_amount: Number(newVehicleCessAmount) || 0,
+        ex_showroom_price: Number(newVehicleExShowroomPrice) || 0,
+        rto_road_tax: Number(newVehicleRtoRoadTax) || 0,
+        tcs_amount: Number(newVehicleTcsAmount) || 0,
+        insurance_cost: Number(newVehicleInsuranceCost) || 0,
+        hsrp_smart_card_fee: Number(newVehicleHsrpFee) || 0,
+        fastag_charges: Number(newVehicleFastagCharges) || 0,
+        accessories_cost: Number(newVehicleAccessoriesCost) || 0,
+        extended_warranty_cost: Number(newVehicleExtendedWarrantyCost) || 0,
+        other_charges: Number(newVehicleOtherCharges) || 0,
+        discount_amount: Number(newVehicleDiscountAmount) || 0,
+        on_road_price: Number(newVehicleOnRoadPrice) || Number(newVehiclePurchasePrice) || 0,
+        purchase_price: Number(newVehicleOnRoadPrice) || Number(newVehiclePurchasePrice) || 0,
+        purchase_cost: Number(newVehicleOnRoadPrice) || Number(newVehiclePurchasePrice) || 0,
         custom_extended_expiry_date: newVehicleCustomExtendedExpiryDate ? newVehicleCustomExtendedExpiryDate : undefined,
         documents: newVehicleDocs
       });
@@ -3795,7 +4019,25 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     setEditVehicleFitnessExpiry(normalizeDateToInputFormat(veh.fitness_expiry_date));
     setEditVehicleHsrp(veh.has_hsrp_plate !== undefined ? veh.has_hsrp_plate : true);
     setEditVehicleRsa(veh.has_roadside_assistance !== undefined ? veh.has_roadside_assistance : true);
-    setEditVehiclePurchasePrice(veh.purchase_price ?? veh.purchase_cost ?? "");
+    
+    // Pricing Breakdown States for Edit Modal
+    setEditVehicleBasicPrice(veh.basic_price ?? "");
+    setEditVehicleGstPercent(veh.gst_percentage ?? 28);
+    setEditVehicleGstAmount(veh.gst_amount ?? "");
+    setEditVehicleCessPercent(veh.cess_percentage ?? 0);
+    setEditVehicleCessAmount(veh.cess_amount ?? "");
+    setEditVehicleExShowroomPrice(veh.ex_showroom_price ?? veh.purchase_price ?? veh.purchase_cost ?? "");
+    setEditVehicleRtoRoadTax(veh.rto_road_tax ?? "");
+    setEditVehicleTcsAmount(veh.tcs_amount ?? "");
+    setEditVehicleInsuranceCost(veh.insurance_cost ?? "");
+    setEditVehicleHsrpFee(veh.hsrp_smart_card_fee ?? "");
+    setEditVehicleFastagCharges(veh.fastag_charges ?? "");
+    setEditVehicleAccessoriesCost(veh.accessories_cost ?? "");
+    setEditVehicleExtendedWarrantyCost(veh.extended_warranty_cost ?? "");
+    setEditVehicleOtherCharges(veh.other_charges ?? "");
+    setEditVehicleDiscountAmount(veh.discount_amount ?? "");
+    setEditVehicleOnRoadPrice(veh.on_road_price ?? veh.purchase_price ?? veh.purchase_cost ?? "");
+    setEditVehiclePurchasePrice(veh.on_road_price ?? veh.purchase_price ?? veh.purchase_cost ?? "");
     setEditVehicleCustomExtendedExpiryDate(normalizeDateToInputFormat(veh.custom_extended_expiry_date));
     setEditVehicleDocs(veh.documents || []);
     setEditDocTitle("");
@@ -3908,8 +4150,24 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         fitness_expiry_date: editVehicleFitnessExpiry || undefined,
         has_roadside_assistance: editVehicleRsa,
         has_hsrp_plate: editVehicleHsrp,
-        purchase_price: Number(editVehiclePurchasePrice) || 0,
-        purchase_cost: Number(editVehiclePurchasePrice) || 0,
+        basic_price: Number(editVehicleBasicPrice) || 0,
+        gst_percentage: Number(editVehicleGstPercent) || 0,
+        gst_amount: Number(editVehicleGstAmount) || 0,
+        cess_percentage: Number(editVehicleCessPercent) || 0,
+        cess_amount: Number(editVehicleCessAmount) || 0,
+        ex_showroom_price: Number(editVehicleExShowroomPrice) || 0,
+        rto_road_tax: Number(editVehicleRtoRoadTax) || 0,
+        tcs_amount: Number(editVehicleTcsAmount) || 0,
+        insurance_cost: Number(editVehicleInsuranceCost) || 0,
+        hsrp_smart_card_fee: Number(editVehicleHsrpFee) || 0,
+        fastag_charges: Number(editVehicleFastagCharges) || 0,
+        accessories_cost: Number(editVehicleAccessoriesCost) || 0,
+        extended_warranty_cost: Number(editVehicleExtendedWarrantyCost) || 0,
+        other_charges: Number(editVehicleOtherCharges) || 0,
+        discount_amount: Number(editVehicleDiscountAmount) || 0,
+        on_road_price: Number(editVehicleOnRoadPrice) || Number(editVehiclePurchasePrice) || 0,
+        purchase_price: Number(editVehicleOnRoadPrice) || Number(editVehiclePurchasePrice) || 0,
+        purchase_cost: Number(editVehicleOnRoadPrice) || Number(editVehiclePurchasePrice) || 0,
         custom_extended_expiry_date: editVehicleCustomExtendedExpiryDate ? editVehicleCustomExtendedExpiryDate : null,
         documents: editVehicleDocs
       });
@@ -3934,8 +4192,24 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               odometer_km: Number(editVehicleOdometer) || 0,
               nickname: editVehicleNickname.trim() || v.nickname,
               paint_color: editVehicleColor,
-              purchase_price: Number(editVehiclePurchasePrice) || 0,
-              purchase_cost: Number(editVehiclePurchasePrice) || 0,
+              basic_price: Number(editVehicleBasicPrice) || 0,
+              gst_percentage: Number(editVehicleGstPercent) || 0,
+              gst_amount: Number(editVehicleGstAmount) || 0,
+              cess_percentage: Number(editVehicleCessPercent) || 0,
+              cess_amount: Number(editVehicleCessAmount) || 0,
+              ex_showroom_price: Number(editVehicleExShowroomPrice) || 0,
+              rto_road_tax: Number(editVehicleRtoRoadTax) || 0,
+              tcs_amount: Number(editVehicleTcsAmount) || 0,
+              insurance_cost: Number(editVehicleInsuranceCost) || 0,
+              hsrp_smart_card_fee: Number(editVehicleHsrpFee) || 0,
+              fastag_charges: Number(editVehicleFastagCharges) || 0,
+              accessories_cost: Number(editVehicleAccessoriesCost) || 0,
+              extended_warranty_cost: Number(editVehicleExtendedWarrantyCost) || 0,
+              other_charges: Number(editVehicleOtherCharges) || 0,
+              discount_amount: Number(editVehicleDiscountAmount) || 0,
+              on_road_price: Number(editVehicleOnRoadPrice) || Number(editVehiclePurchasePrice) || 0,
+              purchase_price: Number(editVehicleOnRoadPrice) || Number(editVehiclePurchasePrice) || 0,
+              purchase_cost: Number(editVehicleOnRoadPrice) || Number(editVehiclePurchasePrice) || 0,
               custom_extended_expiry_date: editVehicleCustomExtendedExpiryDate || null,
               vin_chassis_number: editVehicleVin.trim() || v.vin_chassis_number,
               engine_number: editVehicleEngine.trim() || v.engine_number,
@@ -3987,8 +4261,24 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             fitness_expiry_date: editVehicleFitnessExpiry || prev.fitness_expiry_date,
             has_roadside_assistance: editVehicleRsa,
             has_hsrp_plate: editVehicleHsrp,
-            purchase_price: Number(editVehiclePurchasePrice) || 0,
-            purchase_cost: Number(editVehiclePurchasePrice) || 0,
+            basic_price: Number(editVehicleBasicPrice) || 0,
+            gst_percentage: Number(editVehicleGstPercent) || 0,
+            gst_amount: Number(editVehicleGstAmount) || 0,
+            cess_percentage: Number(editVehicleCessPercent) || 0,
+            cess_amount: Number(editVehicleCessAmount) || 0,
+            ex_showroom_price: Number(editVehicleExShowroomPrice) || 0,
+            rto_road_tax: Number(editVehicleRtoRoadTax) || 0,
+            tcs_amount: Number(editVehicleTcsAmount) || 0,
+            insurance_cost: Number(editVehicleInsuranceCost) || 0,
+            hsrp_smart_card_fee: Number(editVehicleHsrpFee) || 0,
+            fastag_charges: Number(editVehicleFastagCharges) || 0,
+            accessories_cost: Number(editVehicleAccessoriesCost) || 0,
+            extended_warranty_cost: Number(editVehicleExtendedWarrantyCost) || 0,
+            other_charges: Number(editVehicleOtherCharges) || 0,
+            discount_amount: Number(editVehicleDiscountAmount) || 0,
+            on_road_price: Number(editVehicleOnRoadPrice) || Number(editVehiclePurchasePrice) || 0,
+            purchase_price: Number(editVehicleOnRoadPrice) || Number(editVehiclePurchasePrice) || 0,
+            purchase_cost: Number(editVehicleOnRoadPrice) || Number(editVehiclePurchasePrice) || 0,
             custom_extended_expiry_date: editVehicleCustomExtendedExpiryDate || null,
             assignedDriver: matchedDriver ? { id: matchedDriver.id, full_name: matchedDriver.full_name, phone: matchedDriver.phone } : null,
             documents: editVehicleDocs 
@@ -4005,8 +4295,24 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             odometer_km: Number(editVehicleOdometer) || 0,
             nickname: editVehicleNickname.trim() || dossierOriginVehicle.nickname,
             paint_color: editVehicleColor,
-            purchase_price: Number(editVehiclePurchasePrice) || 0,
-            purchase_cost: Number(editVehiclePurchasePrice) || 0,
+            basic_price: Number(editVehicleBasicPrice) || 0,
+            gst_percentage: Number(editVehicleGstPercent) || 0,
+            gst_amount: Number(editVehicleGstAmount) || 0,
+            cess_percentage: Number(editVehicleCessPercent) || 0,
+            cess_amount: Number(editVehicleCessAmount) || 0,
+            ex_showroom_price: Number(editVehicleExShowroomPrice) || 0,
+            rto_road_tax: Number(editVehicleRtoRoadTax) || 0,
+            tcs_amount: Number(editVehicleTcsAmount) || 0,
+            insurance_cost: Number(editVehicleInsuranceCost) || 0,
+            hsrp_smart_card_fee: Number(editVehicleHsrpFee) || 0,
+            fastag_charges: Number(editVehicleFastagCharges) || 0,
+            accessories_cost: Number(editVehicleAccessoriesCost) || 0,
+            extended_warranty_cost: Number(editVehicleExtendedWarrantyCost) || 0,
+            other_charges: Number(editVehicleOtherCharges) || 0,
+            discount_amount: Number(editVehicleDiscountAmount) || 0,
+            on_road_price: Number(editVehicleOnRoadPrice) || Number(editVehiclePurchasePrice) || 0,
+            purchase_price: Number(editVehicleOnRoadPrice) || Number(editVehiclePurchasePrice) || 0,
+            purchase_cost: Number(editVehicleOnRoadPrice) || Number(editVehiclePurchasePrice) || 0,
             custom_extended_expiry_date: editVehicleCustomExtendedExpiryDate || null,
             vin_chassis_number: editVehicleVin.trim() || dossierOriginVehicle.vin_chassis_number,
             engine_number: editVehicleEngine.trim() || dossierOriginVehicle.engine_number,
@@ -7281,21 +7587,368 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
-                <div>
-                  <label className="text-xs font-semibold text-foreground block mb-1.5 flex items-center gap-1">
-                    <IndianRupee className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                    <span>Purchase Price (₹)</span>
-                  </label>
-                  <AppInput 
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={newVehiclePurchasePrice} 
-                    onChange={(e) => setNewVehiclePurchasePrice(e.target.value)} 
-                    className="font-mono text-xs"
-                  />
+              {/* VEHICLE PRICING & ON-ROAD BREAKDOWN */}
+              <div className="pt-2">
+                <div className="rounded-xl border border-emerald-500/30 bg-emerald-50/30 dark:bg-emerald-950/10 p-4 space-y-4">
+                  <div className="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-emerald-500/20">
+                    <div className="flex items-center gap-2">
+                      <div className="h-7 w-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                        ₹
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
+                          Vehicle Pricing & On-Road Cost Breakdown
+                        </h4>
+                        <p className="text-xs text-muted-foreground">
+                          Factory Base, GST/Cess Statutory Matrix, RTO, Insurance, Fitments & Other Charges
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="px-3 py-1 rounded-lg bg-emerald-600 text-white font-mono font-bold text-xs shadow-xs flex items-center gap-1.5">
+                        <span className="text-emerald-100 font-sans text-xs font-normal">On-Road:</span>
+                        <span>₹{Number(newVehicleOnRoadPrice || newVehiclePurchasePrice || 0).toLocaleString("en-IN")}</span>
+                      </div>
+                    </div>
                   </div>
+
+                  {/* 1. Factory Base & Ex-Showroom Slabs */}
+                  <div className="space-y-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-400 flex items-center gap-1">
+                      <span>1. Ex-Factory Base & Statutory GST / Cess Matrix</span>
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1">
+                          Basic / Ex-Factory Price (₹)
+                        </label>
+                        <AppInput 
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder="e.g. 850000"
+                          value={newVehicleBasicPrice} 
+                          onChange={(e) => {
+                            setNewVehicleBasicPrice(e.target.value);
+                            syncNewVehicleOnRoad({ basic: e.target.value });
+                          }} 
+                          className="font-mono text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1">
+                          GST Slab (%)
+                        </label>
+                        <select
+                          value={newVehicleGstPercent}
+                          onChange={(e) => {
+                            const val = Number(e.target.value);
+                            setNewVehicleGstPercent(val);
+                            syncNewVehicleOnRoad({ gstPercent: val });
+                          }}
+                          className="w-full h-9 px-3 rounded-lg border border-border bg-surface text-foreground text-xs focus:ring-2 focus:ring-theme-btn-primary/30"
+                        >
+                          <option value={28}>28% (Standard Passenger / ICE)</option>
+                          <option value={18}>18% (Commercial / Heavy Vehicles)</option>
+                          <option value={12}>12% (Small / Agricultural Vehicles)</option>
+                          <option value={5}>5% (Electric Vehicles - EV)</option>
+                          <option value={0}>0% (Exempt / No Tax)</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1">
+                          GST Amount (₹)
+                        </label>
+                        <AppInput 
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder="Calculated automatically"
+                          value={newVehicleGstAmount} 
+                          onChange={(e) => {
+                            setNewVehicleGstAmount(e.target.value);
+                            syncNewVehicleOnRoad({ gstAmt: e.target.value });
+                          }} 
+                          className="font-mono text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1">
+                          Compensation Cess (%)
+                        </label>
+                        <select
+                          value={newVehicleCessPercent}
+                          onChange={(e) => {
+                            const val = Number(e.target.value);
+                            setNewVehicleCessPercent(val);
+                            syncNewVehicleOnRoad({ cessPercent: val });
+                          }}
+                          className="w-full h-9 px-3 rounded-lg border border-border bg-surface text-foreground text-xs focus:ring-2 focus:ring-theme-btn-primary/30"
+                        >
+                          <option value={0}>0% (EV / Standard Commercial / None)</option>
+                          <option value={1}>1% (Small Petrol &lt; 1200cc, &lt; 4m)</option>
+                          <option value={3}>3% (Small Diesel &lt; 1500cc, &lt; 4m)</option>
+                          <option value={15}>15% (Mid-size / Large Sedans)</option>
+                          <option value={20}>20% (SUVs &lt; 1500cc)</option>
+                          <option value={22}>22% (Large SUVs &gt; 1500cc &amp; &gt; 4m)</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1">
+                          Cess Amount (₹)
+                        </label>
+                        <AppInput 
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder="Calculated automatically"
+                          value={newVehicleCessAmount} 
+                          onChange={(e) => {
+                            setNewVehicleCessAmount(e.target.value);
+                            syncNewVehicleOnRoad({ cessAmt: e.target.value });
+                          }} 
+                          className="font-mono text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1 flex items-center gap-1">
+                          <IndianRupee className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                          <span>Published Ex-Showroom Price (₹) *</span>
+                        </label>
+                        <AppInput 
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder="Base + GST + Cess"
+                          value={newVehicleExShowroomPrice} 
+                          onChange={(e) => {
+                            setNewVehicleExShowroomPrice(e.target.value);
+                            syncNewVehicleOnRoad({ exShowroom: e.target.value });
+                          }} 
+                          className="font-mono text-xs font-bold text-emerald-700 dark:text-emerald-300"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 2. Statutory RTO, TCS & Insurance */}
+                  <div className="space-y-2 pt-2 border-t border-border/60">
+                    <span className="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400 flex items-center gap-1">
+                      <span>2. Statutory RTO Registration, TCS &amp; Insurance Protection</span>
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1">
+                          RTO Road Tax &amp; Reg Fee (₹)
+                        </label>
+                        <AppInput 
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder="e.g. 110000"
+                          value={newVehicleRtoRoadTax} 
+                          onChange={(e) => {
+                            setNewVehicleRtoRoadTax(e.target.value);
+                            syncNewVehicleOnRoad({ rto: e.target.value });
+                          }} 
+                          className="font-mono text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1">
+                          TCS @ 1% (Sec 206C(1F)) (₹)
+                        </label>
+                        <AppInput 
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder="Auto 1% if Ex-Showroom > ₹10L"
+                          value={newVehicleTcsAmount} 
+                          onChange={(e) => {
+                            setNewVehicleTcsAmount(e.target.value);
+                            syncNewVehicleOnRoad({ tcs: e.target.value });
+                          }} 
+                          className="font-mono text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1">
+                          Comprehensive Insurance (₹)
+                        </label>
+                        <AppInput 
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder="e.g. 45000"
+                          value={newVehicleInsuranceCost} 
+                          onChange={(e) => {
+                            setNewVehicleInsuranceCost(e.target.value);
+                            syncNewVehicleOnRoad({ insurance: e.target.value });
+                          }} 
+                          className="font-mono text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1">
+                          Laser HSRP &amp; Smart Card (₹)
+                        </label>
+                        <AppInput 
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder="e.g. 800"
+                          value={newVehicleHsrpFee} 
+                          onChange={(e) => {
+                            setNewVehicleHsrpFee(e.target.value);
+                            syncNewVehicleOnRoad({ hsrp: e.target.value });
+                          }} 
+                          className="font-mono text-xs"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 3. Fitments, Extended Warranty, Other Charges & Discounts */}
+                  <div className="space-y-2 pt-2 border-t border-border/60">
+                    <span className="text-xs font-bold uppercase tracking-wider text-purple-700 dark:text-purple-400 flex items-center gap-1">
+                      <span>3. Fitments, Extended Warranty, Other Charges &amp; Discounts</span>
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1">
+                          FASTag Fee &amp; Security (₹)
+                        </label>
+                        <AppInput 
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder="e.g. 500"
+                          value={newVehicleFastagCharges} 
+                          onChange={(e) => {
+                            setNewVehicleFastagCharges(e.target.value);
+                            syncNewVehicleOnRoad({ fastag: e.target.value });
+                          }} 
+                          className="font-mono text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1">
+                          Accessories &amp; Fitments (₹)
+                        </label>
+                        <AppInput 
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder="e.g. GPS, Mats, Dashcam"
+                          value={newVehicleAccessoriesCost} 
+                          onChange={(e) => {
+                            setNewVehicleAccessoriesCost(e.target.value);
+                            syncNewVehicleOnRoad({ accessories: e.target.value });
+                          }} 
+                          className="font-mono text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1">
+                          Extended Warranty / AMC (₹)
+                        </label>
+                        <AppInput 
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder="e.g. 25000"
+                          value={newVehicleExtendedWarrantyCost} 
+                          onChange={(e) => {
+                            setNewVehicleExtendedWarrantyCost(e.target.value);
+                            syncNewVehicleOnRoad({ ew: e.target.value });
+                          }} 
+                          className="font-mono text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1">
+                          Other Charges (₹)
+                        </label>
+                        <AppInput 
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder="Incidental / Municipal / Green Cess"
+                          value={newVehicleOtherCharges} 
+                          onChange={(e) => {
+                            setNewVehicleOtherCharges(e.target.value);
+                            syncNewVehicleOnRoad({ other: e.target.value });
+                          }} 
+                          className="font-mono text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-rose-600 dark:text-rose-400 block mb-1">
+                          Dealer / Fleet Discount (-) (₹)
+                        </label>
+                        <AppInput 
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder="e.g. 20000"
+                          value={newVehicleDiscountAmount} 
+                          onChange={(e) => {
+                            setNewVehicleDiscountAmount(e.target.value);
+                            syncNewVehicleOnRoad({ discount: e.target.value });
+                          }} 
+                          className="font-mono text-xs text-rose-600 dark:text-rose-400"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-bold text-emerald-700 dark:text-emerald-400 block mb-1 flex items-center gap-1">
+                          <IndianRupee className="h-3.5 w-3.5" />
+                          <span>Final Total On-Road Price (₹)</span>
+                        </label>
+                        <AppInput 
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder="Ex-Showroom + Statutory + Extras - Disc"
+                          value={newVehicleOnRoadPrice || newVehiclePurchasePrice} 
+                          onChange={(e) => {
+                            setNewVehicleOnRoadPrice(e.target.value);
+                            setNewVehiclePurchasePrice(e.target.value);
+                          }} 
+                          className="font-mono text-xs font-bold bg-emerald-500/10 text-emerald-800 dark:text-emerald-200 border-emerald-500/40"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Summary Math Strip */}
+                  <div className="p-3 rounded-lg bg-surface border border-border/80 flex items-center justify-between flex-wrap gap-2 text-xs">
+                    <div className="flex items-center gap-2 flex-wrap text-muted-foreground font-mono">
+                      <span>Ex-Showroom: <strong className="text-foreground">₹{Number(newVehicleExShowroomPrice || 0).toLocaleString("en-IN")}</strong></span>
+                      <span>+</span>
+                      <span>RTO &amp; TCS: <strong className="text-foreground">₹{(Number(newVehicleRtoRoadTax || 0) + Number(newVehicleTcsAmount || 0)).toLocaleString("en-IN")}</strong></span>
+                      <span>+</span>
+                      <span>Ins &amp; Fitments: <strong className="text-foreground">₹{(Number(newVehicleInsuranceCost || 0) + Number(newVehicleHsrpFee || 0) + Number(newVehicleFastagCharges || 0) + Number(newVehicleAccessoriesCost || 0) + Number(newVehicleExtendedWarrantyCost || 0) + Number(newVehicleOtherCharges || 0)).toLocaleString("en-IN")}</strong></span>
+                      <span>-</span>
+                      <span>Disc: <strong className="text-rose-600 dark:text-rose-400">₹{Number(newVehicleDiscountAmount || 0).toLocaleString("en-IN")}</strong></span>
+                    </div>
+                    <div className="font-bold font-mono text-emerald-700 dark:text-emerald-300 text-xs">
+                      = ₹{Number(newVehicleOnRoadPrice || newVehiclePurchasePrice || 0).toLocaleString("en-IN")} Net Asset Cost
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -12093,20 +12746,367 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="font-semibold block mb-1 flex items-center gap-1">
-                      <IndianRupee className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                      <span>Purchase Price (₹)</span>
-                    </label>
-                    <AppInput 
-                      type="number"
-                      min="0"
-                      step="1"
-                      value={editVehiclePurchasePrice} 
-                      onChange={(e) => setEditVehiclePurchasePrice(e.target.value)} 
-                      className="font-mono text-xs"
-                    />
+                {/* VEHICLE PRICING & ON-ROAD BREAKDOWN */}
+                <div className="pt-2">
+                  <div className="rounded-xl border border-emerald-500/30 bg-emerald-50/30 dark:bg-emerald-950/10 p-3.5 space-y-3.5">
+                    <div className="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-emerald-500/20">
+                      <div className="flex items-center gap-2">
+                        <div className="h-6 w-6 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                          ₹
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
+                            Vehicle Pricing &amp; On-Road Cost Breakdown
+                          </h4>
+                          <p className="text-xs text-muted-foreground">
+                            Factory Base, GST/Cess Statutory Matrix, RTO, Insurance, Fitments &amp; Other Charges
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="px-3 py-1 rounded-lg bg-emerald-600 text-white font-mono font-bold text-xs shadow-xs flex items-center gap-1.5">
+                          <span className="text-emerald-100 font-sans text-xs font-normal">On-Road:</span>
+                          <span>₹{Number(editVehicleOnRoadPrice || editVehiclePurchasePrice || 0).toLocaleString("en-IN")}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 1. Factory Base & Ex-Showroom Slabs */}
+                    <div className="space-y-2">
+                      <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-400 flex items-center gap-1">
+                        <span>1. Ex-Factory Base &amp; Statutory GST / Cess Matrix</span>
+                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <div>
+                          <label className="text-xs font-semibold text-foreground block mb-1">
+                            Basic / Ex-Factory Price (₹)
+                          </label>
+                          <AppInput 
+                            type="number"
+                            min="0"
+                            step="1"
+                            placeholder="e.g. 850000"
+                            value={editVehicleBasicPrice} 
+                            onChange={(e) => {
+                              setEditVehicleBasicPrice(e.target.value);
+                              syncEditVehicleOnRoad({ basic: e.target.value });
+                            }} 
+                            className="font-mono text-xs"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-semibold text-foreground block mb-1">
+                            GST Slab (%)
+                          </label>
+                          <select
+                            value={editVehicleGstPercent}
+                            onChange={(e) => {
+                              const val = Number(e.target.value);
+                              setEditVehicleGstPercent(val);
+                              syncEditVehicleOnRoad({ gstPercent: val });
+                            }}
+                            className="w-full h-9 px-3 rounded-lg border border-border bg-surface text-foreground text-xs focus:ring-2 focus:ring-theme-btn-primary/30"
+                          >
+                            <option value={28}>28% (Standard Passenger / ICE)</option>
+                            <option value={18}>18% (Commercial / Heavy Vehicles)</option>
+                            <option value={12}>12% (Small / Agricultural Vehicles)</option>
+                            <option value={5}>5% (Electric Vehicles - EV)</option>
+                            <option value={0}>0% (Exempt / No Tax)</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-semibold text-foreground block mb-1">
+                            GST Amount (₹)
+                          </label>
+                          <AppInput 
+                            type="number"
+                            min="0"
+                            step="1"
+                            placeholder="Calculated automatically"
+                            value={editVehicleGstAmount} 
+                            onChange={(e) => {
+                              setEditVehicleGstAmount(e.target.value);
+                              syncEditVehicleOnRoad({ gstAmt: e.target.value });
+                            }} 
+                            className="font-mono text-xs"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-semibold text-foreground block mb-1">
+                            Compensation Cess (%)
+                          </label>
+                          <select
+                            value={editVehicleCessPercent}
+                            onChange={(e) => {
+                              const val = Number(e.target.value);
+                              setEditVehicleCessPercent(val);
+                              syncEditVehicleOnRoad({ cessPercent: val });
+                            }}
+                            className="w-full h-9 px-3 rounded-lg border border-border bg-surface text-foreground text-xs focus:ring-2 focus:ring-theme-btn-primary/30"
+                          >
+                            <option value={0}>0% (EV / Standard Commercial / None)</option>
+                            <option value={1}>1% (Small Petrol &lt; 1200cc, &lt; 4m)</option>
+                            <option value={3}>3% (Small Diesel &lt; 1500cc, &lt; 4m)</option>
+                            <option value={15}>15% (Mid-size / Large Sedans)</option>
+                            <option value={20}>20% (SUVs &lt; 1500cc)</option>
+                            <option value={22}>22% (Large SUVs &gt; 1500cc &amp; &gt; 4m)</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-semibold text-foreground block mb-1">
+                            Cess Amount (₹)
+                          </label>
+                          <AppInput 
+                            type="number"
+                            min="0"
+                            step="1"
+                            placeholder="Calculated automatically"
+                            value={editVehicleCessAmount} 
+                            onChange={(e) => {
+                              setEditVehicleCessAmount(e.target.value);
+                              syncEditVehicleOnRoad({ cessAmt: e.target.value });
+                            }} 
+                            className="font-mono text-xs"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-semibold text-foreground block mb-1 flex items-center gap-1">
+                            <IndianRupee className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                            <span>Published Ex-Showroom Price (₹) *</span>
+                          </label>
+                          <AppInput 
+                            type="number"
+                            min="0"
+                            step="1"
+                            placeholder="Base + GST + Cess"
+                            value={editVehicleExShowroomPrice} 
+                            onChange={(e) => {
+                              setEditVehicleExShowroomPrice(e.target.value);
+                              syncEditVehicleOnRoad({ exShowroom: e.target.value });
+                            }} 
+                            className="font-mono text-xs font-bold text-emerald-700 dark:text-emerald-300"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 2. Statutory RTO, TCS & Insurance */}
+                    <div className="space-y-2 pt-2 border-t border-border/60">
+                      <span className="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400 flex items-center gap-1">
+                        <span>2. Statutory RTO Registration, TCS &amp; Insurance Protection</span>
+                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div>
+                          <label className="text-xs font-semibold text-foreground block mb-1">
+                            RTO Road Tax &amp; Reg Fee (₹)
+                          </label>
+                          <AppInput 
+                            type="number"
+                            min="0"
+                            step="1"
+                            placeholder="e.g. 110000"
+                            value={editVehicleRtoRoadTax} 
+                            onChange={(e) => {
+                              setEditVehicleRtoRoadTax(e.target.value);
+                              syncEditVehicleOnRoad({ rto: e.target.value });
+                            }} 
+                            className="font-mono text-xs"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-semibold text-foreground block mb-1">
+                            TCS @ 1% (Sec 206C(1F)) (₹)
+                          </label>
+                          <AppInput 
+                            type="number"
+                            min="0"
+                            step="1"
+                            placeholder="Auto 1% if Ex-Showroom > ₹10L"
+                            value={editVehicleTcsAmount} 
+                            onChange={(e) => {
+                              setEditVehicleTcsAmount(e.target.value);
+                              syncEditVehicleOnRoad({ tcs: e.target.value });
+                            }} 
+                            className="font-mono text-xs"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-semibold text-foreground block mb-1">
+                            Comprehensive Insurance (₹)
+                          </label>
+                          <AppInput 
+                            type="number"
+                            min="0"
+                            step="1"
+                            placeholder="e.g. 45000"
+                            value={editVehicleInsuranceCost} 
+                            onChange={(e) => {
+                              setEditVehicleInsuranceCost(e.target.value);
+                              syncEditVehicleOnRoad({ insurance: e.target.value });
+                            }} 
+                            className="font-mono text-xs"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-semibold text-foreground block mb-1">
+                            Laser HSRP &amp; Smart Card (₹)
+                          </label>
+                          <AppInput 
+                            type="number"
+                            min="0"
+                            step="1"
+                            placeholder="e.g. 800"
+                            value={editVehicleHsrpFee} 
+                            onChange={(e) => {
+                              setEditVehicleHsrpFee(e.target.value);
+                              syncEditVehicleOnRoad({ hsrp: e.target.value });
+                            }} 
+                            className="font-mono text-xs"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 3. Fitments, Extended Warranty, Other Charges & Discounts */}
+                    <div className="space-y-2 pt-2 border-t border-border/60">
+                      <span className="text-xs font-bold uppercase tracking-wider text-purple-700 dark:text-purple-400 flex items-center gap-1">
+                        <span>3. Fitments, Extended Warranty, Other Charges &amp; Discounts</span>
+                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <div>
+                          <label className="text-xs font-semibold text-foreground block mb-1">
+                            FASTag Fee &amp; Security (₹)
+                          </label>
+                          <AppInput 
+                            type="number"
+                            min="0"
+                            step="1"
+                            placeholder="e.g. 500"
+                            value={editVehicleFastagCharges} 
+                            onChange={(e) => {
+                              setEditVehicleFastagCharges(e.target.value);
+                              syncEditVehicleOnRoad({ fastag: e.target.value });
+                            }} 
+                            className="font-mono text-xs"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-semibold text-foreground block mb-1">
+                            Accessories &amp; Fitments (₹)
+                          </label>
+                          <AppInput 
+                            type="number"
+                            min="0"
+                            step="1"
+                            placeholder="e.g. GPS, Mats, Dashcam"
+                            value={editVehicleAccessoriesCost} 
+                            onChange={(e) => {
+                              setEditVehicleAccessoriesCost(e.target.value);
+                              syncEditVehicleOnRoad({ accessories: e.target.value });
+                            }} 
+                            className="font-mono text-xs"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-semibold text-foreground block mb-1">
+                            Extended Warranty / AMC (₹)
+                          </label>
+                          <AppInput 
+                            type="number"
+                            min="0"
+                            step="1"
+                            placeholder="e.g. 25000"
+                            value={editVehicleExtendedWarrantyCost} 
+                            onChange={(e) => {
+                              setEditVehicleExtendedWarrantyCost(e.target.value);
+                              syncEditVehicleOnRoad({ ew: e.target.value });
+                            }} 
+                            className="font-mono text-xs"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-semibold text-foreground block mb-1">
+                            Other Charges (₹)
+                          </label>
+                          <AppInput 
+                            type="number"
+                            min="0"
+                            step="1"
+                            placeholder="Incidental / Municipal / Green Cess"
+                            value={editVehicleOtherCharges} 
+                            onChange={(e) => {
+                              setEditVehicleOtherCharges(e.target.value);
+                              syncEditVehicleOnRoad({ other: e.target.value });
+                            }} 
+                            className="font-mono text-xs"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-semibold text-rose-600 dark:text-rose-400 block mb-1">
+                            Dealer / Fleet Discount (-) (₹)
+                          </label>
+                          <AppInput 
+                            type="number"
+                            min="0"
+                            step="1"
+                            placeholder="e.g. 20000"
+                            value={editVehicleDiscountAmount} 
+                            onChange={(e) => {
+                              setEditVehicleDiscountAmount(e.target.value);
+                              syncEditVehicleOnRoad({ discount: e.target.value });
+                            }} 
+                            className="font-mono text-xs text-rose-600 dark:text-rose-400"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-bold text-emerald-700 dark:text-emerald-400 block mb-1 flex items-center gap-1">
+                            <IndianRupee className="h-3.5 w-3.5" />
+                            <span>Final Total On-Road Price (₹)</span>
+                          </label>
+                          <AppInput 
+                            type="number"
+                            min="0"
+                            step="1"
+                            placeholder="Ex-Showroom + Statutory + Extras - Disc"
+                            value={editVehicleOnRoadPrice || editVehiclePurchasePrice} 
+                            onChange={(e) => {
+                              setEditVehicleOnRoadPrice(e.target.value);
+                              setEditVehiclePurchasePrice(e.target.value);
+                            }} 
+                            className="font-mono text-xs font-bold bg-emerald-500/10 text-emerald-800 dark:text-emerald-200 border-emerald-500/40"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Summary Math Strip */}
+                    <div className="p-3 rounded-lg bg-surface border border-border/80 flex items-center justify-between flex-wrap gap-2 text-xs">
+                      <div className="flex items-center gap-2 flex-wrap text-muted-foreground font-mono">
+                        <span>Ex-Showroom: <strong className="text-foreground">₹{Number(editVehicleExShowroomPrice || 0).toLocaleString("en-IN")}</strong></span>
+                        <span>+</span>
+                        <span>RTO &amp; TCS: <strong className="text-foreground">₹{(Number(editVehicleRtoRoadTax || 0) + Number(editVehicleTcsAmount || 0)).toLocaleString("en-IN")}</strong></span>
+                        <span>+</span>
+                        <span>Ins &amp; Fitments: <strong className="text-foreground">₹{(Number(editVehicleInsuranceCost || 0) + Number(editVehicleHsrpFee || 0) + Number(editVehicleFastagCharges || 0) + Number(editVehicleAccessoriesCost || 0) + Number(editVehicleExtendedWarrantyCost || 0) + Number(editVehicleOtherCharges || 0)).toLocaleString("en-IN")}</strong></span>
+                        <span>-</span>
+                        <span>Disc: <strong className="text-rose-600 dark:text-rose-400">₹{Number(editVehicleDiscountAmount || 0).toLocaleString("en-IN")}</strong></span>
+                      </div>
+                      <div className="font-bold font-mono text-emerald-700 dark:text-emerald-300 text-xs">
+                        = ₹{Number(editVehicleOnRoadPrice || editVehiclePurchasePrice || 0).toLocaleString("en-IN")} Net Asset Cost
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -18127,6 +19127,134 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       </div>
                     );
                   })()}
+                </div>
+              </div>
+
+              {/* Vehicle Acquisition Financials & On-Road Quotation Breakdown Card */}
+              <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-50/20 dark:bg-emerald-950/10 space-y-3.5">
+                <div className="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-emerald-500/20">
+                  <div className="flex items-center gap-2">
+                    <div className="h-7 w-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                      ₹
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                        <span>Vehicle Acquisition Financials &amp; On-Road Quotation</span>
+                      </h4>
+                      <p className="text-xs text-muted-foreground">
+                        Itemized statutory taxes, ex-showroom breakdown, registration, fitments &amp; other charges
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="px-3 py-1 rounded-lg bg-emerald-600 text-white font-mono font-bold text-xs shadow-xs flex items-center gap-1.5">
+                      <span className="text-emerald-100 font-sans text-xs font-normal">Capitalized Asset Value:</span>
+                      <span>₹{Number(viewingVehicle.on_road_price || viewingVehicle.purchase_price || viewingVehicle.purchase_cost || 0).toLocaleString("en-IN")}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                  {/* Column 1: Ex-Factory Base & Taxes */}
+                  <div className="p-3 rounded-lg border border-border bg-surface space-y-2">
+                    <span className="font-bold text-emerald-800 dark:text-emerald-400 uppercase tracking-wider text-xs block pb-1 border-b border-border/60">
+                      1. Factory Base &amp; Tax Matrix
+                    </span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Basic / Ex-Factory:</span>
+                      <span className="font-mono font-semibold text-foreground">
+                        {viewingVehicle.basic_price ? `₹${Number(viewingVehicle.basic_price).toLocaleString("en-IN")}` : "—"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">GST ({viewingVehicle.gst_percentage ?? 28}%):</span>
+                      <span className="font-mono font-semibold text-foreground">
+                        {viewingVehicle.gst_amount ? `₹${Number(viewingVehicle.gst_amount).toLocaleString("en-IN")}` : "—"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Compensation Cess ({viewingVehicle.cess_percentage ?? 0}%):</span>
+                      <span className="font-mono font-semibold text-foreground">
+                        {viewingVehicle.cess_amount ? `₹${Number(viewingVehicle.cess_amount).toLocaleString("en-IN")}` : "—"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between pt-1 border-t border-border/60">
+                      <span className="font-bold text-foreground">Ex-Showroom Price:</span>
+                      <span className="font-mono font-bold text-emerald-700 dark:text-emerald-300">
+                        {viewingVehicle.ex_showroom_price || viewingVehicle.purchase_price
+                          ? `₹${Number(viewingVehicle.ex_showroom_price || viewingVehicle.purchase_price).toLocaleString("en-IN")}`
+                          : "—"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Column 2: Statutory RTO, TCS & Insurance */}
+                  <div className="p-3 rounded-lg border border-border bg-surface space-y-2">
+                    <span className="font-bold text-blue-800 dark:text-blue-400 uppercase tracking-wider text-xs block pb-1 border-b border-border/60">
+                      2. Statutory &amp; Compliance
+                    </span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">RTO Road Tax &amp; Reg:</span>
+                      <span className="font-mono font-semibold text-foreground">
+                        {viewingVehicle.rto_road_tax ? `₹${Number(viewingVehicle.rto_road_tax).toLocaleString("en-IN")}` : "—"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">TCS (1% Sec 206C):</span>
+                      <span className="font-mono font-semibold text-foreground">
+                        {viewingVehicle.tcs_amount ? `₹${Number(viewingVehicle.tcs_amount).toLocaleString("en-IN")}` : "—"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Motor Insurance:</span>
+                      <span className="font-mono font-semibold text-foreground">
+                        {viewingVehicle.insurance_cost ? `₹${Number(viewingVehicle.insurance_cost).toLocaleString("en-IN")}` : "—"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between pt-1 border-t border-border/60">
+                      <span className="text-muted-foreground">Laser HSRP &amp; RC:</span>
+                      <span className="font-mono font-semibold text-foreground">
+                        {viewingVehicle.hsrp_smart_card_fee ? `₹${Number(viewingVehicle.hsrp_smart_card_fee).toLocaleString("en-IN")}` : "—"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Column 3: Fitments, Extended Warranty, Other & Discounts */}
+                  <div className="p-3 rounded-lg border border-border bg-surface space-y-2">
+                    <span className="font-bold text-purple-800 dark:text-purple-400 uppercase tracking-wider text-xs block pb-1 border-b border-border/60">
+                      3. Fitments, Other &amp; Discounts
+                    </span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">FASTag Tag &amp; Wallet:</span>
+                      <span className="font-mono font-semibold text-foreground">
+                        {viewingVehicle.fastag_charges ? `₹${Number(viewingVehicle.fastag_charges).toLocaleString("en-IN")}` : "—"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Accessories &amp; Fitments:</span>
+                      <span className="font-mono font-semibold text-foreground">
+                        {viewingVehicle.accessories_cost ? `₹${Number(viewingVehicle.accessories_cost).toLocaleString("en-IN")}` : "—"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Extended Warranty / AMC:</span>
+                      <span className="font-mono font-semibold text-foreground">
+                        {viewingVehicle.extended_warranty_cost ? `₹${Number(viewingVehicle.extended_warranty_cost).toLocaleString("en-IN")}` : "—"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Other Charges:</span>
+                      <span className="font-mono font-semibold text-foreground">
+                        {viewingVehicle.other_charges ? `₹${Number(viewingVehicle.other_charges).toLocaleString("en-IN")}` : "—"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between pt-1 border-t border-border/60">
+                      <span className="text-rose-600 dark:text-rose-400 font-semibold">Dealer / Fleet Discount:</span>
+                      <span className="font-mono font-bold text-rose-600 dark:text-rose-400">
+                        {viewingVehicle.discount_amount ? `-₹${Number(viewingVehicle.discount_amount).toLocaleString("en-IN")}` : "₹0"}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
