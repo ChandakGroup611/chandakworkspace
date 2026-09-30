@@ -57,71 +57,63 @@ if ($versionedDirs && is_array($versionedDirs)) {
 $allTargetDirs = array_values(array_unique(array_filter($targetDirs)));
 
 if (isset($_GET['info']) || isset($_GET['diag']) || isset($_GET['scan'])) {
-    $processes = [];
-    if (function_exists('exec')) {
-        @exec('ps aux 2>&1', $processes);
-    }
-    
-    // Deep search for files containing pricing strings
     $filesWithOldPricing = [];
     $filesWithNewPricing = [];
     $allBuildIds = [];
     
-    $searchRoots = [
-        '/home/u859582759/domains/chandakgroup.tech',
-        '/home/u859582759/public_html',
-        $domainRoot,
-        __DIR__,
-        dirname(__DIR__),
+    $checkDirs = [
+        $domainRoot . '/public_html/_next/static/chunks',
+        $domainRoot . '/hbuilds/current/nodejs/.next/server',
+        $domainRoot . '/hbuilds/current/nodejs/_next/static/chunks',
+        __DIR__ . '/_next/static/chunks',
     ];
     
-    foreach (array_unique(array_filter($searchRoots)) as $sRoot) {
-        if (!is_dir($sRoot)) continue;
-        try {
-            $iterator = new RecursiveIteratorIterator(
-                new RecursiveDirectoryIterator($sRoot, RecursiveDirectoryIterator::SKIP_DOTS),
-                RecursiveIteratorIterator::SELF_FIRST
-            );
-            $iterator->setMaxDepth(5);
-            foreach ($iterator as $item) {
-                $path = $item->getPathname();
-                if (strpos($path, 'node_modules') !== false && strpos($path, '.next') === false) continue;
-                if ($item->isFile()) {
-                    if ($item->getFilename() === 'BUILD_ID') {
-                        $allBuildIds[$path] = trim(@file_get_contents($path) ?: '');
-                    }
-                    if (in_array($item->getExtension(), ['js', 'html', 'json', 'txt'])) {
-                        $content = @file_get_contents($path, false, null, 0, 500000);
-                        if ($content !== false) {
-                            if (strpos($content, '1. EX-FACTORY BASE') !== false || strpos($content, 'EX-FACTORY BASE & STATUTORY') !== false) {
-                                $filesWithOldPricing[$path] = [
-                                    'size' => $item->getSize(),
-                                    'mtime' => date('Y-m-d H:i:s', $item->getMTime())
-                                ];
-                            }
-                            if (strpos($content, 'Vehicle Pricing & On-Road Cost Breakdown') !== false) {
-                                $filesWithNewPricing[$path] = [
-                                    'size' => $item->getSize(),
-                                    'mtime' => date('Y-m-d H:i:s', $item->getMTime())
-                                ];
-                            }
+    if ($versionedDirs && is_array($versionedDirs)) {
+        foreach ($versionedDirs as $vDir) {
+            $checkDirs[] = $vDir . '/.next/server';
+            $checkDirs[] = $vDir . '/_next/static/chunks';
+            $checkDirs[] = $vDir . '/public/_next/static/chunks';
+        }
+    }
+    
+    foreach (array_unique(array_filter($checkDirs)) as $dir) {
+        if (!is_dir($dir)) continue;
+        $files = @scandir($dir);
+        if (!$files) continue;
+        foreach ($files as $f) {
+            if ($f === '.' || $f === '..') continue;
+            $path = $dir . '/' . $f;
+            if (is_file($path)) {
+                if ($f === 'BUILD_ID') {
+                    $allBuildIds[$path] = trim(@file_get_contents($path) ?: '');
+                }
+                if (substr($f, -3) === '.js' || substr($f, -5) === '.html') {
+                    $content = @file_get_contents($path, false, null, 0, 100000);
+                    if ($content !== false) {
+                        if (strpos($content, '1. EX-FACTORY BASE') !== false || strpos($content, 'EX-FACTORY BASE & STATUTORY') !== false) {
+                            $filesWithOldPricing[$path] = [
+                                'size' => filesize($path),
+                                'mtime' => date('Y-m-d H:i:s', filemtime($path))
+                            ];
+                        }
+                        if (strpos($content, 'Vehicle Pricing & On-Road Cost Breakdown') !== false || strpos($content, 'Vehicle Pricing &amp; On-Road Cost Breakdown') !== false) {
+                            $filesWithNewPricing[$path] = [
+                                'size' => filesize($path),
+                                'mtime' => date('Y-m-d H:i:s', filemtime($path))
+                            ];
                         }
                     }
                 }
             }
-        } catch (Exception $e) {
-            // Ignore scan errors
         }
     }
 
     echo json_encode([
-        'current_dir' => __DIR__,
         'domain_root' => $domainRoot,
         'files_with_old_pricing' => $filesWithOldPricing,
         'files_with_new_pricing' => $filesWithNewPricing,
         'build_ids' => $allBuildIds,
-        'passenger_app_root' => $passengerAppRoot,
-        'php_version' => phpversion()
+        'timestamp' => date('Y-m-d H:i:s')
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     exit;
 }
