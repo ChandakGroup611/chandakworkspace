@@ -126,8 +126,13 @@ jobs:
                   cp -rn "$target/.next/static" "$target/public/_next/" 2>/dev/null || true
                   cp -rn "$target/.next/static" "$target/_next/" 2>/dev/null || true
                 fi
-                if [ -d "$target/public" ] && [ -f "$target/deploy-hook.php" ]; then
-                  cp -f "$target/deploy-hook.php" "$target/public/deploy-hook.php" 2>/dev/null || true
+                if [ -f "$target/deploy-hook.php" ]; then
+                  cp -f "$target/deploy-hook.php" "$ROOT_DIR/domains/chandakgroup.tech/public_html/deploy-hook.php" 2>/dev/null || true
+                  cp -f "$target/deploy-hook.php" "$ROOT_DIR/public_html/deploy-hook.php" 2>/dev/null || true
+                fi
+                if [ -d "$target/public" ]; then
+                  cp -f "$target/public/deploy-hook.php" "$ROOT_DIR/domains/chandakgroup.tech/public_html/deploy-hook.php" 2>/dev/null || true
+                  cp -f "$target/public/deploy-hook.php" "$ROOT_DIR/public_html/deploy-hook.php" 2>/dev/null || true
                 fi
               done
               
@@ -144,12 +149,13 @@ jobs:
       - name: Trigger Webhook Extraction and Verify Live Status
         run: |
           echo "Triggering deploy hook via HTTP..."
+          curl -sS --retry 3 --retry-delay 3 "https://chandakgroup.tech/public/deploy-hook.php?key=chandak_deploy_secret_2026_matrix" || true
           RESPONSE=$(curl -sS --retry 3 --retry-delay 3 "https://chandakgroup.tech/deploy-hook.php?key=chandak_deploy_secret_2026_matrix" || echo '{"success":true,"info":"webhook-fallback"}')
           echo "Hook Response: $RESPONSE"
           
           sleep 3
           echo "Verifying server status..."
-          INFO=$(curl -sS "https://chandakgroup.tech/deploy-hook.php?key=chandak_deploy_secret_2026_matrix&info=1" || echo "no-info")
+          INFO=$(curl -sS "https://chandakgroup.tech/public/deploy-hook.php?key=chandak_deploy_secret_2026_matrix&info=1" || echo "no-info")
           echo "Server Info: $INFO"
 
       - name: Update Deployment Status
