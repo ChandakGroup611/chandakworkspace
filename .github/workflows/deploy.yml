@@ -47,6 +47,8 @@ jobs:
         run: |
           cp -r public .next/standalone/public
           cp -r .next/static .next/standalone/.next/static
+          mkdir -p .next/standalone/_next
+          cp -r .next/static .next/standalone/_next/static
           mkdir -p .next/standalone/public/_next
           cp -r .next/static .next/standalone/public/_next/static
           cp public/deploy-hook.php .next/standalone/public/deploy-hook.php
@@ -106,7 +108,7 @@ jobs:
                 if [ -d "$n" ]; then TARGET_DIRS+=("$n"); fi
               done
               
-              for v in "$ROOT_DIR/domains/chandakgroup.tech/hbuilds/versions/"*/nodejs "$ROOT_DIR/hbuilds/versions/"*/nodejs; do
+              for v in "$ROOT_DIR/domains/chandakgroup.tech/hbuilds/versions/"*/nodejs "$ROOT_DIR/hbuilds/versions/"*/nodejs /home/u859582759/domains/chandakgroup.tech/hbuilds/versions/*/nodejs; do
                 if [ -d "$v" ]; then TARGET_DIRS+=("$v"); fi
               done
 
@@ -114,17 +116,17 @@ jobs:
               
               for target in "${TARGET_DIRS[@]}"; do
                 echo "Extracting into $target..."
-                mkdir -p "$target/tmp" "$target/public/_next"
-                rm -rf "$target/.next/cache" "$target/_next" "$target/public/_next"
+                mkdir -p "$target/tmp" "$target/_next" "$target/public/_next"
+                rm -rf "$target/.next/cache"
                 unzip -o "$ZIP_PATH" -d "$target"
-                mkdir -p "$target/tmp" "$target/public/_next"
+                mkdir -p "$target/tmp" "$target/_next" "$target/public/_next"
                 touch "$target/tmp/restart.txt"
                 if [ -f "$target/server.js" ]; then
                   touch "$target/server.js"
                 fi
                 if [ -d "$target/.next/static" ]; then
-                  cp -rn "$target/.next/static" "$target/public/_next/" 2>/dev/null || true
-                  cp -rn "$target/.next/static" "$target/_next/" 2>/dev/null || true
+                  cp -rf "$target/.next/static" "$target/_next/" 2>/dev/null || true
+                  cp -rf "$target/.next/static" "$target/public/_next/" 2>/dev/null || true
                 fi
                 if [ -f "$target/deploy-hook.php" ]; then
                   cp -f "$target/deploy-hook.php" "$ROOT_DIR/domains/chandakgroup.tech/public_html/deploy-hook.php" 2>/dev/null || true
@@ -133,6 +135,18 @@ jobs:
                 if [ -d "$target/public" ]; then
                   cp -f "$target/public/deploy-hook.php" "$ROOT_DIR/domains/chandakgroup.tech/public_html/deploy-hook.php" 2>/dev/null || true
                   cp -f "$target/public/deploy-hook.php" "$ROOT_DIR/public_html/deploy-hook.php" 2>/dev/null || true
+                fi
+              done
+
+              # Ensure _next is synced to every public location
+              for pub in "$ROOT_DIR/domains/chandakgroup.tech/public_html" "$ROOT_DIR/public_html" "$ROOT_DIR/domains/chandakgroup.tech/hbuilds/current/nodejs/public" /home/u859582759/domains/chandakgroup.tech/hbuilds/versions/*/nodejs/public; do
+                if [ -d "$pub" ]; then
+                  mkdir -p "$pub/_next"
+                  for v in /home/u859582759/domains/chandakgroup.tech/hbuilds/versions/*/nodejs /home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs "$ROOT_DIR/domains/chandakgroup.tech/public_html"; do
+                    if [ -d "$v/.next/static" ]; then
+                      cp -rf "$v/.next/static" "$pub/_next/" 2>/dev/null || true
+                    fi
+                  done
                 fi
               done
               
