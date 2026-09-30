@@ -25,9 +25,12 @@ if (preg_match('/PassengerRestartDir\s+([^\s\r\n]+)/', $htaccessContent, $m)) {
 
 $allTargetDirs = array_unique(array_filter([
     __DIR__,
-    $passengerAppRoot,
-    dirname(__DIR__) . '/hbuilds/current/nodejs',
     dirname(__DIR__),
+    $passengerAppRoot,
+    '/home/u859582759/domains/chandakgroup.tech/public_html',
+    '/home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs',
+    '/home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs/public',
+    dirname(__DIR__) . '/hbuilds/current/nodejs',
     __DIR__ . '/workspace'
 ]));
 
@@ -54,18 +57,29 @@ if (isset($_GET['info'])) {
     exit;
 }
 
-// Locate deploy.zip
+// Locate deploy.zip across all candidate paths
+$candidateZipPaths = array_unique(array_filter([
+    __DIR__ . '/deploy.zip',
+    dirname(__DIR__) . '/deploy.zip',
+    '/home/u859582759/domains/chandakgroup.tech/public_html/deploy.zip',
+    '/home/u859582759/domains/chandakgroup.tech/deploy.zip',
+    '/home/u859582759/public_html/deploy.zip',
+    dirname(dirname(dirname(dirname(__DIR__)))) . '/public_html/deploy.zip'
+]));
+
 $zipFile = null;
-if (file_exists(__DIR__ . '/deploy.zip')) {
-    $zipFile = __DIR__ . '/deploy.zip';
-} elseif (file_exists(dirname(__DIR__) . '/deploy.zip')) {
-    $zipFile = dirname(__DIR__) . '/deploy.zip';
+foreach ($candidateZipPaths as $candidate) {
+    if (file_exists($candidate)) {
+        $zipFile = $candidate;
+        break;
+    }
 }
 
 if (!$zipFile) {
     echo json_encode([
         'success' => false, 
         'error' => 'deploy.zip not found',
+        'searched_paths' => $candidateZipPaths,
         'files_in_current' => scandir(__DIR__)
     ]);
     exit;
