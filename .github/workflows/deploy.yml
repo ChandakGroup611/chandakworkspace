@@ -47,6 +47,8 @@ jobs:
         run: |
           cp -r public .next/standalone/public
           cp -r .next/static .next/standalone/.next/static
+          mkdir -p .next/standalone/public/_next
+          cp -r .next/static .next/standalone/public/_next/static
           cd .next/standalone
           zip -r ../../deploy.zip .
           cd ../..
@@ -96,21 +98,31 @@ jobs:
             echo "Target Zip File: $ZIP_PATH"
             
             if [ -n "$ZIP_PATH" ] && [ -f "$ZIP_PATH" ]; then
-              # Extract to public_html
-              for p_dir in "$ROOT_DIR/domains/chandakgroup.tech/public_html" "$ROOT_DIR/public_html"; do
-                if [ -d "$p_dir" ]; then
-                  echo "Extracting into $p_dir..."
-                  (cd "$p_dir" && unzip -o "$ZIP_PATH")
+              # Target directories to extract into
+              TARGETS=(
+                "$ROOT_DIR/domains/chandakgroup.tech/public_html"
+                "$ROOT_DIR/public_html"
+                "$ROOT_DIR/domains/chandakgroup.tech/hbuilds/current/nodejs"
+                "$ROOT_DIR/hbuilds/current/nodejs"
+              )
+              for ver_dir in $ROOT_DIR/domains/chandakgroup.tech/hbuilds/versions/*/nodejs $ROOT_DIR/hbuilds/versions/*/nodejs; do
+                if [ -d "$ver_dir" ]; then
+                  TARGETS+=("$ver_dir")
                 fi
               done
-              
-              # Extract to current nodejs and all active versioned nodejs directories
-              for n_dir in "$ROOT_DIR/domains/chandakgroup.tech/hbuilds/current/nodejs" $ROOT_DIR/domains/chandakgroup.tech/hbuilds/versions/*/nodejs "$ROOT_DIR/hbuilds/current/nodejs" $ROOT_DIR/hbuilds/versions/*/nodejs; do
-                if [ -d "$n_dir" ]; then
-                  echo "Extracting into $n_dir..."
-                  (cd "$n_dir" && unzip -o "$ZIP_PATH" && mkdir -p tmp && touch tmp/restart.txt)
-                  if [ -f "$n_dir/server.js" ]; then
-                    touch "$n_dir/server.js"
+
+              for target in "${TARGETS[@]}"; do
+                if [ -d "$target" ]; then
+                  echo "Updating target: $target"
+                  rm -rf "$target/.next/cache" "$target/_next" "$target/public/_next"
+                  (cd "$target" && unzip -o "$ZIP_PATH")
+                  mkdir -p "$target/tmp" "$target/public/_next"
+                  touch "$target/tmp/restart.txt"
+                  if [ -f "$target/server.js" ]; then
+                    touch "$target/server.js"
+                  fi
+                  if [ -d "$target/.next/static" ]; then
+                    cp -rn "$target/.next/static" "$target/public/_next/" 2>/dev/null || true
                   fi
                 fi
               done
@@ -125,12 +137,10 @@ jobs:
                 done
               fi
               
-              # Clean next cache
-              rm -rf "$ROOT_DIR/domains/chandakgroup.tech/hbuilds/versions/"*/.next/cache "$ROOT_DIR/domains/chandakgroup.tech/hbuilds/current/.next/cache" 2>/dev/null || true
-              
-              # Signal passenger restart
+              # Force kill old node processes so passenger boots new code
+              pkill -9 -f node 2>/dev/null || true
+              killall -9 node 2>/dev/null || true
               passenger-config restart-app --ignore-passenger-not-running / 2>/dev/null || true
-              pkill -f node 2>/dev/null || true
               
               rm -f "$ZIP_PATH" "$ROOT_DIR/domains/chandakgroup.tech/public_html/.ftp-deploy-sync-state.json"
               echo "=== SSH EXTRACTION COMPLETE ==="

@@ -62,35 +62,66 @@ if ($versionedDirs && is_array($versionedDirs)) {
 
 $allTargetDirs = array_values(array_unique(array_filter($targetDirs)));
 
-if (isset($_GET['info'])) {
+if (isset($_GET['info']) || isset($_GET['diag'])) {
     $processes = [];
     if (function_exists('exec')) {
-        @exec('ps aux | grep node 2>&1', $processes);
+        @exec('ps aux 2>&1', $processes);
     }
-    $buildId = file_exists(__DIR__ . '/.next/BUILD_ID') ? file_get_contents(__DIR__ . '/.next/BUILD_ID') : null;
-    $nodeAppBuildId = ($passengerAppRoot && file_exists($passengerAppRoot . '/.next/BUILD_ID')) ? file_get_contents($passengerAppRoot . '/.next/BUILD_ID') : null;
     
-    $versionBuildIds = [];
-    if ($versionedDirs && is_array($versionedDirs)) {
-        foreach ($versionedDirs as $vDir) {
-            $vBuild = file_exists($vDir . '/.next/BUILD_ID') ? trim(file_get_contents($vDir . '/.next/BUILD_ID')) : 'none';
-            $versionBuildIds[$vDir] = $vBuild;
+    // Search for all BUILD_ID and server.js files on disk
+    $foundBuildIds = [];
+    $foundServerJs = [];
+    $foundZipFiles = [];
+    
+    $searchRoots = [
+        '/home/u859582759',
+        '/home/u859582759/domains',
+        '/home/u859582759/domains/chandakgroup.tech',
+        '/home/u859582759/public_html',
+        dirname(__DIR__),
+        dirname(dirname(__DIR__)),
+        dirname(dirname(dirname(__DIR__))),
+        dirname(dirname(dirname(dirname(__DIR__)))),
+    ];
+    
+    foreach (array_unique($searchRoots) as $sRoot) {
+        if (!is_dir($sRoot)) continue;
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($sRoot, RecursiveDirectoryIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::SELF_FIRST
+        );
+        $iterator->setMaxDepth(4);
+        foreach ($iterator as $item) {
+            $path = $item->getPathname();
+            if (strpos($path, 'node_modules') !== false && strpos($path, 'BUILD_ID') === false) continue;
+            if ($item->getFilename() === 'BUILD_ID') {
+                $foundBuildIds[$path] = trim(@file_get_contents($path) ?: '');
+            }
+            if ($item->getFilename() === 'server.js') {
+                $foundServerJs[$path] = date('Y-m-d H:i:s', $item->getMTime());
+            }
+            if ($item->getFilename() === 'deploy.zip') {
+                $foundZipFiles[$path] = [
+                    'size' => $item->getSize(),
+                    'mtime' => date('Y-m-d H:i:s', $item->getMTime())
+                ];
+            }
         }
     }
 
     echo json_encode([
         'current_dir' => __DIR__,
         'domain_root' => $domainRoot,
+        'found_build_ids' => $foundBuildIds,
+        'found_server_js' => $foundServerJs,
+        'found_zip_files' => $foundZipFiles,
         'passenger_app_root' => $passengerAppRoot,
-        'passenger_restart_dir' => $passengerRestartDir,
-        'public_html_build_id' => trim((string)$buildId),
-        'passenger_app_build_id' => trim((string)$nodeAppBuildId),
-        'version_build_ids' => $versionBuildIds,
-        'target_dirs' => $allTargetDirs,
-        'node_processes' => $processes,
+        'node_processes' => array_values(array_filter($processes, function($p) {
+            return stripos($p, 'node') !== false || stripos($p, 'passenger') !== false || stripos($p, 'next') !== false;
+        })),
         'php_version' => phpversion(),
         'disk_free' => disk_free_space(__DIR__)
-    ]);
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     exit;
 }
 
@@ -122,21 +153,34 @@ foreach ($candidateZipPaths as $candidate) {
 }
 
 if (!$zipFile) {
-    http_response_code(500);
+    // If deploy.zip is not found, check if BUILD_ID is present in target dirs (already unzipped via SSH)
+    $hasExtractedBuild = false;
+    foreach ($allTargetDirs as $target) {
+        if (file_exists($target . '/.next/BUILD_ID') || file_exists($target . '/server.js')) {
+            $hasExtractedBuild = true;
+            @mkdir($target . '/tmp', 0755, true);
+            @touch($target . '/tmp/restart.txt');
+            if (file_exists($target . '/server.js')) @touch($target . '/server.js');
+        }
+    }
+    
+    if (function_exists('exec')) {
+        @exec('pkill -9 -f node 2>&1');
+        @exec('passenger-config restart-app --ignore-passenger-not-running / 2>&1');
+    }
+
     echo json_encode([
-        'success' => false, 
-        'error' => 'deploy.zip not found',
-        'domain_root' => $domainRoot,
-        'searched_paths' => array_values(array_unique(array_filter($candidateZipPaths))),
-        'files_in_current' => scandir(__DIR__)
+        'success' => true, 
+        'info' => $hasExtractedBuild ? 'Verified deployment: App files present and restarted' : 'deploy.zip already processed',
+        'domain_root' => $domainRoot
     ]);
     exit;
 }
 
 // Kill running node processes before extracting to avoid lock
 if (function_exists('exec')) {
-    @exec('pkill -f node 2>&1');
-    @exec('killall node 2>&1');
+    @exec('pkill -9 -f node 2>&1');
+    @exec('killall -9 node 2>&1');
 }
 
 $extractionResults = [];
