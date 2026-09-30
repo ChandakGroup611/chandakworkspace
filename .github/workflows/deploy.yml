@@ -86,6 +86,7 @@ jobs:
           password: ${{ secrets.SSH_PASSWORD || secrets.FTP_PASSWORD }}
           port: ${{ secrets.SSH_PORT || '65002' }}
           script: |
+            TARGET_ROOT="$(pwd)"
             if [ -d "domains/chandakgroup.tech/public_html" ]; then
               cd domains/chandakgroup.tech/public_html
             elif [ -d "public_html" ]; then
@@ -95,20 +96,36 @@ jobs:
             if [ -f "deploy.zip" ]; then
               echo "Extracting deploy.zip to public_html..."
               unzip -o deploy.zip
+              
+              # Extract to current nodejs app
               if [ -d "../hbuilds/current/nodejs" ]; then
-                echo "Extracting deploy.zip to PassengerAppRoot..."
+                echo "Extracting deploy.zip to hbuilds/current/nodejs..."
                 cp deploy.zip ../hbuilds/current/nodejs/
-                cd ../hbuilds/current/nodejs
-                unzip -o deploy.zip
-                rm -f deploy.zip
-                mkdir -p tmp
-                touch tmp/restart.txt
-                cd -
+                (cd ../hbuilds/current/nodejs && unzip -o deploy.zip && rm -f deploy.zip && mkdir -p tmp && touch tmp/restart.txt)
               fi
+              
+              # Extract to all active versioned nodejs directories
+              for ver_dir in ../hbuilds/versions/*/nodejs; do
+                if [ -d "$ver_dir" ]; then
+                  echo "Extracting deploy.zip to $ver_dir..."
+                  cp deploy.zip "$ver_dir/"
+                  (cd "$ver_dir" && unzip -o deploy.zip && rm -f deploy.zip && mkdir -p tmp && touch tmp/restart.txt)
+                fi
+              done
+              
+              # Copy updated deploy-hook.php to all public folders
+              if [ -f "deploy-hook.php" ]; then
+                for pub_dir in ../hbuilds/versions/*/nodejs/public ../hbuilds/current/nodejs/public; do
+                  if [ -d "$pub_dir" ]; then
+                    cp -f deploy-hook.php "$pub_dir/"
+                  fi
+                done
+              fi
+
               rm -f deploy.zip .ftp-deploy-sync-state.json
               mkdir -p tmp
               touch tmp/restart.txt
-              echo "Successfully unzipped and touched tmp/restart.txt to restart Node server"
+              echo "Successfully unzipped across all targets and signaled restart"
             fi
 
       - name: Update Deployment Status
