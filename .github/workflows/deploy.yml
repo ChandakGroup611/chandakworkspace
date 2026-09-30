@@ -53,16 +53,18 @@ jobs:
           cp deploy.zip upload-payload/
           cp ./public/deploy-hook.php upload-payload/
 
-      # Upload the compiled standalone zip file and deploy-hook directly via FTP
+      # Upload the compiled standalone zip file and deploy-hook to Hostinger via FTP Deploy Action
       - name: Sync files via FTP
-        run: |
-          echo "Uploading deploy-hook.php via FTP..."
-          curl -sS --ftp-create-dirs -T ./upload-payload/deploy-hook.php -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/deploy-hook.php"
-          echo "Uploading deploy.zip to public_html via FTP..."
-          curl -sS --ftp-create-dirs -T ./upload-payload/deploy.zip -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/deploy.zip"
-          echo "Uploading deploy.zip to domain root via FTP..."
-          curl -sS --ftp-create-dirs -T ./upload-payload/deploy.zip -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/deploy.zip"
-          echo "FTP upload completed successfully."
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./upload-payload/
+          server-dir: domains/chandakgroup.tech/public_html/
+          protocol: ftp
+          state-name: ''
+          dangerous-clean-slate: false
 
       # Trigger HTTP deploy hook to extract deploy.zip and restart Node.js server
       - name: Trigger Webhook Extraction and Restart
