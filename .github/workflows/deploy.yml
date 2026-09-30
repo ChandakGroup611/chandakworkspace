@@ -61,7 +61,7 @@ jobs:
           cp public/deploy-hook.php upload-payload/
 
       # Upload the compiled standalone zip file and deploy-hook to Hostinger via FTP
-      - name: Sync files via FTP
+      - name: Sync files via FTP (Root)
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
@@ -69,6 +69,19 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./upload-payload/
           server-dir: ./
+          protocol: ftp
+          state-name: ''
+          dangerous-clean-slate: false
+
+      - name: Sync files via FTP (Domain public_html)
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        continue-on-error: true
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./upload-payload/
+          server-dir: ./domains/chandakgroup.tech/public_html/
           protocol: ftp
           state-name: ''
           dangerous-clean-slate: false

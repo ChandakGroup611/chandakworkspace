@@ -1,5 +1,7 @@
 <?php
-// Enhanced secure deployment extractor & process restarter for Hostinger
+// Bulletproof Deployment Extractor & Static Sync for Hostinger (Zero exec dependency)
+error_reporting(0);
+ini_set('display_errors', 0);
 header('Content-Type: application/json');
 
 $token = isset($_GET['key']) ? $_GET['key'] : '';
@@ -9,6 +11,43 @@ if ($token !== $expectedToken) {
     http_response_code(403);
     echo json_encode(['success' => false, 'error' => 'Unauthorized']);
     exit;
+}
+
+// Helper: recursive directory copy in pure PHP
+function recursiveCopy($src, $dst) {
+    if (!is_dir($src)) return false;
+    @mkdir($dst, 0755, true);
+    $dir = @opendir($src);
+    if (!$dir) return false;
+    while (($file = readdir($dir)) !== false) {
+        if ($file === '.' || $file === '..') continue;
+        $srcPath = $src . '/' . $file;
+        $dstPath = $dst . '/' . $file;
+        if (is_dir($srcPath)) {
+            recursiveCopy($srcPath, $dstPath);
+        } else {
+            @copy($srcPath, $dstPath);
+        }
+    }
+    closedir($dir);
+    return true;
+}
+
+// Helper: recursive remove
+function recursiveRemove($dir) {
+    if (!is_dir($dir)) return;
+    $files = @scandir($dir);
+    if (!$files) return;
+    foreach ($files as $file) {
+        if ($file === '.' || $file === '..') continue;
+        $path = $dir . '/' . $file;
+        if (is_dir($path)) {
+            recursiveRemove($path);
+        } else {
+            @unlink($path);
+        }
+    }
+    @rmdir($dir);
 }
 
 // Direct domain root discovery
@@ -28,15 +67,10 @@ if (!$domainRoot || !is_dir($domainRoot)) {
 }
 
 // Discover PassengerAppRoot from .htaccess
-$htaccessContent = file_exists(__DIR__ . '/.htaccess') ? file_get_contents(__DIR__ . '/.htaccess') : '';
+$htaccessContent = file_exists(__DIR__ . '/.htaccess') ? @file_get_contents(__DIR__ . '/.htaccess') : '';
 $passengerAppRoot = null;
-$passengerRestartDir = null;
-
 if (preg_match('/PassengerAppRoot\s+([^\s\r\n]+)/', $htaccessContent, $m)) {
     $passengerAppRoot = trim($m[1]);
-}
-if (preg_match('/PassengerRestartDir\s+([^\s\r\n]+)/', $htaccessContent, $m)) {
-    $passengerRestartDir = trim($m[1]);
 }
 
 // Collect all target directories
@@ -46,7 +80,6 @@ $targetDirs = [
     $passengerAppRoot,
 ];
 
-// Add all active versioned nodejs directories
 $versionedDirs = glob($domainRoot . '/hbuilds/versions/*/nodejs');
 if ($versionedDirs && is_array($versionedDirs)) {
     foreach ($versionedDirs as $vDir) {
@@ -56,50 +89,34 @@ if ($versionedDirs && is_array($versionedDirs)) {
 
 $allTargetDirs = array_values(array_unique(array_filter($targetDirs)));
 
-if (isset($_GET['info']) || isset($_GET['diag']) || isset($_GET['scan'])) {
-    $filesWithOldPricing = [];
-    $filesWithNewPricing = [];
-    $allBuildIds = [];
+// Diagnostic / Info Mode
+if (isset($_GET['info']) || isset($_GET['scan']) || isset($_GET['diag'])) {
+    $foundBuildIds = [];
+    $foundPricingChunks = [];
     
-    $checkDirs = [
-        $domainRoot . '/public_html/_next/static/chunks',
-        $domainRoot . '/hbuilds/current/nodejs/.next/server',
-        $domainRoot . '/hbuilds/current/nodejs/_next/static/chunks',
-        __DIR__ . '/_next/static/chunks',
-    ];
-    
-    if ($versionedDirs && is_array($versionedDirs)) {
-        foreach ($versionedDirs as $vDir) {
-            $checkDirs[] = $vDir . '/.next/server';
-            $checkDirs[] = $vDir . '/_next/static/chunks';
-            $checkDirs[] = $vDir . '/public/_next/static/chunks';
+    foreach ($allTargetDirs as $tDir) {
+        $buildFile = $tDir . '/.next/BUILD_ID';
+        if (file_exists($buildFile)) {
+            $foundBuildIds[$tDir] = trim(@file_get_contents($buildFile) ?: '');
         }
-    }
-    
-    foreach (array_unique(array_filter($checkDirs)) as $dir) {
-        if (!is_dir($dir)) continue;
-        $files = @scandir($dir);
-        if (!$files) continue;
-        foreach ($files as $f) {
-            if ($f === '.' || $f === '..') continue;
-            $path = $dir . '/' . $f;
-            if (is_file($path)) {
-                if ($f === 'BUILD_ID') {
-                    $allBuildIds[$path] = trim(@file_get_contents($path) ?: '');
-                }
-                if (substr($f, -3) === '.js' || substr($f, -5) === '.html') {
-                    $content = @file_get_contents($path, false, null, 0, 100000);
-                    if ($content !== false) {
-                        if (strpos($content, '1. EX-FACTORY BASE') !== false || strpos($content, 'EX-FACTORY BASE & STATUTORY') !== false) {
-                            $filesWithOldPricing[$path] = [
-                                'size' => filesize($path),
-                                'mtime' => date('Y-m-d H:i:s', filemtime($path))
-                            ];
-                        }
-                        if (strpos($content, 'Vehicle Pricing & On-Road Cost Breakdown') !== false || strpos($content, 'Vehicle Pricing &amp; On-Road Cost Breakdown') !== false) {
-                            $filesWithNewPricing[$path] = [
-                                'size' => filesize($path),
-                                'mtime' => date('Y-m-d H:i:s', filemtime($path))
+        
+        $chunkDir = $tDir . '/.next/static/chunks';
+        if (!is_dir($chunkDir)) {
+            $chunkDir = $tDir . '/_next/static/chunks';
+        }
+        if (is_dir($chunkDir)) {
+            $files = @scandir($chunkDir);
+            if ($files) {
+                foreach ($files as $f) {
+                    if (substr($f, -3) === '.js') {
+                        $p = $chunkDir . '/' . $f;
+                        $c = @file_get_contents($p, false, null, 0, 50000);
+                        if ($c && strpos($c, 'Vehicle Pricing') !== false) {
+                            $foundPricingChunks[] = [
+                                'file' => $f,
+                                'dir' => $tDir,
+                                'has_new' => (strpos($c, 'Vehicle Pricing & On-Road Cost Breakdown') !== false || strpos($c, 'Vehicle Pricing &amp; On-Road Cost Breakdown') !== false),
+                                'has_old_sections' => (strpos($c, '1. EX-FACTORY BASE') !== false)
                             ];
                         }
                     }
@@ -107,27 +124,27 @@ if (isset($_GET['info']) || isset($_GET['diag']) || isset($_GET['scan'])) {
             }
         }
     }
-
+    
     echo json_encode([
+        'success' => true,
         'domain_root' => $domainRoot,
-        'files_with_old_pricing' => $filesWithOldPricing,
-        'files_with_new_pricing' => $filesWithNewPricing,
-        'build_ids' => $allBuildIds,
+        'current_dir' => __DIR__,
+        'target_dirs' => $allTargetDirs,
+        'build_ids' => $foundBuildIds,
+        'pricing_chunks' => $foundPricingChunks,
         'timestamp' => date('Y-m-d H:i:s')
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     exit;
 }
 
-// Locate deploy.zip across candidate paths
+// Find deploy.zip
 $candidateZipPaths = [
+    '/home/u859582759/deploy.zip',
+    '/home/u859582759/public_html/deploy.zip',
+    $domainRoot . '/deploy.zip',
+    $domainRoot . '/public_html/deploy.zip',
     __DIR__ . '/deploy.zip',
     dirname(__DIR__) . '/deploy.zip',
-    $domainRoot . '/public_html/deploy.zip',
-    $domainRoot . '/deploy.zip',
-    '/home/u859582759/domains/chandakgroup.tech/public_html/deploy.zip',
-    '/home/u859582759/domains/chandakgroup.tech/deploy.zip',
-    '/home/u859582759/public_html/deploy.zip',
-    dirname(dirname(dirname(dirname(dirname(__DIR__))))) . '/public_html/deploy.zip'
 ];
 
 if ($versionedDirs && is_array($versionedDirs)) {
@@ -138,148 +155,82 @@ if ($versionedDirs && is_array($versionedDirs)) {
 }
 
 $zipFile = null;
-foreach ($candidateZipPaths as $candidate) {
-    if ($candidate && file_exists($candidate)) {
-        $zipFile = $candidate;
+foreach (array_unique($candidateZipPaths) as $cand) {
+    if ($cand && file_exists($cand) && filesize($cand) > 1000) {
+        $zipFile = $cand;
         break;
     }
 }
 
-if (!$zipFile) {
-    // If deploy.zip is not found, check if BUILD_ID is present in target dirs (already unzipped via SSH)
-    $hasExtractedBuild = false;
-    foreach ($allTargetDirs as $target) {
-        if (file_exists($target . '/.next/BUILD_ID') || file_exists($target . '/server.js')) {
-            $hasExtractedBuild = true;
-            @mkdir($target . '/tmp', 0755, true);
-            @touch($target . '/tmp/restart.txt');
-            if (file_exists($target . '/server.js')) @touch($target . '/server.js');
-        }
-    }
-    
-    if (function_exists('exec')) {
-        @exec('pkill -9 -f node 2>&1');
-        @exec('passenger-config restart-app --ignore-passenger-not-running / 2>&1');
-    }
-
-    echo json_encode([
-        'success' => true, 
-        'info' => $hasExtractedBuild ? 'Verified deployment: App files present and restarted' : 'deploy.zip already processed',
-        'domain_root' => $domainRoot
-    ]);
-    exit;
-}
-
-// Kill running node processes before extracting to avoid lock
-if (function_exists('exec')) {
-    @exec('pkill -9 -f node 2>&1');
-    @exec('killall -9 node 2>&1');
-}
-
 $extractionResults = [];
 
-foreach ($allTargetDirs as $target) {
-    if (!$target) continue;
-    @mkdir($target, 0755, true);
-    
-    $extracted = false;
-    $method = '';
-    
-    // Method 1: exec unzip
-    if (function_exists('exec')) {
-        $out = [];
-        $rc = 0;
-        @exec("cd " . escapeshellarg($target) . " && unzip -o " . escapeshellarg($zipFile) . " 2>&1", $out, $rc);
-        if ($rc === 0) {
-            $extracted = true;
-            $method = 'exec_unzip';
+if ($zipFile && class_exists('ZipArchive')) {
+    foreach ($allTargetDirs as $target) {
+        if (!is_dir($target)) {
+            @mkdir($target, 0755, true);
         }
-    }
-    
-    // Method 2: ZipArchive fallback
-    if (!$extracted && class_exists('ZipArchive')) {
-        $zip = new ZipArchive;
-        if ($zip->open($zipFile) === TRUE) {
+        
+        // Clean stale cache
+        if (is_dir($target . '/.next/cache')) {
+            recursiveRemove($target . '/.next/cache');
+        }
+        
+        $zip = new ZipArchive();
+        $res = $zip->open($zipFile);
+        $extracted = false;
+        if ($res === TRUE) {
             $zip->extractTo($target);
             $zip->close();
             $extracted = true;
-            $method = 'ZipArchive';
+        }
+        
+        // Mirror static chunks to all public accessible paths
+        if (is_dir($target . '/.next/static')) {
+            recursiveCopy($target . '/.next/static', $target . '/_next/static');
+            recursiveCopy($target . '/.next/static', $target . '/public/_next/static');
+            recursiveCopy($target . '/.next/static', $domainRoot . '/public_html/_next/static');
+            recursiveCopy($target . '/.next/static', __DIR__ . '/_next/static');
+        }
+        
+        // Signal restart for Passenger
+        @mkdir($target . '/tmp', 0755, true);
+        @touch($target . '/tmp/restart.txt');
+        if (file_exists($target . '/server.js')) @touch($target . '/server.js');
+        if (file_exists($target . '/package.json')) @touch($target . '/package.json');
+        
+        $extractionResults[$target] = [
+            'extracted' => $extracted,
+            'build_id' => file_exists($target . '/.next/BUILD_ID') ? trim(@file_get_contents($target . '/.next/BUILD_ID')) : null
+        ];
+    }
+    
+    // Remove the zip file after successful extraction
+    @unlink($zipFile);
+} else {
+    // If no zip found, touch restart.txt on all targets
+    foreach ($allTargetDirs as $target) {
+        @mkdir($target . '/tmp', 0755, true);
+        @touch($target . '/tmp/restart.txt');
+        if (file_exists($target . '/server.js')) @touch($target . '/server.js');
+    }
+}
+
+// Copy self to public directories to ensure persistence
+$selfCode = @file_get_contents(__FILE__);
+if ($selfCode) {
+    @file_put_contents($domainRoot . '/public_html/deploy-hook.php', $selfCode);
+    if ($versionedDirs) {
+        foreach ($versionedDirs as $vDir) {
+            @file_put_contents($vDir . '/public/deploy-hook.php', $selfCode);
         }
     }
-    
-    // Copy static files to public roots
-    if (is_dir($target . '/.next/static')) {
-        @mkdir($target . '/_next', 0755, true);
-        @mkdir($target . '/public/_next', 0755, true);
-        @mkdir($domainRoot . '/public_html/_next', 0755, true);
-        if (function_exists('exec')) {
-            @exec('cp -rf ' . escapeshellarg($target . '/.next/static') . ' ' . escapeshellarg($target . '/_next/') . ' 2>&1');
-            @exec('cp -rf ' . escapeshellarg($target . '/.next/static') . ' ' . escapeshellarg($target . '/public/_next/') . ' 2>&1');
-            @exec('cp -rf ' . escapeshellarg($target . '/.next/static') . ' ' . escapeshellarg($domainRoot . '/public_html/_next/') . ' 2>&1');
-        }
-    }
-    
-    // Clean Next.js cache
-    if (is_dir($target . '/.next/cache')) {
-        @exec('rm -rf ' . escapeshellarg($target . '/.next/cache') . ' 2>&1');
-    }
-    
-    // Touch restart signal in target
-    @mkdir($target . '/tmp', 0755, true);
-    @touch($target . '/tmp/restart.txt');
-    if (file_exists($target . '/server.js')) {
-        @touch($target . '/server.js');
-    }
-    if (file_exists($target . '/package.json')) {
-        @touch($target . '/package.json');
-    }
-    
-    $extractionResults[$target] = [
-        'success' => $extracted,
-        'method' => $method,
-        'build_id' => file_exists($target . '/.next/BUILD_ID') ? trim(file_get_contents($target . '/.next/BUILD_ID')) : null
-    ];
-}
-
-if ($passengerRestartDir) {
-    @mkdir($passengerRestartDir, 0755, true);
-    @touch($passengerRestartDir . '/restart.txt');
-}
-
-// Ensure updated deploy-hook.php is present in all public locations
-$selfContent = file_get_contents(__FILE__);
-$hookLocations = [
-    $domainRoot . '/public_html/deploy-hook.php',
-    $domainRoot . '/hbuilds/current/nodejs/public/deploy-hook.php',
-    '/home/u859582759/domains/chandakgroup.tech/public_html/deploy-hook.php'
-];
-if ($versionedDirs && is_array($versionedDirs)) {
-    foreach ($versionedDirs as $vDir) {
-        $hookLocations[] = $vDir . '/public/deploy-hook.php';
-    }
-}
-foreach (array_unique($hookLocations) as $hLoc) {
-    @mkdir(dirname($hLoc), 0755, true);
-    @file_put_contents($hLoc, $selfContent);
-}
-
-// Clean deploy.zip and any FTP state files
-@unlink($zipFile);
-@unlink($domainRoot . '/public_html/.ftp-deploy-sync-state.json');
-@unlink(__DIR__ . '/.ftp-deploy-sync-state.json');
-@unlink(dirname(__DIR__) . '/.ftp-deploy-sync-state.json');
-
-// Passenger reload command
-if (function_exists('exec')) {
-    @exec('passenger-config restart-app --ignore-passenger-not-running / 2>&1');
 }
 
 echo json_encode([
     'success' => true,
-    'message' => 'deploy.zip successfully extracted to all targets and restart signaled',
-    'domain_root' => $domainRoot,
-    'passenger_app_root' => $passengerAppRoot,
+    'zip_found' => ($zipFile !== null),
+    'zip_path' => $zipFile,
     'results' => $extractionResults,
     'timestamp' => date('Y-m-d H:i:s')
-]);
+], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 ?>
