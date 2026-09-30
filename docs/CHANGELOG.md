@@ -24,6 +24,23 @@ All changes to the Chandak Workspace application will be documented in this file
 
 ## Changes
 
+* **Change ID:** FLEET-008 (Vehicle Quotation & On-Road Cost Breakdown Engine)
+* **Requested functionality:** Expand vehicle purchase price into detailed quotation breakdown with 14 statutory taxes, fitments, and user-requested "Other" charges column (`other_charges`).
+* **Reason:** Provide comprehensive transparency for fleet acquisition, standard Indian automotive GST/Cess matrix calculation, RTO, 1% TCS under Sec 206C(1F), insurance, accessories, and net on-road capitalized valuation.
+* **Modules affected:** FleetDesk Module (Vehicle Inventory, Vehicle Registration, Vehicle Editing, Vehicle Dossier 360°, CSV Export).
+* **Files changed:** `supabase/migrations/20260930093000_add_vehicle_detailed_pricing_breakdown.sql`, `lib/actions/vehicle.ts`, `components/vehicle/FleetDeskHost.tsx`, `docs/CHANGELOG.md`.
+* **Database changes:** Added 14 numeric columns (`basic_price`, `gst_percentage`, `gst_amount`, `cess_percentage`, `cess_amount`, `ex_showroom_price`, `rto_road_tax`, `tcs_amount`, `insurance_cost`, `hsrp_smart_card_fee`, `fastag_charges`, `accessories_cost`, `extended_warranty_cost`, `other_charges`, `discount_amount`, `on_road_price`) to `public.vehicles`.
+* **API changes:** Updated `VehicleRecord` interface, `createVehicleAction`, and `updateVehicleAction` in `lib/actions/vehicle.ts`.
+* **UI changes:** Added 4-tier interactive pricing breakdown card with live formulas in Add Vehicle form, Edit Vehicle modal, Dossier 360° Overview tab, and CSV Export.
+* **Business logic changes:** Automated bidirectional GST/Cess calculation, automatic 1% TCS on Ex-Showroom > ₹10,00,000, and backward-compatible synchronization with `purchase_price`/`purchase_cost`.
+* **Security impact:** Zero authorization bypass; verified against FleetDesk RBAC permissions.
+* **RBAC impact:** Fully respects module creation (`canCreateVehicle`) and management permissions.
+* **Performance impact:** Zero N+1 queries; additive non-blocking schema columns with default 0.00.
+* **Testing performed:** TypeScript typecheck (`npx tsc --noEmit`), security audit (`npm audit --audit-level=critical`), input bounds tests, arithmetic consistency tests.
+* **Regression testing performed:** Verified backward compatibility with existing vehicles, existing table views, and report generators.
+* **Deployment status:** Deployed & Verified.
+* **Rollback information:** Additive migration; columns can be ignored or safely dropped without data corruption.
+
 * **Change ID:** GOV-001 (Document View & Download Governance Rule)
 * **Requested functionality:** Enforce mandatory View and Download capability for every document/file upload across the entire application, and scan all locations where this logic is falling short.
 * **Reason:** Prevent blind uploads so users can always cross-check, preview, and download documents both before submitting and after persistence.
