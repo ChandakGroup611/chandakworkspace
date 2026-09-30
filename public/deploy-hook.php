@@ -11,22 +11,19 @@ if ($token !== $expectedToken) {
     exit;
 }
 
-// Dynamically discover domain root
-$domainRoot = null;
-$curr = __DIR__;
-for ($i = 0; $i < 7; $i++) {
-    while (basename($curr) === 'public' || basename($curr) === 'public_html') {
+// Direct domain root discovery
+$domainRoot = '/home/u859582759/domains/chandakgroup.tech';
+if (!is_dir($domainRoot)) {
+    $curr = __DIR__;
+    while ($curr && $curr !== '/' && $curr !== '.') {
+        if (basename($curr) === 'chandakgroup.tech') {
+            $domainRoot = $curr;
+            break;
+        }
         $curr = dirname($curr);
     }
-    if (is_dir($curr . '/hbuilds') || is_dir($curr . '/public_html') || basename($curr) === 'chandakgroup.tech') {
-        $domainRoot = $curr;
-        break;
-    }
-    $parent = dirname($curr);
-    if ($parent === $curr) break;
-    $curr = $parent;
 }
-if (!$domainRoot) {
+if (!$domainRoot || !is_dir($domainRoot)) {
     $domainRoot = '/home/u859582759/domains/chandakgroup.tech';
 }
 
@@ -45,11 +42,7 @@ if (preg_match('/PassengerRestartDir\s+([^\s\r\n]+)/', $htaccessContent, $m)) {
 // Collect all target directories
 $targetDirs = [
     $domainRoot . '/public_html',
-    $domainRoot . '/public_html/public',
     $domainRoot . '/hbuilds/current/nodejs',
-    $domainRoot . '/hbuilds/current/nodejs/public',
-    '/home/u859582759/domains/chandakgroup.tech/public_html',
-    '/home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs',
     $passengerAppRoot,
 ];
 
@@ -58,14 +51,6 @@ $versionedDirs = glob($domainRoot . '/hbuilds/versions/*/nodejs');
 if ($versionedDirs && is_array($versionedDirs)) {
     foreach ($versionedDirs as $vDir) {
         $targetDirs[] = $vDir;
-        $targetDirs[] = $vDir . '/public';
-    }
-}
-$altVersionedDirs = glob('/home/u859582759/domains/chandakgroup.tech/hbuilds/versions/*/nodejs');
-if ($altVersionedDirs && is_array($altVersionedDirs)) {
-    foreach ($altVersionedDirs as $vDir) {
-        $targetDirs[] = $vDir;
-        $targetDirs[] = $vDir . '/public';
     }
 }
 
