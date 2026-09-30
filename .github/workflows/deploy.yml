@@ -93,8 +93,18 @@ jobs:
             fi
             echo "Working directory: $(pwd)"
             if [ -f "deploy.zip" ]; then
-              echo "Extracting deploy.zip..."
+              echo "Extracting deploy.zip to public_html..."
               unzip -o deploy.zip
+              if [ -d "../hbuilds/current/nodejs" ]; then
+                echo "Extracting deploy.zip to PassengerAppRoot..."
+                cp deploy.zip ../hbuilds/current/nodejs/
+                cd ../hbuilds/current/nodejs
+                unzip -o deploy.zip
+                rm -f deploy.zip
+                mkdir -p tmp
+                touch tmp/restart.txt
+                cd -
+              fi
               rm -f deploy.zip .ftp-deploy-sync-state.json
               mkdir -p tmp
               touch tmp/restart.txt
