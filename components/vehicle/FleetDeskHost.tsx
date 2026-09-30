@@ -831,6 +831,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     "SPECS" | "SERVICES" | "PARTS" | "DOCS" | "COMPLIANCE" | "TRIPS" | "ALL"
   >("SPECS");
   const [showInventoryFinancials, setShowInventoryFinancials] = useState<boolean>(true);
+  const [showExShowroomCol, setShowExShowroomCol] = useState<boolean>(true);
+  const [showRtoCol, setShowRtoCol] = useState<boolean>(true);
+  const [showOtherCol, setShowOtherCol] = useState<boolean>(true);
+  const [showOnRoadCol, setShowOnRoadCol] = useState<boolean>(true);
   const [showInventoryRelations, setShowInventoryRelations] = useState<boolean>(true);
   const [isColumnOptionsOpen, setIsColumnOptionsOpen] = useState<boolean>(false);
 
@@ -9801,11 +9805,38 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <label className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60 p-1.5 rounded-lg text-xs transition-colors">
                       <input
                         type="checkbox"
-                        checked={showInventoryFinancials}
-                        onChange={(e) => setShowInventoryFinancials(e.target.checked)}
+                        checked={showExShowroomCol}
+                        onChange={(e) => setShowExShowroomCol(e.target.checked)}
                         className="rounded border-border text-theme-btn-primary focus:ring-theme-btn-primary h-3.5 w-3.5"
                       />
-                      <span className="font-medium text-foreground">Quotation &amp; On-Road Charges Breakdown</span>
+                      <span className="font-medium text-foreground">Ex-Showroom Base (₹)</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60 p-1.5 rounded-lg text-xs transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={showRtoCol}
+                        onChange={(e) => setShowRtoCol(e.target.checked)}
+                        className="rounded border-border text-theme-btn-primary focus:ring-theme-btn-primary h-3.5 w-3.5"
+                      />
+                      <span className="font-medium text-foreground">RTO &amp; Taxes (₹)</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60 p-1.5 rounded-lg text-xs transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={showOtherCol}
+                        onChange={(e) => setShowOtherCol(e.target.checked)}
+                        className="rounded border-border text-theme-btn-primary focus:ring-theme-btn-primary h-3.5 w-3.5"
+                      />
+                      <span className="font-medium text-foreground">Other &amp; Fitments (₹)</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60 p-1.5 rounded-lg text-xs transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={showOnRoadCol}
+                        onChange={(e) => setShowOnRoadCol(e.target.checked)}
+                        className="rounded border-border text-theme-btn-primary focus:ring-theme-btn-primary h-3.5 w-3.5"
+                      />
+                      <span className="font-medium text-foreground">Net On-Road Price (₹)</span>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60 p-1.5 rounded-lg text-xs transition-colors">
                       <input
@@ -9814,7 +9845,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         onChange={(e) => setShowInventoryRelations(e.target.checked)}
                         className="rounded border-border text-theme-btn-primary focus:ring-theme-btn-primary h-3.5 w-3.5"
                       />
-                      <span className="font-medium text-foreground">Service, Parts & Docs Badges</span>
+                      <span className="font-medium text-foreground">Service, Parts &amp; Docs Badges</span>
                     </label>
                   </div>
                 )}
@@ -9858,8 +9889,17 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <AppTableHead className="p-3.5">PUC Validity</AppTableHead>
                     <AppTableHead className="p-3.5">Insurance Validity</AppTableHead>
                     <AppTableHead className="p-3.5">RSA & HSRP</AppTableHead>
-                    {showInventoryFinancials && (
-                      <AppTableHead className="p-3.5">Quotation &amp; On-Road Charges</AppTableHead>
+                    {showExShowroomCol && (
+                      <AppTableHead className="p-3.5">Ex-Showroom (₹)</AppTableHead>
+                    )}
+                    {showRtoCol && (
+                      <AppTableHead className="p-3.5">RTO &amp; Taxes (₹)</AppTableHead>
+                    )}
+                    {showOtherCol && (
+                      <AppTableHead className="p-3.5">Other &amp; Extras (₹)</AppTableHead>
+                    )}
+                    {showOnRoadCol && (
+                      <AppTableHead className="p-3.5">Net On-Road (₹)</AppTableHead>
                     )}
                     <AppTableHead className="p-3.5 text-center">Status</AppTableHead>
                     <AppTableHead className="p-3.5 text-right">Actions</AppTableHead>
@@ -9868,7 +9908,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <AppTableBody className="divide-y divide-border/60">
                   {filteredVehicles.length === 0 ? (
                     <AppTableRow>
-                      <AppTableCell colSpan={showInventoryFinancials ? 10 : 9} className="text-center py-12 text-muted-foreground">
+                      <AppTableCell colSpan={7 + (showExShowroomCol ? 1 : 0) + (showRtoCol ? 1 : 0) + (showOtherCol ? 1 : 0) + (showOnRoadCol ? 1 : 0) + 2} className="text-center py-12 text-muted-foreground">
                         <div className="flex flex-col items-center gap-2">
                           <span>No vehicles found matching criteria.</span>
                           <AppButton
@@ -10061,42 +10101,54 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             </div>
                           </AppTableCell>
 
-                          {/* 8. Pricing & On-Road Charges Column */}
-                          {showInventoryFinancials && (
+                          {/* 8. Distinct Financial & Quotation Breakdown Columns */}
+                          {showExShowroomCol && (
+                            <AppTableCell className="p-3.5 font-mono text-xs">
+                              <div className="font-semibold text-foreground">
+                                ₹{Number(veh.ex_showroom_price || veh.purchase_price || 0).toLocaleString("en-IN")}
+                              </div>
+                              {veh.basic_price ? (
+                                <div className="text-[10px] text-muted-foreground">
+                                  Base: ₹{Number(veh.basic_price).toLocaleString("en-IN")}
+                                </div>
+                              ) : null}
+                            </AppTableCell>
+                          )}
+
+                          {showRtoCol && (
+                            <AppTableCell className="p-3.5 font-mono text-xs">
+                              <div className="font-semibold text-blue-700 dark:text-blue-400">
+                                ₹{(Number(veh.rto_road_tax || 0) + Number(veh.tcs_amount || 0) + Number(veh.gst_amount || 0) + Number(veh.cess_amount || 0)).toLocaleString("en-IN")}
+                              </div>
+                              {veh.rto_road_tax ? (
+                                <div className="text-[10px] text-muted-foreground">
+                                  RTO: ₹{Number(veh.rto_road_tax).toLocaleString("en-IN")}
+                                </div>
+                              ) : null}
+                            </AppTableCell>
+                          )}
+
+                          {showOtherCol && (
+                            <AppTableCell className="p-3.5 font-mono text-xs">
+                              <div className="font-semibold text-purple-700 dark:text-purple-400">
+                                ₹{(Number(veh.other_charges || 0) + Number(veh.insurance_cost || 0) + Number(veh.accessories_cost || 0) + Number(veh.extended_warranty_cost || 0) + Number(veh.fastag_charges || 0) + Number(veh.hsrp_smart_card_fee || 0)).toLocaleString("en-IN")}
+                              </div>
+                              {veh.other_charges ? (
+                                <div className="text-[10px] text-purple-600 dark:text-purple-400 font-bold">
+                                  Other: ₹{Number(veh.other_charges).toLocaleString("en-IN")}
+                                </div>
+                              ) : null}
+                            </AppTableCell>
+                          )}
+
+                          {showOnRoadCol && (
                             <AppTableCell className="p-3.5 font-mono text-xs">
                               <div className="flex items-center gap-1 font-bold text-emerald-700 dark:text-emerald-300 text-xs">
                                 <IndianRupee className="h-3 w-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
                                 <span>
-                                  {veh.on_road_price || veh.purchase_price || veh.purchase_cost
-                                    ? `₹${Number(veh.on_road_price || veh.purchase_price || veh.purchase_cost).toLocaleString("en-IN")}`
-                                    : "—"}
+                                  ₹{Number(veh.on_road_price || veh.purchase_price || veh.purchase_cost || 0).toLocaleString("en-IN")}
                                 </span>
                               </div>
-
-                              {/* Charges Breakdown Snippet */}
-                              {(veh.ex_showroom_price || veh.basic_price || veh.rto_road_tax || veh.other_charges || veh.insurance_cost) ? (
-                                <div className="space-y-0.5 mt-1 text-[10px] text-muted-foreground font-sans">
-                                  {veh.ex_showroom_price ? (
-                                    <div className="flex items-center justify-between gap-1.5">
-                                      <span className="text-muted-foreground">Ex-Show:</span>
-                                      <span className="font-mono font-semibold text-foreground">₹{Number(veh.ex_showroom_price).toLocaleString("en-IN")}</span>
-                                    </div>
-                                  ) : null}
-                                  {veh.rto_road_tax ? (
-                                    <div className="flex items-center justify-between gap-1.5">
-                                      <span className="text-muted-foreground">+ RTO:</span>
-                                      <span className="font-mono text-foreground">₹{Number(veh.rto_road_tax).toLocaleString("en-IN")}</span>
-                                    </div>
-                                  ) : null}
-                                  {veh.other_charges ? (
-                                    <div className="flex items-center justify-between gap-1.5 text-purple-700 dark:text-purple-400 font-semibold">
-                                      <span>+ Other:</span>
-                                      <span className="font-mono">₹{Number(veh.other_charges).toLocaleString("en-IN")}</span>
-                                    </div>
-                                  ) : null}
-                                </div>
-                              ) : null}
-
                               {veh.custom_extended_expiry_date ? (
                                 <div className="text-[10px] text-indigo-600 dark:text-indigo-400 mt-1 flex items-center gap-1 font-semibold">
                                   <CalendarClock className="h-3 w-3 shrink-0" />
