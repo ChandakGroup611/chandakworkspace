@@ -4025,23 +4025,27 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     setEditVehicleRsa(veh.has_roadside_assistance !== undefined ? veh.has_roadside_assistance : true);
     
     // Pricing Breakdown States for Edit Modal
-    setEditVehicleBasicPrice(veh.basic_price ?? "");
-    setEditVehicleGstPercent(veh.gst_percentage ?? 28);
-    setEditVehicleGstAmount(veh.gst_amount ?? "");
-    setEditVehicleCessPercent(veh.cess_percentage ?? 0);
-    setEditVehicleCessAmount(veh.cess_amount ?? "");
-    setEditVehicleExShowroomPrice(veh.ex_showroom_price ?? veh.purchase_price ?? veh.purchase_cost ?? "");
-    setEditVehicleRtoRoadTax(veh.rto_road_tax ?? "");
-    setEditVehicleTcsAmount(veh.tcs_amount ?? "");
-    setEditVehicleInsuranceCost(veh.insurance_cost ?? "");
-    setEditVehicleHsrpFee(veh.hsrp_smart_card_fee ?? "");
-    setEditVehicleFastagCharges(veh.fastag_charges ?? "");
-    setEditVehicleAccessoriesCost(veh.accessories_cost ?? "");
-    setEditVehicleExtendedWarrantyCost(veh.extended_warranty_cost ?? "");
-    setEditVehicleOtherCharges(veh.other_charges ?? "");
-    setEditVehicleDiscountAmount(veh.discount_amount ?? "");
-    setEditVehicleOnRoadPrice(veh.on_road_price ?? veh.purchase_price ?? veh.purchase_cost ?? "");
-    setEditVehiclePurchasePrice(veh.on_road_price ?? veh.purchase_price ?? veh.purchase_cost ?? "");
+    const toCleanPrice = (val: any) => {
+      if (val === null || val === undefined || val === "" || Number(val) === 0) return "";
+      return val;
+    };
+    setEditVehicleBasicPrice(toCleanPrice(veh.basic_price));
+    setEditVehicleGstPercent(veh.gst_percentage !== undefined && veh.gst_percentage !== null ? veh.gst_percentage : 28);
+    setEditVehicleGstAmount(toCleanPrice(veh.gst_amount));
+    setEditVehicleCessPercent(veh.cess_percentage !== undefined && veh.cess_percentage !== null ? veh.cess_percentage : 0);
+    setEditVehicleCessAmount(toCleanPrice(veh.cess_amount));
+    setEditVehicleExShowroomPrice(toCleanPrice(veh.ex_showroom_price || veh.purchase_price || veh.purchase_cost));
+    setEditVehicleRtoRoadTax(toCleanPrice(veh.rto_road_tax));
+    setEditVehicleTcsAmount(toCleanPrice(veh.tcs_amount));
+    setEditVehicleInsuranceCost(toCleanPrice(veh.insurance_cost));
+    setEditVehicleHsrpFee(toCleanPrice(veh.hsrp_smart_card_fee));
+    setEditVehicleFastagCharges(toCleanPrice(veh.fastag_charges));
+    setEditVehicleAccessoriesCost(toCleanPrice(veh.accessories_cost));
+    setEditVehicleExtendedWarrantyCost(toCleanPrice(veh.extended_warranty_cost));
+    setEditVehicleOtherCharges(toCleanPrice(veh.other_charges));
+    setEditVehicleDiscountAmount(toCleanPrice(veh.discount_amount));
+    setEditVehicleOnRoadPrice(toCleanPrice(veh.on_road_price || veh.purchase_price || veh.purchase_cost));
+    setEditVehiclePurchasePrice(toCleanPrice(veh.on_road_price || veh.purchase_price || veh.purchase_cost));
     setEditVehicleCustomExtendedExpiryDate(normalizeDateToInputFormat(veh.custom_extended_expiry_date));
     setEditVehicleDocs(veh.documents || []);
     setEditDocTitle("");
@@ -7616,324 +7620,302 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     </div>
                   </div>
 
-                  {/* 1. Factory Base & Ex-Showroom Slabs */}
-                  <div className="space-y-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-400 flex items-center gap-1">
-                      <span>1. Ex-Factory Base & Statutory GST / Cess Matrix</span>
-                    </span>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                      <div>
-                        <label className="text-xs font-semibold text-foreground block mb-1">
-                          Basic / Ex-Factory Price (₹)
-                        </label>
-                        <AppInput 
-                          type="number"
-                          min="0"
-                          step="1"
-                          placeholder="e.g. 850000"
-                          value={newVehicleBasicPrice} 
-                          onChange={(e) => {
-                            setNewVehicleBasicPrice(e.target.value);
-                            syncNewVehicleOnRoad({ basic: e.target.value });
-                          }} 
-                          className="font-mono text-xs"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-semibold text-foreground block mb-1">
-                          GST Slab (%)
-                        </label>
-                        <select
-                          value={newVehicleGstPercent}
-                          onChange={(e) => {
-                            const val = Number(e.target.value);
-                            setNewVehicleGstPercent(val);
-                            syncNewVehicleOnRoad({ gstPercent: val });
-                          }}
-                          className="w-full h-9 px-3 rounded-lg border border-border bg-surface text-foreground text-xs focus:ring-2 focus:ring-theme-btn-primary/30"
-                        >
-                          <option value={28}>28% (Standard Passenger / ICE)</option>
-                          <option value={18}>18% (Commercial / Heavy Vehicles)</option>
-                          <option value={12}>12% (Small / Agricultural Vehicles)</option>
-                          <option value={5}>5% (Electric Vehicles - EV)</option>
-                          <option value={0}>0% (Exempt / No Tax)</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-semibold text-foreground block mb-1">
-                          GST Amount (₹)
-                        </label>
-                        <AppInput 
-                          type="number"
-                          min="0"
-                          step="1"
-                          placeholder="Calculated automatically"
-                          value={newVehicleGstAmount} 
-                          onChange={(e) => {
-                            setNewVehicleGstAmount(e.target.value);
-                            syncNewVehicleOnRoad({ gstAmt: e.target.value });
-                          }} 
-                          className="font-mono text-xs"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-semibold text-foreground block mb-1">
-                          Compensation Cess (%)
-                        </label>
-                        <select
-                          value={newVehicleCessPercent}
-                          onChange={(e) => {
-                            const val = Number(e.target.value);
-                            setNewVehicleCessPercent(val);
-                            syncNewVehicleOnRoad({ cessPercent: val });
-                          }}
-                          className="w-full h-9 px-3 rounded-lg border border-border bg-surface text-foreground text-xs focus:ring-2 focus:ring-theme-btn-primary/30"
-                        >
-                          <option value={0}>0% (EV / Standard Commercial / None)</option>
-                          <option value={1}>1% (Small Petrol &lt; 1200cc, &lt; 4m)</option>
-                          <option value={3}>3% (Small Diesel &lt; 1500cc, &lt; 4m)</option>
-                          <option value={15}>15% (Mid-size / Large Sedans)</option>
-                          <option value={20}>20% (SUVs &lt; 1500cc)</option>
-                          <option value={22}>22% (Large SUVs &gt; 1500cc &amp; &gt; 4m)</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-semibold text-foreground block mb-1">
-                          Cess Amount (₹)
-                        </label>
-                        <AppInput 
-                          type="number"
-                          min="0"
-                          step="1"
-                          placeholder="Calculated automatically"
-                          value={newVehicleCessAmount} 
-                          onChange={(e) => {
-                            setNewVehicleCessAmount(e.target.value);
-                            syncNewVehicleOnRoad({ cessAmt: e.target.value });
-                          }} 
-                          className="font-mono text-xs"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-semibold text-foreground block mb-1 flex items-center gap-1">
-                          <IndianRupee className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                          <span>Published Ex-Showroom Price (₹) *</span>
-                        </label>
-                        <AppInput 
-                          type="number"
-                          min="0"
-                          step="1"
-                          placeholder="Base + GST + Cess"
-                          value={newVehicleExShowroomPrice} 
-                          onChange={(e) => {
-                            setNewVehicleExShowroomPrice(e.target.value);
-                            syncNewVehicleOnRoad({ exShowroom: e.target.value });
-                          }} 
-                          className="font-mono text-xs font-bold text-emerald-700 dark:text-emerald-300"
-                        />
-                      </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                    <div>
+                      <label className="text-xs font-semibold text-foreground block mb-1">
+                        Basic / Ex-Factory Price (₹)
+                      </label>
+                      <AppInput 
+                        type="number"
+                        min="0"
+                        step="1"
+                        placeholder=""
+                        value={newVehicleBasicPrice || ""} 
+                        onChange={(e) => {
+                          setNewVehicleBasicPrice(e.target.value);
+                          syncNewVehicleOnRoad({ basic: e.target.value });
+                        }} 
+                        className="font-mono text-xs"
+                      />
                     </div>
-                  </div>
 
-                  {/* 2. Statutory RTO, TCS & Insurance */}
-                  <div className="space-y-2 pt-2 border-t border-border/60">
-                    <span className="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400 flex items-center gap-1">
-                      <span>2. Statutory RTO Registration, TCS &amp; Insurance Protection</span>
-                    </span>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                      <div>
-                        <label className="text-xs font-semibold text-foreground block mb-1">
-                          RTO Road Tax &amp; Reg Fee (₹)
-                        </label>
-                        <AppInput 
-                          type="number"
-                          min="0"
-                          step="1"
-                          placeholder="e.g. 110000"
-                          value={newVehicleRtoRoadTax} 
-                          onChange={(e) => {
-                            setNewVehicleRtoRoadTax(e.target.value);
-                            syncNewVehicleOnRoad({ rto: e.target.value });
-                          }} 
-                          className="font-mono text-xs"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-semibold text-foreground block mb-1">
-                          TCS @ 1% (Sec 206C(1F)) (₹)
-                        </label>
-                        <AppInput 
-                          type="number"
-                          min="0"
-                          step="1"
-                          placeholder="Auto 1% if Ex-Showroom > ₹10L"
-                          value={newVehicleTcsAmount} 
-                          onChange={(e) => {
-                            setNewVehicleTcsAmount(e.target.value);
-                            syncNewVehicleOnRoad({ tcs: e.target.value });
-                          }} 
-                          className="font-mono text-xs"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-semibold text-foreground block mb-1">
-                          Comprehensive Insurance (₹)
-                        </label>
-                        <AppInput 
-                          type="number"
-                          min="0"
-                          step="1"
-                          placeholder="e.g. 45000"
-                          value={newVehicleInsuranceCost} 
-                          onChange={(e) => {
-                            setNewVehicleInsuranceCost(e.target.value);
-                            syncNewVehicleOnRoad({ insurance: e.target.value });
-                          }} 
-                          className="font-mono text-xs"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-semibold text-foreground block mb-1">
-                          Laser HSRP &amp; Smart Card (₹)
-                        </label>
-                        <AppInput 
-                          type="number"
-                          min="0"
-                          step="1"
-                          placeholder="e.g. 800"
-                          value={newVehicleHsrpFee} 
-                          onChange={(e) => {
-                            setNewVehicleHsrpFee(e.target.value);
-                            syncNewVehicleOnRoad({ hsrp: e.target.value });
-                          }} 
-                          className="font-mono text-xs"
-                        />
-                      </div>
+                    <div>
+                      <label className="text-xs font-semibold text-foreground block mb-1">
+                        GST Slab (%)
+                      </label>
+                      <select
+                        value={newVehicleGstPercent}
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          setNewVehicleGstPercent(val);
+                          syncNewVehicleOnRoad({ gstPercent: val });
+                        }}
+                        className="w-full h-9 px-3 rounded-lg border border-border bg-surface text-foreground text-xs focus:ring-2 focus:ring-theme-btn-primary/30"
+                      >
+                        <option value={28}>28% (Standard Passenger / ICE)</option>
+                        <option value={18}>18% (Commercial / Heavy Vehicles)</option>
+                        <option value={12}>12% (Small / Agricultural Vehicles)</option>
+                        <option value={5}>5% (Electric Vehicles - EV)</option>
+                        <option value={0}>0% (Exempt / No Tax)</option>
+                      </select>
                     </div>
-                  </div>
 
-                  {/* 3. Fitments, Extended Warranty, Other Charges & Discounts */}
-                  <div className="space-y-2 pt-2 border-t border-border/60">
-                    <span className="text-xs font-bold uppercase tracking-wider text-purple-700 dark:text-purple-400 flex items-center gap-1">
-                      <span>3. Fitments, Extended Warranty, Other Charges &amp; Discounts</span>
-                    </span>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                      <div>
-                        <label className="text-xs font-semibold text-foreground block mb-1">
-                          FASTag Fee &amp; Security (₹)
-                        </label>
-                        <AppInput 
-                          type="number"
-                          min="0"
-                          step="1"
-                          placeholder="e.g. 500"
-                          value={newVehicleFastagCharges} 
-                          onChange={(e) => {
-                            setNewVehicleFastagCharges(e.target.value);
-                            syncNewVehicleOnRoad({ fastag: e.target.value });
-                          }} 
-                          className="font-mono text-xs"
-                        />
-                      </div>
+                    <div>
+                      <label className="text-xs font-semibold text-foreground block mb-1">
+                        GST Amount (₹)
+                      </label>
+                      <AppInput 
+                        type="number"
+                        min="0"
+                        step="1"
+                        placeholder=""
+                        value={newVehicleGstAmount || ""} 
+                        onChange={(e) => {
+                          setNewVehicleGstAmount(e.target.value);
+                          syncNewVehicleOnRoad({ gstAmt: e.target.value });
+                        }} 
+                        className="font-mono text-xs"
+                      />
+                    </div>
 
-                      <div>
-                        <label className="text-xs font-semibold text-foreground block mb-1">
-                          Accessories &amp; Fitments (₹)
-                        </label>
-                        <AppInput 
-                          type="number"
-                          min="0"
-                          step="1"
-                          placeholder="e.g. GPS, Mats, Dashcam"
-                          value={newVehicleAccessoriesCost} 
-                          onChange={(e) => {
-                            setNewVehicleAccessoriesCost(e.target.value);
-                            syncNewVehicleOnRoad({ accessories: e.target.value });
-                          }} 
-                          className="font-mono text-xs"
-                        />
-                      </div>
+                    <div>
+                      <label className="text-xs font-semibold text-foreground block mb-1">
+                        Compensation Cess (%)
+                      </label>
+                      <select
+                        value={newVehicleCessPercent}
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          setNewVehicleCessPercent(val);
+                          syncNewVehicleOnRoad({ cessPercent: val });
+                        }}
+                        className="w-full h-9 px-3 rounded-lg border border-border bg-surface text-foreground text-xs focus:ring-2 focus:ring-theme-btn-primary/30"
+                      >
+                        <option value={0}>0% (EV / Standard Commercial / None)</option>
+                        <option value={1}>1% (Small Petrol &lt; 1200cc, &lt; 4m)</option>
+                        <option value={3}>3% (Small Diesel &lt; 1500cc, &lt; 4m)</option>
+                        <option value={15}>15% (Mid-size / Large Sedans)</option>
+                        <option value={20}>20% (SUVs &lt; 1500cc)</option>
+                        <option value={22}>22% (Large SUVs &gt; 1500cc &amp; &gt; 4m)</option>
+                      </select>
+                    </div>
 
-                      <div>
-                        <label className="text-xs font-semibold text-foreground block mb-1">
-                          Extended Warranty / AMC (₹)
-                        </label>
-                        <AppInput 
-                          type="number"
-                          min="0"
-                          step="1"
-                          placeholder="e.g. 25000"
-                          value={newVehicleExtendedWarrantyCost} 
-                          onChange={(e) => {
-                            setNewVehicleExtendedWarrantyCost(e.target.value);
-                            syncNewVehicleOnRoad({ ew: e.target.value });
-                          }} 
-                          className="font-mono text-xs"
-                        />
-                      </div>
+                    <div>
+                      <label className="text-xs font-semibold text-foreground block mb-1">
+                        Cess Amount (₹)
+                      </label>
+                      <AppInput 
+                        type="number"
+                        min="0"
+                        step="1"
+                        placeholder=""
+                        value={newVehicleCessAmount || ""} 
+                        onChange={(e) => {
+                          setNewVehicleCessAmount(e.target.value);
+                          syncNewVehicleOnRoad({ cessAmt: e.target.value });
+                        }} 
+                        className="font-mono text-xs"
+                      />
+                    </div>
 
-                      <div>
-                        <label className="text-xs font-semibold text-foreground block mb-1">
-                          Other Charges (₹)
-                        </label>
-                        <AppInput 
-                          type="number"
-                          min="0"
-                          step="1"
-                          placeholder="Incidental / Municipal / Green Cess"
-                          value={newVehicleOtherCharges} 
-                          onChange={(e) => {
-                            setNewVehicleOtherCharges(e.target.value);
-                            syncNewVehicleOnRoad({ other: e.target.value });
-                          }} 
-                          className="font-mono text-xs"
-                        />
-                      </div>
+                    <div>
+                      <label className="text-xs font-semibold text-foreground block mb-1 flex items-center gap-1">
+                        <IndianRupee className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                        <span>Published Ex-Showroom Price (₹) *</span>
+                      </label>
+                      <AppInput 
+                        type="number"
+                        min="0"
+                        step="1"
+                        placeholder=""
+                        value={newVehicleExShowroomPrice || ""} 
+                        onChange={(e) => {
+                          setNewVehicleExShowroomPrice(e.target.value);
+                          syncNewVehicleOnRoad({ exShowroom: e.target.value });
+                        }} 
+                        className="font-mono text-xs font-bold text-emerald-700 dark:text-emerald-300"
+                      />
+                    </div>
 
-                      <div>
-                        <label className="text-xs font-semibold text-rose-600 dark:text-rose-400 block mb-1">
-                          Dealer / Fleet Discount (-) (₹)
-                        </label>
-                        <AppInput 
-                          type="number"
-                          min="0"
-                          step="1"
-                          placeholder="e.g. 20000"
-                          value={newVehicleDiscountAmount} 
-                          onChange={(e) => {
-                            setNewVehicleDiscountAmount(e.target.value);
-                            syncNewVehicleOnRoad({ discount: e.target.value });
-                          }} 
-                          className="font-mono text-xs text-rose-600 dark:text-rose-400"
-                        />
-                      </div>
+                    <div>
+                      <label className="text-xs font-semibold text-foreground block mb-1">
+                        RTO Road Tax &amp; Reg Fee (₹)
+                      </label>
+                      <AppInput 
+                        type="number"
+                        min="0"
+                        step="1"
+                        placeholder=""
+                        value={newVehicleRtoRoadTax || ""} 
+                        onChange={(e) => {
+                          setNewVehicleRtoRoadTax(e.target.value);
+                          syncNewVehicleOnRoad({ rto: e.target.value });
+                        }} 
+                        className="font-mono text-xs"
+                      />
+                    </div>
 
-                      <div>
-                        <label className="text-xs font-bold text-emerald-700 dark:text-emerald-400 block mb-1 flex items-center gap-1">
-                          <IndianRupee className="h-3.5 w-3.5" />
-                          <span>Final Total On-Road Price (₹)</span>
-                        </label>
-                        <AppInput 
-                          type="number"
-                          min="0"
-                          step="1"
-                          placeholder="Ex-Showroom + Statutory + Extras - Disc"
-                          value={newVehicleOnRoadPrice || newVehiclePurchasePrice} 
-                          onChange={(e) => {
-                            setNewVehicleOnRoadPrice(e.target.value);
-                            setNewVehiclePurchasePrice(e.target.value);
-                          }} 
-                          className="font-mono text-xs font-bold bg-emerald-500/10 text-emerald-800 dark:text-emerald-200 border-emerald-500/40"
-                        />
-                      </div>
+                    <div>
+                      <label className="text-xs font-semibold text-foreground block mb-1">
+                        TCS @ 1% (Sec 206C(1F)) (₹)
+                      </label>
+                      <AppInput 
+                        type="number"
+                        min="0"
+                        step="1"
+                        placeholder=""
+                        value={newVehicleTcsAmount || ""} 
+                        onChange={(e) => {
+                          setNewVehicleTcsAmount(e.target.value);
+                          syncNewVehicleOnRoad({ tcs: e.target.value });
+                        }} 
+                        className="font-mono text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-foreground block mb-1">
+                        Comprehensive Insurance (₹)
+                      </label>
+                      <AppInput 
+                        type="number"
+                        min="0"
+                        step="1"
+                        placeholder=""
+                        value={newVehicleInsuranceCost || ""} 
+                        onChange={(e) => {
+                          setNewVehicleInsuranceCost(e.target.value);
+                          syncNewVehicleOnRoad({ insurance: e.target.value });
+                        }} 
+                        className="font-mono text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-foreground block mb-1">
+                        Laser HSRP &amp; Smart Card (₹)
+                      </label>
+                      <AppInput 
+                        type="number"
+                        min="0"
+                        step="1"
+                        placeholder=""
+                        value={newVehicleHsrpFee || ""} 
+                        onChange={(e) => {
+                          setNewVehicleHsrpFee(e.target.value);
+                          syncNewVehicleOnRoad({ hsrp: e.target.value });
+                        }} 
+                        className="font-mono text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-foreground block mb-1">
+                        FASTag Fee &amp; Security (₹)
+                      </label>
+                      <AppInput 
+                        type="number"
+                        min="0"
+                        step="1"
+                        placeholder=""
+                        value={newVehicleFastagCharges || ""} 
+                        onChange={(e) => {
+                          setNewVehicleFastagCharges(e.target.value);
+                          syncNewVehicleOnRoad({ fastag: e.target.value });
+                        }} 
+                        className="font-mono text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-foreground block mb-1">
+                        Accessories &amp; Fitments (₹)
+                      </label>
+                      <AppInput 
+                        type="number"
+                        min="0"
+                        step="1"
+                        placeholder=""
+                        value={newVehicleAccessoriesCost || ""} 
+                        onChange={(e) => {
+                          setNewVehicleAccessoriesCost(e.target.value);
+                          syncNewVehicleOnRoad({ accessories: e.target.value });
+                        }} 
+                        className="font-mono text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-foreground block mb-1">
+                        Extended Warranty / AMC (₹)
+                      </label>
+                      <AppInput 
+                        type="number"
+                        min="0"
+                        step="1"
+                        placeholder=""
+                        value={newVehicleExtendedWarrantyCost || ""} 
+                        onChange={(e) => {
+                          setNewVehicleExtendedWarrantyCost(e.target.value);
+                          syncNewVehicleOnRoad({ ew: e.target.value });
+                        }} 
+                        className="font-mono text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-foreground block mb-1">
+                        Other Charges (₹)
+                      </label>
+                      <AppInput 
+                        type="number"
+                        min="0"
+                        step="1"
+                        placeholder=""
+                        value={newVehicleOtherCharges || ""} 
+                        onChange={(e) => {
+                          setNewVehicleOtherCharges(e.target.value);
+                          syncNewVehicleOnRoad({ other: e.target.value });
+                        }} 
+                        className="font-mono text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-rose-600 dark:text-rose-400 block mb-1">
+                        Dealer / Fleet Discount (-) (₹)
+                      </label>
+                      <AppInput 
+                        type="number"
+                        min="0"
+                        step="1"
+                        placeholder=""
+                        value={newVehicleDiscountAmount || ""} 
+                        onChange={(e) => {
+                          setNewVehicleDiscountAmount(e.target.value);
+                          syncNewVehicleOnRoad({ discount: e.target.value });
+                        }} 
+                        className="font-mono text-xs text-rose-600 dark:text-rose-400"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold text-emerald-700 dark:text-emerald-400 block mb-1 flex items-center gap-1">
+                        <IndianRupee className="h-3.5 w-3.5" />
+                        <span>Final Total On-Road Price (₹)</span>
+                      </label>
+                      <AppInput 
+                        type="number"
+                        min="0"
+                        step="1"
+                        placeholder=""
+                        value={newVehicleOnRoadPrice || newVehiclePurchasePrice || ""} 
+                        onChange={(e) => {
+                          setNewVehicleOnRoadPrice(e.target.value);
+                          setNewVehiclePurchasePrice(e.target.value);
+                        }} 
+                        className="font-mono text-xs font-bold bg-emerald-500/10 text-emerald-800 dark:text-emerald-200 border-emerald-500/40"
+                      />
                     </div>
                   </div>
 
@@ -12925,324 +12907,302 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       </div>
                     </div>
 
-                    {/* 1. Factory Base & Ex-Showroom Slabs */}
-                    <div className="space-y-2">
-                      <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-400 flex items-center gap-1">
-                        <span>1. Ex-Factory Base &amp; Statutory GST / Cess Matrix</span>
-                      </span>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        <div>
-                          <label className="text-xs font-semibold text-foreground block mb-1">
-                            Basic / Ex-Factory Price (₹)
-                          </label>
-                          <AppInput 
-                            type="number"
-                            min="0"
-                            step="1"
-                            placeholder="e.g. 850000"
-                            value={editVehicleBasicPrice} 
-                            onChange={(e) => {
-                              setEditVehicleBasicPrice(e.target.value);
-                              syncEditVehicleOnRoad({ basic: e.target.value });
-                            }} 
-                            className="font-mono text-xs"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-xs font-semibold text-foreground block mb-1">
-                            GST Slab (%)
-                          </label>
-                          <select
-                            value={editVehicleGstPercent}
-                            onChange={(e) => {
-                              const val = Number(e.target.value);
-                              setEditVehicleGstPercent(val);
-                              syncEditVehicleOnRoad({ gstPercent: val });
-                            }}
-                            className="w-full h-9 px-3 rounded-lg border border-border bg-surface text-foreground text-xs focus:ring-2 focus:ring-theme-btn-primary/30"
-                          >
-                            <option value={28}>28% (Standard Passenger / ICE)</option>
-                            <option value={18}>18% (Commercial / Heavy Vehicles)</option>
-                            <option value={12}>12% (Small / Agricultural Vehicles)</option>
-                            <option value={5}>5% (Electric Vehicles - EV)</option>
-                            <option value={0}>0% (Exempt / No Tax)</option>
-                          </select>
-                        </div>
-
-                        <div>
-                          <label className="text-xs font-semibold text-foreground block mb-1">
-                            GST Amount (₹)
-                          </label>
-                          <AppInput 
-                            type="number"
-                            min="0"
-                            step="1"
-                            placeholder="Calculated automatically"
-                            value={editVehicleGstAmount} 
-                            onChange={(e) => {
-                              setEditVehicleGstAmount(e.target.value);
-                              syncEditVehicleOnRoad({ gstAmt: e.target.value });
-                            }} 
-                            className="font-mono text-xs"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-xs font-semibold text-foreground block mb-1">
-                            Compensation Cess (%)
-                          </label>
-                          <select
-                            value={editVehicleCessPercent}
-                            onChange={(e) => {
-                              const val = Number(e.target.value);
-                              setEditVehicleCessPercent(val);
-                              syncEditVehicleOnRoad({ cessPercent: val });
-                            }}
-                            className="w-full h-9 px-3 rounded-lg border border-border bg-surface text-foreground text-xs focus:ring-2 focus:ring-theme-btn-primary/30"
-                          >
-                            <option value={0}>0% (EV / Standard Commercial / None)</option>
-                            <option value={1}>1% (Small Petrol &lt; 1200cc, &lt; 4m)</option>
-                            <option value={3}>3% (Small Diesel &lt; 1500cc, &lt; 4m)</option>
-                            <option value={15}>15% (Mid-size / Large Sedans)</option>
-                            <option value={20}>20% (SUVs &lt; 1500cc)</option>
-                            <option value={22}>22% (Large SUVs &gt; 1500cc &amp; &gt; 4m)</option>
-                          </select>
-                        </div>
-
-                        <div>
-                          <label className="text-xs font-semibold text-foreground block mb-1">
-                            Cess Amount (₹)
-                          </label>
-                          <AppInput 
-                            type="number"
-                            min="0"
-                            step="1"
-                            placeholder="Calculated automatically"
-                            value={editVehicleCessAmount} 
-                            onChange={(e) => {
-                              setEditVehicleCessAmount(e.target.value);
-                              syncEditVehicleOnRoad({ cessAmt: e.target.value });
-                            }} 
-                            className="font-mono text-xs"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-xs font-semibold text-foreground block mb-1 flex items-center gap-1">
-                            <IndianRupee className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                            <span>Published Ex-Showroom Price (₹) *</span>
-                          </label>
-                          <AppInput 
-                            type="number"
-                            min="0"
-                            step="1"
-                            placeholder="Base + GST + Cess"
-                            value={editVehicleExShowroomPrice} 
-                            onChange={(e) => {
-                              setEditVehicleExShowroomPrice(e.target.value);
-                              syncEditVehicleOnRoad({ exShowroom: e.target.value });
-                            }} 
-                            className="font-mono text-xs font-bold text-emerald-700 dark:text-emerald-300"
-                          />
-                        </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1">
+                          Basic / Ex-Factory Price (₹)
+                        </label>
+                        <AppInput 
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder=""
+                          value={editVehicleBasicPrice || ""} 
+                          onChange={(e) => {
+                            setEditVehicleBasicPrice(e.target.value);
+                            syncEditVehicleOnRoad({ basic: e.target.value });
+                          }} 
+                          className="font-mono text-xs"
+                        />
                       </div>
-                    </div>
 
-                    {/* 2. Statutory RTO, TCS & Insurance */}
-                    <div className="space-y-2 pt-2 border-t border-border/60">
-                      <span className="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400 flex items-center gap-1">
-                        <span>2. Statutory RTO Registration, TCS &amp; Insurance Protection</span>
-                      </span>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                        <div>
-                          <label className="text-xs font-semibold text-foreground block mb-1">
-                            RTO Road Tax &amp; Reg Fee (₹)
-                          </label>
-                          <AppInput 
-                            type="number"
-                            min="0"
-                            step="1"
-                            placeholder="e.g. 110000"
-                            value={editVehicleRtoRoadTax} 
-                            onChange={(e) => {
-                              setEditVehicleRtoRoadTax(e.target.value);
-                              syncEditVehicleOnRoad({ rto: e.target.value });
-                            }} 
-                            className="font-mono text-xs"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-xs font-semibold text-foreground block mb-1">
-                            TCS @ 1% (Sec 206C(1F)) (₹)
-                          </label>
-                          <AppInput 
-                            type="number"
-                            min="0"
-                            step="1"
-                            placeholder="Auto 1% if Ex-Showroom > ₹10L"
-                            value={editVehicleTcsAmount} 
-                            onChange={(e) => {
-                              setEditVehicleTcsAmount(e.target.value);
-                              syncEditVehicleOnRoad({ tcs: e.target.value });
-                            }} 
-                            className="font-mono text-xs"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-xs font-semibold text-foreground block mb-1">
-                            Comprehensive Insurance (₹)
-                          </label>
-                          <AppInput 
-                            type="number"
-                            min="0"
-                            step="1"
-                            placeholder="e.g. 45000"
-                            value={editVehicleInsuranceCost} 
-                            onChange={(e) => {
-                              setEditVehicleInsuranceCost(e.target.value);
-                              syncEditVehicleOnRoad({ insurance: e.target.value });
-                            }} 
-                            className="font-mono text-xs"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-xs font-semibold text-foreground block mb-1">
-                            Laser HSRP &amp; Smart Card (₹)
-                          </label>
-                          <AppInput 
-                            type="number"
-                            min="0"
-                            step="1"
-                            placeholder="e.g. 800"
-                            value={editVehicleHsrpFee} 
-                            onChange={(e) => {
-                              setEditVehicleHsrpFee(e.target.value);
-                              syncEditVehicleOnRoad({ hsrp: e.target.value });
-                            }} 
-                            className="font-mono text-xs"
-                          />
-                        </div>
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1">
+                          GST Slab (%)
+                        </label>
+                        <select
+                          value={editVehicleGstPercent}
+                          onChange={(e) => {
+                            const val = Number(e.target.value);
+                            setEditVehicleGstPercent(val);
+                            syncEditVehicleOnRoad({ gstPercent: val });
+                          }}
+                          className="w-full h-9 px-3 rounded-lg border border-border bg-surface text-foreground text-xs focus:ring-2 focus:ring-theme-btn-primary/30"
+                        >
+                          <option value={28}>28% (Standard Passenger / ICE)</option>
+                          <option value={18}>18% (Commercial / Heavy Vehicles)</option>
+                          <option value={12}>12% (Small / Agricultural Vehicles)</option>
+                          <option value={5}>5% (Electric Vehicles - EV)</option>
+                          <option value={0}>0% (Exempt / No Tax)</option>
+                        </select>
                       </div>
-                    </div>
 
-                    {/* 3. Fitments, Extended Warranty, Other Charges & Discounts */}
-                    <div className="space-y-2 pt-2 border-t border-border/60">
-                      <span className="text-xs font-bold uppercase tracking-wider text-purple-700 dark:text-purple-400 flex items-center gap-1">
-                        <span>3. Fitments, Extended Warranty, Other Charges &amp; Discounts</span>
-                      </span>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        <div>
-                          <label className="text-xs font-semibold text-foreground block mb-1">
-                            FASTag Fee &amp; Security (₹)
-                          </label>
-                          <AppInput 
-                            type="number"
-                            min="0"
-                            step="1"
-                            placeholder="e.g. 500"
-                            value={editVehicleFastagCharges} 
-                            onChange={(e) => {
-                              setEditVehicleFastagCharges(e.target.value);
-                              syncEditVehicleOnRoad({ fastag: e.target.value });
-                            }} 
-                            className="font-mono text-xs"
-                          />
-                        </div>
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1">
+                          GST Amount (₹)
+                        </label>
+                        <AppInput 
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder=""
+                          value={editVehicleGstAmount || ""} 
+                          onChange={(e) => {
+                            setEditVehicleGstAmount(e.target.value);
+                            syncEditVehicleOnRoad({ gstAmt: e.target.value });
+                          }} 
+                          className="font-mono text-xs"
+                        />
+                      </div>
 
-                        <div>
-                          <label className="text-xs font-semibold text-foreground block mb-1">
-                            Accessories &amp; Fitments (₹)
-                          </label>
-                          <AppInput 
-                            type="number"
-                            min="0"
-                            step="1"
-                            placeholder="e.g. GPS, Mats, Dashcam"
-                            value={editVehicleAccessoriesCost} 
-                            onChange={(e) => {
-                              setEditVehicleAccessoriesCost(e.target.value);
-                              syncEditVehicleOnRoad({ accessories: e.target.value });
-                            }} 
-                            className="font-mono text-xs"
-                          />
-                        </div>
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1">
+                          Compensation Cess (%)
+                        </label>
+                        <select
+                          value={editVehicleCessPercent}
+                          onChange={(e) => {
+                            const val = Number(e.target.value);
+                            setEditVehicleCessPercent(val);
+                            syncEditVehicleOnRoad({ cessPercent: val });
+                          }}
+                          className="w-full h-9 px-3 rounded-lg border border-border bg-surface text-foreground text-xs focus:ring-2 focus:ring-theme-btn-primary/30"
+                        >
+                          <option value={0}>0% (EV / Standard Commercial / None)</option>
+                          <option value={1}>1% (Small Petrol &lt; 1200cc, &lt; 4m)</option>
+                          <option value={3}>3% (Small Diesel &lt; 1500cc, &lt; 4m)</option>
+                          <option value={15}>15% (Mid-size / Large Sedans)</option>
+                          <option value={20}>20% (SUVs &lt; 1500cc)</option>
+                          <option value={22}>22% (Large SUVs &gt; 1500cc &amp; &gt; 4m)</option>
+                        </select>
+                      </div>
 
-                        <div>
-                          <label className="text-xs font-semibold text-foreground block mb-1">
-                            Extended Warranty / AMC (₹)
-                          </label>
-                          <AppInput 
-                            type="number"
-                            min="0"
-                            step="1"
-                            placeholder="e.g. 25000"
-                            value={editVehicleExtendedWarrantyCost} 
-                            onChange={(e) => {
-                              setEditVehicleExtendedWarrantyCost(e.target.value);
-                              syncEditVehicleOnRoad({ ew: e.target.value });
-                            }} 
-                            className="font-mono text-xs"
-                          />
-                        </div>
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1">
+                          Cess Amount (₹)
+                        </label>
+                        <AppInput 
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder=""
+                          value={editVehicleCessAmount || ""} 
+                          onChange={(e) => {
+                            setEditVehicleCessAmount(e.target.value);
+                            syncEditVehicleOnRoad({ cessAmt: e.target.value });
+                          }} 
+                          className="font-mono text-xs"
+                        />
+                      </div>
 
-                        <div>
-                          <label className="text-xs font-semibold text-foreground block mb-1">
-                            Other Charges (₹)
-                          </label>
-                          <AppInput 
-                            type="number"
-                            min="0"
-                            step="1"
-                            placeholder="Incidental / Municipal / Green Cess"
-                            value={editVehicleOtherCharges} 
-                            onChange={(e) => {
-                              setEditVehicleOtherCharges(e.target.value);
-                              syncEditVehicleOnRoad({ other: e.target.value });
-                            }} 
-                            className="font-mono text-xs"
-                          />
-                        </div>
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1 flex items-center gap-1">
+                          <IndianRupee className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                          <span>Published Ex-Showroom Price (₹) *</span>
+                        </label>
+                        <AppInput 
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder=""
+                          value={editVehicleExShowroomPrice || ""} 
+                          onChange={(e) => {
+                            setEditVehicleExShowroomPrice(e.target.value);
+                            syncEditVehicleOnRoad({ exShowroom: e.target.value });
+                          }} 
+                          className="font-mono text-xs font-bold text-emerald-700 dark:text-emerald-300"
+                        />
+                      </div>
 
-                        <div>
-                          <label className="text-xs font-semibold text-rose-600 dark:text-rose-400 block mb-1">
-                            Dealer / Fleet Discount (-) (₹)
-                          </label>
-                          <AppInput 
-                            type="number"
-                            min="0"
-                            step="1"
-                            placeholder="e.g. 20000"
-                            value={editVehicleDiscountAmount} 
-                            onChange={(e) => {
-                              setEditVehicleDiscountAmount(e.target.value);
-                              syncEditVehicleOnRoad({ discount: e.target.value });
-                            }} 
-                            className="font-mono text-xs text-rose-600 dark:text-rose-400"
-                          />
-                        </div>
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1">
+                          RTO Road Tax &amp; Reg Fee (₹)
+                        </label>
+                        <AppInput 
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder=""
+                          value={editVehicleRtoRoadTax || ""} 
+                          onChange={(e) => {
+                            setEditVehicleRtoRoadTax(e.target.value);
+                            syncEditVehicleOnRoad({ rto: e.target.value });
+                          }} 
+                          className="font-mono text-xs"
+                        />
+                      </div>
 
-                        <div>
-                          <label className="text-xs font-bold text-emerald-700 dark:text-emerald-400 block mb-1 flex items-center gap-1">
-                            <IndianRupee className="h-3.5 w-3.5" />
-                            <span>Final Total On-Road Price (₹)</span>
-                          </label>
-                          <AppInput 
-                            type="number"
-                            min="0"
-                            step="1"
-                            placeholder="Ex-Showroom + Statutory + Extras - Disc"
-                            value={editVehicleOnRoadPrice || editVehiclePurchasePrice} 
-                            onChange={(e) => {
-                              setEditVehicleOnRoadPrice(e.target.value);
-                              setEditVehiclePurchasePrice(e.target.value);
-                            }} 
-                            className="font-mono text-xs font-bold bg-emerald-500/10 text-emerald-800 dark:text-emerald-200 border-emerald-500/40"
-                          />
-                        </div>
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1">
+                          TCS @ 1% (Sec 206C(1F)) (₹)
+                        </label>
+                        <AppInput 
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder=""
+                          value={editVehicleTcsAmount || ""} 
+                          onChange={(e) => {
+                            setEditVehicleTcsAmount(e.target.value);
+                            syncEditVehicleOnRoad({ tcs: e.target.value });
+                          }} 
+                          className="font-mono text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1">
+                          Comprehensive Insurance (₹)
+                        </label>
+                        <AppInput 
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder=""
+                          value={editVehicleInsuranceCost || ""} 
+                          onChange={(e) => {
+                            setEditVehicleInsuranceCost(e.target.value);
+                            syncEditVehicleOnRoad({ insurance: e.target.value });
+                          }} 
+                          className="font-mono text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1">
+                          Laser HSRP &amp; Smart Card (₹)
+                        </label>
+                        <AppInput 
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder=""
+                          value={editVehicleHsrpFee || ""} 
+                          onChange={(e) => {
+                            setEditVehicleHsrpFee(e.target.value);
+                            syncEditVehicleOnRoad({ hsrp: e.target.value });
+                          }} 
+                          className="font-mono text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1">
+                          FASTag Fee &amp; Security (₹)
+                        </label>
+                        <AppInput 
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder=""
+                          value={editVehicleFastagCharges || ""} 
+                          onChange={(e) => {
+                            setEditVehicleFastagCharges(e.target.value);
+                            syncEditVehicleOnRoad({ fastag: e.target.value });
+                          }} 
+                          className="font-mono text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1">
+                          Accessories &amp; Fitments (₹)
+                        </label>
+                        <AppInput 
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder=""
+                          value={editVehicleAccessoriesCost || ""} 
+                          onChange={(e) => {
+                            setEditVehicleAccessoriesCost(e.target.value);
+                            syncEditVehicleOnRoad({ accessories: e.target.value });
+                          }} 
+                          className="font-mono text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1">
+                          Extended Warranty / AMC (₹)
+                        </label>
+                        <AppInput 
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder=""
+                          value={editVehicleExtendedWarrantyCost || ""} 
+                          onChange={(e) => {
+                            setEditVehicleExtendedWarrantyCost(e.target.value);
+                            syncEditVehicleOnRoad({ ew: e.target.value });
+                          }} 
+                          className="font-mono text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1">
+                          Other Charges (₹)
+                        </label>
+                        <AppInput 
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder=""
+                          value={editVehicleOtherCharges || ""} 
+                          onChange={(e) => {
+                            setEditVehicleOtherCharges(e.target.value);
+                            syncEditVehicleOnRoad({ other: e.target.value });
+                          }} 
+                          className="font-mono text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-rose-600 dark:text-rose-400 block mb-1">
+                          Dealer / Fleet Discount (-) (₹)
+                        </label>
+                        <AppInput 
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder=""
+                          value={editVehicleDiscountAmount || ""} 
+                          onChange={(e) => {
+                            setEditVehicleDiscountAmount(e.target.value);
+                            syncEditVehicleOnRoad({ discount: e.target.value });
+                          }} 
+                          className="font-mono text-xs text-rose-600 dark:text-rose-400"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-bold text-emerald-700 dark:text-emerald-400 block mb-1 flex items-center gap-1">
+                          <IndianRupee className="h-3.5 w-3.5" />
+                          <span>Final Total On-Road Price (₹)</span>
+                        </label>
+                        <AppInput 
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder=""
+                          value={editVehicleOnRoadPrice || editVehiclePurchasePrice || ""} 
+                          onChange={(e) => {
+                            setEditVehicleOnRoadPrice(e.target.value);
+                            setEditVehiclePurchasePrice(e.target.value);
+                          }} 
+                          className="font-mono text-xs font-bold bg-emerald-500/10 text-emerald-800 dark:text-emerald-200 border-emerald-500/40"
+                        />
                       </div>
                     </div>
 
@@ -19317,7 +19277,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   {/* Column 1: Ex-Factory Base & Taxes */}
                   <div className="p-3 rounded-lg border border-border bg-surface space-y-2">
                     <span className="font-bold text-emerald-800 dark:text-emerald-400 uppercase tracking-wider text-xs block pb-1 border-b border-border/60">
-                      1. Factory Base &amp; Tax Matrix
+                      Factory Base &amp; Tax Matrix
                     </span>
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">Basic / Ex-Factory:</span>
@@ -19350,7 +19310,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   {/* Column 2: Statutory RTO, TCS & Insurance */}
                   <div className="p-3 rounded-lg border border-border bg-surface space-y-2">
                     <span className="font-bold text-blue-800 dark:text-blue-400 uppercase tracking-wider text-xs block pb-1 border-b border-border/60">
-                      2. Statutory &amp; Compliance
+                      Statutory &amp; Compliance
                     </span>
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">RTO Road Tax &amp; Reg:</span>
@@ -19381,7 +19341,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   {/* Column 3: Fitments, Extended Warranty, Other & Discounts */}
                   <div className="p-3 rounded-lg border border-border bg-surface space-y-2">
                     <span className="font-bold text-purple-800 dark:text-purple-400 uppercase tracking-wider text-xs block pb-1 border-b border-border/60">
-                      3. Fitments, Other &amp; Discounts
+                      Fitments, Other &amp; Discounts
                     </span>
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">FASTag Tag &amp; Wallet:</span>
