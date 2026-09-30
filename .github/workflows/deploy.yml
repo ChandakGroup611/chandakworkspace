@@ -42,19 +42,21 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRrb3Z6eW1rdWJ4dHBjZ3lua2dkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MDk4MDYyMiwiZXhwIjoyMDk2NTU2NjIyfQ.UsBMx2jpsI5cJavw2cFqYQJZO8tN7YHWwzvb2LYJ5wY"
         run: npm run build
 
-      # Copy static assets into standalone folder so everything is self-contained and zip it
+      # Copy static assets and deploy-hook into standalone folder so everything is self-contained and zip it
       - name: Prepare deployment files
         run: |
           cp -r public .next/standalone/public
           cp -r .next/static .next/standalone/.next/static
           mkdir -p .next/standalone/public/_next
           cp -r .next/static .next/standalone/public/_next/static
+          cp public/deploy-hook.php .next/standalone/public/deploy-hook.php
+          cp public/deploy-hook.php .next/standalone/deploy-hook.php
           cd .next/standalone
           zip -r ../../deploy.zip .
           cd ../..
           mkdir -p upload-payload
           cp deploy.zip upload-payload/
-          cp ./public/deploy-hook.php upload-payload/
+          cp public/deploy-hook.php upload-payload/
 
       # Upload the compiled standalone zip file and deploy-hook to Hostinger via FTP
       - name: Sync files via FTP (public_html)
@@ -64,7 +66,7 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./upload-payload/
-          server-dir: domains/chandakgroup.tech/public_html/
+          server-dir: ./
           protocol: ftp
           state-name: ''
           dangerous-clean-slate: false
@@ -84,65 +86,57 @@ jobs:
             echo "Current Directory: $ROOT_DIR"
             
             ZIP_PATH=""
-            for candidate in "$ROOT_DIR/domains/chandakgroup.tech/public_html/deploy.zip" "$ROOT_DIR/public_html/deploy.zip" "$ROOT_DIR/deploy.zip"; do
+            for candidate in "$ROOT_DIR/deploy.zip" "$ROOT_DIR/domains/chandakgroup.tech/public_html/deploy.zip" "$ROOT_DIR/public_html/deploy.zip" $(find "$ROOT_DIR" -maxdepth 4 -name "deploy.zip" 2>/dev/null); do
               if [ -f "$candidate" ]; then
                 ZIP_PATH="$candidate"
                 break
               fi
             done
             
-            if [ -z "$ZIP_PATH" ]; then
-              ZIP_PATH=$(find . -name "deploy.zip" 2>/dev/null | head -n 1)
-            fi
-            
             echo "Target Zip File: $ZIP_PATH"
             
             if [ -n "$ZIP_PATH" ] && [ -f "$ZIP_PATH" ]; then
-              # Target directories to extract into
-              TARGETS=(
-                "$ROOT_DIR/domains/chandakgroup.tech/public_html"
-                "$ROOT_DIR/public_html"
-                "$ROOT_DIR/domains/chandakgroup.tech/hbuilds/current/nodejs"
-                "$ROOT_DIR/hbuilds/current/nodejs"
-              )
-              for ver_dir in $ROOT_DIR/domains/chandakgroup.tech/hbuilds/versions/*/nodejs $ROOT_DIR/hbuilds/versions/*/nodejs; do
-                if [ -d "$ver_dir" ]; then
-                  TARGETS+=("$ver_dir")
-                fi
+              TARGET_DIRS=()
+              
+              for p in "$ROOT_DIR/domains/chandakgroup.tech/public_html" "$ROOT_DIR/public_html"; do
+                if [ -d "$p" ]; then TARGET_DIRS+=("$p"); fi
+              done
+              
+              for n in "$ROOT_DIR/domains/chandakgroup.tech/hbuilds/current/nodejs" "$ROOT_DIR/hbuilds/current/nodejs"; do
+                if [ -d "$n" ]; then TARGET_DIRS+=("$n"); fi
+              done
+              
+              for v in "$ROOT_DIR/domains/chandakgroup.tech/hbuilds/versions/"*/nodejs "$ROOT_DIR/hbuilds/versions/"*/nodejs; do
+                if [ -d "$v" ]; then TARGET_DIRS+=("$v"); fi
               done
 
-              for target in "${TARGETS[@]}"; do
-                if [ -d "$target" ]; then
-                  echo "Updating target: $target"
-                  rm -rf "$target/.next/cache" "$target/_next" "$target/public/_next"
-                  (cd "$target" && unzip -o "$ZIP_PATH")
-                  mkdir -p "$target/tmp" "$target/public/_next"
-                  touch "$target/tmp/restart.txt"
-                  if [ -f "$target/server.js" ]; then
-                    touch "$target/server.js"
-                  fi
-                  if [ -d "$target/.next/static" ]; then
-                    cp -rn "$target/.next/static" "$target/public/_next/" 2>/dev/null || true
-                  fi
+              echo "Target directories: ${TARGET_DIRS[*]}"
+              
+              for target in "${TARGET_DIRS[@]}"; do
+                echo "Extracting into $target..."
+                mkdir -p "$target/tmp" "$target/public/_next"
+                rm -rf "$target/.next/cache" "$target/_next" "$target/public/_next"
+                unzip -o "$ZIP_PATH" -d "$target"
+                mkdir -p "$target/tmp" "$target/public/_next"
+                touch "$target/tmp/restart.txt"
+                if [ -f "$target/server.js" ]; then
+                  touch "$target/server.js"
+                fi
+                if [ -d "$target/.next/static" ]; then
+                  cp -rn "$target/.next/static" "$target/public/_next/" 2>/dev/null || true
+                  cp -rn "$target/.next/static" "$target/_next/" 2>/dev/null || true
+                fi
+                if [ -d "$target/public" ] && [ -f "$target/deploy-hook.php" ]; then
+                  cp -f "$target/deploy-hook.php" "$target/public/deploy-hook.php" 2>/dev/null || true
                 fi
               done
               
-              # Copy updated deploy-hook.php to all public folders
-              if [ -f "$ROOT_DIR/domains/chandakgroup.tech/public_html/deploy-hook.php" ]; then
-                HOOK_SRC="$ROOT_DIR/domains/chandakgroup.tech/public_html/deploy-hook.php"
-                for pub_dir in $ROOT_DIR/domains/chandakgroup.tech/hbuilds/versions/*/nodejs/public "$ROOT_DIR/domains/chandakgroup.tech/hbuilds/current/nodejs/public"; do
-                  if [ -d "$pub_dir" ]; then
-                    cp -f "$HOOK_SRC" "$pub_dir/"
-                  fi
-                done
-              fi
-              
               # Force kill old node processes so passenger boots new code
-              pkill -9 -f node 2>/dev/null || true
+              pkill -9 -u $(whoami) -f node 2>/dev/null || true
               killall -9 node 2>/dev/null || true
               passenger-config restart-app --ignore-passenger-not-running / 2>/dev/null || true
               
-              rm -f "$ZIP_PATH" "$ROOT_DIR/domains/chandakgroup.tech/public_html/.ftp-deploy-sync-state.json"
+              rm -f "$ZIP_PATH" "$ROOT_DIR/.ftp-deploy-sync-state.json" "$ROOT_DIR/domains/chandakgroup.tech/public_html/.ftp-deploy-sync-state.json"
               echo "=== SSH EXTRACTION COMPLETE ==="
             fi
 
