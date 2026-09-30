@@ -9730,7 +9730,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         onChange={(e) => setShowInventoryFinancials(e.target.checked)}
                         className="rounded border-border text-theme-btn-primary focus:ring-theme-btn-primary h-3.5 w-3.5"
                       />
-                      <span className="font-medium text-foreground">Purchase Cost & Extended Expiry</span>
+                      <span className="font-medium text-foreground">Quotation &amp; On-Road Charges Breakdown</span>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60 p-1.5 rounded-lg text-xs transition-colors">
                       <input
@@ -9784,7 +9784,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <AppTableHead className="p-3.5">Insurance Validity</AppTableHead>
                     <AppTableHead className="p-3.5">RSA & HSRP</AppTableHead>
                     {showInventoryFinancials && (
-                      <AppTableHead className="p-3.5">Purchase & Expiry</AppTableHead>
+                      <AppTableHead className="p-3.5">Quotation &amp; On-Road Charges</AppTableHead>
                     )}
                     <AppTableHead className="p-3.5 text-center">Status</AppTableHead>
                     <AppTableHead className="p-3.5 text-right">Actions</AppTableHead>
@@ -9986,22 +9986,48 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             </div>
                           </AppTableCell>
 
-                          {/* 8. Optional Financials Column */}
+                          {/* 8. Pricing & On-Road Charges Column */}
                           {showInventoryFinancials && (
                             <AppTableCell className="p-3.5 font-mono text-xs">
-                              <div className="font-bold text-emerald-700 dark:text-emerald-300">
-                                {veh.purchase_price || veh.purchase_cost
-                                  ? `₹${Number(veh.purchase_price || veh.purchase_cost).toLocaleString("en-IN")}`
-                                  : "—"}
+                              <div className="flex items-center gap-1 font-bold text-emerald-700 dark:text-emerald-300 text-xs">
+                                <IndianRupee className="h-3 w-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                <span>
+                                  {veh.on_road_price || veh.purchase_price || veh.purchase_cost
+                                    ? `₹${Number(veh.on_road_price || veh.purchase_price || veh.purchase_cost).toLocaleString("en-IN")}`
+                                    : "—"}
+                                </span>
                               </div>
-                              {veh.custom_extended_expiry_date ? (
-                                <div className="text-xs text-indigo-600 dark:text-indigo-400 mt-0.5 flex items-center gap-1 font-semibold">
-                                  <CalendarClock className="h-3 w-3" />
-                                  <span>{String(veh.custom_extended_expiry_date).split("T")[0]}</span>
+
+                              {/* Charges Breakdown Snippet */}
+                              {(veh.ex_showroom_price || veh.basic_price || veh.rto_road_tax || veh.other_charges || veh.insurance_cost) ? (
+                                <div className="space-y-0.5 mt-1 text-[10px] text-muted-foreground font-sans">
+                                  {veh.ex_showroom_price ? (
+                                    <div className="flex items-center justify-between gap-1.5">
+                                      <span className="text-muted-foreground">Ex-Show:</span>
+                                      <span className="font-mono font-semibold text-foreground">₹{Number(veh.ex_showroom_price).toLocaleString("en-IN")}</span>
+                                    </div>
+                                  ) : null}
+                                  {veh.rto_road_tax ? (
+                                    <div className="flex items-center justify-between gap-1.5">
+                                      <span className="text-muted-foreground">+ RTO:</span>
+                                      <span className="font-mono text-foreground">₹{Number(veh.rto_road_tax).toLocaleString("en-IN")}</span>
+                                    </div>
+                                  ) : null}
+                                  {veh.other_charges ? (
+                                    <div className="flex items-center justify-between gap-1.5 text-purple-700 dark:text-purple-400 font-semibold">
+                                      <span>+ Other:</span>
+                                      <span className="font-mono">₹{Number(veh.other_charges).toLocaleString("en-IN")}</span>
+                                    </div>
+                                  ) : null}
                                 </div>
-                              ) : (
-                                <div className="text-xs text-muted-foreground mt-0.5">No ext expiry</div>
-                              )}
+                              ) : null}
+
+                              {veh.custom_extended_expiry_date ? (
+                                <div className="text-[10px] text-indigo-600 dark:text-indigo-400 mt-1 flex items-center gap-1 font-semibold">
+                                  <CalendarClock className="h-3 w-3 shrink-0" />
+                                  <span>Exp: {String(veh.custom_extended_expiry_date).split("T")[0]}</span>
+                                </div>
+                              ) : null}
                             </AppTableCell>
                           )}
 
