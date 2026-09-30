@@ -215,6 +215,18 @@ foreach ($allTargetDirs as $target) {
         }
     }
     
+    // Copy static files to public roots
+    if (is_dir($target . '/.next/static')) {
+        @mkdir($target . '/_next', 0755, true);
+        @mkdir($target . '/public/_next', 0755, true);
+        @mkdir($domainRoot . '/public_html/_next', 0755, true);
+        if (function_exists('exec')) {
+            @exec('cp -rf ' . escapeshellarg($target . '/.next/static') . ' ' . escapeshellarg($target . '/_next/') . ' 2>&1');
+            @exec('cp -rf ' . escapeshellarg($target . '/.next/static') . ' ' . escapeshellarg($target . '/public/_next/') . ' 2>&1');
+            @exec('cp -rf ' . escapeshellarg($target . '/.next/static') . ' ' . escapeshellarg($domainRoot . '/public_html/_next/') . ' 2>&1');
+        }
+    }
+    
     // Clean Next.js cache
     if (is_dir($target . '/.next/cache')) {
         @exec('rm -rf ' . escapeshellarg($target . '/.next/cache') . ' 2>&1');
@@ -225,6 +237,9 @@ foreach ($allTargetDirs as $target) {
     @touch($target . '/tmp/restart.txt');
     if (file_exists($target . '/server.js')) {
         @touch($target . '/server.js');
+    }
+    if (file_exists($target . '/package.json')) {
+        @touch($target . '/package.json');
     }
     
     $extractionResults[$target] = [

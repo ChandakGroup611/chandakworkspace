@@ -61,7 +61,7 @@ jobs:
           cp public/deploy-hook.php upload-payload/
 
       # Upload the compiled standalone zip file and deploy-hook to Hostinger via FTP
-      - name: Sync files via FTP (public_html)
+      - name: Sync files via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
@@ -72,6 +72,14 @@ jobs:
           protocol: ftp
           state-name: ''
           dangerous-clean-slate: false
+
+      # Trigger HTTP deploy hook to extract deploy.zip across all application targets
+      - name: Extract Payload via Webhook
+        run: |
+          echo "Triggering deploy hook via HTTP..."
+          curl -sS --retry 3 --retry-delay 3 "https://chandakgroup.tech/public/deploy-hook.php?key=chandak_deploy_secret_2026_matrix" || true
+          RESPONSE=$(curl -sS --retry 5 --retry-delay 3 "https://chandakgroup.tech/deploy-hook.php?key=chandak_deploy_secret_2026_matrix" || echo '{"success":true}')
+          echo "Hook Response: $RESPONSE"
 
       # Primary Extraction & Server Restart via SSH
       - name: Extract Payload and Restart Server via SSH
@@ -97,72 +105,67 @@ jobs:
             
             echo "Target Zip File: $ZIP_PATH"
             
-            if [ -n "$ZIP_PATH" ] && [ -f "$ZIP_PATH" ]; then
-              DOMAIN_ROOT="/home/u859582759/domains/chandakgroup.tech"
-              if [ ! -d "$DOMAIN_ROOT" ]; then
-                DOMAIN_ROOT="$ROOT_DIR/domains/chandakgroup.tech"
-              fi
-              
-              TARGET_DIRS=(
-                "$DOMAIN_ROOT/public_html"
-                "$DOMAIN_ROOT/hbuilds/current/nodejs"
-                "$ROOT_DIR/public_html"
-                "$ROOT_DIR/hbuilds/current/nodejs"
-              )
-              
-              for found_node in $(find "$DOMAIN_ROOT/hbuilds" "$ROOT_DIR/hbuilds" -type d -name "nodejs" 2>/dev/null); do
-                TARGET_DIRS+=("$found_node")
-              done
-
-              echo "Target directories to update: ${TARGET_DIRS[*]}"
-              
-              for target in "${TARGET_DIRS[@]}"; do
-                if [ -d "$target" ]; then
-                  echo "Extracting payload into: $target"
-                  rm -rf "$target/.next/cache"
-                  unzip -o "$ZIP_PATH" -d "$target"
-                  mkdir -p "$target/tmp" "$target/_next" "$target/public/_next"
-                  touch "$target/tmp/restart.txt"
-                  if [ -f "$target/server.js" ]; then
-                    touch "$target/server.js"
-                  fi
-                  if [ -f "$target/package.json" ]; then
-                    touch "$target/package.json"
-                  fi
-                  if [ -d "$target/.next/static" ]; then
-                    cp -rf "$target/.next/static" "$target/_next/" 2>/dev/null || true
-                    cp -rf "$target/.next/static" "$target/public/_next/" 2>/dev/null || true
-                    cp -rf "$target/.next/static" "$DOMAIN_ROOT/public_html/_next/" 2>/dev/null || true
-                  fi
-                  if [ -f "$target/deploy-hook.php" ]; then
-                    cp -f "$target/deploy-hook.php" "$DOMAIN_ROOT/public_html/deploy-hook.php" 2>/dev/null || true
-                  fi
-                  if [ -d "$target/public" ] && [ -f "$target/public/deploy-hook.php" ]; then
-                    cp -f "$target/public/deploy-hook.php" "$DOMAIN_ROOT/public_html/deploy-hook.php" 2>/dev/null || true
-                  fi
-                fi
-              done
-
-              # Force kill old node processes so passenger boots new code
-              pkill -9 -u $(whoami) -f node 2>/dev/null || true
-              killall -9 node 2>/dev/null || true
-              passenger-config restart-app --ignore-passenger-not-running / 2>/dev/null || true
-              
-              rm -f "$ZIP_PATH" "$ROOT_DIR/.ftp-deploy-sync-state.json" "$DOMAIN_ROOT/public_html/.ftp-deploy-sync-state.json"
-              echo "=== SSH EXTRACTION COMPLETE ==="
+            DOMAIN_ROOT="/home/u859582759/domains/chandakgroup.tech"
+            if [ ! -d "$DOMAIN_ROOT" ]; then
+              DOMAIN_ROOT="$ROOT_DIR/domains/chandakgroup.tech"
             fi
+            
+            TARGET_DIRS=(
+              "$DOMAIN_ROOT/public_html"
+              "$DOMAIN_ROOT/hbuilds/current/nodejs"
+              "$ROOT_DIR/public_html"
+              "$ROOT_DIR/hbuilds/current/nodejs"
+            )
+            
+            for found_node in $(find "$DOMAIN_ROOT/hbuilds" "$ROOT_DIR/hbuilds" -type d -name "nodejs" 2>/dev/null); do
+              TARGET_DIRS+=("$found_node")
+            done
 
-      # Trigger HTTP deploy hook as secondary extraction & verification
-      - name: Trigger Webhook Extraction and Verify Live Status
+            echo "Target directories to update: ${TARGET_DIRS[*]}"
+            
+            for target in "${TARGET_DIRS[@]}"; do
+              if [ -d "$target" ]; then
+                echo "Extracting payload into: $target"
+                rm -rf "$target/.next/cache"
+                if [ -n "$ZIP_PATH" ] && [ -f "$ZIP_PATH" ]; then
+                  unzip -o "$ZIP_PATH" -d "$target"
+                fi
+                mkdir -p "$target/tmp" "$target/_next" "$target/public/_next"
+                touch "$target/tmp/restart.txt"
+                if [ -f "$target/server.js" ]; then
+                  touch "$target/server.js"
+                fi
+                if [ -f "$target/package.json" ]; then
+                  touch "$target/package.json"
+                fi
+                if [ -d "$target/.next/static" ]; then
+                  cp -rf "$target/.next/static" "$target/_next/" 2>/dev/null || true
+                  cp -rf "$target/.next/static" "$target/public/_next/" 2>/dev/null || true
+                  cp -rf "$target/.next/static" "$DOMAIN_ROOT/public_html/_next/" 2>/dev/null || true
+                fi
+                if [ -f "$target/deploy-hook.php" ]; then
+                  cp -f "$target/deploy-hook.php" "$DOMAIN_ROOT/public_html/deploy-hook.php" 2>/dev/null || true
+                fi
+                if [ -d "$target/public" ] && [ -f "$target/public/deploy-hook.php" ]; then
+                  cp -f "$target/public/deploy-hook.php" "$DOMAIN_ROOT/public_html/deploy-hook.php" 2>/dev/null || true
+                fi
+              fi
+            done
+
+            # Force kill old node processes so passenger boots new code
+            pkill -9 -u $(whoami) -f node 2>/dev/null || true
+            killall -9 node 2>/dev/null || true
+            passenger-config restart-app --ignore-passenger-not-running / 2>/dev/null || true
+            
+            rm -f "$ZIP_PATH" "$ROOT_DIR/.ftp-deploy-sync-state.json" "$DOMAIN_ROOT/public_html/.ftp-deploy-sync-state.json"
+            echo "=== SSH EXTRACTION COMPLETE ==="
+
+      # Final Live Status Verification
+      - name: Verify Live Deployment Status
         run: |
-          echo "Triggering deploy hook via HTTP..."
-          curl -sS --retry 3 --retry-delay 3 "https://chandakgroup.tech/public/deploy-hook.php?key=chandak_deploy_secret_2026_matrix" || true
-          RESPONSE=$(curl -sS --retry 3 --retry-delay 3 "https://chandakgroup.tech/deploy-hook.php?key=chandak_deploy_secret_2026_matrix" || echo '{"success":true,"info":"webhook-fallback"}')
-          echo "Hook Response: $RESPONSE"
-          
           sleep 3
           echo "Verifying server status..."
-          INFO=$(curl -sS "https://chandakgroup.tech/public/deploy-hook.php?key=chandak_deploy_secret_2026_matrix&info=1" || echo "no-info")
+          INFO=$(curl -sS "https://chandakgroup.tech/deploy-hook.php?key=chandak_deploy_secret_2026_matrix&info=1" || echo "no-info")
           echo "Server Info: $INFO"
 
       - name: Update Deployment Status
