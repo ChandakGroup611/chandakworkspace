@@ -68,6 +68,10 @@ jobs:
           echo "Triggering deploy hook via HTTP..."
           RESPONSE=$(curl -s "https://chandakgroup.tech/deploy-hook.php?key=chandak_deploy_secret_2026_matrix" || echo "failed")
           echo "Hook Response: $RESPONSE"
+          sleep 5
+          echo "Verifying live build endpoint..."
+          LIVE_INFO=$(curl -s "https://chandakgroup.tech/api/build-info" || echo "no-endpoint")
+          echo "Live Build Info: $LIVE_INFO"
 
       # Automatically extract the zip and restart the Node.js server via SSH as secondary fallback
       - name: Extract and Restart Server via SSH (Fallback)
