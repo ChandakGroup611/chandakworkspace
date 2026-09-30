@@ -71,65 +71,72 @@ if ($altVersionedDirs && is_array($altVersionedDirs)) {
 
 $allTargetDirs = array_values(array_unique(array_filter($targetDirs)));
 
-if (isset($_GET['info']) || isset($_GET['diag'])) {
+if (isset($_GET['info']) || isset($_GET['diag']) || isset($_GET['scan'])) {
     $processes = [];
     if (function_exists('exec')) {
         @exec('ps aux 2>&1', $processes);
     }
     
-    // Search for all BUILD_ID and server.js files on disk
-    $foundBuildIds = [];
-    $foundServerJs = [];
-    $foundZipFiles = [];
+    // Deep search for files containing pricing strings
+    $filesWithOldPricing = [];
+    $filesWithNewPricing = [];
+    $allBuildIds = [];
     
     $searchRoots = [
-        '/home/u859582759',
-        '/home/u859582759/domains',
         '/home/u859582759/domains/chandakgroup.tech',
         '/home/u859582759/public_html',
+        $domainRoot,
+        __DIR__,
         dirname(__DIR__),
-        dirname(dirname(__DIR__)),
-        dirname(dirname(dirname(__DIR__))),
-        dirname(dirname(dirname(dirname(__DIR__)))),
     ];
     
-    foreach (array_unique($searchRoots) as $sRoot) {
+    foreach (array_unique(array_filter($searchRoots)) as $sRoot) {
         if (!is_dir($sRoot)) continue;
-        $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($sRoot, RecursiveDirectoryIterator::SKIP_DOTS),
-            RecursiveIteratorIterator::SELF_FIRST
-        );
-        $iterator->setMaxDepth(4);
-        foreach ($iterator as $item) {
-            $path = $item->getPathname();
-            if (strpos($path, 'node_modules') !== false && strpos($path, 'BUILD_ID') === false) continue;
-            if ($item->getFilename() === 'BUILD_ID') {
-                $foundBuildIds[$path] = trim(@file_get_contents($path) ?: '');
+        try {
+            $iterator = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator($sRoot, RecursiveDirectoryIterator::SKIP_DOTS),
+                RecursiveIteratorIterator::SELF_FIRST
+            );
+            $iterator->setMaxDepth(5);
+            foreach ($iterator as $item) {
+                $path = $item->getPathname();
+                if (strpos($path, 'node_modules') !== false && strpos($path, '.next') === false) continue;
+                if ($item->isFile()) {
+                    if ($item->getFilename() === 'BUILD_ID') {
+                        $allBuildIds[$path] = trim(@file_get_contents($path) ?: '');
+                    }
+                    if (in_array($item->getExtension(), ['js', 'html', 'json', 'txt'])) {
+                        $content = @file_get_contents($path, false, null, 0, 500000);
+                        if ($content !== false) {
+                            if (strpos($content, '1. EX-FACTORY BASE') !== false || strpos($content, 'EX-FACTORY BASE & STATUTORY') !== false) {
+                                $filesWithOldPricing[$path] = [
+                                    'size' => $item->getSize(),
+                                    'mtime' => date('Y-m-d H:i:s', $item->getMTime())
+                                ];
+                            }
+                            if (strpos($content, 'Vehicle Pricing & On-Road Cost Breakdown') !== false) {
+                                $filesWithNewPricing[$path] = [
+                                    'size' => $item->getSize(),
+                                    'mtime' => date('Y-m-d H:i:s', $item->getMTime())
+                                ];
+                            }
+                        }
+                    }
+                }
             }
-            if ($item->getFilename() === 'server.js') {
-                $foundServerJs[$path] = date('Y-m-d H:i:s', $item->getMTime());
-            }
-            if ($item->getFilename() === 'deploy.zip') {
-                $foundZipFiles[$path] = [
-                    'size' => $item->getSize(),
-                    'mtime' => date('Y-m-d H:i:s', $item->getMTime())
-                ];
-            }
+        } catch (Exception $e) {
+            // Ignore scan errors
         }
     }
 
     echo json_encode([
         'current_dir' => __DIR__,
         'domain_root' => $domainRoot,
-        'found_build_ids' => $foundBuildIds,
-        'found_server_js' => $foundServerJs,
-        'found_zip_files' => $foundZipFiles,
+        'files_with_old_pricing' => $filesWithOldPricing,
+        'files_with_new_pricing' => $filesWithNewPricing,
+        'build_ids' => $allBuildIds,
         'passenger_app_root' => $passengerAppRoot,
-        'node_processes' => array_values(array_filter($processes, function($p) {
-            return stripos($p, 'node') !== false || stripos($p, 'passenger') !== false || stripos($p, 'next') !== false;
-        })),
-        'php_version' => phpversion(),
-        'disk_free' => disk_free_space(__DIR__)
+        'php_version' => phpversion()
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     exit;
 }
