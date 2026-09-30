@@ -41,14 +41,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Determine event type from body or query params
+    // Determine event type and sessionToken from body or query params
     let event = "heartbeat";
+    let sessionToken: string | null = null;
     try {
       // sendBeacon sends as text/plain or application/x-www-form-urlencoded
       const contentType = request.headers.get("content-type") || "";
       if (contentType.includes("application/json")) {
         const body = await request.json();
         event = body?.event || "heartbeat";
+        sessionToken = body?.sessionToken || null;
       }
     } catch {
       // No body (sendBeacon with no payload) — use query params
@@ -58,6 +60,23 @@ export async function POST(request: NextRequest) {
     if (event === "heartbeat") {
       const urlEvent = request.nextUrl.searchParams.get("event");
       if (urlEvent) event = urlEvent;
+    }
+
+    // Verify session token integrity to enforce single active session per user
+    if (sessionToken && event !== "tab_close") {
+      const { data: activeRec } = await supabaseAdmin
+        .from("active_sessions")
+        .select("session_token")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (activeRec && activeRec.session_token && activeRec.session_token !== sessionToken) {
+        console.warn(`[Heartbeat] Concurrent login detected for user ${user.id}. Stale token: ${sessionToken}, Active: ${activeRec.session_token}`);
+        return NextResponse.json(
+          { ok: false, error: "concurrent_session" },
+          { status: 401 }
+        );
+      }
     }
 
     const now = new Date().toISOString();

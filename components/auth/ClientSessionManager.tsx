@@ -50,20 +50,38 @@ export default function ClientSessionManager() {
       }
 
       // Regular heartbeat via fetch
+      const sessionToken = typeof window !== "undefined" ? localStorage.getItem("app_session_token") : null;
       const clientSent = Date.now();
       const res = await fetch("/api/heartbeat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ event }),
+        body: JSON.stringify({ event, sessionToken }),
       });
 
       if (res.status === 401) {
-        // Session has expired server-side — redirect to login
-        console.warn("[SessionManager] Server returned 401. Session expired.");
+        let isConcurrent = false;
+        try {
+          const resData = await res.json();
+          if (resData.error === "concurrent_session") {
+            isConcurrent = true;
+          }
+        } catch {}
+
+        console.warn("[SessionManager] Server returned 401. Session expired or superseded.");
         if (isMountedRef.current) {
           const isAuthPage = window.location.pathname.startsWith('/login') || window.location.pathname.startsWith('/register');
           if (!isAuthPage) {
-            router.push("/login?reason=timeout");
+            const supabase = createClient();
+            await supabase.auth.signOut().catch(() => {});
+            if (isConcurrent) {
+              toast.warning("Your account was logged into on another device or browser.", {
+                position: "top-center",
+                autoClose: 4000
+              });
+              router.push("/login?reason=concurrent_login");
+            } else {
+              router.push("/login?reason=timeout");
+            }
           }
         }
         return;
@@ -248,19 +266,33 @@ export default function ClientSessionManager() {
             // Register current session with user_master, active_sessions, and auth_session_logs
             await registerUserSession(sessionToken, navigator.userAgent);
 
-            // Subscribe to IAM session kill events
+            // Subscribe to active_sessions changes (Admin kill OR Concurrent Login on another device/browser)
             const channelName = `active_sessions_${user.id}_${Math.random().toString(36).substring(7)}`;
             const channel = supabase
               .channel(channelName)
               .on(
                 "postgres_changes",
                 { event: "*", schema: "public", table: "active_sessions", filter: `user_id=eq.${user.id}` },
-                (payload: any) => {
+                async (payload: any) => {
+                  const currentToken = typeof window !== "undefined" ? localStorage.getItem("app_session_token") : null;
+                  
                   if (payload.eventType === "DELETE") {
                     // Admin killed session from IAM
-                    supabase.auth.signOut().catch(() => {}).finally(() => {
-                      window.location.href = "/login?reason=terminated";
-                    });
+                    await supabase.auth.signOut().catch(() => {});
+                    window.location.href = "/login?reason=terminated";
+                  } else if (payload.eventType === "UPDATE" || payload.eventType === "INSERT") {
+                    const newSessionToken = payload.new?.session_token;
+                    if (newSessionToken && currentToken && newSessionToken !== currentToken) {
+                      console.warn("[SessionManager] Active session superseded by another login. Terminating.");
+                      toast.error("You have been logged out because your account was logged in on another device or browser.", {
+                        position: "top-center",
+                        autoClose: 4000
+                      });
+                      await supabase.auth.signOut().catch(() => {});
+                      setTimeout(() => {
+                        window.location.href = "/login?reason=concurrent_login";
+                      }, 500);
+                    }
                   }
                 }
               )
