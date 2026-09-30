@@ -52,16 +52,27 @@ jobs:
           mkdir -p upload-payload
           cp deploy.zip upload-payload/
 
-      # Upload the compiled standalone zip file to Hostinger via FTP
+      # Upload the compiled standalone zip file and deploy-hook to Hostinger via FTP
       - name: Sync files via FTP
         run: |
+          echo "Uploading deploy-hook.php to Hostinger via FTP..."
+          curl --retry 5 --retry-delay 5 --connect-timeout 60 --max-time 120 -T ./public/deploy-hook.php --user "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/deploy-hook.php" || true
+
           echo "Uploading deploy.zip to Hostinger via FTP..."
           curl --retry 5 --retry-delay 10 --connect-timeout 60 --max-time 300 -T ./upload-payload/deploy.zip --user "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/deploy.zip" || \
           curl --retry 5 --retry-delay 10 --connect-timeout 60 --max-time 300 --ftp-ssl -T ./upload-payload/deploy.zip --user "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/deploy.zip"
 
-      # Automatically extract the zip and restart the Node.js server via SSH
-      - name: Extract and Restart Server via SSH
+      # Trigger HTTP deploy hook to extract deploy.zip and restart Node.js server
+      - name: Trigger Webhook Extraction and Restart
+        run: |
+          echo "Triggering deploy hook via HTTP..."
+          RESPONSE=$(curl -s "https://chandakgroup.tech/deploy-hook.php?key=chandak_deploy_secret_2026_matrix" || echo "failed")
+          echo "Hook Response: $RESPONSE"
+
+      # Automatically extract the zip and restart the Node.js server via SSH as secondary fallback
+      - name: Extract and Restart Server via SSH (Fallback)
         uses: appleboy/ssh-action@v1.0.3
+        continue-on-error: true
         with:
           host: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.SSH_USERNAME || secrets.FTP_USERNAME }}
@@ -81,19 +92,6 @@ jobs:
               mkdir -p tmp
               touch tmp/restart.txt
               echo "Successfully unzipped and touched tmp/restart.txt to restart Node server"
-            else
-              echo "Looking for deploy.zip in parent/child directories..."
-              ZIP_PATH=$(find ~ -name "deploy.zip" 2>/dev/null | head -n 1)
-              if [ -n "$ZIP_PATH" ]; then
-                echo "Found deploy.zip at $ZIP_PATH, extracting into current directory..."
-                unzip -o "$ZIP_PATH"
-                rm -f "$ZIP_PATH"
-                mkdir -p tmp
-                touch tmp/restart.txt
-                echo "Successfully extracted and restarted Node server"
-              else
-                echo "WARNING: deploy.zip was not found via SSH."
-              fi
             fi
 
       - name: Update Deployment Status
