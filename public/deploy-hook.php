@@ -22,11 +22,16 @@ if (isset($_GET['info'])) {
     if (function_exists('exec')) {
         @exec('ps aux | grep node 2>&1', $processes);
     }
+    $buildId = file_exists(__DIR__ . '/.next/BUILD_ID') ? file_get_contents(__DIR__ . '/.next/BUILD_ID') : null;
+    $htaccess = file_exists(__DIR__ . '/.htaccess') ? file_get_contents(__DIR__ . '/.htaccess') : null;
+    $serverJsMtime = file_exists(__DIR__ . '/server.js') ? date('Y-m-d H:i:s', filemtime(__DIR__ . '/server.js')) : null;
+    
     echo json_encode([
         'current_dir' => __DIR__,
         'parent_dir' => dirname(__DIR__),
-        'files_in_current' => scandir(__DIR__),
-        'files_in_workspace' => is_dir(__DIR__ . '/workspace') ? scandir(__DIR__ . '/workspace') : null,
+        'build_id' => trim((string)$buildId),
+        'server_js_mtime' => $serverJsMtime,
+        'htaccess' => $htaccess,
         'php_version' => phpversion(),
         'disk_free' => disk_free_space(__DIR__),
         'node_processes' => $processes,
