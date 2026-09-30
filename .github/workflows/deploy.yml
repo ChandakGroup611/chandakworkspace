@@ -83,12 +83,15 @@ jobs:
             echo "Current Directory: $ROOT_DIR"
             
             ZIP_PATH=""
-            for candidate in "$ROOT_DIR/deploy.zip" "$ROOT_DIR/domains/chandakgroup.tech/public_html/deploy.zip" "$ROOT_DIR/public_html/deploy.zip" $(find "$ROOT_DIR" -maxdepth 4 -name "deploy.zip" 2>/dev/null); do
-              if [ -f "$candidate" ]; then
-                ZIP_PATH="$candidate"
+            for cand in "$ROOT_DIR/deploy.zip" "$ROOT_DIR/domains/chandakgroup.tech/public_html/deploy.zip" "$ROOT_DIR/public_html/deploy.zip" "/home/u859582759/deploy.zip" "/home/u859582759/public_html/deploy.zip" "/home/u859582759/domains/chandakgroup.tech/deploy.zip"; do
+              if [ -f "$cand" ]; then
+                ZIP_PATH="$cand"
                 break
               fi
             done
+            if [ -z "$ZIP_PATH" ]; then
+              ZIP_PATH=$(find /home/u859582759 "$ROOT_DIR" -maxdepth 4 -name "deploy.zip" 2>/dev/null | head -n 1)
+            fi
             
             echo "Target Zip File: $ZIP_PATH"
             
@@ -115,7 +118,7 @@ jobs:
                 echo "Extracting payload into: $target"
                 rm -rf "$target/.next/cache"
                 if [ -n "$ZIP_PATH" ] && [ -f "$ZIP_PATH" ]; then
-                  unzip -o -q "$ZIP_PATH" -d "$target"
+                  unzip -o -q "$ZIP_PATH" -d "$target" 2>/dev/null || php -r '$z = new ZipArchive(); if ($z->open("'"$ZIP_PATH"'") === TRUE) { $z->extractTo("'"$target"'"); $z->close(); echo "Extracted via PHP ZipArchive to '"$target"'\n"; } else { echo "Failed to extract via PHP\n"; }'
                 fi
                 mkdir -p "$target/tmp" "$target/_next" "$target/public/_next"
                 touch "$target/tmp/restart.txt"
@@ -148,7 +151,7 @@ jobs:
             killall -9 node 2>/dev/null || true
             passenger-config restart-app --ignore-passenger-not-running / 2>/dev/null || true
             
-            rm -f "$ZIP_PATH" "$ROOT_DIR/.ftp-deploy-sync-state.json" "$DOMAIN_ROOT/public_html/.ftp-deploy-sync-state.json"
+            rm -f "$ROOT_DIR/.ftp-deploy-sync-state.json" "$DOMAIN_ROOT/public_html/.ftp-deploy-sync-state.json"
             echo "=== SSH EXTRACTION COMPLETE ==="
 
       # Secondary Extraction via Webhook
