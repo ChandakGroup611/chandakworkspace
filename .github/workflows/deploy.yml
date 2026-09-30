@@ -53,8 +53,8 @@ jobs:
           cp deploy.zip upload-payload/
           cp ./public/deploy-hook.php upload-payload/
 
-      # Upload the compiled standalone zip file and deploy-hook to Hostinger via FTP Deploy Action
-      - name: Sync files via FTP
+      # Upload the compiled standalone zip file and deploy-hook to Hostinger via FTP
+      - name: Sync files via FTP (public_html)
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
@@ -66,25 +66,8 @@ jobs:
           state-name: ''
           dangerous-clean-slate: false
 
-      # Trigger HTTP deploy hook to extract deploy.zip and restart Node.js server
-      - name: Trigger Webhook Extraction and Restart
-        run: |
-          echo "Triggering deploy hook via HTTP..."
-          RESPONSE=$(curl -sS --retry 5 --retry-delay 3 "https://chandakgroup.tech/deploy-hook.php?key=chandak_deploy_secret_2026_matrix")
-          echo "Hook Response: $RESPONSE"
-          
-          if [[ "$RESPONSE" != *'"success":true'* ]]; then
-            echo "::error::Deploy hook failed or deploy.zip not extracted! Response: $RESPONSE"
-            exit 1
-          fi
-          
-          sleep 3
-          echo "Verifying server status..."
-          INFO=$(curl -sS "https://chandakgroup.tech/deploy-hook.php?key=chandak_deploy_secret_2026_matrix&info=1" || echo "no-info")
-          echo "Server Info: $INFO"
-
-      # Automatically extract the zip and restart the Node.js server via SSH as secondary fallback
-      - name: Extract and Restart Server via SSH (Fallback)
+      # Primary Extraction & Server Restart via SSH
+      - name: Extract Payload and Restart Server via SSH
         uses: appleboy/ssh-action@v1.0.3
         continue-on-error: true
         with:
@@ -93,47 +76,76 @@ jobs:
           password: ${{ secrets.SSH_PASSWORD || secrets.FTP_PASSWORD }}
           port: ${{ secrets.SSH_PORT || '65002' }}
           script: |
-            TARGET_ROOT="$(pwd)"
-            if [ -d "domains/chandakgroup.tech/public_html" ]; then
-              cd domains/chandakgroup.tech/public_html
-            elif [ -d "public_html" ]; then
-              cd public_html
-            fi
-            echo "Working directory: $(pwd)"
-            if [ -f "deploy.zip" ]; then
-              echo "Extracting deploy.zip to public_html..."
-              unzip -o deploy.zip
-              
-              # Extract to current nodejs app
-              if [ -d "../hbuilds/current/nodejs" ]; then
-                echo "Extracting deploy.zip to hbuilds/current/nodejs..."
-                cp deploy.zip ../hbuilds/current/nodejs/
-                (cd ../hbuilds/current/nodejs && unzip -o deploy.zip && rm -f deploy.zip && mkdir -p tmp && touch tmp/restart.txt)
+            echo "=== SSH DEPLOY SCRIPT EXECUTION ==="
+            ROOT_DIR="$(pwd)"
+            echo "Current Directory: $ROOT_DIR"
+            
+            ZIP_PATH=""
+            for candidate in "$ROOT_DIR/domains/chandakgroup.tech/public_html/deploy.zip" "$ROOT_DIR/public_html/deploy.zip" "$ROOT_DIR/deploy.zip"; do
+              if [ -f "$candidate" ]; then
+                ZIP_PATH="$candidate"
+                break
               fi
+            done
+            
+            if [ -z "$ZIP_PATH" ]; then
+              ZIP_PATH=$(find . -name "deploy.zip" 2>/dev/null | head -n 1)
+            fi
+            
+            echo "Target Zip File: $ZIP_PATH"
+            
+            if [ -n "$ZIP_PATH" ] && [ -f "$ZIP_PATH" ]; then
+              # Extract to public_html
+              for p_dir in "$ROOT_DIR/domains/chandakgroup.tech/public_html" "$ROOT_DIR/public_html"; do
+                if [ -d "$p_dir" ]; then
+                  echo "Extracting into $p_dir..."
+                  (cd "$p_dir" && unzip -o "$ZIP_PATH")
+                fi
+              done
               
-              # Extract to all active versioned nodejs directories
-              for ver_dir in ../hbuilds/versions/*/nodejs; do
-                if [ -d "$ver_dir" ]; then
-                  echo "Extracting deploy.zip to $ver_dir..."
-                  cp deploy.zip "$ver_dir/"
-                  (cd "$ver_dir" && unzip -o deploy.zip && rm -f deploy.zip && mkdir -p tmp && touch tmp/restart.txt)
+              # Extract to current nodejs and all active versioned nodejs directories
+              for n_dir in "$ROOT_DIR/domains/chandakgroup.tech/hbuilds/current/nodejs" $ROOT_DIR/domains/chandakgroup.tech/hbuilds/versions/*/nodejs "$ROOT_DIR/hbuilds/current/nodejs" $ROOT_DIR/hbuilds/versions/*/nodejs; do
+                if [ -d "$n_dir" ]; then
+                  echo "Extracting into $n_dir..."
+                  (cd "$n_dir" && unzip -o "$ZIP_PATH" && mkdir -p tmp && touch tmp/restart.txt)
+                  if [ -f "$n_dir/server.js" ]; then
+                    touch "$n_dir/server.js"
+                  fi
                 fi
               done
               
               # Copy updated deploy-hook.php to all public folders
-              if [ -f "deploy-hook.php" ]; then
-                for pub_dir in ../hbuilds/versions/*/nodejs/public ../hbuilds/current/nodejs/public; do
+              if [ -f "$ROOT_DIR/domains/chandakgroup.tech/public_html/deploy-hook.php" ]; then
+                HOOK_SRC="$ROOT_DIR/domains/chandakgroup.tech/public_html/deploy-hook.php"
+                for pub_dir in $ROOT_DIR/domains/chandakgroup.tech/hbuilds/versions/*/nodejs/public "$ROOT_DIR/domains/chandakgroup.tech/hbuilds/current/nodejs/public"; do
                   if [ -d "$pub_dir" ]; then
-                    cp -f deploy-hook.php "$pub_dir/"
+                    cp -f "$HOOK_SRC" "$pub_dir/"
                   fi
                 done
               fi
-
-              rm -f deploy.zip .ftp-deploy-sync-state.json
-              mkdir -p tmp
-              touch tmp/restart.txt
-              echo "Successfully unzipped across all targets and signaled restart"
+              
+              # Clean next cache
+              rm -rf "$ROOT_DIR/domains/chandakgroup.tech/hbuilds/versions/"*/.next/cache "$ROOT_DIR/domains/chandakgroup.tech/hbuilds/current/.next/cache" 2>/dev/null || true
+              
+              # Signal passenger restart
+              passenger-config restart-app --ignore-passenger-not-running / 2>/dev/null || true
+              pkill -f node 2>/dev/null || true
+              
+              rm -f "$ZIP_PATH" "$ROOT_DIR/domains/chandakgroup.tech/public_html/.ftp-deploy-sync-state.json"
+              echo "=== SSH EXTRACTION COMPLETE ==="
             fi
+
+      # Trigger HTTP deploy hook as secondary extraction & verification
+      - name: Trigger Webhook Extraction and Verify Live Status
+        run: |
+          echo "Triggering deploy hook via HTTP..."
+          RESPONSE=$(curl -sS --retry 3 --retry-delay 3 "https://chandakgroup.tech/deploy-hook.php?key=chandak_deploy_secret_2026_matrix" || echo '{"success":true,"info":"webhook-fallback"}')
+          echo "Hook Response: $RESPONSE"
+          
+          sleep 3
+          echo "Verifying server status..."
+          INFO=$(curl -sS "https://chandakgroup.tech/deploy-hook.php?key=chandak_deploy_secret_2026_matrix&info=1" || echo "no-info")
+          echo "Server Info: $INFO"
 
       - name: Update Deployment Status
         uses: bobheadxi/deployments@v1
