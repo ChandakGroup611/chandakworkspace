@@ -47,21 +47,16 @@ jobs:
         run: |
           cp -r public .next/standalone/public
           cp -r .next/static .next/standalone/.next/static
-          mkdir -p .next/standalone/_next
-          cp -r .next/static .next/standalone/_next/static
-          mkdir -p .next/standalone/public/_next
-          cp -r .next/static .next/standalone/public/_next/static
           cp public/deploy-hook.php .next/standalone/public/deploy-hook.php
-          cp public/deploy-hook.php .next/standalone/deploy-hook.php
           cd .next/standalone
-          zip -r ../../deploy.zip .
+          zip -r -q ../../deploy.zip .
           cd ../..
           mkdir -p upload-payload
           cp deploy.zip upload-payload/
           cp public/deploy-hook.php upload-payload/
 
       # Upload the compiled standalone zip file and deploy-hook to Hostinger via FTP
-      - name: Sync files via FTP (Root)
+      - name: Sync files via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
@@ -72,27 +67,6 @@ jobs:
           protocol: ftp
           state-name: ''
           dangerous-clean-slate: false
-
-      - name: Sync files via FTP (Domain public_html)
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        continue-on-error: true
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./upload-payload/
-          server-dir: ./domains/chandakgroup.tech/public_html/
-          protocol: ftp
-          state-name: ''
-          dangerous-clean-slate: false
-
-      # Trigger HTTP deploy hook to extract deploy.zip across all application targets
-      - name: Extract Payload via Webhook
-        run: |
-          echo "Triggering deploy hook via HTTP..."
-          curl -sS --retry 3 --retry-delay 3 "https://chandakgroup.tech/public/deploy-hook.php?key=chandak_deploy_secret_2026_matrix" || true
-          RESPONSE=$(curl -sS --retry 5 --retry-delay 3 "https://chandakgroup.tech/deploy-hook.php?key=chandak_deploy_secret_2026_matrix" || echo '{"success":true}')
-          echo "Hook Response: $RESPONSE"
 
       # Primary Extraction & Server Restart via SSH
       - name: Extract Payload and Restart Server via SSH
@@ -141,7 +115,7 @@ jobs:
                 echo "Extracting payload into: $target"
                 rm -rf "$target/.next/cache"
                 if [ -n "$ZIP_PATH" ] && [ -f "$ZIP_PATH" ]; then
-                  unzip -o "$ZIP_PATH" -d "$target"
+                  unzip -o -q "$ZIP_PATH" -d "$target"
                 fi
                 mkdir -p "$target/tmp" "$target/_next" "$target/public/_next"
                 touch "$target/tmp/restart.txt"
@@ -155,12 +129,16 @@ jobs:
                   cp -rf "$target/.next/static" "$target/_next/" 2>/dev/null || true
                   cp -rf "$target/.next/static" "$target/public/_next/" 2>/dev/null || true
                   cp -rf "$target/.next/static" "$DOMAIN_ROOT/public_html/_next/" 2>/dev/null || true
+                  for vpub in $(find "$DOMAIN_ROOT/hbuilds" -type d -name "public" 2>/dev/null); do
+                    mkdir -p "$vpub/_next"
+                    cp -rf "$target/.next/static" "$vpub/_next/" 2>/dev/null || true
+                  done
                 fi
-                if [ -f "$target/deploy-hook.php" ]; then
-                  cp -f "$target/deploy-hook.php" "$DOMAIN_ROOT/public_html/deploy-hook.php" 2>/dev/null || true
-                fi
-                if [ -d "$target/public" ] && [ -f "$target/public/deploy-hook.php" ]; then
+                if [ -f "$target/public/deploy-hook.php" ]; then
                   cp -f "$target/public/deploy-hook.php" "$DOMAIN_ROOT/public_html/deploy-hook.php" 2>/dev/null || true
+                  for vpub in $(find "$DOMAIN_ROOT/hbuilds" -type d -name "public" 2>/dev/null); do
+                    cp -f "$target/public/deploy-hook.php" "$vpub/deploy-hook.php" 2>/dev/null || true
+                  done
                 fi
               fi
             done
@@ -172,6 +150,14 @@ jobs:
             
             rm -f "$ZIP_PATH" "$ROOT_DIR/.ftp-deploy-sync-state.json" "$DOMAIN_ROOT/public_html/.ftp-deploy-sync-state.json"
             echo "=== SSH EXTRACTION COMPLETE ==="
+
+      # Secondary Extraction via Webhook
+      - name: Extract Payload via Webhook
+        run: |
+          echo "Triggering deploy hook via HTTP..."
+          curl -sS --retry 3 --retry-delay 3 "https://chandakgroup.tech/public/deploy-hook.php?key=chandak_deploy_secret_2026_matrix" || true
+          RESPONSE=$(curl -sS --retry 5 --retry-delay 3 "https://chandakgroup.tech/deploy-hook.php?key=chandak_deploy_secret_2026_matrix" || echo '{"success":true}')
+          echo "Hook Response: $RESPONSE"
 
       # Final Live Status Verification
       - name: Verify Live Deployment Status
