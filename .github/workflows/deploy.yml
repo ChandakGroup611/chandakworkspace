@@ -53,27 +53,32 @@ jobs:
           cp deploy.zip upload-payload/
           cp ./public/deploy-hook.php upload-payload/
 
-      # Upload the compiled standalone zip file and deploy-hook to Hostinger via FTP Deploy Action
+      # Upload the compiled standalone zip file and deploy-hook directly via FTP
       - name: Sync files via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./upload-payload/
-          server-dir: domains/chandakgroup.tech/public_html/
-          protocol: ftp
-          dangerous-clean-slate: false
+        run: |
+          echo "Uploading deploy-hook.php via FTP..."
+          curl -sS --ftp-create-dirs -T ./upload-payload/deploy-hook.php -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/deploy-hook.php"
+          echo "Uploading deploy.zip to public_html via FTP..."
+          curl -sS --ftp-create-dirs -T ./upload-payload/deploy.zip -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/deploy.zip"
+          echo "Uploading deploy.zip to domain root via FTP..."
+          curl -sS --ftp-create-dirs -T ./upload-payload/deploy.zip -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/deploy.zip"
+          echo "FTP upload completed successfully."
 
       # Trigger HTTP deploy hook to extract deploy.zip and restart Node.js server
       - name: Trigger Webhook Extraction and Restart
         run: |
           echo "Triggering deploy hook via HTTP..."
-          RESPONSE=$(curl -s --retry 3 --retry-delay 3 "https://chandakgroup.tech/deploy-hook.php?key=chandak_deploy_secret_2026_matrix" || echo "failed")
+          RESPONSE=$(curl -sS --retry 5 --retry-delay 3 "https://chandakgroup.tech/deploy-hook.php?key=chandak_deploy_secret_2026_matrix")
           echo "Hook Response: $RESPONSE"
-          sleep 5
+          
+          if [[ "$RESPONSE" != *'"success":true'* ]]; then
+            echo "::error::Deploy hook failed or deploy.zip not extracted! Response: $RESPONSE"
+            exit 1
+          fi
+          
+          sleep 3
           echo "Verifying server status..."
-          INFO=$(curl -s "https://chandakgroup.tech/deploy-hook.php?key=chandak_deploy_secret_2026_matrix&info=1" || echo "no-info")
+          INFO=$(curl -sS "https://chandakgroup.tech/deploy-hook.php?key=chandak_deploy_secret_2026_matrix&info=1" || echo "no-info")
           echo "Server Info: $INFO"
 
       # Automatically extract the zip and restart the Node.js server via SSH as secondary fallback
