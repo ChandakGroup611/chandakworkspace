@@ -11204,7 +11204,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                       </AppButton>
                                     </>
                                   )}
-                                  {item.docType === "PUC Certificate" && (
+                                  {(item.docType === "Pollution (PUC)" || item.docType === "PUC Certificate" || item.docType.includes("PUC")) && (
                                     <>
                                       <AppButton
                                         variant="primary"
@@ -11232,6 +11232,21 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                         <span>History</span>
                                       </AppButton>
                                     </>
+                                  )}
+                                  {(item.docType === "Fitness Certificate" || item.docType.includes("Fitness")) && (
+                                    <AppButton
+                                      variant="primary"
+                                      size="sm"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setEditVehicleSectionTab("DOCS");
+                                        openEditVehicleModal(item.vehicle!);
+                                      }}
+                                      className="h-7 text-xs px-2.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold gap-1 shadow-2xs"
+                                    >
+                                      <ShieldCheck className="h-3 w-3" />
+                                      <span>Renew Fitness</span>
+                                    </AppButton>
                                   )}
                                   <AppButton
                                     variant="outline"
@@ -11261,16 +11276,16 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                 </>
                               ) : item.driver ? (
                                 <AppButton
-                                  variant="outline"
+                                  variant="primary"
                                   size="sm"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     openEditDriverModal(item.driver!);
                                   }}
-                                  className="h-7 text-xs px-2.5"
+                                  className="h-7 text-xs px-2.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold gap-1 shadow-2xs"
                                 >
                                   <Edit2 className="h-3 w-3 mr-1" />
-                                  Renew Driver
+                                  <span>Renew License</span>
                                 </AppButton>
                               ) : null}
                             </div>
