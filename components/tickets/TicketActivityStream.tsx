@@ -34,12 +34,15 @@ export function TicketActivityStream({ ticket }: TicketActivityStreamProps) {
         return;
       }
       
-      const actorIds = [...new Set(rawData.map((n: any) => n.actor).filter(Boolean))];
-      if (actorIds.length > 0) {
+      const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const rawActorIds = [...new Set(rawData.map((n: any) => n.actor).filter(Boolean))];
+      const validActorUuids = rawActorIds.filter((id) => typeof id === "string" && UUID_REGEX.test(id));
+
+      if (validActorUuids.length > 0) {
         const { data: userData } = await supabase
           .from("user_master")
           .select("id, full_name")
-          .in("id", actorIds);
+          .in("id", validActorUuids);
           
         if (userData) {
           const userMap = Object.fromEntries(userData.map((u: any) => [u.id, u.full_name]));

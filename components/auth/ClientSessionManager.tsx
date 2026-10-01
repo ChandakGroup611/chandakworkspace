@@ -5,8 +5,6 @@ import { useEffect, useRef, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 
-import { registerUserSession } from "@/lib/actions/iam";
-
 // =========================================================================
 // Production-Grade Session Manager
 //
@@ -242,21 +240,39 @@ export default function ClientSessionManager() {
       window.addEventListener(evt, handleActivity, { passive: true });
     });
 
-    // ── 4. Tab close handler & Deployment Sync Error Recovery ──────────
-    const handleGlobalError = (event: ErrorEvent | PromiseRejectionEvent) => {
-      const error = 'reason' in event ? event.reason : event.error;
-      const msg = typeof error === 'string' ? error : error?.message || '';
+    // ── 4. Tab close handler & Bulletproof Deployment Sync Auto-Recovery ──────────
+    const handleActionMismatch = (msg: string) => {
       if (
         msg.includes('was not found on the server') ||
         msg.includes('failed-to-find-server-action') ||
         msg.includes('Failed to find Server Action') ||
+        msg.includes('UnrecognizedActionError') ||
         (msg.includes('Server Action') && msg.includes('not found'))
       ) {
-        console.warn('[Deployment Sync] Server Action hash mismatch detected. Auto-refreshing page for new deployment build.');
+        console.warn('[Deployment Sync] Server Action hash mismatch detected. Auto-refreshing window for new deployment build.');
         if (typeof window !== 'undefined') {
-          window.location.reload();
+          const lastReload = Number(sessionStorage.getItem("last_action_reload_ts") || 0);
+          if (Date.now() - lastReload > 5000) {
+            sessionStorage.setItem("last_action_reload_ts", String(Date.now()));
+            sessionStorage.removeItem("app_active_build_id");
+            window.location.reload();
+          }
         }
       }
+    };
+
+    const handleGlobalError = (event: ErrorEvent | PromiseRejectionEvent) => {
+      const error = 'reason' in event ? event.reason : event.error;
+      const msg = typeof error === 'string' ? error : error?.message || '';
+      handleActionMismatch(msg);
+    };
+
+    // Intercept console.error to catch Server Action errors caught in try/catch blocks
+    const originalConsoleError = console.error;
+    console.error = (...args: any[]) => {
+      const combined = args.map(a => (typeof a === 'string' ? a : (a?.message || String(a)))).join(' ');
+      handleActionMismatch(combined);
+      originalConsoleError.apply(console, args);
     };
 
     window.addEventListener('error', handleGlobalError);
@@ -303,8 +319,15 @@ export default function ClientSessionManager() {
           const { data: { user } } = await supabase.auth.getUser();
           
           if (user) {
-            // Register current session with user_master, active_sessions, and auth_session_logs
-            await registerUserSession(sessionToken, navigator.userAgent);
+            // Register current session with user_master, active_sessions, and auth_session_logs via REST
+            await fetch("/api/session/register", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                sessionToken,
+                userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "Unknown Browser"
+              })
+            }).catch(() => {});
 
             // Subscribe to active_sessions changes (Admin kill OR Concurrent Login on another device/browser)
             const channelName = `active_sessions_${user.id}_${Math.random().toString(36).substring(7)}`;

@@ -34,14 +34,16 @@ export function AMCHistoryModal({
 
     if (!error && logData) {
       // Extract unique actor IDs
-      const actorIds = Array.from(new Set(logData.map(l => l.actor_id).filter(Boolean)));
+      const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const rawActorIds = Array.from(new Set(logData.map(l => l.actor_id).filter(Boolean)));
+      const validActorUuids = rawActorIds.filter((id) => typeof id === "string" && UUID_REGEX.test(id));
       let userMap: Record<string, string> = {};
       
-      if (actorIds.length > 0) {
+      if (validActorUuids.length > 0) {
         const { data: userData } = await supabase
           .from("user_master")
           .select("id, full_name")
-          .in("id", actorIds);
+          .in("id", validActorUuids);
           
         if (userData) {
           userMap = userData.reduce((acc: any, user: any) => {

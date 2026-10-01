@@ -124,13 +124,36 @@ interface UnifiedAuthData {
     queryFn: async (): Promise<UnifiedAuthData> => {
       console.count('[PROFILER] loadAuthContext_executed');
       
-      // PHASE 5: REAL-TIME PERMISSIONS RESOLUTION
-      // We directly query the roles and role_permissions tables via Server Action to bypass client cookie/hydration staleness.
-      const { profileData, secondaryRoles } = await fetchServerPermissions();
+      let profileData: any = null;
+      let secondaryRoles: any[] = [];
+
+      try {
+        // PHASE 5: REAL-TIME PERMISSIONS RESOLUTION via version-independent REST route
+        const res = await fetch("/api/auth/permissions", { cache: "no-store" });
+        if (res.ok) {
+          const json = await res.json();
+          profileData = json.profileData;
+          secondaryRoles = json.secondaryRoles || [];
+        } else {
+          // Fallback to Server Action if REST returns non-200
+          const serverRes = await fetchServerPermissions();
+          profileData = serverRes.profileData;
+          secondaryRoles = serverRes.secondaryRoles || [];
+        }
+      } catch (e: any) {
+        console.warn("[PermissionsProvider] Fetch permissions error, using fallback:", e);
+        try {
+          const serverRes = await fetchServerPermissions();
+          profileData = serverRes.profileData;
+          secondaryRoles = serverRes.secondaryRoles || [];
+        } catch {
+          // Both failed, proceed with client session fallback
+        }
+      }
 
       let clientUser = null;
       if (!profileData) {
-        // Fallback: check client session if server action did not find profile (e.g. edge cookie latency)
+        // Fallback: check client session if server endpoint did not find profile (e.g. edge cookie latency)
         const { data: sessionData } = await supabase.auth.getSession();
         clientUser = sessionData.session?.user || null;
       }
@@ -207,6 +230,8 @@ interface UnifiedAuthData {
     },
     staleTime: 300000, // 5 minutes fresh cache
     gcTime: 600000,    // 10 minutes garbage collection
+    retry: 1,
+    refetchOnWindowFocus: false,
   });
 
   const loading = isLoading;
