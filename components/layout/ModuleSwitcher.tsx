@@ -13,7 +13,7 @@ import {
   ExternalLink,
   ArrowRightLeft
 } from "lucide-react";
-import { getUserAllowedModules, setActiveModule, ModuleInfo, UserModulesResult } from "@/lib/actions/module-switcher";
+import type { ModuleInfo, UserModulesResult } from "@/lib/actions/module-switcher";
 import { AppButton } from "@/components/ui/AppButton";
 
 interface ModuleSwitcherProps {
@@ -38,13 +38,16 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
 
   useEffect(() => {
     let isMounted = true;
-    getUserAllowedModules().then((res) => {
-      if (isMounted) {
-        setData(res);
-      }
-    }).catch(err => {
-      console.error("[ModuleSwitcher] error fetching modules:", err);
-    });
+    fetch("/api/modules")
+      .then((res) => res.json())
+      .then((res: UserModulesResult) => {
+        if (isMounted) {
+          setData(res);
+        }
+      })
+      .catch((err) => {
+        console.error("[ModuleSwitcher] error fetching modules:", err);
+      });
 
     return () => {
       isMounted = false;
@@ -120,10 +123,17 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
 
     try {
       setLoading(true);
-      const res = await setActiveModule(code, false);
-      if (res.success) {
+      const res = await fetch("/api/modules", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ moduleCode: code, setAsDefault: false })
+      });
+      const data = await res.json();
+      if (data.success) {
         onCloseMobile?.();
-        window.location.href = res.redirectUrl;
+        window.location.href = data.redirectUrl || "/";
+      } else {
+        setLoading(false);
       }
     } catch (e) {
       console.error("[ModuleSwitcher] switch error:", e);

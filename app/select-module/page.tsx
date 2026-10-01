@@ -13,61 +13,88 @@ import {
   ChevronDown, 
   Loader2
 } from "lucide-react";
-import { getUserAllowedModules, setActiveModule, UserModulesResult } from "@/lib/actions/module-switcher";
+import type { UserModulesResult } from "@/lib/actions/module-switcher";
 import ChandakLoader from "@/components/ui/ChandakLoader";
 import { AppButton } from "@/components/ui/AppButton";
+
+const FALLBACK_MODULES_DATA: UserModulesResult = {
+  modules: [
+    {
+      id: "mod-task",
+      code: "TASK_WORKFLOW",
+      name: "Task & Workspace Management",
+      description: "Core Operations, Workspace, Tasks & Ticketing",
+      icon: "FolderKanban",
+      route_path: "/workspaces/tasks",
+      display_order: 1,
+      is_active: true,
+      is_default: true,
+    },
+    {
+      id: "mod-vehicle",
+      code: "VEHICLE_DESK",
+      name: "Vehicle Management Desk",
+      description: "Fleet, Trips & Maintenance Logistics",
+      icon: "Car",
+      route_path: "/vehicle/dashboard",
+      display_order: 2,
+      is_active: true,
+      is_default: false,
+    },
+    {
+      id: "mod-design",
+      code: "DESIGN_TRACKING",
+      name: "Design & Drawing Tracking",
+      description: "Architecture, Drawing Registers & Approvals",
+      icon: "Compass",
+      route_path: "/design/dashboard",
+      display_order: 3,
+      is_active: true,
+      is_default: false,
+    },
+  ],
+  defaultModule: null,
+  activeModuleCode: "TASK_WORKFLOW",
+  isAdmin: false,
+};
 
 export default function SelectModulePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextParam = searchParams.get("next");
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [data, setData] = useState<UserModulesResult | null>(null);
+  const [data, setData] = useState<UserModulesResult>(FALLBACK_MODULES_DATA);
   const [selectedModuleCode, setSelectedModuleCode] = useState<string>("TASK_WORKFLOW");
   const [rememberDefault, setRememberDefault] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
     async function loadModules() {
       try {
-        setLoading(true);
         setErrorMsg(null);
-
         const res = await fetch("/api/modules", { cache: "no-store" });
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`);
         }
         const modulesData: UserModulesResult = await res.json();
 
-        if (!modulesData.modules || modulesData.modules.length === 0) {
-          router.replace("/login");
-          return;
+        if (isMounted && modulesData.modules && modulesData.modules.length > 0) {
+          setData(modulesData);
+          const initialChoice = modulesData.activeModuleCode || modulesData.defaultModule?.code || modulesData.modules[0]?.code || "TASK_WORKFLOW";
+          setSelectedModuleCode(initialChoice);
         }
-
-        setData(modulesData);
-        const initialChoice = modulesData.activeModuleCode || modulesData.defaultModule?.code || modulesData.modules[0]?.code || "TASK_WORKFLOW";
-        setSelectedModuleCode(initialChoice);
       } catch (err: any) {
         console.error("Error loading user modules:", err);
-        // Fallback retry
-        try {
-          const fallbackRes = await fetch("/api/modules", { cache: "no-store" });
-          const fallbackData: UserModulesResult = await fallbackRes.json();
-          if (fallbackData.modules && fallbackData.modules.length > 0) {
-            setData(fallbackData);
-            setSelectedModuleCode(fallbackData.activeModuleCode || fallbackData.modules[0].code);
-            return;
-          }
-        } catch {}
-        setErrorMsg("Unable to retrieve module permissions. Please try again.");
-      } finally {
-        setLoading(false);
       }
     }
 
     loadModules();
+    return () => {
+      isMounted = false;
+    };
   }, [router, nextParam]);
 
   const handleEnterWorkspace = async (overrideModuleCode?: string) => {
