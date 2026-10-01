@@ -418,9 +418,9 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
 
                 const getModuleTheme = (href: string) => {
                   return {
-                    text: showAsActive ? "text-accent font-semibold" : "text-muted",
-                    activeBg: showAsActive ? "bg-accent/10 shadow-[inset_3px_0_0_var(--color-accent)]" : "border-l-[3px] border-transparent hover:bg-surface/50",
-                    iconColor: showAsActive ? "text-accent drop-shadow-[0_0_8px_var(--color-accent)]" : "text-muted group-hover:text-foreground transition-colors"
+                    text: showAsActive ? "text-theme-btn-primary font-semibold" : "text-muted-foreground",
+                    activeBg: showAsActive ? "bg-theme-btn-primary/10 border-l-[3px] border-theme-btn-primary" : "border-l-[3px] border-transparent hover:bg-elevated hover:text-foreground",
+                    iconColor: showAsActive ? "text-theme-btn-primary" : "text-muted-foreground group-hover:text-foreground transition-colors"
                   };
                 };
 
@@ -521,14 +521,14 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
                               onClick={() => {
                                 onCloseMobile?.();
                               }}
-                              className={`group relative flex items-center gap-2.5 px-3 py-1.5 rounded-r-lg text-xs transition-all duration-200 select-none cursor-pointer overflow-hidden active:scale-[0.98] ${
+                              className={`group relative flex items-center gap-2.5 px-3 py-1.5 rounded-r-lg text-xs transition-all duration-200 select-none cursor-pointer overflow-hidden ${
                                 isSubActive 
-                                  ? `font-bold text-accent bg-accent/5 border-l-[3px] border-accent` 
-                                  : `text-muted hover:bg-surface/50 hover:text-foreground border-l-[3px] border-transparent`
+                                  ? `font-semibold text-theme-btn-primary bg-theme-btn-primary/10 border-l-[3px] border-theme-btn-primary` 
+                                  : `text-muted-foreground hover:bg-elevated hover:text-foreground border-l-[3px] border-transparent`
                               }`}
                             >
-                              <div className={`absolute -left-[14px] top-1/2 w-3 h-[1px] transition-colors duration-200 ${isSubActive ? 'bg-accent' : 'bg-border/60 group-hover:bg-border'}`} />
-                              <span className="truncate flex-1 text-inherit transform group-hover:translate-x-1.5 transition-transform duration-200">{sub.label}</span>
+                              <div className={`absolute -left-[14px] top-1/2 w-3 h-[1px] transition-colors duration-200 ${isSubActive ? 'bg-theme-btn-primary' : 'bg-border/60 group-hover:bg-border'}`} />
+                              <span className="truncate flex-1 text-inherit">{sub.label}</span>
                             </Link>
                           );
                         })}

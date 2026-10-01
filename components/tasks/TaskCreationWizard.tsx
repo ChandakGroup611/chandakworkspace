@@ -289,43 +289,43 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
   return (
     <SidePeekDrawer
       isOpen={true}
-      title={initialParentTaskId ? "Initialize Sub-Task" : "Initialize Enterprise Task"}
+      title={initialParentTaskId ? "New Sub-Task" : "Create New Task"}
       onClose={onClose}
       width="xl"
     >
       <div className="flex flex-col h-full">
-        <div className="flex-1 overflow-y-auto p-6 space-y-8">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
           
-          {/* Section 1: Core Details */}
+          {/* Section 1: Basic Information */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 border-b border-border/40 pb-2">
               <LayoutTemplate className="h-4 w-4 text-theme-icon" />
-              <h3 className="text-sm font-semibold tracking-tight text-foreground">Core Details</h3>
+              <h3 className="text-sm font-semibold tracking-tight text-foreground">Basic Information</h3>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-sm font-bold text-muted uppercase tracking-wider">Task Title *</label>
+                <label className="text-xs font-semibold text-muted uppercase tracking-wider">Task Title *</label>
                 <AppInput placeholder="e.g. Audit API Endpoints" value={title} onChange={e => setTitle(e.target.value)} required className={"bg-surface"} />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-bold text-muted uppercase tracking-wider">Task Code</label>
+                <label className="text-xs font-semibold text-muted uppercase tracking-wider">Task Code</label>
                 <AppInput disabled placeholder="[Auto-Generated]" value="[Auto-Generated]" className={"bg-elevated"} />
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
               <div className="space-y-1.5">
-                <label className="text-sm font-bold text-muted uppercase tracking-wider flex items-center justify-between">
+                <label className="text-xs font-semibold text-muted uppercase tracking-wider flex items-center justify-between">
                   <span className="flex items-center gap-1">
-                    <span>Parent Task Link</span>
+                    <span>Parent Task</span>
                     {initialParentTaskId ? (
                       <span className="text-danger font-bold">*</span>
                     ) : (
-                      <span className="text-xs font-normal text-muted-foreground">(Optional)</span>
+                      <span className="text-[11px] font-normal text-muted">(Optional)</span>
                     )}
                   </span>
                   {initialParentTaskId && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 uppercase tracking-wider">
-                      Sub-Task Mode
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-theme-btn-primary/10 text-theme-icon border border-theme-btn-primary/20 uppercase tracking-wider">
+                      Sub-Task
                     </span>
                   )}
                 </label>
@@ -345,7 +345,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-bold text-muted uppercase tracking-wider">Assign to Sprint</label>
+                <label className="text-xs font-semibold text-muted uppercase tracking-wider">Assign to Sprint</label>
                 <select
                   className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors cursor-pointer ${ "theme-input-structural text-foreground" }`}
                   value={sprintId}
@@ -360,14 +360,14 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
             </div>
             <div className="mt-2">
             <div className="space-y-1.5">
-              <label className="text-sm font-bold text-muted uppercase tracking-wider flex items-center gap-1.5">
-                <AlignLeft className="h-3 w-3" /> Execution Notes (Rich Text) <span className="text-danger">*</span>
+              <label className="text-xs font-semibold text-muted uppercase tracking-wider flex items-center gap-1.5">
+                <AlignLeft className="h-3 w-3" /> Description <span className="text-danger">*</span>
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Detailed execution instructions, context, or constraints..."
-                className={`w-full min-h-[120px] p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors resize-y theme-input-structural theme-card-structural text-foreground placeholder-muted`}
+                placeholder="Detailed instructions, requirements, or context..."
+                className={`w-full min-h-[100px] p-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors resize-y theme-input-structural theme-card-structural text-foreground placeholder-muted`}
               />
             </div>
             </div>
@@ -375,16 +375,16 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
 
           </div>
 
-          {/* Section 2: Timeline & Priority */}
+          {/* Section 2: Schedule & Priority */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 border-b border-border/40 pb-2">
               <CalendarDays className="h-4 w-4 text-theme-icon" />
-              <h3 className="text-sm font-semibold tracking-tight text-foreground">Timeline & Classification</h3>
+              <h3 className="text-sm font-semibold tracking-tight text-foreground">Schedule & Priority</h3>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mb-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-2">
               <div className="space-y-1.5">
-                <label className="text-sm font-bold text-muted uppercase tracking-wider">Duration (Days)</label>
+                <label className="text-xs font-semibold text-muted uppercase tracking-wider">Duration (Days)</label>
                 <AppInput 
                   type="number" 
                   min="1"
@@ -395,7 +395,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-bold text-muted uppercase tracking-wider">Start Date <span className="text-danger">*</span></label>
+                <label className="text-xs font-semibold text-muted uppercase tracking-wider">Start Date <span className="text-danger">*</span></label>
                 <AppInput 
                   type="date" 
                   min={localTodayString} 
@@ -405,7 +405,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-bold text-muted uppercase tracking-wider">Target Due Date <span className="text-danger">*</span></label>
+                <label className="text-xs font-semibold text-muted uppercase tracking-wider">Due Date <span className="text-danger">*</span></label>
                 <AppInput 
                   type="date" 
                   min={startDate || localTodayString} 
@@ -415,15 +415,15 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-bold text-muted uppercase tracking-wider">External Link (Optional)</label>
+                <label className="text-xs font-semibold text-muted uppercase tracking-wider">External Link (Optional)</label>
                 <AppInput placeholder="https://..." value={linkUrl} onChange={e => setLinkUrl(e.target.value)} className={"bg-surface"} />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="space-y-1.5">
-                <label className="text-sm font-bold text-muted uppercase tracking-wider">
-                  Task Priority <span className="text-danger">*</span>
+                <label className="text-xs font-semibold text-muted uppercase tracking-wider">
+                  Priority <span className="text-danger">*</span>
                 </label>
                 <select
                   className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors cursor-pointer ${ "theme-input-structural text-foreground" }`}
@@ -438,7 +438,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-bold text-muted uppercase tracking-wider">Department</label>
+                <label className="text-xs font-semibold text-muted uppercase tracking-wider">Department</label>
                 <select
                   className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors cursor-pointer ${ "theme-input-structural text-foreground" }`}
                   value={departmentId}
@@ -451,8 +451,8 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-bold text-muted uppercase tracking-wider">
-                  Task Status <span className="text-danger">*</span>
+                <label className="text-xs font-semibold text-muted uppercase tracking-wider">
+                  Status <span className="text-danger">*</span>
                 </label>
                 <select
                   className={`w-full p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-btn-primary transition-colors cursor-pointer ${ "theme-input-structural text-foreground" }`}
@@ -470,23 +470,23 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
 
           </div>
 
-          {/* Section 3: Assignment & Execution */}
+          {/* Section 3: Ownership & Team */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 border-b border-border/40 pb-2">
               <Users className="h-4 w-4 text-theme-icon" />
-              <h3 className="text-sm font-semibold tracking-tight text-foreground">Assignment & Execution</h3>
+              <h3 className="text-sm font-semibold tracking-tight text-foreground">Ownership & Team</h3>
             </div>
 
             {/* Category 1: Primary Assignee */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label className="text-sm font-bold text-muted uppercase tracking-wider flex items-center gap-1.5">
-                  <ShieldCheck className="h-3.5 w-3.5 text-amber-500" />
-                  Primary Assignee (Task Owner) *
+                <label className="text-xs font-semibold text-muted uppercase tracking-wider flex items-center gap-1.5">
+                  <ShieldCheck className="h-3.5 w-3.5 text-theme-icon" />
+                  Primary Assignee (Owner) *
                 </label>
               </div>
               <select
-                className="w-full h-10 px-3 text-sm rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                className="w-full h-10 px-3 text-sm rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary"
                 value={primaryAssignee}
                 onChange={e => {
                   const val = e.target.value;
@@ -496,7 +496,6 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                     newExecs.push(val);
                   }
                   setExecutors(newExecs);
-                  // Automatically populate all remaining workspace members into Watchers
                   if (val || newExecs.length > 0) {
                     const remainingWatchers = stakeholders.filter(s => !newExecs.includes(s.id)).map(s => s.id);
                     setWatchers(remainingWatchers);
@@ -516,22 +515,22 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
             <div className="space-y-1.5 mb-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <label className="text-sm font-bold text-muted uppercase tracking-wider flex items-center gap-1.5">
-                    <Users className="h-3.5 w-3.5 text-blue-500" />
-                    Executors (Execution Team)
+                  <label className="text-xs font-semibold text-muted uppercase tracking-wider flex items-center gap-1.5">
+                    <Users className="h-3.5 w-3.5 text-theme-icon" />
+                    Executors
                   </label>
-                  <div className={`flex items-center gap-1.5 px-2 py-1 rounded transition-colors theme-card-structural focus-within:border-emerald-500`}>
+                  <div className={`flex items-center gap-1.5 px-2 py-1 rounded transition-colors theme-card-structural border border-border/40 focus-within:border-theme-btn-primary`}>
                     <Search className="h-3 w-3 text-muted" />
                     <input 
                       type="text" 
                       placeholder="Search users..." 
-                      className={`bg-transparent text-[11px] focus:outline-none w-32 text-foreground placeholder:text-muted`}
+                      className={`bg-transparent text-xs focus:outline-none w-32 text-foreground placeholder:text-muted`}
                       value={executorSearchTerm}
                       onChange={e => setExecutorSearchTerm(e.target.value)}
                     />
                   </div>
                 </div>
-                <AppButton variant="secondary" type="button" onClick={() => {
+                <AppButton variant="secondary" size="sm" type="button" onClick={() => {
                   if (executors.length === stakeholders.length && stakeholders.length > 0) {
                     const newExecs = primaryAssignee ? [primaryAssignee] : [];
                     setExecutors(newExecs);
@@ -543,17 +542,17 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                     // If all are executors, no watchers remain
                     setWatchers([]);
                   }
-                }} className="text-[10px] font-bold text-success hover:text-emerald-700 uppercase tracking-wider">
+                }} className="text-[11px] font-semibold text-theme-icon">
                   {executors.length === stakeholders.length && stakeholders.length > 0 ? "Clear All" : "Select All"}
                 </AppButton>
               </div>
-              <div className={`p-2 rounded-xl max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-500/20 scrollbar-track-transparent theme-card-structural`}>
+              <div className={`p-2 rounded-xl max-h-40 overflow-y-auto scrollbar-thin theme-card-structural border border-border/40`}>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-1">
                   {stakeholders.filter(s => s.full_name?.toLowerCase().includes(executorSearchTerm.toLowerCase())).map(s => (
-                    <label key={s.id} className="flex items-center gap-2 text-sm text-subtle cursor-pointer hover:bg-surface/5 dark:hover:bg-surface/5 p-2 rounded-md transition-colors">
+                    <label key={s.id} className="flex items-center gap-2 text-xs text-foreground cursor-pointer hover:bg-surface/50 p-1.5 rounded-md transition-colors">
                       <input 
                         type="checkbox" 
-                        className="accent-emerald-500 h-4 w-4" 
+                        className="accent-theme-btn-primary h-4 w-4 rounded" 
                         checked={executors.includes(s.id)} 
                         onChange={e => {
                           let newExecs: string[];
@@ -561,20 +560,18 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                             newExecs = [...executors, s.id];
                           } else {
                             if (s.id === primaryAssignee) {
-                              // If primary assignee is unselected from executors, clear primary assignee
                               setPrimaryAssignee("");
                             }
                             newExecs = executors.filter(id => id !== s.id);
                           }
                           setExecutors(newExecs);
-                          // Automatically update remaining workspace members into Watchers
                           const remainingWatchers = stakeholders.filter(st => !newExecs.includes(st.id)).map(st => st.id);
                           setWatchers(remainingWatchers);
                         }} 
                       />
                       <span className="truncate font-medium">{s.full_name}</span>
                       {s.id === primaryAssignee && (
-                        <span className="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-400 px-1 py-0.5 rounded font-bold">Owner</span>
+                        <span className="text-[10px] bg-theme-btn-primary/10 text-theme-icon px-1 py-0.5 rounded font-semibold">Owner</span>
                       )}
                     </label>
                   ))}
@@ -587,42 +584,42 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
             <div className="space-y-1.5 mb-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <label className="text-sm font-bold text-muted uppercase tracking-wider flex items-center gap-1.5">
-                    <Users className="h-3.5 w-3.5 text-purple-500" />
-                    Watchers (Team)
+                  <label className="text-xs font-semibold text-muted uppercase tracking-wider flex items-center gap-1.5">
+                    <Users className="h-3.5 w-3.5 text-theme-icon" />
+                    Watchers
                   </label>
-                  <div className={`flex items-center gap-1.5 px-2 py-1 rounded transition-colors theme-card-structural focus-within:border-emerald-500`}>
+                  <div className={`flex items-center gap-1.5 px-2 py-1 rounded transition-colors theme-card-structural border border-border/40 focus-within:border-theme-btn-primary`}>
                     <Search className="h-3 w-3 text-muted" />
                     <input 
                       type="text" 
                       placeholder="Search users..." 
-                      className={`bg-transparent text-[11px] focus:outline-none w-32 text-foreground placeholder:text-muted`}
+                      className={`bg-transparent text-xs focus:outline-none w-32 text-foreground placeholder:text-muted`}
                       value={watcherSearchTerm}
                       onChange={e => setWatcherSearchTerm(e.target.value)}
                     />
                   </div>
                 </div>
-                <AppButton variant="secondary" type="button" onClick={() => {
+                <AppButton variant="secondary" size="sm" type="button" onClick={() => {
                   const eligibleStakeholders = stakeholders.filter(s => !executors.includes(s.id));
                   if (watchers.length === eligibleStakeholders.length && eligibleStakeholders.length > 0) {
                     setWatchers([]);
                   } else {
                     setWatchers(eligibleStakeholders.map(s => s.id));
                   }
-                }} className="text-[10px] font-bold text-success hover:text-emerald-700 uppercase tracking-wider">
+                }} className="text-[11px] font-semibold text-theme-icon">
                   {watchers.length > 0 && watchers.length === stakeholders.filter(s => !executors.includes(s.id)).length ? "Clear All" : "Select All"}
                 </AppButton>
               </div>
-              <div className={`p-2 rounded-xl max-h-36 overflow-y-auto scrollbar-thin scrollbar-thumb-emerald-500/20 scrollbar-track-transparent theme-card-structural`}>
+              <div className={`p-2 rounded-xl max-h-36 overflow-y-auto scrollbar-thin theme-card-structural border border-border/40`}>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-1">
                   {stakeholders
                     .filter(s => !executors.includes(s.id))
                     .filter(s => s.full_name?.toLowerCase().includes(watcherSearchTerm.toLowerCase()))
                     .map(s => (
-                    <label key={s.id} className="flex items-center gap-2 text-sm text-subtle cursor-pointer hover:bg-surface/5 dark:hover:bg-surface/5 p-2 rounded-md transition-colors">
+                    <label key={s.id} className="flex items-center gap-2 text-xs text-foreground cursor-pointer hover:bg-surface/50 p-1.5 rounded-md transition-colors">
                       <input 
                         type="checkbox" 
-                        className="accent-emerald-500 h-4 w-4" 
+                        className="accent-theme-btn-primary h-4 w-4 rounded" 
                         checked={watchers.includes(s.id)} 
                         onChange={e => {
                           if (e.target.checked) setWatchers([...watchers, s.id]);
@@ -641,16 +638,15 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               </div>
             </div>
             
-            {/* Tags & Labels moved to 2x2 grid */}
           </div>
 
-          {/* 2x2 Grid for Tags, Checklist, Attachments, Extended Properties */}
-          <div className={`w-full p-3 rounded-xl mb-1 theme-card-structural`}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3 w-full">
+          {/* 2x2 Grid for Tags, Checklist, Attachments, Custom Fields */}
+          <div className={`w-full p-4 rounded-xl mb-1 theme-card-structural border border-border/40`}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 w-full">
               {/* Top Left: Tags & Labels */}
               <div className="w-full flex flex-col gap-2">
                 <div className="flex items-center h-7">
-                  <label className="text-sm font-bold text-muted uppercase tracking-wider flex items-center gap-1.5">
+                  <label className="text-xs font-semibold text-muted uppercase tracking-wider flex items-center gap-1.5">
                     Tags & Labels
                   </label>
                 </div>
@@ -667,21 +663,21 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                         }
                       }
                     }}
-                    placeholder="Type a tag (e.g. Bug, Frontend)..." 
-                    className={`h-10 flex-1 ${"bg-surface"}`}
+                    placeholder="Type a tag..." 
+                    className={`h-9 flex-1 bg-surface`}
                   />
-                  <AppButton type="button" variant="primary" className="h-10 px-4 shrink-0 bg-theme-btn-primary hover:opacity-90 text-theme-btn-primary-text border-0" onClick={() => {
+                  <AppButton type="button" variant="primary" size="sm" className="h-9 px-3 shrink-0" onClick={() => {
                     if (newTag.trim() && !tags.includes(newTag.trim())) {
                       setTags([...tags, newTag.trim()]);
                       setNewTag("");
                     }
-                  }}>Add Tag</AppButton>
+                  }}>Add</AppButton>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1.5 mt-1">
                   {tags.map((tag, idx) => (
-                    <span key={idx} className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-theme-btn-primary/10 text-theme-icon`}>
+                    <span key={idx} className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-md bg-theme-btn-primary/10 text-theme-icon border border-theme-btn-primary/20`}>
                       {tag}
-                      <AppButton variant="secondary" type="button" onClick={() => setTags(tags.filter(t => t !== tag))} className="hover:text-danger"><X className="h-3 w-3" /></AppButton>
+                      <button type="button" onClick={() => setTags(tags.filter(t => t !== tag))} className="hover:text-danger ml-0.5"><X className="h-3 w-3" /></button>
                     </span>
                   ))}
                 </div>
@@ -691,12 +687,10 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               <div className="w-full flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className={`p-1.5 rounded-lg bg-theme-btn-primary/10 text-theme-icon`}>
-                      <LayoutList className="h-4 w-4" />
-                    </div>
-                    <h3 className={`text-sm font-bold tracking-wide ${"text-foreground"}`}>Checklist</h3>
+                    <LayoutList className="h-4 w-4 text-theme-icon" />
+                    <h3 className="text-xs font-semibold text-muted uppercase tracking-wider">Checklist</h3>
                   </div>
-                  <span className="text-[10px] font-medium text-muted bg-surface dark:bg-surface/5 px-2 py-0.5 rounded-full">{checklistItems.length} items</span>
+                  <span className="text-[10px] font-medium text-muted bg-surface px-2 py-0.5 rounded-full border border-border/40">{checklistItems.length} items</span>
                 </div>
                 
                 <div className="flex gap-2 items-start">
@@ -712,31 +706,31 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                           setNewChecklistItem("");
                         }
                       }}
-                      placeholder="Type an actionable step..." 
-                      className={`h-10 ${"bg-surface"}`}
+                      placeholder="Add checklist item..." 
+                      className={`h-9 bg-surface`}
                     />
                   </div>
-                  <AppButton type="button" variant="primary" className="h-10 px-4 shrink-0 bg-theme-btn-primary hover:opacity-90 text-theme-btn-primary-text border-0" onClick={() => {
+                  <AppButton type="button" variant="primary" size="sm" className="h-9 px-3 shrink-0" onClick={() => {
                     if (!newChecklistItem.trim()) return;
                     setChecklistItems([...checklistItems, newChecklistItem.trim()]);
                     setNewChecklistItem("");
                   }}>Add</AppButton>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1.5 max-h-36 overflow-y-auto">
                   {checklistItems.map((item, index) => (
-                    <div key={`${item}-${index}`} className="group flex items-center justify-between gap-3 p-2 rounded-md /40 theme-card-structural transition-all hover:border-theme-icon/30">
-                      <div className="flex items-center gap-3 overflow-hidden flex-1">
-                        <div className="shrink-0 h-4 w-4 rounded border flex items-center justify-center border-border bg-background" />
-                        <span className={`text-sm truncate ${"text-foreground"}`}>{item}</span>
+                    <div key={`${item}-${index}`} className="group flex items-center justify-between gap-2 p-2 rounded-lg bg-surface/50 border border-border/40 transition-colors">
+                      <div className="flex items-center gap-2 overflow-hidden flex-1">
+                        <div className="shrink-0 h-3.5 w-3.5 rounded border border-border" />
+                        <span className="text-xs truncate text-foreground">{item}</span>
                       </div>
-                      <AppButton variant="secondary"
+                      <button
                         type="button"
                         onClick={() => setChecklistItems(checklistItems.filter((_, i) => i !== index))}
-                        className="shrink-0 p-1.5 rounded-md opacity-0 group-hover:opacity-100 text-danger hover:bg-danger/10 transition-all"
+                        className="shrink-0 p-1 rounded text-muted hover:text-danger transition-colors"
                       >
-                        <X className="h-3.5 w-3.5" />
-                      </AppButton>
+                        <X className="h-3 w-3" />
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -745,7 +739,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
               {/* Bottom Left: Attachments */}
               <div className="w-full flex flex-col gap-2">
                 <div className="flex items-center justify-between w-full">
-                  <h4 className={`text-[11px] font-bold uppercase tracking-wider ${"text-foreground"}`}>Attachments</h4>
+                  <label className="text-xs font-semibold text-muted uppercase tracking-wider">Attachments</label>
                   
                   <div>
                     <input 
@@ -768,38 +762,40 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                     />
                     <label 
                       htmlFor="task-attachment"
-                      className={`flex items-center justify-center gap-1.5 px-3 py-1 rounded-md text-sm font-bold border-dashed cursor-pointer transition-all ${ "theme-card-structural text-muted hover: hover:border-theme-btn-primary hover:text-theme-icon" }`}
+                      className={`flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold border border-dashed border-border cursor-pointer transition-colors text-muted hover:text-foreground hover:border-theme-btn-primary`}
                     >
                       <Paperclip className="h-3 w-3" />
-                      <span>Attach Files</span>
+                      <span>Attach File</span>
                     </label>
                   </div>
 
-                  <span className="text-[10px] font-medium text-muted bg-surface dark:bg-surface/5 px-2 py-0.5 rounded-full">{attachments.length} files</span>
+                  <span className="text-[10px] font-medium text-muted bg-surface px-2 py-0.5 rounded-full border border-border/40">{attachments.length} files</span>
                 </div>
 
-                <div className="grid grid-cols-1 gap-3">
+                <div className="grid grid-cols-1 gap-2 max-h-36 overflow-y-auto">
                   {attachments.map((item, index) => (
-                    <div key={`${item.file_url}-${index}`} className="group flex items-center justify-between gap-3 p-2 rounded-md /40 theme-card-structural transition-all hover:border-theme-icon/30">
-                      <div className="flex items-center gap-3 overflow-hidden flex-1">
-                        <div className="shrink-0 h-8 w-8 rounded-md flex items-center justify-center text-[10px] font-bold bg-theme-icon/10 text-theme-icon">
+                    <div key={`${item.file_url}-${index}`} className="group flex items-center justify-between gap-2 p-2 rounded-lg bg-surface/50 border border-border/40 transition-colors">
+                      <div className="flex items-center gap-2 overflow-hidden flex-1">
+                        <div className="shrink-0 h-6 w-6 rounded flex items-center justify-center text-[10px] font-bold bg-theme-btn-primary/10 text-theme-icon">
                           {item.file_type.substring(0,3).toUpperCase()}
                         </div>
                         <div className="flex flex-col min-w-0">
-                          <span className={`text-xs font-semibold truncate ${"text-foreground"}`}>{item.file_name}</span>
-                          <span className="text-[10px] text-muted">{item.size ? `${(item.size / 1024).toFixed(1)} KB` : "Unknown size"}</span>
+                          <span className="text-xs font-medium truncate text-foreground">{item.file_name}</span>
+                          <span className="text-[10px] text-muted">{item.size ? `${(item.size / 1024).toFixed(1)} KB` : "Attached"}</span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <AppButton variant="secondary"
+                      <div className="flex items-center gap-1">
+                        <AppButton variant="ghost"
+                          size="sm"
                           type="button"
                           onClick={() => window.open(item.file_url, '_blank')}
-                          className="shrink-0 p-1.5 rounded-md text-muted hover:text-foreground hover:bg-surface transition-all"
+                          className="p-1 h-auto text-muted hover:text-foreground"
                           title="View"
                         >
                           <Eye className="h-3.5 w-3.5" />
                         </AppButton>
-                        <AppButton variant="secondary"
+                        <AppButton variant="ghost"
+                          size="sm"
                           type="button"
                           onClick={() => {
                             const link = document.createElement('a');
@@ -809,15 +805,16 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                             link.click();
                             document.body.removeChild(link);
                           }}
-                          className="shrink-0 p-1.5 rounded-md text-muted hover:text-foreground hover:bg-surface transition-all"
+                          className="p-1 h-auto text-muted hover:text-foreground"
                           title="Download"
                         >
                           <Download className="h-3.5 w-3.5" />
                         </AppButton>
-                        <AppButton variant="secondary"
+                        <AppButton variant="ghost"
+                          size="sm"
                           type="button"
                           onClick={() => setAttachments(attachments.filter((_, i) => i !== index))}
-                          className="shrink-0 p-1.5 rounded-md text-danger hover:bg-danger/10 transition-all"
+                          className="p-1 h-auto text-danger hover:bg-danger/10"
                           title="Remove"
                         >
                           <X className="h-3.5 w-3.5" />
@@ -828,27 +825,27 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                 </div>
               </div>
 
-              {/* Bottom Right: Extended Properties */}
+              {/* Bottom Right: Custom Fields */}
               <div className="w-full flex flex-col gap-2">
                 <div className="flex items-center justify-between border-b border-border/40 pb-2">
                   <div className="flex items-center gap-2">
                     <Activity className="h-4 w-4 text-theme-icon" />
-                    <h3 className="text-sm font-semibold tracking-tight text-foreground">Extended Properties</h3>
+                    <h3 className="text-xs font-semibold text-muted uppercase tracking-wider">Custom Fields</h3>
                   </div>
                   <AppButton variant="ghost" 
-
+                    size="sm"
                     type="button" 
                     onClick={() => setIsAddingField(!isAddingField)}
-                    className={`p-1.5 rounded-lg transition-colors flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-700 hover:bg-amber-200`}
+                    className="p-1 h-auto text-xs font-semibold text-theme-icon hover:bg-theme-btn-primary/10"
                   >
-                    <Plus className="h-3 w-3" /> New Field
+                    <Plus className="h-3 w-3 mr-1" /> New Field
                   </AppButton>
                 </div>
 
                 {isAddingField && (
-                  <div className={`p-3 rounded-lg border flex flex-col sm:flex-row items-end gap-3 bg-amber-50/50 border-amber-200`}>
-                    <div className="w-full sm:flex-1 space-y-1.5">
-                      <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Field Name</label>
+                  <div className="p-3 rounded-lg border border-border/60 bg-surface/50 flex flex-col sm:flex-row items-end gap-2">
+                    <div className="w-full sm:flex-1 space-y-1">
+                      <label className="text-[11px] font-semibold text-muted uppercase tracking-wider">Field Name</label>
                       <AppInput 
                         placeholder="e.g. Jira Ticket URL" 
                         value={newFieldName} 
@@ -859,34 +856,34 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
                             handleAddField();
                           }
                         }}
-                        className={`h-10 ${"bg-surface"}`}
+                        className="h-8 text-xs bg-surface"
                       />
                     </div>
-                    <div className="w-full sm:flex-1 space-y-1.5">
+                    <div className="w-full sm:flex-1 space-y-1">
                       <label className="text-[11px] font-semibold text-muted uppercase tracking-wider">Data Type</label>
                       <select 
-                        className="w-full h-9 px-3 rounded-md text-[12px] theme-card-structural /60 focus:border-theme-icon focus:outline-none transition-colors theme-input-structural text-foreground"
+                        className="w-full h-8 px-2 rounded-md text-xs bg-surface border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-theme-btn-primary"
                         value={newFieldType}
                         onChange={e => setNewFieldType(e.target.value)}
                       >
-                        <option value="text">Text Input</option>
+                        <option value="text">Text</option>
                         <option value="number">Numeric</option>
                         <option value="date">Date</option>
                       </select>
                     </div>
-                    <AppButton type="button" variant="primary" onClick={handleAddField} className="w-full sm:w-auto h-10 bg-warning hover:bg-warning text-white border-0">Save Field</AppButton>
+                    <AppButton type="button" variant="primary" size="sm" onClick={handleAddField} className="h-8 px-3">Save</AppButton>
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 gap-3">
+                <div className="grid grid-cols-1 gap-2 max-h-36 overflow-y-auto">
                   {customFields.map(f => (
-                    <div key={f.field_key} className="space-y-1.5">
-                      <label className="text-sm font-bold text-muted uppercase tracking-wider">{f.field_name}</label>
+                    <div key={f.field_key} className="space-y-1">
+                      <label className="text-xs font-semibold text-muted uppercase tracking-wider">{f.field_name}</label>
                       <AppInput 
                         type={f.field_type === 'number' ? 'number' : f.field_type === 'date' ? 'date' : 'text'}
                         value={fieldValues[f.field_key] || ""} 
                         onChange={e => setFieldValues({...fieldValues, [f.field_key]: e.target.value})} 
-                        className={"bg-surface"}
+                        className="h-8 text-xs bg-surface"
                       />
                     </div>
                   ))}
@@ -899,7 +896,7 @@ export default function TaskCreationWizard({ workspaceId, initialParentTaskId, i
           <div className="p-6 border-t border-border/40 bg-background flex justify-end gap-3 shrink-0">
             <AppButton variant="ghost" type="button" onClick={onClose} disabled={isLoading}>Cancel</AppButton>
             <AppButton variant="primary" onClick={handleSubmit} disabled={isLoading}>
-              {isLoading ? "Deploying..." : "Deploy Directive"}
+              {isLoading ? "Saving..." : initialParentTaskId ? "Create Sub-Task" : "Create Task"}
             </AppButton>
           </div>
         </div>

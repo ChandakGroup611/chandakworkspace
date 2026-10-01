@@ -337,7 +337,7 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
           {/* Top Header & Actions Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-4">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20 shrink-0">
+              <div className="h-10 w-10 rounded-xl bg-theme-btn-primary/10 text-theme-icon flex items-center justify-center border border-theme-btn-primary/20 shrink-0">
                 <Compass className="h-5 w-5" />
               </div>
               <div className="min-w-0">
@@ -346,12 +346,12 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
                     Design & Engineering Tracking
                   </h1>
                   {isRestrictedProjectScope ? (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-theme-btn-primary/10 text-theme-icon border border-theme-btn-primary/20">
                       <Building2 className="h-3 w-3" />
                       <span>Scoped: {accessibleProjects.map(p => p.name).join(", ")} ({accessibleProjects.length} Project{accessibleProjects.length > 1 ? "s" : ""})</span>
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-theme-btn-primary/10 text-theme-icon border border-theme-btn-primary/20">
                       <ShieldCheck className="h-3 w-3" />
                       <span>Global Scope ({accessibleProjects.length} Projects)</span>
                     </span>
@@ -365,17 +365,17 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
               <button
                 type="button"
                 onClick={() => setIsDataEntryOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-semibold transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface hover:bg-surface/80 text-foreground text-xs font-semibold transition-colors cursor-pointer"
                 title="Open quick data entry form"
               >
-                <Plus className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                <Plus className="h-3.5 w-3.5 text-theme-icon" />
                 <span>Quick Entry</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setIsUploadOpen(true)}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-theme-btn-primary hover:opacity-90 text-theme-btn-primary-text text-xs font-semibold transition-opacity cursor-pointer"
               >
                 <Upload className="h-3.5 w-3.5" />
                 <span>Upload Drawing</span>

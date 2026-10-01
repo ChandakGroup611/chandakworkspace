@@ -1166,7 +1166,7 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap h-auto shrink-0",
                   hierarchyScope === "all" && selectedDepartmentName === "ALL"
-                    ? "bg-primary text-primary-foreground font-bold shadow-sm"
+                    ? "bg-theme-btn-primary text-theme-btn-primary-text font-semibold shadow-sm"
                     : "bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-hover border border-border/40"
                 )}
               >
@@ -1187,7 +1187,7 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap h-auto shrink-0",
                   hierarchyScope === "my_reports"
-                    ? "bg-purple-600 text-white font-bold shadow-sm"
+                    ? "bg-theme-btn-primary text-theme-btn-primary-text font-semibold shadow-sm"
                     : "bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-hover border border-border/40"
                 )}
               >
@@ -1209,7 +1209,7 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
                   className={cn(
                     "flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-all whitespace-nowrap h-auto shrink-0",
                     hierarchyScope === "my_dept" && selectedDepartmentName === "ALL"
-                      ? "bg-blue-600 text-white font-bold shadow-sm"
+                      ? "bg-theme-btn-primary text-theme-btn-primary-text font-semibold shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >
@@ -1251,7 +1251,7 @@ export default function TaskListViewClient({ initialTasks, userScope, currentUse
               className={cn(
                 "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap h-auto shrink-0",
                 hierarchyScope === "assigned_me"
-                  ? "bg-emerald-600 text-white font-bold shadow-sm"
+                  ? "bg-theme-btn-primary text-theme-btn-primary-text font-semibold shadow-sm"
                   : "bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-hover border border-border/40"
               )}
             >

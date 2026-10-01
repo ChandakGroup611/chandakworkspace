@@ -35,33 +35,23 @@ export function TicketScopeSelector({ onSelect, onDiscard }: TicketScopeSelector
     }
   };
 
-  const getStyleProps = (code: string) => {
-    switch (code) {
-      case "INFRA": return { iconBg: "bg-theme-btn-primary text-theme-btn-primary-text/10", iconText: "text-accent dark:text-accent", hoverBg: "group-hover:bg-theme-btn-primary text-theme-btn-primary-text", border: "group-hover:border-blue-500/50", gradient: "from-accent/5 to-indigo-500/5 group-hover:from-accent/10 group-hover:to-indigo-500/10" };
-      case "ERP": return { iconBg: "bg-orange-500/10", iconText: "text-orange-600 dark:text-orange-400", hoverBg: "group-hover:bg-orange-500", border: "group-hover:border-orange-500/50", gradient: "from-orange-500/5 to-amber-500/5 group-hover:from-orange-500/10 group-hover:to-amber-500/10" };
-      case "OTHERS": return { iconBg: "bg-success/10", iconText: "text-success dark:text-success", hoverBg: "group-hover:bg-success", border: "group-hover:border-emerald-500/50", gradient: "from-emerald-500/5 to-teal-500/5 group-hover:from-emerald-500/10 group-hover:to-teal-500/10" };
-      default: return { iconBg: "bg-slate-500/10", iconText: "text-slate-600 dark:text-slate-400", hoverBg: "group-hover:bg-slate-500", border: "group-hover:border-slate-500/50", gradient: "from-slate-500/5 to-gray-500/5 group-hover:from-slate-500/10 group-hover:to-gray-500/10" };
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
-        <ChandakLoader size="md" title="Syncing Governance Matrix..." subtitle="Loading operational scopes" />
+        <ChandakLoader size="md" title="Loading..." subtitle="Fetching ticket categories" />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col items-center justify-center space-y-6 py-4 animate-in fade-in zoom-in duration-500">
+    <div className="flex flex-col items-center justify-center space-y-6 py-4 animate-in fade-in zoom-in duration-300">
       <div className="text-center space-y-1">
-        <h2 className="text-2xl font-bold text-foreground">Select Operational Scope</h2>
+        <h2 className="text-xl font-bold text-foreground">Select Ticket Category</h2>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full px-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full px-4">
         {dbScopes.map((scope) => {
           const Icon = getIcon(scope.code);
-          const style = getStyleProps(scope.code);
           
           return (
             <AppButton
@@ -69,23 +59,22 @@ export function TicketScopeSelector({ onSelect, onDiscard }: TicketScopeSelector
               onClick={() => onSelect(scope)}
               type="button"
               variant="ghost"
-              className="p-0 h-auto w-full group relative text-left transition-all duration-300 hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-btn-primary rounded-xl"
+              className="p-0 h-auto w-full group relative text-left transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-btn-primary rounded-xl"
             >
-              <AppCard className={`h-full w-full transition-all duration-300 overflow-hidden relative ${isLightMode ? '/80 hover:border-theme-btn-primary/60' : ' hover:border-theme-btn-primary/80'} shadow-sm hover:shadow-md ${style.border} theme-card-structural rounded-2xl`}>
-                <div className={`absolute inset-0 bg-gradient-to-br ${style.gradient} transition-colors duration-500`} />
-                <AppCardContent className="p-6 relative z-10 flex flex-col h-full space-y-5">
-                  <div className={`h-14 w-14 rounded-2xl flex items-center justify-center ${style.iconBg} ${style.hoverBg} transition-colors duration-300 shadow-sm border border-black/5 dark:border-border`}>
-                    <Icon className={`h-7 w-7 ${style.iconText} group-hover:text-white transition-colors duration-300`} />
+              <AppCard className={`h-full w-full transition-all duration-200 overflow-hidden relative shadow-sm hover:shadow-md hover:border-theme-btn-primary/60 theme-card-structural rounded-xl border border-border/60`}>
+                <AppCardContent className="p-5 relative z-10 flex flex-col h-full space-y-4">
+                  <div className={`h-12 w-12 rounded-xl flex items-center justify-center bg-theme-btn-primary/10 text-theme-icon group-hover:bg-theme-btn-primary group-hover:text-theme-btn-primary-text transition-colors duration-200 border border-border/40`}>
+                    <Icon className="h-6 w-6 transition-colors duration-200" />
                   </div>
                   
-                  <div className="space-y-2 flex-1">
-                    <h3 className="text-[17px] font-semibold text-foreground group-hover:text-foreground/90 transition-colors">
+                  <div className="space-y-1 flex-1">
+                    <h3 className="text-base font-semibold text-foreground group-hover:text-theme-btn-primary transition-colors">
                       {scope.name}
                     </h3>
                   </div>
 
-                  <div className="flex items-center justify-between text-[11px] font-bold tracking-wider uppercase transition-colors pt-4 border-t border-border/50 text-muted group-hover:text-foreground">
-                    <span>Initialize Flow</span>
+                  <div className="flex items-center justify-between text-[11px] font-semibold tracking-wider uppercase transition-colors pt-3 border-t border-border/40 text-muted group-hover:text-foreground">
+                    <span>Continue</span>
                     <div className="h-6 w-6 rounded-full bg-border/40 group-hover:bg-foreground/10 flex items-center justify-center transition-colors">
                       <ChevronRight className="h-3.5 w-3.5 transform group-hover:translate-x-0.5 transition-transform" />
                     </div>
@@ -98,9 +87,9 @@ export function TicketScopeSelector({ onSelect, onDiscard }: TicketScopeSelector
       </div>
       
       {onDiscard && (
-        <div className="mt-8 pt-6 border-t border-border w-full flex justify-center">
-          <AppButton variant="outline" type="button" onClick={onDiscard} className="text-danger border-danger/30 hover:bg-danger/10 hover:border-danger hover:text-danger px-8">
-            Discard Request
+        <div className="mt-6 pt-4 border-t border-border w-full flex justify-center">
+          <AppButton variant="outline" type="button" onClick={onDiscard} className="text-danger border-danger/30 hover:bg-danger/10 hover:border-danger hover:text-danger px-6">
+            Cancel
           </AppButton>
         </div>
       )}

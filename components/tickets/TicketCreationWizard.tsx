@@ -206,22 +206,20 @@ export function TicketCreationWizard({ onClose, onSuccess }: TicketCreationWizar
               size="sm"
               variant="ghost"
               onClick={handleBack}
-              className={`p-1.5 -ml-2 rounded-full ${
-                "text-muted"
-              }`}
+              className="p-1.5 -ml-2 rounded-full text-muted hover:text-foreground"
             >
-              <ChevronLeft className="h-6 w-6" />
+              <ChevronLeft className="h-5 w-5" />
             </AppButton>
           )}
-          <span>Initialize Operational Ticket</span>
+          <span>New Support Ticket</span>
         </div>
       }
       subtitle={
         <div className="flex items-center gap-2 mt-1">
-          <div className={`h-1.5 w-1.5 rounded-full ${step === "SCOPE" ? "bg-theme-btn-primary" : "bg-theme-btn-primary/30"}`} />
-          <div className={`h-1.5 w-1.5 rounded-full ${step === "FORM" ? "bg-theme-btn-primary" : "bg-theme-btn-primary/30"}`} />
-          <span className="text-xs text-muted uppercase tracking-widest font-semibold ml-2">
-            {step === "SCOPE" ? "Step 1: Classification" : `Step 2: ${scope?.name || scope?.code || 'Form'} Intake`}
+          <div className={`h-1.5 w-1.5 rounded-full ${step === "SCOPE" ? "bg-theme-btn-primary" : "bg-muted"}`} />
+          <div className={`h-1.5 w-1.5 rounded-full ${step === "FORM" ? "bg-theme-btn-primary" : "bg-muted"}`} />
+          <span className="text-xs text-muted uppercase tracking-wider font-semibold ml-1">
+            {step === "SCOPE" ? "Step 1: Category" : `Step 2: ${scope?.name || scope?.code || 'Ticket'} Details`}
           </span>
         </div>
       }
@@ -234,8 +232,8 @@ export function TicketCreationWizard({ onClose, onSuccess }: TicketCreationWizar
         ) : (
           <div className="relative">
             {isSubmitting && (
-              <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-background/70 backdrop-blur-sm rounded-xl">
-                <ChandakLoader size="sm" title="Processing Request..." subtitle="Dispatching ticket workflow" />
+              <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-background/80 rounded-xl">
+                <ChandakLoader size="sm" title="Submitting..." subtitle="Creating support ticket" />
               </div>
             )}
             {scope?.code === "INFRA" && <TicketFormInfra scope={scope} onCancel={handleBack} onDiscard={onClose} onSubmit={handleFormSubmit} />}

@@ -83,36 +83,12 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
   };
 
   const getModuleTheme = (code: string) => {
-    switch (code) {
-      case "TASK_WORKFLOW":
-        return {
-          color: "text-blue-500",
-          bg: "bg-blue-500/10",
-          border: "border-blue-500/20",
-          dot: "bg-blue-500"
-        };
-      case "VEHICLE_DESK":
-        return {
-          color: "text-amber-500",
-          bg: "bg-amber-500/10",
-          border: "border-amber-500/20",
-          dot: "bg-amber-500"
-        };
-      case "DESIGN_TRACKING":
-        return {
-          color: "text-emerald-500",
-          bg: "bg-emerald-500/10",
-          border: "border-emerald-500/20",
-          dot: "bg-emerald-500"
-        };
-      default:
-        return {
-          color: "text-purple-500",
-          bg: "bg-purple-500/10",
-          border: "border-purple-500/20",
-          dot: "bg-purple-500"
-        };
-    }
+    return {
+      color: "text-theme-btn-primary",
+      bg: "bg-theme-btn-primary/10",
+      border: "border-theme-btn-primary/30",
+      dot: "bg-theme-btn-primary"
+    };
   };
 
   const handleSetDefaultModule = async (e: React.MouseEvent, code: string, name: string) => {
@@ -283,46 +259,45 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
         disabled={!hasMultipleModules}
         className={`w-full flex items-center justify-between gap-2.5 px-3 py-2 rounded-xl border transition-all text-left group ${
           hasMultipleModules
-            ? "hover:border-accent/40 active:scale-[0.99] cursor-pointer"
+            ? "hover:border-theme-btn-primary/40 active:scale-[0.99] cursor-pointer"
             : "cursor-default border-transparent"
-        } ${activeTheme.bg} ${activeTheme.border}`}
+        } bg-surface/80 border-border shadow-xs`}
       >
         <div className="flex items-center gap-2.5 min-w-0 flex-1">
-          <div className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 ${activeTheme.bg} ${activeTheme.color} shadow-sm`}>
+          <div className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 bg-theme-btn-primary/10 text-theme-btn-primary shadow-xs">
             <ActiveIcon className="h-4 w-4" />
           </div>
           <div className="flex flex-col min-w-0">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-muted/80 flex items-center gap-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
               Active Module
               {hasMultipleModules && (
-                <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
               )}
             </span>
-            <span className="text-xs font-bold text-foreground truncate">
+            <span className="text-xs font-semibold text-foreground truncate">
               {activeModule.name}
             </span>
           </div>
         </div>
 
         {hasMultipleModules && (
-          <ChevronDown className={`h-3.5 w-3.5 text-muted transition-transform duration-200 shrink-0 ${open ? "rotate-180 text-foreground" : "group-hover:text-foreground"}`} />
+          <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 shrink-0 ${open ? "rotate-180 text-foreground" : "group-hover:text-foreground"}`} />
         )}
       </AppButton>
 
       {/* Dropdown Menu */}
       {open && hasMultipleModules && (
-        <div className="absolute top-full left-0 right-0 mt-2 z-50 rounded-2xl bg-surface dark:bg-[#0B0F19] border border-border shadow-2xl p-2.5 animate-in fade-in slide-in-from-top-2 duration-150">
-          <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-muted border-b border-border/50 flex items-center justify-between">
-            <span>Available Modules</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-surface-hover text-foreground/70 font-medium">
-              {data?.modules.length} Access
+        <div className="absolute top-full left-0 right-0 mt-2 z-50 rounded-2xl bg-surface border border-border shadow-2xl p-2.5 animate-in fade-in slide-in-from-top-2 duration-150">
+          <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border/50 flex items-center justify-between">
+            <span>Switch Module</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-elevated text-muted-foreground font-semibold">
+              {data?.modules.length} Available
             </span>
           </div>
 
-          <div className="py-2 space-y-1.5">
+          <div className="py-2 space-y-1">
             {data?.modules.map((mod) => {
               const ModIcon = getModuleIcon(mod.code);
-              const modTheme = getModuleTheme(mod.code);
               const isCurrent = mod.code === activeModuleCode;
 
               return (
@@ -331,16 +306,16 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
                   onClick={() => handleSelectModule(mod.code)}
                   className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-left text-xs transition-all cursor-pointer ${
                     isCurrent
-                      ? `${modTheme.bg} ${modTheme.color} font-bold shadow-sm`
-                      : "text-foreground/80 hover:bg-surface-hover hover:text-foreground"
+                      ? "bg-theme-btn-primary/10 text-theme-btn-primary font-bold border border-theme-btn-primary/20 shadow-xs"
+                      : "text-foreground hover:bg-elevated"
                   }`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                    <div className={`h-6 w-6 rounded-md flex items-center justify-center shrink-0 ${modTheme.bg} ${modTheme.color}`}>
+                    <div className={`h-6 w-6 rounded-md flex items-center justify-center shrink-0 ${isCurrent ? 'bg-theme-btn-primary text-white' : 'bg-elevated text-muted-foreground'}`}>
                       <ModIcon className="h-3.5 w-3.5" />
                     </div>
                     <div className="flex flex-col min-w-0">
-                      <span className="truncate leading-tight">{mod.name}</span>
+                      <span className="truncate leading-tight font-medium">{mod.name}</span>
                       {mod.is_default && (
                         <span className="text-[9px] text-amber-500 font-semibold mt-0.5">★ Default Login</span>
                       )}
@@ -353,12 +328,12 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
                         type="button"
                         onClick={(e) => handleSetDefaultModule(e, mod.code, mod.name)}
                         title="Set this as your default module on login"
-                        className="px-2 py-0.5 rounded-md text-[10px] text-muted hover:text-amber-500 hover:bg-amber-500/10 border border-transparent hover:border-amber-500/20 transition-all font-medium"
+                        className="px-2 py-0.5 rounded-md text-[10px] text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10 border border-transparent hover:border-amber-500/20 transition-all font-medium"
                       >
-                        ☆ Make Default
+                        ☆ Set Default
                       </button>
                     )}
-                    {isCurrent && <Check className="h-3.5 w-3.5 shrink-0" />}
+                    {isCurrent && <Check className="h-3.5 w-3.5 text-theme-btn-primary shrink-0" />}
                   </div>
                 </div>
               );
@@ -371,13 +346,9 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
               onClick={() => onCloseMobile?.()}
               className="text-[11px] font-semibold text-theme-btn-primary hover:underline flex items-center gap-1 py-1"
             >
-              <span>Change Default Module</span>
+              <span>Manage Modules</span>
               <ExternalLink className="h-3 w-3" />
             </a>
-
-            <span className="text-[10px] text-muted">
-              Auto-persisted
-            </span>
           </div>
         </div>
       )}

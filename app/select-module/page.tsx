@@ -234,15 +234,7 @@ export default function SelectModulePage() {
   const selectedMeta = getModuleMeta(selectedModuleCode);
 
   return (
-    <div className="min-h-screen w-full bg-background text-foreground flex flex-col relative overflow-hidden select-none font-sans">
-      {/* Background Atmosphere */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div 
-          className="absolute -top-[20%] -left-[10%] w-[50vw] h-[50vw] rounded-full blur-[140px] opacity-20 dark:opacity-25 transition-all duration-700"
-          style={{ backgroundColor: selectedMeta.accentColor }}
-        />
-        <div className="absolute top-[40%] -right-[15%] w-[45vw] h-[45vw] rounded-full bg-blue-500/10 dark:bg-blue-600/15 blur-[160px] opacity-20 dark:opacity-30" />
-      </div>
+    <div className="min-h-screen w-full bg-background text-foreground flex flex-col relative select-none font-sans">
 
       {/* Header Bar */}
       <header className="relative z-20 w-full px-6 py-4 flex items-center justify-between border-b border-border backdrop-blur-md bg-surface/90 dark:bg-surface/60 shadow-xs">
