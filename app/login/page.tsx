@@ -144,6 +144,17 @@ export default function LoginPage() {
         if (session) {
           const rawNext = searchParams.get("next");
           const destination = rawNext && rawNext !== "/" ? `/select-module?next=${encodeURIComponent(rawNext)}` : "/select-module";
+          const isOAuthConflict = searchParams.get("oauth_conflict") === "1";
+
+          const currentToken = typeof window !== "undefined" ? localStorage.getItem("app_session_token") : null;
+          const conflictRes = await checkActiveSessionConflict(session.user.id, currentToken || undefined);
+
+          if (isOAuthConflict || conflictRes.hasConflict) {
+            setConflictData({ user: session.user, destination });
+            setConflictModalOpen(true);
+            return;
+          }
+
           window.location.href = destination;
         }
       }

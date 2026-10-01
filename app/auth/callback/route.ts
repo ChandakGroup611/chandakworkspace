@@ -42,6 +42,22 @@ export async function GET(request: Request) {
         return NextResponse.redirect(`${redirectOrigin}/login?error=account-disabled`);
       }
 
+      // Check if user has an active session on another device/browser
+      const { supabaseAdmin } = await import('@/lib/supabase/service_role');
+      const { data: activeSession } = await supabaseAdmin
+        .from('active_sessions')
+        .select('session_token, last_active_at')
+        .eq('user_id', sessionData.user.id)
+        .maybeSingle();
+
+      if (activeSession && activeSession.session_token) {
+        const lastActive = activeSession.last_active_at ? new Date(activeSession.last_active_at).getTime() : 0;
+        const isRecent = (Date.now() - lastActive) < 24 * 60 * 60 * 1000;
+        if (isRecent) {
+          return NextResponse.redirect(`${redirectOrigin}/login?oauth_conflict=1&next=${encodeURIComponent(next)}`);
+        }
+      }
+
       return NextResponse.redirect(`${redirectOrigin}${next}`);
     } else {
       console.error("Auth Callback Error:", error?.message || "User data missing in session");
