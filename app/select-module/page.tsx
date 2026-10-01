@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { 
@@ -11,7 +11,10 @@ import {
   ArrowRight, 
   CheckCircle2, 
   ChevronDown, 
-  Loader2
+  Check,
+  Star,
+  Loader2,
+  ShieldCheck
 } from "lucide-react";
 import type { UserModulesResult } from "@/lib/actions/module-switcher";
 import ChandakLoader from "@/components/ui/ChandakLoader";
@@ -20,10 +23,10 @@ import { AppButton } from "@/components/ui/AppButton";
 const FALLBACK_MODULES_DATA: UserModulesResult = {
   modules: [
     {
-      id: "mod-task",
+      id: "3c0d7f6f-36a9-4a0c-acb1-c6f48f1dfbbd",
       code: "TASK_WORKFLOW",
       name: "Task & Workspace Management",
-      description: "Core Operations, Workspace, Tasks & Ticketing",
+      description: "Core Operations, Workspace, Tasks, Ticketing & AMC Governance",
       icon: "FolderKanban",
       route_path: "/workspaces/tasks",
       display_order: 1,
@@ -31,10 +34,10 @@ const FALLBACK_MODULES_DATA: UserModulesResult = {
       is_default: true,
     },
     {
-      id: "mod-vehicle",
+      id: "d49152e5-a054-494c-9281-61d487f3b8ed",
       code: "VEHICLE_DESK",
       name: "Vehicle Management Desk",
-      description: "Fleet, Trips & Maintenance Logistics",
+      description: "Fleet Master, Driver Rosters, Trip Sheets & Maintenance Logistics",
       icon: "Car",
       route_path: "/vehicle/dashboard",
       display_order: 2,
@@ -42,10 +45,10 @@ const FALLBACK_MODULES_DATA: UserModulesResult = {
       is_default: false,
     },
     {
-      id: "mod-design",
+      id: "b550adf5-0f8d-4b7f-9088-fd40336e38d1",
       code: "DESIGN_TRACKING",
       name: "Design & Drawing Tracking",
-      description: "Architecture, Drawing Registers & Approvals",
+      description: "Architectural Drawings, CAD/BIM Revision Control & Approvals",
       icon: "Compass",
       route_path: "/design/dashboard",
       display_order: 3,
@@ -54,6 +57,7 @@ const FALLBACK_MODULES_DATA: UserModulesResult = {
     },
   ],
   defaultModule: null,
+  hasExplicitDefault: false,
   activeModuleCode: "TASK_WORKFLOW",
   isAdmin: false,
 };
@@ -68,7 +72,9 @@ export default function SelectModulePage() {
   const [data, setData] = useState<UserModulesResult>(FALLBACK_MODULES_DATA);
   const [selectedModuleCode, setSelectedModuleCode] = useState<string>("TASK_WORKFLOW");
   const [rememberDefault, setRememberDefault] = useState<boolean>(false);
+  const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -76,18 +82,19 @@ export default function SelectModulePage() {
       try {
         setErrorMsg(null);
         const res = await fetch("/api/modules", { cache: "no-store" });
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
-        const modulesData: UserModulesResult = await res.json();
-
-        if (isMounted && modulesData.modules && modulesData.modules.length > 0) {
-          setData(modulesData);
-          const initialChoice = modulesData.activeModuleCode || modulesData.defaultModule?.code || modulesData.modules[0]?.code || "TASK_WORKFLOW";
-          setSelectedModuleCode(initialChoice);
+        if (res.ok) {
+          const modulesData: UserModulesResult = await res.json();
+          if (isMounted && modulesData.modules && modulesData.modules.length > 0) {
+            setData(modulesData);
+            const initialChoice = modulesData.activeModuleCode || modulesData.defaultModule?.code || modulesData.modules[0]?.code || "TASK_WORKFLOW";
+            setSelectedModuleCode(initialChoice);
+            if (modulesData.hasExplicitDefault && modulesData.defaultModule) {
+              setRememberDefault(true);
+            }
+          }
         }
       } catch (err: any) {
-        console.error("Error loading user modules:", err);
+        console.warn("Module load note (using resilient fallback):", err);
       }
     }
 
@@ -95,7 +102,22 @@ export default function SelectModulePage() {
     return () => {
       isMounted = false;
     };
-  }, [router, nextParam]);
+  }, []);
+
+  // Close custom dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    if (dropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [dropdownOpen]);
 
   const handleEnterWorkspace = async (overrideModuleCode?: string) => {
     const targetCode = overrideModuleCode || selectedModuleCode;
@@ -111,17 +133,19 @@ export default function SelectModulePage() {
         body: JSON.stringify({ moduleCode: targetCode, setAsDefault: rememberDefault })
       });
 
-      const result = await res.json();
+      const result = await res.json().catch(() => ({}));
 
-      if (!result.success) {
-        setErrorMsg(result.error || "Failed to switch workspace module");
-        setSubmitting(false);
-        return;
+      let destination = result?.redirectUrl;
+      if (!destination) {
+        const fallbackRoutes: Record<string, string> = {
+          TASK_WORKFLOW: "/workspaces/tasks",
+          VEHICLE_DESK: "/vehicle/dashboard",
+          DESIGN_TRACKING: "/design/dashboard"
+        };
+        destination = fallbackRoutes[targetCode] || "/workspaces/tasks";
       }
 
-      // If a specific deep link exists and belongs to the chosen module, honor it
-      let destination = result.redirectUrl || "/";
-      if (nextParam) {
+      if (nextParam && nextParam !== "/" && !nextParam.includes("/login")) {
         if (targetCode === "TASK_WORKFLOW" && !nextParam.startsWith("/vehicle") && !nextParam.startsWith("/design")) {
           destination = nextParam;
         } else if (targetCode === "VEHICLE_DESK" && nextParam.startsWith("/vehicle")) {
@@ -134,14 +158,12 @@ export default function SelectModulePage() {
       window.location.href = destination;
     } catch (err: any) {
       console.error("Error activating module:", err);
-      // Resilient navigation fallback to target module
       const fallbackRoutes: Record<string, string> = {
         TASK_WORKFLOW: "/workspaces/tasks",
         VEHICLE_DESK: "/vehicle/dashboard",
         DESIGN_TRACKING: "/design/dashboard"
       };
-      const destination = fallbackRoutes[targetCode] || "/";
-      window.location.href = destination;
+      window.location.href = fallbackRoutes[targetCode] || "/workspaces/tasks";
     }
   };
 
@@ -150,11 +172,11 @@ export default function SelectModulePage() {
       case "VEHICLE_DESK":
         return {
           icon: Car,
-          gradient: "from-amber-500/10 via-orange-500/5 to-transparent",
-          badgeBg: "bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-500/30",
+          gradient: "from-amber-500/15 via-orange-500/5 to-transparent",
+          badgeBg: "bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-200 border-amber-300 dark:border-amber-500/30",
           accentColor: "#F59E0B",
           badge: "Fleet & Logistics",
-          launchLabel: "Enter Vehicle Module",
+          launchLabel: "Enter Vehicle Desk",
           features: [
             "Fleet Master & Vehicle Inventory",
             "Driver Roster & Traveler Allocations",
@@ -165,8 +187,8 @@ export default function SelectModulePage() {
       case "TASK_WORKFLOW":
         return {
           icon: FolderKanban,
-          gradient: "from-blue-500/10 via-indigo-500/5 to-transparent",
-          badgeBg: "bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-500/30",
+          gradient: "from-blue-500/15 via-indigo-500/5 to-transparent",
+          badgeBg: "bg-blue-100 dark:bg-blue-500/20 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-500/30",
           accentColor: "#3B82F6",
           badge: "Core Operations",
           launchLabel: "Enter Workspace Module",
@@ -181,8 +203,8 @@ export default function SelectModulePage() {
       case "DESIGN_TRACKING":
         return {
           icon: Compass,
-          gradient: "from-emerald-500/10 via-teal-500/5 to-transparent",
-          badgeBg: "bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30",
+          gradient: "from-emerald-500/15 via-teal-500/5 to-transparent",
+          badgeBg: "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-200 border-emerald-300 dark:border-emerald-500/30",
           accentColor: "#10B981",
           badge: "Drawings & Engineering",
           launchLabel: "Enter Design Tracking",
@@ -196,8 +218,8 @@ export default function SelectModulePage() {
       default:
         return {
           icon: Layers,
-          gradient: "from-purple-500/10 via-pink-500/5 to-transparent",
-          badgeBg: "bg-purple-50 dark:bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-500/30",
+          gradient: "from-purple-500/15 via-pink-500/5 to-transparent",
+          badgeBg: "bg-purple-100 dark:bg-purple-500/20 text-purple-800 dark:text-purple-200 border-purple-300 dark:border-purple-500/30",
           accentColor: "#8B5CF6",
           badge: "Workspace",
           launchLabel: "Enter Module",
@@ -206,42 +228,22 @@ export default function SelectModulePage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background text-foreground">
-        <ChandakLoader />
-        <p className="mt-4 text-sm text-muted tracking-wider uppercase font-medium animate-pulse">
-          Resolving Workspace Entitlements...
-        </p>
-      </div>
-    );
-  }
-
+  const selectedModuleObj = data?.modules.find(m => m.code === selectedModuleCode) || data.modules[0];
   const selectedMeta = getModuleMeta(selectedModuleCode);
 
   return (
-    <div className="min-h-screen w-full bg-background text-foreground flex flex-col relative overflow-hidden select-none font-sans transition-colors duration-200">
-      {/* Dynamic Background Atmosphere */}
+    <div className="min-h-screen w-full bg-background text-foreground flex flex-col relative overflow-hidden select-none font-sans">
+      {/* Background Atmosphere */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div 
-          className="absolute -top-[20%] -left-[10%] w-[50vw] h-[50vw] rounded-full blur-[140px] opacity-15 dark:opacity-25 transition-all duration-700"
+          className="absolute -top-[20%] -left-[10%] w-[50vw] h-[50vw] rounded-full blur-[140px] opacity-20 dark:opacity-25 transition-all duration-700"
           style={{ backgroundColor: selectedMeta.accentColor }}
         />
         <div className="absolute top-[40%] -right-[15%] w-[45vw] h-[45vw] rounded-full bg-blue-500/10 dark:bg-blue-600/15 blur-[160px] opacity-20 dark:opacity-30" />
-        <div className="absolute -bottom-[20%] left-[20%] w-[40vw] h-[40vw] rounded-full bg-indigo-500/10 dark:bg-indigo-700/10 blur-[150px] opacity-15 dark:opacity-20" />
-        
-        {/* Subtle grid pattern */}
-        <div 
-          className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]" 
-          style={{ 
-            backgroundImage: `radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)`,
-            backgroundSize: '32px 32px' 
-          }} 
-        />
       </div>
 
       {/* Header Bar */}
-      <header className="relative z-10 w-full px-6 py-4 flex items-center justify-between border-b border-border backdrop-blur-md bg-surface/80 dark:bg-surface/50 shadow-2xs">
+      <header className="relative z-20 w-full px-6 py-4 flex items-center justify-between border-b border-border backdrop-blur-md bg-surface/90 dark:bg-surface/60 shadow-xs">
         <div className="flex items-center gap-3">
           <div className="h-9 w-auto flex items-center">
             <Image 
@@ -259,8 +261,8 @@ export default function SelectModulePage() {
           </span>
         </div>
 
-        {data?.userFullName && (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface border border-border text-xs text-foreground shadow-2xs">
+        {data?.userFullName ? (
+          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface border border-border text-xs text-foreground shadow-2xs">
             <div className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
             <span className="font-semibold">{data.userFullName}</span>
             {data.isAdmin && (
@@ -269,30 +271,86 @@ export default function SelectModulePage() {
               </span>
             )}
           </div>
+        ) : (
+          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-surface border border-border text-xs text-muted">
+            <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
+            <span>Select Workspace</span>
+          </div>
         )}
       </header>
 
-      {/* Main Selection Area */}
+      {/* Main Content */}
       <main className="relative z-10 flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 md:py-12 flex flex-col justify-center">
 
-        {/* Quick Dropdown Selector for Fast Selection */}
-        <div className="max-w-md mx-auto w-full mb-8">
+        <div className="text-center max-w-xl mx-auto mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-2">
+            Select Active Workspace Module
+          </h1>
+          <p className="text-sm text-muted">
+            Choose the workspace module you would like to enter for this session.
+          </p>
+        </div>
+
+        {/* Custom Bulletproof Interactive Selector Dropdown */}
+        <div className="max-w-md mx-auto w-full mb-8" ref={dropdownRef}>
           <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-2">
-            Select Active Module
+            Quick Selector Dropdown
           </label>
           <div className="relative">
-            <select
-              value={selectedModuleCode}
-              onChange={(e) => setSelectedModuleCode(e.target.value)}
-              className="w-full appearance-none bg-surface hover:bg-elevated text-foreground border border-border rounded-xl px-4 py-3 pr-10 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/30 focus:border-theme-btn-primary transition-all cursor-pointer shadow-xs"
+            <button
+              type="button"
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="w-full flex items-center justify-between bg-surface hover:bg-elevated text-foreground border border-border rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/30 focus:border-theme-btn-primary transition-all cursor-pointer shadow-xs"
             >
-              {data?.modules.map((m) => (
-                <option key={m.id} value={m.code} className="bg-surface text-foreground py-2 font-medium">
-                  {m.name} {m.is_default ? "★ (Default)" : ""}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted pointer-events-none" />
+              <div className="flex items-center gap-2.5 truncate">
+                <span className="truncate">{selectedModuleObj?.name || "Select Module"}</span>
+                {selectedModuleObj?.is_default && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold border border-amber-500/25 shrink-0">
+                    ★ Default
+                  </span>
+                )}
+              </div>
+              <ChevronDown className={`h-4 w-4 text-muted transition-transform duration-200 shrink-0 ${dropdownOpen ? "rotate-180" : ""}`} />
+            </button>
+
+            {dropdownOpen && (
+              <div className="absolute top-full left-0 right-0 mt-2 z-50 rounded-2xl bg-surface border border-border shadow-2xl p-2 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="space-y-1">
+                  {data?.modules.map((m) => {
+                    const isSelected = selectedModuleCode === m.code;
+                    const meta = getModuleMeta(m.code);
+                    const Icon = meta.icon;
+
+                    return (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedModuleCode(m.code);
+                          setDropdownOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between gap-3 px-3.5 py-3 rounded-xl text-left text-sm font-medium transition-colors cursor-pointer ${
+                          isSelected 
+                            ? "bg-theme-btn-primary/10 text-theme-btn-primary font-bold border border-theme-btn-primary/20" 
+                            : "text-foreground hover:bg-elevated"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <Icon className="h-4 w-4 shrink-0" />
+                          <span className="truncate">{m.name}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {m.is_default && (
+                            <span className="text-[10px] text-amber-500 font-bold">★ Default</span>
+                          )}
+                          {isSelected && <Check className="h-4 w-4 text-theme-btn-primary" />}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -301,7 +359,7 @@ export default function SelectModulePage() {
           {(data?.modules || [])
             .slice()
             .sort((a, b) => {
-              const order: Record<string, number> = { VEHICLE_DESK: 1, TASK_WORKFLOW: 2, DESIGN_TRACKING: 3 };
+              const order: Record<string, number> = { TASK_WORKFLOW: 1, VEHICLE_DESK: 2, DESIGN_TRACKING: 3 };
               return (order[a.code] || 99) - (order[b.code] || 99);
             })
             .map((module) => {
@@ -316,11 +374,11 @@ export default function SelectModulePage() {
                   onDoubleClick={() => handleEnterWorkspace(module.code)}
                   className={`group relative rounded-2xl p-6 cursor-pointer transition-all duration-300 flex flex-col justify-between border ${
                     isSelected
-                      ? "bg-surface border-theme-btn-primary shadow-lg ring-2 ring-theme-btn-primary/20 scale-[1.02]"
-                      : "bg-surface/80 dark:bg-surface/40 hover:bg-surface border-border hover:border-theme-btn-primary/40 shadow-xs hover:shadow-md hover:scale-[1.01]"
+                      ? "bg-surface border-theme-btn-primary shadow-xl ring-2 ring-theme-btn-primary/30 scale-[1.02]"
+                      : "bg-surface/80 dark:bg-surface/40 hover:bg-surface border-border hover:border-theme-btn-primary/50 shadow-xs hover:shadow-lg hover:scale-[1.01]"
                   }`}
                 >
-                  {/* Highlight Glow Background */}
+                  {/* Glow Background */}
                   <div 
                     className={`absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none bg-gradient-to-br ${meta.gradient}`} 
                   />
@@ -337,9 +395,14 @@ export default function SelectModulePage() {
                       </div>
 
                       <div className="flex items-center gap-1.5">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${meta.badgeBg}`}>
+                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${meta.badgeBg}`}>
                           {meta.badge}
                         </span>
+                        {module.is_default && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold border border-amber-500/25">
+                            ★ Default
+                          </span>
+                        )}
                         <div className={`h-5 w-5 rounded-full flex items-center justify-center border transition-all ${
                           isSelected 
                             ? "border-theme-btn-primary bg-theme-btn-primary text-white shadow-xs" 
@@ -350,9 +413,12 @@ export default function SelectModulePage() {
                       </div>
                     </div>
 
-                    <h3 className="text-lg font-bold text-foreground mb-4 group-hover:text-theme-btn-primary transition-colors">
+                    <h3 className="text-lg font-bold text-foreground mb-2 group-hover:text-theme-btn-primary transition-colors">
                       {module.name}
                     </h3>
+                    <p className="text-xs text-muted mb-4 leading-relaxed line-clamp-2">
+                      {module.description}
+                    </p>
                   </div>
 
                   {/* Card Footer Button */}
@@ -388,14 +454,14 @@ export default function SelectModulePage() {
             </div>
           )}
 
-          <label className="flex items-center justify-center gap-2.5 text-xs text-muted cursor-pointer hover:text-foreground transition-colors">
+          <label className="flex items-center justify-center gap-2.5 text-xs text-foreground cursor-pointer hover:text-foreground/80 transition-colors p-2 rounded-xl bg-surface/50 border border-border/50">
             <input
               type="checkbox"
               checked={rememberDefault}
               onChange={(e) => setRememberDefault(e.target.checked)}
               className="rounded border-border bg-surface text-theme-btn-primary focus:ring-theme-btn-primary h-4 w-4 cursor-pointer"
             />
-            <span>Remember my choice as default for future logins</span>
+            <span className="font-medium">Remember my choice as default for future logins</span>
           </label>
 
           <AppButton
@@ -420,10 +486,11 @@ export default function SelectModulePage() {
         </div>
       </main>
 
-      {/* Clean Modern Footer */}
+      {/* Modern Footer */}
       <footer className="relative z-10 w-full py-4 text-center text-[11px] text-muted border-t border-border bg-surface/50">
         © {new Date().getFullYear()} Chandak Group. Enterprise Workspace Architecture. All rights reserved.
       </footer>
     </div>
   );
 }
+
