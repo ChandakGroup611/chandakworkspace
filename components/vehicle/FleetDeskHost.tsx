@@ -798,12 +798,12 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
   // Vehicle Master Dossier Multi-Column / Tab View States
   const [vehicleDossierTab, setVehicleDossierTab] = useState<
-    "OVERVIEW" | "SERVICES" | "PARTS" | "DOCS" | "COMPLIANCE" | "TRIPS" | "ALL"
-  >("ALL");
+    "OVERVIEW" | "SERVICES" | "PARTS" | "DOCS" | "COMPLIANCE" | "TRIPS"
+  >("OVERVIEW");
   const [dossierOriginVehicle, setDossierOriginVehicle] = useState<VehicleRecord | null>(null);
   const [dossierOriginTab, setDossierOriginTab] = useState<
-    "OVERVIEW" | "SERVICES" | "PARTS" | "DOCS" | "COMPLIANCE" | "TRIPS" | "ALL"
-  >("ALL");
+    "OVERVIEW" | "SERVICES" | "PARTS" | "DOCS" | "COMPLIANCE" | "TRIPS"
+  >("OVERVIEW");
   const [isDossierAddDocOpen, setIsDossierAddDocOpen] = useState(false);
   const [dossierNewDocType, setDossierNewDocType] = useState("PUC");
   const [dossierNewDocTitle, setDossierNewDocTitle] = useState("");
@@ -9917,7 +9917,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           key={veh.id} 
                           onClick={() => {
                             setViewingVehicle(veh);
-                            setVehicleDossierTab("ALL");
+                            setVehicleDossierTab("OVERVIEW");
                           }}
                           className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group"
                         >
@@ -10158,7 +10158,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setViewingVehicle(veh);
-                                  setVehicleDossierTab("ALL");
+                                  setVehicleDossierTab("OVERVIEW");
                                 }}
                                 className="h-7 px-2.5 text-xs gap-1 font-semibold bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text shadow-2xs"
                               >
@@ -18986,40 +18986,40 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           </div>
 
           {/* 3. STICKY DOSSIER NAVIGATION BAR */}
-          <div className="bg-surface/95 backdrop-blur-md p-1.5 rounded-xl border border-border shadow-2xs flex items-center gap-1 overflow-x-auto no-scrollbar sticky top-0 z-20">
+          <div className="bg-surface/95 backdrop-blur-md p-1.5 rounded-xl border border-border shadow-2xs flex items-center gap-1.5 overflow-x-auto no-scrollbar sticky top-0 z-20">
             <button
               type="button"
-              onClick={() => setVehicleDossierTab("ALL")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
-                vehicleDossierTab === "ALL"
-                  ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-2xs"
-                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+              onClick={() => setVehicleDossierTab("OVERVIEW")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
+                vehicleDossierTab === "OVERVIEW"
+                  ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-surface border border-transparent"
               }`}
             >
-              <Layers className="h-3.5 w-3.5 text-theme-btn-primary" />
-              <span>360° All</span>
+              <Gauge className="h-3.5 w-3.5" />
+              <span>Overview &amp; Specs</span>
             </button>
 
             <button
               type="button"
-              onClick={() => setVehicleDossierTab("OVERVIEW")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
-                vehicleDossierTab === "OVERVIEW"
-                  ? "bg-indigo-600 text-white shadow-2xs"
-                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+              onClick={() => setVehicleDossierTab("COMPLIANCE")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
+                vehicleDossierTab === "COMPLIANCE"
+                  ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-surface border border-transparent"
               }`}
             >
-              <Gauge className="h-3.5 w-3.5" />
-              <span>Overview & Specs</span>
+              <ShieldCheck className="h-3.5 w-3.5" />
+              <span>Compliance &amp; Renewals</span>
             </button>
 
             <button
               type="button"
               onClick={() => setVehicleDossierTab("SERVICES")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
                 vehicleDossierTab === "SERVICES"
-                  ? "bg-amber-600 text-white shadow-2xs"
-                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                  ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-surface border border-transparent"
               }`}
             >
               <Wrench className="h-3.5 w-3.5" />
@@ -19029,10 +19029,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             <button
               type="button"
               onClick={() => setVehicleDossierTab("PARTS")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
                 vehicleDossierTab === "PARTS"
-                  ? "bg-blue-600 text-white shadow-2xs"
-                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                  ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-surface border border-transparent"
               }`}
             >
               <Package className="h-3.5 w-3.5" />
@@ -19042,10 +19042,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             <button
               type="button"
               onClick={() => setVehicleDossierTab("DOCS")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
                 vehicleDossierTab === "DOCS"
-                  ? "bg-emerald-600 text-white shadow-2xs"
-                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                  ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-surface border border-transparent"
               }`}
             >
               <FileCheck className="h-3.5 w-3.5" />
@@ -19054,24 +19054,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
             <button
               type="button"
-              onClick={() => setVehicleDossierTab("COMPLIANCE")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
-                vehicleDossierTab === "COMPLIANCE"
-                  ? "bg-cyan-600 text-white shadow-2xs"
-                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-              }`}
-            >
-              <ShieldCheck className="h-3.5 w-3.5" />
-              <span>Compliance & Renewals</span>
-            </button>
-
-            <button
-              type="button"
               onClick={() => setVehicleDossierTab("TRIPS")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
                 vehicleDossierTab === "TRIPS"
-                  ? "bg-purple-600 text-white shadow-2xs"
-                  : "text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                  ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-surface border border-transparent"
               }`}
             >
               <MapPin className="h-3.5 w-3.5" />
@@ -19082,94 +19069,97 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           {/* ========================================================================= */}
           {/* TAB 1: OVERVIEW & TECHNICAL SPECIFICATIONS */}
           {/* ========================================================================= */}
-          {(vehicleDossierTab === "OVERVIEW" || vehicleDossierTab === "ALL") && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between border-b border-border pb-2">
-                <div className="text-sm font-bold text-foreground flex items-center gap-2">
-                  <Gauge className="h-4 w-4 text-theme-btn-primary" />
-                  <span>Technical Powertrain & Identity Specifications</span>
+          {vehicleDossierTab === "OVERVIEW" && (
+            <div className="space-y-6">
+              {/* Section 1: Basic Information & Technical Specifications */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between border-b border-border pb-2">
+                  <div className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+                    <Gauge className="h-4 w-4 text-theme-btn-primary" />
+                    <span>Basic Information &amp; Technical Specifications</span>
+                  </div>
                 </div>
-              </div>
 
-              {/* Technical Specifications Grid (5x2 Balanced Grid - 10 Items) */}
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-5 gap-3">
-                <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
-                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Category / Body Type</span>
-                  <div className="font-semibold text-foreground text-xs">{viewingVehicle.category || "Standard"}</div>
-                </div>
-                <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
-                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Fuel / Powertrain</span>
-                  <div className="font-semibold text-foreground text-xs flex items-center gap-1">
-                    <Fuel className="h-3.5 w-3.5 text-amber-500" />
-                    <span>{viewingVehicle.fuel_type || "Petrol"}</span>
+                {/* Technical Specifications Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-5 gap-3">
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Category / Body Type</span>
+                    <div className="font-semibold text-foreground text-xs">{viewingVehicle.category || "Standard"}</div>
                   </div>
-                </div>
-                <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
-                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Seating Capacity</span>
-                  <div className="font-semibold text-foreground text-xs">{viewingVehicle.seating_capacity ? `${viewingVehicle.seating_capacity} Seater` : "5 Seater"}</div>
-                </div>
-                <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
-                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Transmission</span>
-                  <div className="font-semibold text-foreground text-xs">{viewingVehicle.transmission || "Manual"}</div>
-                </div>
-                <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
-                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Chassis / VIN Number</span>
-                  <div className="font-mono font-bold text-foreground text-xs">{viewingVehicle.vin_chassis_number || "—"}</div>
-                </div>
-                <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
-                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Engine Number</span>
-                  <div className="font-mono font-bold text-foreground text-xs">{viewingVehicle.engine_number || "—"}</div>
-                </div>
-                <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
-                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Exterior Paint Color</span>
-                  <div className="font-semibold text-foreground text-xs flex items-center gap-1.5">
-                    <span className="h-3.5 w-3.5 rounded-full border border-border" style={{ backgroundColor: viewingVehicle.paint_color || "#334155" }} />
-                    <span>{viewingVehicle.paint_color || "Standard"}</span>
-                  </div>
-                </div>
-                <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
-                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Registration Date</span>
-                  <div className="font-mono font-semibold text-foreground text-xs">{viewingVehicle.registration_date ? String(viewingVehicle.registration_date).split("T")[0] : "—"}</div>
-                </div>
-                <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
-                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                    <IndianRupee className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-                    <span>On-Road Asset Cost</span>
-                  </span>
-                  <div className="font-mono font-bold text-emerald-700 dark:text-emerald-300 text-xs">
-                    {viewingVehicle.on_road_price || viewingVehicle.purchase_price || viewingVehicle.purchase_cost
-                      ? `₹${Number(viewingVehicle.on_road_price || viewingVehicle.purchase_price || viewingVehicle.purchase_cost).toLocaleString("en-IN")}`
-                      : "—"}
-                  </div>
-                  {viewingVehicle.ex_showroom_price ? (
-                    <div className="text-[10px] text-muted-foreground font-mono">
-                      Ex-Show: ₹{Number(viewingVehicle.ex_showroom_price).toLocaleString("en-IN")}
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Fuel / Powertrain</span>
+                    <div className="font-semibold text-foreground text-xs flex items-center gap-1">
+                      <Fuel className="h-3.5 w-3.5 text-amber-500" />
+                      <span>{viewingVehicle.fuel_type || "Petrol"}</span>
                     </div>
-                  ) : null}
-                </div>
-                <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                      <CalendarClock className="h-3 w-3 text-indigo-500" />
-                      <span>Extended Expiry</span>
-                    </span>
-                    {viewingVehicle.custom_extended_expiry_date && (
-                      <div>{renderExpiryBadge(calculateDaysRemaining(viewingVehicle.custom_extended_expiry_date))}</div>
-                    )}
                   </div>
-                  <div className="font-mono font-semibold text-foreground text-xs">
-                    {viewingVehicle.custom_extended_expiry_date ? String(viewingVehicle.custom_extended_expiry_date).split("T")[0] : "—"}
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Seating Capacity</span>
+                    <div className="font-semibold text-foreground text-xs">{viewingVehicle.seating_capacity ? `${viewingVehicle.seating_capacity} Seater` : "5 Seater"}</div>
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Transmission</span>
+                    <div className="font-semibold text-foreground text-xs">{viewingVehicle.transmission || "Manual"}</div>
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Chassis / VIN Number</span>
+                    <div className="font-mono font-bold text-foreground text-xs">{viewingVehicle.vin_chassis_number || "—"}</div>
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Engine Number</span>
+                    <div className="font-mono font-bold text-foreground text-xs">{viewingVehicle.engine_number || "—"}</div>
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Exterior Paint Color</span>
+                    <div className="font-semibold text-foreground text-xs flex items-center gap-1.5">
+                      <span className="h-3.5 w-3.5 rounded-full border border-border" style={{ backgroundColor: viewingVehicle.paint_color || "#334155" }} />
+                      <span>{viewingVehicle.paint_color || "Standard"}</span>
+                    </div>
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Registration Date</span>
+                    <div className="font-mono font-semibold text-foreground text-xs">{viewingVehicle.registration_date ? String(viewingVehicle.registration_date).split("T")[0] : "—"}</div>
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                      <IndianRupee className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                      <span>On-Road Capital Cost</span>
+                    </span>
+                    <div className="font-mono font-bold text-emerald-700 dark:text-emerald-300 text-xs">
+                      {viewingVehicle.on_road_price || viewingVehicle.purchase_price || viewingVehicle.purchase_cost
+                        ? `₹${Number(viewingVehicle.on_road_price || viewingVehicle.purchase_price || viewingVehicle.purchase_cost).toLocaleString("en-IN")}`
+                        : "—"}
+                    </div>
+                    {viewingVehicle.ex_showroom_price ? (
+                      <div className="text-[10px] text-muted-foreground font-mono">
+                        Ex-Show: ₹{Number(viewingVehicle.ex_showroom_price).toLocaleString("en-IN")}
+                      </div>
+                    ) : null}
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                        <CalendarClock className="h-3 w-3 text-indigo-500" />
+                        <span>Extended Expiry</span>
+                      </span>
+                      {viewingVehicle.custom_extended_expiry_date && (
+                        <div>{renderExpiryBadge(calculateDaysRemaining(viewingVehicle.custom_extended_expiry_date))}</div>
+                      )}
+                    </div>
+                    <div className="font-mono font-semibold text-foreground text-xs">
+                      {viewingVehicle.custom_extended_expiry_date ? String(viewingVehicle.custom_extended_expiry_date).split("T")[0] : "—"}
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* RTO & Chauffeur Details Grid */}
+              {/* Section 2: Registration & RTO Details and Section 3: Duty Assignment */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* RTO Office & Ownership */}
+                {/* Section 2: RTO Office Jurisdiction & Ownership */}
                 <div className="p-4 rounded-xl border border-border bg-surface space-y-3">
-                  <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                    <Building2 className="h-4 w-4 text-blue-500" />
-                    <span>RTO Jurisdiction & Registered Ownership</span>
+                  <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 border-b border-border/60 pb-2">
+                    <Building2 className="h-4 w-4 text-theme-btn-primary" />
+                    <span>Registration &amp; RTO Jurisdiction</span>
                   </div>
                   <div className="space-y-2 text-xs">
                     <div className="flex items-center justify-between">
@@ -19189,21 +19179,19 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       <span className="font-mono font-semibold text-foreground">{viewingVehicle.fitness_expiry_date || "—"}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">On-Road Asset Cost:</span>
-                      <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                        {viewingVehicle.on_road_price || viewingVehicle.purchase_price || viewingVehicle.purchase_cost
-                          ? `₹${Number(viewingVehicle.on_road_price || viewingVehicle.purchase_price || viewingVehicle.purchase_cost).toLocaleString("en-IN")}`
-                          : "—"}
+                      <span className="text-muted-foreground">HSRP Plate Status:</span>
+                      <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                        {viewingVehicle.has_hsrp_plate !== false ? "Laser-Etched HSRP Fitted" : "Standard Plate"}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Assigned Chauffeur & Personnel Details */}
+                {/* Section 3: Assigned Chauffeur & Personnel Details */}
                 <div className="p-4 rounded-xl border border-border bg-surface space-y-3">
-                  <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                    <Users className="h-4 w-4 text-purple-500" />
-                    <span>Assigned Chauffeur & Duty Assignment</span>
+                  <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 border-b border-border/60 pb-2">
+                    <Users className="h-4 w-4 text-theme-btn-primary" />
+                    <span>Assigned Chauffeur &amp; Duty Assignment</span>
                   </div>
                   {(() => {
                     const assignedDriverFull = viewingVehicle.assignedDriver?.id
@@ -19239,20 +19227,17 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 </div>
               </div>
 
-              {/* Vehicle Acquisition Financials & On-Road Quotation Breakdown Card */}
-              <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-50/20 dark:bg-emerald-950/10 space-y-3.5">
-                <div className="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-emerald-500/20">
+              {/* Section 4: Vehicle Acquisition Financials & On-Road Breakdown */}
+              <div className="p-4 rounded-xl border border-border bg-surface space-y-3.5">
+                <div className="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-border">
                   <div className="flex items-center gap-2">
-                    <div className="h-7 w-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                    <div className="h-7 w-7 rounded-lg bg-emerald-600/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xs border border-emerald-500/20">
                       ₹
                     </div>
                     <div>
                       <h4 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
-                        <span>Vehicle Acquisition Financials &amp; On-Road Quotation</span>
+                        <span>Vehicle Acquisition Financials &amp; Capital Valuation</span>
                       </h4>
-                      <p className="text-xs text-muted-foreground">
-                        Itemized statutory taxes, ex-showroom breakdown, registration, fitments &amp; other charges
-                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -19266,7 +19251,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
                   {/* Column 1: Ex-Factory Base & Taxes */}
                   <div className="p-3 rounded-lg border border-border bg-surface space-y-2">
-                    <span className="font-bold text-emerald-800 dark:text-emerald-400 uppercase tracking-wider text-xs block pb-1 border-b border-border/60">
+                    <span className="font-bold text-foreground uppercase tracking-wider text-xs block pb-1 border-b border-border/60">
                       Factory Base &amp; Tax Matrix
                     </span>
                     <div className="flex items-center justify-between">
@@ -19299,7 +19284,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
                   {/* Column 2: Statutory RTO, TCS & Insurance */}
                   <div className="p-3 rounded-lg border border-border bg-surface space-y-2">
-                    <span className="font-bold text-blue-800 dark:text-blue-400 uppercase tracking-wider text-xs block pb-1 border-b border-border/60">
+                    <span className="font-bold text-foreground uppercase tracking-wider text-xs block pb-1 border-b border-border/60">
                       Statutory &amp; Compliance
                     </span>
                     <div className="flex items-center justify-between">
@@ -19330,7 +19315,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
                   {/* Column 3: Fitments, Extended Warranty, Other & Discounts */}
                   <div className="p-3 rounded-lg border border-border bg-surface space-y-2">
-                    <span className="font-bold text-purple-800 dark:text-purple-400 uppercase tracking-wider text-xs block pb-1 border-b border-border/60">
+                    <span className="font-bold text-foreground uppercase tracking-wider text-xs block pb-1 border-b border-border/60">
                       Fitments, Other &amp; Discounts
                     </span>
                     <div className="flex items-center justify-between">
@@ -19372,7 +19357,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           {/* ========================================================================= */}
           {/* TAB 2: VEHICLE SERVICE DETAILS (Workshop & Job Sheets) */}
           {/* ========================================================================= */}
-          {(vehicleDossierTab === "SERVICES" || vehicleDossierTab === "ALL") && (
+          {vehicleDossierTab === "SERVICES" && (
             <div className="space-y-4">
               <div className="flex items-center justify-between border-b border-border pb-2 flex-wrap gap-2">
                 <div>
@@ -19620,7 +19605,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           {/* ========================================================================= */}
           {/* TAB 3: SPARE PARTS & MOUNTED ASSETS */}
           {/* ========================================================================= */}
-          {(vehicleDossierTab === "PARTS" || vehicleDossierTab === "ALL") && (
+          {vehicleDossierTab === "PARTS" && (
             <div className="space-y-4">
               <div className="flex items-center justify-between border-b border-border pb-2 flex-wrap gap-2">
                 <div>
@@ -19832,7 +19817,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           {/* ========================================================================= */}
           {/* TAB 4: LEGAL & COMPLIANCE DOCUMENT VAULT */}
           {/* ========================================================================= */}
-          {(vehicleDossierTab === "DOCS" || vehicleDossierTab === "ALL") && (
+          {vehicleDossierTab === "DOCS" && (
             <div className="space-y-4">
               <div className="flex items-center justify-between border-b border-border pb-2 flex-wrap gap-2">
                 <div>
@@ -20338,7 +20323,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           {/* ========================================================================= */}
           {/* TAB 5: STATUTORY COMPLIANCE, INSURANCE & PUC */}
           {/* ========================================================================= */}
-          {(vehicleDossierTab === "COMPLIANCE" || vehicleDossierTab === "ALL") && (
+          {vehicleDossierTab === "COMPLIANCE" && (
             <div className="space-y-4">
               <div className="flex items-center justify-between border-b border-border pb-2 flex-wrap gap-2">
                 <div>
@@ -20734,7 +20719,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           {/* ========================================================================= */}
           {/* TAB 6: TRIP MOVEMENTS & DISPATCH HISTORY */}
           {/* ========================================================================= */}
-          {(vehicleDossierTab === "TRIPS" || vehicleDossierTab === "ALL") && (
+          {vehicleDossierTab === "TRIPS" && (
             <div className="space-y-4">
               <div className="flex items-center justify-between border-b border-border pb-2 flex-wrap gap-2">
                 <div>
