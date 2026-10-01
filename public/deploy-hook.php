@@ -94,9 +94,11 @@ if ($versionedDirs && is_array($versionedDirs)) {
 $allTargetDirs = array_values(array_unique(array_filter($targetDirs)));
 
 // Diagnostic / Info Mode
-if (isset($_GET['info']) || isset($_GET['scan']) || isset($_GET['diag'])) {
+if (isset($_GET['info']) || isset($_GET['scan']) || isset($_GET['diag']) || isset($_GET['logs'])) {
     $foundBuildIds = [];
     $foundFiles = [];
+    $foundLogs = [];
+    $foundHts = [];
     
     foreach ($allTargetDirs as $tDir) {
         if (!is_dir($tDir)) continue;
@@ -108,6 +110,15 @@ if (isset($_GET['info']) || isset($_GET['scan']) || isset($_GET['diag'])) {
         if ($sc) {
             $foundFiles[$tDir] = array_values(array_diff($sc, ['.', '..']));
         }
+        if (file_exists($tDir . '/stderr.log')) {
+            $foundLogs[$tDir . '/stderr.log'] = substr(@file_get_contents($tDir . '/stderr.log'), -2000);
+        }
+        if (file_exists($tDir . '/console.log')) {
+            $foundLogs[$tDir . '/console.log'] = substr(@file_get_contents($tDir . '/console.log'), -2000);
+        }
+        if (file_exists($tDir . '/.htaccess')) {
+            $foundHts[$tDir . '/.htaccess'] = @file_get_contents($tDir . '/.htaccess');
+        }
     }
     
     echo json_encode([
@@ -117,6 +128,8 @@ if (isset($_GET['info']) || isset($_GET['scan']) || isset($_GET['diag'])) {
         'target_dirs' => $allTargetDirs,
         'build_ids' => $foundBuildIds,
         'files' => $foundFiles,
+        'logs' => $foundLogs,
+        'htaccess' => $foundHts,
         'timestamp' => date('Y-m-d H:i:s')
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     exit;
