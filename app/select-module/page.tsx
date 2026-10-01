@@ -35,35 +35,33 @@ export default function SelectModulePage() {
         setLoading(true);
         setErrorMsg(null);
 
-        const { createClient } = await import("@/utils/supabase/client");
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
+        const res = await fetch("/api/modules", { cache: "no-store" });
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        const modulesData: UserModulesResult = await res.json();
 
-        if (!user) {
+        if (!modulesData.modules || modulesData.modules.length === 0) {
           router.replace("/login");
           return;
         }
 
-        let res = await getUserAllowedModules(user.id);
-
-        if (!res.modules || res.modules.length === 0) {
-          // Retry once in case of initial token handshake
-          res = await getUserAllowedModules(user.id);
-        }
-
-        setData(res);
-        const initialChoice = res.activeModuleCode || res.defaultModule?.code || res.modules[0]?.code || "TASK_WORKFLOW";
+        setData(modulesData);
+        const initialChoice = modulesData.activeModuleCode || modulesData.defaultModule?.code || modulesData.modules[0]?.code || "TASK_WORKFLOW";
         setSelectedModuleCode(initialChoice);
       } catch (err: any) {
         console.error("Error loading user modules:", err);
-        // Fallback gracefully
-        const res = await getUserAllowedModules();
-        if (res.modules && res.modules.length > 0) {
-          setData(res);
-          setSelectedModuleCode(res.activeModuleCode || res.modules[0].code);
-        } else {
-          setErrorMsg("Unable to retrieve module permissions. Please try again.");
-        }
+        // Fallback retry
+        try {
+          const fallbackRes = await fetch("/api/modules", { cache: "no-store" });
+          const fallbackData: UserModulesResult = await fallbackRes.json();
+          if (fallbackData.modules && fallbackData.modules.length > 0) {
+            setData(fallbackData);
+            setSelectedModuleCode(fallbackData.activeModuleCode || fallbackData.modules[0].code);
+            return;
+          }
+        } catch {}
+        setErrorMsg("Unable to retrieve module permissions. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -80,15 +78,22 @@ export default function SelectModulePage() {
       setSubmitting(true);
       setErrorMsg(null);
 
-      const res = await setActiveModule(targetCode, rememberDefault);
-      if (!res.success) {
-        setErrorMsg(res.error || "Failed to switch workspace module");
+      const res = await fetch("/api/modules", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ moduleCode: targetCode, setAsDefault: rememberDefault })
+      });
+
+      const result = await res.json();
+
+      if (!result.success) {
+        setErrorMsg(result.error || "Failed to switch workspace module");
         setSubmitting(false);
         return;
       }
 
       // If a specific deep link exists and belongs to the chosen module, honor it
-      let destination = res.redirectUrl;
+      let destination = result.redirectUrl || "/";
       if (nextParam) {
         if (targetCode === "TASK_WORKFLOW" && !nextParam.startsWith("/vehicle") && !nextParam.startsWith("/design")) {
           destination = nextParam;
@@ -102,8 +107,14 @@ export default function SelectModulePage() {
       window.location.href = destination;
     } catch (err: any) {
       console.error("Error activating module:", err);
-      setErrorMsg(err.message || "An unexpected error occurred.");
-      setSubmitting(false);
+      // Resilient navigation fallback to target module
+      const fallbackRoutes: Record<string, string> = {
+        TASK_WORKFLOW: "/workspaces/tasks",
+        VEHICLE_DESK: "/vehicle/dashboard",
+        DESIGN_TRACKING: "/design/dashboard"
+      };
+      const destination = fallbackRoutes[targetCode] || "/";
+      window.location.href = destination;
     }
   };
 
