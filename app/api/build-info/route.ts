@@ -8,8 +8,8 @@ export async function GET() {
     timestamp: new Date().toISOString(),
     cwd: process.cwd(),
     node_version: process.version,
-    git_commit: '7268250d',
-    build_version: '2026.09.30-quotation-matrix-v3',
+    git_commit: '0f72cd02',
+    build_version: '2026.10.01-module-api-v1',
     uptime: process.uptime()
   });
 }
