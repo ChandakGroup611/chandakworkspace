@@ -2128,6 +2128,20 @@ export async function createVehicleAction(formData: {
     let nickname = formData.nickname?.trim();
     let odo = formData.odometer_km ?? 0;
 
+    // Date Sequence Validation
+    if (reg_date && ins_exp && ins_exp < reg_date) {
+      return { success: false, error: "Insurance Expiry Date cannot be earlier than Vehicle Registration Date." };
+    }
+    if (reg_date && puc_exp && puc_exp < reg_date) {
+      return { success: false, error: "PUC Expiry Date cannot be earlier than Vehicle Registration Date." };
+    }
+    if (reg_date && fit_exp && fit_exp < reg_date) {
+      return { success: false, error: "Fitness Expiry Date cannot be earlier than Vehicle Registration Date." };
+    }
+    if (reg_date && formData.custom_extended_expiry_date && formData.custom_extended_expiry_date <= reg_date) {
+      return { success: false, error: "Custom Extended Expiry Date must be after Registration Date." };
+    }
+
     const isElectric = isElectricFuel(fuel_type);
     if (isElectric) {
       puc_exp = undefined;

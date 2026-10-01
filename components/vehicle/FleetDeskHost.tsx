@@ -3861,6 +3861,23 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       return;
     }
 
+    if (editVehicleRegDate && editVehicleInsuranceExpiry && editVehicleInsuranceExpiry < editVehicleRegDate) {
+      triggerToast("Insurance Expiry Date cannot be earlier than Vehicle Registration Date.", true);
+      return;
+    }
+    if (editVehicleRegDate && editVehiclePucExpiry && editVehiclePucExpiry < editVehicleRegDate) {
+      triggerToast("PUC Expiry Date cannot be earlier than Vehicle Registration Date.", true);
+      return;
+    }
+    if (editVehicleRegDate && editVehicleFitnessExpiry && editVehicleFitnessExpiry < editVehicleRegDate) {
+      triggerToast("Fitness Expiry Date cannot be earlier than Vehicle Registration Date.", true);
+      return;
+    }
+    if (editVehicleRegDate && editVehicleCustomExtendedExpiryDate && editVehicleCustomExtendedExpiryDate <= editVehicleRegDate) {
+      triggerToast("Custom Extended Expiry Date must be after Registration Date.", true);
+      return;
+    }
+
     setModalSubmitting(true);
     try {
       let make = newVehicleMake.trim();
@@ -3913,6 +3930,21 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       }
       if (!regDate) {
         triggerToast("Registration Date is mandatory.", true);
+        setModalSubmitting(false);
+        return;
+      }
+      if (insExp && regDate && insExp < regDate) {
+        triggerToast("Insurance Expiry Date cannot be earlier than Vehicle Registration Date.", true);
+        setModalSubmitting(false);
+        return;
+      }
+      if (!isElectric && pucExp && regDate && pucExp < regDate) {
+        triggerToast("PUC Expiry Date cannot be earlier than Vehicle Registration Date.", true);
+        setModalSubmitting(false);
+        return;
+      }
+      if (fitExp && regDate && fitExp < regDate) {
+        triggerToast("Fitness Expiry Date cannot be earlier than Vehicle Registration Date.", true);
         setModalSubmitting(false);
         return;
       }
@@ -4579,6 +4611,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       triggerToast("Please fill in vehicle, driver, traveler name, purpose, origin and destination.", true);
       return;
     }
+    if (newTripStartTime && newTripEndTime && newTripEndTime < newTripStartTime) {
+      triggerToast("Trip End Time cannot be earlier than Trip Start Time.", true);
+      return;
+    }
 
     setModalSubmitting(true);
     try {
@@ -4640,6 +4676,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     e?.preventDefault?.();
     if (!newMaintVehicleId || !newMaintServiceType.trim() || !newMaintVendor.trim()) {
       triggerToast("Please select a target vehicle, specify service scope, and authorized workshop.", true);
+      return;
+    }
+    if (newMaintDate && newMaintNextDue && newMaintNextDue <= newMaintDate) {
+      triggerToast("Next Service Due Date must be after Service Date.", true);
+      return;
+    }
+    if (newMaintOdometer && newMaintNextDueOdometer && Number(newMaintNextDueOdometer) <= Number(newMaintOdometer)) {
+      triggerToast("Next Service Due Odometer must be greater than Current Service Odometer.", true);
       return;
     }
 
@@ -4715,6 +4759,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     if (!selectedMaintenanceForEdit) return;
     if (!editMaintVehicleId || !editMaintServiceType.trim() || !editMaintVendor.trim()) {
       triggerToast("Please select a target vehicle, specify service scope, and authorized workshop.", true);
+      return;
+    }
+    if (editMaintDate && editMaintNextDue && editMaintNextDue <= editMaintDate) {
+      triggerToast("Next Service Due Date must be after Service Date.", true);
+      return;
+    }
+    if (editMaintOdometer && editMaintNextDueOdometer && Number(editMaintNextDueOdometer) <= Number(editMaintOdometer)) {
+      triggerToast("Next Service Due Odometer must be greater than Current Service Odometer.", true);
       return;
     }
 
@@ -5176,6 +5228,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       triggerToast("Policy start and end dates are required.", true);
       return;
     }
+    if (renewPolicyEndDate <= renewPolicyStartDate) {
+      triggerToast("Policy End Date must be after Policy Start Date.", true);
+      return;
+    }
 
     setModalSubmitting(true);
     try {
@@ -5312,6 +5368,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     }
     if (!renewPucValidFrom || !renewPucValidUpto) {
       triggerToast("Validity start and expiry dates are required.", true);
+      return;
+    }
+    if (renewPucValidUpto <= renewPucValidFrom) {
+      triggerToast("PUC Expiry Date must be after Validity Start Date.", true);
       return;
     }
 
