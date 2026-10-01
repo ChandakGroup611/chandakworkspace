@@ -79,6 +79,7 @@ $targetDirs = [
     __DIR__,
     $domainRoot . '/public_html',
     $domainRoot . '/hbuilds/current/nodejs',
+    $domainRoot . '/hbuilds/current/nodejs/public',
     $passengerAppRoot,
 ];
 
@@ -86,6 +87,7 @@ $versionedDirs = glob($domainRoot . '/hbuilds/versions/*/nodejs');
 if ($versionedDirs && is_array($versionedDirs)) {
     foreach ($versionedDirs as $vDir) {
         $targetDirs[] = $vDir;
+        $targetDirs[] = $vDir . '/public';
     }
 }
 
@@ -94,36 +96,17 @@ $allTargetDirs = array_values(array_unique(array_filter($targetDirs)));
 // Diagnostic / Info Mode
 if (isset($_GET['info']) || isset($_GET['scan']) || isset($_GET['diag'])) {
     $foundBuildIds = [];
-    $foundPricingChunks = [];
+    $foundFiles = [];
     
     foreach ($allTargetDirs as $tDir) {
+        if (!is_dir($tDir)) continue;
         $buildFile = $tDir . '/.next/BUILD_ID';
         if (file_exists($buildFile)) {
             $foundBuildIds[$tDir] = trim(@file_get_contents($buildFile) ?: '');
         }
-        
-        $chunkDir = $tDir . '/.next/static/chunks';
-        if (!is_dir($chunkDir)) {
-            $chunkDir = $tDir . '/_next/static/chunks';
-        }
-        if (is_dir($chunkDir)) {
-            $files = @scandir($chunkDir);
-            if ($files) {
-                foreach ($files as $f) {
-                    if (substr($f, -3) === '.js') {
-                        $p = $chunkDir . '/' . $f;
-                        $c = @file_get_contents($p, false, null, 0, 50000);
-                        if ($c && strpos($c, 'Vehicle Pricing') !== false) {
-                            $foundPricingChunks[] = [
-                                'file' => $f,
-                                'dir' => $tDir,
-                                'has_new' => (strpos($c, 'Vehicle Pricing & On-Road Cost Breakdown') !== false || strpos($c, 'Vehicle Pricing &amp; On-Road Cost Breakdown') !== false),
-                                'has_old_sections' => (strpos($c, '1. EX-FACTORY BASE') !== false)
-                            ];
-                        }
-                    }
-                }
-            }
+        $sc = @scandir($tDir);
+        if ($sc) {
+            $foundFiles[$tDir] = array_values(array_diff($sc, ['.', '..']));
         }
     }
     
@@ -133,18 +116,16 @@ if (isset($_GET['info']) || isset($_GET['scan']) || isset($_GET['diag'])) {
         'current_dir' => __DIR__,
         'target_dirs' => $allTargetDirs,
         'build_ids' => $foundBuildIds,
-        'pricing_chunks' => $foundPricingChunks,
+        'files' => $foundFiles,
         'timestamp' => date('Y-m-d H:i:s')
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     exit;
 }
 
-// Find deploy.zip
+// Find deploy.zip in all candidate locations
 $candidateZipPaths = [
     __DIR__ . '/deploy.zip',
     dirname(__DIR__) . '/deploy.zip',
-    '/home/u859582759/domains/chandakgroup.tech/hbuilds/versions/01a0e75f-5f5d-715a-9479-733f79592f9f/nodejs/public/deploy.zip',
-    '/home/u859582759/domains/chandakgroup.tech/hbuilds/versions/01a0e75f-5f5d-715a-9479-733f79592f9f/nodejs/deploy.zip',
     $domainRoot . '/public_html/deploy.zip',
     $domainRoot . '/deploy.zip',
     '/home/u859582759/deploy.zip',
@@ -196,11 +177,12 @@ if ($zipFile && class_exists('ZipArchive')) {
             recursiveCopy($target . '/.next/static', __DIR__ . '/_next/static');
         }
         
-        // Signal restart for Passenger
+        // Signal restart for Passenger & LiteSpeed
         @mkdir($target . '/tmp', 0755, true);
         @touch($target . '/tmp/restart.txt');
         if (file_exists($target . '/server.js')) @touch($target . '/server.js');
         if (file_exists($target . '/package.json')) @touch($target . '/package.json');
+        if (file_exists($target . '/.htaccess')) @touch($target . '/.htaccess');
         
         $extractionResults[$target] = [
             'extracted' => $extracted,
@@ -208,14 +190,17 @@ if ($zipFile && class_exists('ZipArchive')) {
         ];
     }
     
-    // Remove the zip file after successful extraction
+    // Remove the zip file and any sync state file
     @unlink($zipFile);
+    @unlink(__DIR__ . '/.ftp-deploy-sync-state.json');
+    @unlink($domainRoot . '/public_html/.ftp-deploy-sync-state.json');
 } else {
-    // If no zip found, touch restart.txt on all targets
+    // If no zip found, touch restart and .htaccess on all targets anyway
     foreach ($allTargetDirs as $target) {
         @mkdir($target . '/tmp', 0755, true);
         @touch($target . '/tmp/restart.txt');
         if (file_exists($target . '/server.js')) @touch($target . '/server.js');
+        if (file_exists($target . '/.htaccess')) @touch($target . '/.htaccess');
     }
 }
 
@@ -228,6 +213,14 @@ if ($selfCode) {
             @file_put_contents($vDir . '/public/deploy-hook.php', $selfCode);
         }
     }
+}
+
+// Touch domain root .htaccess to force LiteSpeed process reload
+if (file_exists($domainRoot . '/public_html/.htaccess')) {
+    @touch($domainRoot . '/public_html/.htaccess');
+}
+if (file_exists(__DIR__ . '/.htaccess')) {
+    @touch(__DIR__ . '/.htaccess');
 }
 
 echo json_encode([

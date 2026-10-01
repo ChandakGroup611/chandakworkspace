@@ -56,7 +56,24 @@ jobs:
           cp deploy.zip upload-payload/
           cp public/deploy-hook.php upload-payload/
 
-      # Upload the compiled standalone zip file and deploy-hook to Hostinger via FTP
+      # Upload the compiled standalone zip file and deploy-hook to Hostinger via Direct FTP (Zero Caching)
+      - name: Sync files via Direct FTP
+        run: |
+          echo "Syncing deploy.zip and deploy-hook.php to Hostinger via Direct FTP..."
+          
+          # Upload to Domain Public HTML
+          curl -sS --ftp-create-dirs -T upload-payload/deploy.zip -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/deploy.zip" || echo "FTP to domain public_html deploy.zip failed"
+          curl -sS --ftp-create-dirs -T upload-payload/deploy-hook.php -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/deploy-hook.php" || echo "FTP to domain public_html deploy-hook.php failed"
+          
+          # Upload to Versioned Nodejs and Versioned Public
+          curl -sS --ftp-create-dirs -T upload-payload/deploy.zip -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/hbuilds/versions/01a0e75f-5f5d-715a-9479-733f79592f9f/nodejs/public/deploy.zip" || echo "FTP to versioned public deploy.zip failed"
+          curl -sS --ftp-create-dirs -T upload-payload/deploy-hook.php -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/hbuilds/versions/01a0e75f-5f5d-715a-9479-733f79592f9f/nodejs/public/deploy-hook.php" || echo "FTP to versioned public deploy-hook.php failed"
+          curl -sS --ftp-create-dirs -T upload-payload/deploy.zip -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/hbuilds/versions/01a0e75f-5f5d-715a-9479-733f79592f9f/nodejs/deploy.zip" || echo "FTP to versioned nodejs deploy.zip failed"
+          
+          # Upload to Root
+          curl -sS --ftp-create-dirs -T upload-payload/deploy.zip -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/deploy.zip" || echo "FTP to root deploy.zip failed"
+
+      # Fallback Sync via FTP-Deploy-Action
       - name: Sync files via FTP (Versioned Nodejs Public)
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         continue-on-error: true
@@ -83,19 +100,6 @@ jobs:
           state-name: ''
           dangerous-clean-slate: false
 
-      - name: Sync files via FTP (Root)
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        continue-on-error: true
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./upload-payload/
-          server-dir: ./
-          protocol: ftp
-          state-name: ''
-          dangerous-clean-slate: false
-
       # Primary Extraction & Server Restart via SSH
       - name: Extract Payload and Restart Server via SSH
         uses: appleboy/ssh-action@v1.0.3
@@ -111,14 +115,14 @@ jobs:
             echo "Current Directory: $ROOT_DIR"
             
             ZIP_PATH=""
-            for cand in "$ROOT_DIR/deploy.zip" "$ROOT_DIR/domains/chandakgroup.tech/public_html/deploy.zip" "$ROOT_DIR/public_html/deploy.zip" "/home/u859582759/deploy.zip" "/home/u859582759/public_html/deploy.zip" "/home/u859582759/domains/chandakgroup.tech/deploy.zip"; do
+            for cand in "$ROOT_DIR/deploy.zip" "$ROOT_DIR/domains/chandakgroup.tech/public_html/deploy.zip" "$ROOT_DIR/public_html/deploy.zip" "/home/u859582759/deploy.zip" "/home/u859582759/public_html/deploy.zip" "/home/u859582759/domains/chandakgroup.tech/deploy.zip" "/home/u859582759/domains/chandakgroup.tech/hbuilds/versions/01a0e75f-5f5d-715a-9479-733f79592f9f/nodejs/public/deploy.zip" "/home/u859582759/domains/chandakgroup.tech/hbuilds/versions/01a0e75f-5f5d-715a-9479-733f79592f9f/nodejs/deploy.zip"; do
               if [ -f "$cand" ]; then
                 ZIP_PATH="$cand"
                 break
               fi
             done
             if [ -z "$ZIP_PATH" ]; then
-              ZIP_PATH=$(find /home/u859582759 "$ROOT_DIR" -maxdepth 4 -name "deploy.zip" 2>/dev/null | head -n 1)
+              ZIP_PATH=$(find /home/u859582759 "$ROOT_DIR" -maxdepth 5 -name "deploy.zip" 2>/dev/null | head -n 1)
             fi
             
             echo "Target Zip File: $ZIP_PATH"
@@ -135,7 +139,7 @@ jobs:
               "$ROOT_DIR/hbuilds/current/nodejs"
             )
             
-            for found_node in $(find "$DOMAIN_ROOT/hbuilds" "$ROOT_DIR/hbuilds" -type d -name "nodejs" 2>/dev/null); do
+            for found_node in $(find "$DOMAIN_ROOT/hbuilds" "$ROOT_DIR/hbuilds" -type d \( -name "nodejs" -o -name "public" \) 2>/dev/null); do
               TARGET_DIRS+=("$found_node")
             done
 
@@ -156,6 +160,9 @@ jobs:
                 if [ -f "$target/package.json" ]; then
                   touch "$target/package.json"
                 fi
+                if [ -f "$target/.htaccess" ]; then
+                  touch "$target/.htaccess"
+                fi
                 if [ -d "$target/.next/static" ]; then
                   cp -rf "$target/.next/static" "$target/_next/" 2>/dev/null || true
                   cp -rf "$target/.next/static" "$target/public/_next/" 2>/dev/null || true
@@ -174,10 +181,11 @@ jobs:
               fi
             done
 
-            # Force kill old node processes so passenger boots new code
+            # Force reload web server and restart passenger
             pkill -9 -u $(whoami) -f node 2>/dev/null || true
             killall -9 node 2>/dev/null || true
             passenger-config restart-app --ignore-passenger-not-running / 2>/dev/null || true
+            touch "$DOMAIN_ROOT/public_html/.htaccess" 2>/dev/null || true
             
             rm -f "$ROOT_DIR/.ftp-deploy-sync-state.json" "$DOMAIN_ROOT/public_html/.ftp-deploy-sync-state.json"
             echo "=== SSH EXTRACTION COMPLETE ==="
