@@ -2788,19 +2788,19 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             prev.map((v) => (v.id === vId ? { ...v, documents: res.documents } : v))
           );
         }
-      });
+      }).catch((err) => console.error("Error fetching vehicle documents:", err));
       // 2. Fetch insurance policies (renewals & history)
       fetchVehicleInsurancePoliciesAction(vId).then((res) => {
         if (res.success && res.policies) {
           setViewingVehiclePolicies(res.policies);
         }
-      });
+      }).catch((err) => console.error("Error fetching vehicle policies:", err));
       // 3. Fetch PUC certificates (renewals & history)
       fetchVehiclePucCertificatesAction(vId).then((res) => {
         if (res.success && res.certificates) {
           setViewingVehiclePucs(res.certificates);
         }
-      });
+      }).catch((err) => console.error("Error fetching vehicle PUCs:", err));
     } else {
       setViewingVehiclePolicies([]);
       setViewingVehiclePucs([]);
@@ -4055,7 +4055,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       if (res.success && res.documents) {
         setEditVehicleDocs(res.documents);
       }
-    });
+    }).catch((err) => console.error("Error fetching vehicle edit docs:", err));
     setIsEditVehicleOpen(true);
   };
 
@@ -4351,7 +4351,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         if (selectedVehicleForSpecHistory?.id === updatedVehId) {
           fetchVehicleSpecificationHistoryAction(updatedVehId).then(hRes => {
             if (hRes.success) setVehicleSpecHistory(hRes.history);
-          });
+          }).catch((err) => console.error("Error fetching spec history:", err));
         }
       } else {
         triggerToast(res.error || "Failed to update vehicle", true);
