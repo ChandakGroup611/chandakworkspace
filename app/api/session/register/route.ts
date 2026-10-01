@@ -30,24 +30,25 @@ export async function POST(request: Request) {
 
     const now = new Date().toISOString();
 
-    // 1. Upsert active_sessions record
-    await supabaseAdmin
+    // 1. Upsert active_sessions record (exact schema: user_id, session_token, last_active_at)
+    const { error: activeErr } = await supabaseAdmin
       .from("active_sessions")
       .upsert({
         user_id: user.id,
         session_token: sessionToken,
-        user_agent: clientUserAgent,
-        ip_address: ipAddress,
         last_active_at: now
       }, { onConflict: "user_id" });
 
-    // 2. Mark truly stale sessions as inactive
-    const staleThreshold = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    if (activeErr) {
+      console.error("[Session Register API] active_sessions upsert error:", activeErr);
+    }
+
+    // 2. Mark any other session tokens for this user as inactive in auth_session_logs
     await supabaseAdmin
       .from("auth_session_logs")
       .update({ is_active: false })
       .eq("user_id", user.id)
-      .lt("last_activity", staleThreshold);
+      .neq("session_token", sessionToken);
 
     // 3. Upsert session log
     const { data: existingLog } = await supabaseAdmin
