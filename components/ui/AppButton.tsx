@@ -55,26 +55,10 @@ export const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(
 
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
       if (onClick) {
-        const text = (e.currentTarget?.textContent || "").toLowerCase();
         const result = onClick(e) as any;
         if (result instanceof Promise) {
           setInternalLoading(true);
           result
-            .then(() => {
-              if (text.includes('delete') || text.includes('remove')) {
-                toast.success('Record Deleted Successfully');
-              } else if (text.includes('update') || text.includes('save')) {
-                toast.success('Record Saved Successfully');
-              } else if (text.includes('create') || text.includes('add') || text.includes('new')) {
-                toast.success('Record Created Successfully');
-              } else if (text.includes('approve') || text.includes('accept')) {
-                toast.success('Approved Successfully');
-              } else if (text.includes('reject')) {
-                toast.success('Rejected Successfully');
-              } else if (text.includes('sign off')) {
-                toast.success('Signed Off Successfully');
-              }
-            })
             .catch((err) => {
               console.error("[AppButton] Async action error:", err);
             })

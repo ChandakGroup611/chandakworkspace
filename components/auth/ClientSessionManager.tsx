@@ -221,7 +221,26 @@ export default function ClientSessionManager() {
       window.addEventListener(evt, handleActivity, { passive: true });
     });
 
-    // ── 4. Tab close handler ────────────────────────────────────
+    // ── 4. Tab close handler & Deployment Sync Error Recovery ──────────
+    const handleGlobalError = (event: ErrorEvent | PromiseRejectionEvent) => {
+      const error = 'reason' in event ? event.reason : event.error;
+      const msg = typeof error === 'string' ? error : error?.message || '';
+      if (
+        msg.includes('was not found on the server') ||
+        msg.includes('failed-to-find-server-action') ||
+        msg.includes('Failed to find Server Action') ||
+        (msg.includes('Server Action') && msg.includes('not found'))
+      ) {
+        console.warn('[Deployment Sync] Server Action hash mismatch detected. Auto-refreshing page for new deployment build.');
+        if (typeof window !== 'undefined') {
+          window.location.reload();
+        }
+      }
+    };
+
+    window.addEventListener('error', handleGlobalError);
+    window.addEventListener('unhandledrejection', handleGlobalError);
+
     const handleBeforeUnload = () => {
       // Send a final heartbeat with tab_close event
       sendHeartbeat("tab_close");
@@ -326,6 +345,8 @@ export default function ClientSessionManager() {
       }
 
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("error", handleGlobalError);
+      window.removeEventListener("unhandledrejection", handleGlobalError);
       activityEvents.forEach((evt) => {
         window.removeEventListener(evt, handleActivity);
       });
