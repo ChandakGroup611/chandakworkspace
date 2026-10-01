@@ -133,8 +133,10 @@ import {
   VehicleRecord,
   VehicleDocumentRecord,
   fetchVehicleDocumentsAction,
+  fetchVehicleDocumentContentAction,
   createVehicleDocumentAction,
   deleteVehicleDocumentAction,
+  fetchServiceAttachmentContentAction,
   DriverRecord,
   TripRecord,
   MaintenanceRecord,
@@ -228,6 +230,7 @@ export interface AggregatedVehicleDoc {
   sourceModule: "VAULT" | "MASTER" | "SERVICE" | "PART" | "TRIP" | "DRIVER" | "REGISTRATION" | "INSURANCE" | "PUC" | string;
   sourceLabel: string;
   isDirectVaultDoc: boolean;
+  has_file?: boolean;
 }
 
 // Module-level in-memory cache for FleetDesk data
@@ -1518,11 +1521,89 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     }
   };
 
-  const downloadAttachment = (att: { file_name?: string; file_url?: string; title?: string; doc_type?: string }) => {
+  const handleViewAttachment = async (att: any) => {
+    if (!att) return;
+
+    // If file_url is already loaded in memory
+    if (att.file_url && (att.file_url.startsWith("http") || att.file_url.startsWith("data:") || att.file_url.startsWith("blob:"))) {
+      setPreviewAttachment(att);
+      setPreviewZoom(1);
+      setPreviewRotation(0);
+      return;
+    }
+
+    // On-demand fetch for vehicle document
+    if (att.id && !att.id.startsWith("temp-") && !att.id.startsWith("vdoc-temp-") && (att.id.startsWith("vdoc-") || att.vehicle_id || att.doc_type)) {
+      triggerToast("Opening secure document preview...");
+      try {
+        const res = await fetchVehicleDocumentContentAction(att.id);
+        if (res.success && res.file_url) {
+          const enriched = { ...att, file_url: res.file_url };
+          setPreviewAttachment(enriched);
+          setPreviewZoom(1);
+          setPreviewRotation(0);
+          return;
+        }
+      } catch (err) {
+        console.error("Failed to retrieve document content:", err);
+      }
+    }
+
+    // On-demand fetch for service record attachment
+    if (att.service_id || att.serviceRecordId) {
+      triggerToast("Opening service attachment scan...");
+      try {
+        const res = await fetchServiceAttachmentContentAction(att.service_id || att.serviceRecordId, att.id);
+        if (res.success && res.file_url) {
+          const enriched = { ...att, file_url: res.file_url };
+          setPreviewAttachment(enriched);
+          setPreviewZoom(1);
+          setPreviewRotation(0);
+          return;
+        }
+      } catch (err) {
+        console.error("Failed to retrieve service attachment:", err);
+      }
+    }
+
+    // Fallback: Verified digital certificate view
+    setPreviewAttachment(att);
+    setPreviewZoom(1);
+    setPreviewRotation(0);
+  };
+
+  const downloadAttachment = async (att: {
+    id?: string;
+    file_name?: string;
+    file_url?: string | null;
+    title?: string;
+    doc_type?: string;
+    service_id?: string;
+    serviceRecordId?: string;
+    vehicle_id?: string;
+    [key: string]: any;
+  }) => {
     try {
-      if (att.file_url && (att.file_url.startsWith("http") || att.file_url.startsWith("data:") || att.file_url.startsWith("blob:"))) {
+      let fileUrl = att.file_url;
+
+      // If file_url is not in memory, retrieve on-demand
+      if (!fileUrl && att.id && !att.id.startsWith("temp-") && !att.id.startsWith("vdoc-temp-")) {
+        triggerToast("Fetching file for download...");
+        if (att.id.startsWith("vdoc-") || att.vehicle_id || att.doc_type) {
+          const res = await fetchVehicleDocumentContentAction(att.id);
+          if (res.success && res.file_url) fileUrl = res.file_url;
+        } else if (att.service_id || att.serviceRecordId) {
+          const sId = att.service_id || att.serviceRecordId;
+          if (sId) {
+            const res = await fetchServiceAttachmentContentAction(sId, att.id);
+            if (res.success && res.file_url) fileUrl = res.file_url;
+          }
+        }
+      }
+
+      if (fileUrl && (fileUrl.startsWith("http") || fileUrl.startsWith("data:") || fileUrl.startsWith("blob:"))) {
         const link = document.createElement("a");
-        link.href = att.file_url;
+        link.href = fileUrl;
         link.download = att.file_name || "document";
         document.body.appendChild(link);
         link.click();
@@ -8403,18 +8484,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                 type="button"
                                 variant="outline"
                                 size="icon-sm"
-                                onClick={() => {
-                                  setPreviewAttachment({
-                                    id: doc.id,
-                                    file_name: doc.file_name,
-                                    file_size: doc.file_size || "0 B",
-                                    file_type: doc.file_type || resolveMimeFromName(doc.file_name),
-                                    file_url: doc.file_url,
-                                    uploaded_at: doc.uploaded_at
-                                  });
-                                  setPreviewZoom(1);
-                                  setPreviewRotation(0);
-                                }}
+                                onClick={() => handleViewAttachment(doc)}
                                 className="h-7 w-7 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
                                 title="View / Preview Document"
                               >
@@ -13741,18 +13811,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                 type="button"
                                 variant="outline"
                                 size="icon-sm"
-                                onClick={() => {
-                                  setPreviewAttachment({
-                                    id: doc.id,
-                                    file_name: doc.file_name,
-                                    file_size: doc.file_size || "0 B",
-                                    file_type: doc.file_type || resolveMimeFromName(doc.file_name),
-                                    file_url: doc.file_url,
-                                    uploaded_at: doc.uploaded_at
-                                  });
-                                  setPreviewZoom(1);
-                                  setPreviewRotation(0);
-                                }}
+                                onClick={() => handleViewAttachment(doc)}
                                 className="h-7 w-7 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
                                 title="View / Preview Document"
                               >
@@ -16099,11 +16158,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                       type="button"
                                       variant="outline"
                                       size="sm"
-                                      onClick={() => {
-                                        setPreviewAttachment(att);
-                                        setPreviewZoom(1);
-                                        setPreviewRotation(0);
-                                      }}
+                                      onClick={() => handleViewAttachment({
+                                        ...att,
+                                        service_id: selectedMaintenanceForView.id
+                                      })}
                                       className="h-8 px-2.5 text-xs gap-1 text-blue-600 dark:text-blue-400 border-blue-500/20 hover:bg-blue-500/10 font-semibold"
                                       title="View / Preview"
                                     >
@@ -16114,7 +16172,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                       type="button"
                                       variant="outline"
                                       size="sm"
-                                      onClick={() => downloadAttachment(att)}
+                                      onClick={() => downloadAttachment({
+                                        ...att,
+                                        service_id: selectedMaintenanceForView.id
+                                      })}
                                       className="h-8 px-2.5 text-xs gap-1 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/10 font-semibold"
                                       title="Download File"
                                     >
@@ -19707,25 +19768,20 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                   </span>
                                   <button
                                     type="button"
-                                    onClick={() => {
-                                      setPreviewAttachment({
-                                        id: att.id || String(attIdx),
-                                        file_name: att.file_name,
-                                        file_size: formatFileSize(att.file_size || 0),
-                                        file_type: att.file_type || resolveMimeFromName(att.file_name),
-                                        file_url: att.file_url,
-                                        uploaded_at: att.uploaded_at || new Date().toISOString()
-                                      });
-                                      setPreviewZoom(1);
-                                      setPreviewRotation(0);
-                                    }}
+                                    onClick={() => handleViewAttachment({
+                                      ...att,
+                                      service_id: svc.id
+                                    })}
                                     className="text-blue-600 dark:text-blue-400 hover:underline text-xs font-semibold"
                                   >
                                     View
                                   </button>
                                   <button
                                     type="button"
-                                    onClick={() => downloadAttachment(att)}
+                                    onClick={() => downloadAttachment({
+                                      ...att,
+                                      service_id: svc.id
+                                    })}
                                     className="text-emerald-600 dark:text-emerald-400 hover:underline text-xs font-semibold"
                                   >
                                     Download
@@ -20377,26 +20433,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                 type="button"
                                 variant="outline"
                                 size="icon-sm"
-                                onClick={() => {
-                                  setPreviewAttachment({
-                                    id: doc.id,
-                                    file_name: doc.file_name,
-                                    file_size: doc.file_size || (doc.file_url ? "0 B" : "Digital Record"),
-                                    file_type: doc.file_type || resolveMimeFromName(doc.file_name),
-                                    file_url: doc.file_url || "",
-                                    uploaded_at: doc.uploaded_at,
-                                    title: doc.title,
-                                    doc_type: doc.doc_type,
-                                    document_number: doc.document_number,
-                                    expiry_date: doc.expiry_date,
-                                    sourceLabel: doc.sourceLabel,
-                                    categoryLabel: doc.categoryLabel,
-                                    status: doc.status,
-                                    vehicleReg: viewingVehicle?.registration_number
-                                  } as any);
-                                  setPreviewZoom(1);
-                                  setPreviewRotation(0);
-                                }}
+                                onClick={() => handleViewAttachment({
+                                  ...doc,
+                                  vehicleReg: viewingVehicle?.registration_number
+                                })}
                                 className="h-7 w-7 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
                                 title="View / Preview Document"
                               >
@@ -20406,19 +20446,14 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                 type="button"
                                 variant="outline"
                                 size="icon-sm"
-                                onClick={() => downloadAttachment({
-                                  file_name: doc.file_name,
-                                  file_url: doc.file_url || "",
-                                  title: doc.title,
-                                  doc_type: doc.doc_type
-                                })}
+                                onClick={() => downloadAttachment(doc)}
                                 className="h-7 w-7 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
                                 title="Download Document"
                               >
                                 <Download className="h-3.5 w-3.5" />
                               </AppButton>
 
-                              {!doc.file_url && (
+                              {(!doc.has_file && !doc.file_url) && (
                                 <AppButton
                                   type="button"
                                   variant="outline"
@@ -20539,23 +20574,21 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       size="sm"
                       onClick={() => {
                         const doc = dossierData.docs.find(d => d.doc_type === "INSURANCE");
-                        setPreviewAttachment({
-                          id: doc?.id || `ins-view-${viewingVehicle.id}`,
-                          file_name: doc?.file_name || `Insurance_${viewingVehicle.registration_number}.pdf`,
-                          file_size: doc?.file_size || "Policy Document",
-                          file_type: doc?.file_type || "application/pdf",
-                          file_url: doc?.file_url || "",
-                          uploaded_at: doc?.uploaded_at || viewingVehicle.created_at,
-                          title: doc?.title || `Motor Insurance Policy: ${viewingVehicle.insurance_vendor || "Comprehensive"}`,
+                        handleViewAttachment(doc || {
+                          id: `ins-view-${viewingVehicle.id}`,
+                          file_name: `Insurance_${viewingVehicle.registration_number}.pdf`,
+                          file_size: "Policy Document",
+                          file_type: "application/pdf",
+                          file_url: "",
+                          uploaded_at: viewingVehicle.created_at,
+                          title: `Motor Insurance Policy: ${viewingVehicle.insurance_vendor || "Comprehensive"}`,
                           doc_type: "INSURANCE",
                           document_number: viewingVehicle.insurance_policy_number,
                           expiry_date: viewingVehicle.insurance_expiry_date,
-                          sourceLabel: doc?.sourceLabel || `Underwriter: ${viewingVehicle.insurance_vendor || "Authorized Provider"}`,
+                          sourceLabel: `Underwriter: ${viewingVehicle.insurance_vendor || "Authorized Provider"}`,
                           status: "VALID",
                           vehicleReg: viewingVehicle.registration_number
-                        } as any);
-                        setPreviewZoom(1);
-                        setPreviewRotation(0);
+                        });
                       }}
                       className="h-7 text-xs px-2 text-blue-600 dark:text-blue-400 border-blue-500/30 gap-1 font-semibold"
                       title="View / Inspect Insurance Document"
@@ -20569,9 +20602,9 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       size="sm"
                       onClick={() => {
                         const doc = dossierData.docs.find(d => d.doc_type === "INSURANCE");
-                        downloadAttachment({
-                          file_name: doc?.file_name || `Insurance_${viewingVehicle.registration_number}.pdf`,
-                          file_url: doc?.file_url || "",
+                        downloadAttachment(doc || {
+                          file_name: `Insurance_${viewingVehicle.registration_number}.pdf`,
+                          file_url: "",
                           title: `Motor Insurance Policy - ${viewingVehicle.registration_number}`,
                           doc_type: "INSURANCE"
                         });
@@ -20661,23 +20694,21 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       size="sm"
                       onClick={() => {
                         const doc = dossierData.docs.find(d => d.doc_type === "PUC");
-                        setPreviewAttachment({
-                          id: doc?.id || `puc-view-${viewingVehicle.id}`,
-                          file_name: doc?.file_name || `PUC_${viewingVehicle.registration_number}.pdf`,
-                          file_size: doc?.file_size || "Emission Certificate",
-                          file_type: doc?.file_type || "application/pdf",
-                          file_url: doc?.file_url || "",
-                          uploaded_at: doc?.uploaded_at || viewingVehicle.created_at,
-                          title: doc?.title || `PUC Emission Certificate (${viewingVehicle.puc_certificate_number || viewingVehicle.registration_number})`,
+                        handleViewAttachment(doc || {
+                          id: `puc-view-${viewingVehicle.id}`,
+                          file_name: `PUC_${viewingVehicle.registration_number}.pdf`,
+                          file_size: "Emission Certificate",
+                          file_type: "application/pdf",
+                          file_url: "",
+                          uploaded_at: viewingVehicle.created_at,
+                          title: `PUC Emission Certificate (${viewingVehicle.puc_certificate_number || viewingVehicle.registration_number})`,
                           doc_type: "PUC",
                           document_number: viewingVehicle.puc_certificate_number,
                           expiry_date: viewingVehicle.puc_expiry_date,
-                          sourceLabel: doc?.sourceLabel || "Emission Clearance Test Certificate",
+                          sourceLabel: "Emission Clearance Test Certificate",
                           status: "VALID",
                           vehicleReg: viewingVehicle.registration_number
-                        } as any);
-                        setPreviewZoom(1);
-                        setPreviewRotation(0);
+                        });
                       }}
                       className="h-7 text-xs px-2 text-blue-600 dark:text-blue-400 border-blue-500/30 gap-1 font-semibold"
                       title="View / Inspect PUC Certificate"
@@ -20691,9 +20722,9 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       size="sm"
                       onClick={() => {
                         const doc = dossierData.docs.find(d => d.doc_type === "PUC");
-                        downloadAttachment({
-                          file_name: doc?.file_name || `PUC_${viewingVehicle.registration_number}.pdf`,
-                          file_url: doc?.file_url || "",
+                        downloadAttachment(doc || {
+                          file_name: `PUC_${viewingVehicle.registration_number}.pdf`,
+                          file_url: "",
                           title: `PUC Emission Certificate - ${viewingVehicle.registration_number}`,
                           doc_type: "PUC"
                         });
@@ -20797,23 +20828,21 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       size="sm"
                       onClick={() => {
                         const doc = dossierData.docs.find(d => d.doc_type === "FITNESS");
-                        setPreviewAttachment({
-                          id: doc?.id || `fit-view-${viewingVehicle.id}`,
-                          file_name: doc?.file_name || `Fitness_${viewingVehicle.registration_number}.pdf`,
-                          file_size: doc?.file_size || "Fitness Certificate",
-                          file_type: doc?.file_type || "application/pdf",
-                          file_url: doc?.file_url || "",
-                          uploaded_at: doc?.uploaded_at || viewingVehicle.created_at,
-                          title: doc?.title || `Commercial Transport Fitness Certificate (${viewingVehicle.registration_number})`,
+                        handleViewAttachment(doc || {
+                          id: `fit-view-${viewingVehicle.id}`,
+                          file_name: `Fitness_${viewingVehicle.registration_number}.pdf`,
+                          file_size: "Fitness Certificate",
+                          file_type: "application/pdf",
+                          file_url: "",
+                          uploaded_at: viewingVehicle.created_at,
+                          title: `Commercial Transport Fitness Certificate (${viewingVehicle.registration_number})`,
                           doc_type: "FITNESS",
                           document_number: viewingVehicle.vin_chassis_number,
                           expiry_date: viewingVehicle.fitness_expiry_date,
-                          sourceLabel: doc?.sourceLabel || "Commercial Transport Fitness Clearance",
+                          sourceLabel: "Commercial Transport Fitness Clearance",
                           status: "VALID",
                           vehicleReg: viewingVehicle.registration_number
-                        } as any);
-                        setPreviewZoom(1);
-                        setPreviewRotation(0);
+                        });
                       }}
                       className="h-7 text-xs px-2 text-blue-600 dark:text-blue-400 border-blue-500/30 gap-1 font-semibold"
                       title="View / Inspect Fitness Certificate"

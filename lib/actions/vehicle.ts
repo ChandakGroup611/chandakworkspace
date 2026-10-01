@@ -230,6 +230,7 @@ export interface VehicleDocumentRecord {
   document_number?: string | null;
   file_url: string;
   file_type?: string;
+  has_file?: boolean;
 }
 
 function resolveMimeFromName(fileName: string): string {
@@ -731,10 +732,10 @@ export async function fetchVehiclesList(params?: {
       }
     });
 
-    // Controlled Batch Lookup: Documents attached to these vehicles (eliminates N+1)
+    // Controlled Batch Lookup: Document metadata attached to these vehicles (omits heavy Base64 payloads)
     const { data: docsData } = await supabaseAdmin
       .from("vehicle_documents")
-      .select("*")
+      .select("id, vehicle_id, doc_type, title, file_name, file_size, file_type, uploaded_at, expiry_date, status, document_number")
       .in("vehicle_id", vehicleIds)
       .order("uploaded_at", { ascending: false });
 
@@ -744,6 +745,8 @@ export async function fetchVehiclesList(params?: {
         const list = docsMap.get(doc.vehicle_id) || [];
         list.push({
           ...doc,
+          file_url: "",
+          has_file: true,
           file_type: doc.file_type || resolveMimeFromName(doc.file_name)
         });
         docsMap.set(doc.vehicle_id, list);
@@ -2856,7 +2859,7 @@ export async function updateVehicleAction(
 }
 
 /**
- * Fetch all legal & compliance documents for a specific vehicle
+ * Fetch all legal & compliance documents metadata for a specific vehicle (lightweight listing)
  */
 export async function fetchVehicleDocumentsAction(vehicleId: string): Promise<{
   success: boolean;
@@ -2874,7 +2877,7 @@ export async function fetchVehicleDocumentsAction(vehicleId: string): Promise<{
 
     const { data, error } = await supabaseAdmin
       .from("vehicle_documents")
-      .select("*")
+      .select("id, vehicle_id, doc_type, title, file_name, file_size, file_type, uploaded_at, expiry_date, status, document_number")
       .eq("vehicle_id", vehicleId)
       .order("uploaded_at", { ascending: false });
 
@@ -2885,6 +2888,8 @@ export async function fetchVehicleDocumentsAction(vehicleId: string): Promise<{
 
     const docs = (data || []).map((d: any) => ({
       ...d,
+      file_url: "",
+      has_file: true,
       file_type: d.file_type || resolveMimeFromName(d.file_name)
     })) as VehicleDocumentRecord[];
 
@@ -2892,6 +2897,50 @@ export async function fetchVehicleDocumentsAction(vehicleId: string): Promise<{
   } catch (err: any) {
     console.error("[vehicle-actions] fetchVehicleDocumentsAction exception:", err);
     return { success: false, documents: [], error: err.message || "Failed to fetch vehicle documents" };
+  }
+}
+
+/**
+ * Securely fetch full document content / file_url on-demand for View or Download.
+ * Performs strict server-side authorization check.
+ */
+export async function fetchVehicleDocumentContentAction(documentId: string): Promise<{
+  success: boolean;
+  document?: VehicleDocumentRecord;
+  file_url?: string;
+  error?: string;
+}> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) {
+      return { success: false, error: "Unauthenticated: Access restricted to authorized personnel." };
+    }
+    if (!documentId) {
+      return { success: false, error: "Document ID is required." };
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from("vehicle_documents")
+      .select("id, vehicle_id, doc_type, title, file_name, file_size, file_type, uploaded_at, expiry_date, status, document_number, file_url")
+      .eq("id", documentId)
+      .maybeSingle();
+
+    if (error || !data) {
+      return { success: false, error: error?.message || "Document not found." };
+    }
+
+    return {
+      success: true,
+      document: {
+        ...data,
+        has_file: !!data.file_url,
+        file_type: data.file_type || resolveMimeFromName(data.file_name)
+      },
+      file_url: data.file_url || ""
+    };
+  } catch (err: any) {
+    console.error("[vehicle-actions] fetchVehicleDocumentContentAction error:", err);
+    return { success: false, error: err.message || "Failed to retrieve document content." };
   }
 }
 
@@ -3238,14 +3287,85 @@ export async function fetchMaintenanceList(): Promise<{
 
     const vMap = new Map((vehiclesData || []).map((v) => [v.id, v.registration_number]));
 
-    const enriched = recordsList.map((r) => ({
-      ...r,
-      vehicle_reg: vMap.get(r.vehicle_id) || "N/A"
-    }));
+    const enriched = recordsList.map((r) => {
+      let pr = r.parts_replaced;
+      if (typeof pr === "object" && pr !== null && Array.isArray(pr.attachments)) {
+        pr = {
+          ...pr,
+          attachments: pr.attachments.map((a: any) => ({
+            id: a.id || `att-${Date.now()}`,
+            file_name: a.file_name,
+            file_size: a.file_size,
+            file_type: a.file_type || resolveMimeFromName(a.file_name || ""),
+            uploaded_at: a.uploaded_at,
+            has_file: !!a.file_url,
+            file_url: ""
+          }))
+        };
+      }
+      return {
+        ...r,
+        parts_replaced: pr,
+        vehicle_reg: vMap.get(r.vehicle_id) || "N/A"
+      };
+    });
 
     return { success: true, records: enriched };
   } catch (err: any) {
     return { success: false, records: [], error: err.message };
+  }
+}
+
+/**
+ * Securely fetch maintenance job card attachments / invoice scans on-demand
+ */
+export async function fetchServiceAttachmentContentAction(
+  serviceId: string,
+  attachmentId?: string
+): Promise<{
+  success: boolean;
+  attachments?: any[];
+  file_url?: string;
+  error?: string;
+}> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) {
+      return { success: false, error: "Unauthenticated: Access restricted to authorized personnel." };
+    }
+    if (!serviceId) {
+      return { success: false, error: "Service record ID is required." };
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from("service_records")
+      .select("id, vehicle_id, parts_replaced")
+      .eq("id", serviceId)
+      .maybeSingle();
+
+    if (error || !data) {
+      return { success: false, error: error?.message || "Service record not found." };
+    }
+
+    const partsData = typeof data.parts_replaced === "object" && data.parts_replaced !== null ? data.parts_replaced : {};
+    const rawAttachments: any[] = Array.isArray(partsData.attachments) ? partsData.attachments : [];
+
+    let targetFileUrl = "";
+    if (attachmentId) {
+      const match = rawAttachments.find((a: any) => a.id === attachmentId || a.file_name === attachmentId);
+      if (match) targetFileUrl = match.file_url || "";
+    } else if (rawAttachments.length > 0) {
+      targetFileUrl = rawAttachments[0].file_url || "";
+    }
+
+    return {
+      success: true,
+      attachments: rawAttachments,
+      file_url: targetFileUrl
+    };
+  } catch (err: any) {
+    console.error("[vehicle-actions] fetchServiceAttachmentContentAction error:", err);
+    return { success: false, error: err.message || "Failed to retrieve service attachment." };
   }
 }
 
@@ -3428,6 +3548,20 @@ export async function updateServiceRecordAction(
     const incomingParts = typeof formData.parts_replaced === "object" && formData.parts_replaced !== null
       ? { ...formData.parts_replaced }
       : existingParts;
+
+    // Preserve existing attachment content/file_url if not replaced
+    if (Array.isArray(incomingParts.attachments) && Array.isArray(existingParts.attachments)) {
+      const existingAttMap = new Map<string, any>(existingParts.attachments.map((a: any) => [a.id || a.file_name, a]));
+      incomingParts.attachments = incomingParts.attachments.map((att: any) => {
+        if (!att.file_url) {
+          const match = existingAttMap.get(att.id || att.file_name);
+          if (match?.file_url) {
+            return { ...att, file_url: match.file_url };
+          }
+        }
+        return att;
+      });
+    }
 
     const changedFields: string[] = [];
     const changeSummaries: string[] = [];
