@@ -32,6 +32,7 @@ export default function LoginPage() {
   const [ssoLoading, setSsoLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [noticeMsg, setNoticeMsg] = useState<{ type: 'warning' | 'info' | 'error'; title: string; description: string } | null>(null);
   const [isOAuthCallback, setIsOAuthCallback] = useState(false);
   const [conflictModalOpen, setConflictModalOpen] = useState(false);
   const [conflictData, setConflictData] = useState<{ user: any; destination: string } | null>(null);
@@ -63,28 +64,26 @@ export default function LoginPage() {
         setIsOAuthCallback(true);
         
         // Listen for the auth state change which sets the cookies in @supabase/ssr
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
           if (event === "SIGNED_IN" && session) {
             const rawNext = searchParams.get("next");
             const destination = rawNext && rawNext !== "/" ? `/select-module?next=${encodeURIComponent(rawNext)}` : "/select-module";
-            // Wait 500ms to ensure @supabase/ssr has completely finished writing cookies
-            setTimeout(() => {
-              window.location.href = destination;
-            }, 500);
+            
+            const currentToken = typeof window !== "undefined" ? localStorage.getItem("app_session_token") : null;
+            const conflictRes = await checkActiveSessionConflict(session.user.id, currentToken || undefined);
+            
+            if (conflictRes.hasConflict) {
+              setIsOAuthCallback(false);
+              setConflictData({ user: session.user, destination });
+              setConflictModalOpen(true);
+              return;
+            }
+
+            await completeLogin(session.user, destination);
           }
         });
         
-        // Fallback just in case the event already fired before we attached the listener
-        setTimeout(async () => {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session) {
-            const rawNext = searchParams.get("next");
-            const destination = rawNext && rawNext !== "/" ? `/select-module?next=${encodeURIComponent(rawNext)}` : "/select-module";
-            window.location.href = destination;
-          }
-        }, 1500);
-        
-        return; // Exit early, let the event listener or fallback handle the redirect
+        return;
       }
 
       if (finalError) {
@@ -112,21 +111,33 @@ export default function LoginPage() {
         if (session) {
           await Promise.race([supabase.auth.signOut(), new Promise(resolve => setTimeout(resolve, 800))]);
         }
-        setErrorMsg("Your session was terminated by an administrator or remotely.");
+        setNoticeMsg({
+          type: "warning",
+          title: "Session Terminated",
+          description: "Your session was terminated by an administrator or remotely."
+        });
         window.history.replaceState({}, document.title, window.location.pathname);
       } else if (isConcurrent) {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           await Promise.race([supabase.auth.signOut(), new Promise(resolve => setTimeout(resolve, 800))]);
         }
-        setErrorMsg("You have been logged out because your account was logged in on another device or browser.");
+        setNoticeMsg({
+          type: "warning",
+          title: "Session Transferred",
+          description: "You have been logged out because your account was logged in on another device or browser. To continue on this device, please sign in."
+        });
         window.history.replaceState({}, document.title, window.location.pathname);
       } else if (isTimeout) {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           await Promise.race([supabase.auth.signOut(), new Promise(resolve => setTimeout(resolve, 800))]);
         }
-        setErrorMsg("Your session expired. Please sign in again.");
+        setNoticeMsg({
+          type: "info",
+          title: "Session Expired",
+          description: "Your session expired due to inactivity. Please sign in again."
+        });
         window.history.replaceState({}, document.title, window.location.pathname);
       } else {
         const { data: { session } } = await supabase.auth.getSession();
@@ -172,6 +183,7 @@ export default function LoginPage() {
     e.preventDefault();
     setErrorMsg(null);
     setSuccessMsg(null);
+    setNoticeMsg(null);
 
     if (!email.trim() || !password) {
       setErrorMsg("Please fill in all required fields.");
@@ -214,6 +226,7 @@ export default function LoginPage() {
   const handleMicrosoftLogin = async () => {
     try {
       setErrorMsg(null);
+      setNoticeMsg(null);
       setSsoLoading(true);
 
       const searchParams = new URLSearchParams(window.location.search);
@@ -338,6 +351,16 @@ export default function LoginPage() {
             </div>
 
             {/* Realtime Alert Displays */}
+            {noticeMsg && (
+              <div className="mb-6 p-4 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 text-amber-900 dark:text-amber-200 text-sm flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                <AlertCircle className="h-5 w-5 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+                <div className="space-y-1">
+                  <strong className="font-semibold block text-amber-900 dark:text-amber-300">{noticeMsg.title}</strong>
+                  <span className="opacity-90">{noticeMsg.description}</span>
+                </div>
+              </div>
+            )}
+
             {errorMsg && (
               <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 text-danger dark:text-danger text-sm flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
                 <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
@@ -415,8 +438,6 @@ export default function LoginPage() {
               </AppButton>
             </form>
 
-
-
             <div className="relative py-8">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t border-border"></span>
@@ -457,26 +478,26 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Concurrent Session Warning Modal */}
+      {/* Active Session Confirmation Modal: "Do you want to continue here?" */}
       {conflictModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="relative w-full max-w-md p-6 bg-surface rounded-2xl border border-border shadow-2xl space-y-5 animate-in zoom-in-95 duration-200 text-foreground">
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center shrink-0">
-                <AlertCircle className="h-6 w-6" />
+                <Smartphone className="h-6 w-6" />
               </div>
               <div>
                 <h3 className="text-lg font-bold text-foreground">Active Session Detected</h3>
-                <p className="text-xs text-muted-foreground">Single Session Security Policy</p>
+                <p className="text-xs text-muted-foreground">Single Active Session Policy</p>
               </div>
             </div>
 
             <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/15 text-sm text-foreground space-y-2">
-              <p className="font-medium">
-                Your account is currently active on another device or browser.
+              <p className="font-semibold text-foreground text-base">
+                Do you want to continue here?
               </p>
-              <p className="text-xs text-muted-foreground">
-                Signing in here will terminate your other active session immediately to prevent concurrent usage.
+              <p className="text-muted-foreground leading-relaxed text-xs">
+                Your account is currently active on another device or browser. If you say <strong className="text-foreground">Yes, Continue</strong>, your previous session on the other device will be logged out immediately and you will be signed in on this device.
               </p>
             </div>
 
@@ -495,7 +516,7 @@ export default function LoginPage() {
                 onClick={handleConfirmConflictLogin}
                 className="h-10 px-5 text-sm font-semibold bg-amber-600 hover:bg-amber-700 text-white shadow-lg shadow-amber-600/20"
               >
-                Continue & Sign In Here
+                Yes, Continue & Log In Here
               </AppButton>
             </div>
           </div>
