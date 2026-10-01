@@ -407,11 +407,8 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
     <ExperienceProvider mode="operational">
       <div className="space-y-6">
         <header className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
-          <div className="flex flex-col gap-1.5 shrink-0">
-            <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Requirement Analysis & Report</h1>
-            <p className="text-sm font-medium text-muted">
-              Deep dive analytics and reporting for all requirements
-            </p>
+          <div className="flex flex-col gap-1 shrink-0">
+            <h1 className="text-xl font-bold tracking-tight text-foreground">Requirement Analysis &amp; Reports</h1>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full xl:w-auto">
             <ReportKPIBar kpis={kpis} variant="compact" className="mb-0" />

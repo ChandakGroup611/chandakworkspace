@@ -1,0 +1,2947 @@
+[
+  {
+    "file": "app\\amc\\analytics\\page.tsx",
+    "line": 241,
+    "matches": [
+      "bg-purple-500/10"
+    ],
+    "text": "<div className=\"p-2 rounded-xl bg-purple-500/10 text-theme-icon\">"
+  },
+  {
+    "file": "app\\learning\\LearningHubClient.tsx",
+    "line": 25,
+    "matches": [
+      "bg-gradient-to-tr",
+      "from-blue-100",
+      "to-indigo-100"
+    ],
+    "text": "<div className={`p-4 rounded-3xl bg-gradient-to-tr from-blue-100 to-indigo-100 text-theme-icon shadow-xl shadow-blue-500/10`}>"
+  },
+  {
+    "file": "app\\login\\page.tsx",
+    "line": 418,
+    "matches": [
+      "bg-gradient-to-t"
+    ],
+    "text": "<div className=\"absolute inset-0 bg-gradient-to-t from-surface via-surface/80 to-surface/20\"></div>"
+  },
+  {
+    "file": "app\\masters\\page.tsx",
+    "line": 757,
+    "matches": [
+      "bg-gradient-to-b"
+    ],
+    "text": "<div className=\"absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-theme-btn-primary to-theme-btn-secondary shadow-[0_0_10px_rgba(var(--theme-accent-raw),0.8)]\" />"
+  },
+  {
+    "file": "app\\masters\\page.tsx",
+    "line": 838,
+    "matches": [
+      "bg-gradient-to-br"
+    ],
+    "text": "<div className=\"absolute inset-0 bg-gradient-to-br from-theme-btn-primary/5 via-transparent to-theme-accent-raw/5 opacity-50 group-hover:opacity-100 transition-opacity duration-500\" />"
+  },
+  {
+    "file": "app\\masters\\page.tsx",
+    "line": 840,
+    "matches": [
+      "bg-gradient-to-br"
+    ],
+    "text": "<div className=\"h-16 w-16 rounded-2xl bg-gradient-to-br from-theme-btn-primary/20 to-theme-btn-primary/5 border border-theme-btn-primary/20 flex items-center justify-center shadow-[0_0_20px_rgba(var(--theme-accent-raw),0.15)] group-hover:shadow-[0_0_30px_rgba(var(--theme-accent-raw),0.3)] transition-shadow duration-500\">"
+  },
+  {
+    "file": "app\\migration\\Client.tsx",
+    "line": 258,
+    "matches": [
+      "text-indigo-300"
+    ],
+    "text": "<p className=\"text-xs text-indigo-300 leading-relaxed\">"
+  },
+  {
+    "file": "app\\migration\\Client.tsx",
+    "line": 356,
+    "matches": [
+      "text-indigo-300"
+    ],
+    "text": "<h3 className=\"text-sm font-semibold text-indigo-300 mb-1\">Processing Excel File...</h3>"
+  },
+  {
+    "file": "app\\migration\\page.tsx",
+    "line": 21,
+    "matches": [
+      "via-indigo-200",
+      "to-indigo-400"
+    ],
+    "text": "<h1 className=\"text-3xl font-black tracking-tight bg-clip-text text-transparent bg-surface border border-border/50 text-foreground from-accent via-accent/80 to-accent/60 dark:from-white dark:via-indigo-200 dark:to-indigo-400\">"
+  },
+  {
+    "file": "app\\requirements\\grooming\\page.tsx",
+    "line": 215,
+    "matches": [
+      "bg-indigo-100",
+      "text-indigo-700"
+    ],
+    "text": "<div className=\"w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-[10px] font-bold\" title={req.creator?.full_name || 'Requester'}>"
+  },
+  {
+    "file": "app\\requirements\\page.tsx",
+    "line": 299,
+    "matches": [
+      "text-indigo-100",
+      "border-indigo-800/50"
+    ],
+    "text": "className=\"border-theme-btn-primary/30 bg-theme-btn-primary/10 hover:bg-theme-btn-primary/10 text-theme-icon-secondary dark:bg-theme-btn-primary/10 dark:text-indigo-100 dark:border-indigo-800/50\""
+  },
+  {
+    "file": "app\\requirements\\[id]\\page.tsx",
+    "line": 1076,
+    "matches": [
+      "bg-purple-600"
+    ],
+    "text": "{ id: 'analysis', label: 'Business Analysis', icon: Target, color: 'text-theme-icon', activeBg: 'bg-purple-600' },"
+  },
+  {
+    "file": "app\\requirements\\[id]\\page.tsx",
+    "line": 1079,
+    "matches": [
+      "bg-cyan-600"
+    ],
+    "text": "{ id: 'audit', label: 'Audit Trail', icon: Clock, count: auditLogs.length, color: 'text-theme-icon', activeBg: 'bg-cyan-600' }"
+  },
+  {
+    "file": "app\\requirements\\[id]\\page.tsx",
+    "line": 1786,
+    "matches": [
+      "bg-indigo-600"
+    ],
+    "text": "<span className=\"px-3 py-1 rounded-full theme-data-value bg-indigo-600 text-white shadow-xs\">"
+  },
+  {
+    "file": "app\\requirements\\[id]\\page.tsx",
+    "line": 1800,
+    "matches": [
+      "bg-purple-600"
+    ],
+    "text": "<span className=\"w-4 h-4 rounded-full bg-purple-600 text-white text-[10px] font-extrabold flex items-center justify-center\">{idx + 1}</span>"
+  },
+  {
+    "file": "app\\requirements\\[id]\\page.tsx",
+    "line": 1814,
+    "matches": [
+      "bg-purple-600"
+    ],
+    "text": "<span className=\"w-4 h-4 rounded-full bg-purple-600 text-white text-[10px] font-extrabold flex items-center justify-center\">{idx + 1}</span>"
+  },
+  {
+    "file": "app\\select-module\\page.tsx",
+    "line": 177,
+    "matches": [
+      "from-amber-500"
+    ],
+    "text": "gradient: \"from-amber-500/15 via-orange-500/5 to-transparent\","
+  },
+  {
+    "file": "app\\select-module\\page.tsx",
+    "line": 192,
+    "matches": [
+      "from-blue-500",
+      "via-indigo-500"
+    ],
+    "text": "gradient: \"from-blue-500/15 via-indigo-500/5 to-transparent\","
+  },
+  {
+    "file": "app\\select-module\\page.tsx",
+    "line": 208,
+    "matches": [
+      "via-teal-500"
+    ],
+    "text": "gradient: \"from-emerald-500/15 via-teal-500/5 to-transparent\","
+  },
+  {
+    "file": "app\\select-module\\page.tsx",
+    "line": 223,
+    "matches": [
+      "from-purple-500",
+      "via-pink-500"
+    ],
+    "text": "gradient: \"from-purple-500/15 via-pink-500/5 to-transparent\","
+  },
+  {
+    "file": "app\\select-module\\page.tsx",
+    "line": 224,
+    "matches": [
+      "bg-purple-100",
+      "bg-purple-500/20",
+      "text-purple-800",
+      "text-purple-200",
+      "border-purple-300"
+    ],
+    "text": "badgeBg: \"bg-purple-100 dark:bg-purple-500/20 text-purple-800 dark:text-purple-200 border-purple-300 dark:border-border\","
+  },
+  {
+    "file": "app\\select-module\\page.tsx",
+    "line": 377,
+    "matches": [
+      "bg-gradient-to-br"
+    ],
+    "text": "className={`absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none bg-gradient-to-br ${meta.gradient}`}"
+  },
+  {
+    "file": "app\\sla\\page.tsx",
+    "line": 330,
+    "matches": [
+      "bg-gradient-to-b",
+      "from-amber-500",
+      "to-rose-500"
+    ],
+    "text": "<div className=\"absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-amber-500 to-rose-500 opacity-60\" />"
+  },
+  {
+    "file": "app\\subscription\\page.tsx",
+    "line": 76,
+    "matches": [
+      "bg-gradient-to-br"
+    ],
+    "text": "<h1 id=\"subscription-page-title\" className=\"text-3xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-br from-foreground via-foreground/90 to-foreground/50 bg-clip-text text-transparent\">"
+  },
+  {
+    "file": "app\\subscription\\page.tsx",
+    "line": 91,
+    "matches": [
+      "bg-gradient-to-b"
+    ],
+    "text": "? 'border-theme-btn-primary shadow-[0_0_40px_-15px_rgba(var(--accent),0.3)] bg-gradient-to-b from-accent/5 to-transparent'"
+  },
+  {
+    "file": "app\\tickets\\[ticketId]\\page.tsx",
+    "line": 149,
+    "matches": [
+      "text-purple-200"
+    ],
+    "text": "<div className=\"inline-flex items-center gap-2 rounded-2xl bg-theme-btn-primary/10 px-4 py-2 text-xs font-semibold text-theme-icon dark:bg-theme-btn-primary/10 dark:text-purple-200 shrink-0\">"
+  },
+  {
+    "file": "app\\users\\page.tsx",
+    "line": 765,
+    "matches": [
+      "bg-indigo-500/15",
+      "border-indigo-500/25"
+    ],
+    "text": "<div className=\"h-10 w-10 rounded-xl bg-indigo-500/15 text-theme-icon flex items-center justify-center border border-indigo-500/25\">"
+  },
+  {
+    "file": "app\\users\\page.tsx",
+    "line": 1132,
+    "matches": [
+      "text-indigo-400",
+      "bg-indigo-50/80",
+      "bg-indigo-950/40",
+      "bg-indigo-100",
+      "bg-indigo-900/60",
+      "border-indigo-200/70",
+      "border-indigo-800/50"
+    ],
+    "text": "className=\"p-1.5 rounded-lg transition-all text-theme-icon dark:text-indigo-400 bg-indigo-50/80 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-indigo-200/70 dark:border-indigo-800/50 shadow-2xs\""
+  },
+  {
+    "file": "app\\users\\page.tsx",
+    "line": 1372,
+    "matches": [
+      "bg-indigo-500/10",
+      "text-indigo-400",
+      "border-indigo-500/20"
+    ],
+    "text": "<div className=\"h-9 w-9 rounded-xl bg-indigo-500/10 text-theme-icon dark:text-indigo-400 flex items-center justify-center border border-indigo-500/20 shrink-0\">"
+  },
+  {
+    "file": "app\\users\\page.tsx",
+    "line": 1453,
+    "matches": [
+      "border-indigo-500/50"
+    ],
+    "text": "? \"bg-surface border-indigo-500/50 shadow-xs ring-1 ring-indigo-500/20\""
+  },
+  {
+    "file": "app\\users\\page.tsx",
+    "line": 1465,
+    "matches": [
+      "bg-indigo-500/15",
+      "text-indigo-400"
+    ],
+    "text": "<span className=\"text-[10px] px-1.5 py-0.2 rounded bg-indigo-500/15 text-theme-icon dark:text-indigo-400 font-bold border border-border\">"
+  },
+  {
+    "file": "app\\users\\page.tsx",
+    "line": 1477,
+    "matches": [
+      "bg-indigo-600",
+      "border-indigo-600"
+    ],
+    "text": "? \"bg-indigo-600 border-indigo-600 text-white shadow-2xs\""
+  },
+  {
+    "file": "app\\users\\page.tsx",
+    "line": 1524,
+    "matches": [
+      "bg-indigo-600",
+      "bg-indigo-500"
+    ],
+    "text": "className=\"bg-indigo-600 hover:bg-indigo-500 text-white font-bold\""
+  },
+  {
+    "file": "app\\users\\[id]\\page.tsx",
+    "line": 76,
+    "matches": [
+      "bg-purple-500/15"
+    ],
+    "text": "badgeBg: \"bg-purple-500/15 text-theme-icon border-border\","
+  },
+  {
+    "file": "app\\users\\[id]\\page.tsx",
+    "line": 355,
+    "matches": [
+      "border-indigo-200",
+      "border-indigo-800/60",
+      "bg-indigo-50/60",
+      "bg-indigo-950/30",
+      "text-indigo-700",
+      "text-indigo-300",
+      "bg-indigo-100",
+      "bg-indigo-900/40"
+    ],
+    "text": "className=\"px-4 h-10 font-semibold flex items-center gap-2 border-indigo-200 dark:border-indigo-800/60 bg-indigo-50/60 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-all shadow-xs cursor-pointer\""
+  },
+  {
+    "file": "app\\users\\[id]\\page.tsx",
+    "line": 358,
+    "matches": [
+      "text-indigo-400"
+    ],
+    "text": "<Layers className=\"h-4 w-4 text-theme-icon dark:text-indigo-400\" />"
+  },
+  {
+    "file": "app\\users\\[id]\\page.tsx",
+    "line": 385,
+    "matches": [
+      "bg-indigo-500/15",
+      "border-indigo-500/25"
+    ],
+    "text": "<div className=\"h-10 w-10 rounded-xl bg-indigo-500/15 text-theme-icon flex items-center justify-center border border-indigo-500/25\">"
+  },
+  {
+    "file": "app\\users\\[id]\\page.tsx",
+    "line": 731,
+    "matches": [
+      "bg-indigo-500/15",
+      "border-indigo-500/25"
+    ],
+    "text": "<div className=\"h-8 w-8 rounded-lg bg-indigo-500/15 text-theme-icon flex items-center justify-center border border-indigo-500/25\">"
+  },
+  {
+    "file": "app\\users\\[id]\\page.tsx",
+    "line": 741,
+    "matches": [
+      "bg-indigo-500/10",
+      "text-indigo-400",
+      "border-indigo-500/20"
+    ],
+    "text": "<span className=\"text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-500/10 text-theme-icon dark:text-indigo-400 border border-indigo-500/20 shrink-0\">"
+  },
+  {
+    "file": "app\\users\\[id]\\page.tsx",
+    "line": 954,
+    "matches": [
+      "text-indigo-300"
+    ],
+    "text": "<span key={idx} className=\"text-xs font-bold px-3 py-1.5 flex items-center gap-2 bg-theme-btn-primary/10 text-theme-icon-secondary border border-theme-btn-primary/30 rounded-lg dark:bg-theme-btn-primary/20 dark:text-indigo-300 dark:border-theme-btn-primary/30 shadow-sm\">"
+  },
+  {
+    "file": "app\\workspaces\\WorkspacesClient.tsx",
+    "line": 1247,
+    "matches": [
+      "bg-purple-600"
+    ],
+    "text": "? \"bg-purple-600 text-white font-bold shadow-sm\""
+  },
+  {
+    "file": "components\\amc\\AMCExecutiveDashboard.tsx",
+    "line": 394,
+    "matches": [
+      "bg-purple-500/10",
+      "border-purple-500/20"
+    ],
+    "text": "<div className=\"p-2 rounded-xl bg-purple-500/10 text-theme-icon border border-purple-500/20\">"
+  },
+  {
+    "file": "components\\amc\\AMCExecutiveDashboard.tsx",
+    "line": 404,
+    "matches": [
+      "text-purple-400"
+    ],
+    "text": "<span className=\"font-semibold text-purple-400\">Operational</span>"
+  },
+  {
+    "file": "components\\amc\\AMCExecutiveDashboard.tsx",
+    "line": 469,
+    "matches": [
+      "bg-gradient-to-r",
+      "from-rose-500",
+      "via-amber-500"
+    ],
+    "text": "<div className=\"p-4 rounded-2xl bg-gradient-to-r from-rose-500/10 via-amber-500/10 to-transparent border border-rose-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm\">"
+  },
+  {
+    "file": "components\\amc\\AMCImplementationTab.tsx",
+    "line": 82,
+    "matches": [
+      "bg-purple-500/10"
+    ],
+    "text": "bgColor: \"bg-purple-500/10\","
+  },
+  {
+    "file": "components\\amc\\AMCImplementationTab.tsx",
+    "line": 100,
+    "matches": [
+      "bg-indigo-500/10"
+    ],
+    "text": "bgColor: \"bg-indigo-500/10\","
+  },
+  {
+    "file": "components\\amc\\AMCImplementationTab.tsx",
+    "line": 118,
+    "matches": [
+      "bg-cyan-500/10"
+    ],
+    "text": "bgColor: \"bg-cyan-500/10\","
+  },
+  {
+    "file": "components\\amc\\AMCImplementationTab.tsx",
+    "line": 490,
+    "matches": [
+      "bg-gradient-to-r"
+    ],
+    "text": "className=\"bg-gradient-to-r from-theme-btn-primary via-emerald-500 to-success h-full transition-all duration-500 rounded-full\""
+  },
+  {
+    "file": "components\\collaboration\\RealtimeChat.tsx",
+    "line": 95,
+    "matches": [
+      "bg-indigo-900/30"
+    ],
+    "text": "<div key={msg.id || i} className={`text-sm ${isChat ? 'bg-indigo-900/30 border-theme-btn-primary/30' : 'theme-card-structural /40 /30'} rounded-xl p-3 max-w-[85%] ${isChat ? 'self-end' : 'self-start'}`}>"
+  },
+  {
+    "file": "components\\dashboard\\DashboardCommandCenter.tsx",
+    "line": 498,
+    "matches": [
+      "bg-purple-600"
+    ],
+    "text": "? \"bg-purple-600 text-white font-bold shadow-sm\""
+  },
+  {
+    "file": "components\\dashboard\\EscalationMonitor.tsx",
+    "line": 23,
+    "matches": [
+      "bg-gradient-to-b",
+      "from-rose-950"
+    ],
+    "text": "<AppCard className=\"flex flex-col h-full border-rose-500/10 bg-gradient-to-b from-rose-950/10 via-white/[0.01] to-transparent\">"
+  },
+  {
+    "file": "components\\dashboard\\panels\\MetricsRow.tsx",
+    "line": 65,
+    "matches": [
+      "to-amber-50"
+    ],
+    "text": "gradientLight: \"from-white to-amber-50\","
+  },
+  {
+    "file": "components\\dashboard\\panels\\MetricsRow.tsx",
+    "line": 66,
+    "matches": [
+      "to-amber-500"
+    ],
+    "text": "gradientDark: \"from-white/5 to-amber-500/10\","
+  },
+  {
+    "file": "components\\dashboard\\panels\\MetricsRow.tsx",
+    "line": 77,
+    "matches": [
+      "to-rose-50"
+    ],
+    "text": "gradientLight: \"from-white to-rose-50\","
+  },
+  {
+    "file": "components\\dashboard\\panels\\MetricsRow.tsx",
+    "line": 78,
+    "matches": [
+      "to-rose-500"
+    ],
+    "text": "gradientDark: \"from-white/5 to-rose-500/10\","
+  },
+  {
+    "file": "components\\dashboard\\panels\\MetricsRow.tsx",
+    "line": 95,
+    "matches": [
+      "bg-gradient-to-br"
+    ],
+    "text": "<div className={`absolute inset-0 bg-gradient-to-br opacity-60 transition-opacity duration-300 group-hover:opacity-100 ${"
+  },
+  {
+    "file": "components\\dashboard\\performance\\UserPerformanceWorkingSheetModal.tsx",
+    "line": 211,
+    "matches": [
+      "bg-gradient-to-br"
+    ],
+    "text": "<div className=\"w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 via-accent/20 to-emerald-500/20 border border-primary/30 flex items-center justify-center text-primary font-black text-lg shadow-sm\">"
+  },
+  {
+    "file": "components\\dashboard\\performance\\UserPerformanceWorkingSheetModal.tsx",
+    "line": 322,
+    "matches": [
+      "bg-gradient-to-br"
+    ],
+    "text": "<div className=\"p-4 rounded-2xl bg-gradient-to-br from-primary/10 via-surface to-surface dark:from-primary/15 dark:via-[#111625] dark:to-[#0E1320] border border-primary/20 shadow-sm relative overflow-hidden group\">"
+  },
+  {
+    "file": "components\\dashboard\\portfolio\\MyPortfolioSection.tsx",
+    "line": 324,
+    "matches": [
+      "bg-gradient-to-r",
+      "to-indigo-600"
+    ],
+    "text": "? \"bg-gradient-to-r from-theme-btn-primary to-indigo-600 ring-2 ring-theme-btn-primary/30\""
+  },
+  {
+    "file": "components\\dashboard\\portfolio\\PortfolioTables.tsx",
+    "line": 292,
+    "matches": [
+      "bg-cyan-500/10",
+      "border-cyan-500/20"
+    ],
+    "text": "item.module === \"Sub Tasks\" && \"bg-cyan-500/10 text-theme-icon border-cyan-500/20\","
+  },
+  {
+    "file": "components\\dashboard\\portfolio\\PortfolioTables.tsx",
+    "line": 293,
+    "matches": [
+      "bg-purple-500/10",
+      "border-purple-500/20"
+    ],
+    "text": "item.module === \"Tickets\" && \"bg-purple-500/10 text-theme-icon border-purple-500/20\","
+  },
+  {
+    "file": "components\\dashboard\\portfolio\\UserComparisonMatrix.tsx",
+    "line": 170,
+    "matches": [
+      "bg-gradient-to-r"
+    ],
+    "text": "<div className=\"p-4 rounded-2xl bg-gradient-to-r from-theme-btn-primary/15 via-theme-btn-primary/5 to-transparent border border-theme-btn-primary/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3\">"
+  },
+  {
+    "file": "components\\dashboard\\widgets\\ExecutiveKPIWidget.tsx",
+    "line": 149,
+    "matches": [
+      "bg-cyan-500"
+    ],
+    "text": "<div className=\"absolute top-0 left-0 w-full h-[3px] bg-cyan-500 shadow-[0_0_12px_rgba(6,182,212,0.7)]\" />"
+  },
+  {
+    "file": "components\\dashboard\\widgets\\ExecutiveKPIWidget.tsx",
+    "line": 156,
+    "matches": [
+      "bg-cyan-500/10"
+    ],
+    "text": "<div className=\"p-1 rounded-md bg-cyan-500/10 text-theme-icon group-hover:scale-110 transition-transform duration-200\">"
+  },
+  {
+    "file": "components\\dashboard\\widgets\\ExecutiveKPIWidget.tsx",
+    "line": 181,
+    "matches": [
+      "bg-indigo-500"
+    ],
+    "text": "<div className=\"absolute top-0 left-0 w-full h-[3px] bg-indigo-500 shadow-[0_0_12px_rgba(99,102,241,0.7)]\" />"
+  },
+  {
+    "file": "components\\dashboard\\widgets\\ExecutiveKPIWidget.tsx",
+    "line": 188,
+    "matches": [
+      "bg-indigo-500/10"
+    ],
+    "text": "<div className=\"p-1 rounded-md bg-indigo-500/10 text-theme-icon group-hover:scale-110 transition-transform duration-200\">"
+  },
+  {
+    "file": "components\\dashboard\\widgets\\ExecutiveKPIWidget.tsx",
+    "line": 213,
+    "matches": [
+      "bg-purple-500"
+    ],
+    "text": "<div className=\"absolute top-0 left-0 w-full h-[3px] bg-purple-500 shadow-[0_0_12px_rgba(168,85,247,0.7)]\" />"
+  },
+  {
+    "file": "components\\dashboard\\widgets\\ExecutiveKPIWidget.tsx",
+    "line": 220,
+    "matches": [
+      "bg-purple-500/10"
+    ],
+    "text": "<div className=\"p-1 rounded-md bg-purple-500/10 text-theme-icon group-hover:scale-110 transition-transform duration-200\">"
+  },
+  {
+    "file": "components\\dashboard\\widgets\\PerformanceWidget.tsx",
+    "line": 127,
+    "matches": [
+      "bg-purple-500/10",
+      "border-purple-500/20"
+    ],
+    "text": "<span className=\"px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-purple-500/10 text-theme-icon border border-purple-500/20 shrink-0\">"
+  },
+  {
+    "file": "components\\dashboard\\WorkloadAnalyzer.tsx",
+    "line": 83,
+    "matches": [
+      "bg-gradient-to-r",
+      "from-rose-500"
+    ],
+    "text": "? 'bg-gradient-to-r from-rose-500 to-red-500'"
+  },
+  {
+    "file": "components\\dashboard\\WorkloadAnalyzer.tsx",
+    "line": 84,
+    "matches": [
+      "bg-gradient-to-r",
+      "to-indigo-500"
+    ],
+    "text": ": 'bg-gradient-to-r from-accent to-indigo-500'"
+  },
+  {
+    "file": "components\\dashboard\\WorkloadDistributionMap.tsx",
+    "line": 13,
+    "matches": [
+      "to-indigo-600"
+    ],
+    "text": "{ id: \"tasks\", name: \"Workspace Tasks\", active: 0, overdue: 0, capacity: 0, color: \"from-accent to-indigo-600\" },"
+  },
+  {
+    "file": "components\\dashboard\\WorkloadDistributionMap.tsx",
+    "line": 14,
+    "matches": [
+      "from-indigo-600",
+      "to-purple-600"
+    ],
+    "text": "{ id: \"tickets\", name: \"ITSM Tickets\", active: 0, overdue: 0, capacity: 0, color: \"from-indigo-600 to-purple-600\" },"
+  },
+  {
+    "file": "components\\dashboard\\WorkloadDistributionMap.tsx",
+    "line": 15,
+    "matches": [
+      "from-amber-600",
+      "to-rose-600"
+    ],
+    "text": "{ id: \"requirements\", name: \"Environments\", active: 0, overdue: 0, capacity: 0, color: \"from-amber-600 to-rose-600\" },"
+  },
+  {
+    "file": "components\\dashboard\\WorkloadDistributionMap.tsx",
+    "line": 94,
+    "matches": [
+      "bg-gradient-to-r"
+    ],
+    "text": "className={`h-full rounded-full bg-gradient-to-r ${dept.color} transition-all duration-500 shadow-sm`}"
+  },
+  {
+    "file": "components\\dashboards\\CentralOperationsDashboard.tsx",
+    "line": 31,
+    "matches": [
+      "bg-gradient-to-br"
+    ],
+    "text": "<div className=\"absolute inset-0 bg-gradient-to-br from-white to-accent/10 dark:from-white/5 dark:to-accent/20 opacity-60 transition-opacity duration-300 group-hover:opacity-100\" />"
+  },
+  {
+    "file": "components\\dashboards\\CentralOperationsDashboard.tsx",
+    "line": 65,
+    "matches": [
+      "bg-gradient-to-br"
+    ],
+    "text": "<div className=\"absolute inset-0 bg-gradient-to-br from-white to-emerald-500/10 dark:from-white/5 dark:to-emerald-500/20 opacity-60 transition-opacity duration-300 group-hover:opacity-100\" />"
+  },
+  {
+    "file": "components\\dashboards\\CentralOperationsDashboard.tsx",
+    "line": 98,
+    "matches": [
+      "bg-gradient-to-br",
+      "to-purple-500"
+    ],
+    "text": "<div className=\"absolute inset-0 bg-gradient-to-br from-white to-purple-500/10 dark:from-white/5 dark:to-purple-500/20 opacity-60 transition-opacity duration-300 group-hover:opacity-100\" />"
+  },
+  {
+    "file": "components\\dashboards\\CentralOperationsDashboard.tsx",
+    "line": 133,
+    "matches": [
+      "bg-gradient-to-br",
+      "to-rose-500"
+    ],
+    "text": "<div className=\"absolute inset-0 bg-gradient-to-br from-white to-rose-500/10 dark:from-white/5 dark:to-rose-500/20 opacity-60 transition-opacity duration-300 group-hover:opacity-100\" />"
+  },
+  {
+    "file": "components\\iam\\IAMGovernanceCockpit.tsx",
+    "line": 447,
+    "matches": [
+      "from-indigo-600",
+      "from-indigo-500"
+    ],
+    "text": "<AppButton variant=\"ghost\" className=\"theme-card-structural text-foreground from-indigo-600 to-accent hover:from-indigo-500 hover:to-accent border-none shadow-lg shadow-indigo-500/10\">"
+  },
+  {
+    "file": "components\\iam\\IAMGovernanceCockpit.tsx",
+    "line": 544,
+    "matches": [
+      "bg-indigo-400"
+    ],
+    "text": "className=\"h-10 px-4 bg-theme-btn-primary hover:bg-indigo-400 text-theme-btn-primary-text border-none shadow-lg shadow-indigo-500/20\""
+  },
+  {
+    "file": "components\\iam\\IAMGovernanceCockpit.tsx",
+    "line": 803,
+    "matches": [
+      "bg-gradient-to-r"
+    ],
+    "text": "<div className={cn(\"p-8 border-t bg-gradient-to-r from-transparent to-transparent\", \"border-border via-gray-50/50\")}>"
+  },
+  {
+    "file": "components\\iam\\IAMGovernanceCockpit.tsx",
+    "line": 805,
+    "matches": [
+      "border-indigo-100"
+    ],
+    "text": "<div className={cn(\"p-3 rounded-2xl shadow-inner\", \"bg-theme-btn-primary/10 border border-indigo-100\")}>"
+  },
+  {
+    "file": "components\\layout\\RealtimeNotificationsDrawer.tsx",
+    "line": 222,
+    "matches": [
+      "bg-gradient-to-br",
+      "from-amber-500"
+    ],
+    "text": "<span className=\"absolute -top-1.5 -right-1.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-orange-500 px-1 text-[10px] font-bold text-[#ffffff] shadow-md ring-2 ring-background animate-pulse font-mono leading-none z-10\">"
+  },
+  {
+    "file": "components\\layout\\RealtimeNotificationsDrawer.tsx",
+    "line": 244,
+    "matches": [
+      "bg-gradient-to-br",
+      "from-rose-500"
+    ],
+    "text": "? \"bg-gradient-to-br from-rose-500/20 to-orange-500/20 text-danger border border-rose-500/20\""
+  },
+  {
+    "file": "components\\layout\\RealtimeNotificationsDrawer.tsx",
+    "line": 245,
+    "matches": [
+      "bg-gradient-to-br",
+      "from-amber-500"
+    ],
+    "text": ": \"bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-warning border border-amber-500/20\""
+  },
+  {
+    "file": "components\\layout\\RealtimeNotificationsDrawer.tsx",
+    "line": 289,
+    "matches": [
+      "from-amber-500"
+    ],
+    "text": "<div className=\"p-1.5 rounded-lg theme-card-structural text-foreground from-amber-500/20 to-orange-500/20 border-amber-500/30 text-warning dark:text-warning shrink-0\">"
+  },
+  {
+    "file": "components\\layout\\RealtimeNotificationsDrawer.tsx",
+    "line": 312,
+    "matches": [
+      "bg-gradient-to-r",
+      "from-amber-500"
+    ],
+    "text": "className={activeFilter === \"UNREAD\" ? \"bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md border-none hover:scale-105\" : \"text-muted-foreground hover:bg-warning/10\"}"
+  },
+  {
+    "file": "components\\layout\\RealtimeNotificationsDrawer.tsx",
+    "line": 320,
+    "matches": [
+      "bg-gradient-to-r",
+      "from-rose-500"
+    ],
+    "text": "className={activeFilter === \"CRITICAL\" ? \"bg-gradient-to-r from-rose-500 to-red-500 text-white shadow-md border-none hover:scale-105\" : \"text-muted-foreground hover:bg-danger/10\"}"
+  },
+  {
+    "file": "components\\layout\\RealtimeNotificationsDrawer.tsx",
+    "line": 372,
+    "matches": [
+      "bg-gradient-to-r",
+      "from-rose-500"
+    ],
+    "text": "? \"bg-gradient-to-r from-rose-500/10 to-transparent border-rose-200 dark:border-rose-500/30\""
+  },
+  {
+    "file": "components\\layout\\RealtimeNotificationsDrawer.tsx",
+    "line": 373,
+    "matches": [
+      "bg-gradient-to-r",
+      "from-amber-500"
+    ],
+    "text": ": \"bg-gradient-to-r from-amber-500/10 to-transparent border-amber-200 dark:border-amber-500/30\""
+  },
+  {
+    "file": "components\\layout\\RealtimeNotificationsDrawer.tsx",
+    "line": 378,
+    "matches": [
+      "bg-gradient-to-br",
+      "from-rose-500",
+      "from-amber-500"
+    ],
+    "text": "<div className={`p-1.5 rounded-lg ${isCritical ? \"bg-gradient-to-br from-rose-500/20 to-orange-500/20 text-danger border border-rose-500/30\" : \"bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-warning border border-amber-500/30\"}`}>"
+  },
+  {
+    "file": "components\\layout\\Sidebar.tsx",
+    "line": 492,
+    "matches": [
+      "bg-gradient-to-b"
+    ],
+    "text": "<div className=\"absolute left-[1.125rem] top-0 bottom-3 w-[1px] bg-gradient-to-b from-border/80 via-border/40 to-transparent\" />"
+  },
+  {
+    "file": "components\\requirements\\RequirementAnalysisModal.tsx",
+    "line": 336,
+    "matches": [
+      "text-indigo-700"
+    ],
+    "text": "<h3 className={`theme-label flex items-center gap-2 pb-2 border-b text-indigo-700 border-border`}>"
+  },
+  {
+    "file": "components\\requirements\\RequirementAnalysisModal.tsx",
+    "line": 469,
+    "matches": [
+      "text-pink-700"
+    ],
+    "text": "<h3 className={`theme-label flex items-center gap-2 pb-2 border-b text-pink-700 border-border`}>"
+  },
+  {
+    "file": "components\\requirements\\RequirementAuditTrail.tsx",
+    "line": 63,
+    "matches": [
+      "border-indigo-100"
+    ],
+    "text": "<div className={`absolute -left-[9px] top-1 rounded-full border-2 ${ \"theme-card-structural border-indigo-100\" } p-0.5 group-hover:scale-110 transition-transform`}>"
+  },
+  {
+    "file": "components\\settings\\CustomFieldsConfigurator.tsx",
+    "line": 168,
+    "matches": [
+      "bg-gradient-to-b",
+      "from-blue-950"
+    ],
+    "text": "<AppCard className=\"p-5 space-y-4 border-theme-btn-primary/20 bg-gradient-to-b from-blue-950/10 via-transparent to-transparent\">"
+  },
+  {
+    "file": "components\\settings\\SettingsGallery.tsx",
+    "line": 90,
+    "matches": [
+      "bg-pink-500"
+    ],
+    "text": "accentColor: \"bg-pink-500\","
+  },
+  {
+    "file": "components\\settings\\SettingsGallery.tsx",
+    "line": 123,
+    "matches": [
+      "bg-cyan-500"
+    ],
+    "text": "accentColor: \"bg-cyan-500\","
+  },
+  {
+    "file": "components\\settings\\SettingsGallery.tsx",
+    "line": 145,
+    "matches": [
+      "bg-violet-500"
+    ],
+    "text": "accentColor: \"bg-violet-500\","
+  },
+  {
+    "file": "components\\settings\\UserProfileEditor.tsx",
+    "line": 292,
+    "matches": [
+      "bg-gradient-to-br"
+    ],
+    "text": "<AppCard className=\"overflow-hidden border-0 shadow-lg bg-gradient-to-br from-card to-card/50\">"
+  },
+  {
+    "file": "components\\tasks\\TaskExecutionController.tsx",
+    "line": 1050,
+    "matches": [
+      "text-cyan-400"
+    ],
+    "text": "<Hourglass className=\"w-3.5 h-3.5 text-theme-icon\" /> <span className=\"text-theme-icon dark:text-cyan-400 font-bold\">Duration</span>"
+  },
+  {
+    "file": "components\\tasks\\TaskExecutionController.tsx",
+    "line": 1441,
+    "matches": [
+      "border-indigo-800"
+    ],
+    "text": "<h4 className=\"text-sm font-bold text-theme-icon dark:text-theme-icon mb-4 flex items-center gap-2 border-b border-theme-btn-primary/30 dark:border-indigo-800 pb-2\">"
+  },
+  {
+    "file": "components\\tasks\\TaskExecutionController.tsx",
+    "line": 1735,
+    "matches": [
+      "bg-gradient-to-br",
+      "to-indigo-600"
+    ],
+    "text": "<div className=\"h-7 w-7 rounded-full bg-gradient-to-br from-accent to-indigo-600 flex items-center justify-center text-xs font-extrabold text-white border border-theme-btn-primary/20 shadow-md\">"
+  },
+  {
+    "file": "components\\tasks\\TaskRealtimeChat.tsx",
+    "line": 398,
+    "matches": [
+      "bg-gradient-to-tr",
+      "to-indigo-600"
+    ],
+    "text": "<div className=\"h-8 w-8 shrink-0 rounded-full bg-gradient-to-tr from-accent to-indigo-600 flex items-center justify-center text-xs font-bold text-white shadow-sm overflow-hidden\">"
+  },
+  {
+    "file": "components\\tasks\\TaskRealtimeChat.tsx",
+    "line": 435,
+    "matches": [
+      "bg-gradient-to-br",
+      "from-indigo-500",
+      "to-purple-600",
+      "border-indigo-100"
+    ],
+    "text": "<div className={`p-3 rounded-2xl text-xs leading-relaxed shadow-sm ${ isSender ? \"bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-tr-sm border-theme-btn-primary/30\" : isMention ? (\"bg-theme-btn-primary/10 border-indigo-100 text-theme-icon-secondary rounded-tl-sm\") : (\"theme-card-structural text-foreground rounded-tl-sm\") }`}>"
+  },
+  {
+    "file": "components\\tasks\\TaskRealtimeChat.tsx",
+    "line": 534,
+    "matches": [
+      "bg-gradient-to-tr",
+      "to-indigo-600"
+    ],
+    "text": "<div className=\"h-6 w-6 rounded-full bg-gradient-to-tr from-accent to-indigo-600 flex items-center justify-center text-white font-bold text-[0.65rem] overflow-hidden\">"
+  },
+  {
+    "file": "components\\tasks\\TemplateManager.tsx",
+    "line": 103,
+    "matches": [
+      "border-indigo-100"
+    ],
+    "text": "<form onSubmit={handleCreate} className={`p-4 rounded-xl border space-y-4 bg-theme-btn-primary/10/50 border-indigo-100`}>"
+  },
+  {
+    "file": "components\\tickets\\TicketFormERP.tsx",
+    "line": 330,
+    "matches": [
+      "border-indigo-500/20"
+    ],
+    "text": "<div className=\"space-y-4 mt-4 animate-in fade-in slide-in-from-top-4 duration-300 bg-theme-btn-primary text-theme-btn-primary-text/5 p-4 rounded-xl border border-indigo-500/20\">"
+  },
+  {
+    "file": "components\\tickets\\TicketFormOthers.tsx",
+    "line": 304,
+    "matches": [
+      "border-indigo-500/20"
+    ],
+    "text": "<div className=\"space-y-4 mt-4 animate-in fade-in slide-in-from-top-4 duration-300 bg-theme-btn-primary text-theme-btn-primary-text/5 p-4 rounded-xl border border-indigo-500/20\">"
+  },
+  {
+    "file": "components\\tickets\\TicketInspector.tsx",
+    "line": 173,
+    "matches": [
+      "text-indigo-300"
+    ],
+    "text": "<AppButton variant=\"ghost\" size=\"sm\" className=\"text-xs text-theme-icon hover:text-indigo-300 hover:bg-surface/5\">"
+  },
+  {
+    "file": "components\\tickets\\TicketListSidebar.tsx",
+    "line": 145,
+    "matches": [
+      "text-indigo-300",
+      "bg-indigo-400/10"
+    ],
+    "text": "<span className=\"text-[0.65rem] text-indigo-300 font-medium bg-indigo-400/10 px-1.5 rounded\">"
+  },
+  {
+    "file": "components\\tickets\\TicketRealtimeChat.tsx",
+    "line": 409,
+    "matches": [
+      "bg-gradient-to-tr",
+      "to-indigo-600"
+    ],
+    "text": "<div className=\"h-8 w-8 shrink-0 rounded-full bg-gradient-to-tr from-accent to-indigo-600 flex items-center justify-center text-xs font-bold text-white shadow-sm overflow-hidden\">"
+  },
+  {
+    "file": "components\\tickets\\TicketRealtimeChat.tsx",
+    "line": 446,
+    "matches": [
+      "bg-gradient-to-br",
+      "from-indigo-500",
+      "to-purple-600",
+      "border-indigo-100"
+    ],
+    "text": "<div className={`p-3 rounded-2xl text-xs leading-relaxed shadow-sm ${ isSender ? \"bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-tr-sm border-theme-btn-primary/30\" : isMention ? (\"bg-theme-btn-primary/10 border-indigo-100 text-theme-icon-secondary rounded-tl-sm\") : (\"theme-card-structural text-foreground rounded-tl-sm\") }`}>"
+  },
+  {
+    "file": "components\\tickets\\TicketRealtimeChat.tsx",
+    "line": 545,
+    "matches": [
+      "bg-gradient-to-tr",
+      "to-indigo-600"
+    ],
+    "text": "<div className=\"h-6 w-6 rounded-full bg-gradient-to-tr from-accent to-indigo-600 flex items-center justify-center text-white font-bold text-[0.65rem] overflow-hidden\">"
+  },
+  {
+    "file": "components\\tickets\\TicketWorkspaceConsole.tsx",
+    "line": 325,
+    "matches": [
+      "text-pink-500"
+    ],
+    "text": "<Paperclip className=\"w-4 h-4 text-pink-500\" /> Ticket Relationships"
+  },
+  {
+    "file": "components\\tickets\\TicketWorkspaceConsole.tsx",
+    "line": 355,
+    "matches": [
+      "border-pink-500"
+    ],
+    "text": "className=\"border rounded-lg px-3 py-2 text-xs theme-input-structural text-foreground outline-none w-32 focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all\""
+  },
+  {
+    "file": "components\\tickets\\TicketWorkspaceConsole.tsx",
+    "line": 372,
+    "matches": [
+      "border-pink-500"
+    ],
+    "text": "className=\"w-full border rounded-lg px-3 py-2 text-xs theme-input-structural text-foreground focus:border-pink-500 focus:ring-1 focus:ring-pink-500 outline-none transition-all\""
+  },
+  {
+    "file": "components\\tickets\\TicketWorkspaceConsole.tsx",
+    "line": 403,
+    "matches": [
+      "text-pink-500"
+    ],
+    "text": "<span className=\"text-xs font-bold text-pink-500\">{t.code}</span>"
+  },
+  {
+    "file": "components\\tickets\\TicketWorkspaceConsole.tsx",
+    "line": 791,
+    "matches": [
+      "bg-gradient-to-br",
+      "to-indigo-600"
+    ],
+    "text": "<div className=\"h-7 w-7 rounded-full bg-gradient-to-br from-accent to-indigo-600 flex items-center justify-center text-xs font-extrabold text-white border border-theme-btn-primary/20 shadow-md\">"
+  },
+  {
+    "file": "components\\ui\\ChandakLoader.tsx",
+    "line": 33,
+    "matches": [
+      "bg-gradient-to-tr"
+    ],
+    "text": "<div className=\"absolute inset-0 rounded-full bg-gradient-to-tr from-[#7B1D56]/20 via-[#D4AF37]/20 to-[#1E3A8A]/20 blur-md animate-pulse duration-1000\" />"
+  },
+  {
+    "file": "components\\ui\\enterprise\\EnterpriseWizardShell.tsx",
+    "line": 29,
+    "matches": [
+      "from-indigo-600"
+    ],
+    "text": "indigo: \"from-indigo-600/20 to-transparent\","
+  },
+  {
+    "file": "components\\ui\\enterprise\\EnterpriseWizardShell.tsx",
+    "line": 31,
+    "matches": [
+      "from-amber-600"
+    ],
+    "text": "amber: \"from-amber-600/20 to-transparent\","
+  },
+  {
+    "file": "components\\ui\\enterprise\\EnterpriseWizardShell.tsx",
+    "line": 32,
+    "matches": [
+      "from-rose-600"
+    ],
+    "text": "rose: \"from-rose-600/20 to-transparent\","
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 205,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-400",
+      "border-purple-500/25"
+    ],
+    "text": "{ value: \"RC\", label: \"RC Book (Smart Card)\", badgeColor: \"bg-purple-500/10 text-theme-icon dark:text-purple-400 border-purple-500/25\" },"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 207,
+    "matches": [
+      "bg-indigo-500/10",
+      "text-indigo-400",
+      "border-indigo-500/25"
+    ],
+    "text": "{ value: \"PERMIT\", label: \"Commercial / Tourist Permit\", badgeColor: \"bg-indigo-500/10 text-theme-icon dark:text-indigo-400 border-indigo-500/25\" },"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 7186,
+    "matches": [
+      "bg-gradient-to-tr",
+      "from-amber-400",
+      "via-teal-400",
+      "to-indigo-500"
+    ],
+    "text": "<span className=\"h-4 w-4 rounded-full bg-gradient-to-tr from-amber-400 via-teal-400 to-indigo-500 opacity-90 border border-slate-400/80 shadow-2xs\" title=\"Authentic Parivahan Laser Hologram\" />"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 8863,
+    "matches": [
+      "bg-gradient-to-r",
+      "from-blue-500",
+      "to-indigo-500"
+    ],
+    "text": "className=\"h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-500\""
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 8870,
+    "matches": [
+      "bg-gradient-to-r",
+      "from-amber-500"
+    ],
+    "text": "className=\"h-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-500\""
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 8877,
+    "matches": [
+      "bg-gradient-to-r",
+      "from-teal-500"
+    ],
+    "text": "className=\"h-full bg-gradient-to-r from-teal-500 to-emerald-500 transition-all duration-500\""
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 8884,
+    "matches": [
+      "bg-gradient-to-r",
+      "from-cyan-400"
+    ],
+    "text": "className=\"h-full bg-gradient-to-r from-cyan-400 to-emerald-400 transition-all duration-500\""
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 9025,
+    "matches": [
+      "bg-gradient-to-t",
+      "from-blue-600",
+      "via-indigo-500",
+      "to-indigo-400",
+      "from-blue-500",
+      "to-cyan-400"
+    ],
+    "text": "className=\"w-full bg-gradient-to-t from-blue-600 via-indigo-500 to-indigo-400 dark:from-blue-500 dark:via-indigo-500 dark:to-cyan-400 group-hover:brightness-110 transition-all duration-500 rounded-t-lg shadow-sm\""
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 9039,
+    "matches": [
+      "bg-indigo-500"
+    ],
+    "text": "<span className=\"h-2.5 w-2.5 rounded-full bg-indigo-500 inline-block shadow-xs\"></span>"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 9370,
+    "matches": [
+      "bg-cyan-50",
+      "bg-cyan-950/40"
+    ],
+    "text": "className=\"h-7 w-7 text-theme-icon hover:bg-cyan-50 dark:hover:bg-cyan-950/40\""
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 9655,
+    "matches": [
+      "bg-indigo-500/5"
+    ],
+    "text": "className=\"p-3.5 rounded-2xl bg-surface border border-border/70 hover:border-theme-btn-primary/50 hover:bg-indigo-500/5 transition-all text-left group flex flex-col justify-between space-y-3 shadow-2xs cursor-pointer\""
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 9657,
+    "matches": [
+      "bg-indigo-500/10"
+    ],
+    "text": "<div className=\"h-8 w-8 rounded-xl bg-indigo-500/10 text-theme-icon flex items-center justify-center group-hover:scale-110 transition-transform\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 9684,
+    "matches": [
+      "bg-purple-500/5"
+    ],
+    "text": "className=\"p-3.5 rounded-2xl bg-surface border border-border/70 hover:border-theme-btn-primary/50 hover:bg-purple-500/5 transition-all text-left group flex flex-col justify-between space-y-3 shadow-2xs cursor-pointer\""
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 9686,
+    "matches": [
+      "bg-purple-500/10"
+    ],
+    "text": "<div className=\"h-8 w-8 rounded-xl bg-purple-500/10 text-theme-icon flex items-center justify-center group-hover:scale-110 transition-transform\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 9766,
+    "matches": [
+      "bg-purple-50/20",
+      "bg-purple-950/15"
+    ],
+    "text": "<div className=\"p-4 rounded-2xl border border-border bg-purple-50/20 dark:bg-purple-950/15 shadow-xs space-y-1\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 9767,
+    "matches": [
+      "text-purple-800",
+      "text-purple-400"
+    ],
+    "text": "<div className=\"flex items-center justify-between text-purple-800 dark:text-purple-400\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 9769,
+    "matches": [
+      "text-purple-400"
+    ],
+    "text": "<Sparkles className=\"h-4 w-4 text-theme-icon dark:text-purple-400\" />"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 9771,
+    "matches": [
+      "text-purple-700",
+      "text-purple-300"
+    ],
+    "text": "<div className=\"text-xl font-bold text-purple-700 dark:text-purple-300 font-mono\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 10167,
+    "matches": [
+      "text-purple-700",
+      "text-purple-400"
+    ],
+    "text": "<div className=\"font-semibold text-purple-700 dark:text-purple-400\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 10171,
+    "matches": [
+      "text-purple-400"
+    ],
+    "text": "<div className=\"text-[10px] text-theme-icon dark:text-purple-400 font-bold\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 10187,
+    "matches": [
+      "text-indigo-400"
+    ],
+    "text": "<div className=\"text-[10px] text-theme-icon dark:text-indigo-400 mt-1 flex items-center gap-1 font-semibold\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 10238,
+    "matches": [
+      "text-cyan-400"
+    ],
+    "text": "className=\"h-7 px-2 text-xs gap-1 font-semibold text-theme-icon dark:text-cyan-400 border-border hover:border-theme-btn-primary hover:bg-elevated shadow-2xs\""
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 10749,
+    "matches": [
+      "bg-indigo-500/10",
+      "text-indigo-400",
+      "border-indigo-500/20"
+    ],
+    "text": "<div className=\"inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-indigo-500/10 text-theme-icon dark:text-indigo-400 border border-indigo-500/20 mt-1\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 11199,
+    "matches": [
+      "text-indigo-400"
+    ],
+    "text": "className=\"h-7 text-xs px-2 text-theme-icon dark:text-indigo-400 border-border hover:border-theme-btn-primary hover:bg-elevated gap-1 font-semibold shadow-2xs\""
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 11323,
+    "matches": [
+      "text-indigo-400"
+    ],
+    "text": "<h3 className=\"text-2xl font-bold mt-1 text-theme-icon dark:text-indigo-400\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 11618,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-700",
+      "text-purple-300",
+      "border-purple-500/20"
+    ],
+    "text": "<span className=\"px-2 py-0.5 rounded text-xs font-semibold bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 11816,
+    "matches": [
+      "text-cyan-400",
+      "bg-cyan-50",
+      "bg-cyan-950/40"
+    ],
+    "text": "className=\"h-7 text-xs px-2 text-theme-icon dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-950/40 border-border\""
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 12489,
+    "matches": [
+      "text-purple-400"
+    ],
+    "text": "className=\"h-9 px-3 text-xs gap-1.5 font-semibold text-theme-icon dark:text-purple-400 border-border hover:border-theme-btn-primary hover:bg-elevated shadow-2xs\""
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 14531,
+    "matches": [
+      "text-purple-400",
+      "bg-purple-50",
+      "bg-purple-950/40"
+    ],
+    "text": "className=\"text-xs h-7 px-2.5 py-0 border-border text-theme-icon dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40\""
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 14724,
+    "matches": [
+      "text-purple-400"
+    ],
+    "text": "className=\"h-9 text-xs font-mono font-semibold text-theme-icon dark:text-purple-400\""
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 15344,
+    "matches": [
+      "text-purple-400",
+      "bg-purple-50",
+      "bg-purple-950/40"
+    ],
+    "text": "className=\"text-xs h-7 px-2.5 py-0 border-border text-theme-icon dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40\""
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 15537,
+    "matches": [
+      "text-purple-400"
+    ],
+    "text": "className=\"h-9 text-xs font-mono font-semibold text-theme-icon dark:text-purple-400\""
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 16008,
+    "matches": [
+      "text-purple-400"
+    ],
+    "text": "<div className=\"flex items-center justify-between text-xs text-theme-icon dark:text-purple-400\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 16525,
+    "matches": [
+      "text-purple-400",
+      "bg-purple-50",
+      "bg-purple-950/40"
+    ],
+    "text": "className=\"text-xs h-7 px-2.5 py-0 border-border text-theme-icon dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 font-medium\""
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 16692,
+    "matches": [
+      "text-purple-400"
+    ],
+    "text": "className=\"font-mono text-theme-icon dark:text-purple-400\""
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 16840,
+    "matches": [
+      "border-cyan-500/20",
+      "bg-cyan-500/5"
+    ],
+    "text": "<div className=\"space-y-3 p-3.5 rounded-xl border border-cyan-500/20 bg-cyan-500/5\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 16842,
+    "matches": [
+      "text-cyan-800",
+      "text-cyan-300"
+    ],
+    "text": "<div className=\"text-xs font-bold uppercase tracking-wider text-cyan-800 dark:text-cyan-300 flex items-center gap-1.5\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 17245,
+    "matches": [
+      "border-cyan-500/20",
+      "bg-cyan-50/50",
+      "bg-cyan-950/20"
+    ],
+    "text": "<div className=\"p-3.5 rounded-xl border border-cyan-500/20 bg-cyan-50/50 dark:bg-cyan-950/20 flex flex-wrap items-center justify-between gap-2\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 17247,
+    "matches": [
+      "text-cyan-700",
+      "text-cyan-400"
+    ],
+    "text": "<div className=\"text-xs font-bold uppercase tracking-wider text-cyan-700 dark:text-cyan-400 flex items-center gap-1\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 17353,
+    "matches": [
+      "text-cyan-400"
+    ],
+    "text": "className=\"font-mono font-bold text-theme-icon dark:text-cyan-400\""
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 17375,
+    "matches": [
+      "bg-cyan-500/10",
+      "text-cyan-400",
+      "bg-cyan-500/20"
+    ],
+    "text": "className=\"px-2 py-0.5 rounded text-xs font-semibold bg-cyan-500/10 text-theme-icon dark:text-cyan-400 hover:bg-cyan-500/20 transition-colors\""
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 17388,
+    "matches": [
+      "bg-indigo-500/10",
+      "text-indigo-400",
+      "bg-indigo-500/20"
+    ],
+    "text": "className=\"px-2 py-0.5 rounded text-xs font-semibold bg-indigo-500/10 text-theme-icon dark:text-indigo-400 hover:bg-indigo-500/20 transition-colors\""
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 17543,
+    "matches": [
+      "text-indigo-400"
+    ],
+    "text": "<div className=\"text-sm font-extrabold font-mono text-theme-icon dark:text-indigo-400\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 17575,
+    "matches": [
+      "bg-indigo-500/10",
+      "text-indigo-400"
+    ],
+    "text": "<div className=\"h-12 w-12 rounded-full bg-indigo-500/10 text-theme-icon dark:text-indigo-400 flex items-center justify-center mx-auto\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 17667,
+    "matches": [
+      "bg-purple-500/10",
+      "border-purple-500/20"
+    ],
+    "text": "<span className=\"px-1.5 py-0.5 rounded text-xs font-bold bg-purple-500/10 text-theme-icon border border-purple-500/20\">Zero-Dep</span>"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 18185,
+    "matches": [
+      "text-purple-400"
+    ],
+    "text": "<div className=\"text-sm font-extrabold font-mono text-theme-icon dark:text-purple-400\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 18231,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-400"
+    ],
+    "text": "<div className=\"h-12 w-12 rounded-full bg-purple-500/10 text-theme-icon dark:text-purple-400 flex items-center justify-center mx-auto\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 18264,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-400",
+      "border-purple-500/20"
+    ],
+    "text": "<span className=\"px-2 py-0.5 rounded-md font-mono text-xs font-bold bg-purple-500/10 text-theme-icon dark:text-purple-400 border border-purple-500/20\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 18433,
+    "matches": [
+      "bg-cyan-500"
+    ],
+    "text": "? \"bg-cyan-500 text-white\""
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 18454,
+    "matches": [
+      "bg-cyan-500/10",
+      "text-cyan-400",
+      "border-cyan-500/20"
+    ],
+    "text": "? \"bg-cyan-500/10 text-theme-icon dark:text-cyan-400 border border-cyan-500/20\""
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 18600,
+    "matches": [
+      "bg-gradient-to-r",
+      "from-blue-500",
+      "via-indigo-500",
+      "to-purple-500"
+    ],
+    "text": "<div className=\"p-4 rounded-xl bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-purple-500/10 border border-blue-500/20 flex items-center justify-between flex-wrap gap-3\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 18963,
+    "matches": [
+      "bg-gradient-to-r"
+    ],
+    "text": "<div className=\"p-4 sm:p-5 rounded-2xl border border-border bg-gradient-to-r from-slate-50 via-surface to-slate-50/50 dark:from-slate-900/60 dark:via-surface dark:to-slate-900/40 shadow-xs flex flex-col xl:flex-row xl:items-center justify-between gap-4\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 19130,
+    "matches": [
+      "border-purple-500",
+      "bg-purple-500/10",
+      "bg-purple-950/30"
+    ],
+    "text": "? \"border-purple-500 bg-purple-500/10 dark:bg-purple-950/30 ring-2 ring-purple-500/30 shadow-xs\""
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 19131,
+    "matches": [
+      "bg-purple-500/5"
+    ],
+    "text": ": \"border-border bg-surface hover:border-theme-btn-primary/40 hover:bg-purple-500/5\""
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 19135,
+    "matches": [
+      "text-purple-700",
+      "text-purple-400"
+    ],
+    "text": "<span className=\"text-xs font-bold uppercase tracking-wider text-purple-700 dark:text-purple-400 flex items-center gap-1.5\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 19139,
+    "matches": [
+      "bg-purple-500/15",
+      "text-purple-700",
+      "text-purple-300"
+    ],
+    "text": "<span className=\"text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-700 dark:text-purple-300\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 20323,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-700",
+      "text-purple-400",
+      "border-purple-500/25"
+    ],
+    "text": "<span className=\"text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-700 dark:text-purple-400 border border-purple-500/25\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 20515,
+    "matches": [
+      "border-cyan-500/20",
+      "bg-cyan-500/5"
+    ],
+    "text": "<div className=\"p-4 rounded-xl border border-cyan-500/20 bg-cyan-500/5 space-y-3\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 20517,
+    "matches": [
+      "text-cyan-800",
+      "text-cyan-300"
+    ],
+    "text": "<div className=\"text-xs font-bold uppercase tracking-wider text-cyan-800 dark:text-cyan-300 flex items-center gap-1.5\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 20553,
+    "matches": [
+      "border-cyan-500/20"
+    ],
+    "text": "<div className=\"pt-2 border-t border-cyan-500/20 flex items-center justify-end gap-2 flex-wrap\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 20613,
+    "matches": [
+      "text-cyan-700",
+      "text-cyan-300"
+    ],
+    "text": "className=\"h-7 text-xs px-2.5 text-cyan-700 dark:text-cyan-300 border-border gap-1\""
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 20759,
+    "matches": [
+      "border-indigo-500/20",
+      "bg-indigo-50/5"
+    ],
+    "text": "<div className=\"p-4 rounded-xl border border-indigo-500/20 bg-indigo-50/5 space-y-3\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 20761,
+    "matches": [
+      "text-indigo-800",
+      "text-indigo-300"
+    ],
+    "text": "<div className=\"text-xs font-bold uppercase tracking-wider text-indigo-800 dark:text-indigo-300 flex items-center gap-1.5\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 20777,
+    "matches": [
+      "bg-indigo-500/15",
+      "text-indigo-700",
+      "text-indigo-400",
+      "border-indigo-500/25"
+    ],
+    "text": "<span className=\"px-2 py-0.5 rounded text-xs font-bold bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 border border-indigo-500/25\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 20811,
+    "matches": [
+      "border-indigo-500/20"
+    ],
+    "text": "<div className=\"pt-2 border-t border-indigo-500/20 flex items-center justify-end gap-2 flex-wrap\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 20869,
+    "matches": [
+      "text-indigo-700",
+      "text-indigo-300"
+    ],
+    "text": "className=\"h-7 text-xs px-2.5 text-indigo-700 dark:text-indigo-300 border-border gap-1 font-semibold\""
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 20949,
+    "matches": [
+      "text-purple-700",
+      "text-purple-300",
+      "bg-purple-500/10"
+    ],
+    "text": "className=\"h-7 text-xs px-2.5 text-purple-700 dark:text-purple-300 border-border hover:bg-purple-500/10 gap-1 font-semibold\""
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 21263,
+    "matches": [
+      "border-indigo-500/20",
+      "bg-indigo-500/5"
+    ],
+    "text": "<div className=\"p-4 rounded-xl border border-indigo-500/20 bg-indigo-500/5 space-y-2\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 21264,
+    "matches": [
+      "text-indigo-800",
+      "text-indigo-300"
+    ],
+    "text": "<div className=\"text-xs font-bold uppercase tracking-wider text-indigo-800 dark:text-indigo-300 flex items-center gap-1.5\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 21303,
+    "matches": [
+      "border-purple-500/20",
+      "bg-purple-500/5"
+    ],
+    "text": "<div className=\"p-4 rounded-xl border border-purple-500/20 bg-purple-500/5 space-y-3\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 21305,
+    "matches": [
+      "text-purple-800",
+      "text-purple-300"
+    ],
+    "text": "<div className=\"text-xs font-bold uppercase tracking-wider text-purple-800 dark:text-purple-300 flex items-center gap-1.5\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 21317,
+    "matches": [
+      "text-purple-700",
+      "text-purple-300",
+      "bg-purple-100",
+      "bg-purple-950/40"
+    ],
+    "text": "className=\"h-7 text-xs px-2.5 text-purple-700 dark:text-purple-300 border-border hover:bg-purple-100 dark:hover:bg-purple-950/40 gap-1 font-semibold\""
+  },
+  {
+    "file": "components\\vehicle\\FleetDeskHost.tsx",
+    "line": 21415,
+    "matches": [
+      "text-purple-400"
+    ],
+    "text": "<div className=\"flex items-center justify-between text-xs text-theme-icon dark:text-purple-400\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetRbacGovernance.tsx",
+    "line": 76,
+    "matches": [
+      "bg-indigo-500/15",
+      "text-indigo-400"
+    ],
+    "text": "{ id: \"indigo\", label: \"Indigo\", class: \"bg-indigo-500/15 text-theme-icon dark:text-indigo-400 border-border\" },"
+  },
+  {
+    "file": "components\\vehicle\\FleetRbacGovernance.tsx",
+    "line": 79,
+    "matches": [
+      "bg-cyan-500/15",
+      "text-cyan-400"
+    ],
+    "text": "{ id: \"cyan\", label: \"Cyan\", class: \"bg-cyan-500/15 text-theme-icon dark:text-cyan-400 border-border\" },"
+  },
+  {
+    "file": "components\\vehicle\\FleetRbacGovernance.tsx",
+    "line": 81,
+    "matches": [
+      "bg-purple-500/15",
+      "text-purple-400"
+    ],
+    "text": "{ id: \"purple\", label: \"Purple\", class: \"bg-purple-500/15 text-theme-icon dark:text-purple-400 border-border\" },"
+  },
+  {
+    "file": "components\\vehicle\\FleetRbacGovernance.tsx",
+    "line": 1287,
+    "matches": [
+      "bg-purple-500/5",
+      "border-purple-500/20"
+    ],
+    "text": "<div className=\"p-5 rounded-2xl bg-purple-500/5 border border-purple-500/20 space-y-4 animate-in fade-in\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetRbacGovernance.tsx",
+    "line": 1288,
+    "matches": [
+      "border-purple-500/15"
+    ],
+    "text": "<div className=\"flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-purple-500/15 pb-3\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetRbacGovernance.tsx",
+    "line": 1290,
+    "matches": [
+      "text-purple-400"
+    ],
+    "text": "<span className=\"text-xs font-bold uppercase tracking-wider text-theme-icon dark:text-purple-400\">"
+  },
+  {
+    "file": "components\\vehicle\\FleetRbacGovernance.tsx",
+    "line": 1299,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-400",
+      "border-purple-500/20"
+    ],
+    "text": "<span className=\"text-xs px-2 py-0.5 rounded-md bg-purple-500/10 text-theme-icon dark:text-purple-400 font-bold border border-purple-500/20\">"
+  },
+  {
+    "file": "components\\workspaces\\sprints\\SprintBoard.tsx",
+    "line": 171,
+    "matches": [
+      "border-indigo-100"
+    ],
+    "text": "<form onSubmit={handleCreateSprint} className={`p-4 rounded-xl border flex gap-4 items-end bg-theme-btn-primary/10/50 border-indigo-100`}>"
+  },
+  {
+    "file": "components\\workspaces\\sprints\\SprintBoard.tsx",
+    "line": 237,
+    "matches": [
+      "border-indigo-100"
+    ],
+    "text": "className={`flex-shrink-0 w-80 rounded-xl border flex flex-col bg-theme-btn-primary/10/30 border-indigo-100`}"
+  },
+  {
+    "file": "components\\workspaces\\WorkspaceConsole.tsx",
+    "line": 37,
+    "matches": [
+      "text-indigo-300"
+    ],
+    "text": "<AppButton variant=\"ghost\" size=\"sm\" className=\"h-auto p-0 text-theme-icon hover:text-indigo-300 font-medium text-xs\">"
+  },
+  {
+    "file": "components\\workspaces\\WorkspaceMasterTable.tsx",
+    "line": 323,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-400"
+    ],
+    "text": "node.type === 'SUB_WORKSPACE' ? 'bg-purple-500/10 text-theme-icon dark:text-purple-400' :"
+  },
+  {
+    "file": "components\\workspaces\\WorkspaceMasterTable.tsx",
+    "line": 648,
+    "matches": [
+      "bg-purple-500/10"
+    ],
+    "text": "node.type === 'SUB_WORKSPACE' ? 'bg-purple-500/10 text-theme-icon' :"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DataEntryFormsModal.tsx",
+    "line": 598,
+    "matches": [
+      "text-purple-400"
+    ],
+    "text": "<ShieldCheck className=\"h-4 w-4 text-theme-icon dark:text-purple-400\" />"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DeleteDependencyModal.tsx",
+    "line": 74,
+    "matches": [
+      "text-purple-400"
+    ],
+    "text": "return <Users className=\"h-5 w-5 text-theme-icon dark:text-purple-400\" />;"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DeleteDependencyModal.tsx",
+    "line": 76,
+    "matches": [
+      "text-indigo-400"
+    ],
+    "text": "return <ShieldCheck className=\"h-5 w-5 text-theme-icon dark:text-indigo-400\" />;"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DeleteDependencyModal.tsx",
+    "line": 78,
+    "matches": [
+      "text-indigo-400"
+    ],
+    "text": "return <Tag className=\"h-5 w-5 text-theme-icon dark:text-indigo-400\" />;"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DesignMultiSelectDropdown.tsx",
+    "line": 119,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-700",
+      "text-purple-300"
+    ],
+    "text": "activeBg: \"bg-purple-500/10 border-border text-purple-700 dark:text-purple-300\","
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DesignMultiSelectDropdown.tsx",
+    "line": 120,
+    "matches": [
+      "bg-purple-600"
+    ],
+    "text": "badge: \"bg-purple-600 text-white\","
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DesignMultiSelectDropdown.tsx",
+    "line": 122,
+    "matches": [
+      "bg-purple-50",
+      "bg-purple-950/30",
+      "text-purple-900",
+      "text-purple-100"
+    ],
+    "text": "itemActive: \"bg-purple-50 dark:bg-purple-950/30 text-purple-900 dark:text-purple-100 font-semibold\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DesignRbacGovernance.tsx",
+    "line": 68,
+    "matches": [
+      "bg-indigo-500/15",
+      "text-indigo-400"
+    ],
+    "text": "{ id: \"indigo\", label: \"Indigo\", class: \"bg-indigo-500/15 text-theme-icon dark:text-indigo-400 border-border\" },"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DesignRbacGovernance.tsx",
+    "line": 71,
+    "matches": [
+      "bg-cyan-500/15",
+      "text-cyan-400"
+    ],
+    "text": "{ id: \"cyan\", label: \"Cyan\", class: \"bg-cyan-500/15 text-theme-icon dark:text-cyan-400 border-border\" },"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DesignRbacGovernance.tsx",
+    "line": 73,
+    "matches": [
+      "bg-purple-500/15",
+      "text-purple-400"
+    ],
+    "text": "{ id: \"purple\", label: \"Purple\", class: \"bg-purple-500/15 text-theme-icon dark:text-purple-400 border-border\" },"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DesignRbacGovernance.tsx",
+    "line": 910,
+    "matches": [
+      "bg-indigo-500/15"
+    ],
+    "text": "<span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${role.badgeColor || \"bg-indigo-500/15 text-theme-icon\"}`}>"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DesignRbacGovernance.tsx",
+    "line": 937,
+    "matches": [
+      "bg-indigo-500/15"
+    ],
+    "text": "<span className={`text-xs font-bold px-2 py-0.5 rounded-md border ${currentBuilderRole.badgeColor || \"bg-indigo-500/15 text-theme-icon\"}`}>"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DesignRbacGovernance.tsx",
+    "line": 1024,
+    "matches": [
+      "bg-purple-500/10"
+    ],
+    "text": "\"bg-purple-500/10 text-theme-icon\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DesignRbacGovernance.tsx",
+    "line": 1138,
+    "matches": [
+      "bg-indigo-500/15"
+    ],
+    "text": "<span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${roleMeta.badgeColor || \"bg-indigo-500/15 text-theme-icon\"}`}>"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DesignRbacModal.tsx",
+    "line": 252,
+    "matches": [
+      "bg-purple-600"
+    ],
+    "text": "? \"bg-purple-600 text-white shadow-sm\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DesignRbacModal.tsx",
+    "line": 265,
+    "matches": [
+      "bg-purple-600"
+    ],
+    "text": "? \"bg-purple-600 text-white shadow-sm\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DesignReportsAnalytics.tsx",
+    "line": 149,
+    "matches": [
+      "bg-purple-500/10"
+    ],
+    "text": "<div className=\"h-7 w-7 rounded-lg bg-purple-500/10 text-theme-icon flex items-center justify-center\">"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DesignReportsAnalytics.tsx",
+    "line": 182,
+    "matches": [
+      "bg-gradient-to-r",
+      "to-teal-400"
+    ],
+    "text": "className=\"h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DesignRfiTracker.tsx",
+    "line": 241,
+    "matches": [
+      "bg-purple-500/10",
+      "border-purple-500/20",
+      "text-purple-400"
+    ],
+    "text": "<div className=\"h-10 w-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-theme-icon dark:text-purple-400 shrink-0\">"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DesignRfiTracker.tsx",
+    "line": 255,
+    "matches": [
+      "bg-purple-600",
+      "bg-purple-500"
+    ],
+    "text": "className=\"h-8 px-3.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-md cursor-pointer whitespace-nowrap\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DesignRfiTracker.tsx",
+    "line": 302,
+    "matches": [
+      "border-purple-500"
+    ],
+    "text": "className=\"w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-purple-500\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DesignRfiTracker.tsx",
+    "line": 407,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-700",
+      "text-purple-300",
+      "border-purple-500/20"
+    ],
+    "text": "className=\"inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20 text-[11px] font-medium\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DesignRfiTracker.tsx",
+    "line": 413,
+    "matches": [
+      "text-purple-900",
+      "text-purple-100"
+    ],
+    "text": "className=\"hover:text-purple-900 dark:hover:text-purple-100\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DesignRfiTracker.tsx",
+    "line": 476,
+    "matches": [
+      "text-purple-400"
+    ],
+    "text": "<span className=\"font-mono font-black text-sm text-theme-icon dark:text-purple-400\">"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DesignRfiTracker.tsx",
+    "line": 566,
+    "matches": [
+      "bg-purple-600",
+      "bg-purple-500"
+    ],
+    "text": "className=\"h-7 px-3 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold inline-flex items-center gap-1 transition-colors cursor-pointer\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DesignRfiTracker.tsx",
+    "line": 634,
+    "matches": [
+      "text-purple-400"
+    ],
+    "text": "<Building2 className=\"h-4 w-4 text-theme-icon dark:text-purple-400\" />"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DesignRfiTracker.tsx",
+    "line": 730,
+    "matches": [
+      "text-purple-400"
+    ],
+    "text": "<MessageSquare className=\"h-4 w-4 text-theme-icon dark:text-purple-400\" />"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DesignRfiTracker.tsx",
+    "line": 842,
+    "matches": [
+      "text-purple-400"
+    ],
+    "text": "<span className=\"font-semibold text-theme-icon dark:text-purple-400\">{selectedRfiForReply.assignedConsultant}</span>"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DesignStagesRoadmap.tsx",
+    "line": 39,
+    "matches": [
+      "from-blue-600",
+      "to-cyan-500"
+    ],
+    "text": "{ label: \"Stage 1: Feasibility & Roadmap\", targetPct: \"0% - 10%\", color: \"from-blue-600 to-cyan-500\", desc: \"Topographical survey, statutory applicability, and site constraints\" },"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DesignStagesRoadmap.tsx",
+    "line": 40,
+    "matches": [
+      "from-indigo-600",
+      "to-blue-500"
+    ],
+    "text": "{ label: \"Stage 2: Concept Design Freeze\", targetPct: \"20% - 30%\", color: \"from-indigo-600 to-blue-500\", desc: \"Massing studies, area statements, and environmental strategy\" },"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DesignStagesRoadmap.tsx",
+    "line": 41,
+    "matches": [
+      "from-purple-600",
+      "to-indigo-500"
+    ],
+    "text": "{ label: \"Stage 3: Design Basis Freeze\", targetPct: \"30% - 40%\", color: \"from-purple-600 to-indigo-500\", desc: \"Soil investigation, Structural & MEP Design Basis Reports\" },"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DesignStagesRoadmap.tsx",
+    "line": 42,
+    "matches": [
+      "from-violet-600",
+      "to-purple-500"
+    ],
+    "text": "{ label: \"Stage 4: Schematic Design Freeze\", targetPct: \"40% - 60%\", color: \"from-violet-600 to-purple-500\", desc: \"RCC framing, shaft layouts, facade concepts, and lift sizing\" },"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DesignStagesRoadmap.tsx",
+    "line": 43,
+    "matches": [
+      "from-amber-600"
+    ],
+    "text": "{ label: \"Stage 5: Detailed Design\", targetPct: \"60% - 80%\", color: \"from-amber-600 to-orange-500\", desc: \"Detailed structural, MEP, facade, and lighting schematics\" },"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DesignStagesRoadmap.tsx",
+    "line": 44,
+    "matches": [
+      "from-rose-600",
+      "to-amber-500"
+    ],
+    "text": "{ label: \"Stage 6: Tender Design & BOQ\", targetPct: \"80% - 100%\", color: \"from-rose-600 to-amber-500\", desc: \"Procurement packages, tender drawings, and BOQs\" },"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DesignStagesRoadmap.tsx",
+    "line": 45,
+    "matches": [
+      "to-teal-500"
+    ],
+    "text": "{ label: \"Stage 7: Pre-Construction / GFC\", targetPct: \"100% GFC\", color: \"from-emerald-600 to-teal-500\", desc: \"Good For Construction drawings issued to site execution team\" },"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DesignStagesRoadmap.tsx",
+    "line": 46,
+    "matches": [
+      "from-teal-600"
+    ],
+    "text": "{ label: \"Stage 8: Construction Support\", targetPct: \"Site QA/QC\", color: \"from-teal-600 to-emerald-500\", desc: \"TPQA audits, PMC monitoring, site supervisor certifications\" }"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DesignStagesRoadmap.tsx",
+    "line": 110,
+    "matches": [
+      "to-teal-500"
+    ],
+    "text": "const targetInfo = STAGE_TARGETS[idx] || { targetPct: \"100%\", color: \"from-emerald-600 to-teal-500\" };"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DrawingRegister.tsx",
+    "line": 503,
+    "matches": [
+      "bg-cyan-500/10"
+    ],
+    "text": "badgeColor={previewDrawing.status === \"Approved (GFC)\" ? \"bg-emerald-500/10 text-emerald-600 border border-emerald-500/30\" : \"bg-cyan-500/10 text-theme-icon border border-border\"}"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DrawingRegister.tsx",
+    "line": 506,
+    "matches": [
+      "bg-cyan-500/10",
+      "text-cyan-400"
+    ],
+    "text": "iconBg=\"bg-cyan-500/10 text-theme-icon dark:text-cyan-400\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DrawingRegister.tsx",
+    "line": 570,
+    "matches": [
+      "text-cyan-400"
+    ],
+    "text": "<div className=\"flex items-center justify-between text-[11px] text-cyan-400 font-bold\">"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DrawingRegister.tsx",
+    "line": 577,
+    "matches": [
+      "border-cyan-400/60",
+      "bg-cyan-950/20"
+    ],
+    "text": "<div className=\"w-80 h-44 border-2 border-dashed border-cyan-400/60 rounded-xl flex items-center justify-center relative bg-cyan-950/20 backdrop-blur-xs\">"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DrawingRegister.tsx",
+    "line": 578,
+    "matches": [
+      "border-cyan-300/40"
+    ],
+    "text": "<div className=\"w-64 h-32 border border-cyan-300/40 rounded-lg flex flex-col items-center justify-center p-4 text-center\">"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DrawingRegister.tsx",
+    "line": 579,
+    "matches": [
+      "text-cyan-300"
+    ],
+    "text": "<span className=\"text-sm font-bold text-cyan-300 tracking-wider\">"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DrawingRegister.tsx",
+    "line": 582,
+    "matches": [
+      "text-cyan-400"
+    ],
+    "text": "<span className=\"text-[11px] text-cyan-400/80 font-mono mt-1\">"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\DrawingRegister.tsx",
+    "line": 586,
+    "matches": [
+      "text-cyan-400",
+      "border-cyan-500/40"
+    ],
+    "text": "<div className=\"absolute -top-3 bg-slate-950 px-3 text-[10px] text-cyan-400 font-bold border border-cyan-500/40 rounded\">"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\GfcHandoverView.tsx",
+    "line": 148,
+    "matches": [
+      "text-purple-400"
+    ],
+    "text": "<div className=\"text-[11px] font-bold text-theme-icon dark:text-purple-400 uppercase\">Filtered Records</div>"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\GfcHandoverView.tsx",
+    "line": 149,
+    "matches": [
+      "text-purple-400"
+    ],
+    "text": "<div className=\"text-xl font-black text-theme-icon dark:text-purple-400 mt-1\">{filteredReleases.length}</div>"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\LiaisoningTracker.tsx",
+    "line": 270,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-400",
+      "border-purple-500/20"
+    ],
+    "text": "<div className=\"h-9 w-9 rounded-xl bg-purple-500/10 text-theme-icon dark:text-purple-400 flex items-center justify-center border border-purple-500/20 shrink-0\">"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\LiaisoningTracker.tsx",
+    "line": 313,
+    "matches": [
+      "border-purple-500"
+    ],
+    "text": "className=\"w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/50 text-foreground focus:outline-none focus:border-purple-500\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\LiaisoningTracker.tsx",
+    "line": 373,
+    "matches": [
+      "text-purple-400"
+    ],
+    "text": "<span className=\"text-xs font-black text-theme-icon dark:text-purple-400 font-mono\">{complianceStats.rate}%</span>"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\LiaisoningTracker.tsx",
+    "line": 376,
+    "matches": [
+      "bg-gradient-to-r",
+      "from-purple-500",
+      "to-indigo-400"
+    ],
+    "text": "className=\"h-full bg-gradient-to-r from-purple-500 to-indigo-400 rounded-full transition-all duration-500\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\LiaisoningTracker.tsx",
+    "line": 412,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-700",
+      "text-purple-300"
+    ],
+    "text": "className=\"px-2 py-0.5 rounded-lg bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-border text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\LiaisoningTracker.tsx",
+    "line": 498,
+    "matches": [
+      "bg-purple-500/5"
+    ],
+    "text": "className=\"p-2 border-r border-border/30 text-center cursor-pointer hover:bg-purple-500/5 transition-colors\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\LiaisoningTracker.tsx",
+    "line": 534,
+    "matches": [
+      "bg-purple-500/10",
+      "border-purple-500/20"
+    ],
+    "text": "<div className=\"h-9 w-9 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20\">"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\LiaisoningTracker.tsx",
+    "line": 546,
+    "matches": [
+      "text-purple-400"
+    ],
+    "text": "<span className=\"font-mono text-xs font-black text-theme-icon dark:text-purple-400\">"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\LiaisoningTracker.tsx",
+    "line": 554,
+    "matches": [
+      "bg-gradient-to-r",
+      "from-purple-500",
+      "to-indigo-400"
+    ],
+    "text": "className=\"h-full bg-gradient-to-r from-purple-500 to-indigo-400 rounded-full transition-all\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\LiaisoningTracker.tsx",
+    "line": 578,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-400"
+    ],
+    "text": "iconBg=\"bg-purple-500/10 text-theme-icon dark:text-purple-400\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\LiaisoningTracker.tsx",
+    "line": 632,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-700",
+      "text-purple-300",
+      "bg-purple-500/20"
+    ],
+    "text": "className=\"p-3 rounded-xl border border-border bg-purple-500/10 text-purple-700 dark:text-purple-300 hover:bg-purple-500/20 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\CategoryMasterView.tsx",
+    "line": 37,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-400",
+      "bg-purple-500"
+    ],
+    "text": "{ id: \"purple\", label: \"Purple\", bg: \"bg-purple-500/10\", text: \"text-theme-icon dark:text-purple-400\", border: \"border-border\", dot: \"bg-purple-500\" },"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\CategoryMasterView.tsx",
+    "line": 172,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-400",
+      "border-purple-500/20"
+    ],
+    "text": "<div className=\"h-9 w-9 rounded-xl bg-purple-500/10 text-theme-icon dark:text-purple-400 flex items-center justify-center border border-purple-500/20 shrink-0\">"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\CategoryMasterView.tsx",
+    "line": 194,
+    "matches": [
+      "bg-purple-600",
+      "bg-purple-500"
+    ],
+    "text": "className=\"px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\CategoryMasterView.tsx",
+    "line": 358,
+    "matches": [
+      "bg-purple-500/10",
+      "bg-purple-500/20",
+      "text-purple-400",
+      "border-purple-500/25"
+    ],
+    "text": "className=\"h-6 px-2.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-theme-icon dark:text-purple-400 border border-purple-500/25 text-[11px] font-bold inline-flex items-center transition-colors cursor-pointer\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\CategoryMasterView.tsx",
+    "line": 441,
+    "matches": [
+      "bg-purple-500"
+    ],
+    "text": "? \"bg-purple-500 text-white shadow-xs scale-105\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\CategoryMasterView.tsx",
+    "line": 500,
+    "matches": [
+      "bg-purple-600",
+      "bg-purple-500"
+    ],
+    "text": "className=\"px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-md cursor-pointer transition-all\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\ConsultantMasterView.tsx",
+    "line": 374,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-400"
+    ],
+    "text": "<span className=\"text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/10 text-theme-icon dark:text-purple-400 font-bold\">"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\ConsultantMasterView.tsx",
+    "line": 383,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-400",
+      "bg-purple-500/20"
+    ],
+    "text": "className=\"px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-500/10 text-theme-icon dark:text-purple-400 hover:bg-purple-500/20 transition-colors cursor-pointer inline-flex items-center gap-1\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\ConsultantMasterView.tsx",
+    "line": 426,
+    "matches": [
+      "bg-purple-50",
+      "bg-purple-950/40",
+      "border-purple-500",
+      "text-purple-900",
+      "text-purple-100"
+    ],
+    "text": "? \"bg-purple-50 dark:bg-purple-950/40 border-purple-500 text-purple-900 dark:text-purple-100 font-bold shadow-xs ring-1 ring-purple-500/30\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\ConsultantMasterView.tsx",
+    "line": 442,
+    "matches": [
+      "bg-purple-600",
+      "border-purple-600"
+    ],
+    "text": "? \"bg-purple-600 border-purple-600 text-white\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\ConsultantMasterView.tsx",
+    "line": 464,
+    "matches": [
+      "bg-purple-600",
+      "bg-purple-500"
+    ],
+    "text": "className=\"px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-md cursor-pointer transition-all\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\ConsultantMasterView.tsx",
+    "line": 478,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-400",
+      "border-purple-500/20"
+    ],
+    "text": "<div className=\"h-9 w-9 rounded-xl bg-purple-500/10 text-theme-icon dark:text-purple-400 flex items-center justify-center border border-purple-500/20 shrink-0\">"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\ConsultantMasterView.tsx",
+    "line": 500,
+    "matches": [
+      "bg-purple-600",
+      "bg-purple-500"
+    ],
+    "text": "className=\"px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\ConsultantMasterView.tsx",
+    "line": 599,
+    "matches": [
+      "bg-purple-600"
+    ],
+    "text": "? \"bg-purple-600 text-white font-bold shadow-2xs\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\ConsultantMasterView.tsx",
+    "line": 615,
+    "matches": [
+      "bg-purple-600"
+    ],
+    "text": "? \"bg-purple-600 text-white font-bold shadow-2xs\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\ConsultantMasterView.tsx",
+    "line": 645,
+    "matches": [
+      "bg-purple-600",
+      "bg-purple-500"
+    ],
+    "text": "className=\"px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\ConsultantMasterView.tsx",
+    "line": 735,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-700",
+      "text-purple-300",
+      "border-purple-500/20"
+    ],
+    "text": "className=\"px-2 py-0.5 rounded-md text-[10px] font-semibold bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20 flex items-center gap-1\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\ConsultantMasterView.tsx",
+    "line": 762,
+    "matches": [
+      "bg-purple-500/10",
+      "bg-purple-500/20",
+      "text-purple-400",
+      "border-purple-500/25"
+    ],
+    "text": "className=\"h-6 px-2.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-theme-icon dark:text-purple-400 border border-purple-500/25 text-[11px] font-bold inline-flex items-center transition-colors cursor-pointer\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\MasterBulkImportModal.tsx",
+    "line": 145,
+    "matches": [
+      "bg-purple-500/10"
+    ],
+    "text": "{ id: \"PACKAGES\", label: \"Package Master\", icon: Tag, color: \"text-theme-icon bg-purple-500/10 border-border\" },"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\MasterBulkImportModal.tsx",
+    "line": 148,
+    "matches": [
+      "bg-indigo-500/10"
+    ],
+    "text": "{ id: \"SUB_PROJECTS\", label: \"Sub-Project / Wings\", icon: FolderTree, color: \"text-theme-icon bg-indigo-500/10 border-border\" },"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\ProjectMasterView.tsx",
+    "line": 399,
+    "matches": [
+      "text-purple-400"
+    ],
+    "text": "<span className=\"text-lg font-black text-theme-icon dark:text-purple-400\">"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\ProjectMasterView.tsx",
+    "line": 526,
+    "matches": [
+      "text-purple-400",
+      "bg-purple-500/10",
+      "border-purple-500/20"
+    ],
+    "text": "<span className=\"text-[10px] font-bold text-theme-icon dark:text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20 whitespace-nowrap\">"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\ProjectMasterView.tsx",
+    "line": 616,
+    "matches": [
+      "bg-purple-500/10",
+      "bg-purple-500/20",
+      "text-purple-400",
+      "border-purple-500/25"
+    ],
+    "text": "className=\"h-5 px-2 rounded-md bg-purple-500/10 hover:bg-purple-500/20 text-theme-icon dark:text-purple-400 border border-purple-500/25 text-[10px] font-bold inline-flex items-center transition-colors cursor-pointer\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\ProjectMasterView.tsx",
+    "line": 626,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-700",
+      "text-purple-300",
+      "border-purple-500/20"
+    ],
+    "text": "className=\"px-2 py-0.5 rounded-md text-[10px] font-semibold bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\ProjectMasterView.tsx",
+    "line": 926,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-400"
+    ],
+    "text": "<span className=\"text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/10 text-theme-icon dark:text-purple-400 font-bold\">"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\ProjectMasterView.tsx",
+    "line": 935,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-400",
+      "bg-purple-500/20"
+    ],
+    "text": "className=\"px-2 py-1 rounded-lg text-[10px] font-bold bg-purple-500/10 text-theme-icon dark:text-purple-400 hover:bg-purple-500/20 transition-colors cursor-pointer inline-flex items-center gap-1\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\ProjectMasterView.tsx",
+    "line": 978,
+    "matches": [
+      "bg-purple-50",
+      "bg-purple-950/40",
+      "border-purple-500/60",
+      "text-purple-900",
+      "text-purple-100"
+    ],
+    "text": "? \"bg-purple-50 dark:bg-purple-950/40 border-purple-500/60 text-purple-900 dark:text-purple-100 font-bold shadow-2xs\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\ProjectMasterView.tsx",
+    "line": 990,
+    "matches": [
+      "bg-purple-600",
+      "border-purple-600"
+    ],
+    "text": "? \"bg-purple-600 border-purple-600 text-white\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\SubProjectMasterView.tsx",
+    "line": 338,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-400",
+      "border-purple-500/20"
+    ],
+    "text": "<div className=\"h-9 w-9 rounded-xl bg-purple-500/10 text-theme-icon dark:text-purple-400 flex items-center justify-center border border-purple-500/20 shrink-0\">"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\SubProjectMasterView.tsx",
+    "line": 361,
+    "matches": [
+      "bg-purple-600",
+      "bg-purple-500"
+    ],
+    "text": "className=\"px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\SubProjectMasterView.tsx",
+    "line": 443,
+    "matches": [
+      "bg-purple-600",
+      "bg-purple-500"
+    ],
+    "text": "className=\"px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\SubProjectMasterView.tsx",
+    "line": 535,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-700",
+      "text-purple-300",
+      "border-purple-500/20"
+    ],
+    "text": "className=\"px-1.5 py-0.2 rounded text-[9px] font-semibold bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\SubProjectMasterView.tsx",
+    "line": 572,
+    "matches": [
+      "bg-purple-500/10",
+      "bg-purple-500/20",
+      "text-purple-400",
+      "border-purple-500/25"
+    ],
+    "text": "className=\"h-6 px-2.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-theme-icon dark:text-purple-400 border border-purple-500/25 text-[11px] font-bold inline-flex items-center transition-colors cursor-pointer\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\SubProjectMasterView.tsx",
+    "line": 612,
+    "matches": [
+      "bg-purple-600"
+    ],
+    "text": "? \"bg-purple-600 text-white shadow-xs\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\SubProjectMasterView.tsx",
+    "line": 624,
+    "matches": [
+      "bg-purple-600"
+    ],
+    "text": "? \"bg-purple-600 text-white shadow-xs\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\SubProjectMasterView.tsx",
+    "line": 637,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-700",
+      "text-purple-300",
+      "bg-purple-500/20"
+    ],
+    "text": "className=\"px-3.5 py-2 rounded-xl text-xs font-bold bg-purple-500/10 text-purple-700 dark:text-purple-300 hover:bg-purple-500/20 transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\SubProjectMasterView.tsx",
+    "line": 782,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-400"
+    ],
+    "text": "<span className=\"text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/10 text-theme-icon dark:text-purple-400 font-bold\">"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\SubProjectMasterView.tsx",
+    "line": 791,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-400",
+      "bg-purple-500/20"
+    ],
+    "text": "className=\"px-2 py-1 rounded-lg text-[10px] font-bold bg-purple-500/10 text-theme-icon dark:text-purple-400 hover:bg-purple-500/20 transition-colors cursor-pointer inline-flex items-center gap-1\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\SubProjectMasterView.tsx",
+    "line": 833,
+    "matches": [
+      "bg-purple-50",
+      "bg-purple-950/40",
+      "border-purple-500/60",
+      "text-purple-900",
+      "text-purple-100"
+    ],
+    "text": "? \"bg-purple-50 dark:bg-purple-950/40 border-purple-500/60 text-purple-900 dark:text-purple-100 font-bold shadow-2xs\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\SubProjectMasterView.tsx",
+    "line": 845,
+    "matches": [
+      "bg-purple-600",
+      "border-purple-600"
+    ],
+    "text": "? \"bg-purple-600 border-purple-600 text-white\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\masters\\SubProjectMasterView.tsx",
+    "line": 1014,
+    "matches": [
+      "bg-purple-600",
+      "bg-purple-500"
+    ],
+    "text": "className=\"px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-md cursor-pointer transition-all\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\MastersSetupView.tsx",
+    "line": 489,
+    "matches": [
+      "bg-purple-600",
+      "bg-purple-500"
+    ],
+    "text": "className=\"px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\MastersSetupView.tsx",
+    "line": 504,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-700",
+      "text-purple-300",
+      "border-purple-500/20"
+    ],
+    "text": "<span className=\"text-[10px] font-bold px-1.5 py-0.2 rounded bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20\">"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\MastersSetupView.tsx",
+    "line": 753,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-400"
+    ],
+    "text": "iconBg=\"bg-purple-500/10 text-theme-icon dark:text-purple-400\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\RevisionHistoryLogs.tsx",
+    "line": 323,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-400",
+      "border-purple-500/20"
+    ],
+    "text": "<span className=\"px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-500/10 text-theme-icon dark:text-purple-400 border border-purple-500/20 inline-flex items-center gap-1\">"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\RevisionHistoryLogs.tsx",
+    "line": 342,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-700",
+      "text-purple-300",
+      "border-purple-500/20"
+    ],
+    "text": "return <span className=\"px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20\">🤝 Consultant</span>;"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\RevisionHistoryLogs.tsx",
+    "line": 344,
+    "matches": [
+      "bg-indigo-500/10",
+      "text-indigo-700",
+      "text-indigo-300",
+      "border-indigo-500/20"
+    ],
+    "text": "return <span className=\"px-1.5 py-0.5 rounded text-[9px] font-bold bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20\">🛡️ Authority</span>;"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\RevisionHistoryLogs.tsx",
+    "line": 357,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-400",
+      "border-purple-500/20"
+    ],
+    "text": "<div className=\"h-10 w-10 rounded-xl bg-purple-500/10 text-theme-icon dark:text-purple-400 flex items-center justify-center border border-purple-500/20 shrink-0\">"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\RevisionHistoryLogs.tsx",
+    "line": 374,
+    "matches": [
+      "bg-purple-600"
+    ],
+    "text": "? \"bg-purple-600 text-white shadow-2xs\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\RevisionHistoryLogs.tsx",
+    "line": 402,
+    "matches": [
+      "bg-purple-500/5",
+      "border-purple-500/20"
+    ],
+    "text": "<div className=\"p-3 rounded-xl bg-purple-500/5 border border-purple-500/20\">"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\RevisionHistoryLogs.tsx",
+    "line": 494,
+    "matches": [
+      "bg-purple-600",
+      "bg-purple-500"
+    ],
+    "text": "className=\"px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all ml-auto\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\RevisionHistoryLogs.tsx",
+    "line": 604,
+    "matches": [
+      "text-purple-400"
+    ],
+    "text": "<span className=\"text-[10px] font-semibold text-theme-icon dark:text-purple-400 block mt-0.5\">"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\RevisionHistoryLogs.tsx",
+    "line": 644,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-700",
+      "text-purple-300",
+      "border-purple-500/20"
+    ],
+    "text": "<span className=\"px-1.5 py-0.5 rounded text-[10px] bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20 font-medium truncate max-w-[130px]\">"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\TenderDesignMatrix.tsx",
+    "line": 869,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-700",
+      "text-purple-300"
+    ],
+    "text": "className=\"px-2 py-0.5 rounded-lg bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-border text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\TenderDesignMatrix.tsx",
+    "line": 1156,
+    "matches": [
+      "text-purple-400"
+    ],
+    "text": "<Users className=\"h-4 w-4 text-theme-icon dark:text-purple-400\" />"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\TenderDesignMatrix.tsx",
+    "line": 1162,
+    "matches": [
+      "bg-purple-500/10",
+      "bg-purple-500/20",
+      "text-purple-700",
+      "text-purple-300"
+    ],
+    "text": "className=\"h-6 px-2.5 rounded-lg border border-border bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 text-[10px] font-bold flex items-center gap-1 transition-colors cursor-pointer\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\TenderDesignMatrix.tsx",
+    "line": 1170,
+    "matches": [
+      "bg-purple-500/10",
+      "border-purple-500/25"
+    ],
+    "text": "<div className=\"p-4 rounded-2xl bg-purple-500/10 border border-purple-500/25 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs\">"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\TenderDesignMatrix.tsx",
+    "line": 1172,
+    "matches": [
+      "bg-purple-600"
+    ],
+    "text": "<div className=\"h-10 w-10 rounded-xl bg-purple-600 text-white flex items-center justify-center font-black text-sm shrink-0 shadow-xs\">"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\TenderDesignMatrix.tsx",
+    "line": 1180,
+    "matches": [
+      "bg-purple-500/20",
+      "text-purple-700",
+      "text-purple-300"
+    ],
+    "text": "<span className=\"text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-border\">"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\TenderDesignMatrix.tsx",
+    "line": 1316,
+    "matches": [
+      "bg-purple-500/10"
+    ],
+    "text": "badgeColor=\"bg-purple-500/10 text-theme-icon border border-border\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\TenderDesignMatrix.tsx",
+    "line": 1319,
+    "matches": [
+      "bg-purple-500/10",
+      "text-purple-400"
+    ],
+    "text": "iconBg=\"bg-purple-500/10 text-theme-icon dark:text-purple-400\""
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\TenderDesignMatrix.tsx",
+    "line": 1389,
+    "matches": [
+      "text-purple-400"
+    ],
+    "text": "<strong className=\"text-theme-icon dark:text-purple-400\">{log.consultantName || \"Not tagged\"}</strong>"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\TenderDesignMatrix.tsx",
+    "line": 1532,
+    "matches": [
+      "text-purple-400"
+    ],
+    "text": "<Layers className=\"h-4 w-4 text-theme-icon dark:text-purple-400\" />"
+  },
+  {
+    "file": "Design_Tracking\\src\\components\\TenderDesignMatrix.tsx",
+    "line": 1628,
+    "matches": [
+      "bg-purple-500/15",
+      "text-purple-700",
+      "text-purple-300",
+      "border-purple-500/20"
+    ],
+    "text": "<span className=\"px-1.5 py-0.2 rounded text-[10px] font-bold bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/20\">"
+  }
+]

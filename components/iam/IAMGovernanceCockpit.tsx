@@ -444,7 +444,7 @@ export default function IAMGovernanceCockpit({
               {isSaving ? "Syncing Logic Gates..." : "Snapshot Synced"}
             </span>
           </div>
-          <AppButton variant="ghost" className="theme-card-structural text-foreground from-indigo-600 to-accent hover:from-indigo-500 hover:to-accent border-none shadow-lg shadow-indigo-500/10">
+          <AppButton variant="outline" size="sm" className="text-xs font-semibold">
             Audit Export
           </AppButton>
         </div>
@@ -483,12 +483,12 @@ export default function IAMGovernanceCockpit({
                     onClick={() => setActiveRoleID(role.id)}
                     className={cn("group relative p-4 rounded-2xl border transition-all duration-300 cursor-pointer",
                       isSelected
-                        ? ("bg-theme-btn-primary/10/50 border-theme-btn-primary/30 shadow-sm shadow-indigo-500/5")
+                        ? ("bg-theme-btn-primary/10 border-theme-btn-primary/30 shadow-xs")
                         : ("bg-transparent border-transparent hover:bg-elevated/80 hover:border-border")
                     )}
                   >
                     {isSelected && (
-                      <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-theme-btn-primary rounded-r-full shadow-[0_0_15px_rgba(99,102,241,0.5)]" />
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-theme-btn-primary rounded-r-full" />
                     )}
                     
                     <div className="flex items-start justify-between">
@@ -539,9 +539,9 @@ export default function IAMGovernanceCockpit({
                       className={cn("h-10 text-xs", "bg-surface border-border text-foreground focus:border-theme-btn-primary focus:bg-surface")}
                     />
                     <AppButton 
-                      variant="secondary" 
+                      variant="primary" 
                       type="submit" 
-                      className="h-10 px-4 bg-theme-btn-primary hover:bg-indigo-400 text-theme-btn-primary-text border-none shadow-lg shadow-indigo-500/20"
+                      className="h-10 px-4 bg-theme-btn-primary hover:opacity-90 text-theme-btn-primary-text"
                     >
                       <Plus className="h-4 w-4" />
                     </AppButton>
@@ -557,7 +557,7 @@ export default function IAMGovernanceCockpit({
           <AppCard className={cn("flex-1 overflow-hidden flex flex-col relative")}>
             {isRoleLoading && (
               <div className="absolute inset-0 bg-surface/30-[2px] dark:bg-[#0A0D14]/30 flex flex-col items-center justify-center space-y-3 z-50">
-                <div className="animate-spin h-10 w-10 border-2 border-theme-btn-primary border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
+                <div className="animate-spin h-10 w-10 border-2 border-theme-btn-primary border-t-transparent rounded-full" />
                 <span className={cn("text-xs font-bold uppercase tracking-widest animate-pulse", "text-muted")}>
                   Loading Capabilities...
                 </span>
@@ -644,7 +644,7 @@ export default function IAMGovernanceCockpit({
                             className={cn(
                               "flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap border cursor-pointer",
                               isTabSelected
-                                ? "bg-theme-btn-primary border-theme-btn-primary text-theme-btn-primary-text shadow-md shadow-indigo-500/10"
+                                ? "bg-theme-btn-primary border-theme-btn-primary text-theme-btn-primary-text shadow-xs"
                                 : "bg-elevated border-border text-muted hover:bg-elevated hover:text-muted"
                             )}
                           >
