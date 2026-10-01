@@ -197,22 +197,13 @@ if ($zipFile && class_exists('ZipArchive')) {
         if (file_exists($target . '/server.js')) @touch($target . '/server.js');
         if (file_exists($target . '/package.json')) @touch($target . '/package.json');
         
-        // Ensure .htaccess has anti-caching and no-lscache directives
-        $htPath = $target . '/.htaccess';
-        $htCurrent = file_exists($htPath) ? @file_get_contents($htPath) : '';
-        if (strpos($htCurrent, 'no-lscache') === false) {
-            $htAntiCache = "<IfModule LiteSpeed>\n    CacheLookup off\n    SetEnv no-lscache 1\n</IfModule>\n\n<IfModule mod_headers.c>\n    <FilesMatch \"\\.(html|htm|php|json)$\">\n        Header set Cache-Control \"no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0\"\n        Header set CDN-Cache-Control \"no-store\"\n        Header set Surrogate-Control \"no-store\"\n        Header set Pragma \"no-cache\"\n        Header set Expires \"0\"\n    </FilesMatch>\n    <FilesMatch \"\\.(js|css|woff|woff2|svg|png|jpg|jpeg|gif|webp|ico)$\">\n        Header set Cache-Control \"public, max-age=31536000, immutable\"\n    </FilesMatch>\n</IfModule>\n\n";
-            @file_put_contents($htPath, $htAntiCache . $htCurrent);
-        }
-        @touch($htPath);
-        
         $extractionResults[$target] = [
             'extracted' => $extracted,
             'build_id' => file_exists($target . '/.next/BUILD_ID') ? trim(@file_get_contents($target . '/.next/BUILD_ID')) : null
         ];
     }
 
-    // Force synchronization from primary nodejs to public_html
+    // Force synchronization from primary nodejs to public_html and versioned public
     $primaryNode = $domainRoot . '/hbuilds/current/nodejs';
     $pubHtml = $domainRoot . '/public_html';
     if (is_dir($primaryNode) && is_dir($pubHtml)) {
@@ -238,19 +229,49 @@ if ($zipFile && class_exists('ZipArchive')) {
         @mkdir($target . '/tmp', 0755, true);
         @touch($target . '/tmp/restart.txt');
         if (file_exists($target . '/server.js')) @touch($target . '/server.js');
-        if (file_exists($target . '/.htaccess')) @touch($target . '/.htaccess');
     }
 }
 
 // Restart Passenger explicitly
 @mkdir($domainRoot . '/hbuilds/current/nodejs/tmp', 0755, true);
 @touch($domainRoot . '/hbuilds/current/nodejs/tmp/restart.txt');
+if ($versionedDirs) {
+    foreach ($versionedDirs as $vDir) {
+        @mkdir($vDir . '/tmp', 0755, true);
+        @touch($vDir . '/tmp/restart.txt');
+    }
+}
 
-// Ensure domain root .htaccess always has full Passenger configuration and anti-caching rules
-$completeHtaccess = "<IfModule LiteSpeed>\n    CacheLookup off\n    SetEnv no-lscache 1\n</IfModule>\n\n<IfModule mod_headers.c>\n    <FilesMatch \"\\.(html|htm|php|json)$\">\n        Header set Cache-Control \"no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0\"\n        Header set CDN-Cache-Control \"no-store\"\n        Header set Surrogate-Control \"no-store\"\n        Header set Pragma \"no-cache\"\n        Header set Expires \"0\"\n    </FilesMatch>\n    <FilesMatch \"\\.(js|css|woff|woff2|svg|png|jpg|jpeg|gif|webp|ico)$\">\n        Header set Cache-Control \"public, max-age=31536000, immutable\"\n    </FilesMatch>\n</IfModule>\n\nPassengerAppRoot /home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs\nPassengerAppType node\nPassengerNodejs /opt/alt/alt-nodejs20/root/bin/node\nPassengerStartupFile server.js\nPassengerBaseURI /\nPassengerRestartDir /home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs/tmp\nSetEnv NODE_OPTIONS \"--require /home/u859582759/domains/chandakgroup.tech/hbuilds/config/preload-timestamp.js\"\nSetEnv LSNODE_CONSOLE_LOG console.log\nSetEnv TOKIO_WORKER_THREADS 2\nRewriteRule ^\\.builds - [F,L]\n";
+// Find the active version directory
+$activeVersionDir = null;
+if ($versionedDirs && count($versionedDirs) > 0) {
+    $activeVersionDir = $versionedDirs[0];
+}
 
-@file_put_contents($domainRoot . '/public_html/.htaccess', $completeHtaccess);
+// Build standard .htaccess template
+$htaccessHeader = "<IfModule LiteSpeed>\n    CacheLookup off\n    SetEnv no-lscache 1\n</IfModule>\n\n<IfModule mod_headers.c>\n    <FilesMatch \"\\.(html|htm|php|json)$\">\n        Header set Cache-Control \"no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0\"\n        Header set CDN-Cache-Control \"no-store\"\n        Header set Surrogate-Control \"no-store\"\n        Header set Pragma \"no-cache\"\n        Header set Expires \"0\"\n    </FilesMatch>\n    <FilesMatch \"\\.(js|css|woff|woff2|svg|png|jpg|jpeg|gif|webp|ico)$\">\n        Header set Cache-Control \"public, max-age=31536000, immutable\"\n    </FilesMatch>\n</IfModule>\n\n";
+
+// Write to public_html
+$pubHtaccess = $htaccessHeader . "PassengerAppRoot /home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs\nPassengerAppType node\nPassengerNodejs /opt/alt/alt-nodejs20/root/bin/node\nPassengerStartupFile server.js\nPassengerBaseURI /\nPassengerRestartDir /home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs/tmp\nSetEnv NODE_OPTIONS \"--require /home/u859582759/domains/chandakgroup.tech/hbuilds/config/preload-timestamp.js\"\nSetEnv LSNODE_CONSOLE_LOG console.log\nSetEnv TOKIO_WORKER_THREADS 2\nRewriteRule ^\\.builds - [F,L]\n";
+@file_put_contents($domainRoot . '/public_html/.htaccess', $pubHtaccess);
 @touch($domainRoot . '/public_html/.htaccess');
+
+// Write to active versioned public and nodejs
+if ($activeVersionDir) {
+    $vHtaccess = $htaccessHeader . "PassengerAppRoot " . $activeVersionDir . "\nPassengerAppType node\nPassengerNodejs /opt/alt/alt-nodejs20/root/bin/node\nPassengerStartupFile server.js\nPassengerBaseURI /\nPassengerRestartDir " . $activeVersionDir . "/tmp\nSetEnv NODE_OPTIONS \"--require /home/u859582759/domains/chandakgroup.tech/hbuilds/config/preload-timestamp.js\"\nSetEnv LSNODE_CONSOLE_LOG console.log\nSetEnv TOKIO_WORKER_THREADS 2\nRewriteRule ^\\.builds - [F,L]\n";
+    @file_put_contents($activeVersionDir . '/.htaccess', $vHtaccess);
+    @file_put_contents($activeVersionDir . '/public/.htaccess', $vHtaccess);
+    @touch($activeVersionDir . '/.htaccess');
+    @touch($activeVersionDir . '/public/.htaccess');
+}
+
+// Write to __DIR__/.htaccess (which is where deploy-hook.php is running)
+if (__DIR__ !== $domainRoot . '/public_html') {
+    $currParent = dirname(__DIR__);
+    $currHtaccess = $htaccessHeader . "PassengerAppRoot " . $currParent . "\nPassengerAppType node\nPassengerNodejs /opt/alt/alt-nodejs20/root/bin/node\nPassengerStartupFile server.js\nPassengerBaseURI /\nPassengerRestartDir " . $currParent . "/tmp\nSetEnv NODE_OPTIONS \"--require /home/u859582759/domains/chandakgroup.tech/hbuilds/config/preload-timestamp.js\"\nSetEnv LSNODE_CONSOLE_LOG console.log\nSetEnv TOKIO_WORKER_THREADS 2\nRewriteRule ^\\.builds - [F,L]\n";
+    @file_put_contents(__DIR__ . '/.htaccess', $currHtaccess);
+    @touch(__DIR__ . '/.htaccess');
+}
 
 // Copy self to public directories to ensure persistence
 $selfCode = @file_get_contents(__FILE__);
@@ -263,14 +284,6 @@ if ($selfCode) {
     }
 }
 
-// Touch domain root .htaccess to force LiteSpeed process reload
-if (file_exists($domainRoot . '/public_html/.htaccess')) {
-    @touch($domainRoot . '/public_html/.htaccess');
-}
-if (file_exists(__DIR__ . '/.htaccess')) {
-    @touch(__DIR__ . '/.htaccess');
-}
-
 echo json_encode([
     'success' => true,
     'zip_found' => ($zipFile !== null),
@@ -278,4 +291,5 @@ echo json_encode([
     'results' => $extractionResults,
     'timestamp' => date('Y-m-d H:i:s')
 ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+exit;
 ?>
