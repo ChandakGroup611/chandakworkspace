@@ -55,7 +55,7 @@ export default function LoginPage() {
         }
       }
     } catch (e) {}
-    return "/select-module";
+    return "/workspaces/tasks";
   };
 
   useEffect(() => {
