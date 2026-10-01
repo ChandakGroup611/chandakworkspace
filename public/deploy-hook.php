@@ -1,5 +1,9 @@
 <?php
-// Bulletproof Deployment Extractor & Static Sync for Hostinger (Zero exec dependency)
+// Bulletproof High-Performance Deployment Extractor & Passenger Synchronizer for Hostinger
+@ini_set('max_execution_time', 300);
+@set_time_limit(300);
+@ini_set('memory_limit', '512M');
+@ignore_user_abort(true);
 error_reporting(0);
 ini_set('display_errors', 0);
 header('Content-Type: application/json');
@@ -13,7 +17,7 @@ if ($token !== $expectedToken) {
     exit;
 }
 
-// Helper: recursive directory copy in pure PHP
+// Helper: Fast recursive directory copy
 function recursiveCopy($src, $dst) {
     if (!is_dir($src)) return false;
     @mkdir($dst, 0755, true);
@@ -33,7 +37,7 @@ function recursiveCopy($src, $dst) {
     return true;
 }
 
-// Helper: recursive remove
+// Helper: Fast recursive remove
 function recursiveRemove($dir) {
     if (!is_dir($dir)) return;
     $files = @scandir($dir);
@@ -50,7 +54,7 @@ function recursiveRemove($dir) {
     @rmdir($dir);
 }
 
-// Direct domain root discovery
+// Domain root discovery
 $domainRoot = '/home/u859582759/domains/chandakgroup.tech';
 if (!is_dir($domainRoot)) {
     $curr = __DIR__;
@@ -66,32 +70,22 @@ if (!$domainRoot || !is_dir($domainRoot)) {
     $domainRoot = '/home/u859582759/domains/chandakgroup.tech';
 }
 
-// Discover PassengerAppRoot from .htaccess
-$htaccessContent = file_exists(__DIR__ . '/.htaccess') ? @file_get_contents(__DIR__ . '/.htaccess') : '';
-$passengerAppRoot = null;
-if (preg_match('/PassengerAppRoot\s+([^\s\r\n]+)/', $htaccessContent, $m)) {
-    $passengerAppRoot = trim($m[1]);
-}
-
-// Collect all target directories
-$targetDirs = [
-    dirname(__DIR__),
-    __DIR__,
-    $domainRoot . '/public_html',
-    $domainRoot . '/hbuilds/current/nodejs',
-    $domainRoot . '/hbuilds/current/nodejs/public',
-    $passengerAppRoot,
-];
-
 $versionedDirs = glob($domainRoot . '/hbuilds/versions/*/nodejs');
-if ($versionedDirs && is_array($versionedDirs)) {
-    foreach ($versionedDirs as $vDir) {
-        $targetDirs[] = $vDir;
-        $targetDirs[] = $vDir . '/public';
-    }
+$activeVersionDir = ($versionedDirs && count($versionedDirs) > 0) ? $versionedDirs[0] : null;
+
+// Determine Primary Node Application Roots (ONLY the true Node app roots, avoid nested public folders)
+$primaryAppRoots = [
+    $domainRoot . '/hbuilds/current/nodejs',
+    $domainRoot . '/public_html',
+];
+if ($activeVersionDir) {
+    $primaryAppRoots[] = $activeVersionDir;
+}
+if (dirname(__DIR__) !== $domainRoot && is_dir(dirname(__DIR__))) {
+    $primaryAppRoots[] = dirname(__DIR__);
 }
 
-$allTargetDirs = array_values(array_unique(array_filter($targetDirs)));
+$primaryAppRoots = array_values(array_unique(array_filter($primaryAppRoots, 'is_dir')));
 
 // Diagnostic / Info Mode
 if (isset($_GET['info']) || isset($_GET['scan']) || isset($_GET['diag']) || isset($_GET['logs'])) {
@@ -100,8 +94,7 @@ if (isset($_GET['info']) || isset($_GET['scan']) || isset($_GET['diag']) || isse
     $foundLogs = [];
     $foundHts = [];
     
-    foreach ($allTargetDirs as $tDir) {
-        if (!is_dir($tDir)) continue;
+    foreach ($primaryAppRoots as $tDir) {
         $buildFile = $tDir . '/.next/BUILD_ID';
         if (file_exists($buildFile)) {
             $foundBuildIds[$tDir] = trim(@file_get_contents($buildFile) ?: '');
@@ -125,7 +118,7 @@ if (isset($_GET['info']) || isset($_GET['scan']) || isset($_GET['diag']) || isse
         'success' => true,
         'domain_root' => $domainRoot,
         'current_dir' => __DIR__,
-        'target_dirs' => $allTargetDirs,
+        'app_roots' => $primaryAppRoots,
         'build_ids' => $foundBuildIds,
         'files' => $foundFiles,
         'logs' => $foundLogs,
@@ -135,21 +128,19 @@ if (isset($_GET['info']) || isset($_GET['scan']) || isset($_GET['diag']) || isse
     exit;
 }
 
-// Find deploy.zip in all candidate locations
+// Find deploy.zip in candidate locations
 $candidateZipPaths = [
-    __DIR__ . '/deploy.zip',
-    dirname(__DIR__) . '/deploy.zip',
     $domainRoot . '/public_html/deploy.zip',
     $domainRoot . '/deploy.zip',
+    __DIR__ . '/deploy.zip',
+    dirname(__DIR__) . '/deploy.zip',
     '/home/u859582759/deploy.zip',
     '/home/u859582759/public_html/deploy.zip',
 ];
 
-if ($versionedDirs && is_array($versionedDirs)) {
-    foreach ($versionedDirs as $vDir) {
-        $candidateZipPaths[] = $vDir . '/deploy.zip';
-        $candidateZipPaths[] = $vDir . '/public/deploy.zip';
-    }
+if ($activeVersionDir) {
+    $candidateZipPaths[] = $activeVersionDir . '/deploy.zip';
+    $candidateZipPaths[] = $activeVersionDir . '/public/deploy.zip';
 }
 
 $zipFile = null;
@@ -163,12 +154,12 @@ foreach (array_unique($candidateZipPaths) as $cand) {
 $extractionResults = [];
 
 if ($zipFile && class_exists('ZipArchive')) {
-    foreach ($allTargetDirs as $target) {
+    foreach ($primaryAppRoots as $target) {
         if (!is_dir($target)) {
             @mkdir($target, 0755, true);
         }
         
-        // Clean stale cache
+        // Clear stale Next.js cache to avoid memory corruptions
         if (is_dir($target . '/.next/cache')) {
             recursiveRemove($target . '/.next/cache');
         }
@@ -182,16 +173,15 @@ if ($zipFile && class_exists('ZipArchive')) {
             $extracted = true;
         }
         
-        // Mirror static chunks to all public accessible paths
+        // Ensure static assets are reachable under _next/static inside the target
         if (is_dir($target . '/.next/static')) {
             recursiveCopy($target . '/.next/static', $target . '/_next/static');
-            recursiveCopy($target . '/.next/static', $target . '/public/_next/static');
-            recursiveCopy($target . '/.next/static', $domainRoot . '/public_html/_next/static');
-            recursiveCopy($target . '/.next/static', $domainRoot . '/public_html/.next/static');
-            recursiveCopy($target . '/.next/static', __DIR__ . '/_next/static');
+            if (is_dir($target . '/public')) {
+                recursiveCopy($target . '/.next/static', $target . '/public/_next/static');
+            }
         }
         
-        // Signal restart for Passenger & LiteSpeed
+        // Signal restart
         @mkdir($target . '/tmp', 0755, true);
         @touch($target . '/tmp/restart.txt');
         if (file_exists($target . '/server.js')) @touch($target . '/server.js');
@@ -203,83 +193,69 @@ if ($zipFile && class_exists('ZipArchive')) {
         ];
     }
 
-    // Force synchronization from primary nodejs to public_html and versioned public
-    $primaryNode = $domainRoot . '/hbuilds/current/nodejs';
+    // Mirror static chunks to public_html so Apache/LiteSpeed serves them with zero Node overhead
     $pubHtml = $domainRoot . '/public_html';
-    if (is_dir($primaryNode) && is_dir($pubHtml)) {
-        recursiveCopy($primaryNode . '/.next', $pubHtml . '/.next');
-        if (is_dir($primaryNode . '/.next/static')) {
-            recursiveCopy($primaryNode . '/.next/static', $pubHtml . '/_next/static');
-            recursiveCopy($primaryNode . '/.next/static', $pubHtml . '/.next/static');
-        }
-        @copy($primaryNode . '/server.js', $pubHtml . '/server.js');
-        @copy($primaryNode . '/package.json', $pubHtml . '/package.json');
-        if (file_exists($primaryNode . '/.next/BUILD_ID')) {
-            @copy($primaryNode . '/.next/BUILD_ID', $pubHtml . '/.next/BUILD_ID');
+    $sourceStatic = null;
+    foreach ($primaryAppRoots as $root) {
+        if (is_dir($root . '/.next/static')) {
+            $sourceStatic = $root . '/.next/static';
+            break;
         }
     }
+    if ($sourceStatic && is_dir($pubHtml)) {
+        recursiveCopy($sourceStatic, $pubHtml . '/_next/static');
+        recursiveCopy($sourceStatic, $pubHtml . '/.next/static');
+    }
     
-    // Remove the zip file and any sync state file
+    // Clean up zip file and sync states
     @unlink($zipFile);
     @unlink(__DIR__ . '/.ftp-deploy-sync-state.json');
     @unlink($domainRoot . '/public_html/.ftp-deploy-sync-state.json');
-} else {
-    // If no zip found, touch restart and .htaccess on all targets anyway
-    foreach ($allTargetDirs as $target) {
-        @mkdir($target . '/tmp', 0755, true);
-        @touch($target . '/tmp/restart.txt');
-        if (file_exists($target . '/server.js')) @touch($target . '/server.js');
-    }
 }
 
-// Restart Passenger explicitly
-@mkdir($domainRoot . '/hbuilds/current/nodejs/tmp', 0755, true);
-@touch($domainRoot . '/hbuilds/current/nodejs/tmp/restart.txt');
-if ($versionedDirs) {
-    foreach ($versionedDirs as $vDir) {
-        @mkdir($vDir . '/tmp', 0755, true);
-        @touch($vDir . '/tmp/restart.txt');
-    }
-}
-
-// Find the active version directory
-$activeVersionDir = null;
-if ($versionedDirs && count($versionedDirs) > 0) {
-    $activeVersionDir = $versionedDirs[0];
-}
-
+// Base anti-caching header for LiteSpeed & Apache
 $htaccessHeader = "<IfModule LiteSpeed>\n    CacheLookup off\n    SetEnv no-lscache 1\n</IfModule>\n\n<IfModule mod_headers.c>\n    <FilesMatch \"\\.(html|htm|php|json|js|css)$\">\n        Header set Cache-Control \"no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0\"\n        Header set CDN-Cache-Control \"no-store\"\n        Header set Surrogate-Control \"no-store\"\n        Header set Pragma \"no-cache\"\n        Header set Expires \"0\"\n    </FilesMatch>\n    <FilesMatch \"\\.(woff|woff2|svg|png|jpg|jpeg|gif|webp|ico)$\">\n        Header set Cache-Control \"public, max-age=3600, must-revalidate\"\n    </FilesMatch>\n</IfModule>\n\n";
 
-// Write to public_html
-$pubHtaccess = $htaccessHeader . "PassengerAppRoot /home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs\nPassengerAppType node\nPassengerNodejs /opt/alt/alt-nodejs20/root/bin/node\nPassengerStartupFile server.js\nPassengerBaseURI /\nPassengerRestartDir /home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs/tmp\nSetEnv NODE_OPTIONS \"--require /home/u859582759/domains/chandakgroup.tech/hbuilds/config/preload-timestamp.js\"\nSetEnv LSNODE_CONSOLE_LOG console.log\nSetEnv TOKIO_WORKER_THREADS 2\nRewriteRule ^\\.builds - [F,L]\n";
+// Rewrite rules & Passenger configurations
+$passengerDirective = "PassengerAppType node\nPassengerNodejs /opt/alt/alt-nodejs20/root/bin/node\nPassengerStartupFile server.js\nPassengerBaseURI /\nSetEnv NODE_OPTIONS \"--require /home/u859582759/domains/chandakgroup.tech/hbuilds/config/preload-timestamp.js\"\nSetEnv LSNODE_CONSOLE_LOG console.log\nSetEnv TOKIO_WORKER_THREADS 2\nRewriteRule ^\\.builds - [F,L]\n";
+
+// 1. Write to public_html/.htaccess
+$pubHtaccess = $htaccessHeader . "PassengerAppRoot /home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs\nPassengerRestartDir /home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs/tmp\n" . $passengerDirective;
 @file_put_contents($domainRoot . '/public_html/.htaccess', $pubHtaccess);
 @touch($domainRoot . '/public_html/.htaccess');
 
-// Write to active versioned public and nodejs
+// 2. Write to active versioned dir if present
 if ($activeVersionDir) {
-    $vHtaccess = $htaccessHeader . "PassengerAppRoot " . $activeVersionDir . "\nPassengerAppType node\nPassengerNodejs /opt/alt/alt-nodejs20/root/bin/node\nPassengerStartupFile server.js\nPassengerBaseURI /\nPassengerRestartDir " . $activeVersionDir . "/tmp\nSetEnv NODE_OPTIONS \"--require /home/u859582759/domains/chandakgroup.tech/hbuilds/config/preload-timestamp.js\"\nSetEnv LSNODE_CONSOLE_LOG console.log\nSetEnv TOKIO_WORKER_THREADS 2\nRewriteRule ^\\.builds - [F,L]\n";
+    $vHtaccess = $htaccessHeader . "PassengerAppRoot " . $activeVersionDir . "\nPassengerRestartDir " . $activeVersionDir . "/tmp\n" . $passengerDirective;
     @file_put_contents($activeVersionDir . '/.htaccess', $vHtaccess);
-    @file_put_contents($activeVersionDir . '/public/.htaccess', $vHtaccess);
     @touch($activeVersionDir . '/.htaccess');
-    @touch($activeVersionDir . '/public/.htaccess');
+    if (is_dir($activeVersionDir . '/public')) {
+        @file_put_contents($activeVersionDir . '/public/.htaccess', $vHtaccess);
+        @touch($activeVersionDir . '/public/.htaccess');
+    }
 }
 
-// Write to __DIR__/.htaccess (which is where deploy-hook.php is running)
-if (__DIR__ !== $domainRoot . '/public_html') {
-    $currParent = dirname(__DIR__);
-    $currHtaccess = $htaccessHeader . "PassengerAppRoot " . $currParent . "\nPassengerAppType node\nPassengerNodejs /opt/alt/alt-nodejs20/root/bin/node\nPassengerStartupFile server.js\nPassengerBaseURI /\nPassengerRestartDir " . $currParent . "/tmp\nSetEnv NODE_OPTIONS \"--require /home/u859582759/domains/chandakgroup.tech/hbuilds/config/preload-timestamp.js\"\nSetEnv LSNODE_CONSOLE_LOG console.log\nSetEnv TOKIO_WORKER_THREADS 2\nRewriteRule ^\\.builds - [F,L]\n";
-    @file_put_contents(__DIR__ . '/.htaccess', $currHtaccess);
-    @touch(__DIR__ . '/.htaccess');
+// 3. Write to current nodejs dir
+$currNode = $domainRoot . '/hbuilds/current/nodejs';
+if (is_dir($currNode)) {
+    $cHtaccess = $htaccessHeader . "PassengerAppRoot " . $currNode . "\nPassengerRestartDir " . $currNode . "/tmp\n" . $passengerDirective;
+    @file_put_contents($currNode . '/.htaccess', $cHtaccess);
+    @touch($currNode . '/.htaccess');
 }
 
-// Copy self to public directories to ensure persistence
+// 4. Touch all restart.txt triggers to force Passenger worker respawn
+foreach ($primaryAppRoots as $root) {
+    @mkdir($root . '/tmp', 0755, true);
+    @touch($root . '/tmp/restart.txt');
+    if (file_exists($root . '/server.js')) @touch($root . '/server.js');
+}
+
+// 5. Ensure deploy-hook is preserved in public_html and versioned public
 $selfCode = @file_get_contents(__FILE__);
 if ($selfCode) {
     @file_put_contents($domainRoot . '/public_html/deploy-hook.php', $selfCode);
-    if ($versionedDirs) {
-        foreach ($versionedDirs as $vDir) {
-            @file_put_contents($vDir . '/public/deploy-hook.php', $selfCode);
-        }
+    if ($activeVersionDir && is_dir($activeVersionDir . '/public')) {
+        @file_put_contents($activeVersionDir . '/public/deploy-hook.php', $selfCode);
     }
 }
 
