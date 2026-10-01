@@ -233,13 +233,11 @@ if ($zipFile && class_exists('ZipArchive')) {
 @mkdir($domainRoot . '/hbuilds/current/nodejs/tmp', 0755, true);
 @touch($domainRoot . '/hbuilds/current/nodejs/tmp/restart.txt');
 
-// Ensure domain root .htaccess also contains anti-caching rules
-$domHt = $domainRoot . '/public_html/.htaccess';
-$domHtCurrent = file_exists($domHt) ? @file_get_contents($domHt) : '';
-if (strpos($domHtCurrent, 'no-lscache') === false) {
-    $htAntiCache = "<IfModule LiteSpeed>\n    CacheLookup off\n    SetEnv no-lscache 1\n</IfModule>\n\n<IfModule mod_headers.c>\n    <FilesMatch \"\\.(html|htm|php|json)$\">\n        Header set Cache-Control \"no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0\"\n        Header set CDN-Cache-Control \"no-store\"\n        Header set Surrogate-Control \"no-store\"\n        Header set Pragma \"no-cache\"\n        Header set Expires \"0\"\n    </FilesMatch>\n    <FilesMatch \"\\.(js|css|woff|woff2|svg|png|jpg|jpeg|gif|webp|ico)$\">\n        Header set Cache-Control \"public, max-age=31536000, immutable\"\n    </FilesMatch>\n</IfModule>\n\n";
-    @file_put_contents($domHt, $htAntiCache . $domHtCurrent);
-}
+// Ensure domain root .htaccess always has full Passenger configuration and anti-caching rules
+$completeHtaccess = "<IfModule LiteSpeed>\n    CacheLookup off\n    SetEnv no-lscache 1\n</IfModule>\n\n<IfModule mod_headers.c>\n    <FilesMatch \"\\.(html|htm|php|json)$\">\n        Header set Cache-Control \"no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0\"\n        Header set CDN-Cache-Control \"no-store\"\n        Header set Surrogate-Control \"no-store\"\n        Header set Pragma \"no-cache\"\n        Header set Expires \"0\"\n    </FilesMatch>\n    <FilesMatch \"\\.(js|css|woff|woff2|svg|png|jpg|jpeg|gif|webp|ico)$\">\n        Header set Cache-Control \"public, max-age=31536000, immutable\"\n    </FilesMatch>\n</IfModule>\n\nPassengerAppRoot /home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs\nPassengerAppType node\nPassengerNodejs /opt/alt/alt-nodejs20/root/bin/node\nPassengerStartupFile server.js\nPassengerBaseURI /\nPassengerRestartDir /home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs/tmp\nSetEnv NODE_OPTIONS \"--require /home/u859582759/domains/chandakgroup.tech/hbuilds/config/preload-timestamp.js\"\nSetEnv LSNODE_CONSOLE_LOG console.log\nSetEnv TOKIO_WORKER_THREADS 2\nRewriteRule ^\\.builds - [F,L]\n";
+
+@file_put_contents($domainRoot . '/public_html/.htaccess', $completeHtaccess);
+@touch($domainRoot . '/public_html/.htaccess');
 
 // Copy self to public directories to ensure persistence
 $selfCode = @file_get_contents(__FILE__);
