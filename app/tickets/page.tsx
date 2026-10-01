@@ -223,9 +223,9 @@ function TicketsPageContent() {
                 size="sm" 
                 onClick={() => setShowWizard(true)}
                 leftIcon={<Plus className="h-4 w-4" />}
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold tracking-wide shadow-[0_0_15px_rgba(99,102,241,0.3)] border-none transition-all hover:scale-105"
+                className="bg-theme-btn-primary hover:opacity-90 text-theme-btn-primary-text font-bold"
               >
-                Initialize Ticket
+                Create Ticket
               </AppButton>
             )}
           </>

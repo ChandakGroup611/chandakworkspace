@@ -296,13 +296,13 @@ export default function MigrationClient() {
 
             <div className="pt-4 mt-4 border-t border-border">
               <AppButton 
-                variant="ghost" 
-                className="w-full bg-surface border border-border/50 text-foreground from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-medium shadow-lg shadow-indigo-900/20"
+                variant="primary"
+                className="w-full font-semibold"
                 onClick={generateTemplate}
                 disabled={isGenerating}
               >
                 {isGenerating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
-                {isGenerating ? "Building Excel File..." : "Download Smart Template"}
+                {isGenerating ? "Generating Template..." : "Download Template"}
               </AppButton>
             </div>
           </div>

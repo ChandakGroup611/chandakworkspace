@@ -306,8 +306,8 @@ export default function SLAPage() {
             </div>
 
             <div className={`p-4 border-t text-[0.8rem] text-muted flex items-center justify-between bg-elevated border-border`}>
-              <span>Powered by Real-Time Database Tracking Triggers & Dynamic Target Computations.</span>
-              <span className={`cursor-pointer hover:underline text-danger`} onClick={refreshLiveTracking}>Force Re-sync</span>
+              <span>Real-Time SLA Tracking</span>
+              <span className={`cursor-pointer hover:underline text-danger font-semibold`} onClick={refreshLiveTracking}>Force Re-sync</span>
             </div>
           </AppCard>
         </div>

@@ -148,7 +148,7 @@ export default function KnowledgeBaseAuthoring() {
                         {activeArticle.isPublished ? "Public" : "Internal Draft"}
                       </AppBadge>
                     </div>
-                    <h1 className="text-4xl font-black mb-8 text-foreground tracking-tight">{activeArticle.title || "Untitled Article"}</h1>
+                    <h1 className="text-2xl font-bold mb-6 text-foreground tracking-tight">{activeArticle.title || "Untitled Article"}</h1>
                     <div className="prose prose-blue dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(activeArticle.content || "<p><i>Empty content</i></p>") }} />
                   </div>
                 ) : (

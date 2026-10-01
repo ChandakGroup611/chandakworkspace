@@ -28,7 +28,7 @@ export default function LearningHubClient() {
         </div>
         
         <div className="space-y-2">
-          <h1 className={`text-4xl md:text-5xl font-extrabold tracking-tight text-foreground`}>
+          <h1 className={`text-2xl font-bold tracking-tight text-foreground`}>
             Enterprise Learning Hub
           </h1>
           <p className={`text-lg md:text-xl max-w-2xl mx-auto text-muted-foreground`}>
