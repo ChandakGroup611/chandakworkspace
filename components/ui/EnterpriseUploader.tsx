@@ -292,7 +292,7 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
                       href={viewUrl} 
                       target="_blank" 
                       rel="noopener noreferrer" 
-                      className="px-2 py-1 rounded-lg text-accent hover:bg-theme-btn-primary text-theme-btn-primary-text/10 transition-colors flex items-center gap-1" 
+                      className="px-2 py-1 rounded-lg text-theme-icon hover:bg-theme-btn-primary/10 transition-colors flex items-center gap-1 font-semibold" 
                       title="View Attachment"
                     >
                       <Eye className="h-3.5 w-3.5" />
@@ -301,7 +301,7 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
                     <a 
                       href={downloadUrl} 
                       download={fileName} 
-                      className="px-2 py-1 rounded-lg text-theme-icon hover:opacity-90/10 transition-colors flex items-center gap-1" 
+                      className="px-2 py-1 rounded-lg text-theme-icon hover:bg-theme-btn-primary/10 transition-colors flex items-center gap-1 font-semibold" 
                       title="Download Attachment"
                     >
                       <Download className="h-3.5 w-3.5" />

@@ -41,12 +41,16 @@ NEVER deploy a change without first checking its global impact.
 - Keep automated security mechanisms active (Dependabot daily monitoring, daily scheduled CI security scans, and pre-deployment safety gates in `scripts/deploy.js`).
 - Never allow high or critical vulnerabilities into production code.
 
-## Mandatory Document View & Download Capability (Zero Blind Uploads)
+## Mandatory Document View & Download Capability & Zero Upload Errors (Zero Blind Uploads)
 
 Whenever any file/document upload capability is implemented or available in the application (forms, wizards, modal dialogues, collaboration chats, detail views, and listings):
 - **Universal View & Download Requirement**: Every document/file uploaded or staged for upload MUST provide both a **View** (in-browser preview/modal/tab) and a **Download** (direct retrieval) option.
-- **Verification Before & After Submission**: Users must be able to cross-check, review, and verify documents both before submitting (staged local files) and after submission (persisted records). Never provide an upload mechanism where a user is left with only a filename or unable to cross-check/download the document.
+- **Verification Before & After Submission**: Users must be able to cross-check, review, and verify documents both before submitting (staged local files with `URL.createObjectURL`) and after submission (persisted records with secure signed proxy URLs `/api/proxy-attachment/[id]` or direct storage URLs). Never provide an upload mechanism where a user is left with only a filename or unable to cross-check/download the document.
 - **Standardized Presentation**: Every attachment representation must display appropriate file type indicators (PDF, Image, Spreadsheet, Document, Archive), human-readable file size, and dedicated, unambiguous "View" and "Download" triggers.
+- **Zero Upload Errors Guarantee**:
+  1. Signed upload URL generation must dynamically resolve the appropriate bucket (`ticket-attachments`, `chat-attachments`, `resolution-files`, `requirement-files`, `vehicle-documents`).
+  2. Fallback MIME detection must resolve extensions properly so valid documents (e.g. `.pdf`, `.docx`, `.xlsx`, `.png`, `.jpg`, `.csv`, `.zip`) are never blocked or corrupted.
+  3. Upload errors must be caught with informative user feedback, and network timeouts or bucket permission errors must not crash form submissions.
 
 
 
