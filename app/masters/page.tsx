@@ -827,9 +827,12 @@ function MastersPageContent() {
             {/* Table / Mobile Cards Output Array Container */}
             <div className="p-4 flex-1 overflow-y-auto">
               {loading ? (
-                <div className="py-16 flex flex-col items-center justify-center space-y-3">
-                  <RefreshCw className="h-6 w-6 animate-spin text-theme-icon" />
-                  <span className="text-xs text-muted font-medium">Resolving normalized records live from database schema...</span>
+                <div className="py-16 flex flex-col items-center justify-center">
+                  <ChandakLoader
+                    size="md"
+                    title="Loading Master Catalog..."
+                    subtitle="Resolving normalized records live from database schema"
+                  />
                 </div>
               ) : (
                 <>

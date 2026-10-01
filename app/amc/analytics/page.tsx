@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePermissions } from "@/hooks/usePermissions";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 
 export default function AMCAnalyticsPage() {
   let isLightMode = false;
@@ -187,7 +188,11 @@ export default function AMCAnalyticsPage() {
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-2 border-theme-btn-primary border-t-transparent rounded-full" />
+        <ChandakLoader
+          size="lg"
+          title="AMC & Contract Analytics"
+          subtitle="Aggregating financial metrics and performance trends..."
+        />
       </div>
     );
   }

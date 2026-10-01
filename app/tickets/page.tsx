@@ -317,7 +317,11 @@ function TicketsPageContent() {
         <div className="flex-1 min-h-0 overflow-y-auto">
           {loading && tickets.length === 0 ? (
             <div className="flex-1 h-64 flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-theme-icon" />
+              <ChandakLoader
+                size="md"
+                title="Loading Tickets..."
+                subtitle="Fetching active enterprise operational requests"
+              />
             </div>
           ) : (
             <>

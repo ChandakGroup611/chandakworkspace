@@ -9,6 +9,7 @@ import { fetchMigrationMetadata } from '@/lib/actions/migration';
 import * as ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { useRouter } from 'next/navigation';
+import ChandakLoader from '@/components/ui/ChandakLoader';
 
 export default function MigrationClient() {
   const router = useRouter();
@@ -350,12 +351,14 @@ export default function MigrationClient() {
                  }
                }}
              >
-               {isUploading ? (
-                 <>
-                   <Loader2 className="w-10 h-10 text-theme-icon mb-3 animate-spin" />
-                   <h3 className="text-sm font-semibold text-muted-foreground mb-1">Processing Excel File...</h3>
-                   <p className="text-xs text-theme-icon/70">Please do not close this page.</p>
-                 </>
+                              {isUploading ? (
+                 <div className="py-2 flex flex-col items-center justify-center">
+                   <ChandakLoader
+                     size="sm"
+                     title="Processing Excel File..."
+                     subtitle="Validating data schema and preparing records"
+                   />
+                 </div>
                ) : (
                  <>
                    <Upload className="w-10 h-10 text-muted mb-3 group-hover:text-theme-icon transition-colors" />

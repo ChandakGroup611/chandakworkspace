@@ -12,6 +12,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { Save, Plus, Edit2, Trash2, MapPin, Globe, Phone, FileText, CheckCircle2, XCircle, Search, AlertTriangle, Building2, Check, RefreshCw, Lock, X, FileSpreadsheet } from "lucide-react";
 import { saveMasterEntity, deleteMasterEntity } from "@/lib/actions/masters";
 import { SystemMasterBulkImportModal, MasterTableConfig } from "@/components/masters/SystemMasterBulkImportModal";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 
 const COMPANY_MASTER_CONFIG: MasterTableConfig[] = [
   {
@@ -181,10 +182,12 @@ export default function CompanyMasterPage() {
 
   if (permsLoading) {
     return (
-      <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
-        "bg-surface"
-      }`}>
-        <div className="animate-spin h-10 w-10 border-2 border-theme-btn-primary border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
+      <div className="h-screen flex items-center justify-center bg-surface">
+        <ChandakLoader
+          size="lg"
+          title="Loading Company Architecture..."
+          subtitle="Fetching enterprise entities & subsidiary records"
+        />
       </div>
     );
   }

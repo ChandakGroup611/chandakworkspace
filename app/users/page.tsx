@@ -1002,11 +1002,12 @@ export default function UserMasterPage() {
             {/* Main Output List Table */}
             <div className="p-0 flex-1 flex flex-col">
               {loading ? (
-                <div className="flex flex-col items-center justify-center py-16 space-y-4">
-                  <div className="animate-spin h-8 w-8 border-2 border-theme-btn-primary border-t-transparent rounded-full shadow-lg shadow-indigo-500/20" />
-                  <p className="text-xs font-bold uppercase tracking-widest animate-pulse text-muted">
-                    Syncing Enterprise Directory...
-                  </p>
+                <div className="flex flex-col items-center justify-center py-16">
+                  <ChandakLoader
+                    size="md"
+                    title="Syncing Enterprise Directory..."
+                    subtitle="Loading active staff personnel & role credentials"
+                  />
                 </div>
               ) : filteredUsers.length === 0 ? (
                 <div className="text-center py-16 px-4 space-y-2">
@@ -1186,14 +1187,12 @@ export default function UserMasterPage() {
           }`} onClick={(e) => e.stopPropagation()}>
             
             {deleteWarningData.loading ? (
-              <div className="flex flex-col items-center justify-center py-10 space-y-4">
-                <RefreshCw className="h-10 w-10 animate-spin text-theme-icon" />
-                <p className={`text-xs font-semibold ${"text-foreground"}`}>
-                  Performing Security Integrity Checks...
-                </p>
-                <p className="text-xs text-muted">
-                  Scanning Tickets, Workspace Tasks, and Requirements creator and assignee records.
-                </p>
+              <div className="flex flex-col items-center justify-center py-10">
+                <ChandakLoader
+                  size="md"
+                  title="Performing Security Integrity Checks..."
+                  subtitle="Scanning Tickets, Tasks, and Requirements references"
+                />
               </div>
             ) : deleteWarningData.hasReferences ? (
               <>
@@ -1391,9 +1390,12 @@ export default function UserMasterPage() {
             </div>
 
             {moduleModalLoading ? (
-              <div className="flex flex-col items-center justify-center py-8 space-y-3">
-                <RefreshCw className="h-7 w-7 animate-spin text-theme-icon" />
-                <p className="text-xs text-muted-foreground">Loading assigned module entitlements...</p>
+              <div className="flex flex-col items-center justify-center py-8">
+                <ChandakLoader
+                  size="md"
+                  title="Loading Module Entitlements..."
+                  subtitle="Fetching authorized workspace modules"
+                />
               </div>
             ) : (
               <div className="space-y-4 text-xs">

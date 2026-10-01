@@ -27,6 +27,7 @@ import { saveMasterEntity } from "@/lib/actions/masters";
 import { FormMultiSelect } from "@/components/ui/FormMultiSelect";
 import { MasterOptionsManager } from "@/components/shared/MasterOptionsManager";
 import Link from "next/link";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 import { 
   ShieldCheck, 
   Plus, 
@@ -1454,7 +1455,11 @@ export default function AMCPage() {
   if (!mounted || permsLoading) {
     return (
       <div className="h-screen flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-2 border-theme-btn-primary border-t-transparent rounded-full" />
+        <ChandakLoader
+          size="lg"
+          title="Chandak AMC Management"
+          subtitle="Initializing contracts, vendors and assets..."
+        />
       </div>
     );
   }

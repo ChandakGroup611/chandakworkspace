@@ -4,10 +4,22 @@ import React from "react";
 import { usePermissions } from "@/hooks/usePermissions";
 import DataRetentionClient from "./DataRetentionClient";
 
+import ChandakLoader from "@/components/ui/ChandakLoader";
+
 export default function CompliancePage() {
   const { hasPermission, roleCode, loading } = usePermissions();
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <ChandakLoader
+          size="lg"
+          title="Loading Compliance Vault..."
+          subtitle="Verifying statutory permissions & soft-deleted archives"
+        />
+      </div>
+    );
+  }
   if (roleCode !== "SUPER_ADMIN" && !hasPermission("TRASH_VIEW")) {
     return (
       <div className="h-screen flex flex-col items-center justify-center space-y-4">

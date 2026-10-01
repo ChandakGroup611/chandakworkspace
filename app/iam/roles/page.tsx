@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Shield, Plus, Save, Trash2, Copy, AlertCircle, Loader2 } from "lucide-react";
 import { fetchRoles, fetchPermissions, fetchRolePermissions, createRole, updateRole, syncRolePermissions, deleteRole, fetchDepartments } from "@/lib/actions/iam";
 import { toast } from "react-toastify";
+import ChandakLoader from "@/components/ui/ChandakLoader";
 
 export default function IAMRoleBuilder() {
   const [roles, setRoles] = useState<any[]>([]);
@@ -124,7 +125,11 @@ export default function IAMRoleBuilder() {
   if (loading) {
     return (
       <div className="h-[80vh] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-theme-icon" />
+        <ChandakLoader
+          size="lg"
+          title="Loading IAM Role Architecture..."
+          subtitle="Fetching security matrices & permission models"
+        />
       </div>
     );
   }
