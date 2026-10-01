@@ -52,6 +52,49 @@ Whenever any file/document upload capability is implemented or available in the 
   2. Fallback MIME detection must resolve extensions properly so valid documents (e.g. `.pdf`, `.docx`, `.xlsx`, `.png`, `.jpg`, `.csv`, `.zip`) are never blocked or corrupted.
   3. Upload errors must be caught with informative user feedback, and network timeouts or bucket permission errors must not crash form submissions.
 
+## Enterprise UI/UX Cleanup & Standardization (Human-Designed, Minimal, Professional UI)
+
+This rule is MANDATORY for all present and future developments across all modules (**Task Workflow**, **Vehicle Desk**, **Design Tracking**, **AMC**, **IAM**, etc.).
+
+### 1. Non-Negotiable Core Rule: Zero Functional Regression
+- **CHANGE THE UI — DO NOT CHANGE THE FUNCTIONALITY**.
+- You MUST preserve 100% of existing business logic, CRUD operations, APIs, Server Actions, database queries, validations, auth, RBAC/IAM matrix, RLS, state management, filters, sorting, and pagination.
+- If a UI change appears to require a logic change: **STOP → explain why → identify impact → wait for approval.**
+
+### 2. Explicit Dashboard Exception
+- **DO NOT APPLY UI SIMPLIFICATION RULES BLINDLY TO DASHBOARDS**.
+- Dashboards may contain KPI cards, charts, trends, comparisons, status indicators, legends, and analytical context.
+- Never remove analytical context or visualization features merely because it looks informational.
+- Do NOT modify KPI calculations, metrics, or query logic.
+
+### 3. Minimal Copy & Text Elimination
+- Non-dashboard screens (forms, tables, lists, modals, drawers, settings, CRUD views) must NOT contain AI-style explanatory paragraphs, "Welcome" banners, "Manage your..." descriptions, decorative marketing copy, or obvious instructions.
+- Prefer self-explanatory, concise field labels (e.g., `Registration Number`, `Category`, `Due Date`) over paragraphs.
+- Keep helper text strictly contextual, short, and only when non-obvious business rules require it.
+- Keep error and success notifications concise and direct (e.g. `Registration number already exists`, `Vehicle created successfully`).
+
+### 4. Color Hierarchy & Anti-Rainbow Standardization
+- **Never use random or competing accent colors** across screens or modules (avoid "Rainbow UI").
+- **Primary**: Brand Primary token (`bg-theme-btn-primary`, `text-theme-btn-primary-text`) for primary actions, selected states, and active items.
+- **Neutral**: Slate/Zinc surfaces (`bg-surface`, `bg-elevated`, `border-border`) for cards, tables, and borders.
+- **Semantic Colors**: Emerald (Success), Amber (Warning), Rose (Danger), Sky (Info) used exclusively for functional status.
+- Ensure cross-module color consistency (the same semantic status must have the identical visual treatment in Task, Vehicle, and Design).
+
+### 5. Clear & Accessible Active States
+- Always clearly highlight active contexts (active session, active module, active navigation route, active tab, active filter scope).
+- Active states must NOT rely solely on color; combine background contrast, subtle border indicators, font weight, and icons.
+
+### 6. Elimination of AI-Generated UI Clutter
+- Avoid excessive nested cards, floating neon atmospheric blur blobs, excessive glowing drop-shadows, decorative badges everywhere, and oversized empty hero spaces.
+- The interface must feel calm, dense where appropriate, readable, predictable, and designed by an experienced product team.
+
+### 7. Form, Modal & Table Standards
+- **Content Hierarchy**: `Page Header → Section Title → Field Label → Control`.
+- **Long Pages**: Group logically by business domain (e.g., `Basic Information`, `Registration`, `Ownership`, `Compliance`, `Documents`) rather than generic numbered containers.
+- **Tables**: Maximize information density, use compact row heights, clear column headers, and unobtrusive actions.
+- **Buttons**: Exactly ONE primary action per contextual group; secondary actions use outline/ghost; destructive actions use distinct, safe styling.
+- **Modals**: Focused solely on title, relevant fields, and explicit actions.
+
 
 
 
