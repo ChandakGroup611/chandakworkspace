@@ -16,10 +16,48 @@ import {
   AlertCircle, 
   User,
   Zap,
-  Smartphone
+  Smartphone,
+  Laptop,
+  Globe,
+  Clock,
+  LogOut
 } from "lucide-react";
 import ChandakLoader from "@/components/ui/ChandakLoader";
 import { checkActiveSessionConflict, registerUserSession } from "@/lib/actions/iam";
+
+function formatUserAgent(ua?: string) {
+  if (!ua || ua === "Unknown Browser" || ua === "Unknown Device") return "Active Browser / Device";
+  let browser = "Web Browser";
+  let os = "Device";
+
+  if (ua.includes("Firefox/")) browser = "Mozilla Firefox";
+  else if (ua.includes("Edg/")) browser = "Microsoft Edge";
+  else if (ua.includes("Chrome/")) browser = "Google Chrome";
+  else if (ua.includes("Safari/")) browser = "Apple Safari";
+  else if (ua.includes("MSIE") || ua.includes("Trident/")) browser = "Internet Explorer";
+
+  if (ua.includes("Windows")) os = "Windows PC";
+  else if (ua.includes("Macintosh") || ua.includes("Mac OS")) os = "Mac";
+  else if (ua.includes("iPhone")) os = "iPhone";
+  else if (ua.includes("iPad")) os = "iPad";
+  else if (ua.includes("Android")) os = "Android Device";
+  else if (ua.includes("Linux")) os = "Linux";
+
+  return `${browser} on ${os}`;
+}
+
+function formatRelativeTime(dateString?: string) {
+  if (!dateString) return "Recently active";
+  const date = new Date(dateString);
+  const diffMs = Date.now() - date.getTime();
+  const diffMinutes = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMinutes / 60);
+
+  if (diffMinutes < 1) return "Active just now";
+  if (diffMinutes < 60) return `Active ${diffMinutes} min${diffMinutes > 1 ? "s" : ""} ago`;
+  if (diffHours < 24) return `Active ${diffHours} hr${diffHours > 1 ? "s" : ""} ago`;
+  return `Active on ${date.toLocaleDateString([], { month: "short", day: "numeric" })}`;
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -35,7 +73,39 @@ export default function LoginPage() {
   const [noticeMsg, setNoticeMsg] = useState<{ type: 'warning' | 'info' | 'error'; title: string; description: string } | null>(null);
   const [isOAuthCallback, setIsOAuthCallback] = useState(false);
   const [conflictModalOpen, setConflictModalOpen] = useState(false);
-  const [conflictData, setConflictData] = useState<{ user: any; destination: string } | null>(null);
+  const [conflictData, setConflictData] = useState<{ 
+    user: any; 
+    destination: string;
+    existingSession?: {
+      userAgent?: string;
+      ipAddress?: string;
+      loginTime?: string;
+      lastActiveAt?: string;
+    };
+  } | null>(null);
+
+  const checkConflictViaApi = async (userId: string) => {
+    try {
+      const currentToken = typeof window !== "undefined" ? localStorage.getItem("app_session_token") : null;
+      const res = await fetch("/api/session/conflict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, currentSessionToken: currentToken || undefined })
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {
+      console.warn("[Login] Conflict check API warning:", e);
+    }
+    // Fallback to server action
+    try {
+      const currentToken = typeof window !== "undefined" ? localStorage.getItem("app_session_token") : null;
+      return await checkActiveSessionConflict(userId, currentToken || undefined);
+    } catch {
+      return { hasConflict: false };
+    }
+  };
 
   const resolvePostLoginDestination = async (rawNext?: string | null): Promise<string> => {
     try {
@@ -72,6 +142,7 @@ export default function LoginPage() {
       const isTimeout = searchParams.get("reason") === "timeout";
       const isTerminated = searchParams.get("reason") === "terminated";
       const isConcurrent = searchParams.get("reason") === "concurrent_login";
+      const isOAuthConflict = searchParams.get("oauth_conflict") === "1";
       const urlError = searchParams.get("error");
       const urlErrorDesc = searchParams.get("error_description");
 
@@ -95,12 +166,15 @@ export default function LoginPage() {
             const rawNext = searchParams.get("next");
             const destination = await resolvePostLoginDestination(rawNext);
             
-            const currentToken = typeof window !== "undefined" ? localStorage.getItem("app_session_token") : null;
-            const conflictRes = await checkActiveSessionConflict(session.user.id, currentToken || undefined);
+            const conflictRes = await checkConflictViaApi(session.user.id);
             
             if (conflictRes.hasConflict) {
               setIsOAuthCallback(false);
-              setConflictData({ user: session.user, destination });
+              setConflictData({ 
+                user: session.user, 
+                destination,
+                existingSession: conflictRes.existingSession
+              });
               setConflictModalOpen(true);
               return;
             }
@@ -151,7 +225,7 @@ export default function LoginPage() {
         setNoticeMsg({
           type: "warning",
           title: "Session Transferred",
-          description: "You have been logged out because your account was logged in on another device or browser. To continue on this device, please sign in."
+          description: "You were logged out because your account was logged in on another device or browser. To continue on this device, please sign in."
         });
         window.history.replaceState({}, document.title, window.location.pathname);
       } else if (isTimeout) {
@@ -170,13 +244,15 @@ export default function LoginPage() {
         if (session) {
           const rawNext = searchParams.get("next");
           const destination = await resolvePostLoginDestination(rawNext);
-          const isOAuthConflict = searchParams.get("oauth_conflict") === "1";
 
-          const currentToken = typeof window !== "undefined" ? localStorage.getItem("app_session_token") : null;
-          const conflictRes = await checkActiveSessionConflict(session.user.id, currentToken || undefined);
+          const conflictRes = await checkConflictViaApi(session.user.id);
 
           if (isOAuthConflict || conflictRes.hasConflict) {
-            setConflictData({ user: session.user, destination });
+            setConflictData({ 
+              user: session.user, 
+              destination,
+              existingSession: conflictRes.existingSession
+            });
             setConflictModalOpen(true);
             return;
           }
@@ -196,7 +272,17 @@ export default function LoginPage() {
       if (typeof window !== "undefined") {
         localStorage.setItem("app_session_token", newToken);
       }
-      await registerUserSession(newToken, typeof navigator !== "undefined" ? navigator.userAgent : undefined);
+      
+      // Register session via REST endpoint
+      await fetch("/api/session/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionToken: newToken,
+          userAgent: typeof navigator !== "undefined" ? navigator.userAgent : undefined
+        })
+      }).catch(() => {});
+
       window.location.href = destination;
     } catch (e: any) {
       window.location.href = destination;
@@ -242,11 +328,14 @@ export default function LoginPage() {
         const rawNext = searchParams.get("next");
         const destination = await resolvePostLoginDestination(rawNext);
 
-        const currentToken = typeof window !== "undefined" ? localStorage.getItem("app_session_token") : null;
-        const conflictRes = await checkActiveSessionConflict(data.user.id, currentToken || undefined);
+        const conflictRes = await checkConflictViaApi(data.user.id);
 
         if (conflictRes.hasConflict) {
-          setConflictData({ user: data.user, destination });
+          setConflictData({ 
+            user: data.user, 
+            destination,
+            existingSession: conflictRes.existingSession
+          });
           setConflictModalOpen(true);
           setLoading(false);
           return;
@@ -519,23 +608,55 @@ export default function LoginPage() {
       {/* Active Session Confirmation Modal: "Do you want to continue here?" */}
       {conflictModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative w-full max-w-md p-6 bg-surface rounded-2xl border border-border shadow-2xl space-y-5 animate-in zoom-in-95 duration-200 text-foreground">
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center shrink-0">
-                <Smartphone className="h-6 w-6" />
+          <div className="relative w-full max-w-lg p-6 bg-surface rounded-2xl border border-border shadow-2xl space-y-5 animate-in zoom-in-95 duration-200 text-foreground">
+            <div className="flex items-center gap-3.5">
+              <div className="h-12 w-12 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 shadow-sm">
+                <Laptop className="h-6 w-6" />
               </div>
               <div>
                 <h3 className="text-lg font-bold text-foreground">Active Session Detected</h3>
-                <p className="text-xs text-muted-foreground">Single Active Session Policy</p>
+                <p className="text-xs text-muted-foreground">Single Active Device Policy</p>
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/15 text-sm text-foreground space-y-2">
-              <p className="font-semibold text-foreground text-base">
-                Do you want to continue here?
+            {/* Existing Session Summary Card */}
+            {conflictData?.existingSession && (
+              <div className="p-3.5 rounded-xl bg-elevated/70 border border-border/80 space-y-2.5 text-xs">
+                <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">
+                  Currently Active Device
+                </span>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-foreground">
+                  <div className="flex items-center gap-2 bg-surface/60 p-2 rounded-lg border border-border/40">
+                    <Laptop className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                    <span className="truncate font-medium" title={conflictData.existingSession.userAgent}>
+                      {formatUserAgent(conflictData.existingSession.userAgent)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 bg-surface/60 p-2 rounded-lg border border-border/40">
+                    <Globe className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                    <span className="truncate font-mono text-[11px]" title={conflictData.existingSession.ipAddress}>
+                      IP: {conflictData.existingSession.ipAddress || "Unknown"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 text-muted-foreground pt-1">
+                  <Clock className="h-3.5 w-3.5 text-amber-500/80 shrink-0" />
+                  <span>{formatRelativeTime(conflictData.existingSession.lastActiveAt)}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Explanation Alert */}
+            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-sm text-foreground space-y-2">
+              <p className="font-bold text-foreground text-sm flex items-center gap-1.5">
+                <AlertCircle className="h-4 w-4 text-amber-500 shrink-0" />
+                <span>Do you want to continue here?</span>
               </p>
               <p className="text-muted-foreground leading-relaxed text-xs">
-                Your account is currently active on another device or browser. If you say <strong className="text-foreground">Yes, Continue</strong>, your previous session on the other device will be logged out immediately and you will be signed in on this device.
+                Signing in on this device will <strong className="text-foreground">automatically log out and close your previous session</strong> on the other device or browser.
               </p>
             </div>
 
@@ -544,17 +665,18 @@ export default function LoginPage() {
                 type="button"
                 variant="outline"
                 onClick={handleCancelConflictLogin}
-                className="h-10 px-4 text-sm font-medium border border-border hover:bg-surface/60"
+                className="h-10 px-4 text-xs font-semibold border border-border hover:bg-surface/60 text-muted-foreground hover:text-foreground"
               >
-                Cancel
+                Cancel (Keep Other Session)
               </AppButton>
               <AppButton
                 type="button"
                 variant="primary"
                 onClick={handleConfirmConflictLogin}
-                className="h-10 px-5 text-sm font-semibold bg-amber-600 hover:bg-amber-700 text-white shadow-lg shadow-amber-600/20"
+                className="h-10 px-5 text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-lg shadow-amber-600/20 flex items-center gap-2"
               >
-                Yes, Continue & Log In Here
+                <LogOut className="h-3.5 w-3.5" />
+                <span>Yes, Continue & Log In Here</span>
               </AppButton>
             </div>
           </div>
