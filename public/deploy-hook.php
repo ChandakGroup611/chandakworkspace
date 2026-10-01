@@ -174,6 +174,7 @@ if ($zipFile && class_exists('ZipArchive')) {
             recursiveCopy($target . '/.next/static', $target . '/_next/static');
             recursiveCopy($target . '/.next/static', $target . '/public/_next/static');
             recursiveCopy($target . '/.next/static', $domainRoot . '/public_html/_next/static');
+            recursiveCopy($target . '/.next/static', $domainRoot . '/public_html/.next/static');
             recursiveCopy($target . '/.next/static', __DIR__ . '/_next/static');
         }
         
@@ -197,6 +198,22 @@ if ($zipFile && class_exists('ZipArchive')) {
             'build_id' => file_exists($target . '/.next/BUILD_ID') ? trim(@file_get_contents($target . '/.next/BUILD_ID')) : null
         ];
     }
+
+    // Force synchronization from primary nodejs to public_html
+    $primaryNode = $domainRoot . '/hbuilds/current/nodejs';
+    $pubHtml = $domainRoot . '/public_html';
+    if (is_dir($primaryNode) && is_dir($pubHtml)) {
+        recursiveCopy($primaryNode . '/.next', $pubHtml . '/.next');
+        if (is_dir($primaryNode . '/.next/static')) {
+            recursiveCopy($primaryNode . '/.next/static', $pubHtml . '/_next/static');
+            recursiveCopy($primaryNode . '/.next/static', $pubHtml . '/.next/static');
+        }
+        @copy($primaryNode . '/server.js', $pubHtml . '/server.js');
+        @copy($primaryNode . '/package.json', $pubHtml . '/package.json');
+        if (file_exists($primaryNode . '/.next/BUILD_ID')) {
+            @copy($primaryNode . '/.next/BUILD_ID', $pubHtml . '/.next/BUILD_ID');
+        }
+    }
     
     // Remove the zip file and any sync state file
     @unlink($zipFile);
@@ -211,6 +228,10 @@ if ($zipFile && class_exists('ZipArchive')) {
         if (file_exists($target . '/.htaccess')) @touch($target . '/.htaccess');
     }
 }
+
+// Restart Passenger explicitly
+@mkdir($domainRoot . '/hbuilds/current/nodejs/tmp', 0755, true);
+@touch($domainRoot . '/hbuilds/current/nodejs/tmp/restart.txt');
 
 // Ensure domain root .htaccess also contains anti-caching rules
 $domHt = $domainRoot . '/public_html/.htaccess';
