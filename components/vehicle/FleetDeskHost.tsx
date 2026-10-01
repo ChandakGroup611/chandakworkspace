@@ -13,6 +13,7 @@ import {
   Plus,
   CheckCircle2,
   AlertTriangle,
+  AlertCircle,
   MapPin,
   RefreshCw,
   X,
@@ -9990,72 +9991,51 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             </div>
                             <div className="font-semibold text-foreground mt-1.5 group-hover:text-theme-btn-primary transition-colors text-sm flex items-center gap-1.5">
                               <VehicleBrandLogo brand={veh.make} model={veh.model} size={16} />
-                              <span className="truncate">{veh.nickname || `${veh.make} ${veh.model}`}</span>
+                              <span className="truncate">{veh.make} {veh.model} {veh.year ? `(${veh.year})` : ""}</span>
                             </div>
                             <div className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
-                              <span>{veh.make} {veh.model}</span>
+                              {veh.nickname && veh.nickname.trim().toLowerCase() !== `${veh.make} ${veh.model}`.trim().toLowerCase() ? (
+                                <span className="truncate font-medium text-foreground">"{veh.nickname}"</span>
+                              ) : (
+                                <span>{veh.category || "Vehicle"}</span>
+                              )}
                               {veh.fuel_type && (
-                                <span className="px-2 py-0.5 rounded text-xs font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
                                   {veh.fuel_type}
                                 </span>
                               )}
                             </div>
                             {showInventoryRelations && (
-                              <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setViewingVehicle(veh);
-                                    setVehicleDossierTab("SERVICES");
-                                  }}
-                                  className="inline-flex items-center gap-1 text-xs font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded border border-amber-500/20 hover:bg-amber-500/20 transition-colors cursor-pointer"
-                                  title="View Logged Workshop Services"
-                                >
-                                  <Wrench className="h-3 w-3 text-amber-500" />
+                              <div className="flex items-center gap-1.5 mt-1.5 text-xs text-muted-foreground">
+                                <span className="inline-flex items-center gap-1 font-mono text-[11px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-border text-foreground" title="Workshop Services">
+                                  <Wrench className="h-3 w-3 text-muted-foreground" />
                                   <span>{vServices.length} Svc</span>
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setViewingVehicle(veh);
-                                    setVehicleDossierTab("PARTS");
-                                  }}
-                                  className="inline-flex items-center gap-1 text-xs font-semibold bg-blue-500/10 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded border border-blue-500/20 hover:bg-blue-500/20 transition-colors cursor-pointer"
-                                  title="View Mounted Spare Parts"
-                                >
-                                  <Package className="h-3 w-3 text-blue-500" />
+                                </span>
+                                <span className="inline-flex items-center gap-1 font-mono text-[11px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-border text-foreground" title="Mounted Parts">
+                                  <Package className="h-3 w-3 text-muted-foreground" />
                                   <span>{vParts.length} Parts</span>
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setViewingVehicle(veh);
-                                    setVehicleDossierTab("DOCS");
-                                  }}
-                                  className="inline-flex items-center gap-1 text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors cursor-pointer"
-                                  title="Open Archived Documents Vault (RC, Insurance, PUC, Service Bills, Parts, Renewals)"
-                                >
-                                  <FileCheck className="h-3 w-3 text-emerald-500" />
+                                </span>
+                                <span className="inline-flex items-center gap-1 font-mono text-[11px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-border text-foreground" title="Archived Documents">
+                                  <FileCheck className="h-3 w-3 text-muted-foreground" />
                                   <span>{vDocs.length} Docs</span>
-                                </button>
+                                </span>
                               </div>
                             )}
                           </AppTableCell>
 
                           {/* 2. Owner Name & RTO RMN */}
                           <AppTableCell className="p-3.5">
-                            <div className="font-semibold text-foreground text-xs truncate max-w-xs" title={veh.registered_owner || "—"}>
+                            <div className="font-semibold text-foreground text-xs truncate max-w-[240px]" title={veh.registered_owner || "—"}>
                               {veh.registered_owner || "—"}
                             </div>
-                            <div className="flex items-center gap-1 text-xs font-mono text-blue-600 dark:text-blue-400 font-semibold mt-1">
-                              <Phone className="h-3 w-3 shrink-0" />
-                              <span>{veh.rto_rmn || "Not Provided"}</span>
-                            </div>
+                            {veh.rto_rmn && (
+                              <div className="flex items-center gap-1 text-xs font-mono text-muted-foreground mt-0.5">
+                                <Phone className="h-3 w-3 text-muted-foreground shrink-0" />
+                                <span>{veh.rto_rmn}</span>
+                              </div>
+                            )}
                             {veh.rto_office && (
-                              <div className="text-xs text-muted-foreground font-mono mt-0.5 truncate max-w-xs" title={veh.rto_office}>
+                              <div className="text-xs text-muted-foreground mt-0.5 truncate max-w-[240px]" title={veh.rto_office}>
                                 {veh.rto_office}
                               </div>
                             )}
@@ -10063,13 +10043,13 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
                           {/* 3. Chassis Number & Engine Number */}
                           <AppTableCell className="p-3.5 font-mono text-xs">
-                            <div className="text-xs text-foreground font-medium" title={veh.vin_chassis_number || "—"}>
-                              <span className="text-xs text-muted-foreground uppercase font-bold mr-1">VIN:</span>
-                              {veh.vin_chassis_number || "—"}
+                            <div className="text-xs text-foreground font-medium flex items-center gap-1 truncate max-w-[220px]" title={veh.vin_chassis_number || "—"}>
+                              <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider shrink-0">VIN:</span>
+                              <span className="truncate">{veh.vin_chassis_number || "—"}</span>
                             </div>
-                            <div className="text-xs text-muted-foreground mt-0.5" title={veh.engine_number || "—"}>
-                              <span className="uppercase font-bold mr-1">ENG:</span>
-                              {veh.engine_number || "—"}
+                            <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1 truncate max-w-[220px]" title={veh.engine_number || "—"}>
+                              <span className="text-[10px] uppercase font-bold tracking-wider shrink-0">ENG:</span>
+                              <span className="truncate">{veh.engine_number || "—"}</span>
                             </div>
                           </AppTableCell>
 
@@ -18971,7 +18951,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <h2 className="text-lg sm:text-xl font-bold tracking-tight text-foreground truncate">
                     {viewingVehicle.make} {viewingVehicle.model} {viewingVehicle.year ? `(${viewingVehicle.year})` : ""}
                   </h2>
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-200/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-border">
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-border">
                     {viewingVehicle.category || "Standard Car"}
                   </span>
                   {viewingVehicle.fuel_type && (
@@ -18980,26 +18960,26 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       <span>{viewingVehicle.fuel_type}</span>
                     </span>
                   )}
-                  {viewingVehicle.nickname && (
-                    <span className="text-xs font-medium text-muted-foreground italic truncate">
+                  {viewingVehicle.nickname && viewingVehicle.nickname.trim().toLowerCase() !== `${viewingVehicle.make} ${viewingVehicle.model}`.trim().toLowerCase() && (
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-foreground border border-border truncate">
                       "{viewingVehicle.nickname}"
                     </span>
                   )}
                 </div>
-                <div className="text-xs text-muted-foreground flex items-center gap-2.5 flex-wrap">
+                <div className="text-xs text-muted-foreground flex items-center gap-2.5 flex-wrap pt-0.5">
                   <span className="flex items-center gap-1 font-mono">
-                    <Hash className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span>VIN: {viewingVehicle.vin_chassis_number || "Not Recorded"}</span>
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">VIN:</span>
+                    <span className="text-foreground font-medium">{viewingVehicle.vin_chassis_number || "Not Recorded"}</span>
                   </span>
                   <span className="text-border">•</span>
                   <span className="flex items-center gap-1">
-                    <Building2 className="h-3.5 w-3.5 text-blue-500" />
-                    <span>RTO: {viewingVehicle.rto_office || "State Transport"}</span>
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">RTO:</span>
+                    <span className="text-foreground">{viewingVehicle.rto_office || "State Transport"}</span>
                   </span>
                   <span className="text-border">•</span>
                   <span className="flex items-center gap-1">
-                    <UserCheck className="h-3.5 w-3.5 text-emerald-500" />
-                    <span>Owner: {viewingVehicle.registered_owner || "Corporate Fleet"}</span>
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Owner:</span>
+                    <span className="text-foreground font-medium">{viewingVehicle.registered_owner || "Corporate Fleet"}</span>
                   </span>
                 </div>
               </div>
@@ -19007,7 +18987,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
             <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
               <div className="p-2.5 sm:p-3 rounded-xl border border-border bg-surface shadow-2xs space-y-0.5 min-w-[120px]">
-                <div className="text-xs uppercase font-bold text-muted-foreground flex items-center gap-1">
+                <div className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground flex items-center gap-1">
                   <Gauge className="h-3 w-3 text-theme-btn-primary" />
                   <span>Odometer</span>
                 </div>
@@ -19017,16 +18997,16 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               </div>
 
               <div className="p-2.5 sm:p-3 rounded-xl border border-border bg-surface shadow-2xs space-y-0.5 min-w-[150px]">
-                <div className="text-xs uppercase font-bold text-muted-foreground flex items-center gap-1">
-                  <Users className="h-3 w-3 text-theme-icon" />
+                <div className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground flex items-center gap-1">
+                  <Users className="h-3 w-3 text-muted-foreground" />
                   <span>Chauffeur</span>
                 </div>
-                <div className="text-xs font-semibold text-foreground truncate max-w-[140px]">
+                <div className="text-xs font-semibold text-foreground truncate max-w-[140px]" title={viewingVehicle.assignedDriver?.full_name || "Unassigned Pool"}>
                   {viewingVehicle.assignedDriver?.full_name || "Unassigned Pool"}
                 </div>
                 {viewingVehicle.assignedDriver?.phone && (
-                  <div className="text-xs text-blue-600 dark:text-blue-400 font-mono">
-                    <a href={`tel:${viewingVehicle.assignedDriver.phone}`} className="hover:underline">
+                  <div className="text-[11px] text-muted-foreground font-mono">
+                    <a href={`tel:${viewingVehicle.assignedDriver.phone}`} className="hover:underline hover:text-foreground">
                       {viewingVehicle.assignedDriver.phone}
                     </a>
                   </div>
@@ -20316,47 +20296,43 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             {/* Header Category & Origin Source Pill */}
                             <div className="flex items-center justify-between gap-2 flex-wrap">
                               <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${typeConfig.badgeColor}`}>
+                                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border ${typeConfig.badgeColor}`}>
                                   {doc.categoryLabel || typeConfig.label}
                                 </span>
                                 {versionTag && (
-                                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-surface text-foreground dark:text-muted-foreground border border-border">
+                                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-foreground border border-border">
                                     {versionTag}
                                   </span>
                                 )}
-                                {doc.file_url ? (
-                                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25">
-                                    Archived File
-                                  </span>
-                                ) : (
-                                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/25">
+                                {!doc.file_url && (
+                                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20">
                                     Digital Record
                                   </span>
                                 )}
                               </div>
-                              {doc.sourceLabel && (
-                                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-border truncate max-w-[170px]" title={doc.sourceLabel}>
+                              {doc.sourceLabel && doc.sourceLabel !== (doc.categoryLabel || typeConfig.label) && (
+                                <span className="text-[10px] font-medium text-muted-foreground truncate max-w-[160px]" title={doc.sourceLabel}>
                                   {doc.sourceLabel}
                                 </span>
                               )}
                             </div>
 
-                            <div className="flex items-start gap-3 pt-0.5">
+                            <div className="flex items-start gap-3 pt-1">
                               <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-border shrink-0 group-hover:scale-105 transition-transform">
                                 {renderAttachmentIcon(doc.file_type || resolveMimeFromName(doc.file_name), doc.file_name)}
                               </div>
                               <div className="min-w-0 flex-1">
-                                <h4 className="font-bold text-foreground text-xs line-clamp-2" title={doc.title || doc.file_name}>
+                                <h4 className="font-semibold text-foreground text-xs line-clamp-1" title={doc.title || doc.file_name}>
                                   {doc.title || doc.file_name}
                                 </h4>
                                 {doc.document_number && (
                                   <div className="text-[11px] font-mono text-muted-foreground mt-0.5 flex items-center gap-1 truncate">
                                     <span>Doc #:</span>
-                                    <strong className="text-foreground font-semibold">{doc.document_number}</strong>
+                                    <span className="text-foreground font-semibold">{doc.document_number}</span>
                                   </div>
                                 )}
                                 <div className="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-0.5 truncate">
-                                  <span className="truncate max-w-[130px] font-mono">{doc.file_name}</span>
+                                  <span className="truncate max-w-[140px] font-mono">{doc.file_name}</span>
                                   {doc.file_size && (
                                     <>
                                       <span>•</span>
@@ -20373,20 +20349,26 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             <div>
                               {doc.expiry_date ? (
                                 daysRemaining !== null && daysRemaining < 0 ? (
-                                  <span className="text-xs font-bold text-rose-600 dark:text-rose-400">
-                                    Expired {Math.abs(daysRemaining)}d ago
+                                  <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20 inline-flex items-center gap-1">
+                                    <AlertCircle className="h-3 w-3" />
+                                    <span>Expired {Math.abs(daysRemaining)}d ago</span>
                                   </span>
                                 ) : daysRemaining !== null && daysRemaining <= 30 ? (
-                                  <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
-                                    Expires in {daysRemaining}d
+                                  <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 inline-flex items-center gap-1">
+                                    <Clock className="h-3 w-3 text-amber-500" />
+                                    <span>Exp in {daysRemaining}d</span>
                                   </span>
                                 ) : (
-                                  <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                                    Valid ({daysRemaining}d)
+                                  <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1">
+                                    <ShieldCheck className="h-3 w-3 text-emerald-500" />
+                                    <span>Valid ({daysRemaining}d)</span>
                                   </span>
                                 )
                               ) : (
-                                <span className="text-xs text-muted-foreground italic">Lifetime Valid</span>
+                                <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-muted-foreground border border-border inline-flex items-center gap-1">
+                                  <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                                  <span>Lifetime Valid</span>
+                                </span>
                               )}
                             </div>
 
