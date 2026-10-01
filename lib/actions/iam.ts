@@ -326,7 +326,7 @@ export async function registerUserSession(sessionToken: string, userAgent?: stri
 }
 
 /**
- * Check if the user is actively logged in on another device (within last 5 minutes with a different session token)
+ * Check if the user is actively logged in on another device/browser with a different session token.
  */
 export async function checkActiveSessionConflict(userId: string, currentSessionToken?: string) {
   try {
@@ -336,17 +336,22 @@ export async function checkActiveSessionConflict(userId: string, currentSessionT
       .eq("user_id", userId)
       .maybeSingle();
       
-    if (!activeSession || !activeSession.last_active_at) {
+    if (!activeSession || !activeSession.session_token) {
+      return { hasConflict: false };
+    }
+
+    // If the client already has the exact same session token, it's the same browser session
+    if (currentSessionToken && activeSession.session_token === currentSessionToken) {
       return { hasConflict: false };
     }
     
-    const lastActive = new Date(activeSession.last_active_at).getTime();
+    // Check if the session is within 24 hours
+    const lastActive = activeSession.last_active_at ? new Date(activeSession.last_active_at).getTime() : 0;
     const now = Date.now();
-    const isRecent = (now - lastActive) < 5 * 60 * 1000; // Active within last 5 minutes
-    const isDifferentSession = currentSessionToken ? activeSession.session_token !== currentSessionToken : true;
+    const isRecent = (now - lastActive) < 24 * 60 * 60 * 1000;
     
     return {
-      hasConflict: isRecent && isDifferentSession,
+      hasConflict: isRecent,
       lastActiveAt: activeSession.last_active_at
     };
   } catch (err) {
