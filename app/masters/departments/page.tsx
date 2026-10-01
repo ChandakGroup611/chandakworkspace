@@ -127,7 +127,6 @@ export default function DepartmentsMasterPage() {
       <div className="flex flex-col h-full gap-6 px-4 md:px-8 py-6">
         <PageHeader 
           title="Departments" 
-          description="Manage organizational departments and business units." 
           icon={<Layers className="h-6 w-6 text-theme-icon" />}
         />
 

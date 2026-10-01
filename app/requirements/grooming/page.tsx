@@ -92,7 +92,6 @@ export default function RequirementsGroomingBoard() {
     <PageContainer strict={true}>
       <PageHeader
         title="Agile Requirements Grooming"
-        description="Prioritize and refine business requirements visually."
         badge={<AppBadge variant="warning">Grooming Board</AppBadge>}
         actions={
           <Link href="/requirements">

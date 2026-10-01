@@ -247,7 +247,6 @@ export default function RequirementsPage() {
     <PageContainer strict={true}>
       <PageHeader
         title="Requirement Approvals"
-        description="Pending requirement approvals that require your action."
         badge={<AppBadge variant="warning">Action Required</AppBadge>}
         actions={
           <>

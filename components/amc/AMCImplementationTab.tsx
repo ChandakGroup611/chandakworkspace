@@ -418,16 +418,11 @@ export function AMCImplementationTab({
       {/* Header Metric & Summary Card */}
       <AppCard className="p-6 theme-card-structural border border-border space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-theme-icon" />
-              <h3 className="text-lg font-bold text-foreground">
-                Software Onboarding & Implementation Lifecycle
-              </h3>
-            </div>
-            <p className="text-xs text-muted">
-              Track progress from initial purchase, discovery discussions, setup, integration, UAT, and rollout to production Go-Live.
-            </p>
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-theme-icon" />
+            <h3 className="text-lg font-bold text-foreground">
+              Software Onboarding & Implementation Lifecycle
+            </h3>
           </div>
 
           <div className="flex items-center gap-2">

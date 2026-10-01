@@ -148,7 +148,6 @@ export default function HolidayCalendar() {
     <PageContainer strict={true}>
       <PageHeader
         title="Working Hours & Holidays"
-        description="Configure schedules to accurately calculate SLA breaches across different regions."
         badge={<AppBadge variant="info">Governance Engine</AppBadge>}
       />
 

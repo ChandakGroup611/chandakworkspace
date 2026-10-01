@@ -89,7 +89,6 @@ export default function GlobalSettingsPage() {
       <div className="flex flex-col h-full gap-6 px-4 md:px-8 py-6 max-w-4xl mx-auto w-full">
         <PageHeader 
           title="Global Configuration" 
-          description="Manage system-wide switches, global performance tunings, and kill switches." 
           icon={<Settings className="h-6 w-6 text-theme-icon" />}
         />
 

@@ -418,29 +418,17 @@ export default function IAMGovernanceCockpit({
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in-50 duration-500 w-full pb-20 relative">
-      {/* Background Decorative Elements */}
-      <div className={cn("absolute top-0 right-0 w-[400px] h-[400px] blur-[120px] rounded-full -z-10", "bg-theme-btn-primary/[0.02]")} />
-      <div className={cn("absolute bottom-0 left-0 w-[400px] h-[400px] blur-[120px] rounded-full -z-10", "bg-theme-btn-primary/[0.02]")} />
-
+    <div className="space-y-8 w-full pb-20 relative">
       {/* Header Section */}
-      <div className={cn("flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b pb-8", "border-border")}>
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-gradient-to-br from-indigo-500 to-accent  shadow-indigo-500/20">
-              <ShieldCheck className="h-6 w-6 text-foreground" />
-            </div>
-            <div>
-              <h1 className={cn("text-2xl font-bold tracking-tight flex items-center gap-3", "text-foreground")}>
-                IAM Governance Cockpit
-                <AppBadge variant="info" className={cn("py-0.5 px-2", "bg-theme-btn-primary/10 text-theme-icon border-theme-btn-primary/30/50")}>
-                  v2.0 Realtime
-                </AppBadge>
-              </h1>
-              <p className={cn("text-sm font-medium", "text-muted")}>
-                Enterprise Identity & Access Management powered by ADIOS Governance Engine.
-              </p>
-            </div>
+      <div className={cn("flex flex-col lg:flex-row lg:items-end justify-between gap-6 border-b pb-6", "border-border")}>
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-elevated border border-border text-foreground">
+            <ShieldCheck className="h-5 w-5 text-foreground" />
+          </div>
+          <div>
+            <h1 className={cn("text-xl font-bold tracking-tight", "text-foreground")}>
+              IAM Governance Cockpit
+            </h1>
           </div>
         </div>
 

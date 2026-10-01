@@ -75,7 +75,6 @@ export default function LearningCourseBuilder() {
     <PageContainer strict={true}>
       <PageHeader
         title="Learning Hub Builder"
-        description="Author employee training courses, video lessons, and compliance quizzes."
         badge={<AppBadge variant="success">LMS Module</AppBadge>}
         actions={
           <AppButton variant="primary" onClick={handleCreateNew} leftIcon={<Plus className="w-4 h-4" />}>

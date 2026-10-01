@@ -1478,7 +1478,6 @@ export default function AMCPage() {
     <PageContainer strict={true}>
       <PageHeader
         title="Annual Maintenance Contracts"
-        description="Manage Software AMCs, Subscriptions, and Ownership Assignments."
         icon={<ShieldCheck className="h-6 w-6" />}
         actions={
           <>
@@ -1800,9 +1799,8 @@ export default function AMCPage() {
       {showModal && (
         <div className={`fixed inset-0 z-[100] flex flex-col animate-in slide-in-from-bottom-4 duration-300 bg-surface`}>
           <div className={`flex items-center justify-between p-6 border-b shrink-0 bg-surface border-border shadow-[var(--shadow-ambient)]`}>
-            <div className="space-y-1">
-              <h2 className="text-2xl font-bold text-theme-icon">{editRecordId ? "Manage Subscription Record" : "Add New Subscription"}</h2>
-              <p className="text-sm text-muted">Manage the core software record, mid-year transactions, and renewals.</p>
+            <div>
+              <h2 className="text-xl font-bold text-theme-icon">{editRecordId ? "Manage Subscription Record" : "Add New Subscription"}</h2>
             </div>
             <div className="flex items-center gap-3">
               {editRecordId && (
@@ -2470,9 +2468,6 @@ export default function AMCPage() {
                             <DollarSign className="h-4 w-4 text-theme-icon" />
                             Custom Payment Schedule & Milestone Releases
                           </h5>
-                          <p className="text-xs text-muted">
-                            Configure milestone breakdown by percentage or fixed phases, release dates, and track release remarks.
-                          </p>
                         </div>
                       </div>
                       <CustomPaymentMilestoneManager
@@ -2632,7 +2627,6 @@ export default function AMCPage() {
                         <span className="bg-theme-btn-primary text-white h-5 w-5 rounded flex items-center justify-center text-xs">1</span>
                         Solution Name & Line Items
                       </h4>
-                      <p className="text-xs text-muted mt-0.5">Manage line item breakdown, software modules, individual license keys, and dates.</p>
                     </div>
                     <AppButton type="button" variant="outline" size="sm" onClick={addLineItem} leftIcon={<Plus className="h-4 w-4" />}>
                       Add Line Item

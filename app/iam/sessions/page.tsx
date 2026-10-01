@@ -59,13 +59,11 @@ export default function SessionManagement() {
     <PageContainer strict={true}>
       <PageHeader
         title="Active Sessions"
-        description="Monitor and manage active user sessions across the platform."
         badge={<AppBadge variant="info">Governance</AppBadge>}
         actions={
-          <div className="relative w-72 group animate-in fade-in zoom-in-95 duration-500">
-            <div className="absolute inset-0 bg-surface border border-border/50 text-foreground from-accent/20 to-accent/5 rounded-xl blur-md opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
-            <div className="relative bg-surface/60 border border-border/40 rounded-xl flex items-center shadow-sm transition-all duration-300 group-focus-within:border-accent/50 group-focus-within:bg-surface/90">
-              <Search className="w-4 h-4 ml-3 text-muted group-focus-within:text-accent transition-colors duration-300" />
+          <div className="relative w-72">
+            <div className="relative bg-surface border border-border rounded-xl flex items-center shadow-sm">
+              <Search className="w-4 h-4 ml-3 text-muted" />
               <input 
                 type="text" 
                 placeholder="Search users or IP..." 

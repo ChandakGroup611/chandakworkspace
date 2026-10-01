@@ -196,7 +196,6 @@ export default function AMCAnalyticsPage() {
     <PageContainer strict={true}>
       <PageHeader
         title="AMC & Subscription Analytics"
-        description="Enterprise spend distribution, monthly amortization burn-rate, license health, and risk matrix."
         icon={<BarChart2 className="h-6 w-6" />}
         actions={
           <Link href="/amc">

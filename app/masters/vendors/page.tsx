@@ -365,7 +365,6 @@ export default function VendorMasterPage() {
       <div className="flex flex-col h-full gap-6 px-4 md:px-8 py-6">
         <PageHeader 
           title="Provider / Vendor Master" 
-          description="Manage software providers, OEMs, and general vendors across the organization." 
           icon={<Building2 className="h-6 w-6 text-theme-icon" />}
         />
 

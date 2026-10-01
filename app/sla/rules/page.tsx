@@ -153,7 +153,6 @@ export default function SLARuleBuilder() {
     <PageContainer strict={true}>
       <PageHeader
         title="SLA Rule Builder"
-        description="Configure target response and resolution windows for operational governance."
         badge={<AppBadge variant="warning">Governance Engine</AppBadge>}
         actions={
           canCreate ? (

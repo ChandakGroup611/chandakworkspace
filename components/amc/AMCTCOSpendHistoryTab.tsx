@@ -492,21 +492,15 @@ export function AMCTCOSpendHistoryTab({
   return (
     <div className="space-y-8">
       {/* 1. HERO TOTAL COST OF OWNERSHIP BANNER */}
-      <AppCard className="p-6 md:p-8 bg-gradient-to-br from-surface via-surface to-elevated/80 border border-border shadow-lg relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
-
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>Enterprise Total Cost of Ownership (TCO) Engine</span>
-            </div>
-            <h2 className="text-2xl md:text-3xl font-black text-foreground tracking-tight">
+      <AppCard className="p-6 bg-surface border border-border">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div>
+            <h2 className="text-xl font-bold text-foreground tracking-tight">
               {amcRecord?.software_name || "Software Subscription"}
             </h2>
-            <p className="text-sm text-muted max-w-2xl leading-relaxed">
-              Complete chronological audit trail and capital lifecycle from initial acquisition baseline (<span className="font-semibold text-foreground">{amcRecord?.purchase_date || 'N/A'}</span>) to present date across add-on licenses, customizations, and renewals.
-            </p>
+            <div className="text-xs text-muted mt-1">
+              Acquisition Baseline: <span className="font-semibold text-foreground">{amcRecord?.purchase_date || 'N/A'}</span>
+            </div>
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">

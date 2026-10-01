@@ -53,7 +53,6 @@ export default function KnowledgeBaseAuthoring() {
     <PageContainer strict={true}>
       <PageHeader
         title="Knowledge Base Authoring"
-        description="Write, format, and publish help articles for the Self-Service Portal."
         badge={<AppBadge variant="info">Support Hub</AppBadge>}
         actions={
           <AppButton variant="primary" onClick={handleCreateNew} leftIcon={<BookOpen className="w-4 h-4" />}>

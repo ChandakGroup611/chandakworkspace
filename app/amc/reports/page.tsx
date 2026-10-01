@@ -228,7 +228,6 @@ export default function AMCReportsPage() {
     <PageContainer strict={true}>
       <PageHeader
         title="Financial & Amortization Reports"
-        description="Comprehensive cashflow reporting, straight-line expense accruals, and invoice tracking."
         icon={<PieChart className="h-6 w-6" />}
         actions={
           <>

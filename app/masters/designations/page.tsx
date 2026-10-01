@@ -147,7 +147,6 @@ export default function DesignationsMasterPage() {
       <div className="flex flex-col h-full gap-6 px-4 md:px-8 py-6">
         <PageHeader 
           title="Designations" 
-          description="Manage job titles, designations, and map them to departments." 
           icon={<Briefcase className="h-6 w-6 text-theme-icon" />}
         />
 

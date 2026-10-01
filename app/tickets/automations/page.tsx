@@ -94,7 +94,6 @@ export default function TicketAutomationsBuilder() {
     <PageContainer strict={true}>
       <PageHeader
         title="Ticket Automations (IFTTT)"
-        description="Build triggers and actions to auto-route, assign, and manage tickets efficiently."
         badge={<AppBadge variant="warning">Workflow Engine</AppBadge>}
         actions={
           <AppButton variant="primary" onClick={handleCreateNew} leftIcon={<Plus className="w-4 h-4" />}>

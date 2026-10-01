@@ -266,7 +266,6 @@ function RequirementsPageContent() {
     <PageContainer strict={true}>
       <PageHeader
         title="Requirement Registration Repository"
-        description="Centralized repository for all operational business requirements."
         badge={<AppBadge variant="info">List View</AppBadge>}
         actions={
           <>

@@ -133,7 +133,6 @@ export default function IAMRoleBuilder() {
     <PageContainer strict={true}>
       <PageHeader
         title="IAM Role Builder"
-        description="Visually construct and manage role-based access control."
         badge={<AppBadge variant="info">Security & Governance</AppBadge>}
       />
 
