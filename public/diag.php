@@ -62,11 +62,26 @@ foreach ($candidateDirs as $dir) {
     }
 }
 
+// Check select-module files
+$selectModuleFiles = [];
+foreach ($candidateDirs as $dir) {
+    $smPath = $dir . '/.next/server/app/select-module';
+    if (is_dir($smPath)) {
+        $selectModuleFiles[$dir] = scandir($smPath);
+    }
+    $chunkPath = $dir . '/.next/static/chunks';
+    if (is_dir($chunkPath)) {
+        $chunks = scandir($chunkPath);
+        $selectModuleFiles[$dir . '/chunks_sample'] = array_slice($chunks, 0, 10);
+    }
+}
+
 echo json_encode([
     'current_script' => __FILE__,
     'htaccess' => $htContents,
     'build_ids' => $buildIds,
     'server_files' => $serverFiles,
+    'select_module_files' => $selectModuleFiles,
     'env_port' => getenv('PORT'),
     'env_node_env' => getenv('NODE_ENV'),
     'php_uname' => php_uname(),

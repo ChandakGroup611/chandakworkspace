@@ -16,6 +16,8 @@ export async function GET() {
   const response = NextResponse.json({
     status: 'ok',
     buildId,
+    cwd: process.cwd(),
+    pid: process.pid,
     timestamp: new Date().toISOString(),
     uptime: process.uptime()
   });
