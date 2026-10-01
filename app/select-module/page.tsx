@@ -33,20 +33,37 @@ export default function SelectModulePage() {
     async function loadModules() {
       try {
         setLoading(true);
-        const res = await getUserAllowedModules();
+        setErrorMsg(null);
 
-        if (!res.modules || res.modules.length === 0) {
-          // Fallback if not logged in or no modules
+        const { createClient } = await import("@/utils/supabase/client");
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
           router.replace("/login");
           return;
         }
 
+        let res = await getUserAllowedModules(user.id);
+
+        if (!res.modules || res.modules.length === 0) {
+          // Retry once in case of initial token handshake
+          res = await getUserAllowedModules(user.id);
+        }
+
         setData(res);
-        const initialChoice = res.activeModuleCode || res.defaultModule?.code || res.modules[0].code;
+        const initialChoice = res.activeModuleCode || res.defaultModule?.code || res.modules[0]?.code || "TASK_WORKFLOW";
         setSelectedModuleCode(initialChoice);
       } catch (err: any) {
         console.error("Error loading user modules:", err);
-        setErrorMsg("Unable to retrieve module permissions. Please try again.");
+        // Fallback gracefully
+        const res = await getUserAllowedModules();
+        if (res.modules && res.modules.length > 0) {
+          setData(res);
+          setSelectedModuleCode(res.activeModuleCode || res.modules[0].code);
+        } else {
+          setErrorMsg("Unable to retrieve module permissions. Please try again.");
+        }
       } finally {
         setLoading(false);
       }

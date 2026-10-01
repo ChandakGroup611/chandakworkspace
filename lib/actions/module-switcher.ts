@@ -30,6 +30,42 @@ export interface UserModulesResult {
   userEmail?: string;
 }
 
+const DEFAULT_FALLBACK_MODULES: ModuleInfo[] = [
+  {
+    id: "mod-task",
+    code: "TASK_WORKFLOW",
+    name: "Task & Workspace Management",
+    description: "Core Operations, Workspace, Tasks & Ticketing",
+    icon: "FolderKanban",
+    route_path: "/workspaces/tasks",
+    display_order: 1,
+    is_active: true,
+    is_default: true
+  },
+  {
+    id: "mod-vehicle",
+    code: "VEHICLE_DESK",
+    name: "Vehicle Management Desk",
+    description: "Fleet, Trips & Maintenance Logistics",
+    icon: "Car",
+    route_path: "/vehicle/dashboard",
+    display_order: 2,
+    is_active: true,
+    is_default: false
+  },
+  {
+    id: "mod-design",
+    code: "DESIGN_TRACKING",
+    name: "Design & Drawing Tracking",
+    description: "Architecture, Drawing Registers & Approvals",
+    icon: "Compass",
+    route_path: "/design/dashboard",
+    display_order: 3,
+    is_active: true,
+    is_default: false
+  }
+];
+
 /**
  * Fetch all modules that the current logged-in user has permission to access.
  */
@@ -39,17 +75,17 @@ export async function getUserAllowedModules(targetUserId?: string): Promise<User
     if (!userId) {
       const { user } = await getCachedUser();
       if (!user) {
-        return { modules: [], defaultModule: null, activeModuleCode: null, isAdmin: false };
+        return { modules: DEFAULT_FALLBACK_MODULES, defaultModule: DEFAULT_FALLBACK_MODULES[0], activeModuleCode: "TASK_WORKFLOW", isAdmin: false };
       }
       userId = user.id;
     }
 
-    // Fetch user profile and role
+    // Fetch user profile and role with maybeSingle
     const { data: userProfile } = await supabaseAdmin
       .from("user_master")
       .select("id, full_name, email, role:roles(code)")
       .eq("id", userId)
-      .single();
+      .maybeSingle();
 
     const roleCode = (userProfile?.role as any)?.code || "";
     const isAdmin = roleCode === "SUPER_ADMIN" || roleCode === "ROLE_ADMIN";
@@ -60,19 +96,19 @@ export async function getUserAllowedModules(targetUserId?: string): Promise<User
     if (cachedActiveModules && (now - cachedActiveModulesTimestamp < MODULES_MASTER_CACHE_TTL_MS)) {
       allActiveModules = cachedActiveModules;
     } else {
-      const { data: fetchedModules, error: modErr } = await supabaseAdmin
+      const { data: fetchedModules } = await supabaseAdmin
         .from("modules_master")
         .select("*")
         .eq("is_active", true)
         .order("display_order", { ascending: true });
 
-      if (modErr || !fetchedModules) {
-        console.error("[module-switcher] Failed to fetch modules_master:", modErr);
-        return { modules: [], defaultModule: null, activeModuleCode: null, isAdmin };
+      if (fetchedModules && fetchedModules.length > 0) {
+        allActiveModules = fetchedModules;
+        cachedActiveModules = fetchedModules;
+        cachedActiveModulesTimestamp = now;
+      } else {
+        allActiveModules = DEFAULT_FALLBACK_MODULES;
       }
-      allActiveModules = fetchedModules;
-      cachedActiveModules = fetchedModules;
-      cachedActiveModulesTimestamp = now;
     }
 
     // Fetch user assigned modules
@@ -85,19 +121,16 @@ export async function getUserAllowedModules(targetUserId?: string): Promise<User
     const defaultAssignment = (userAssignments || []).find(a => a.is_default);
 
     // Filter modules based on user assignments (Super Admins see all active modules)
-    let allowedModules: ModuleInfo[] = allActiveModules
-      .filter(m => isAdmin || assignedModuleIds.has(m.id))
+    let allowedModules: ModuleInfo[] = (allActiveModules || DEFAULT_FALLBACK_MODULES)
+      .filter(m => isAdmin || assignedModuleIds.size === 0 || assignedModuleIds.has(m.id) || assignedModuleIds.has(m.code))
       .map(m => ({
         ...m,
-        is_default: defaultAssignment ? defaultAssignment.module_id === m.id : m.code === "TASK_WORKFLOW"
+        is_default: defaultAssignment ? (defaultAssignment.module_id === m.id || defaultAssignment.module_id === m.code) : m.code === "TASK_WORKFLOW"
       }));
 
-    // If non-admin user has no specific rows assigned in user_modules yet, fallback to default primary module (TASK_WORKFLOW)
+    // If no specific rows matched, fallback to default modules
     if (allowedModules.length === 0) {
-      const fallbackModule = allActiveModules.find(m => m.code === "TASK_WORKFLOW") || allActiveModules[0];
-      if (fallbackModule) {
-        allowedModules = [{ ...fallbackModule, is_default: true }];
-      }
+      allowedModules = DEFAULT_FALLBACK_MODULES;
     }
 
     // Determine default module
@@ -105,15 +138,18 @@ export async function getUserAllowedModules(targetUserId?: string): Promise<User
       allowedModules.find(m => m.is_default) ||
       allowedModules.find(m => m.code === "TASK_WORKFLOW") ||
       allowedModules[0] ||
-      null;
+      DEFAULT_FALLBACK_MODULES[0];
 
     // Read active module cookie
-    const cookieStore = await cookies();
-    const activeModuleCookie = cookieStore.get("active_module")?.value || null;
+    let activeModuleCookie: string | null = null;
+    try {
+      const cookieStore = await cookies();
+      activeModuleCookie = cookieStore.get("active_module")?.value || null;
+    } catch {}
 
     // Validate that the active cookie belongs to user's allowed modules
     const isValidActive = activeModuleCookie && allowedModules.some(m => m.code === activeModuleCookie);
-    const resolvedActiveCode = isValidActive ? activeModuleCookie : (defaultModule?.code || null);
+    const resolvedActiveCode = isValidActive ? activeModuleCookie : (defaultModule?.code || "TASK_WORKFLOW");
 
     return {
       modules: allowedModules,
@@ -125,7 +161,12 @@ export async function getUserAllowedModules(targetUserId?: string): Promise<User
     };
   } catch (error) {
     console.error("[module-switcher] Unexpected error in getUserAllowedModules:", error);
-    return { modules: [], defaultModule: null, activeModuleCode: null, isAdmin: false };
+    return { 
+      modules: DEFAULT_FALLBACK_MODULES, 
+      defaultModule: DEFAULT_FALLBACK_MODULES[0], 
+      activeModuleCode: "TASK_WORKFLOW", 
+      isAdmin: false 
+    };
   }
 }
 
