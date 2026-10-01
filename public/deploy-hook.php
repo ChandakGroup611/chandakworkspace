@@ -182,7 +182,15 @@ if ($zipFile && class_exists('ZipArchive')) {
         @touch($target . '/tmp/restart.txt');
         if (file_exists($target . '/server.js')) @touch($target . '/server.js');
         if (file_exists($target . '/package.json')) @touch($target . '/package.json');
-        if (file_exists($target . '/.htaccess')) @touch($target . '/.htaccess');
+        
+        // Ensure .htaccess has anti-caching and no-lscache directives
+        $htPath = $target . '/.htaccess';
+        $htCurrent = file_exists($htPath) ? @file_get_contents($htPath) : '';
+        if (strpos($htCurrent, 'no-lscache') === false) {
+            $htAntiCache = "<IfModule LiteSpeed>\n    CacheLookup off\n    SetEnv no-lscache 1\n</IfModule>\n\n<IfModule mod_headers.c>\n    <FilesMatch \"\\.(html|htm|php|json)$\">\n        Header set Cache-Control \"no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0\"\n        Header set CDN-Cache-Control \"no-store\"\n        Header set Surrogate-Control \"no-store\"\n        Header set Pragma \"no-cache\"\n        Header set Expires \"0\"\n    </FilesMatch>\n    <FilesMatch \"\\.(js|css|woff|woff2|svg|png|jpg|jpeg|gif|webp|ico)$\">\n        Header set Cache-Control \"public, max-age=31536000, immutable\"\n    </FilesMatch>\n</IfModule>\n\n";
+            @file_put_contents($htPath, $htAntiCache . $htCurrent);
+        }
+        @touch($htPath);
         
         $extractionResults[$target] = [
             'extracted' => $extracted,
@@ -202,6 +210,14 @@ if ($zipFile && class_exists('ZipArchive')) {
         if (file_exists($target . '/server.js')) @touch($target . '/server.js');
         if (file_exists($target . '/.htaccess')) @touch($target . '/.htaccess');
     }
+}
+
+// Ensure domain root .htaccess also contains anti-caching rules
+$domHt = $domainRoot . '/public_html/.htaccess';
+$domHtCurrent = file_exists($domHt) ? @file_get_contents($domHt) : '';
+if (strpos($domHtCurrent, 'no-lscache') === false) {
+    $htAntiCache = "<IfModule LiteSpeed>\n    CacheLookup off\n    SetEnv no-lscache 1\n</IfModule>\n\n<IfModule mod_headers.c>\n    <FilesMatch \"\\.(html|htm|php|json)$\">\n        Header set Cache-Control \"no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0\"\n        Header set CDN-Cache-Control \"no-store\"\n        Header set Surrogate-Control \"no-store\"\n        Header set Pragma \"no-cache\"\n        Header set Expires \"0\"\n    </FilesMatch>\n    <FilesMatch \"\\.(js|css|woff|woff2|svg|png|jpg|jpeg|gif|webp|ico)$\">\n        Header set Cache-Control \"public, max-age=31536000, immutable\"\n    </FilesMatch>\n</IfModule>\n\n";
+    @file_put_contents($domHt, $htAntiCache . $domHtCurrent);
 }
 
 // Copy self to public directories to ensure persistence

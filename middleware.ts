@@ -38,12 +38,12 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  // Prevent browser caching for protected routes to avoid "Back Button" ghost sessions
-  if (!isAuthPage && !isApiRoute && !isAuthCallback) {
-    supabaseResponse.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
-    supabaseResponse.headers.set("Pragma", "no-cache");
-    supabaseResponse.headers.set("Expires", "0");
-  }
+  // Prevent browser & CDN caching for all dynamic pages to ensure instant deploy reflection
+  supabaseResponse.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
+  supabaseResponse.headers.set("CDN-Cache-Control", "no-store");
+  supabaseResponse.headers.set("Surrogate-Control", "no-store");
+  supabaseResponse.headers.set("Pragma", "no-cache");
+  supabaseResponse.headers.set("Expires", "0");
 
   return supabaseResponse;
 }
