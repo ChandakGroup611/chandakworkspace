@@ -73,7 +73,7 @@ if (!$domainRoot || !is_dir($domainRoot)) {
 $versionedDirs = glob($domainRoot . '/hbuilds/versions/*/nodejs');
 $activeVersionDir = ($versionedDirs && count($versionedDirs) > 0) ? $versionedDirs[0] : null;
 
-// Determine Primary Node Application Roots (ONLY the true Node app roots, avoid nested public folders)
+// Determine Primary Node Application Roots (ONLY the true Node app roots)
 $primaryAppRoots = [
     $domainRoot . '/hbuilds/current/nodejs',
     $domainRoot . '/public_html',
@@ -86,6 +86,22 @@ if (dirname(__DIR__) !== $domainRoot && is_dir(dirname(__DIR__))) {
 }
 
 $primaryAppRoots = array_values(array_unique(array_filter($primaryAppRoots, 'is_dir')));
+
+// Determine all public-facing document roots (where LiteSpeed directly serves static chunks)
+$publicDocRoots = [
+    $domainRoot . '/public_html',
+    $domainRoot . '/hbuilds/current/nodejs/public',
+    __DIR__,
+];
+if ($activeVersionDir) {
+    $publicDocRoots[] = $activeVersionDir . '/public';
+}
+if ($versionedDirs) {
+    foreach ($versionedDirs as $vDir) {
+        $publicDocRoots[] = $vDir . '/public';
+    }
+}
+$publicDocRoots = array_values(array_unique(array_filter($publicDocRoots, 'is_dir')));
 
 // Diagnostic / Info Mode
 if (isset($_GET['info']) || isset($_GET['scan']) || isset($_GET['diag']) || isset($_GET['logs'])) {
@@ -119,6 +135,7 @@ if (isset($_GET['info']) || isset($_GET['scan']) || isset($_GET['diag']) || isse
         'domain_root' => $domainRoot,
         'current_dir' => __DIR__,
         'app_roots' => $primaryAppRoots,
+        'public_doc_roots' => $publicDocRoots,
         'build_ids' => $foundBuildIds,
         'files' => $foundFiles,
         'logs' => $foundLogs,
@@ -173,14 +190,6 @@ if ($zipFile && class_exists('ZipArchive')) {
             $extracted = true;
         }
         
-        // Ensure static assets are reachable under _next/static inside the target
-        if (is_dir($target . '/.next/static')) {
-            recursiveCopy($target . '/.next/static', $target . '/_next/static');
-            if (is_dir($target . '/public')) {
-                recursiveCopy($target . '/.next/static', $target . '/public/_next/static');
-            }
-        }
-        
         // Signal restart
         @mkdir($target . '/tmp', 0755, true);
         @touch($target . '/tmp/restart.txt');
@@ -193,8 +202,7 @@ if ($zipFile && class_exists('ZipArchive')) {
         ];
     }
 
-    // Mirror static chunks to public_html so Apache/LiteSpeed serves them with zero Node overhead
-    $pubHtml = $domainRoot . '/public_html';
+    // Locate freshly extracted static chunk assets
     $sourceStatic = null;
     foreach ($primaryAppRoots as $root) {
         if (is_dir($root . '/.next/static')) {
@@ -202,9 +210,18 @@ if ($zipFile && class_exists('ZipArchive')) {
             break;
         }
     }
-    if ($sourceStatic && is_dir($pubHtml)) {
-        recursiveCopy($sourceStatic, $pubHtml . '/_next/static');
-        recursiveCopy($sourceStatic, $pubHtml . '/.next/static');
+
+    // CRITICAL: Mirror static chunks into ALL public-facing document roots so LiteSpeed never serves stale chunks
+    if ($sourceStatic) {
+        foreach ($publicDocRoots as $pub) {
+            @mkdir($pub . '/_next', 0755, true);
+            @mkdir($pub . '/.next', 0755, true);
+            recursiveCopy($sourceStatic, $pub . '/_next/static');
+            recursiveCopy($sourceStatic, $pub . '/.next/static');
+            if (is_dir($pub . '/public')) {
+                recursiveCopy($sourceStatic, $pub . '/public/_next/static');
+            }
+        }
     }
     
     // Clean up zip file and sync states
