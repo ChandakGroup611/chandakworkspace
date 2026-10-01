@@ -212,7 +212,7 @@ function ReqCard({ req }: { req: any }) {
 
         <div className="flex items-center justify-between pt-3 border-t border-border/50 dark:border-white/5">
           <div className="flex items-center gap-2">
-             <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-[10px] font-bold" title={req.creator?.full_name || 'Requester'}>
+             <div className="w-6 h-6 rounded-full bg-indigo-100 text-foreground flex items-center justify-center text-[10px] font-bold" title={req.creator?.full_name || 'Requester'}>
                {(req.creator?.full_name || req.requester?.full_name || 'U').substring(0, 2).toUpperCase()}
              </div>
              <div className="text-[10px] font-medium text-muted">{new Date(req.created_at).toLocaleDateString()}</div>

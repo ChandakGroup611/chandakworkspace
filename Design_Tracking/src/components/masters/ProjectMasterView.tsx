@@ -396,11 +396,11 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
         <div className="p-3 rounded-xl bg-surface border border-border flex items-center justify-between">
           <div>
             <span className="text-[11px] font-semibold text-muted-foreground block">Total Sub-Projects / Wings</span>
-            <span className="text-lg font-black text-purple-600 dark:text-purple-400">
+            <span className="text-lg font-black text-theme-icon dark:text-muted-foreground">
               {allTowers.length}
             </span>
           </div>
-          <Layers className="h-4 w-4 text-purple-500" />
+          <Layers className="h-4 w-4 text-theme-icon" />
         </div>
         <div className="p-3 rounded-xl bg-surface border border-border flex items-center justify-between">
           <div>
@@ -523,7 +523,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                           </span>
                         )}
                         {proj.projectStatus && (
-                          <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20 whitespace-nowrap">
+                          <span className="text-[10px] font-bold text-theme-icon dark:text-muted-foreground bg-surface px-2 py-0.5 rounded border border-border whitespace-nowrap">
                             {proj.projectStatus}
                           </span>
                         )}
@@ -604,7 +604,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                     <div>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[11px] font-bold text-muted-foreground flex items-center gap-1">
-                          <Users className="h-3 w-3 text-purple-500" />
+                          <Users className="h-3 w-3 text-theme-icon" />
                           <span>Mapped Consultants ({taggedCons.length}):</span>
                         </span>
                         <button
@@ -613,7 +613,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                             handleOpenEdit(proj);
                             setFormTab("CONSULTANTS_CATEGORIES");
                           }}
-                          className="h-5 px-2 rounded-md bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/25 text-[10px] font-bold inline-flex items-center transition-colors cursor-pointer"
+                          className="h-5 px-2 rounded-md bg-surface hover:bg-surface text-theme-icon dark:text-muted-foreground border border-border text-[10px] font-bold inline-flex items-center transition-colors cursor-pointer"
                         >
                           Manage
                         </button>
@@ -623,7 +623,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                           taggedCons.map((consName, idx) => (
                             <span
                               key={idx}
-                              className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20"
+                              className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-surface text-foreground dark:text-muted-foreground border border-border"
                             >
                               {consName}
                             </span>
@@ -919,11 +919,11 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                     <div className="space-y-2.5">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div className="flex items-center gap-1.5">
-                          <Users className="h-4 w-4 text-purple-500" />
+                          <Users className="h-4 w-4 text-theme-icon" />
                           <label className="text-xs font-bold text-foreground">
                             Map Consultant Partners
                           </label>
-                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold">
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-surface text-theme-icon dark:text-muted-foreground font-bold">
                             {selectedConsultants.length} of {consultants.length} Selected
                           </span>
                         </div>
@@ -932,7 +932,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                           <button
                             type="button"
                             onClick={handleSelectAllConsultants}
-                            className="px-2 py-1 rounded-lg text-[10px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 transition-colors cursor-pointer inline-flex items-center gap-1"
+                            className="px-2 py-1 rounded-lg text-[10px] font-bold bg-surface text-theme-icon dark:text-muted-foreground hover:bg-surface transition-colors cursor-pointer inline-flex items-center gap-1"
                           >
                             <CheckSquare className="h-3 w-3" />
                             <span>Select All</span>
@@ -975,7 +975,7 @@ export const ProjectMasterView: React.FC<ProjectMasterViewProps> = ({ onNavigate
                                 onClick={() => handleToggleConsultant(c.name)}
                                 className={`w-full p-2.5 rounded-xl text-left text-xs border transition-all cursor-pointer flex items-center justify-between gap-2 ${
                                   isSelected
-                                    ? "bg-purple-50 dark:bg-purple-950/40 border-purple-500/60 text-purple-900 dark:text-purple-100 font-bold shadow-2xs"
+                                    ? "bg-surface dark:bg-surface border-border text-purple-900 dark:text-purple-100 font-bold shadow-2xs"
                                     : "bg-background border-border text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
                                 }`}
                               >

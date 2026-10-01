@@ -145,8 +145,8 @@ export const GfcHandoverView: React.FC<GfcHandoverViewProps> = ({
         </div>
 
         <div className="p-4 rounded-xl bg-card border border-border">
-          <div className="text-[11px] font-bold text-purple-600 dark:text-purple-400 uppercase">Filtered Records</div>
-          <div className="text-xl font-black text-purple-600 dark:text-purple-400 mt-1">{filteredReleases.length}</div>
+          <div className="text-[11px] font-bold text-theme-icon dark:text-muted-foreground uppercase">Filtered Records</div>
+          <div className="text-xl font-black text-theme-icon dark:text-muted-foreground mt-1">{filteredReleases.length}</div>
         </div>
       </div>
 

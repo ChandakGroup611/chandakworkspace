@@ -762,7 +762,7 @@ export default function UserMasterPage() {
           <div className="bg-surface dark:bg-slate-900 border border-border w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
             <div className="p-5 border-b border-border/60 bg-surface/50 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-indigo-500/15 text-indigo-500 flex items-center justify-center border border-indigo-500/25">
+                <div className="h-10 w-10 rounded-xl bg-surface text-theme-icon flex items-center justify-center border border-border">
                   <Layers className="h-5 w-5" />
                 </div>
                 <div>
@@ -787,14 +787,14 @@ export default function UserMasterPage() {
             <div className="p-5 space-y-3.5 overflow-y-auto flex-1">
               {moduleModalLoading ? (
                 <div className="py-8 text-center text-muted flex flex-col items-center gap-2">
-                  <RefreshCw className="h-5 w-5 animate-spin text-indigo-500" />
+                  <RefreshCw className="h-5 w-5 animate-spin text-theme-icon" />
                   <span className="text-xs">Loading module entitlements...</span>
                 </div>
               ) : (
                 [
                   { code: "VEHICLE_DESK", name: "Vehicle Module", desc: "Fleet inventory, trip sheets, driver rosters, maintenance & spare parts.", icon: Car, color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20" },
                   { code: "TASK_WORKFLOW", name: "Workspace Module", desc: "Executive task tracker, sprints, ticketing/helpdesk, requirements & AMC.", icon: FolderKanban, color: "text-blue-500 bg-blue-500/10 border-blue-500/20" },
-                  { code: "DESIGN_TRACKING", name: "Design Tracking", desc: "Architectural & structural drawing registers, consultant reviews & site GFC.", icon: Layers, color: "text-purple-500 bg-purple-500/10 border-purple-500/20" }
+                  { code: "DESIGN_TRACKING", name: "Design Tracking", desc: "Architectural & structural drawing registers, consultant reviews & site GFC.", icon: Layers, color: "text-theme-icon bg-surface border-border" }
                 ].map((mod) => {
                   const isChecked = modalSelectedCodes.includes(mod.code);
                   const isDefault = modalDefaultCode === mod.code;
@@ -1129,7 +1129,7 @@ export default function UserMasterPage() {
                                   <AppButton variant="secondary"
                                     type="button"
                                     onClick={() => handleOpenModuleModal(usr)}
-                                    className="p-1.5 rounded-lg transition-all text-indigo-600 dark:text-indigo-400 bg-indigo-50/80 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-indigo-200/70 dark:border-indigo-800/50 shadow-2xs"
+                                    className="p-1.5 rounded-lg transition-all text-theme-icon dark:text-muted-foreground bg-surface/80 dark:bg-surface hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-border/70 dark:border-indigo-800/50 shadow-2xs"
                                     title="Assign Workspace Modules"
                                   >
                                     <Layers className="h-4 w-4" />
@@ -1369,7 +1369,7 @@ export default function UserMasterPage() {
             {/* Header */}
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-500/20 shrink-0">
+                <div className="h-9 w-9 rounded-xl bg-surface text-theme-icon dark:text-muted-foreground flex items-center justify-center border border-border shrink-0">
                   <Layers className="h-4 w-4" />
                 </div>
                 <div>
@@ -1392,7 +1392,7 @@ export default function UserMasterPage() {
 
             {moduleModalLoading ? (
               <div className="flex flex-col items-center justify-center py-8 space-y-3">
-                <RefreshCw className="h-7 w-7 animate-spin text-indigo-500" />
+                <RefreshCw className="h-7 w-7 animate-spin text-theme-icon" />
                 <p className="text-xs text-muted-foreground">Loading assigned module entitlements...</p>
               </div>
             ) : (
@@ -1450,7 +1450,7 @@ export default function UserMasterPage() {
                         }}
                         className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-start justify-between gap-3 ${
                           isSelected 
-                            ? "bg-surface border-indigo-500/50 shadow-xs ring-1 ring-indigo-500/20" 
+                            ? "bg-surface border-border shadow-xs ring-1 ring-indigo-500/20" 
                             : "bg-muted/30 border-border opacity-60 hover:opacity-100"
                         }`}
                       >
@@ -1462,7 +1462,7 @@ export default function UserMasterPage() {
                             <div className="flex items-center gap-2">
                               <span className="font-bold text-foreground text-xs">{mod.name}</span>
                               {isDefault && (
-                                <span className="text-[10px] px-1.5 py-0.2 rounded bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-500/30">
+                                <span className="text-[10px] px-1.5 py-0.2 rounded bg-surface text-theme-icon dark:text-muted-foreground font-bold border border-border">
                                   Default Landing
                                 </span>
                               )}
@@ -1521,7 +1521,7 @@ export default function UserMasterPage() {
                 onClick={handleSaveModules}
                 disabled={moduleModalSaving || moduleModalLoading}
                 leftIcon={moduleModalSaving ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold"
+                className="bg-indigo-600 hover:bg-surface0 text-white font-bold"
               >
                 {moduleModalSaving ? "Saving Allocations..." : "Save Module Allocations"}
               </AppButton>

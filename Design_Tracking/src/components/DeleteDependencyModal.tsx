@@ -71,11 +71,11 @@ export const DeleteDependencyModal: React.FC<DeleteDependencyModalProps> = ({
       case "PACKAGE":
         return <Package className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />;
       case "CONSULTANT":
-        return <Users className="h-5 w-5 text-purple-600 dark:text-purple-400" />;
+        return <Users className="h-5 w-5 text-theme-icon dark:text-muted-foreground" />;
       case "AUTHORITY":
-        return <ShieldCheck className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />;
+        return <ShieldCheck className="h-5 w-5 text-theme-icon dark:text-muted-foreground" />;
       case "CATEGORY":
-        return <Tag className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />;
+        return <Tag className="h-5 w-5 text-theme-icon dark:text-muted-foreground" />;
       default:
         return <Trash2 className="h-5 w-5 text-rose-600 dark:text-rose-400" />;
     }

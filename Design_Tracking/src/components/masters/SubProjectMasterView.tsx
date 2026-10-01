@@ -335,7 +335,7 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <div className="h-9 w-9 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center border border-purple-500/20 shrink-0">
+          <div className="h-9 w-9 rounded-xl bg-surface text-theme-icon dark:text-muted-foreground flex items-center justify-center border border-border shrink-0">
             <Layers className="h-4 w-4" />
           </div>
           <div>
@@ -352,13 +352,13 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
             onClick={() => setIsImportModalOpen(true)}
             className="px-3.5 py-1.5 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-bold inline-flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all shrink-0 whitespace-nowrap"
           >
-            <Upload className="h-3.5 w-3.5 text-purple-600" />
+            <Upload className="h-3.5 w-3.5 text-theme-icon" />
             <span>Import Sub-Projects (Excel)</span>
           </button>
           <button
             type="button"
             onClick={() => handleOpenAdd()}
-            className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
+            className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-surface0 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
           >
             <Plus className="h-3.5 w-3.5" />
             <span>Add Sub-Project / Wing</span>
@@ -440,7 +440,7 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
           <button
             type="button"
             onClick={() => handleOpenAdd()}
-            className="px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all"
+            className="px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-surface0 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all"
           >
             <Plus className="h-3.5 w-3.5" />
             <span>Create First Sub-Project</span>
@@ -456,7 +456,7 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
             return (
               <div
                 key={twr.id}
-                className="p-4 rounded-2xl border border-border bg-surface hover:border-purple-500/40 shadow-xs transition-all flex flex-col justify-between space-y-3"
+                className="p-4 rounded-2xl border border-border bg-surface hover:border-theme-btn-primary/40 shadow-xs transition-all flex flex-col justify-between space-y-3"
               >
                 <div className="space-y-3">
                   {/* Top: Parent Project, Type, Actions */}
@@ -532,7 +532,7 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
                           taggedCons.map((cn, idx) => (
                             <span
                               key={idx}
-                              className="px-1.5 py-0.2 rounded text-[9px] font-semibold bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20"
+                              className="px-1.5 py-0.2 rounded text-[9px] font-semibold bg-surface text-foreground dark:text-muted-foreground border border-border"
                             >
                               {cn}
                             </span>
@@ -569,7 +569,7 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
                   <button
                     type="button"
                     onClick={() => handleOpenEdit(twr)}
-                    className="h-6 px-2.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/25 text-[11px] font-bold inline-flex items-center transition-colors cursor-pointer"
+                    className="h-6 px-2.5 rounded-lg bg-surface hover:bg-surface text-theme-icon dark:text-muted-foreground border border-border text-[11px] font-bold inline-flex items-center transition-colors cursor-pointer"
                   >
                     Configure Mappings
                   </button>
@@ -634,7 +634,7 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
               <button
                 type="button"
                 onClick={handleInheritFromParent}
-                className="px-3.5 py-2 rounded-xl text-xs font-bold bg-purple-500/10 text-purple-700 dark:text-purple-300 hover:bg-purple-500/20 transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
+                className="px-3.5 py-2 rounded-xl text-xs font-bold bg-surface text-foreground dark:text-muted-foreground hover:bg-surface transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
                 title="Inherit all tagged consultants and packages from the selected parent project"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
@@ -775,11 +775,11 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
                     <div className="space-y-2.5">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div className="flex items-center gap-1.5">
-                          <Users className="h-4 w-4 text-purple-500" />
+                          <Users className="h-4 w-4 text-theme-icon" />
                           <label className="text-xs font-bold text-foreground">
                             Map Consultants to Sub-Project
                           </label>
-                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold">
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-surface text-theme-icon dark:text-muted-foreground font-bold">
                             {selectedConsultants.length} of {consultants.length} Selected
                           </span>
                         </div>
@@ -788,7 +788,7 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
                           <button
                             type="button"
                             onClick={handleSelectAllConsultants}
-                            className="px-2 py-1 rounded-lg text-[10px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 transition-colors cursor-pointer inline-flex items-center gap-1"
+                            className="px-2 py-1 rounded-lg text-[10px] font-bold bg-surface text-theme-icon dark:text-muted-foreground hover:bg-surface transition-colors cursor-pointer inline-flex items-center gap-1"
                           >
                             <CheckSquare className="h-3 w-3" />
                             <span>Select All</span>
@@ -830,7 +830,7 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
                                 onClick={() => handleToggleConsultant(c.name)}
                                 className={`w-full p-2.5 rounded-xl text-left text-xs border transition-all cursor-pointer flex items-center justify-between gap-2 ${
                                   isSelected
-                                    ? "bg-purple-50 dark:bg-purple-950/40 border-purple-500/60 text-purple-900 dark:text-purple-100 font-bold shadow-2xs"
+                                    ? "bg-surface dark:bg-surface border-border text-purple-900 dark:text-purple-100 font-bold shadow-2xs"
                                     : "bg-background border-border text-muted-foreground hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
                                 }`}
                               >
@@ -986,7 +986,7 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
                     <button
                       type="button"
                       onClick={() => setFormTab("MAPPINGS")}
-                      className="h-7 px-3 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs inline-flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
+                      className="h-7 px-3 rounded-lg bg-theme-btn-primary hover:opacity-90 text-white font-bold text-xs inline-flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
                     >
                       Next: Map Consultants & Packages →
                     </button>
@@ -1011,7 +1011,7 @@ export const SubProjectMasterView: React.FC<SubProjectMasterViewProps> = ({ init
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-md cursor-pointer transition-all"
+                    className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-surface0 text-white text-xs font-bold shadow-md cursor-pointer transition-all"
                   >
                     {editingSubProject ? "Save Sub-Project" : "Create Sub-Project"}
                   </button>

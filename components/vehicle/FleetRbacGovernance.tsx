@@ -73,12 +73,12 @@ import ChandakLoader from "@/components/ui/ChandakLoader";
 
 const ROLE_BADGE_COLORS = [
   { id: "amber", label: "Amber", class: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30" },
-  { id: "indigo", label: "Indigo", class: "bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border-indigo-500/30" },
+  { id: "indigo", label: "Indigo", class: "bg-surface text-theme-icon dark:text-muted-foreground border-border" },
   { id: "blue", label: "Sky Blue", class: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30" },
   { id: "emerald", label: "Emerald", class: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30" },
-  { id: "cyan", label: "Cyan", class: "bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border-cyan-500/30" },
+  { id: "cyan", label: "Cyan", class: "bg-surface text-theme-icon dark:text-muted-foreground border-border" },
   { id: "orange", label: "Orange", class: "bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/30" },
-  { id: "purple", label: "Purple", class: "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30" },
+  { id: "purple", label: "Purple", class: "bg-surface text-theme-icon dark:text-muted-foreground border-border" },
   { id: "slate", label: "Slate", class: "bg-slate-500/15 text-slate-600 dark:text-slate-400 border-slate-500/30" },
   { id: "rose", label: "Rose", class: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30" }
 ];
@@ -760,7 +760,7 @@ export default function FleetRbacGovernance() {
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
-          <Play className="h-3.5 w-3.5 text-purple-500" />
+          <Play className="h-3.5 w-3.5 text-theme-icon" />
           <span>Permission Tester</span>
         </button>
       </div>
@@ -1245,7 +1245,7 @@ export default function FleetRbacGovernance() {
         <div className="max-w-3xl mx-auto rounded-2xl border border-border bg-card p-6 space-y-6">
           <div>
             <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-              <Play className="h-4 w-4 text-purple-500" />
+              <Play className="h-4 w-4 text-theme-icon" />
               <span>Fleet Permission Simulation Engine</span>
             </h3>
             <p className="text-xs text-muted-foreground mt-0.5">
@@ -1284,10 +1284,10 @@ export default function FleetRbacGovernance() {
 
           {/* Simulation Output */}
           {activeSimUser && (
-            <div className="p-5 rounded-2xl bg-purple-500/5 border border-purple-500/20 space-y-4 animate-in fade-in">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-purple-500/15 pb-3">
+            <div className="p-5 rounded-2xl bg-surface border border-border space-y-4 animate-in fade-in">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
+                  <span className="text-xs font-bold uppercase tracking-wider text-theme-icon dark:text-muted-foreground">
                     Simulation Evaluation:
                   </span>
                   <span className="text-xs font-bold text-foreground">{activeSimUser.fullName}</span>
@@ -1296,7 +1296,7 @@ export default function FleetRbacGovernance() {
                   <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold border ${activeSimRoleDef?.badgeColor || 'bg-surface text-muted-foreground border-border'}`}>
                     {activeSimRoleDef?.label || activeSimRoleCode}
                   </span>
-                  <span className="text-xs px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold border border-purple-500/20">
+                  <span className="text-xs px-2 py-0.5 rounded-md bg-surface text-theme-icon dark:text-muted-foreground font-bold border border-border">
                     Scope: {activeSimPolicy.movementAccessScope || "ALL"}
                   </span>
                 </div>

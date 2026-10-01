@@ -78,9 +78,9 @@ const DEFAULT_STAGES = [
     stage_name: "2. Discussion & Discovery",
     description: "Stakeholder requirements discovery, kickoff meeting, IT architecture review.",
     icon: MessageSquare,
-    color: "text-purple-500",
-    bgColor: "bg-purple-500/10",
-    borderColor: "border-purple-500/30"
+    color: "text-theme-icon",
+    bgColor: "bg-surface",
+    borderColor: "border-border"
   },
   {
     stage_key: "configuration",
@@ -96,9 +96,9 @@ const DEFAULT_STAGES = [
     stage_name: "4. Implementation & Integration",
     description: "Custom development, data migration, API connectors, workflow automation.",
     icon: Layers,
-    color: "text-indigo-500",
-    bgColor: "bg-indigo-500/10",
-    borderColor: "border-indigo-500/30"
+    color: "text-theme-icon",
+    bgColor: "bg-surface",
+    borderColor: "border-border"
   },
   {
     stage_key: "uat",
@@ -114,9 +114,9 @@ const DEFAULT_STAGES = [
     stage_name: "6. Training & User Rollout",
     description: "End-user training sessions, SOP guide distribution, change management.",
     icon: GraduationCap,
-    color: "text-cyan-500",
-    bgColor: "bg-cyan-500/10",
-    borderColor: "border-cyan-500/30"
+    color: "text-theme-icon",
+    bgColor: "bg-surface",
+    borderColor: "border-border"
   },
   {
     stage_key: "go_live",

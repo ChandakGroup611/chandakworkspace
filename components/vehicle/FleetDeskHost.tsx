@@ -169,9 +169,9 @@ export const MAINTENANCE_CATEGORIES = [
   { id: "PERIODIC_SERVICE", label: "Scheduled Periodic Service", icon: "🔄", badge: "bg-blue-500/10 text-blue-600 border-blue-500/20" },
   { id: "MECHANICAL", label: "Mechanical & Powertrain", icon: "⚙️", badge: "bg-amber-500/10 text-amber-600 border-amber-500/20" },
   { id: "BRAKES_TYRES", label: "Brakes, Tyres & Alignment", icon: "🛞", badge: "bg-rose-500/10 text-rose-600 border-rose-500/20" },
-  { id: "ELECTRICAL", label: "Electrical, Battery & ECU", icon: "🔋", badge: "bg-purple-500/10 text-purple-600 border-purple-500/20" },
-  { id: "AC_CLIMATE", label: "AC & Climate Control", icon: "❄️", badge: "bg-cyan-500/10 text-cyan-600 border-cyan-500/20" },
-  { id: "BODY_PAINT", label: "Body Denting & Painting", icon: "🎨", badge: "bg-indigo-500/10 text-indigo-600 border-indigo-500/20" },
+  { id: "ELECTRICAL", label: "Electrical, Battery & ECU", icon: "🔋", badge: "bg-surface text-foreground border-border" },
+  { id: "AC_CLIMATE", label: "AC & Climate Control", icon: "❄️", badge: "bg-surface text-foreground border-border" },
+  { id: "BODY_PAINT", label: "Body Denting & Painting", icon: "🎨", badge: "bg-surface text-foreground border-border" },
   { id: "EMERGENCY_BREAKDOWN", label: "Emergency Breakdown", icon: "🚨", badge: "bg-red-500/10 text-red-600 border-red-500/20" },
   { id: "DETAILING_WASH", label: "Detailing & Foam Wash", icon: "🧼", badge: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" }
 ];
@@ -202,9 +202,9 @@ export const CHECKLIST_ITEMS = [
 export const VEHICLE_DOC_TYPES = [
   { value: "PUC", label: "PUC Certificate", badgeColor: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25" },
   { value: "INSURANCE", label: "Insurance Policy & Cover Note", badgeColor: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/25" },
-  { value: "RC", label: "RC Book (Smart Card)", badgeColor: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/25" },
+  { value: "RC", label: "RC Book (Smart Card)", badgeColor: "bg-surface text-theme-icon dark:text-muted-foreground border-border" },
   { value: "FITNESS", label: "Fitness Certificate", badgeColor: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25" },
-  { value: "PERMIT", label: "Commercial / Tourist Permit", badgeColor: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/25" },
+  { value: "PERMIT", label: "Commercial / Tourist Permit", badgeColor: "bg-surface text-theme-icon dark:text-muted-foreground border-border" },
   { value: "ROAD_TAX", label: "Road Tax Receipt", badgeColor: "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/25" },
   { value: "INVOICE", label: "Purchase Invoice & OEM Bill", badgeColor: "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/25" },
   { value: "OTHER", label: "Other Legal / Transport Document", badgeColor: "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/25" }
@@ -6149,8 +6149,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               value: servicesDueCount,
               subtext: "Upcoming service deadlines",
               icon: Calendar,
-              iconColor: "text-indigo-500",
-              iconBg: "bg-indigo-500/10 border-indigo-500/20"
+              iconColor: "text-theme-icon",
+              iconBg: "bg-surface border-border"
             }
           ]
         };
@@ -6197,8 +6197,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               value: partsKpis.activeWarranties,
               subtext: "Valid warranty protection",
               icon: ShieldCheck,
-              iconColor: "text-indigo-500",
-              iconBg: "bg-indigo-500/10 border-indigo-500/20"
+              iconColor: "text-theme-icon",
+              iconBg: "bg-surface border-border"
             },
             {
               title: "Low Stock / Expiries",
@@ -6215,9 +6215,9 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         return {
           category: "Fleet Operations",
           badge: "Trip Logistics",
-          badgeColor: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
+          badgeColor: "bg-surface text-foreground border-border",
           icon: Calendar,
-          iconBg: "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/25",
+          iconBg: "bg-surface text-theme-icon border-border",
           title: "Daily Trip Dispatch & Log Sheets",
           description: "Vehicle route dispatching, passenger manifests, odometer tracking & trip completion logs",
           actionBtn: canDispatchTrips ? (
@@ -6237,8 +6237,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               value: trips.length,
               subtext: "All trip sheets",
               icon: Calendar,
-              iconColor: "text-purple-500",
-              iconBg: "bg-purple-500/10 border-purple-500/20"
+              iconColor: "text-theme-icon",
+              iconBg: "bg-surface border-border"
             },
             {
               title: "Active En-Route",
@@ -6271,9 +6271,9 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         return {
           category: "Fleet Operations",
           badge: "Driver Roster",
-          badgeColor: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20",
+          badgeColor: "bg-surface text-foreground border-border",
           icon: Users,
-          iconBg: "bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border-cyan-500/25",
+          iconBg: "bg-surface text-theme-icon border-border",
           title: "Driver Roster & Commercial Licensing",
           description: "Driver profiles, commercial license validity, assigned vehicles & duty status tracking",
           actionBtn: canManageDrivers ? (
@@ -6293,8 +6293,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               value: drivers.length,
               subtext: "Registered drivers",
               icon: Users,
-              iconColor: "text-cyan-500",
-              iconBg: "bg-cyan-500/10 border-cyan-500/20"
+              iconColor: "text-theme-icon",
+              iconBg: "bg-surface border-border"
             },
             {
               title: "Drivers On Duty",
@@ -6327,9 +6327,9 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         return {
           category: "Service & Assets",
           badge: "Insurance & Workshop Vendors",
-          badgeColor: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20",
+          badgeColor: "bg-surface text-foreground border-border",
           icon: ShieldCheck,
-          iconBg: "bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border-indigo-500/25",
+          iconBg: "bg-surface text-theme-icon border-border",
           title: "Insurance & Workshop Vendor Master",
           description: "Authorized service centers, cashless garage networks & insurance policy providers",
           actionBtn: (
@@ -6349,8 +6349,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               value: insuranceVendors.length,
               subtext: "Registered partners",
               icon: ShieldCheck,
-              iconColor: "text-indigo-500",
-              iconBg: "bg-indigo-500/10 border-indigo-500/20"
+              iconColor: "text-theme-icon",
+              iconBg: "bg-surface border-border"
             },
             {
               title: "Active Vendors",
@@ -6419,8 +6419,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               value: complianceAlerts.filter(a => a.docType.includes("License")).length,
               subtext: "License renewals",
               icon: Users,
-              iconColor: "text-purple-500",
-              iconBg: "bg-purple-500/10 border-purple-500/20"
+              iconColor: "text-theme-icon",
+              iconBg: "bg-surface border-border"
             }
           ]
         };
@@ -6465,8 +6465,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               value: fleetReportsData.avgOdometer.toLocaleString("en-IN") + " km",
               subtext: "Mean odometer reading",
               icon: Car,
-              iconColor: "text-purple-500",
-              iconBg: "bg-purple-500/10 border-purple-500/20"
+              iconColor: "text-theme-icon",
+              iconBg: "bg-surface border-border"
             }
           ]
         };
@@ -6475,9 +6475,9 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         return {
           category: "Fleet Operations",
           badge: "Employee Commute",
-          badgeColor: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20",
+          badgeColor: "bg-surface text-foreground border-border",
           icon: UserCheck,
-          iconBg: "bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border-indigo-500/25",
+          iconBg: "bg-surface text-theme-icon border-border",
           title: "Traveler & Commute Allocations",
           description: "Employee commute assignments, regular traveler directories & route allocations",
           actionBtn: canDispatchTrips ? (
@@ -6513,8 +6513,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               value: stats.availableVehicles,
               subtext: "Ready for dispatch",
               icon: CheckCircle2,
-              iconColor: "text-indigo-500",
-              iconBg: "bg-indigo-500/10 border-indigo-500/20"
+              iconColor: "text-theme-icon",
+              iconBg: "bg-surface border-border"
             },
             {
               title: "In Workshop / Service",
@@ -6569,8 +6569,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               value: stats.availableVehicles,
               subtext: "Ready for dispatch",
               icon: CheckCircle2,
-              iconColor: "text-indigo-500",
-              iconBg: "bg-indigo-500/10 border-indigo-500/20"
+              iconColor: "text-theme-icon",
+              iconBg: "bg-surface border-border"
             },
             {
               title: "In Workshop / Service",
@@ -6625,8 +6625,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               value: stats.availableVehicles,
               subtext: "Ready for dispatch",
               icon: CheckCircle2,
-              iconColor: "text-indigo-500",
-              iconBg: "bg-indigo-500/10 border-indigo-500/20"
+              iconColor: "text-theme-icon",
+              iconBg: "bg-surface border-border"
             },
             {
               title: "In Workshop / Service",
@@ -7234,7 +7234,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   {/* Field 3: District Code & Zone */}
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                      <Hash className="h-3.5 w-3.5 text-purple-500 shrink-0" />
+                      <Hash className="h-3.5 w-3.5 text-theme-icon shrink-0" />
                       <span>RTO District Code</span>
                     </label>
                     <div className="h-9 px-3 rounded-lg border border-border bg-surface flex items-center justify-between text-xs font-semibold text-foreground shadow-2xs">
@@ -7496,7 +7496,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
                 <div>
                   <label className="text-xs font-semibold text-foreground block mb-1.5 flex items-center gap-1">
-                    <Palette className="h-3.5 w-3.5 text-purple-500" />
+                    <Palette className="h-3.5 w-3.5 text-theme-icon" />
                     <span>Body Paint Color</span>
                   </label>
                   <div className="flex gap-2 items-center">
@@ -8114,7 +8114,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="text-xs font-semibold text-foreground flex items-center gap-1">
-                      <CalendarClock className="h-3.5 w-3.5 text-indigo-500" />
+                      <CalendarClock className="h-3.5 w-3.5 text-theme-icon" />
                       <span>Custom Extended Expiry Date</span>
                     </label>
                     {newVehicleCustomExtendedExpiryDate && (
@@ -9036,7 +9036,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
                   <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
                     <span className="flex items-center gap-1.5">
-                      <span className="h-2.5 w-2.5 rounded-full bg-indigo-500 inline-block shadow-xs"></span>
+                      <span className="h-2.5 w-2.5 rounded-full bg-surface0 inline-block shadow-xs"></span>
                       <span className="font-medium text-foreground">Authorized Workshop Job Cards</span>
                     </span>
                     <span>Total Aggregate Spend: <strong className="text-foreground">₹{fleetReportsData.totalMaintenanceSpend.toLocaleString("en-IN")}</strong></span>
@@ -9367,7 +9367,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                 e.stopPropagation();
                                 handleOpenVehiclePolicyRenewModal(veh);
                               }}
-                              className="h-7 w-7 text-cyan-600 hover:bg-cyan-50 dark:hover:bg-cyan-950/40"
+                              className="h-7 w-7 text-theme-icon hover:bg-surface dark:hover:bg-cyan-950/40"
                             >
                               <RotateCcw className="h-3.5 w-3.5" />
                             </AppButton>
@@ -9652,13 +9652,13 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <button
                   type="button"
                   onClick={() => setIsDispatchTripOpen(true)}
-                  className="p-3.5 rounded-2xl bg-surface border border-border/70 hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-all text-left group flex flex-col justify-between space-y-3 shadow-2xs cursor-pointer"
+                  className="p-3.5 rounded-2xl bg-surface border border-border/70 hover:border-theme-btn-primary/50 hover:bg-surface transition-all text-left group flex flex-col justify-between space-y-3 shadow-2xs cursor-pointer"
                 >
-                  <div className="h-8 w-8 rounded-xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <div className="h-8 w-8 rounded-xl bg-surface text-theme-icon flex items-center justify-center group-hover:scale-110 transition-transform">
                     <MapPin className="h-4 w-4" />
                   </div>
                   <div>
-                    <p className="font-bold text-xs text-foreground group-hover:text-indigo-600 transition-colors">Dispatch Trip</p>
+                    <p className="font-bold text-xs text-foreground group-hover:text-theme-icon transition-colors">Dispatch Trip</p>
                     <p className="text-[10px] text-muted-foreground">Employee transit route</p>
                   </div>
                 </button>
@@ -9681,13 +9681,13 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <button
                 type="button"
                 onClick={exportVehiclesCSV}
-                className="p-3.5 rounded-2xl bg-surface border border-border/70 hover:border-purple-500/50 hover:bg-purple-500/5 transition-all text-left group flex flex-col justify-between space-y-3 shadow-2xs cursor-pointer"
+                className="p-3.5 rounded-2xl bg-surface border border-border/70 hover:border-theme-btn-primary/50 hover:bg-surface transition-all text-left group flex flex-col justify-between space-y-3 shadow-2xs cursor-pointer"
               >
-                <div className="h-8 w-8 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <div className="h-8 w-8 rounded-xl bg-surface text-theme-icon flex items-center justify-center group-hover:scale-110 transition-transform">
                   <FileSpreadsheet className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="font-bold text-xs text-foreground group-hover:text-purple-600 transition-colors">Export Register</p>
+                  <p className="font-bold text-xs text-foreground group-hover:text-theme-icon transition-colors">Export Register</p>
                   <p className="text-[10px] text-muted-foreground">Download CSV audit</p>
                 </div>
               </button>
@@ -9738,7 +9738,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="p-4 rounded-2xl border border-border/80 bg-surface shadow-xs space-y-1">
                 <div className="flex items-center justify-between text-muted-foreground">
                   <span className="text-xs font-bold uppercase tracking-wider">Ex-Showroom Base</span>
-                  <Building2 className="h-4 w-4 text-indigo-500" />
+                  <Building2 className="h-4 w-4 text-theme-icon" />
                 </div>
                 <div className="text-xl font-bold text-foreground font-mono">
                   ₹{vehicles.reduce((acc, v) => acc + Number(v.ex_showroom_price || v.purchase_price || 0), 0).toLocaleString("en-IN")}
@@ -9763,12 +9763,12 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               </div>
 
               {/* 5. Total Other, Insurance & Fitments */}
-              <div className="p-4 rounded-2xl border border-purple-500/30 bg-purple-50/20 dark:bg-purple-950/15 shadow-xs space-y-1">
-                <div className="flex items-center justify-between text-purple-800 dark:text-purple-400">
+              <div className="p-4 rounded-2xl border border-border bg-surface/20 dark:bg-surface shadow-xs space-y-1">
+                <div className="flex items-center justify-between text-purple-800 dark:text-muted-foreground">
                   <span className="text-xs font-bold uppercase tracking-wider">Other, Ins &amp; Fitments</span>
-                  <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                  <Sparkles className="h-4 w-4 text-theme-icon dark:text-muted-foreground" />
                 </div>
-                <div className="text-xl font-bold text-purple-700 dark:text-purple-300 font-mono">
+                <div className="text-xl font-bold text-foreground dark:text-muted-foreground font-mono">
                   ₹{vehicles.reduce((acc, v) => acc + Number(v.other_charges || 0) + Number(v.insurance_cost || 0) + Number(v.accessories_cost || 0) + Number(v.extended_warranty_cost || 0) + Number(v.fastag_charges || 0) + Number(v.hsrp_smart_card_fee || 0), 0).toLocaleString("en-IN")}
                 </div>
                 <div className="text-[11px] text-muted-foreground">
@@ -10164,11 +10164,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
                           {showOtherCol && (
                             <AppTableCell className="p-3.5 font-mono text-xs">
-                              <div className="font-semibold text-purple-700 dark:text-purple-400">
+                              <div className="font-semibold text-foreground dark:text-muted-foreground">
                                 ₹{(Number(veh.other_charges || 0) + Number(veh.insurance_cost || 0) + Number(veh.accessories_cost || 0) + Number(veh.extended_warranty_cost || 0) + Number(veh.fastag_charges || 0) + Number(veh.hsrp_smart_card_fee || 0)).toLocaleString("en-IN")}
                               </div>
                               {veh.other_charges ? (
-                                <div className="text-[10px] text-purple-600 dark:text-purple-400 font-bold">
+                                <div className="text-[10px] text-theme-icon dark:text-muted-foreground font-bold">
                                   Other: ₹{Number(veh.other_charges).toLocaleString("en-IN")}
                                 </div>
                               ) : null}
@@ -10184,7 +10184,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                 </span>
                               </div>
                               {veh.custom_extended_expiry_date ? (
-                                <div className="text-[10px] text-indigo-600 dark:text-indigo-400 mt-1 flex items-center gap-1 font-semibold">
+                                <div className="text-[10px] text-theme-icon dark:text-muted-foreground mt-1 flex items-center gap-1 font-semibold">
                                   <CalendarClock className="h-3 w-3 shrink-0" />
                                   <span>Exp: {String(veh.custom_extended_expiry_date).split("T")[0]}</span>
                                 </div>
@@ -10235,7 +10235,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                   e.stopPropagation();
                                   handleOpenVehiclePolicyRenewModal(veh);
                                 }}
-                                className="h-7 px-2 text-xs gap-1 font-semibold text-cyan-600 dark:text-cyan-400 border-cyan-500/30 hover:border-cyan-500 hover:bg-cyan-50 dark:hover:bg-cyan-950/30 shadow-2xs"
+                                className="h-7 px-2 text-xs gap-1 font-semibold text-theme-icon dark:text-muted-foreground border-border hover:border-theme-btn-primary hover:bg-elevated shadow-2xs"
                               >
                                 <RotateCcw className="h-3 w-3" />
                                 <span>Renew</span>
@@ -10746,7 +10746,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                               <div className="text-xs text-muted-foreground font-mono">#{m.id.slice(-6)}</div>
                             )}
                             {Array.isArray(partsData?.attachments) && partsData.attachments.length > 0 && (
-                              <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 mt-1">
+                              <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-surface text-theme-icon dark:text-muted-foreground border border-border mt-1">
                                 <Paperclip className="h-3 w-3" />
                                 <span>{partsData.attachments.length} {partsData.attachments.length === 1 ? "file" : "files"}</span>
                               </div>
@@ -10876,7 +10876,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <AppCardTitle className="text-lg flex items-center gap-2">
-                  <UserCheck className="h-5 w-5 text-indigo-500" />
+                  <UserCheck className="h-5 w-5 text-theme-icon" />
                   <span>Traveler Allocations & Passenger Manifest</span>
                 </AppCardTitle>
               </div>
@@ -11184,7 +11184,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                           e.stopPropagation();
                                           handleOpenVehiclePolicyRenewModal(item.vehicle!);
                                         }}
-                                        className="h-7 text-xs px-2.5 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold gap-1 shadow-2xs"
+                                        className="h-7 text-xs px-2.5 bg-theme-btn-primary hover:opacity-90 text-white font-semibold gap-1 shadow-2xs"
                                       >
                                         <RotateCcw className="h-3 w-3" />
                                         <span>Renew Policy</span>
@@ -11196,7 +11196,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                           e.stopPropagation();
                                           handleOpenVehiclePolicyHistoryModal(item.vehicle!);
                                         }}
-                                        className="h-7 text-xs px-2 text-indigo-600 dark:text-indigo-400 border-indigo-500/30 hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 gap-1 font-semibold shadow-2xs"
+                                        className="h-7 text-xs px-2 text-theme-icon dark:text-muted-foreground border-border hover:border-theme-btn-primary hover:bg-elevated gap-1 font-semibold shadow-2xs"
                                         title="View Historical Policies"
                                       >
                                         <History className="h-3 w-3" />
@@ -11225,7 +11225,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                           e.stopPropagation();
                                           handleOpenVehiclePucHistoryModal(item.vehicle!);
                                         }}
-                                        className="h-7 text-xs px-2 text-teal-600 dark:text-teal-400 border-teal-500/30 hover:border-teal-500 hover:bg-teal-50 dark:hover:bg-teal-950/30 gap-1 font-semibold shadow-2xs"
+                                        className="h-7 text-xs px-2 text-teal-600 dark:text-teal-400 border-border hover:border-teal-500 hover:bg-teal-50 dark:hover:bg-teal-950/30 gap-1 font-semibold shadow-2xs"
                                         title="View Historical PUC Certificates"
                                       >
                                         <History className="h-3 w-3" />
@@ -11282,7 +11282,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                     e.stopPropagation();
                                     openEditDriverModal(item.driver!);
                                   }}
-                                  className="h-7 text-xs px-2.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold gap-1 shadow-2xs"
+                                  className="h-7 text-xs px-2.5 bg-theme-btn-primary hover:opacity-90 text-white font-semibold gap-1 shadow-2xs"
                                 >
                                   <Edit2 className="h-3 w-3 mr-1" />
                                   <span>Renew License</span>
@@ -11320,7 +11320,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
             <AppCard className="border-border shadow-xs">
               <AppCardContent className="p-4">
                 <p className="text-xs font-semibold text-muted-foreground">Cumulative Mileage</p>
-                <h3 className="text-2xl font-bold mt-1 text-indigo-600 dark:text-indigo-400">
+                <h3 className="text-2xl font-bold mt-1 text-theme-icon dark:text-muted-foreground">
                   {fleetReportsData.totalOdometerKm.toLocaleString()} km
                 </h3>
                 <span className="text-xs text-muted-foreground">Avg {fleetReportsData.avgOdometer.toLocaleString()} km / vehicle</span>
@@ -11615,7 +11615,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           return (
                             <div className="space-y-1">
                               <div className="flex items-center gap-1.5">
-                                <span className="px-2 py-0.5 rounded text-xs font-semibold bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20">
+                                <span className="px-2 py-0.5 rounded text-xs font-semibold bg-surface text-foreground dark:text-muted-foreground border border-border">
                                   {part.renewal_policy_type || "Recurring Renewal"}
                                 </span>
                               </div>
@@ -11813,7 +11813,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                       openRenewPartModal(part);
                                     }}
                                     title="Quick Renew Policy"
-                                    className="h-7 text-xs px-2 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-950/40 border-cyan-500/30"
+                                    className="h-7 text-xs px-2 text-theme-icon dark:text-muted-foreground hover:bg-surface dark:hover:bg-cyan-950/40 border-border"
                                   >
                                     <RotateCcw className="h-3 w-3 mr-1" />
                                     <span>Renew</span>
@@ -12222,7 +12222,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           <AppCard className="border-border shadow-xs">
             <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50">
               <AppCardTitle className="text-lg flex items-center gap-2">
-                <BookOpen className="h-5 w-5 text-indigo-500" />
+                <BookOpen className="h-5 w-5 text-theme-icon" />
                 <span>Chandak Fleet Guidelines & Standard Operating Procedures (SOPs)</span>
               </AppCardTitle>
             </AppCardHeader>
@@ -12251,7 +12251,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
                 <div className="p-4 rounded-xl border border-border/70 bg-card shadow-2xs space-y-2">
                   <div className="flex items-center gap-2 font-bold text-foreground text-sm">
-                    <Fuel className="h-4 w-4 text-purple-500" />
+                    <Fuel className="h-4 w-4 text-theme-icon" />
                     <span>Fuel Card Billing & Logbook Submissions</span>
                   </div>
                 </div>
@@ -12486,7 +12486,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 variant="outline"
                 size="sm"
                 onClick={() => handleOpenVehicleSpecHistoryModal(selectedVehicleForEdit)}
-                className="h-9 px-3 text-xs gap-1.5 font-semibold text-purple-600 dark:text-purple-400 border-purple-500/30 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/30 shadow-2xs"
+                className="h-9 px-3 text-xs gap-1.5 font-semibold text-theme-icon dark:text-muted-foreground border-border hover:border-theme-btn-primary hover:bg-elevated shadow-2xs"
                 title="View specification change history and audit trail"
               >
                 <ClipboardCheck className="h-3.5 w-3.5" />
@@ -12852,7 +12852,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   </div>
                   <div>
                     <label className="font-semibold block mb-1 flex items-center gap-1">
-                      <Palette className="h-3.5 w-3.5 text-purple-500" />
+                      <Palette className="h-3.5 w-3.5 text-theme-icon" />
                       <span>Paint Color</span>
                     </label>
                     <div className="flex gap-2 items-center">
@@ -13547,7 +13547,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <label className="font-semibold flex items-center gap-1">
-                        <CalendarClock className="h-3.5 w-3.5 text-indigo-500" />
+                        <CalendarClock className="h-3.5 w-3.5 text-theme-icon" />
                         <span>Custom Extended Expiry Date</span>
                       </label>
                       {editVehicleCustomExtendedExpiryDate && (
@@ -13825,7 +13825,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           badge="Driver Master Form"
           category="Driver Operations"
           icon={Users}
-          iconBg="bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/25"
+          iconBg="bg-surface text-theme-icon border-border"
           description="Enroll a licensed driver into the company fleet roster, record driving credentials, emergency contacts & primary vehicle allocation."
           breadcrumbs={[
             { label: "Driver Management", onClick: () => setIsAddDriverOpen(false) },
@@ -14046,7 +14046,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           badge="Trip Dispatch Form"
           category="Transit Operations"
           icon={MapPin}
-          iconBg="bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border-indigo-500/25"
+          iconBg="bg-surface text-theme-icon border-border"
           description="Assign an available depot vehicle and duty driver, record traveler manifest, destination route & start odometer reading."
           breadcrumbs={[
             { label: "Trip Dispatches", onClick: () => setIsDispatchTripOpen(false) },
@@ -14528,7 +14528,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                               setNewMaintTdsAmount(tds);
                               setNewMaintCost(Math.max(0, taxable + (Number(newMaintTaxCost) || 0) - tds - (Number(newMaintOtherDeductions) || 0)));
                             }}
-                            className="text-xs h-7 px-2.5 py-0 border-purple-500/30 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40"
+                            className="text-xs h-7 px-2.5 py-0 border-border text-theme-icon dark:text-muted-foreground hover:bg-surface dark:hover:bg-purple-950/40"
                           >
                             2% TDS (194C)
                           </AppButton>
@@ -14721,7 +14721,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                               const taxable = Math.max(0, gross - (Number(newMaintDiscount) || 0));
                               setNewMaintCost(Math.max(0, taxable + (Number(newMaintTaxCost) || 0) - val - (Number(newMaintOtherDeductions) || 0)));
                             }}
-                            className="h-9 text-xs font-mono font-semibold text-purple-600 dark:text-purple-400"
+                            className="h-9 text-xs font-mono font-semibold text-theme-icon dark:text-muted-foreground"
                           />
                         </div>
                       </div>
@@ -15341,7 +15341,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                               setEditMaintTdsAmount(tds);
                               setEditMaintCost(Math.max(0, taxable + (Number(editMaintTaxCost) || 0) - tds - (Number(editMaintOtherDeductions) || 0)));
                             }}
-                            className="text-xs h-7 px-2.5 py-0 border-purple-500/30 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40"
+                            className="text-xs h-7 px-2.5 py-0 border-border text-theme-icon dark:text-muted-foreground hover:bg-surface dark:hover:bg-purple-950/40"
                           >
                             2% TDS (194C)
                           </AppButton>
@@ -15534,7 +15534,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                               const taxable = Math.max(0, gross - (Number(editMaintDiscount) || 0));
                               setEditMaintCost(Math.max(0, taxable + (Number(editMaintTaxCost) || 0) - val - (Number(editMaintOtherDeductions) || 0)));
                             }}
-                            className="h-9 text-xs font-mono font-semibold text-purple-600 dark:text-purple-400"
+                            className="h-9 text-xs font-mono font-semibold text-theme-icon dark:text-muted-foreground"
                           />
                         </div>
                       </div>
@@ -16005,7 +16005,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           </span>
                         </div>
                         {Boolean(partsData?.tds_amount) && Number(partsData.tds_amount) > 0 && (
-                          <div className="flex items-center justify-between text-xs text-purple-600 dark:text-purple-400">
+                          <div className="flex items-center justify-between text-xs text-theme-icon dark:text-muted-foreground">
                             <span>TDS Withholding Deduction {partsData?.tds_rate ? `(${partsData.tds_rate}%)` : ""}:</span>
                             <span className="font-mono font-medium">
                               -₹{Number(partsData.tds_amount).toLocaleString("en-IN")}
@@ -16153,7 +16153,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     {/* Activity & Audit Trail Timeline */}
                     <div className="p-4 rounded-xl border border-border bg-slate-50/40 dark:bg-slate-900/30 space-y-3">
                       <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                        <History className="h-3.5 w-3.5 text-indigo-500" />
+                        <History className="h-3.5 w-3.5 text-theme-icon" />
                         <span>Audit Trail & Activity Log History</span>
                       </div>
                       
@@ -16522,7 +16522,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         setPartFormTdsDeduction(tds);
                         setPartFormPurchaseAmount(Math.max(0, taxable + (Number(partFormTaxAmount) || 0) - tds - (Number(partFormOtherDeductions) || 0)));
                       }}
-                      className="text-xs h-7 px-2.5 py-0 border-purple-500/30 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 font-medium"
+                      className="text-xs h-7 px-2.5 py-0 border-border text-theme-icon dark:text-muted-foreground hover:bg-surface dark:hover:bg-purple-950/40 font-medium"
                     >
                       2% TDS
                     </AppButton>
@@ -16689,7 +16689,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         const taxable = Math.max(0, gross - (Number(partFormDiscount) || 0));
                         setPartFormPurchaseAmount(Math.max(0, taxable + (Number(partFormTaxAmount) || 0) - val - (Number(partFormOtherDeductions) || 0)));
                       }}
-                      className="font-mono text-purple-600 dark:text-purple-400"
+                      className="font-mono text-theme-icon dark:text-muted-foreground"
                     />
                   </div>
                   <div>
@@ -16762,7 +16762,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               {/* Section 4: OEM Warranty Coverage & Period */}
               <div className="space-y-3">
                 <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border">
-                  <ShieldCheck className="h-3.5 w-3.5 text-indigo-500" />
+                  <ShieldCheck className="h-3.5 w-3.5 text-theme-icon" />
                   <span>Warranty Coverage</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -16817,7 +16817,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   </div>
                   <div>
                     <label className="font-semibold block mb-1 flex items-center gap-1">
-                      <Calendar className="h-3 w-3 text-indigo-500" />
+                      <Calendar className="h-3 w-3 text-theme-icon" />
                       <span>Warranty Expiry Date</span>
                     </label>
                     <AppInput
@@ -16837,10 +16837,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               </div>
 
               {/* Section 5: Recurring Renewal Policy */}
-              <div className="space-y-3 p-3.5 rounded-xl border border-cyan-500/20 bg-cyan-500/5">
+              <div className="space-y-3 p-3.5 rounded-xl border border-border bg-surface">
                 <div className="flex items-center justify-between">
-                  <div className="text-xs font-bold uppercase tracking-wider text-cyan-800 dark:text-cyan-300 flex items-center gap-1.5">
-                    <Zap className="h-3.5 w-3.5 text-cyan-500" />
+                  <div className="text-xs font-bold uppercase tracking-wider text-cyan-800 dark:text-muted-foreground flex items-center gap-1.5">
+                    <Zap className="h-3.5 w-3.5 text-theme-icon" />
                     <span>Renewal Policy</span>
                   </div>
                   <label className="flex items-center gap-2 cursor-pointer">
@@ -17161,7 +17161,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           badge="Warranty Renewal"
           category="Supply Chain & Parts"
           icon={RotateCcw}
-          iconBg="bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border-cyan-500/25"
+          iconBg="bg-surface text-theme-icon border-border"
           description="Extend replacement warranty, update inspection dates & purchase invoice records."
           breadcrumbs={[
             {
@@ -17208,7 +17208,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           badge="Policy Renewal"
           category="Statutory Compliance"
           icon={ShieldCheck}
-          iconBg="bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border-cyan-500/25"
+          iconBg="bg-surface text-theme-icon border-border"
           description="Record newly issued insurance policy number, underwriting vendor, premium amount, coverage dates & policy document."
           breadcrumbs={[
             {
@@ -17242,9 +17242,9 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         >
           <div className="space-y-4">
               {/* Current Active Policy Banner */}
-              <div className="p-3.5 rounded-xl border border-cyan-500/20 bg-cyan-50/50 dark:bg-cyan-950/20 flex flex-wrap items-center justify-between gap-2">
+              <div className="p-3.5 rounded-xl border border-border bg-surface/50 dark:bg-surface flex flex-wrap items-center justify-between gap-2">
                 <div className="space-y-0.5">
-                  <div className="text-xs font-bold uppercase tracking-wider text-cyan-700 dark:text-cyan-400 flex items-center gap-1">
+                  <div className="text-xs font-bold uppercase tracking-wider text-foreground dark:text-muted-foreground flex items-center gap-1">
                     <Clock className="h-3 w-3" />
                     <span>Current Active Policy Info</span>
                   </div>
@@ -17350,7 +17350,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     value={renewPolicyPremium || ""}
                     onChange={(e) => setRenewPolicyPremium(Number(e.target.value) || 0)}
                     required
-                    className="font-mono font-bold text-cyan-600 dark:text-cyan-400"
+                    className="font-mono font-bold text-theme-icon dark:text-muted-foreground"
                   />
                 </div>
               </div>
@@ -17359,7 +17359,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="p-3.5 rounded-xl border border-border bg-slate-50/60 dark:bg-slate-900/40 space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                    <Calendar className="h-3.5 w-3.5 text-cyan-500" />
+                    <Calendar className="h-3.5 w-3.5 text-theme-icon" />
                     <span>Policy Validity Period</span>
                   </label>
                   <div className="flex items-center gap-1">
@@ -17372,7 +17372,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         end.setDate(end.getDate() - 1);
                         setRenewPolicyEndDate(end.toISOString().split("T")[0]);
                       }}
-                      className="px-2 py-0.5 rounded text-xs font-semibold bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/20 transition-colors"
+                      className="px-2 py-0.5 rounded text-xs font-semibold bg-surface text-theme-icon dark:text-muted-foreground hover:bg-surface transition-colors"
                     >
                       +1 Year (Auto)
                     </button>
@@ -17385,7 +17385,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         end.setDate(end.getDate() - 1);
                         setRenewPolicyEndDate(end.toISOString().split("T")[0]);
                       }}
-                      className="px-2 py-0.5 rounded text-xs font-semibold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 transition-colors"
+                      className="px-2 py-0.5 rounded text-xs font-semibold bg-surface text-theme-icon dark:text-muted-foreground hover:bg-surface transition-colors"
                     >
                       +3 Years (Long-Term)
                     </button>
@@ -17491,10 +17491,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         <WorkingDocumentLayout
           title={`Insurance Policy Ledger: ${selectedVehicleForPolicyHistory.registration_number}`}
           badge="Statutory Ledger"
-          badgeColor="bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20"
+          badgeColor="bg-surface text-foreground border-border"
           category="Insurance & Underwriting Ledgers"
           icon={History}
-          iconBg="bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border-cyan-500/25"
+          iconBg="bg-surface text-theme-icon border-border"
           description="Complete chronology of past insurance policies, premium costs, underwriters, claim contacts & certificate documents."
           breadcrumbs={[
             {
@@ -17540,7 +17540,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
                 <div className="p-3.5 rounded-xl border border-border bg-surface shadow-2xs space-y-1">
                   <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total Cycles Tracked</span>
-                  <div className="text-sm font-extrabold font-mono text-indigo-600 dark:text-indigo-400">
+                  <div className="text-sm font-extrabold font-mono text-theme-icon dark:text-muted-foreground">
                     {vehiclePoliciesHistory.length} Policy {vehiclePoliciesHistory.length === 1 ? "Record" : "Records"}
                   </div>
                 </div>
@@ -17557,7 +17557,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
-                    <Sparkles className="h-3.5 w-3.5 text-indigo-500" />
+                    <Sparkles className="h-3.5 w-3.5 text-theme-icon" />
                     <span>Chronological Policy History Ledger</span>
                   </h4>
                   <span className="text-xs text-muted-foreground">
@@ -17572,7 +17572,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   </div>
                 ) : vehiclePoliciesHistory.length === 0 ? (
                   <div className="py-12 text-center rounded-xl border border-dashed border-border bg-slate-50/50 dark:bg-slate-900/30 p-6 space-y-3">
-                    <div className="h-12 w-12 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto">
+                    <div className="h-12 w-12 rounded-full bg-surface text-theme-icon dark:text-muted-foreground flex items-center justify-center mx-auto">
                       <Shield className="h-6 w-6" />
                     </div>
                     <div className="space-y-1">
@@ -17588,7 +17588,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         setIsPolicyHistoryModalOpen(false);
                         handleOpenVehiclePolicyRenewModal(selectedVehicleForPolicyHistory);
                       }}
-                      className="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold gap-1.5"
+                      className="bg-theme-btn-primary hover:opacity-90 text-white font-semibold gap-1.5"
                     >
                       <RotateCcw className="h-3.5 w-3.5" />
                       <span>Create Renewal Policy</span>
@@ -17664,7 +17664,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                 <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-blue-500/10 text-blue-600 border border-blue-500/20">RSA</span>
                               )}
                               {policy.has_zero_depreciation && (
-                                <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-purple-500/10 text-purple-600 border border-purple-500/20">Zero-Dep</span>
+                                <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-surface text-theme-icon border border-border">Zero-Dep</span>
                               )}
                               {policy.has_engine_protect && (
                                 <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20">Engine</span>
@@ -18147,10 +18147,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         <WorkingDocumentLayout
           title={`Specification Revision Ledger: ${selectedVehicleForSpecHistory.registration_number}`}
           badge="Specification Audit"
-          badgeColor="bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20"
+          badgeColor="bg-surface text-foreground border-border"
           category="Fleet Compliance & Technical Audits"
           icon={FileSpreadsheet}
-          iconBg="bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/25"
+          iconBg="bg-surface text-theme-icon border-border"
           description="Chronological audit trail of vehicle technical parameters, fuel type modifications, engine specifications & registration updates."
           breadcrumbs={[
             {
@@ -18182,7 +18182,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                 <div className="p-3.5 rounded-xl border border-border bg-surface shadow-2xs space-y-1">
                   <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total Revisions</span>
-                  <div className="text-sm font-extrabold font-mono text-purple-600 dark:text-purple-400">
+                  <div className="text-sm font-extrabold font-mono text-theme-icon dark:text-muted-foreground">
                     {vehicleSpecHistory.length} {vehicleSpecHistory.length === 1 ? "Audit Entry" : "Audit Entries"}
                   </div>
                 </div>
@@ -18213,7 +18213,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
-                    <Sparkles className="h-3.5 w-3.5 text-purple-500" />
+                    <Sparkles className="h-3.5 w-3.5 text-theme-icon" />
                     <span>Chronological Specification Audit Trail</span>
                   </h4>
                   <span className="text-xs text-muted-foreground">
@@ -18228,7 +18228,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   </div>
                 ) : vehicleSpecHistory.length === 0 ? (
                   <div className="py-12 text-center rounded-xl border border-dashed border-border bg-slate-50/50 dark:bg-slate-900/30 p-6 space-y-3">
-                    <div className="h-12 w-12 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center mx-auto">
+                    <div className="h-12 w-12 rounded-full bg-surface text-theme-icon dark:text-muted-foreground flex items-center justify-center mx-auto">
                       <ClipboardCheck className="h-6 w-6" />
                     </div>
                     <div className="space-y-1">
@@ -18245,7 +18245,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           setIsSpecHistoryModalOpen(false);
                           openEditVehicleModal(selectedVehicleForSpecHistory);
                         }}
-                        className="bg-purple-600 hover:bg-purple-700 text-white font-semibold gap-1.5 shadow-xs"
+                        className="bg-theme-btn-primary hover:opacity-90 text-white font-semibold gap-1.5 shadow-xs"
                       >
                         <Edit2 className="h-3.5 w-3.5" />
                         <span>Edit Vehicle Specifications</span>
@@ -18257,11 +18257,11 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     {vehicleSpecHistory.map((record, idx) => (
                       <div
                         key={record.id}
-                        className="p-4 rounded-xl border border-border bg-surface shadow-2xs hover:border-purple-500/40 transition-colors space-y-3"
+                        className="p-4 rounded-xl border border-border bg-surface shadow-2xs hover:border-theme-btn-primary/40 transition-colors space-y-3"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-center gap-2">
-                            <span className="px-2 py-0.5 rounded-md font-mono text-xs font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                            <span className="px-2 py-0.5 rounded-md font-mono text-xs font-bold bg-surface text-theme-icon dark:text-muted-foreground border border-border">
                               Revision #{vehicleSpecHistory.length - idx}
                             </span>
                             <span className="text-xs font-semibold text-foreground">
@@ -18430,7 +18430,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                               {/* Timeline Bullet */}
                               <div className={`absolute -left-[31px] top-1 h-5 w-5 rounded-full border-2 border-surface flex items-center justify-center shadow-xs ${
                                 isInsurance
-                                  ? "bg-cyan-500 text-white"
+                                  ? "bg-surface0 text-white"
                                   : isPuc
                                   ? "bg-emerald-500 text-white"
                                   : "bg-blue-600 text-white"
@@ -18451,7 +18451,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                     <div className="flex items-center gap-2 flex-wrap">
                                       <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase ${
                                         isInsurance
-                                          ? "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20"
+                                          ? "bg-surface text-theme-icon dark:text-muted-foreground border border-border"
                                           : isPuc
                                           ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
                                           : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
@@ -18720,7 +18720,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
                                 <div className="p-2 rounded-lg bg-surface/70 border border-border/60">
                                   <div className="text-xs text-muted-foreground uppercase flex items-center gap-1">
-                                    <Gauge className="h-3 w-3 text-indigo-500" />
+                                    <Gauge className="h-3 w-3 text-theme-icon" />
                                     <span>Mileage Bounds</span>
                                   </div>
                                   <div className="font-semibold text-foreground text-xs mt-0.5">
@@ -19018,7 +19018,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
               <div className="p-2.5 sm:p-3 rounded-xl border border-border bg-surface shadow-2xs space-y-0.5 min-w-[150px]">
                 <div className="text-xs uppercase font-bold text-muted-foreground flex items-center gap-1">
-                  <Users className="h-3 w-3 text-purple-500" />
+                  <Users className="h-3 w-3 text-theme-icon" />
                   <span>Chauffeur</span>
                 </div>
                 <div className="text-xs font-semibold text-foreground truncate max-w-[140px]">
@@ -19127,16 +19127,16 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               onClick={() => setVehicleDossierTab("TRIPS")}
               className={`p-3 rounded-xl border text-left transition-all cursor-pointer shadow-2xs group ${
                 vehicleDossierTab === "TRIPS"
-                  ? "border-purple-500 bg-purple-500/10 dark:bg-purple-950/30 ring-2 ring-purple-500/30 shadow-xs"
-                  : "border-border bg-surface hover:border-purple-500/40 hover:bg-purple-500/5"
+                  ? "border-purple-500 bg-surface dark:bg-surface ring-2 ring-purple-500/30 shadow-xs"
+                  : "border-border bg-surface hover:border-theme-btn-primary/40 hover:bg-surface"
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-purple-700 dark:text-purple-400 flex items-center gap-1.5">
+                <span className="text-xs font-bold uppercase tracking-wider text-foreground dark:text-muted-foreground flex items-center gap-1.5">
                   <MapPin className="h-3.5 w-3.5" />
                   <span>Trips & Journeys</span>
                 </span>
-                <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-700 dark:text-purple-300">
+                <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-surface text-foreground dark:text-muted-foreground">
                   {dossierData.trips.length}
                 </span>
               </div>
@@ -19300,7 +19300,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
                     <div className="flex items-center justify-between gap-1">
                       <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                        <CalendarClock className="h-3 w-3 text-indigo-500" />
+                        <CalendarClock className="h-3 w-3 text-theme-icon" />
                         <span>Extended Expiry</span>
                       </span>
                       {viewingVehicle.custom_extended_expiry_date && (
@@ -20320,7 +20320,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                   {doc.categoryLabel || typeConfig.label}
                                 </span>
                                 {versionTag && (
-                                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-700 dark:text-purple-400 border border-purple-500/25">
+                                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-surface text-foreground dark:text-muted-foreground border border-border">
                                     {versionTag}
                                   </span>
                                 )}
@@ -20489,7 +20489,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="flex items-center justify-between border-b border-border pb-2 flex-wrap gap-2">
                 <div>
                   <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-                    <ShieldCheck className="h-4 w-4 text-cyan-600" />
+                    <ShieldCheck className="h-4 w-4 text-theme-icon" />
                     <span>Motor Insurance Policy & PUC Clearances</span>
                   </h3>
                 </div>
@@ -20512,10 +20512,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Motor Insurance Policy Card */}
-                <div className="p-4 rounded-xl border border-cyan-500/20 bg-cyan-500/5 space-y-3">
+                <div className="p-4 rounded-xl border border-border bg-surface space-y-3">
                   <div className="flex items-center justify-between">
-                    <div className="text-xs font-bold uppercase tracking-wider text-cyan-800 dark:text-cyan-300 flex items-center gap-1.5">
-                      <ShieldCheck className="h-4 w-4 text-cyan-600" />
+                    <div className="text-xs font-bold uppercase tracking-wider text-cyan-800 dark:text-muted-foreground flex items-center gap-1.5">
+                      <ShieldCheck className="h-4 w-4 text-theme-icon" />
                       <span>Motor Insurance Policy</span>
                     </div>
                     {viewingVehicle.insurance_expiry_date && (() => {
@@ -20550,7 +20550,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       <span className="font-mono font-bold text-foreground">{viewingVehicle.insurance_expiry_date || "—"}</span>
                     </div>
                   </div>
-                  <div className="pt-2 border-t border-cyan-500/20 flex items-center justify-end gap-2 flex-wrap">
+                  <div className="pt-2 border-t border-border flex items-center justify-end gap-2 flex-wrap">
                     <AppButton
                       type="button"
                       variant="outline"
@@ -20610,7 +20610,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         setViewingVehicle(null);
                         handleOpenVehiclePolicyHistoryModal(v);
                       }}
-                      className="h-7 text-xs px-2.5 text-cyan-700 dark:text-cyan-300 border-cyan-500/30 gap-1"
+                      className="h-7 text-xs px-2.5 text-foreground dark:text-muted-foreground border-border gap-1"
                     >
                       <History className="h-3 w-3" />
                       <span>History</span>
@@ -20625,7 +20625,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         setViewingVehicle(null);
                         handleOpenVehiclePolicyRenewModal(v);
                       }}
-                      className="h-7 text-xs px-2.5 bg-cyan-600 hover:bg-cyan-700 text-white gap-1 shadow-2xs font-semibold"
+                      className="h-7 text-xs px-2.5 bg-theme-btn-primary hover:opacity-90 text-white gap-1 shadow-2xs font-semibold"
                     >
                       <RotateCcw className="h-3 w-3" />
                       <span>Renew Policy</span>
@@ -20756,10 +20756,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 </div>
 
                 {/* Statutory Fitness & Extended Validity Card */}
-                <div className="p-4 rounded-xl border border-indigo-500/20 bg-indigo-50/5 space-y-3">
+                <div className="p-4 rounded-xl border border-border bg-surface/5 space-y-3">
                   <div className="flex items-center justify-between">
-                    <div className="text-xs font-bold uppercase tracking-wider text-indigo-800 dark:text-indigo-300 flex items-center gap-1.5">
-                      <CalendarClock className="h-4 w-4 text-indigo-600" />
+                    <div className="text-xs font-bold uppercase tracking-wider text-indigo-800 dark:text-muted-foreground flex items-center gap-1.5">
+                      <CalendarClock className="h-4 w-4 text-theme-icon" />
                       <span>Statutory Fitness & Extended Expiry</span>
                     </div>
                     {viewingVehicle.custom_extended_expiry_date && (() => {
@@ -20774,7 +20774,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           Expires in {days}d
                         </span>
                       ) : (
-                        <span className="px-2 py-0.5 rounded text-xs font-bold bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 border border-indigo-500/25">
+                        <span className="px-2 py-0.5 rounded text-xs font-bold bg-surface text-foreground dark:text-muted-foreground border border-border">
                           Valid ({days}d)
                         </span>
                       );
@@ -20808,7 +20808,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       </span>
                     </div>
                   </div>
-                  <div className="pt-2 border-t border-indigo-500/20 flex items-center justify-end gap-2 flex-wrap">
+                  <div className="pt-2 border-t border-border flex items-center justify-end gap-2 flex-wrap">
                     <AppButton
                       type="button"
                       variant="outline"
@@ -20866,7 +20866,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         setDossierOriginTab(vehicleDossierTab);
                         openEditVehicleModal(viewingVehicle);
                       }}
-                      className="h-7 text-xs px-2.5 text-indigo-700 dark:text-indigo-300 border-indigo-500/30 gap-1 font-semibold"
+                      className="h-7 text-xs px-2.5 text-foreground dark:text-muted-foreground border-border gap-1 font-semibold"
                     >
                       <Edit2 className="h-3 w-3" />
                       <span>Update Compliance Dates</span>
@@ -20885,7 +20885,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               <div className="flex items-center justify-between border-b border-border pb-2 flex-wrap gap-2">
                 <div>
                   <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-purple-500" />
+                    <MapPin className="h-4 w-4 text-theme-icon" />
                     <span>Trip Movements & Fleet Dispatches</span>
                   </h3>
                 </div>
@@ -20907,7 +20907,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   {dossierData.trips.map((t) => (
                     <div
                       key={t.id}
-                      className="p-3.5 rounded-xl border border-border bg-surface hover:border-purple-500/40 transition-colors shadow-2xs flex items-center justify-between gap-3 flex-wrap text-xs"
+                      className="p-3.5 rounded-xl border border-border bg-surface hover:border-theme-btn-primary/40 transition-colors shadow-2xs flex items-center justify-between gap-3 flex-wrap text-xs"
                     >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -20946,7 +20946,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             setDossierOriginTab(vehicleDossierTab);
                             setViewingTrip(t);
                           }}
-                          className="h-7 text-xs px-2.5 text-purple-700 dark:text-purple-300 border-purple-500/30 hover:bg-purple-500/10 gap-1 font-semibold"
+                          className="h-7 text-xs px-2.5 text-foreground dark:text-muted-foreground border-border hover:bg-surface gap-1 font-semibold"
                         >
                           <Eye className="h-3 w-3" />
                           <span>Inspect Trip</span>
@@ -21018,7 +21018,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
                 <div className="p-3.5 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/40 space-y-2">
                   <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                    <Car className="h-3.5 w-3.5 text-purple-500" />
+                    <Car className="h-3.5 w-3.5 text-theme-icon" />
                     <span>Assigned Fleet Vehicle</span>
                   </span>
                   <div>
@@ -21083,10 +21083,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         <WorkingDocumentLayout
           title={`Trip Transit Record #${viewingTrip.id.slice(0, 8)}`}
           badge={viewingTrip.status}
-          badgeColor="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20"
+          badgeColor="bg-surface text-foreground border-border"
           category="Transit Operations"
           icon={MapPin}
-          iconBg="bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border-indigo-500/25"
+          iconBg="bg-surface text-theme-icon border-border"
           description="Transit route manifest, driver assignment, vehicle telemetry, destination itinerary & trip odometer logs."
           breadcrumbs={[
             {
@@ -21260,9 +21260,9 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               {/* Warranty & Shelf Expiry Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* OEM Warranty Card */}
-                <div className="p-4 rounded-xl border border-indigo-500/20 bg-indigo-500/5 space-y-2">
-                  <div className="text-xs font-bold uppercase tracking-wider text-indigo-800 dark:text-indigo-300 flex items-center gap-1.5">
-                    <ShieldCheck className="h-4 w-4 text-indigo-600" />
+                <div className="p-4 rounded-xl border border-border bg-surface space-y-2">
+                  <div className="text-xs font-bold uppercase tracking-wider text-indigo-800 dark:text-muted-foreground flex items-center gap-1.5">
+                    <ShieldCheck className="h-4 w-4 text-theme-icon" />
                     <span>OEM Warranty Terms</span>
                   </div>
                   <div className="space-y-1 text-xs">
@@ -21300,10 +21300,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
               {/* Recurring Renewal Policy */}
               {viewingPart.has_renewal_policy && (
-                <div className="p-4 rounded-xl border border-purple-500/20 bg-purple-500/5 space-y-3">
+                <div className="p-4 rounded-xl border border-border bg-surface space-y-3">
                   <div className="flex items-center justify-between">
-                    <div className="text-xs font-bold uppercase tracking-wider text-purple-800 dark:text-purple-300 flex items-center gap-1.5">
-                      <Zap className="h-4 w-4 text-purple-600" />
+                    <div className="text-xs font-bold uppercase tracking-wider text-purple-800 dark:text-muted-foreground flex items-center gap-1.5">
+                      <Zap className="h-4 w-4 text-theme-icon" />
                       <span>Recurring Renewal Policy ({viewingPart.renewal_policy_type || "Standard"})</span>
                     </div>
                     <AppButton
@@ -21314,7 +21314,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         setViewingPart(null);
                         openRenewPartModal(p);
                       }}
-                      className="h-7 text-xs px-2.5 text-purple-700 dark:text-purple-300 border-purple-500/30 hover:bg-purple-100 dark:hover:bg-purple-950/40 gap-1 font-semibold"
+                      className="h-7 text-xs px-2.5 text-foreground dark:text-muted-foreground border-border hover:bg-purple-100 dark:hover:bg-purple-950/40 gap-1 font-semibold"
                     >
                       <RotateCcw className="h-3 w-3" />
                       <span>Renew Policy</span>
@@ -21412,7 +21412,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           </div>
                         )}
                         {tb && tb.tds_deduction > 0 && (
-                          <div className="flex items-center justify-between text-xs text-purple-600 dark:text-purple-400">
+                          <div className="flex items-center justify-between text-xs text-theme-icon dark:text-muted-foreground">
                             <span>TDS Withholding Deduction ({tb.tds_rate}%):</span>
                             <span className="font-mono font-medium">-₹{Number(tb.tds_deduction).toLocaleString("en-IN")}</span>
                           </div>
@@ -21642,7 +21642,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <div className="p-4 rounded-xl border border-border bg-surface space-y-2.5">
                     <div className="flex items-center justify-between">
                       <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                        <Car className="h-4 w-4 text-purple-500" />
+                        <Car className="h-4 w-4 text-theme-icon" />
                         <span>Insured Fleet Portfolio</span>
                       </div>
                       <span className="px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20">

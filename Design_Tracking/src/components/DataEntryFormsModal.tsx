@@ -243,7 +243,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
     ? "bg-teal-500/15 text-teal-600 dark:text-teal-400 border-teal-500/25" 
     : activeTab === "LOOK_AHEAD" 
     ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/25" 
-    : "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/25";
+    : "bg-surface text-theme-icon border-border";
 
   const saveLabel = activeTab === "PACKAGE" 
     ? "Record Status & Log Audit" 
@@ -305,7 +305,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          <ShieldCheck className="h-4 w-4 text-purple-500" />
+          <ShieldCheck className="h-4 w-4 text-theme-icon" />
           <span>Statutory Authority NOC</span>
         </button>
       </div>
@@ -595,7 +595,7 @@ export const DataEntryFormsModal: React.FC<DataEntryFormsModalProps> = ({
           <AppCard className="border-border shadow-xs">
             <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
               <AppCardTitle className="text-sm font-bold flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                <ShieldCheck className="h-4 w-4 text-theme-icon dark:text-muted-foreground" />
                 <span>Statutory Authority & Compliance Status</span>
               </AppCardTitle>
             </AppCardHeader>

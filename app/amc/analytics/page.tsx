@@ -238,7 +238,7 @@ export default function AMCAnalyticsPage() {
           <AppCard className="p-5 border border-border bg-surface flex flex-col justify-between space-y-2 rounded-2xl shadow-sm">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold text-muted uppercase tracking-wider">License Utilization</span>
-              <div className="p-2 rounded-xl bg-purple-500/10 text-purple-500">
+              <div className="p-2 rounded-xl bg-surface text-theme-icon">
                 <Users className="h-4 w-4" />
               </div>
             </div>

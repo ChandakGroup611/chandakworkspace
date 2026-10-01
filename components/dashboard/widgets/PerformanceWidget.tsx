@@ -122,9 +122,9 @@ export function PerformanceWidget({ metrics = [], onOpenList }: PerformanceWidge
         id="team-performance"
         title="Team Throughput & Performance"
         subtitle="Member workload, resolved story points & velocity"
-        icon={<Users className="w-5 h-5 text-purple-500" />}
+        icon={<Users className="w-5 h-5 text-theme-icon" />}
         badge={
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-purple-500/10 text-purple-500 border border-purple-500/20 shrink-0">
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-surface text-theme-icon border border-border shrink-0">
             {teamStats.length} Members
           </span>
         }

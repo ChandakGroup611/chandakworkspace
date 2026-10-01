@@ -142,13 +142,13 @@ export const MasterBulkImportModal: React.FC<MasterBulkImportModalProps> = ({
   });
 
   const masterTabOptions: Array<{ id: MasterImportType; label: string; icon: any; color: string }> = [
-    { id: "PACKAGES", label: "Package Master", icon: Tag, color: "text-purple-600 bg-purple-500/10 border-purple-500/30" },
-    { id: "SUB_PACKAGES", label: "Sub-Package Master", icon: Layers, color: "text-teal-600 bg-teal-500/10 border-teal-500/30" },
+    { id: "PACKAGES", label: "Package Master", icon: Tag, color: "text-theme-icon bg-surface border-border" },
+    { id: "SUB_PACKAGES", label: "Sub-Package Master", icon: Layers, color: "text-teal-600 bg-teal-500/10 border-border" },
     { id: "PROJECTS", label: "Project Master", icon: Building2, color: "text-blue-600 bg-blue-500/10 border-blue-500/30" },
-    { id: "SUB_PROJECTS", label: "Sub-Project / Wings", icon: FolderTree, color: "text-indigo-600 bg-indigo-500/10 border-indigo-500/30" },
+    { id: "SUB_PROJECTS", label: "Sub-Project / Wings", icon: FolderTree, color: "text-theme-icon bg-surface border-border" },
     { id: "CONSULTANTS", label: "Consultant Master", icon: Users, color: "text-emerald-600 bg-emerald-500/10 border-emerald-500/30" },
     { id: "AUTHORITIES", label: "Statutory Authorities", icon: ShieldCheck, color: "text-amber-600 bg-amber-500/10 border-amber-500/30" },
-    { id: "ALL", label: "All Masters (Consolidated)", icon: FileSpreadsheet, color: "text-teal-600 bg-teal-500/10 border-teal-500/30" }
+    { id: "ALL", label: "All Masters (Consolidated)", icon: FileSpreadsheet, color: "text-teal-600 bg-teal-500/10 border-border" }
   ];
 
   return (

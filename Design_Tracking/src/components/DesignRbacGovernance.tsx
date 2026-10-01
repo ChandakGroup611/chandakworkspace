@@ -65,12 +65,12 @@ import { TransactionFormLayout } from "./DesignTransactionLayout";
 // Clean badge colors
 const ROLE_BADGE_COLORS = [
   { id: "amber", label: "Amber", class: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30" },
-  { id: "indigo", label: "Indigo", class: "bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border-indigo-500/30" },
+  { id: "indigo", label: "Indigo", class: "bg-surface text-theme-icon dark:text-muted-foreground border-border" },
   { id: "blue", label: "Sky Blue", class: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30" },
   { id: "emerald", label: "Emerald", class: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30" },
-  { id: "cyan", label: "Cyan", class: "bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border-cyan-500/30" },
+  { id: "cyan", label: "Cyan", class: "bg-surface text-theme-icon dark:text-muted-foreground border-border" },
   { id: "orange", label: "Orange", class: "bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/30" },
-  { id: "purple", label: "Purple", class: "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30" },
+  { id: "purple", label: "Purple", class: "bg-surface text-theme-icon dark:text-muted-foreground border-border" },
   { id: "slate", label: "Slate", class: "bg-slate-500/15 text-slate-600 dark:text-slate-400 border-slate-500/30" },
   { id: "rose", label: "Rose", class: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30" }
 ];
@@ -907,7 +907,7 @@ export const DesignRbacGovernance: React.FC = () => {
                             System
                           </span>
                         ) : (
-                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${role.badgeColor || "bg-indigo-500/15 text-indigo-600"}`}>
+                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${role.badgeColor || "bg-surface text-theme-icon"}`}>
                             Custom
                           </span>
                         )}
@@ -934,7 +934,7 @@ export const DesignRbacGovernance: React.FC = () => {
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h2 className="text-lg font-bold text-foreground">{currentBuilderRole.label}</h2>
-                      <span className={`text-xs font-bold px-2 py-0.5 rounded-md border ${currentBuilderRole.badgeColor || "bg-indigo-500/15 text-indigo-600"}`}>
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded-md border ${currentBuilderRole.badgeColor || "bg-surface text-theme-icon"}`}>
                         {currentBuilderRole.code}
                       </span>
                     </div>
@@ -1021,7 +1021,7 @@ export const DesignRbacGovernance: React.FC = () => {
                                   tScope === "ALL" ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" :
                                   tScope === "ASSIGNED_ONLY" ? "bg-amber-500/10 text-amber-600 dark:text-amber-400" :
                                   tScope === "NONE" ? "bg-rose-500/10 text-danger" :
-                                  "bg-purple-500/10 text-theme-icon"
+                                  "bg-surface text-theme-icon"
                                 }`}>
                                   {TICKET_SCOPE_OPTIONS.find(o => o.value === tScope)?.label || tScope}
                                 </span>
@@ -1135,7 +1135,7 @@ export const DesignRbacGovernance: React.FC = () => {
                         </td>
                         <td className="py-3 px-3">
                           {roleMeta ? (
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${roleMeta.badgeColor || "bg-indigo-500/15 text-indigo-600"}`}>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${roleMeta.badgeColor || "bg-surface text-theme-icon"}`}>
                               {roleMeta.label}
                             </span>
                           ) : (

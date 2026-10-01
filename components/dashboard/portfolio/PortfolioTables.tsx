@@ -289,8 +289,8 @@ export function PortfolioTables({ items = [], startDate, endDate }: PortfolioTab
                       <span className={cn(
                         "inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border",
                         item.module === "Tasks" && "bg-blue-500/10 text-blue-500 border-blue-500/20",
-                        item.module === "Sub Tasks" && "bg-cyan-500/10 text-cyan-500 border-cyan-500/20",
-                        item.module === "Tickets" && "bg-purple-500/10 text-purple-500 border-purple-500/20",
+                        item.module === "Sub Tasks" && "bg-surface text-theme-icon border-border",
+                        item.module === "Tickets" && "bg-surface text-theme-icon border-border",
                         item.module === "Requirements" && "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
                         item.module === "Workspaces" && "bg-amber-500/10 text-amber-500 border-amber-500/20"
                       )}>

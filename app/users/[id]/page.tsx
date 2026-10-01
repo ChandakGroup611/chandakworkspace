@@ -73,7 +73,7 @@ const getModuleMeta = (code: string) => {
     default:
       return {
         icon: Layers,
-        badgeBg: "bg-purple-500/15 text-purple-500 border-purple-500/30",
+        badgeBg: "bg-surface text-theme-icon border-border",
         description: "Enterprise operational suite and specialized workflows."
       };
   }
@@ -352,10 +352,10 @@ export default function UserFormPage() {
             type="button"
             variant="outline" 
             onClick={() => setAssignModalOpen(true)}
-            className="px-4 h-10 font-semibold flex items-center gap-2 border-indigo-200 dark:border-indigo-800/60 bg-indigo-50/60 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-all shadow-xs cursor-pointer"
+            className="px-4 h-10 font-semibold flex items-center gap-2 border-border dark:border-indigo-800/60 bg-surface/60 dark:bg-surface text-foreground dark:text-muted-foreground hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-all shadow-xs cursor-pointer"
             title="Configure and assign workspace modules"
           >
-            <Layers className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+            <Layers className="h-4 w-4 text-theme-icon dark:text-muted-foreground" />
             <span>Assign Modules ({selectedModuleCodes.length})</span>
           </AppButton>
           <AppButton 
@@ -382,7 +382,7 @@ export default function UserFormPage() {
           <div className="bg-surface dark:bg-slate-900 border border-border w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
             <div className="p-5 border-b border-border/60 bg-surface/50 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-indigo-500/15 text-indigo-500 flex items-center justify-center border border-indigo-500/25">
+                <div className="h-10 w-10 rounded-xl bg-surface text-theme-icon flex items-center justify-center border border-border">
                   <Layers className="h-5 w-5" />
                 </div>
                 <div>
@@ -728,7 +728,7 @@ export default function UserFormPage() {
           <AppCard className="overflow-hidden transition-all border-border shadow-xs">
             <AppCardHeader className="bg-surface/50 pb-4 flex flex-row items-center justify-between border-b border-border/50">
               <div className="flex items-center gap-2.5">
-                <div className="h-8 w-8 rounded-lg bg-indigo-500/15 text-indigo-500 flex items-center justify-center border border-indigo-500/25">
+                <div className="h-8 w-8 rounded-lg bg-surface text-theme-icon flex items-center justify-center border border-border">
                   <Layers className="h-4 w-4" />
                 </div>
                 <div>
@@ -738,7 +738,7 @@ export default function UserFormPage() {
                   </p>
                 </div>
               </div>
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 shrink-0">
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-surface text-theme-icon dark:text-muted-foreground border border-border shrink-0">
                 {selectedModuleCodes.length} / {availableModules.length || 3} Permitted
               </span>
             </AppCardHeader>
@@ -942,7 +942,7 @@ export default function UserFormPage() {
           <AppCard className={`overflow-hidden shadow-md ring-1 ring-black/5 transition-all border-border`}>
             <AppCardHeader className={"bg-surface/50 pb-4"}>
               <div className="flex items-center gap-2">
-                <MonitorSmartphone className="h-5 w-5 text-cyan-500" />
+                <MonitorSmartphone className="h-5 w-5 text-theme-icon" />
                 <AppCardTitle className="text-lg">Assigned Assets</AppCardTitle>
               </div>
             </AppCardHeader>
@@ -951,7 +951,7 @@ export default function UserFormPage() {
               <div className={`min-h-[140px] p-4 rounded-xl border flex flex-col gap-3 relative bg-surface border-border`}>
                 <div className="flex flex-wrap items-center gap-2">
                   {formAssignedAssets.split(',').map(t => t.trim()).filter(Boolean).map((tag, idx) => (
-                    <span key={idx} className="text-xs font-bold px-3 py-1.5 flex items-center gap-2 bg-theme-btn-primary/10 text-theme-icon-secondary border border-theme-btn-primary/30 rounded-lg dark:bg-theme-btn-primary/20 dark:text-indigo-300 dark:border-theme-btn-primary/30 shadow-sm">
+                    <span key={idx} className="text-xs font-bold px-3 py-1.5 flex items-center gap-2 bg-theme-btn-primary/10 text-theme-icon-secondary border border-theme-btn-primary/30 rounded-lg dark:bg-theme-btn-primary/20 dark:text-muted-foreground dark:border-theme-btn-primary/30 shadow-sm">
                       <MonitorSmartphone className="h-3 w-3" />
                       {tag} 
                       <X className="h-3 w-3 cursor-pointer opacity-70 hover:opacity-100 transition-opacity" onClick={() => {

@@ -86,7 +86,7 @@ export default function SettingsGallery() {
       sentiment: "Creative & Fresh",
       icon: Zap,
       previewBg: "bg-[#0a0a0f] text-[#00FFFF]",
-      previewBorder: "border-cyan-500/30",
+      previewBorder: "border-border",
       accentColor: "bg-pink-500",
     },
     {
@@ -120,7 +120,7 @@ export default function SettingsGallery() {
       icon: Layers,
       previewBg: "bg-[#1e293b] text-[#f8fafc]",
       previewBorder: "border-border",
-      accentColor: "bg-cyan-500",
+      accentColor: "bg-surface0",
     },
     {
       id: "dark-neumorphic",
@@ -142,7 +142,7 @@ export default function SettingsGallery() {
       icon: Sun,
       previewBg: "bg-[#ffffff] text-[#000000]",
       previewBorder: "border-[#e5e5e5]",
-      accentColor: "bg-violet-500",
+      accentColor: "bg-surface0",
     },
     {
       id: "amazon",

@@ -161,9 +161,9 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
     switch (disc) {
       case "Architectural": return "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20";
       case "Structural": return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20";
-      case "MEP": return "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20";
+      case "MEP": return "bg-surface text-foreground border-border";
       case "Landscape": return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20";
-      case "Interior": return "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20";
+      case "Interior": return "bg-surface text-foreground border-border";
       default: return "bg-slate-100 dark:bg-slate-800 text-muted-foreground border-border";
     }
   };
@@ -500,10 +500,10 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
         <WorkingDocumentLayout
           title={`${previewDrawing.code}: ${previewDrawing.title}`}
           badge={previewDrawing.status}
-          badgeColor={previewDrawing.status === "Approved (GFC)" ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/30" : "bg-cyan-500/10 text-cyan-600 border border-cyan-500/30"}
+          badgeColor={previewDrawing.status === "Approved (GFC)" ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/30" : "bg-surface text-theme-icon border border-border"}
           category="Architectural Blueprint & GFC Inspection"
           icon={Compass}
-          iconBg="bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"
+          iconBg="bg-surface text-theme-icon dark:text-muted-foreground"
           description={`High-fidelity vector engineering sheet verification for ${previewDrawing.project} (${previewDrawing.discipline}).`}
           breadcrumbs={[
             { label: "Design Tracking Desk" },
@@ -560,14 +560,14 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
 
             {/* CAD Blueprint Canvas Simulation */}
             <div
-              className="h-96 w-full rounded-2xl bg-slate-950 border border-cyan-500/30 relative overflow-hidden flex flex-col justify-between p-6 font-mono select-none shadow-2xl text-white"
+              className="h-96 w-full rounded-2xl bg-slate-950 border border-border relative overflow-hidden flex flex-col justify-between p-6 font-mono select-none shadow-2xl text-white"
               style={{
                 backgroundImage: "radial-gradient(#0ea5e9 1px, transparent 1px)",
                 backgroundSize: "24px 24px"
               }}
             >
               {/* Engineering Coordinate Grid Markers */}
-              <div className="flex items-center justify-between text-[11px] text-cyan-400 font-bold">
+              <div className="flex items-center justify-between text-[11px] text-muted-foreground font-bold">
                 <span>GRID COORD: A1-F8 | SCALE: 1:100 METRIC | PROJECTION: ORTHOGRAPHIC</span>
                 <span>CHANDAK DESIGN & ENGINEERING STUDIO</span>
               </div>
@@ -575,22 +575,22 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
               {/* Center Wireframe Graphics simulation */}
               <div className="flex flex-col items-center justify-center space-y-3 opacity-90 my-auto">
                 <div className="w-80 h-44 border-2 border-dashed border-cyan-400/60 rounded-xl flex items-center justify-center relative bg-cyan-950/20 backdrop-blur-xs">
-                  <div className="w-64 h-32 border border-cyan-300/40 rounded-lg flex flex-col items-center justify-center p-4 text-center">
-                    <span className="text-sm font-bold text-cyan-300 tracking-wider">
+                  <div className="w-64 h-32 border border-border/40 rounded-lg flex flex-col items-center justify-center p-4 text-center">
+                    <span className="text-sm font-bold text-muted-foreground tracking-wider">
                       {previewDrawing.title}
                     </span>
-                    <span className="text-[11px] text-cyan-400/80 font-mono mt-1">
+                    <span className="text-[11px] text-muted-foreground/80 font-mono mt-1">
                       SHEET {previewDrawing.code} • REV {previewDrawing.revision}
                     </span>
                   </div>
-                  <div className="absolute -top-3 bg-slate-950 px-3 text-[10px] text-cyan-400 font-bold border border-cyan-500/40 rounded">
+                  <div className="absolute -top-3 bg-slate-950 px-3 text-[10px] text-muted-foreground font-bold border border-border rounded">
                     SECTION X-X' ELEVATION ARCHITECTURAL
                   </div>
                 </div>
               </div>
 
               {/* Title Block Bottom Right */}
-              <div className="flex items-end justify-between border-t border-cyan-500/30 pt-3">
+              <div className="flex items-end justify-between border-t border-border pt-3">
                 <div className="text-[11px] text-slate-300 space-y-0.5">
                   <div>AUTHOR: <strong className="text-white font-bold">{previewDrawing.consultant}</strong></div>
                   <div>SHEET NO: <strong className="text-white font-mono font-bold">{previewDrawing.code}</strong></div>

@@ -620,7 +620,7 @@ export function AMCTCOSpendHistoryTab({
         <AppCard className="p-4 border border-border bg-surface rounded-2xl flex flex-col justify-between space-y-2">
           <div className="flex items-center justify-between text-muted">
             <span className="text-[11px] font-bold uppercase tracking-wider">Renewals Outlay</span>
-            <CalendarClock className="h-4 w-4 text-indigo-500" />
+            <CalendarClock className="h-4 w-4 text-theme-icon" />
           </div>
           <div>
             <div className="text-xl font-black text-foreground font-mono">
@@ -648,7 +648,7 @@ export function AMCTCOSpendHistoryTab({
         <AppCard className="p-4 border border-border bg-surface rounded-2xl flex flex-col justify-between space-y-2">
           <div className="flex items-center justify-between text-muted">
             <span className="text-[11px] font-bold uppercase tracking-wider">Annual Run Rate</span>
-            <Activity className="h-4 w-4 text-purple-500" />
+            <Activity className="h-4 w-4 text-theme-icon" />
           </div>
           <div>
             <div className="text-xl font-black text-foreground font-mono">

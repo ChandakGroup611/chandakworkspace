@@ -142,7 +142,7 @@ export function TicketListSidebar({
                       <AppBadge variant={ticket.statusObj?.code === "ST_OPEN" ? "info" : "success"} className="text-[0.65rem] py-0 px-1.5">
                         {ticket.statusObj?.name || "Active"}
                       </AppBadge>
-                      <span className="text-[0.65rem] text-indigo-300 font-medium bg-indigo-400/10 px-1.5 rounded">
+                      <span className="text-[0.65rem] text-muted-foreground font-medium bg-indigo-400/10 px-1.5 rounded">
                         SLA: STABLE
                       </span>
                     </div>

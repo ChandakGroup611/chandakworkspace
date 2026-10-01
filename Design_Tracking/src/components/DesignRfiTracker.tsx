@@ -238,7 +238,7 @@ export function DesignRfiTracker() {
           {/* Header Banner */}
           <div className="p-5 rounded-2xl bg-card border border-border flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-600 dark:text-purple-400 shrink-0">
+          <div className="h-10 w-10 rounded-xl bg-surface border border-border flex items-center justify-center text-theme-icon dark:text-muted-foreground shrink-0">
             <HelpCircle className="h-5 w-5" />
           </div>
           <div>
@@ -252,7 +252,7 @@ export function DesignRfiTracker() {
           <button
             type="button"
             onClick={() => setIsRaiseModalOpen(true)}
-            className="h-8 px-3.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-md cursor-pointer whitespace-nowrap"
+            className="h-8 px-3.5 rounded-xl bg-purple-600 hover:bg-surface0 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-md cursor-pointer whitespace-nowrap"
           >
             <Plus className="h-3.5 w-3.5" />
             <span>Raise Site Query (RFI)</span>
@@ -404,7 +404,7 @@ export function DesignRfiTracker() {
               return (
                 <span
                   key={st}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20 text-[11px] font-medium"
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface text-foreground dark:text-muted-foreground border border-border text-[11px] font-medium"
                 >
                   <span>Status: {opt?.label || st}</span>
                   <button
@@ -468,12 +468,12 @@ export function DesignRfiTracker() {
             return (
               <div
                 key={r.id}
-                className="p-5 rounded-2xl border border-border bg-card hover:border-purple-500/40 transition-all shadow-sm space-y-3"
+                className="p-5 rounded-2xl border border-border bg-card hover:border-theme-btn-primary/40 transition-all shadow-sm space-y-3"
               >
                 {/* Header line */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-mono font-black text-sm text-purple-600 dark:text-purple-400">
+                    <span className="font-mono font-black text-sm text-theme-icon dark:text-muted-foreground">
                       {r.rfiNumber}
                     </span>
                     <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${pBadge.color}`}>
@@ -563,7 +563,7 @@ export function DesignRfiTracker() {
                         setRespondedByName("");
                         setResolvingRev("");
                       }}
-                      className="h-7 px-3 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                      className="h-7 px-3 rounded-lg bg-purple-600 hover:bg-surface0 text-white text-xs font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
                     >
                       <MessageSquare className="h-3.5 w-3.5" />
                       <span>Submit Consultant Clarification</span>
@@ -598,7 +598,7 @@ export function DesignRfiTracker() {
           badge="Technical Query Entry"
           category="RFI & Query Control"
           icon={HelpCircle}
-          iconBg="bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/25"
+          iconBg="bg-surface text-theme-icon border-border"
           description="Log design query, site condition clash, or structural specification ambiguity with consultant assignment."
           breadcrumbs={[
             { label: "RFI Tracker", onClick: () => setIsRaiseModalOpen(false) },
@@ -631,7 +631,7 @@ export function DesignRfiTracker() {
             <AppCard className="border-border shadow-xs">
               <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
                 <AppCardTitle className="text-sm font-bold flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                  <Building2 className="h-4 w-4 text-theme-icon dark:text-muted-foreground" />
                   <span>Project & Engineering Discipline</span>
                 </AppCardTitle>
               </AppCardHeader>
@@ -727,7 +727,7 @@ export function DesignRfiTracker() {
             <AppCard className="border-border shadow-xs">
               <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
                 <AppCardTitle className="text-sm font-bold flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                  <MessageSquare className="h-4 w-4 text-theme-icon dark:text-muted-foreground" />
                   <span>Technical Query Details</span>
                 </AppCardTitle>
               </AppCardHeader>
@@ -839,7 +839,7 @@ export function DesignRfiTracker() {
                   </div>
                   <div className="p-2.5 rounded-lg bg-slate-50/50 dark:bg-slate-900/40 border border-border">
                     <span className="text-[10px] text-muted-foreground block font-bold">Assigned To:</span>
-                    <span className="font-semibold text-purple-600 dark:text-purple-400">{selectedRfiForReply.assignedConsultant}</span>
+                    <span className="font-semibold text-theme-icon dark:text-muted-foreground">{selectedRfiForReply.assignedConsultant}</span>
                   </div>
                 </div>
               </AppCardContent>

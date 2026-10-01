@@ -320,8 +320,8 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
       case "STATUS_CHANGE":
       default:
         return (
-          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 inline-flex items-center gap-1">
-            <Layers className="h-3 w-3 text-purple-500" />
+          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-surface text-theme-icon dark:text-muted-foreground border border-border inline-flex items-center gap-1">
+            <Layers className="h-3 w-3 text-theme-icon" />
             <span>STATUS CHANGE</span>
           </span>
         );
@@ -339,9 +339,9 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
       case "PACKAGE":
         return <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">📦 Work Package</span>;
       case "CONSULTANT":
-        return <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20">🤝 Consultant</span>;
+        return <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-surface text-foreground dark:text-muted-foreground border border-border">🤝 Consultant</span>;
       case "AUTHORITY":
-        return <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20">🛡️ Authority</span>;
+        return <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-surface text-foreground dark:text-muted-foreground border border-border">🛡️ Authority</span>;
       case "MATRIX_CELL":
       default:
         return <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-muted text-muted-foreground border border-border">📊 Matrix Cell</span>;
@@ -354,7 +354,7 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
       <div className="p-4 sm:p-5 rounded-2xl border border-border bg-surface shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center border border-purple-500/20 shrink-0">
+            <div className="h-10 w-10 rounded-xl bg-surface text-theme-icon dark:text-muted-foreground flex items-center justify-center border border-border shrink-0">
               <History className="h-5 w-5" />
             </div>
             <div>
@@ -399,7 +399,7 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
           <div className="space-y-4 pt-1">
             {/* Fast Stats Row */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="p-3 rounded-xl bg-purple-500/5 border border-purple-500/20">
+              <div className="p-3 rounded-xl bg-surface border border-border">
                 <span className="text-[10px] uppercase font-bold text-muted-foreground block">Total Audit Events</span>
                 <span className="text-lg font-black text-foreground font-mono">{auditStats.total}</span>
               </div>
@@ -491,7 +491,7 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
               <button
                 type="button"
                 onClick={handleExportAuditCsv}
-                className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all ml-auto"
+                className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-surface0 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all ml-auto"
               >
                 <FileSpreadsheet className="h-3.5 w-3.5" />
                 <span>Export Audit CSV</span>
@@ -601,7 +601,7 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
                               <span className="font-mono text-[10px] text-muted-foreground block">
                                 {new Date(log.timestamp).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                               </span>
-                              <span className="text-[10px] font-semibold text-purple-600 dark:text-purple-400 block mt-0.5">
+                              <span className="text-[10px] font-semibold text-theme-icon dark:text-muted-foreground block mt-0.5">
                                 👤 {log.changedBy || "Design Manager"}
                               </span>
                             </div>
@@ -641,7 +641,7 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
                                 </span>
                               )}
                               {log.consultantName && (
-                                <span className="px-1.5 py-0.5 rounded text-[10px] bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20 font-medium truncate max-w-[130px]">
+                                <span className="px-1.5 py-0.5 rounded text-[10px] bg-surface text-foreground dark:text-muted-foreground border border-border font-medium truncate max-w-[130px]">
                                   🤝 {log.consultantName}
                                 </span>
                               )}
@@ -694,7 +694,7 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
                               <div className="p-3.5 rounded-xl bg-surface border border-border space-y-2.5">
                                 <div className="flex items-center justify-between border-b border-border pb-2">
                                   <span className="font-bold text-xs text-foreground flex items-center gap-1.5">
-                                    <Info className="h-3.5 w-3.5 text-purple-500" />
+                                    <Info className="h-3.5 w-3.5 text-theme-icon" />
                                     <span>Audit Snapshot & Foreign Key Relationship Inspection</span>
                                   </span>
                                   <span className="font-mono text-[10px] text-muted-foreground">ID: {log.id}</span>

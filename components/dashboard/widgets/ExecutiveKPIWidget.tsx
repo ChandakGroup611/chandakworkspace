@@ -145,27 +145,27 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis, onDrillDown }:
           onClick={() => handleCardClick("Sub Tasks", "Sub Tasks")}
           className="block group cursor-pointer"
         >
-          <div className="min-h-[120px] h-full overflow-hidden relative rounded-xl bg-surface/60 border border-border/70 hover:border-cyan-500/50 hover:bg-surface transition-all shadow-xs p-3.5 flex flex-col justify-between kpi-tile-interactive" style={{ "--kpi-glow-color": "rgba(6, 182, 212, 0.25)" } as React.CSSProperties}>
-            <div className="absolute top-0 left-0 w-full h-[3px] bg-cyan-500 shadow-[0_0_12px_rgba(6,182,212,0.7)]" />
-            <div className="absolute -bottom-3 -right-3 p-2 opacity-[0.05] dark:opacity-[0.08] kpi-watermark-icon text-cyan-500">
+          <div className="min-h-[120px] h-full overflow-hidden relative rounded-xl bg-surface/60 border border-border/70 hover:border-theme-btn-primary/50 hover:bg-surface transition-all shadow-xs p-3.5 flex flex-col justify-between kpi-tile-interactive" style={{ "--kpi-glow-color": "rgba(6, 182, 212, 0.25)" } as React.CSSProperties}>
+            <div className="absolute top-0 left-0 w-full h-[3px] bg-surface0 shadow-[0_0_12px_rgba(6,182,212,0.7)]" />
+            <div className="absolute -bottom-3 -right-3 p-2 opacity-[0.05] dark:opacity-[0.08] kpi-watermark-icon text-theme-icon">
               <GitMerge className="h-14 w-14" />
             </div>
 
             <div className="flex justify-between items-center mb-1 relative z-10">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide truncate">Sub Tasks</h3>
-              <div className="p-1 rounded-md bg-cyan-500/10 text-cyan-500 group-hover:scale-110 transition-transform duration-200">
+              <div className="p-1 rounded-md bg-surface text-theme-icon group-hover:scale-110 transition-transform duration-200">
                 <GitMerge className="h-3.5 w-3.5" />
               </div>
             </div>
             
             <div className="my-1 relative z-10">
-              <span className="text-2xl sm:text-3xl font-black text-foreground drop-shadow-sm group-hover:text-cyan-500 transition-colors">
+              <span className="text-2xl sm:text-3xl font-black text-foreground drop-shadow-sm group-hover:text-theme-icon transition-colors">
                 <AnimatedCounter value={kpis.sub_tasks?.total || 0} />
               </span>
             </div>
             
             <div className="flex flex-wrap items-center gap-1 text-[10px] font-medium text-muted-foreground relative z-10">
-              <span className="text-cyan-500 flex items-center gap-0.5 whitespace-nowrap"><CheckCircle className="h-3 w-3 shrink-0" /> <AnimatedCounter value={kpis.sub_tasks?.resolved || 0} /> Done</span>
+              <span className="text-theme-icon flex items-center gap-0.5 whitespace-nowrap"><CheckCircle className="h-3 w-3 shrink-0" /> <AnimatedCounter value={kpis.sub_tasks?.resolved || 0} /> Done</span>
               <span className="text-muted-foreground/50">·</span>
               <span className="whitespace-nowrap"><AnimatedCounter value={(kpis.sub_tasks?.total || 0) - (kpis.sub_tasks?.resolved || 0)} /> Open</span>
             </div>
@@ -177,27 +177,27 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis, onDrillDown }:
           onClick={() => handleCardClick("Requirements", "Requirements")}
           className="block group cursor-pointer"
         >
-          <div className="min-h-[120px] h-full overflow-hidden relative rounded-xl bg-surface/60 border border-border/70 hover:border-indigo-500/50 hover:bg-surface transition-all shadow-xs p-3.5 flex flex-col justify-between kpi-tile-interactive" style={{ "--kpi-glow-color": "rgba(99, 102, 241, 0.25)" } as React.CSSProperties}>
-            <div className="absolute top-0 left-0 w-full h-[3px] bg-indigo-500 shadow-[0_0_12px_rgba(99,102,241,0.7)]" />
-            <div className="absolute -bottom-3 -right-3 p-2 opacity-[0.05] dark:opacity-[0.08] kpi-watermark-icon text-indigo-500">
+          <div className="min-h-[120px] h-full overflow-hidden relative rounded-xl bg-surface/60 border border-border/70 hover:border-theme-btn-primary/50 hover:bg-surface transition-all shadow-xs p-3.5 flex flex-col justify-between kpi-tile-interactive" style={{ "--kpi-glow-color": "rgba(99, 102, 241, 0.25)" } as React.CSSProperties}>
+            <div className="absolute top-0 left-0 w-full h-[3px] bg-surface0 shadow-[0_0_12px_rgba(99,102,241,0.7)]" />
+            <div className="absolute -bottom-3 -right-3 p-2 opacity-[0.05] dark:opacity-[0.08] kpi-watermark-icon text-theme-icon">
               <FileText className="h-14 w-14" />
             </div>
 
             <div className="flex justify-between items-center mb-1 relative z-10">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide truncate">Requirements</h3>
-              <div className="p-1 rounded-md bg-indigo-500/10 text-indigo-500 group-hover:scale-110 transition-transform duration-200">
+              <div className="p-1 rounded-md bg-surface text-theme-icon group-hover:scale-110 transition-transform duration-200">
                 <FileText className="h-3.5 w-3.5" />
               </div>
             </div>
             
             <div className="my-1 relative z-10">
-              <span className="text-2xl sm:text-3xl font-black text-foreground drop-shadow-sm group-hover:text-indigo-500 transition-colors">
+              <span className="text-2xl sm:text-3xl font-black text-foreground drop-shadow-sm group-hover:text-theme-icon transition-colors">
                 <AnimatedCounter value={kpis.requirements?.total || 0} />
               </span>
             </div>
             
             <div className="flex flex-wrap items-center gap-1 text-[10px] font-medium text-muted-foreground relative z-10">
-              <span className="text-indigo-500 flex items-center gap-0.5 whitespace-nowrap"><CheckCircle className="h-3 w-3 shrink-0" /> <AnimatedCounter value={kpis.requirements?.resolved || 0} /> Done</span>
+              <span className="text-theme-icon flex items-center gap-0.5 whitespace-nowrap"><CheckCircle className="h-3 w-3 shrink-0" /> <AnimatedCounter value={kpis.requirements?.resolved || 0} /> Done</span>
               <span className="text-muted-foreground/50">·</span>
               <span className="whitespace-nowrap"><AnimatedCounter value={(kpis.requirements?.total || 0) - (kpis.requirements?.resolved || 0)} /> Open</span>
             </div>
@@ -209,27 +209,27 @@ export function ExecutiveKPIWidget({ analytics, kpis: globalKpis, onDrillDown }:
           onClick={() => handleCardClick("Tickets", "Tickets")}
           className="block group cursor-pointer"
         >
-          <div className="min-h-[120px] h-full overflow-hidden relative rounded-xl bg-surface/60 border border-border/70 hover:border-purple-500/50 hover:bg-surface transition-all shadow-xs p-3.5 flex flex-col justify-between kpi-tile-interactive" style={{ "--kpi-glow-color": "rgba(168, 85, 247, 0.25)" } as React.CSSProperties}>
-            <div className="absolute top-0 left-0 w-full h-[3px] bg-purple-500 shadow-[0_0_12px_rgba(168,85,247,0.7)]" />
-            <div className="absolute -bottom-3 -right-3 p-2 opacity-[0.05] dark:opacity-[0.08] kpi-watermark-icon text-purple-500">
+          <div className="min-h-[120px] h-full overflow-hidden relative rounded-xl bg-surface/60 border border-border/70 hover:border-theme-btn-primary/50 hover:bg-surface transition-all shadow-xs p-3.5 flex flex-col justify-between kpi-tile-interactive" style={{ "--kpi-glow-color": "rgba(168, 85, 247, 0.25)" } as React.CSSProperties}>
+            <div className="absolute top-0 left-0 w-full h-[3px] bg-surface0 shadow-[0_0_12px_rgba(168,85,247,0.7)]" />
+            <div className="absolute -bottom-3 -right-3 p-2 opacity-[0.05] dark:opacity-[0.08] kpi-watermark-icon text-theme-icon">
               <LayoutDashboard className="h-14 w-14" />
             </div>
 
             <div className="flex justify-between items-center mb-1 relative z-10">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide truncate">Tickets</h3>
-              <div className="p-1 rounded-md bg-purple-500/10 text-purple-500 group-hover:scale-110 transition-transform duration-200">
+              <div className="p-1 rounded-md bg-surface text-theme-icon group-hover:scale-110 transition-transform duration-200">
                 <LayoutDashboard className="h-3.5 w-3.5" />
               </div>
             </div>
             
             <div className="my-1 relative z-10">
-              <span className="text-2xl sm:text-3xl font-black text-foreground drop-shadow-sm group-hover:text-purple-500 transition-colors">
+              <span className="text-2xl sm:text-3xl font-black text-foreground drop-shadow-sm group-hover:text-theme-icon transition-colors">
                 <AnimatedCounter value={kpis.tickets?.total || 0} />
               </span>
             </div>
             
             <div className="flex flex-wrap items-center gap-1 text-[10px] font-medium text-muted-foreground relative z-10">
-              <span className="text-purple-500 flex items-center gap-0.5 whitespace-nowrap"><CheckCircle className="h-3 w-3 shrink-0" /> <AnimatedCounter value={kpis.tickets?.resolved || 0} /> Done</span>
+              <span className="text-theme-icon flex items-center gap-0.5 whitespace-nowrap"><CheckCircle className="h-3 w-3 shrink-0" /> <AnimatedCounter value={kpis.tickets?.resolved || 0} /> Done</span>
               <span className="text-muted-foreground/50">·</span>
               <span className="whitespace-nowrap"><AnimatedCounter value={(kpis.tickets?.total || 0) - (kpis.tickets?.resolved || 0)} /> Open</span>
             </div>

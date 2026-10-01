@@ -320,7 +320,7 @@ export function WorkspaceMasterTable({
               {/* Entity Icon */}
               <div className={`h-6 w-6 rounded-md flex items-center justify-center shrink-0 shadow-xs mt-0.5 ${
                 node.type === 'WORKSPACE' ? 'bg-theme-btn-primary/10 text-theme-icon' :
-                node.type === 'SUB_WORKSPACE' ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400' :
+                node.type === 'SUB_WORKSPACE' ? 'bg-surface text-theme-icon dark:text-muted-foreground' :
                 node.type === 'TASK' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' :
                 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
               }`}>
@@ -645,7 +645,7 @@ export function WorkspaceMasterTable({
 
             <div className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
               node.type === 'WORKSPACE' ? 'bg-theme-btn-primary/10 text-theme-icon' :
-              node.type === 'SUB_WORKSPACE' ? 'bg-purple-500/10 text-purple-600' :
+              node.type === 'SUB_WORKSPACE' ? 'bg-surface text-theme-icon' :
               node.type === 'TASK' ? 'bg-emerald-500/10 text-emerald-600' :
               'bg-amber-500/10 text-amber-600'
             }`}>
@@ -745,7 +745,7 @@ export function WorkspaceMasterTable({
                     }}
                     className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-foreground hover:bg-surface-hover transition-colors text-left"
                   >
-                    <Edit2 className="h-4 w-4 text-purple-500" />
+                    <Edit2 className="h-4 w-4 text-theme-icon" />
                     <span>{isWorkspaceType ? 'Edit Workspace' : 'Edit Task'}</span>
                   </button>
                 )}

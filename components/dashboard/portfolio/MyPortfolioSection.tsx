@@ -501,9 +501,9 @@ export function MyPortfolioSection() {
             <div className="flex items-center gap-2 flex-wrap text-[11px]">
               <span className="text-blue-500 font-semibold">{kpis.createdByModule.Tasks} Tasks</span>
               <span className="text-muted">·</span>
-              <span className="text-cyan-500 font-semibold">{kpis.createdByModule["Sub Tasks"]} Subtasks</span>
+              <span className="text-theme-icon font-semibold">{kpis.createdByModule["Sub Tasks"]} Subtasks</span>
               <span className="text-muted">·</span>
-              <span className="text-purple-500 font-semibold">{kpis.createdByModule.Tickets} Tickets</span>
+              <span className="text-theme-icon font-semibold">{kpis.createdByModule.Tickets} Tickets</span>
             </div>
           </div>
         </AppCard>

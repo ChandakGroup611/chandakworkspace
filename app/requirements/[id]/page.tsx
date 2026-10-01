@@ -1073,10 +1073,10 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
         <div className="flex flex-wrap items-center gap-2 p-2 rounded-2xl bg-surface/80 dark:bg-elevated/40 border border-border/80 mb-6 shadow-xs select-none">
           {[
             { id: 'details', label: 'Requirement Details', icon: FileText, color: 'text-blue-500', activeBg: 'bg-blue-600' },
-            { id: 'analysis', label: 'Business Analysis', icon: Target, color: 'text-purple-500', activeBg: 'bg-purple-600' },
+            { id: 'analysis', label: 'Business Analysis', icon: Target, color: 'text-theme-icon', activeBg: 'bg-purple-600' },
             { id: 'approval', label: 'Approval Workflow', icon: Shield, color: 'text-amber-500', activeBg: 'bg-amber-600' },
             { id: 'tasks', label: 'Tasks', icon: Briefcase, count: linkedTasks.length, color: 'text-emerald-500', activeBg: 'bg-emerald-600' },
-            { id: 'audit', label: 'Audit Trail', icon: Clock, count: auditLogs.length, color: 'text-cyan-500', activeBg: 'bg-cyan-600' }
+            { id: 'audit', label: 'Audit Trail', icon: Clock, count: auditLogs.length, color: 'text-theme-icon', activeBg: 'bg-cyan-600' }
           ].map(tab => {
             const isActive = activeTab === tab.id;
             const Icon = tab.icon;
@@ -1302,7 +1302,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
                 <div className="flex flex-col p-3 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                   <span className="theme-label mb-1 text-muted flex items-center gap-1">
-                    <Server className="w-3 h-3 text-purple-500" /> {requirement.scope === 'INFRA' ? 'Affected Asset' : 'System'}
+                    <Server className="w-3 h-3 text-theme-icon" /> {requirement.scope === 'INFRA' ? 'Affected Asset' : 'System'}
                   </span>
                   <span className="theme-data-value text-foreground truncate" title={requirement.scope === 'INFRA' ? (assetName || snap.assetId || '-') : (requirement.software_system?.name || snap.system || '-')}>
                     {requirement.scope === 'INFRA' ? (assetName || snap.assetId || '-') : (requirement.software_system?.name || snap.system || '-')}
@@ -1318,7 +1318,7 @@ const RequirementAnalyzePageContent = ({ params }: { params: Promise<{ id: strin
 
                 <div className="flex flex-col p-3 rounded-xl bg-surface/80 dark:bg-elevated/40 border border-border/50 hover:border-border/80 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                   <span className="theme-label mb-1 text-muted flex items-center gap-1">
-                    <FileText className="w-3 h-3 text-cyan-500" /> Submodule
+                    <FileText className="w-3 h-3 text-theme-icon" /> Submodule
                   </span>
                   <span className="theme-data-value text-foreground truncate" title={requirement.sub_module?.name || snap.submodule || '-'}>{requirement.sub_module?.name || snap.submodule || '-'}</span>
                 </div>

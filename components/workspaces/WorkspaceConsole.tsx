@@ -34,7 +34,7 @@ export function WorkspaceGrid({ workspaces }: { workspaces: any[] }) {
               <span>Members:</span>
               <span className="text-muted font-medium">{ws.members?.length || 0}</span>
             </div>
-            <AppButton variant="ghost" size="sm" className="h-auto p-0 text-theme-icon hover:text-indigo-300 font-medium text-xs">
+            <AppButton variant="ghost" size="sm" className="h-auto p-0 text-theme-icon hover:text-muted-foreground font-medium text-xs">
               Enter Workspace <ArrowRight className="h-3 w-3 ml-1" />
             </AppButton>
           </div>

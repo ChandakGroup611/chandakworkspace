@@ -333,7 +333,7 @@ export default function RequirementAnalysisModal({ requirement, masters, onClose
             {/* Infrastructure Conditional Section */}
             {formData.requirement_domain === "Infrastructure & Hardware" && (
               <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
-                <h3 className={`theme-label flex items-center gap-2 pb-2 border-b text-indigo-700 border-border`}>
+                <h3 className={`theme-label flex items-center gap-2 pb-2 border-b text-foreground border-border`}>
                   <Server className="h-4 w-4" /> Infrastructure Scope
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

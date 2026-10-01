@@ -170,7 +170,7 @@ export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
                     <Paperclip className="h-5 w-5 text-subtle" />
                   </div>
                   <p className="text-xs text-subtle">No diagnostic files attached</p>
-                  <AppButton variant="ghost" size="sm" className="text-xs text-theme-icon hover:text-indigo-300 hover:bg-surface/5">
+                  <AppButton variant="ghost" size="sm" className="text-xs text-theme-icon hover:text-muted-foreground hover:bg-surface/5">
                     Upload File
                   </AppButton>
                 </div>

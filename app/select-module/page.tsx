@@ -221,7 +221,7 @@ export default function SelectModulePage() {
         return {
           icon: Layers,
           gradient: "from-purple-500/15 via-pink-500/5 to-transparent",
-          badgeBg: "bg-purple-100 dark:bg-purple-500/20 text-purple-800 dark:text-purple-200 border-purple-300 dark:border-purple-500/30",
+          badgeBg: "bg-purple-100 dark:bg-surface text-purple-800 dark:text-purple-200 border-border dark:border-border",
           accentColor: "#8B5CF6",
           badge: "Workspace",
           launchLabel: "Enter Module",

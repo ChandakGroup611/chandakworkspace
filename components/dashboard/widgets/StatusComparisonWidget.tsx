@@ -60,7 +60,7 @@ export function StatusComparisonWidget({ kpis }: StatusComparisonWidgetProps) {
       id="status-comp"
       title="Status Trends" 
       subtitle="Monthly status-wise breakdown" 
-      icon={<BarChart3 className="w-5 h-5 text-purple-500" />}
+      icon={<BarChart3 className="w-5 h-5 text-theme-icon" />}
       collapsible={true}
       overflowHidden
     >

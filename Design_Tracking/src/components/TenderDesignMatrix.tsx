@@ -704,7 +704,7 @@ export const TenderDesignMatrix: React.FC = () => {
               className="h-9 px-3 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
               title="View live audit trail and mail notification logs"
             >
-              <History className="h-3.5 w-3.5 text-purple-500" />
+              <History className="h-3.5 w-3.5 text-theme-icon" />
               <span>Audit Trail ({storeState.auditLogs?.length || 0})</span>
             </button>
 
@@ -866,7 +866,7 @@ export const TenderDesignMatrix: React.FC = () => {
             {selectedConsultants.map(cName => (
               <span
                 key={`cons-${cName}`}
-                className="px-2 py-0.5 rounded-lg bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/30 text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
+                className="px-2 py-0.5 rounded-lg bg-surface text-foreground dark:text-muted-foreground border border-border text-[11px] font-semibold inline-flex items-center gap-1 shadow-2xs"
               >
                 <Users className="h-2.5 w-2.5" />
                 <span>{cName}</span>
@@ -1043,7 +1043,7 @@ export const TenderDesignMatrix: React.FC = () => {
                         inspectorTab === "AUDIT" ? "bg-surface text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
                       )}
                     >
-                      <History className="h-3.5 w-3.5 text-purple-500" />
+                      <History className="h-3.5 w-3.5 text-theme-icon" />
                       <span>Audit Trail</span>
                     </button>
                   </div>
@@ -1153,13 +1153,13 @@ export const TenderDesignMatrix: React.FC = () => {
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                      <Users className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                      <Users className="h-4 w-4 text-theme-icon dark:text-muted-foreground" />
                       <span>Designated Consultant Partner</span>
                     </label>
                     <button
                       type="button"
                       onClick={() => setIsReassigningConsultant(!isReassigningConsultant)}
-                      className="h-6 px-2.5 rounded-lg border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 text-[10px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                      className="h-6 px-2.5 rounded-lg border border-border bg-surface hover:bg-surface text-foreground dark:text-muted-foreground text-[10px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
                     >
                       {isReassigningConsultant ? "Keep Designated Partner" : "Change / Reassign"}
                     </button>
@@ -1167,7 +1167,7 @@ export const TenderDesignMatrix: React.FC = () => {
 
                   {/* Highlighted Established Consultant Partner Card */}
                   {resolvedCellConsultant ? (
-                    <div className="p-4 rounded-2xl bg-purple-500/10 border border-purple-500/25 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                    <div className="p-4 rounded-2xl bg-surface border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="h-10 w-10 rounded-xl bg-purple-600 text-white flex items-center justify-center font-black text-sm shrink-0 shadow-xs">
                           {resolvedCellConsultant.name?.charAt(0) || "C"}
@@ -1177,7 +1177,7 @@ export const TenderDesignMatrix: React.FC = () => {
                             <span className="text-xs font-bold text-foreground truncate">
                               {resolvedCellConsultant.name}
                             </span>
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/30">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-surface text-foreground dark:text-muted-foreground border border-border">
                               {resolvedCellConsultant.category || activeCell.pkg.disciplineName}
                             </span>
                           </div>
@@ -1202,7 +1202,7 @@ export const TenderDesignMatrix: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setIsReassigningConsultant(true)}
-                        className="h-6 px-2.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-[10px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                        className="h-6 px-2.5 rounded-lg bg-theme-btn-primary hover:opacity-90 text-white text-[10px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
                       >
                         + Assign Partner
                       </button>
@@ -1313,10 +1313,10 @@ export const TenderDesignMatrix: React.FC = () => {
         <WorkingDocumentLayout
           title="Master Design Matrix: Audit Trail & Mail Dispatch Ledger"
           badge={filteredAuditLogs.length + " Records"}
-          badgeColor="bg-purple-500/10 text-purple-600 border border-purple-500/30"
+          badgeColor="bg-surface text-theme-icon border border-border"
           category="Audit & Compliance"
           icon={History}
-          iconBg="bg-purple-500/10 text-purple-600 dark:text-purple-400"
+          iconBg="bg-surface text-theme-icon dark:text-muted-foreground"
           description="Immutable revision history of deliverable dates, status modifications, and email notices."
           breadcrumbs={[
             { label: "Design Tracking Desk" },
@@ -1355,7 +1355,7 @@ export const TenderDesignMatrix: React.FC = () => {
                 </div>
               ) : (
                 filteredAuditLogs.map(log => (
-                  <div key={log.id} className="p-4 rounded-2xl border border-border bg-surface shadow-2xs space-y-2.5 text-xs hover:border-purple-500/30 transition-all">
+                  <div key={log.id} className="p-4 rounded-2xl border border-border bg-surface shadow-2xs space-y-2.5 text-xs hover:border-theme-btn-primary/30 transition-all">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-bold text-foreground text-sm">{log.projectName}</span>
@@ -1386,7 +1386,7 @@ export const TenderDesignMatrix: React.FC = () => {
                       </div>
                       <div>
                         <span className="text-muted-foreground block text-[10px]">Consultant:</span>
-                        <strong className="text-purple-600 dark:text-purple-400">{log.consultantName || "Not tagged"}</strong>
+                        <strong className="text-theme-icon dark:text-muted-foreground">{log.consultantName || "Not tagged"}</strong>
                       </div>
                       <div>
                         <span className="text-muted-foreground block text-[10px]">Changed By:</span>
@@ -1529,7 +1529,7 @@ export const TenderDesignMatrix: React.FC = () => {
               <div className="space-y-2 pt-2 border-t border-border">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
                   <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                    <Layers className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                    <Layers className="h-4 w-4 text-theme-icon dark:text-muted-foreground" />
                     <span>Target Wings & Sub-Projects (Line Item Selection)</span>
                   </label>
                   <div className="flex items-center gap-2 text-[11px]">
@@ -1625,7 +1625,7 @@ export const TenderDesignMatrix: React.FC = () => {
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <span className="font-bold text-xs text-foreground">{twr.towerName}</span>
                                   {twr.isSubProjectTower && (
-                                    <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/20">
+                                    <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-surface text-foreground dark:text-muted-foreground border border-border">
                                       🏙️ {twr.subProjectName || "Sub-Project"}
                                     </span>
                                   )}
@@ -1647,7 +1647,7 @@ export const TenderDesignMatrix: React.FC = () => {
                             <div className="shrink-0 flex items-center gap-2">
                               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md transition-colors ${
                                 isChecked 
-                                  ? "bg-teal-600/20 text-teal-700 dark:text-teal-300 border border-teal-500/30" 
+                                  ? "bg-teal-600/20 text-teal-700 dark:text-teal-300 border border-border" 
                                   : "bg-muted text-muted-foreground border border-border"
                               }`}>
                                 {isChecked ? "Included" : "Excluded"}
@@ -1664,7 +1664,7 @@ export const TenderDesignMatrix: React.FC = () => {
               <div className="space-y-1.5 pt-1">
                 <label className="text-xs font-semibold text-foreground flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
-                    <ShieldCheck className="h-3.5 w-3.5 text-purple-500" />
+                    <ShieldCheck className="h-3.5 w-3.5 text-theme-icon" />
                     <span>Assign Consultant Partner</span>
                   </span>
                   <span className="text-[10px] text-muted-foreground">Optional</span>

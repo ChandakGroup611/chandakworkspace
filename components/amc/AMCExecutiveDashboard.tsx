@@ -391,7 +391,7 @@ export function AMCExecutiveDashboard({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold text-muted uppercase tracking-wider">Active Subscriptions</span>
-              <div className="p-2 rounded-xl bg-purple-500/10 text-purple-500 border border-purple-500/20">
+              <div className="p-2 rounded-xl bg-surface text-theme-icon border border-border">
                 <Layers className="h-4 w-4" />
               </div>
             </div>
@@ -401,7 +401,7 @@ export function AMCExecutiveDashboard({
           </div>
           <div className="pt-3 mt-3 border-t border-border/50 text-[11px] text-muted flex items-center justify-between">
             <span>In Onboarding: {kpiData.implementationCount}</span>
-            <span className="font-semibold text-purple-400">Operational</span>
+            <span className="font-semibold text-muted-foreground">Operational</span>
           </div>
         </AppCard>
 

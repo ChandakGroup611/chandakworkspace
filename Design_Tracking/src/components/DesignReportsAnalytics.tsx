@@ -146,12 +146,12 @@ export const DesignReportsAnalytics: React.FC<DesignReportsAnalyticsProps> = ({
         <div className="p-4 sm:p-5 rounded-2xl bg-surface border border-border flex flex-col justify-between shadow-xs">
           <div className="flex items-center justify-between text-xs font-bold text-muted-foreground">
             <span>Empanelled Partners</span>
-            <div className="h-7 w-7 rounded-lg bg-purple-500/10 text-purple-500 flex items-center justify-center">
+            <div className="h-7 w-7 rounded-lg bg-surface text-theme-icon flex items-center justify-center">
               <Users className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-3">
-            <h3 className="text-2xl sm:text-3xl font-black text-purple-500">{consultants.length}</h3>
+            <h3 className="text-2xl sm:text-3xl font-black text-theme-icon">{consultants.length}</h3>
             <span className="text-[11px] text-muted-foreground">Specialist firms engaged</span>
           </div>
         </div>

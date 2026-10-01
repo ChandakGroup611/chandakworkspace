@@ -182,7 +182,7 @@ export function TransmittalManager() {
     FOR_TENDER_BIDDING: { label: "FOR TENDER / PRICING", color: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20" },
     FOR_REVIEW_APPROVAL: { label: "FOR REVIEW & COMMENTS", color: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20" },
     FOR_INFORMATION: { label: "FOR INFORMATION ONLY", color: "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20" },
-    AS_BUILT_RECORD: { label: "AS-BUILT ARCHIVE", color: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20" }
+    AS_BUILT_RECORD: { label: "AS-BUILT ARCHIVE", color: "bg-surface text-foreground border-border" }
   };
 
   return (

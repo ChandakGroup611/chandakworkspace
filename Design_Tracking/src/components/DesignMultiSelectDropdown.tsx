@@ -115,11 +115,11 @@ export const DesignMultiSelectDropdown: React.FC<DesignMultiSelectDropdownProps>
         };
       case "purple":
         return {
-          icon: "text-purple-500",
-          activeBg: "bg-purple-500/10 border-purple-500/30 text-purple-700 dark:text-purple-300",
+          icon: "text-theme-icon",
+          activeBg: "bg-surface border-border text-foreground dark:text-muted-foreground",
           badge: "bg-purple-600 text-white",
-          checkbox: "text-purple-600",
-          itemActive: "bg-purple-50 dark:bg-purple-950/30 text-purple-900 dark:text-purple-100 font-semibold"
+          checkbox: "text-theme-icon",
+          itemActive: "bg-surface dark:bg-surface text-purple-900 dark:text-purple-100 font-semibold"
         };
       case "amber":
         return {
@@ -132,7 +132,7 @@ export const DesignMultiSelectDropdown: React.FC<DesignMultiSelectDropdownProps>
       case "teal":
         return {
           icon: "text-teal-500",
-          activeBg: "bg-teal-500/10 border-teal-500/30 text-teal-700 dark:text-teal-300",
+          activeBg: "bg-teal-500/10 border-border text-teal-700 dark:text-teal-300",
           badge: "bg-teal-600 text-white",
           checkbox: "text-teal-600",
           itemActive: "bg-teal-50 dark:bg-teal-950/30 text-teal-900 dark:text-teal-100 font-semibold"

@@ -255,7 +255,7 @@ export default function MigrationClient() {
               <div className="p-4 bg-theme-btn-primary/5 border border-theme-btn-primary/20 rounded-xl space-y-4 animate-in fade-in slide-in-from-top-2">
                 <div className="flex items-start gap-2 mb-2">
                   <Database className="w-4 h-4 text-theme-icon mt-0.5" />
-                  <p className="text-xs text-indigo-300 leading-relaxed">
+                  <p className="text-xs text-muted-foreground leading-relaxed">
                     Task imports require a destination context. The template will automatically restrict the 'Assignee' and 'Watchers' fields to the users who have access to this context.
                   </p>
                 </div>
@@ -353,7 +353,7 @@ export default function MigrationClient() {
                {isUploading ? (
                  <>
                    <Loader2 className="w-10 h-10 text-theme-icon mb-3 animate-spin" />
-                   <h3 className="text-sm font-semibold text-indigo-300 mb-1">Processing Excel File...</h3>
+                   <h3 className="text-sm font-semibold text-muted-foreground mb-1">Processing Excel File...</h3>
                    <p className="text-xs text-theme-icon/70">Please do not close this page.</p>
                  </>
                ) : (

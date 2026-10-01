@@ -224,9 +224,9 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
             <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 sm:pb-0 text-xs">
               {[
                 { id: "PROJECTS" as MasterSubTab, label: "Projects", icon: Building2, count: parentProjects.length, color: "text-emerald-600" },
-                { id: "SUB_PROJECTS" as MasterSubTab, label: "Sub-Projects / Wings", icon: FolderTree, count: storeState.towers.length, color: "text-purple-600" },
+                { id: "SUB_PROJECTS" as MasterSubTab, label: "Sub-Projects / Wings", icon: FolderTree, count: storeState.towers.length, color: "text-theme-icon" },
                 { id: "CONSULTANTS" as MasterSubTab, label: "Consultants", icon: Users, count: storeState.consultants.length, color: "text-blue-600" },
-                { id: "PACKAGES" as MasterSubTab, label: "Package Master", icon: Tag, count: categories.length, color: "text-indigo-600" },
+                { id: "PACKAGES" as MasterSubTab, label: "Package Master", icon: Tag, count: categories.length, color: "text-theme-icon" },
                 { id: "SUB_PACKAGES" as MasterSubTab, label: "Sub-Packages", icon: Layers, count: storeState.packages.length, color: "text-teal-600" },
                 { id: "AUTHORITIES" as MasterSubTab, label: "Authorities", icon: ShieldCheck, count: storeState.authorities.length, color: "text-amber-600" },
                 { id: "TEMPLATES" as MasterSubTab, label: "Templates & Backup", icon: FileSpreadsheet, color: "text-slate-600" }
@@ -480,13 +480,13 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                 }}
                 className="px-3.5 py-1.5 rounded-xl border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground text-xs font-bold inline-flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all shrink-0 whitespace-nowrap"
               >
-                <Upload className="h-3.5 w-3.5 text-purple-600" />
+                <Upload className="h-3.5 w-3.5 text-theme-icon" />
                 <span>Import Authorities (Excel)</span>
               </button>
               <button
                 type="button"
                 onClick={() => setIsNewAuthorityModalOpen(true)}
-                className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
+                className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-surface0 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span>Add Authority</span>
@@ -498,10 +498,10 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
             {storeState.authorities.map(auth => (
               <div
                 key={auth.id}
-                className="p-3.5 rounded-xl border border-border bg-surface hover:border-purple-500/40 shadow-xs transition-all flex items-start justify-between gap-3"
+                className="p-3.5 rounded-xl border border-border bg-surface hover:border-theme-btn-primary/40 shadow-xs transition-all flex items-start justify-between gap-3"
               >
                 <div className="space-y-1 min-w-0">
-                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20">
+                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-surface text-foreground dark:text-muted-foreground border border-border">
                     {auth.category}
                   </span>
                   <h5 className="text-xs font-bold text-foreground truncate">{auth.authorityName}</h5>
@@ -750,7 +750,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
           title="Add Statutory Authority"
           category="Statutory Authority Directory"
           icon={ShieldCheck}
-          iconBg="bg-purple-500/10 text-purple-600 dark:text-purple-400"
+          iconBg="bg-surface text-theme-icon dark:text-muted-foreground"
           description="Register civic, municipal, or regulatory authority for compliance and NOC tracking."
           breadcrumbs={[
             { label: "Design Desk" },

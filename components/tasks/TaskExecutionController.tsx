@@ -1047,7 +1047,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
               {/* 6. Duration */}
               <div className="flex flex-col space-y-1 p-3 rounded-xl border border-border/70 bg-surface/80 dark:bg-elevated/40 hover:border-theme-btn-primary/40 transition-all min-h-[76px] justify-center">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-muted flex items-center gap-1.5">
-                  <Hourglass className="w-3.5 h-3.5 text-cyan-500" /> <span className="text-cyan-600 dark:text-cyan-400 font-bold">Duration</span>
+                  <Hourglass className="w-3.5 h-3.5 text-theme-icon" /> <span className="text-theme-icon dark:text-muted-foreground font-bold">Duration</span>
                 </span>
                 <div className="text-sm font-semibold text-foreground h-9 flex items-center">
                   {canEditDates ? (
