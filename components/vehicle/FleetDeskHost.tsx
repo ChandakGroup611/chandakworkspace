@@ -840,6 +840,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
   // Modal Dialog States
   const [isEditVehicleOpen, setIsEditVehicleOpen] = useState(false);
+  const [editVehicleSectionTab, setEditVehicleSectionTab] = useState<"SPECS" | "REGISTRATION" | "FINANCIALS" | "ALLOCATION" | "DOCS">("SPECS");
   const [selectedVehicleForEdit, setSelectedVehicleForEdit] = useState<VehicleRecord | null>(null);
 
   const [isAddDriverOpen, setIsAddDriverOpen] = useState(false);
@@ -4056,6 +4057,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         setEditVehicleDocs(res.documents);
       }
     }).catch((err) => console.error("Error fetching vehicle edit docs:", err));
+    setEditVehicleSectionTab("SPECS");
     setIsEditVehicleOpen(true);
   };
 
@@ -12441,7 +12443,64 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           }
         >
           <div className="space-y-6">
-              {/* SECTION 1: REGISTRATION & VEHICLE SPECS */}
+            {/* Edit Vehicle Domain Section Tabs */}
+            <div className="flex items-center gap-1.5 overflow-x-auto p-1 bg-elevated/60 border border-border rounded-xl">
+              <AppButton
+                type="button"
+                variant={editVehicleSectionTab === "SPECS" ? "primary" : "ghost"}
+                size="sm"
+                onClick={() => setEditVehicleSectionTab("SPECS")}
+                leftIcon={<Car className="h-3.5 w-3.5" />}
+                className="h-8 text-xs font-semibold whitespace-nowrap"
+              >
+                Identity & Specs
+              </AppButton>
+              <AppButton
+                type="button"
+                variant={editVehicleSectionTab === "REGISTRATION" ? "primary" : "ghost"}
+                size="sm"
+                onClick={() => setEditVehicleSectionTab("REGISTRATION")}
+                leftIcon={<Building2 className="h-3.5 w-3.5" />}
+                className="h-8 text-xs font-semibold whitespace-nowrap"
+              >
+                Registration & RTO
+              </AppButton>
+              <AppButton
+                type="button"
+                variant={editVehicleSectionTab === "FINANCIALS" ? "primary" : "ghost"}
+                size="sm"
+                onClick={() => setEditVehicleSectionTab("FINANCIALS")}
+                leftIcon={<IndianRupee className="h-3.5 w-3.5" />}
+                className="h-8 text-xs font-semibold whitespace-nowrap"
+              >
+                Valuation & Financials
+              </AppButton>
+              <AppButton
+                type="button"
+                variant={editVehicleSectionTab === "ALLOCATION" ? "primary" : "ghost"}
+                size="sm"
+                onClick={() => setEditVehicleSectionTab("ALLOCATION")}
+                leftIcon={<Users className="h-3.5 w-3.5" />}
+                className="h-8 text-xs font-semibold whitespace-nowrap"
+              >
+                Duty & Allocation
+              </AppButton>
+              <AppButton
+                type="button"
+                variant={editVehicleSectionTab === "DOCS" ? "primary" : "ghost"}
+                size="sm"
+                onClick={() => setEditVehicleSectionTab("DOCS")}
+                leftIcon={<FileCheck className="h-3.5 w-3.5" />}
+                className="h-8 text-xs font-semibold whitespace-nowrap"
+              >
+                Compliance & Docs ({editVehicleDocs.length})
+              </AppButton>
+            </div>
+
+            {/* TAB 1: IDENTITY & SPECS */}
+            {editVehicleSectionTab === "SPECS" && (
+              <div className="space-y-4 animate-in fade-in-50 duration-200">
+                              {/* SECTION 1: REGISTRATION & VEHICLE SPECS */}
               <div className="rounded-xl border border-border bg-slate-50/70 dark:bg-slate-900/50 p-4 space-y-3.5">
                 <div className="flex items-center gap-2 pb-2 border-b border-border/60 text-foreground font-semibold text-xs">
                   <Car className="h-4 w-4 text-blue-500" />
@@ -12791,7 +12850,13 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 </div>
               </div>
 
-              {/* SECTION 2: CHASSIS, ENGINE & LEGAL OWNERSHIP */}
+              </div>
+            )}
+
+            {/* TAB 2: REGISTRATION & RTO */}
+            {editVehicleSectionTab === "REGISTRATION" && (
+              <div className="space-y-4 animate-in fade-in-50 duration-200">
+                              {/* SECTION 2: CHASSIS, ENGINE & LEGAL OWNERSHIP */}
               <div className="rounded-xl border border-border bg-slate-50/70 dark:bg-slate-900/50 p-4 space-y-3.5">
                 <div className="flex items-center gap-2 pb-2 border-b border-border/60 text-foreground font-semibold text-xs">
                   <Building2 className="h-4 w-4 text-blue-500" />
@@ -12872,7 +12937,15 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   </div>
                 </div>
 
-                {/* VEHICLE PRICING & ON-ROAD BREAKDOWN */}
+              </div>
+              </div>
+            )}
+
+            {/* TAB 3: FINANCIALS & VALUATION */}
+            {editVehicleSectionTab === "FINANCIALS" && (
+              <div className="space-y-4 animate-in fade-in-50 duration-200">
+                <div className="rounded-xl border border-border bg-slate-50/70 dark:bg-slate-900/50 p-4 space-y-3.5">
+                                  {/* VEHICLE PRICING & ON-ROAD BREAKDOWN */}
                 <div className="pt-2">
                   <div className="rounded-xl border border-emerald-500/30 bg-emerald-50/30 dark:bg-emerald-950/10 p-3.5 space-y-3.5">
                     <div className="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-emerald-500/20">
@@ -13214,8 +13287,77 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   </div>
                 </div>
               </div>
+            </div>
+            )}
 
-              {/* SECTION 3: STATUTORY COMPLIANCE & VALIDITY */}
+            {/* TAB 4: ALLOCATION */}
+            {editVehicleSectionTab === "ALLOCATION" && (
+              <div className="space-y-4 animate-in fade-in-50 duration-200">
+                              {/* SECTION 4: FLEET OPERATIONS & DRIVER */}
+              <div className="rounded-xl border border-border bg-slate-50/70 dark:bg-slate-900/50 p-4 space-y-3.5">
+                <div className="flex items-center gap-2 pb-2 border-b border-border/60 text-foreground font-semibold text-xs">
+                  <Gauge className="h-4 w-4 text-amber-500" />
+                  <span>Operations & Driver</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-semibold block mb-1">Fleet Operational Status</label>
+                    <select 
+                      value={editVehicleStatus}
+                      onChange={(e) => setEditVehicleStatus(e.target.value)}
+                      className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs font-semibold"
+                    >
+                      <option value="IN_STOCK">Available (In Stock)</option>
+                      <option value="IN_SERVICE">On Route / In Service</option>
+                      <option value="MAINTENANCE">In Workshop / Maintenance</option>
+                      <option value="RESERVED">Reserved</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1 flex items-center gap-1">
+                      <Gauge className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span>Current Odometer (km)</span>
+                    </label>
+                    <AppInput 
+                      type="number" 
+                      value={editVehicleOdometer || ""} 
+                      onChange={(e) => setEditVehicleOdometer(e.target.value === "" ? 0 : Number(e.target.value) || 0)} 
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-semibold block mb-1">Fleet Nickname / Tag</label>
+                    <AppInput 
+                      value={editVehicleNickname} 
+                      onChange={(e) => setEditVehicleNickname(e.target.value)} 
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1">Assigned Driver</label>
+                    <select 
+                      value={editVehicleDriverId}
+                      onChange={(e) => setEditVehicleDriverId(e.target.value)}
+                      className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs"
+                    >
+                      <option value="">-- No Driver Assigned --</option>
+                      {drivers.map(d => (
+                        <option key={d.id} value={d.id}>{d.full_name} ({d.phone})</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              </div>
+            )}
+
+            {/* TAB 5: COMPLIANCE & DOCS */}
+            {editVehicleSectionTab === "DOCS" && (
+              <div className="space-y-4 animate-in fade-in-50 duration-200">
+                              {/* SECTION 3: STATUTORY COMPLIANCE & VALIDITY */}
               <div className="rounded-xl border border-border bg-slate-50/70 dark:bg-slate-900/50 p-4 space-y-3.5">
                 <div className="flex items-center gap-2 pb-2 border-b border-border/60 text-foreground font-semibold text-xs">
                   <ShieldCheck className="h-4 w-4 text-emerald-500" />
@@ -13374,65 +13516,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 </div>
               </div>
 
-              {/* SECTION 4: FLEET OPERATIONS & DRIVER */}
-              <div className="rounded-xl border border-border bg-slate-50/70 dark:bg-slate-900/50 p-4 space-y-3.5">
-                <div className="flex items-center gap-2 pb-2 border-b border-border/60 text-foreground font-semibold text-xs">
-                  <Gauge className="h-4 w-4 text-amber-500" />
-                  <span>Operations & Driver</span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="font-semibold block mb-1">Fleet Operational Status</label>
-                    <select 
-                      value={editVehicleStatus}
-                      onChange={(e) => setEditVehicleStatus(e.target.value)}
-                      className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs font-semibold"
-                    >
-                      <option value="IN_STOCK">Available (In Stock)</option>
-                      <option value="IN_SERVICE">On Route / In Service</option>
-                      <option value="MAINTENANCE">In Workshop / Maintenance</option>
-                      <option value="RESERVED">Reserved</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="font-semibold block mb-1 flex items-center gap-1">
-                      <Gauge className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span>Current Odometer (km)</span>
-                    </label>
-                    <AppInput 
-                      type="number" 
-                      value={editVehicleOdometer || ""} 
-                      onChange={(e) => setEditVehicleOdometer(e.target.value === "" ? 0 : Number(e.target.value) || 0)} 
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="font-semibold block mb-1">Fleet Nickname / Tag</label>
-                    <AppInput 
-                      value={editVehicleNickname} 
-                      onChange={(e) => setEditVehicleNickname(e.target.value)} 
-                    />
-                  </div>
-                  <div>
-                    <label className="font-semibold block mb-1">Assigned Driver</label>
-                    <select 
-                      value={editVehicleDriverId}
-                      onChange={(e) => setEditVehicleDriverId(e.target.value)}
-                      className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs"
-                    >
-                      <option value="">-- No Driver Assigned --</option>
-                      {drivers.map(d => (
-                        <option key={d.id} value={d.id}>{d.full_name} ({d.phone})</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* SECTION 5: VEHICLE LEGAL & COMPLIANCE DOCUMENTS VAULT */}
+                              {/* SECTION 5: VEHICLE LEGAL & COMPLIANCE DOCUMENTS VAULT */}
               <div className="rounded-xl border border-border bg-slate-50/70 dark:bg-slate-900/50 p-4 space-y-3.5">
                 <div className="flex items-center justify-between pb-2 border-b border-border/60">
                   <div className="flex items-center gap-2 text-foreground font-semibold text-xs">
@@ -13651,6 +13735,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 )}
               </div>
 
+              </div>
+            )}
           </div>
         </TransactionFormLayout>
       )}
@@ -18699,7 +18785,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       {/* ---------------------------------------------------------------------- */}
       {/* 1. VIEW VEHICLE INSPECTOR MODAL */}
       {/* ---------------------------------------------------------------------- */}
-      {viewingVehicle && (
+      {viewingVehicle && !isEditVehicleOpen && !isAddMaintenanceOpen && !isEditMaintenanceOpen && !isDispatchTripOpen && !isAddPartOpen && !isEditPartOpen && !isRenewPartOpen && !isRenewPolicyModalOpen && !isPolicyHistoryModalOpen && !isRenewPucModalOpen && !isPucHistoryModalOpen && !isSpecHistoryModalOpen && !isAddEntitlementModalOpen && !isRedeemEntitlementModalOpen && !isAddDriverOpen && !isEditDriverOpen && (
         <WorkingDocumentLayout
           title={`Vehicle Master Dossier: ${viewingVehicle.registration_number}`}
           badge={viewingVehicle.status}
