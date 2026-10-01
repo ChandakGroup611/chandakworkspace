@@ -38,9 +38,6 @@ export default function LoginPage() {
   const [conflictData, setConflictData] = useState<{ user: any; destination: string } | null>(null);
 
   const resolvePostLoginDestination = async (rawNext?: string | null): Promise<string> => {
-    if (rawNext && rawNext !== "/" && !rawNext.includes("/login")) {
-      return rawNext;
-    }
     try {
       const res = await fetch("/api/modules", { cache: "no-store" });
       if (res.ok) {
@@ -51,11 +48,19 @@ export default function LoginPage() {
             VEHICLE_DESK: "/vehicle/dashboard",
             DESIGN_TRACKING: "/design/dashboard"
           };
-          return routeMap[data.defaultModule.code] || data.defaultModule.route_path || "/workspaces/tasks";
+          const dest = routeMap[data.defaultModule.code] || data.defaultModule.route_path || "/workspaces/tasks";
+          if (rawNext && rawNext !== "/" && !rawNext.includes("/login")) {
+            return rawNext;
+          }
+          return dest;
         }
       }
     } catch (e) {}
-    return "/workspaces/tasks";
+
+    if (rawNext && rawNext !== "/" && !rawNext.includes("/login") && !rawNext.includes("/select-module")) {
+      return `/select-module?next=${encodeURIComponent(rawNext)}`;
+    }
+    return "/select-module";
   };
 
   useEffect(() => {

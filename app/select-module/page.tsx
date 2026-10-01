@@ -157,6 +157,7 @@ export default function SelectModulePage() {
         }
       }
 
+      document.cookie = `active_module=${targetCode}; path=/; max-age=2592000; SameSite=Lax`;
       window.location.href = destination;
     } catch (err: any) {
       console.error("Error activating module:", err);
@@ -165,6 +166,7 @@ export default function SelectModulePage() {
         VEHICLE_DESK: "/vehicle/dashboard",
         DESIGN_TRACKING: "/design/dashboard"
       };
+      document.cookie = `active_module=${targetCode}; path=/; max-age=2592000; SameSite=Lax`;
       window.location.href = fallbackRoutes[targetCode] || "/workspaces/tasks";
     }
   };
