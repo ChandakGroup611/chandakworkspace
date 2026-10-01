@@ -6770,7 +6770,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${moduleMeta?.badgeColor || ""}`}>
                       {moduleMeta?.badge || "Fleet Operations"}
                     </span>
-                    <span className="text-xs text-muted-foreground font-medium hidden sm:inline">• {moduleMeta?.category || "Fleet Operations"}</span>
                   </div>
                   <h1 className="text-2xl font-bold tracking-tight text-foreground mt-0.5">
                     {moduleMeta?.title || "Enterprise Fleet Management Desk"}
@@ -6849,9 +6848,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <div>
                       <p className="text-xs font-semibold text-muted-foreground group-hover:text-foreground transition-colors">{kpi?.title}</p>
                       <h3 className="text-2xl font-bold mt-1 text-foreground group-hover:text-theme-btn-primary transition-colors">{kpi?.value}</h3>
-                      {kpi?.subtext && (
-                        <p className="text-[10px] text-muted-foreground mt-0.5">{kpi.subtext}</p>
-                      )}
                     </div>
                     <div className={`h-10 w-10 rounded-xl flex items-center justify-center border ${kpi?.iconBg || "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-border"} ${kpi?.iconColor || ""} group-hover:scale-110 transition-transform`}>
                       <IconComp className="h-5 w-5" />
@@ -8460,9 +8456,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     {stats.totalVehicles > 0 ? `${utilizationRate}% Active Utilization` : "Ready"}
                   </span>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Synchronized across {stats.totalVehicles} registered assets • {stats.activeDrivers} active roster drivers • {stats.onRouteVehicles} live transits
-                </p>
               </div>
             </div>
 
@@ -8519,9 +8512,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <h3 className="font-bold text-xs uppercase tracking-wider text-amber-800 dark:text-amber-300">
                       Compliance Radar Alert ({complianceAlerts.filter(a => a.status === "EXPIRED" || a.daysRemaining <= 15).length} Action Items)
                     </h3>
-                    <p className="text-[11px] text-muted-foreground">
-                      Statutory documents expired or due for mandatory renewal within 15 days
-                    </p>
                   </div>
                 </div>
                 <AppButton
