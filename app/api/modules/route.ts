@@ -90,12 +90,13 @@ export async function GET(request: NextRequest) {
     const allActive = fetchedModules && fetchedModules.length > 0 ? fetchedModules : DEFAULT_MODULES;
     const assignedModuleIds = new Set(userAssignments.map(a => a.module_id));
     const defaultAssignment = userAssignments.find(a => a.is_default);
+    const hasExplicitDefault = !!defaultAssignment;
 
     let allowedModules = allActive
       .filter(m => isAdmin || assignedModuleIds.size === 0 || assignedModuleIds.has(m.id) || assignedModuleIds.has(m.code))
       .map(m => ({
         ...m,
-        is_default: defaultAssignment ? (defaultAssignment.module_id === m.id || defaultAssignment.module_id === m.code) : m.code === "TASK_WORKFLOW"
+        is_default: defaultAssignment ? (defaultAssignment.module_id === m.id || defaultAssignment.module_id === m.code) : false
       }));
 
     if (allowedModules.length === 0) {
@@ -113,7 +114,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       modules: allowedModules,
-      defaultModule,
+      defaultModule: hasExplicitDefault ? defaultModule : null,
+      hasExplicitDefault,
       activeModuleCode,
       isAdmin,
       userFullName: userProfile?.full_name,
@@ -123,7 +125,8 @@ export async function GET(request: NextRequest) {
     console.error("[API /api/modules] GET error:", err);
     return NextResponse.json({
       modules: DEFAULT_MODULES,
-      defaultModule: DEFAULT_MODULES[0],
+      defaultModule: null,
+      hasExplicitDefault: false,
       activeModuleCode: "TASK_WORKFLOW",
       isAdmin: false
     });
@@ -143,9 +146,9 @@ export async function POST(request: NextRequest) {
       DESIGN_TRACKING: "/design/dashboard"
     };
 
-    const redirectUrl = routeMap[targetCode] || "/";
+    const redirectUrl = routeMap[targetCode] || "/workspaces/tasks";
 
-    // If setAsDefault is requested, attempt to save to database
+    // If setAsDefault is requested, save to database
     if (setAsDefault) {
       try {
         const supabase = createServerClient(
@@ -169,8 +172,34 @@ export async function POST(request: NextRequest) {
             .maybeSingle();
 
           if (mod?.id) {
-            await supabaseAdmin.from("user_modules").update({ is_default: false }).eq("user_id", user.id);
-            await supabaseAdmin.from("user_modules").update({ is_default: true }).eq("user_id", user.id).eq("module_id", mod.id);
+            // Reset existing defaults for this user
+            await supabaseAdmin
+              .from("user_modules")
+              .update({ is_default: false })
+              .eq("user_id", user.id);
+
+            // Check if record already exists
+            const { data: existing } = await supabaseAdmin
+              .from("user_modules")
+              .select("id")
+              .eq("user_id", user.id)
+              .eq("module_id", mod.id)
+              .maybeSingle();
+
+            if (existing?.id) {
+              await supabaseAdmin
+                .from("user_modules")
+                .update({ is_default: true })
+                .eq("id", existing.id);
+            } else {
+              await supabaseAdmin
+                .from("user_modules")
+                .insert({
+                  user_id: user.id,
+                  module_id: mod.id,
+                  is_default: true
+                });
+            }
           }
         }
       } catch (dbErr) {

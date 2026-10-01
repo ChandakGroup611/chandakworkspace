@@ -37,6 +37,27 @@ export default function LoginPage() {
   const [conflictModalOpen, setConflictModalOpen] = useState(false);
   const [conflictData, setConflictData] = useState<{ user: any; destination: string } | null>(null);
 
+  const resolvePostLoginDestination = async (rawNext?: string | null): Promise<string> => {
+    if (rawNext && rawNext !== "/" && !rawNext.includes("/login")) {
+      return rawNext;
+    }
+    try {
+      const res = await fetch("/api/modules", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.hasExplicitDefault && data.defaultModule?.route_path) {
+          const routeMap: Record<string, string> = {
+            TASK_WORKFLOW: "/workspaces/tasks",
+            VEHICLE_DESK: "/vehicle/dashboard",
+            DESIGN_TRACKING: "/design/dashboard"
+          };
+          return routeMap[data.defaultModule.code] || data.defaultModule.route_path || "/workspaces/tasks";
+        }
+      }
+    } catch (e) {}
+    return "/select-module";
+  };
+
   useEffect(() => {
     const checkSession = async () => {
       if (typeof window === "undefined") return;
@@ -67,7 +88,7 @@ export default function LoginPage() {
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
           if (event === "SIGNED_IN" && session) {
             const rawNext = searchParams.get("next");
-            const destination = rawNext && rawNext !== "/" ? rawNext : "/workspaces/tasks";
+            const destination = await resolvePostLoginDestination(rawNext);
             
             const currentToken = typeof window !== "undefined" ? localStorage.getItem("app_session_token") : null;
             const conflictRes = await checkActiveSessionConflict(session.user.id, currentToken || undefined);
@@ -143,7 +164,7 @@ export default function LoginPage() {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           const rawNext = searchParams.get("next");
-          const destination = rawNext && rawNext !== "/" ? rawNext : "/workspaces/tasks";
+          const destination = await resolvePostLoginDestination(rawNext);
           const isOAuthConflict = searchParams.get("oauth_conflict") === "1";
 
           const currentToken = typeof window !== "undefined" ? localStorage.getItem("app_session_token") : null;
@@ -214,7 +235,7 @@ export default function LoginPage() {
       if (data.user) {
         const searchParams = new URLSearchParams(window.location.search);
         const rawNext = searchParams.get("next");
-        const destination = rawNext && rawNext !== "/" ? rawNext : "/workspaces/tasks";
+        const destination = await resolvePostLoginDestination(rawNext);
 
         const currentToken = typeof window !== "undefined" ? localStorage.getItem("app_session_token") : null;
         const conflictRes = await checkActiveSessionConflict(data.user.id, currentToken || undefined);
@@ -242,12 +263,13 @@ export default function LoginPage() {
 
       const searchParams = new URLSearchParams(window.location.search);
       const rawNext = searchParams.get("next");
-      const next = rawNext && rawNext !== "/" ? rawNext : "/workspaces/tasks";
+      const next = rawNext && rawNext !== "/" ? rawNext : "/select-module";
 
       // Check if user is already authenticated before initiating SSO
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        window.location.href = next;
+        const destination = await resolvePostLoginDestination(rawNext);
+        window.location.href = destination;
         return;
       }
 

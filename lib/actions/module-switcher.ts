@@ -24,6 +24,7 @@ export interface ModuleInfo {
 export interface UserModulesResult {
   modules: ModuleInfo[];
   defaultModule: ModuleInfo | null;
+  hasExplicitDefault?: boolean;
   activeModuleCode: string | null;
   isAdmin: boolean;
   userFullName?: string;
