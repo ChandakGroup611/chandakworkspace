@@ -9,7 +9,7 @@ export const AppSkeleton = React.forwardRef<HTMLDivElement, AppSkeletonProps>(
       <div
         ref={ref}
         className={cn(
-          "animate-shimmer rounded-xl bg-surface/50 border border-border/30 transition-opacity duration-300",
+          "animate-pulse rounded-xl bg-slate-200/80 dark:bg-slate-800/80 border border-border/60 transition-opacity duration-300",
           className
         )}
         {...props}

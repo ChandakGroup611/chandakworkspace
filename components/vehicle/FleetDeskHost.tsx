@@ -169,14 +169,14 @@ import {
 } from "@/lib/actions/vehicle";
 
 export const MAINTENANCE_CATEGORIES = [
-  { id: "PERIODIC_SERVICE", label: "Scheduled Periodic Service", icon: "🔄", badge: "bg-blue-500/10 text-blue-600 border-blue-500/20" },
-  { id: "MECHANICAL", label: "Mechanical & Powertrain", icon: "⚙️", badge: "bg-amber-500/10 text-amber-600 border-amber-500/20" },
-  { id: "BRAKES_TYRES", label: "Brakes, Tyres & Alignment", icon: "🛞", badge: "bg-rose-500/10 text-rose-600 border-rose-500/20" },
+  { id: "PERIODIC_SERVICE", label: "Scheduled Periodic Service", icon: "🔄", badge: "bg-surface text-foreground border-border" },
+  { id: "MECHANICAL", label: "Mechanical & Powertrain", icon: "⚙️", badge: "bg-surface text-foreground border-border" },
+  { id: "BRAKES_TYRES", label: "Brakes, Tyres & Alignment", icon: "🛞", badge: "bg-surface text-foreground border-border" },
   { id: "ELECTRICAL", label: "Electrical, Battery & ECU", icon: "🔋", badge: "bg-surface text-foreground border-border" },
   { id: "AC_CLIMATE", label: "AC & Climate Control", icon: "❄️", badge: "bg-surface text-foreground border-border" },
   { id: "BODY_PAINT", label: "Body Denting & Painting", icon: "🎨", badge: "bg-surface text-foreground border-border" },
-  { id: "EMERGENCY_BREAKDOWN", label: "Emergency Breakdown", icon: "🚨", badge: "bg-red-500/10 text-red-600 border-red-500/20" },
-  { id: "DETAILING_WASH", label: "Detailing & Foam Wash", icon: "🧼", badge: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" }
+  { id: "EMERGENCY_BREAKDOWN", label: "Emergency Breakdown", icon: "🚨", badge: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20" },
+  { id: "DETAILING_WASH", label: "Detailing & Foam Wash", icon: "🧼", badge: "bg-surface text-foreground border-border" }
 ];
 
 export const SERVICE_PRESETS = [
@@ -203,14 +203,14 @@ export const CHECKLIST_ITEMS = [
 ];
 
 export const VEHICLE_DOC_TYPES = [
-  { value: "PUC", label: "PUC Certificate", badgeColor: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25" },
-  { value: "INSURANCE", label: "Insurance Policy & Cover Note", badgeColor: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/25" },
-  { value: "RC", label: "RC Book (Smart Card)", badgeColor: "bg-surface text-theme-icon dark:text-muted-foreground border-border" },
-  { value: "FITNESS", label: "Fitness Certificate", badgeColor: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25" },
-  { value: "PERMIT", label: "Commercial / Tourist Permit", badgeColor: "bg-surface text-theme-icon dark:text-muted-foreground border-border" },
-  { value: "ROAD_TAX", label: "Road Tax Receipt", badgeColor: "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/25" },
-  { value: "INVOICE", label: "Purchase Invoice & OEM Bill", badgeColor: "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/25" },
-  { value: "OTHER", label: "Other Legal / Transport Document", badgeColor: "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/25" }
+  { value: "PUC", label: "PUC Certificate", badgeColor: "bg-surface text-foreground border-border" },
+  { value: "INSURANCE", label: "Insurance Policy & Cover Note", badgeColor: "bg-surface text-foreground border-border" },
+  { value: "RC", label: "RC Book (Smart Card)", badgeColor: "bg-surface text-foreground border-border" },
+  { value: "FITNESS", label: "Fitness Certificate", badgeColor: "bg-surface text-foreground border-border" },
+  { value: "PERMIT", label: "Commercial / Tourist Permit", badgeColor: "bg-surface text-foreground border-border" },
+  { value: "ROAD_TAX", label: "Road Tax Receipt", badgeColor: "bg-surface text-foreground border-border" },
+  { value: "INVOICE", label: "Purchase Invoice & OEM Bill", badgeColor: "bg-surface text-foreground border-border" },
+  { value: "OTHER", label: "Other Legal / Transport Document", badgeColor: "bg-surface text-foreground border-border" }
 ];
 
 export interface AggregatedVehicleDoc {
@@ -449,7 +449,7 @@ function TransactionFormLayout({
             ))}
           </div>
           <div className="flex items-center gap-3 pt-1">
-            <div className={`h-11 w-11 rounded-xl flex items-center justify-center border shrink-0 ${iconBg || "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"}`}>
+            <div className={`h-11 w-11 rounded-xl flex items-center justify-center border shrink-0 ${iconBg || "bg-theme-btn-primary/10 text-theme-btn-primary border-theme-btn-primary/20"}`}>
               <Icon className="h-6 w-6" />
             </div>
             <div>
@@ -656,7 +656,7 @@ function WorkingDocumentLayout({
 
           {/* Title + Icon + Badge */}
           <div className="flex items-center gap-3">
-            <div className={`h-11 w-11 rounded-xl flex items-center justify-center border shrink-0 shadow-2xs ${iconBg || "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"}`}>
+            <div className={`h-11 w-11 rounded-xl flex items-center justify-center border shrink-0 shadow-2xs ${iconBg || "bg-theme-btn-primary/10 text-theme-btn-primary border-theme-btn-primary/20"}`}>
               <Icon className="h-6 w-6" />
             </div>
             <div className="min-w-0">
@@ -6809,45 +6809,12 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
   if (loading) {
     return (
-      <div className="w-full flex-1 flex flex-col space-y-6 min-w-0 animate-in fade-in duration-300">
-        {/* Top Header Skeleton */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/50 pb-6">
-          <div className="flex items-center gap-3">
-            <AppSkeleton className="h-11 w-11 rounded-xl" />
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <AppSkeleton className="h-4 w-24 rounded-full" />
-                <AppSkeleton className="h-4 w-32 rounded" />
-              </div>
-              <AppSkeleton className="h-7 w-64 rounded-lg" />
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <AppSkeleton className="h-9 w-24 rounded-lg" />
-            <AppSkeleton className="h-9 w-28 rounded-lg" />
-          </div>
-        </div>
-
-        {/* Dynamic Bento KPI Cards Skeleton (4 Columns) */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <AppCardSkeleton key={i} />
-          ))}
-        </div>
-
-        {/* Table & Search Bar Skeleton */}
-        <AppCard className="border-border shadow-xs overflow-hidden">
-          <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <AppSkeleton className="h-6 w-48 rounded" />
-            <div className="flex items-center gap-2.5 w-full sm:w-auto">
-              <AppSkeleton className="h-8 w-64 rounded-lg" />
-              <AppSkeleton className="h-8 w-28 rounded-lg" />
-            </div>
-          </AppCardHeader>
-          <AppCardContent className="p-4">
-            <AppTableSkeleton rows={6} />
-          </AppCardContent>
-        </AppCard>
+      <div className="w-full flex-1 flex flex-col items-center justify-center min-h-[60vh] min-w-0 animate-in fade-in duration-300">
+        <ChandakLoader
+          size="lg"
+          title="Chandak Fleet & Vehicle Desk"
+          subtitle="Loading fleet metrics, inventory & allocations..."
+        />
       </div>
     );
   }
@@ -18951,7 +18918,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     setNewMaintVehicleId(viewingVehicle.id);
                     setIsAddMaintenanceOpen(true);
                   }}
-                  className="bg-amber-600 hover:bg-amber-700 text-white text-xs h-8 px-2.5 gap-1.5 font-semibold shadow-2xs"
+                  className="text-xs h-8 px-2.5 gap-1.5 font-semibold"
                 >
                   <Wrench className="h-3.5 w-3.5" />
                   <span>+ Log Service</span>
@@ -18968,7 +18935,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   setPartFormVehicleId(viewingVehicle.id);
                   setPartFormAssignedVehicleReg(viewingVehicle.registration_number);
                 }}
-                className="text-xs h-8 px-2.5 gap-1.5 font-semibold text-blue-600 dark:text-blue-400 border-blue-500/30 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+                className="text-xs h-8 px-2.5 gap-1.5 font-semibold"
               >
                 <Package className="h-3.5 w-3.5" />
                 <span>+ Mount Part</span>
@@ -18981,7 +18948,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   setVehicleDossierTab("DOCS");
                   setIsDossierAddDocOpen(true);
                 }}
-                className="text-xs h-8 px-2.5 gap-1.5 font-semibold text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                className="text-xs h-8 px-2.5 gap-1.5 font-semibold"
               >
                 <UploadCloud className="h-3.5 w-3.5" />
                 <span>+ Attach Doc</span>
@@ -19016,8 +18983,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     {viewingVehicle.category || "Standard Car"}
                   </span>
                   {viewingVehicle.fuel_type && (
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 flex items-center gap-1">
-                      <Fuel className="h-3 w-3 text-amber-500" />
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-border flex items-center gap-1">
+                      <Fuel className="h-3 w-3 text-muted-foreground" />
                       <span>{viewingVehicle.fuel_type}</span>
                     </span>
                   )}
@@ -19084,16 +19051,16 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               onClick={() => setVehicleDossierTab("SERVICES")}
               className={`p-3 rounded-xl border text-left transition-all cursor-pointer shadow-2xs group ${
                 vehicleDossierTab === "SERVICES"
-                  ? "border-amber-500 bg-amber-500/10 dark:bg-amber-950/30 ring-2 ring-amber-500/30 shadow-xs"
-                  : "border-border bg-surface hover:border-amber-500/40 hover:bg-amber-500/5"
+                  ? "border-theme-btn-primary bg-theme-btn-primary/5 ring-1 ring-theme-btn-primary/30"
+                  : "border-border bg-surface hover:border-border hover:bg-surface-elevated"
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
-                  <Wrench className="h-3.5 w-3.5" />
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <Wrench className="h-3.5 w-3.5 text-muted-foreground" />
                   <span>Workshop Services</span>
                 </span>
-                <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300">
+                <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-muted/20 text-foreground">
                   {dossierData.services.length}
                 </span>
               </div>
@@ -19108,16 +19075,16 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               onClick={() => setVehicleDossierTab("PARTS")}
               className={`p-3 rounded-xl border text-left transition-all cursor-pointer shadow-2xs group ${
                 vehicleDossierTab === "PARTS"
-                  ? "border-blue-500 bg-blue-500/10 dark:bg-blue-950/30 ring-2 ring-blue-500/30 shadow-xs"
-                  : "border-border bg-surface hover:border-blue-500/40 hover:bg-blue-500/5"
+                  ? "border-theme-btn-primary bg-theme-btn-primary/5 ring-1 ring-theme-btn-primary/30"
+                  : "border-border bg-surface hover:border-border hover:bg-surface-elevated"
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400 flex items-center gap-1.5">
-                  <Package className="h-3.5 w-3.5" />
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <Package className="h-3.5 w-3.5 text-muted-foreground" />
                   <span>Mounted Parts</span>
                 </span>
-                <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-700 dark:text-blue-300">
+                <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-muted/20 text-foreground">
                   {dossierData.parts.length}
                 </span>
               </div>
@@ -19132,16 +19099,16 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               onClick={() => setVehicleDossierTab("DOCS")}
               className={`p-3 rounded-xl border text-left transition-all cursor-pointer shadow-2xs group ${
                 vehicleDossierTab === "DOCS"
-                  ? "border-emerald-500 bg-emerald-500/10 dark:bg-emerald-950/30 ring-2 ring-emerald-500/30 shadow-xs"
-                  : "border-border bg-surface hover:border-emerald-500/40 hover:bg-emerald-500/5"
+                  ? "border-theme-btn-primary bg-theme-btn-primary/5 ring-1 ring-theme-btn-primary/30"
+                  : "border-border bg-surface hover:border-border hover:bg-surface-elevated"
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
-                  <FileCheck className="h-3.5 w-3.5" />
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <FileCheck className="h-3.5 w-3.5 text-muted-foreground" />
                   <span>Document Vault</span>
                 </span>
-                <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
+                <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-muted/20 text-foreground">
                   {dossierData.docs.length}
                 </span>
               </div>
@@ -19168,16 +19135,16 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               onClick={() => setVehicleDossierTab("TRIPS")}
               className={`p-3 rounded-xl border text-left transition-all cursor-pointer shadow-2xs group ${
                 vehicleDossierTab === "TRIPS"
-                  ? "border-purple-500 bg-surface dark:bg-surface ring-2 ring-purple-500/30 shadow-xs"
-                  : "border-border bg-surface hover:border-theme-btn-primary/40 hover:bg-surface"
+                  ? "border-theme-btn-primary bg-theme-btn-primary/5 ring-1 ring-theme-btn-primary/30"
+                  : "border-border bg-surface hover:border-border hover:bg-surface-elevated"
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-foreground dark:text-muted-foreground flex items-center gap-1.5">
-                  <MapPin className="h-3.5 w-3.5" />
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
                   <span>Trips & Journeys</span>
                 </span>
-                <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-surface text-foreground dark:text-muted-foreground">
+                <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-muted/20 text-foreground">
                   {dossierData.trips.length}
                 </span>
               </div>
@@ -19581,7 +19548,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         setNewMaintVehicleId(viewingVehicle.id);
                         setIsAddMaintenanceOpen(true);
                       }}
-                      className="bg-amber-600 hover:bg-amber-700 text-white text-xs h-8 px-3 gap-1.5 font-semibold shadow-2xs"
+                      className="text-xs h-8 px-3 gap-1.5 font-semibold"
                     >
                       <Plus className="h-3.5 w-3.5" />
                       <span>Log Service Job Card</span>
@@ -19592,8 +19559,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
               {/* Service Summary KPI Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-3 rounded-xl border border-amber-500/20 bg-amber-500/5 space-y-1">
-                  <span className="text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">Lifetime Spend</span>
+                <div className="p-3 rounded-xl border border-border bg-surface space-y-1">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Lifetime Spend</span>
                   <div className="text-base font-mono font-bold text-foreground">
                     ₹{dossierData.totalServiceSpend.toLocaleString("en-IN")}
                   </div>
@@ -19637,7 +19604,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                           setNewMaintVehicleId(viewingVehicle.id);
                           setIsAddMaintenanceOpen(true);
                         }}
-                        className="bg-amber-600 hover:bg-amber-700 text-white text-xs h-8 px-3 gap-1.5 font-semibold"
+                        className="text-xs h-8 px-3 gap-1.5 font-semibold"
                       >
                         <Plus className="h-3.5 w-3.5" />
                         <span>Log First Service Job Card</span>
@@ -19823,7 +19790,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       setPartFormVehicleId(viewingVehicle.id);
                       setPartFormAssignedVehicleReg(viewingVehicle.registration_number);
                     }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 px-3 gap-1.5 font-semibold shadow-2xs"
+                    className="text-xs h-8 px-3 gap-1.5 font-semibold"
                   >
                     <Plus className="h-3.5 w-3.5" />
                     <span>+ Mount Spare Part / Asset</span>
@@ -19833,8 +19800,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
               {/* Spare Parts Summary Bar */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-3 rounded-xl border border-blue-500/20 bg-blue-500/5 space-y-1">
-                  <span className="text-xs font-bold uppercase tracking-wider text-blue-800 dark:text-blue-300">Total Mounted Assets</span>
+                <div className="p-3 rounded-xl border border-border bg-surface space-y-1">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total Mounted Assets</span>
                   <div className="text-base font-mono font-bold text-foreground">
                     {dossierData.parts.length} Units
                   </div>
@@ -19879,7 +19846,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         setPartFormVehicleId(viewingVehicle.id);
                         setPartFormAssignedVehicleReg(viewingVehicle.registration_number);
                       }}
-                      className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 px-3 gap-1.5 font-semibold"
+                      className="text-xs h-8 px-3 gap-1.5 font-semibold"
                     >
                       <Plus className="h-3.5 w-3.5" />
                       <span>Mount First Spare Part</span>
@@ -20029,11 +19996,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     variant={isDossierAddDocOpen ? "outline" : "primary"}
                     size="sm"
                     onClick={() => setIsDossierAddDocOpen(!isDossierAddDocOpen)}
-                    className={
-                      isDossierAddDocOpen
-                        ? "text-xs h-8 px-3 gap-1.5 font-semibold"
-                        : "bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 px-3 gap-1.5 font-semibold shadow-2xs"
-                    }
+                    className="text-xs h-8 px-3 gap-1.5 font-semibold"
                   >
                     {isDossierAddDocOpen ? (
                       <>
@@ -20094,10 +20057,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
               {/* INLINE DOCUMENT UPLOAD FORM (Directly inside dossier screen) */}
               {isDossierAddDocOpen && (
-                <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 space-y-4 animate-in fade-in duration-200">
+                <div className="p-4 rounded-xl border border-border bg-surface space-y-4 animate-in fade-in duration-200">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
-                      <UploadCloud className="h-4 w-4" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                      <UploadCloud className="h-4 w-4 text-theme-btn-primary" />
                       <span>Archive New Document to Vehicle Vault</span>
                     </span>
                     <button
@@ -20163,7 +20126,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         handleDossierDirectDocUpload(e.dataTransfer.files);
                       }
                     }}
-                    className="p-6 border-2 border-dashed border-emerald-500/40 rounded-xl bg-surface text-center hover:border-emerald-500 transition-colors cursor-pointer"
+                    className="p-6 border-2 border-dashed border-border rounded-xl bg-surface text-center hover:border-theme-btn-primary transition-colors cursor-pointer"
                     onClick={() => {
                       const input = document.getElementById("dossier-direct-doc-file-input") as HTMLInputElement;
                       if (input) input.click();
@@ -20181,7 +20144,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       }}
                     />
                     <div className="flex flex-col items-center justify-center gap-1.5">
-                      <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                      <div className="h-10 w-10 rounded-full bg-theme-btn-primary/10 flex items-center justify-center text-theme-btn-primary">
                         {dossierUploadingDoc ? (
                           <RotateCw className="h-5 w-5 animate-spin" />
                         ) : (
@@ -20322,7 +20285,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             variant="primary"
                             size="sm"
                             onClick={() => setIsDossierAddDocOpen(true)}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 px-3 gap-1.5 font-semibold"
+                            className="text-xs h-8 px-3 gap-1.5 font-semibold"
                           >
                             <UploadCloud className="h-3.5 w-3.5" />
                             <span>Upload First Document</span>
