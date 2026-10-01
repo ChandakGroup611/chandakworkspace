@@ -9974,7 +9974,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                     setVehicleDossierTab("DOCS");
                                   }}
                                   className="inline-flex items-center gap-1 text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors cursor-pointer"
-                                  title="Open 360° Archived Documents Vault (RC, Insurance, PUC, Service Bills, Parts, Renewals)"
+                                  title="Open Archived Documents Vault (RC, Insurance, PUC, Service Bills, Parts, Renewals)"
                                 >
                                   <FileCheck className="h-3 w-3 text-emerald-500" />
                                   <span>{vDocs.length} Docs</span>
@@ -10181,7 +10181,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                               <AppButton
                                 variant="outline"
                                 size="sm"
-                                title="Open 360° Documents Vault & Compliance"
+                                title="Open Documents Vault & Compliance"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setViewingVehicle(veh);
