@@ -62,17 +62,20 @@ foreach ($candidateDirs as $dir) {
     }
 }
 
-// Check select-module files
-$selectModuleFiles = [];
-foreach ($candidateDirs as $dir) {
-    $smPath = $dir . '/.next/server/app/select-module';
-    if (is_dir($smPath)) {
-        $selectModuleFiles[$dir] = scandir($smPath);
-    }
-    $chunkPath = $dir . '/.next/static/chunks';
-    if (is_dir($chunkPath)) {
-        $chunks = scandir($chunkPath);
-        $selectModuleFiles[$dir . '/chunks_sample'] = array_slice($chunks, 0, 10);
+// Find 0dwpjdt_qtpwp.js
+$foundFilePaths = [];
+$allChunks = glob($domainRoot . '/**/_next/static/chunks/*.js');
+$targetChunk = '0dwpjdt_qtpwp.js';
+
+// Recursive find
+$iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($domainRoot, RecursiveDirectoryIterator::SKIP_DOTS));
+foreach ($iterator as $file) {
+    if ($file->getFilename() === $targetChunk || strpos($file->getPathname(), 'select-module') !== false) {
+        $foundFilePaths[] = [
+            'path' => $file->getPathname(),
+            'size' => $file->getSize(),
+            'mtime' => date('Y-m-d H:i:s', $file->getMTime())
+        ];
     }
 }
 
@@ -81,7 +84,7 @@ echo json_encode([
     'htaccess' => $htContents,
     'build_ids' => $buildIds,
     'server_files' => $serverFiles,
-    'select_module_files' => $selectModuleFiles,
+    'found_files' => $foundFilePaths,
     'env_port' => getenv('PORT'),
     'env_node_env' => getenv('NODE_ENV'),
     'php_uname' => php_uname(),

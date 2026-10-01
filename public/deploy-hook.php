@@ -176,9 +176,15 @@ if ($zipFile && class_exists('ZipArchive')) {
             @mkdir($target, 0755, true);
         }
         
-        // Clear stale Next.js cache to avoid memory corruptions
+        // Clear stale Next.js cache and old server/static files to avoid collisions
         if (is_dir($target . '/.next/cache')) {
             recursiveRemove($target . '/.next/cache');
+        }
+        if (is_dir($target . '/.next/server')) {
+            recursiveRemove($target . '/.next/server');
+        }
+        if (is_dir($target . '/_next')) {
+            recursiveRemove($target . '/_next');
         }
         
         $zip = new ZipArchive();
@@ -214,6 +220,12 @@ if ($zipFile && class_exists('ZipArchive')) {
     // CRITICAL: Mirror static chunks into ALL public-facing document roots so LiteSpeed never serves stale chunks
     if ($sourceStatic) {
         foreach ($publicDocRoots as $pub) {
+            if ($pub . '/_next/static' !== $sourceStatic) {
+                recursiveRemove($pub . '/_next/static');
+            }
+            if ($pub . '/.next/static' !== $sourceStatic) {
+                recursiveRemove($pub . '/.next/static');
+            }
             @mkdir($pub . '/_next', 0755, true);
             @mkdir($pub . '/.next', 0755, true);
             recursiveCopy($sourceStatic, $pub . '/_next/static');
