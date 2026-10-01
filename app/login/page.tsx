@@ -67,7 +67,7 @@ export default function LoginPage() {
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
           if (event === "SIGNED_IN" && session) {
             const rawNext = searchParams.get("next");
-            const destination = rawNext && rawNext !== "/" ? `/select-module?next=${encodeURIComponent(rawNext)}` : "/select-module";
+            const destination = rawNext && rawNext !== "/" ? rawNext : "/workspaces/tasks";
             
             const currentToken = typeof window !== "undefined" ? localStorage.getItem("app_session_token") : null;
             const conflictRes = await checkActiveSessionConflict(session.user.id, currentToken || undefined);
@@ -143,7 +143,7 @@ export default function LoginPage() {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           const rawNext = searchParams.get("next");
-          const destination = rawNext && rawNext !== "/" ? `/select-module?next=${encodeURIComponent(rawNext)}` : "/select-module";
+          const destination = rawNext && rawNext !== "/" ? rawNext : "/workspaces/tasks";
           const isOAuthConflict = searchParams.get("oauth_conflict") === "1";
 
           const currentToken = typeof window !== "undefined" ? localStorage.getItem("app_session_token") : null;
@@ -214,7 +214,7 @@ export default function LoginPage() {
       if (data.user) {
         const searchParams = new URLSearchParams(window.location.search);
         const rawNext = searchParams.get("next");
-        const destination = rawNext && rawNext !== "/" ? `/select-module?next=${encodeURIComponent(rawNext)}` : "/select-module";
+        const destination = rawNext && rawNext !== "/" ? rawNext : "/workspaces/tasks";
 
         const currentToken = typeof window !== "undefined" ? localStorage.getItem("app_session_token") : null;
         const conflictRes = await checkActiveSessionConflict(data.user.id, currentToken || undefined);
@@ -242,7 +242,7 @@ export default function LoginPage() {
 
       const searchParams = new URLSearchParams(window.location.search);
       const rawNext = searchParams.get("next");
-      const next = rawNext && rawNext !== "/" ? `/select-module?next=${encodeURIComponent(rawNext)}` : "/select-module";
+      const next = rawNext && rawNext !== "/" ? rawNext : "/workspaces/tasks";
 
       // Check if user is already authenticated before initiating SSO
       const { data: { session } } = await supabase.auth.getSession();

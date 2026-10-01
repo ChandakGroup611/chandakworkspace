@@ -24,10 +24,16 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  // If user is authenticated and trying to access login/register, redirect to module selection
+  // If user is authenticated and trying to access login/register, redirect to active module or workspaces
   if (user && isAuthPage) {
     const nextParam = request.nextUrl.searchParams.get("next");
-    const target = nextParam && nextParam !== "/" ? nextParam : "/select-module";
+    const activeModule = request.cookies.get("active_module")?.value;
+    
+    let defaultDest = "/workspaces/tasks";
+    if (activeModule === "VEHICLE_DESK") defaultDest = "/vehicle/dashboard";
+    else if (activeModule === "DESIGN_TRACKING") defaultDest = "/design/dashboard";
+
+    const target = nextParam && nextParam !== "/" ? nextParam : defaultDest;
     const redirectUrl = new URL(target, request.url);
     const response = NextResponse.redirect(redirectUrl);
     

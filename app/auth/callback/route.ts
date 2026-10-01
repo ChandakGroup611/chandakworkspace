@@ -7,9 +7,9 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  // if "next" is in param and not root, use it; otherwise route to module selection
+  // if "next" is in param and not root, use it; otherwise route to workspace tasks
   const rawNext = searchParams.get('next');
-  const next = rawNext && rawNext !== '/' ? rawNext : '/select-module';
+  const next = rawNext && rawNext !== '/' ? rawNext : '/workspaces/tasks';
 
   if (code) {
     const cookieStore = await cookies();
