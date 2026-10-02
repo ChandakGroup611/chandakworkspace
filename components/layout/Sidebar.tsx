@@ -575,7 +575,15 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
           <div className="relative z-50 w-[280px] max-w-[85vw] bg-surface dark:bg-[#0B0F19] h-full flex flex-col shadow-2xl border-r border-border animate-in slide-in-from-left duration-300">
             <div className="flex items-center justify-between p-4 border-b border-border/50">
               <div className="flex items-center gap-2">
-                <img src="/Chandak_Group_Official_Logo.png" alt="Chandak Logo" className="h-8 w-auto dark:brightness-0 dark:invert" />
+                <img 
+                  src="/Chandak_Group_Official_Logo.png" 
+                  alt="Chandak Logo" 
+                  className="h-8 w-auto dark:brightness-0 dark:invert" 
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (target.src.endsWith(".png")) target.src = "/Chandak_Group_Official_Logo.svg";
+                  }}
+                />
                 <span className="text-sm font-bold text-foreground">Chandak Workspace</span>
               </div>
               <AppButton
@@ -608,7 +616,16 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
           {!isCompact ? (
             <Link href={moduleHomeHref} className="flex flex-col gap-1 overflow-hidden items-center justify-center pt-1">
               <div className={`flex items-center justify-center transition-all duration-300 h-[58px] w-[200px] mx-auto shrink-0 px-1`}>
-                <img src="/Chandak_Group_Official_Logo.png" alt="Chandak Logo" className="max-h-full max-w-full object-contain dark:brightness-0 dark:invert" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+                <img 
+                  src="/Chandak_Group_Official_Logo.png" 
+                  alt="Chandak Logo" 
+                  className="max-h-full max-w-full object-contain dark:brightness-0 dark:invert" 
+                  style={{ imageRendering: '-webkit-optimize-contrast' }} 
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (target.src.endsWith(".png")) target.src = "/Chandak_Group_Official_Logo.svg";
+                  }}
+                />
               </div>
               <div className="flex flex-col min-w-0 justify-center items-center px-1">
                 <span className={`text-[14px] font-bold tracking-tight truncate text-foreground`}>
@@ -619,7 +636,16 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
           ) : (
             <Link href={moduleHomeHref} className="flex h-10 w-10 mx-auto shrink-0 items-center justify-center mt-1">
               <div className="h-9 w-9 mx-auto flex items-center justify-center rounded-lg overflow-hidden px-1">
-                <img src="/chandak-40-icon.png" alt="Chandak 40 Years Logo" className="max-h-full max-w-full object-contain" style={{ imageRendering: '-webkit-optimize-contrast' }} />
+                <img 
+                  src="/chandak-40-icon.png" 
+                  alt="Chandak 40 Years Logo" 
+                  className="max-h-full max-w-full object-contain" 
+                  style={{ imageRendering: '-webkit-optimize-contrast' }} 
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (target.src.endsWith(".png")) target.src = "/chandak-40-icon.svg";
+                  }}
+                />
               </div>
             </Link>
           )}

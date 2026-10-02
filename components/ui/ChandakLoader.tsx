@@ -42,6 +42,12 @@ export default function ChandakLoader({
             alt="Chandak 40 Years"
             className={`${currentSize.img} object-contain transition-transform duration-300`}
             style={{ imageRendering: '-webkit-optimize-contrast' }}
+            onError={(e) => {
+              const target = e.currentTarget;
+              if (target.src.endsWith(".png")) {
+                target.src = "/chandak-40-icon.svg";
+              }
+            }}
           />
         </div>
       </div>
