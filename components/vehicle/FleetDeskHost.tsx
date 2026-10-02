@@ -1365,6 +1365,35 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   const [previewZoom, setPreviewZoom] = useState<number>(1);
   const [previewRotation, setPreviewRotation] = useState<number>(0);
 
+  const pdfPreviewSrc = useMemo(() => {
+    if (!previewAttachment?.file_url) return "";
+    const url = previewAttachment.file_url;
+    if (url.startsWith("data:application/pdf")) {
+      try {
+        const parts = url.split(",");
+        const byteCharacters = atob(parts[1]);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: "application/pdf" });
+        return URL.createObjectURL(blob);
+      } catch {
+        return url;
+      }
+    }
+    return url;
+  }, [previewAttachment?.file_url]);
+
+  useEffect(() => {
+    return () => {
+      if (pdfPreviewSrc && pdfPreviewSrc.startsWith("blob:")) {
+        URL.revokeObjectURL(pdfPreviewSrc);
+      }
+    };
+  }, [pdfPreviewSrc]);
+
   const formatFileSize = (bytes: number | string | undefined | null): string => {
     if (!bytes || bytes === 0) return "0 B";
     if (typeof bytes === "string") {
@@ -1541,7 +1570,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     }
 
     // On-demand fetch for vehicle document
-    if (att.id && !att.id.startsWith("temp-") && !att.id.startsWith("vdoc-temp-") && (att.id.startsWith("vdoc-") || att.vehicle_id || att.doc_type)) {
+    if (att.id && !att.id.startsWith("temp-") && !att.id.startsWith("vdoc-temp-") && (att.id.startsWith("vdoc-") || att.vehicle_id || att.doc_type || att.isDirectVaultDoc)) {
       triggerToast("Opening secure document preview...");
       try {
         const res = await fetchVehicleDocumentContentAction(att.id);
@@ -1553,7 +1582,21 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           return;
         }
       } catch (err) {
-        console.error("Failed to retrieve document content:", err);
+        console.warn("fetchVehicleDocumentContentAction error, trying API fallback:", err);
+      }
+
+      // REST API fallback for document retrieval
+      try {
+        const apiRes = await fetch(`/api/vehicle/document-content?id=${encodeURIComponent(att.id)}`).then((r) => r.json());
+        if (apiRes.success && apiRes.file_url) {
+          const enriched = { ...att, file_url: apiRes.file_url };
+          setPreviewAttachment(enriched);
+          setPreviewZoom(1);
+          setPreviewRotation(0);
+          return;
+        }
+      } catch (apiErr) {
+        console.error("API document content error:", apiErr);
       }
     }
 
@@ -1600,9 +1643,21 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       // If file_url is not in memory, retrieve on-demand
       if (!fileUrl && att.id && !att.id.startsWith("temp-") && !att.id.startsWith("vdoc-temp-")) {
         triggerToast("Fetching file for download...");
-        if (att.id.startsWith("vdoc-") || att.vehicle_id || att.doc_type) {
-          const res = await fetchVehicleDocumentContentAction(att.id);
-          if (res.success && res.file_url) fileUrl = res.file_url;
+        if (att.id.startsWith("vdoc-") || att.vehicle_id || att.doc_type || att.isDirectVaultDoc) {
+          try {
+            const res = await fetchVehicleDocumentContentAction(att.id);
+            if (res.success && res.file_url) fileUrl = res.file_url;
+          } catch (e) {
+            console.warn("fetchVehicleDocumentContentAction failed for download, trying API:", e);
+          }
+          if (!fileUrl) {
+            try {
+              const apiRes = await fetch(`/api/vehicle/document-content?id=${encodeURIComponent(att.id)}`).then((r) => r.json());
+              if (apiRes.success && apiRes.file_url) fileUrl = apiRes.file_url;
+            } catch (apiE) {
+              console.error("API download fetch error:", apiE);
+            }
+          }
         } else if (att.service_id || att.serviceRecordId) {
           const sId = att.service_id || att.serviceRecordId;
           if (sId) {
@@ -1613,12 +1668,36 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       }
 
       if (fileUrl && (fileUrl.startsWith("http") || fileUrl.startsWith("data:") || fileUrl.startsWith("blob:"))) {
+        let downloadHref = fileUrl;
+        let isBlobCreated = false;
+
+        if (fileUrl.startsWith("data:")) {
+          try {
+            const parts = fileUrl.split(",");
+            const mime = parts[0].match(/:(.*?);/)?.[1] || "application/octet-stream";
+            const byteCharacters = atob(parts[1]);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: mime });
+            downloadHref = URL.createObjectURL(blob);
+            isBlobCreated = true;
+          } catch (err) {
+            downloadHref = fileUrl;
+          }
+        }
+
         const link = document.createElement("a");
-        link.href = fileUrl;
+        link.href = downloadHref;
         link.download = att.file_name || `${(att.title || "document").replace(/\s+/g, "_")}.pdf`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        if (isBlobCreated) {
+          setTimeout(() => URL.revokeObjectURL(downloadHref), 10000);
+        }
         triggerToast(`Downloading ${att.file_name || att.title || "document"}...`);
       } else {
         const docTitle = att.title || att.file_name || "Document";
@@ -2441,14 +2520,15 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       if (!isSilent) setLoading(true);
       else setRefreshing(true);
 
-      const [statsRes, vehiclesRes, driversRes, tripsRes, maintRes, vendorsRes, partsRes] = await Promise.all([
+      const [statsRes, vehiclesRes, driversRes, tripsRes, maintRes, vendorsRes, partsRes, docsRes] = await Promise.all([
         fetchVehicleDashboardStats(),
         fetchVehiclesList({ pageSize: 100 }),
         fetchDriversList(),
         fetchTripsList(),
         fetchMaintenanceList(),
         fetchInsuranceVendorsListAction(),
-        fetchVehiclePartsList()
+        fetchVehiclePartsList(),
+        fetch("/api/vehicle/documents").then((r) => r.json()).catch(() => ({ success: false, documents: [] }))
       ]);
 
       const newCache: {
@@ -2462,8 +2542,24 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         timestamp: number;
       } = { timestamp: Date.now() };
 
+      let loadedVehicles = vehiclesRes.success ? vehiclesRes.vehicles : [];
+      if (docsRes?.success && Array.isArray(docsRes.documents) && docsRes.documents.length > 0) {
+        const docMap = new Map<string, VehicleDocumentRecord[]>();
+        docsRes.documents.forEach((d: any) => {
+          if (d.vehicle_id) {
+            const arr = docMap.get(d.vehicle_id) || [];
+            arr.push(d);
+            docMap.set(d.vehicle_id, arr);
+          }
+        });
+        loadedVehicles = loadedVehicles.map((v) => ({
+          ...v,
+          documents: docMap.get(v.id) || v.documents || []
+        }));
+      }
+
       if (statsRes.success) { setStats(statsRes.stats); newCache.stats = statsRes.stats; }
-      if (vehiclesRes.success) { setVehicles(vehiclesRes.vehicles); newCache.vehicles = vehiclesRes.vehicles; }
+      if (vehiclesRes.success || loadedVehicles.length > 0) { setVehicles(loadedVehicles); newCache.vehicles = loadedVehicles; }
       if (driversRes.success) { setDrivers(driversRes.drivers); newCache.drivers = driversRes.drivers; }
       if (tripsRes.success) { setTrips(tripsRes.trips); newCache.trips = tripsRes.trips; }
       if (maintRes.success) { setMaintenance(maintRes.records); newCache.maintenance = maintRes.records; }
@@ -2849,14 +2945,34 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     if (viewingVehicle?.id) {
       const vId = viewingVehicle.id;
       // 1. Fetch vault documents
-      fetchVehicleDocumentsAction(vId).then((res) => {
-        if (res.success && res.documents && res.documents.length > 0) {
-          setViewingVehicle((prev) => (prev && prev.id === vId ? { ...prev, documents: res.documents } : prev));
-          setVehicles((prev) =>
-            prev.map((v) => (v.id === vId ? { ...v, documents: res.documents } : v))
-          );
+      const fetchDocs = async () => {
+        try {
+          const res = await fetchVehicleDocumentsAction(vId);
+          if (res.success && res.documents && res.documents.length > 0) {
+            setViewingVehicle((prev) => (prev && prev.id === vId ? { ...prev, documents: res.documents } : prev));
+            setVehicles((prev) =>
+              prev.map((v) => (v.id === vId ? { ...v, documents: res.documents } : v))
+            );
+            return;
+          }
+        } catch (e) {
+          console.warn("fetchVehicleDocumentsAction error, trying API fallback:", e);
         }
-      }).catch((err) => console.error("Error fetching vehicle documents:", err));
+
+        try {
+          const apiRes = await fetch(`/api/vehicle/documents?vehicleId=${vId}`).then((r) => r.json());
+          if (apiRes.success && apiRes.documents && apiRes.documents.length > 0) {
+            setViewingVehicle((prev) => (prev && prev.id === vId ? { ...prev, documents: apiRes.documents } : prev));
+            setVehicles((prev) =>
+              prev.map((v) => (v.id === vId ? { ...v, documents: apiRes.documents } : v))
+            );
+          }
+        } catch (apiErr) {
+          console.error("API doc fallback error:", apiErr);
+        }
+      };
+
+      fetchDocs();
       // 2. Fetch insurance policies (renewals & history)
       fetchVehicleInsurancePoliciesAction(vId).then((res) => {
         if (res.success && res.policies) {
@@ -22312,7 +22428,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 </div>
               ) : previewAttachment.file_url && (previewAttachment.file_type === "application/pdf" || previewAttachment.file_name?.toLowerCase().endsWith(".pdf")) ? (
                 <iframe
-                  src={previewAttachment.file_url}
+                  src={pdfPreviewSrc || previewAttachment.file_url}
                   title={previewAttachment.file_name}
                   className="w-full h-[70vh] rounded-lg border border-border bg-white shadow-inner"
                 />
