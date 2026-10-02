@@ -843,6 +843,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     "SPECS" | "SERVICES" | "PARTS" | "DOCS" | "COMPLIANCE" | "TRIPS" | "ALL"
   >("SPECS");
   const [showInventoryFinancials, setShowInventoryFinancials] = useState<boolean>(true);
+  const [showDocsCol, setShowDocsCol] = useState<boolean>(true);
   const [showExShowroomCol, setShowExShowroomCol] = useState<boolean>(true);
   const [showRtoCol, setShowRtoCol] = useState<boolean>(true);
   const [showOtherCol, setShowOtherCol] = useState<boolean>(true);
@@ -10083,6 +10084,15 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <label className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60 p-1.5 rounded-lg text-xs transition-colors">
                       <input
                         type="checkbox"
+                        checked={showDocsCol}
+                        onChange={(e) => setShowDocsCol(e.target.checked)}
+                        className="rounded border-border text-theme-btn-primary focus:ring-theme-btn-primary h-3.5 w-3.5"
+                      />
+                      <span className="font-medium text-foreground">Attached Documents Vault</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60 p-1.5 rounded-lg text-xs transition-colors">
+                      <input
+                        type="checkbox"
                         checked={showInventoryRelations}
                         onChange={(e) => setShowInventoryRelations(e.target.checked)}
                         className="rounded border-border text-theme-btn-primary focus:ring-theme-btn-primary h-3.5 w-3.5"
@@ -10131,6 +10141,9 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <AppTableHead className="p-3.5">PUC Validity</AppTableHead>
                     <AppTableHead className="p-3.5">Insurance Validity</AppTableHead>
                     <AppTableHead className="p-3.5">RSA & HSRP</AppTableHead>
+                    {showDocsCol && (
+                      <AppTableHead className="p-3.5 min-w-[200px]">Attached Documents</AppTableHead>
+                    )}
                     {showExShowroomCol && (
                       <AppTableHead className="p-3.5">Ex-Showroom (₹)</AppTableHead>
                     )}
@@ -10150,7 +10163,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                 <AppTableBody className="divide-y divide-border/60">
                   {filteredVehicles.length === 0 ? (
                     <AppTableRow>
-                      <AppTableCell colSpan={7 + (showExShowroomCol ? 1 : 0) + (showRtoCol ? 1 : 0) + (showOtherCol ? 1 : 0) + (showOnRoadCol ? 1 : 0) + 2} className="text-center py-12 text-muted-foreground">
+                      <AppTableCell colSpan={7 + (showDocsCol ? 1 : 0) + (showExShowroomCol ? 1 : 0) + (showRtoCol ? 1 : 0) + (showOtherCol ? 1 : 0) + (showOnRoadCol ? 1 : 0) + 2} className="text-center py-12 text-muted-foreground">
                         <div className="flex flex-col items-center gap-2">
                           <span>No vehicles found matching criteria.</span>
                           <AppButton
@@ -10183,25 +10196,20 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       const vDocs = computeVehicleAggregatedDocs(veh, maintenance, parts, trips, drivers);
 
                       const isExpanded = expandedVehicleId === veh.id;
-                      const colSpanCount = 7 + (showExShowroomCol ? 1 : 0) + (showRtoCol ? 1 : 0) + (showOtherCol ? 1 : 0) + (showOnRoadCol ? 1 : 0) + 2;
+                      const colSpanCount = 7 + (showDocsCol ? 1 : 0) + (showExShowroomCol ? 1 : 0) + (showRtoCol ? 1 : 0) + (showOtherCol ? 1 : 0) + (showOnRoadCol ? 1 : 0) + 2;
 
                       return (
-                        <React.Fragment key={veh.id}>
                         <AppTableRow 
+                          key={veh.id}
                           onClick={() => {
-                            setExpandedVehicleId(isExpanded ? null : veh.id);
-                            setExpandedVehicleTab("DOCS");
+                            setViewingVehicle(veh);
+                            setVehicleDossierTab("OVERVIEW");
                           }}
-                          className={`hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group ${
-                            isExpanded ? "bg-theme-btn-primary/5 dark:bg-theme-btn-primary/10 border-l-4 border-l-theme-btn-primary" : ""
-                          }`}
+                          className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group"
                         >
                           {/* 1. Vehicle Name & Regn No */}
                           <AppTableCell className="p-3.5">
                             <div className="flex items-center gap-2">
-                              <span className="text-muted-foreground group-hover:text-foreground transition-transform">
-                                {isExpanded ? <ChevronDown className="h-4 w-4 text-theme-btn-primary" /> : <ChevronRight className="h-4 w-4" />}
-                              </span>
                               {renderHsrpPlate(veh.registration_number)}
                             </div>
                             <div className="font-semibold text-foreground mt-1.5 group-hover:text-theme-btn-primary transition-colors text-sm flex items-center gap-1.5">
@@ -10222,18 +10230,45 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             </div>
                             {showInventoryRelations && (
                               <div className="flex items-center gap-1.5 mt-1.5 text-xs text-muted-foreground">
-                                <span className="inline-flex items-center gap-1 font-mono text-[11px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-border text-foreground" title="Workshop Services">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setViewingVehicle(veh);
+                                    setVehicleDossierTab("SERVICES");
+                                  }}
+                                  className="inline-flex items-center gap-1 font-mono text-[11px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-border text-foreground transition-colors cursor-pointer"
+                                  title="Open workshop services history"
+                                >
                                   <Wrench className="h-3 w-3 text-muted-foreground" />
                                   <span>{vServices.length} Svc</span>
-                                </span>
-                                <span className="inline-flex items-center gap-1 font-mono text-[11px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-border text-foreground" title="Mounted Parts">
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setViewingVehicle(veh);
+                                    setVehicleDossierTab("PARTS");
+                                  }}
+                                  className="inline-flex items-center gap-1 font-mono text-[11px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-border text-foreground transition-colors cursor-pointer"
+                                  title="Open mounted spare parts & accessories"
+                                >
                                   <Package className="h-3 w-3 text-muted-foreground" />
                                   <span>{vParts.length} Parts</span>
-                                </span>
-                                <span className="inline-flex items-center gap-1 font-mono text-[11px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-border text-foreground" title="Archived Documents">
-                                  <FileCheck className="h-3 w-3 text-muted-foreground" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setViewingVehicle(veh);
+                                    setVehicleDossierTab("DOCS");
+                                  }}
+                                  className="inline-flex items-center gap-1 font-mono text-[11px] px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 hover:border-emerald-500 transition-colors cursor-pointer"
+                                  title="Open Detailed Vehicle Documents Vault"
+                                >
+                                  <FileCheck className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
                                   <span>{vDocs.length} Docs</span>
-                                </span>
+                                </button>
                               </div>
                             )}
                           </AppTableCell>
@@ -10330,7 +10365,86 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             </div>
                           </AppTableCell>
 
-                          {/* 8. Distinct Financial & Quotation Breakdown Columns */}
+                          {/* 8. Attached Documents Vault Column */}
+                          {showDocsCol && (
+                            <AppTableCell className="p-3.5" onClick={(e) => e.stopPropagation()}>
+                              {vDocs.length === 0 ? (
+                                <span className="text-muted-foreground text-xs italic flex items-center gap-1">
+                                  <FileText className="h-3 w-3 opacity-40" />
+                                  <span>No docs</span>
+                                </span>
+                              ) : (
+                                <div className="flex items-center flex-wrap gap-1.5 max-w-[260px]">
+                                  {vDocs.slice(0, 3).map((doc, idx) => {
+                                    const hasScan = Boolean(doc.file_url || (doc as any).has_file);
+                                    const typeBadge =
+                                      doc.doc_type === "RC"
+                                        ? "bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/25"
+                                        : doc.doc_type === "INSURANCE"
+                                        ? "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/25"
+                                        : doc.doc_type === "PUC"
+                                        ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/25"
+                                        : "bg-slate-100 dark:bg-slate-800 text-foreground border-border";
+
+                                    return (
+                                      <div
+                                        key={doc.id || idx}
+                                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold border ${typeBadge} shadow-2xs group/chip`}
+                                        title={`${doc.title || doc.file_name} ${doc.document_number ? `(#${doc.document_number})` : ""}`}
+                                      >
+                                        <FileCheck className="h-2.5 w-2.5 shrink-0 opacity-70" />
+                                        <span className="truncate max-w-[55px]">{doc.doc_type || "DOC"}</span>
+                                        {hasScan ? (
+                                          <div className="flex items-center gap-0.5 ml-0.5">
+                                            <button
+                                              type="button"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleViewAttachment({ ...doc, vehicleReg: veh.registration_number });
+                                              }}
+                                              className="p-0.5 hover:text-blue-600 hover:bg-blue-500/20 rounded transition-colors cursor-pointer"
+                                              title="View Document"
+                                            >
+                                              <Eye className="h-2.5 w-2.5" />
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                downloadAttachment(doc);
+                                              }}
+                                              className="p-0.5 hover:text-emerald-600 hover:bg-emerald-500/20 rounded transition-colors cursor-pointer"
+                                              title="Download Document"
+                                            >
+                                              <Download className="h-2.5 w-2.5" />
+                                            </button>
+                                          </div>
+                                        ) : (
+                                          <span className="text-[9px] opacity-60 ml-0.5 font-normal">dig</span>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                  {vDocs.length > 3 && (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setExpandedVehicleId(isExpanded && expandedVehicleTab === "DOCS" ? null : veh.id);
+                                        setExpandedVehicleTab("DOCS");
+                                      }}
+                                      className="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-theme-btn-primary/10 hover:text-theme-btn-primary border border-border transition-colors cursor-pointer text-muted-foreground"
+                                      title="View all attached documents"
+                                    >
+                                      +{vDocs.length - 3} more
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                            </AppTableCell>
+                          )}
+
+                          {/* 9. Distinct Financial & Quotation Breakdown Columns */}
                           {showExShowroomCol && (
                             <AppTableCell className="p-3.5 font-mono text-xs">
                               <div className="font-semibold text-foreground">
@@ -10416,17 +10530,13 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                               <AppButton
                                 variant="outline"
                                 size="sm"
-                                title="Toggle Vehicle Document Vault"
+                                title="Open Detailed Vehicle Documents Vault"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  setExpandedVehicleId(isExpanded && expandedVehicleTab === "DOCS" ? null : veh.id);
-                                  setExpandedVehicleTab("DOCS");
+                                  setViewingVehicle(veh);
+                                  setVehicleDossierTab("DOCS");
                                 }}
-                                className={`h-7 px-2 text-xs gap-1 font-semibold shadow-2xs ${
-                                  isExpanded && expandedVehicleTab === "DOCS"
-                                    ? "bg-emerald-600 text-white border-emerald-600"
-                                    : "text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
-                                }`}
+                                className="h-7 px-2 text-xs gap-1 font-semibold text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 shadow-2xs"
                               >
                                 <FileCheck className="h-3 w-3" />
                                 <span>Docs ({vDocs.length})</span>
@@ -10481,204 +10591,6 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             </div>
                           </AppTableCell>
                         </AppTableRow>
-
-                        {/* Inline Expandable Documents & Subsystems Panel */}
-                        {isExpanded && (
-                          <AppTableRow className="bg-slate-50/90 dark:bg-slate-900/60 border-y-2 border-theme-btn-primary/30">
-                            <AppTableCell colSpan={colSpanCount} className="p-4 sm:p-5">
-                              <div className="space-y-4">
-                                {/* Inline Header Navigation */}
-                                <div className="flex items-center justify-between gap-3 flex-wrap border-b border-border pb-3">
-                                  <div className="flex items-center gap-2">
-                                    <div className="flex items-center gap-1.5 font-mono font-bold text-xs px-2.5 py-1 rounded-md bg-surface border border-border text-foreground">
-                                      <VehicleBrandLogo brand={veh.make} model={veh.model} size={16} />
-                                      <span>{veh.registration_number}</span>
-                                    </div>
-                                    <span className="text-xs font-semibold text-muted-foreground">
-                                      {veh.make} {veh.model} {veh.variant ? `• ${veh.variant}` : ""}
-                                    </span>
-                                  </div>
-
-                                  <div className="flex items-center gap-2">
-                                    <AppButton
-                                      type="button"
-                                      variant="primary"
-                                      size="sm"
-                                      onClick={() => {
-                                        setViewingVehicle(veh);
-                                        setVehicleDossierTab("DOCS");
-                                      }}
-                                      className="h-7 px-3 text-xs bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text font-bold gap-1.5 shadow-xs"
-                                    >
-                                      <Eye className="h-3.5 w-3.5" />
-                                      <span>Open Full Dossier</span>
-                                    </AppButton>
-                                    <AppButton
-                                      type="button"
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => {
-                                        setViewingVehicle(veh);
-                                        setDossierNewDocType("OTHER");
-                                        setDossierNewDocTitle("");
-                                        setDossierNewDocNumber("");
-                                        setDossierNewDocExpiry("");
-                                        setIsDossierAddDocOpen(true);
-                                      }}
-                                      className="h-7 px-3 text-xs text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 font-bold gap-1.5"
-                                    >
-                                      <Plus className="h-3.5 w-3.5" />
-                                      <span>Upload Document</span>
-                                    </AppButton>
-                                    <button
-                                      type="button"
-                                      onClick={() => setExpandedVehicleId(null)}
-                                      className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-surface border border-border"
-                                      title="Close Panel"
-                                    >
-                                      <X className="h-4 w-4" />
-                                    </button>
-                                  </div>
-                                </div>
-
-                                {/* Documents Cards Grid */}
-                                {vDocs.length === 0 ? (
-                                  <div className="p-8 text-center rounded-xl border border-dashed border-border bg-surface text-muted-foreground space-y-2">
-                                    <FileCheck className="h-8 w-8 text-muted-foreground mx-auto opacity-50" />
-                                    <p className="text-xs font-semibold text-foreground">No documents currently attached to this vehicle.</p>
-                                    <p className="text-[11px] text-muted-foreground">Upload the RC book, Insurance policy, or PUC certificate scan.</p>
-                                  </div>
-                                ) : (
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                                    {vDocs.map((doc, dIdx) => {
-                                      const typeConfig = VEHICLE_DOC_TYPES.find((t) => t.value === doc.doc_type) || {
-                                        badgeColor: "bg-surface text-foreground border-border",
-                                        label: doc.categoryLabel || doc.doc_type || "Document"
-                                      };
-                                      const daysRemaining = doc.expiry_date ? calculateDaysRemaining(doc.expiry_date) : null;
-                                      const hasScan = Boolean(doc.file_url || (doc as any).has_file);
-
-                                      return (
-                                        <div
-                                          key={doc.id || dIdx}
-                                          className="p-3 rounded-xl border border-border bg-surface hover:border-theme-btn-primary/50 transition-all shadow-2xs space-y-2.5 flex flex-col justify-between group"
-                                        >
-                                          <div className="space-y-1.5">
-                                            <div className="flex items-center justify-between gap-1.5">
-                                              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${typeConfig.badgeColor}`}>
-                                                {doc.categoryLabel || typeConfig.label}
-                                              </span>
-                                              {!hasScan && (
-                                                <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20">
-                                                  Digital Record
-                                                </span>
-                                              )}
-                                            </div>
-
-                                            <div className="flex items-start gap-2 pt-0.5">
-                                              <div className="h-8 w-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-border shrink-0">
-                                                {renderAttachmentIcon(doc.file_type || resolveMimeFromName(doc.file_name || ""), doc.file_name || undefined)}
-                                              </div>
-                                              <div className="min-w-0 flex-1">
-                                                <h5 className="font-semibold text-foreground text-xs line-clamp-1" title={doc.title || doc.file_name || undefined}>
-                                                  {doc.title || doc.file_name}
-                                                </h5>
-                                                <div className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5 truncate">
-                                                  {hasScan ? (
-                                                    <>
-                                                      <span className="truncate max-w-[130px] font-mono text-foreground font-medium">{doc.file_name || "scanned_copy.pdf"}</span>
-                                                      {doc.file_size && (
-                                                        <>
-                                                          <span>•</span>
-                                                          <span>{formatFileSize(doc.file_size)}</span>
-                                                        </>
-                                                      )}
-                                                    </>
-                                                  ) : (
-                                                    <span className="text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1">
-                                                      <AlertCircle className="h-3 w-3" /> No Scan Attached
-                                                    </span>
-                                                  )}
-                                                </div>
-                                              </div>
-                                            </div>
-                                          </div>
-
-                                          <div className="pt-2 border-t border-border flex items-center justify-between text-xs gap-1.5">
-                                            <div>
-                                              {doc.expiry_date ? (
-                                                daysRemaining !== null && daysRemaining < 0 ? (
-                                                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20">
-                                                    Expired
-                                                  </span>
-                                                ) : (
-                                                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
-                                                    Valid ({daysRemaining}d)
-                                                  </span>
-                                                )
-                                              ) : (
-                                                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-muted-foreground border border-border">
-                                                  Lifetime
-                                                </span>
-                                              )}
-                                            </div>
-
-                                            <div className="flex items-center gap-1 shrink-0">
-                                              {hasScan ? (
-                                                <>
-                                                  <AppButton
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="icon-sm"
-                                                    onClick={() => handleViewAttachment({ ...doc, vehicleReg: veh.registration_number })}
-                                                    className="h-6 w-6 text-blue-600 hover:bg-blue-500/10"
-                                                    title="View Document"
-                                                  >
-                                                    <Eye className="h-3 w-3" />
-                                                  </AppButton>
-                                                  <AppButton
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="icon-sm"
-                                                    onClick={() => downloadAttachment(doc)}
-                                                    className="h-6 w-6 text-emerald-600 hover:bg-emerald-500/10"
-                                                    title="Download Document"
-                                                  >
-                                                    <Download className="h-3 w-3" />
-                                                  </AppButton>
-                                                </>
-                                              ) : (
-                                                <AppButton
-                                                  type="button"
-                                                  variant="outline"
-                                                  size="sm"
-                                                  onClick={() => {
-                                                    setViewingVehicle(veh);
-                                                    setDossierNewDocType(doc.doc_type || "OTHER");
-                                                    setDossierNewDocTitle(doc.title || "");
-                                                    setDossierNewDocNumber(doc.document_number || "");
-                                                    setDossierNewDocExpiry(doc.expiry_date || "");
-                                                    setIsDossierAddDocOpen(true);
-                                                  }}
-                                                  className="h-6 px-1.5 text-[10px] text-amber-600 border-amber-500/30 font-semibold"
-                                                  title="Upload Original Scan"
-                                                >
-                                                  <Upload className="h-3 w-3 mr-0.5" />
-                                                  Upload
-                                                </AppButton>
-                                              )}
-                                            </div>
-                                          </div>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                )}
-                              </div>
-                            </AppTableCell>
-                          </AppTableRow>
-                        )}
-                        </React.Fragment>
                       );
                     })
                   )}
