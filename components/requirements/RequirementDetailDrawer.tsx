@@ -7,6 +7,7 @@ import { handleRequirementUAT } from '@/lib/actions/requirements';
 import { EnterpriseDrawerShell } from "@/components/ui/enterprise/EnterpriseDrawerShell";
 import { ListTodo, MessageSquare, Paperclip } from 'lucide-react';
 import { AppButton } from "@/components/ui/AppButton";
+import { AppBadge } from "@/components/ui/AppBadge";
 import SafeHtml from "@/components/ui/SafeHtml";
 import { usePermissions } from "@/hooks/usePermissions";
 
@@ -49,10 +50,15 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
       title={requirement.title}
       subtitle={
         <div className="flex items-center gap-3 mt-2">
-          <span className="theme-label text-muted">{requirement.requirement_code || 'REQ-0000'}</span>
-          <span className="px-2 py-0.5 rounded-md text-xs font-bold" style={{ backgroundColor: `${requirement.status?.status_color}20`, color: requirement.status?.status_color }}>
+          <span className="theme-label text-muted font-mono font-bold text-amber-500">{requirement.requirement_code || 'REQ-0000'}</span>
+          <AppBadge 
+            variant={requirement.status?.status_color ? "custom" : "neutral"} 
+            customColor={requirement.status?.status_color || null}
+            isOutline={true}
+            className="text-xs"
+          >
             {requirement.status?.status_name || 'UNKNOWN'}
-          </span>
+          </AppBadge>
         </div>
       }
       onClose={onClose}

@@ -135,10 +135,14 @@ export function EnrolledWorkspacesClient({ initialWorkspaces, initialSubWorkspac
                         </AppBadge>
                       </AppTableCell>
                       <AppTableCell>
-                        <span className="text-xs flex items-center gap-1">
-                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.status?.status_color || '#10b981' }}></span>
+                        <AppBadge 
+                          variant={item.status?.status_name === "Inactive" ? "danger" : "success"}
+                          customColor={item.status?.status_color || null}
+                          isOutline={true}
+                          className="text-xs"
+                        >
                           {item.status?.status_name || "Active"}
-                        </span>
+                        </AppBadge>
                       </AppTableCell>
                       <AppTableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">

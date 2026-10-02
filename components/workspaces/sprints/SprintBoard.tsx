@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { fetchSprints, fetchTasksByWorkspace, updateTaskProgress } from "@/lib/actions/workspaces";
 import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
+import { AppBadge } from "@/components/ui/AppBadge";
 import { Plus, GripVertical, Calendar, Edit2, Check, X, Filter } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { createClient } from "@/utils/supabase/client";
@@ -210,16 +211,14 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
                   {draggable && <GripVertical className="h-4 w-4 text-muted mt-0.5 shrink-0" />}
                   <div className="min-w-0 flex-1">
                     <div className="text-xs font-bold break-words whitespace-normal leading-snug" title={t.title || t.subject}>{t.title || t.subject}</div>
-                    <div 
-                      className="text-[10px] font-bold mt-1 px-1.5 py-0.5 rounded inline-block"
-                      style={t.priority?.priority_color ? { 
-                        color: t.priority.priority_color, 
-                        backgroundColor: `${t.priority.priority_color}1A`, 
-                        border: `1px solid ${t.priority.priority_color}33` 
-                      } : {}}
+                    <AppBadge 
+                      variant={t.priority?.priority_color ? "custom" : "info"} 
+                      customColor={t.priority?.priority_color || null}
+                      isOutline={true}
+                      className="text-[10px] py-0 px-1.5 mt-1"
                     >
                       {t.priority?.priority_name || 'Standard'}
-                    </div>
+                    </AppBadge>
                   </div>
                 </div>
               );
@@ -305,16 +304,14 @@ export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspa
                     {draggable && <GripVertical className="h-4 w-4 text-muted mt-0.5 shrink-0" />}
                     <div className="min-w-0 flex-1">
                       <div className="text-xs font-bold break-words whitespace-normal leading-snug" title={t.title || t.subject}>{t.title || t.subject}</div>
-                      <div 
-                        className="text-[10px] font-bold mt-1 px-1.5 py-0.5 rounded inline-block"
-                        style={t.priority?.priority_color ? { 
-                          color: t.priority.priority_color, 
-                          backgroundColor: `${t.priority.priority_color}1A`, 
-                          border: `1px solid ${t.priority.priority_color}33` 
-                        } : {}}
+                      <AppBadge 
+                        variant={t.priority?.priority_color ? "custom" : "info"} 
+                        customColor={t.priority?.priority_color || null}
+                        isOutline={true}
+                        className="text-[10px] py-0 px-1.5 mt-1"
                       >
                         {t.priority?.priority_name || 'Standard'}
-                      </div>
+                      </AppBadge>
                     </div>
                   </div>
                 );

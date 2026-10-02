@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { AppButton } from "@/components/ui/AppButton";
+import { AppBadge } from "@/components/ui/AppBadge";
 import { ArrowRight, Plus, Activity } from "lucide-react";
 import SafeHtml from "@/components/ui/SafeHtml";
 
@@ -16,12 +17,14 @@ export function WorkspaceGrid({ workspaces }: { workspaces: any[] }) {
               <p className="text-xs text-muted mt-1">{ws.workspace_code}</p>
             </div>
             {ws.status && (
-              <span 
-                className="px-2 py-1 rounded-lg text-xs font-bold tracking-widest uppercase"
-                style={{ backgroundColor: `${ws.status.status_color}20`, color: ws.status.status_color }}
+              <AppBadge 
+                variant={ws.status.status_color ? "custom" : "neutral"}
+                customColor={ws.status.status_color || null}
+                isOutline={true}
+                className="text-xs"
               >
                 {ws.status.status_name}
-              </span>
+              </AppBadge>
             )}
           </div>
           
