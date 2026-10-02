@@ -38,7 +38,7 @@ const DEFAULT_FALLBACK_MODULES: ModuleInfo[] = [
     name: "Task & Workspace Management",
     description: "Core Operations, Workspace, Tasks & Ticketing",
     icon: "FolderKanban",
-    route_path: "/workspaces/tasks",
+    route_path: "/",
     display_order: 1,
     is_active: true,
     is_default: true
@@ -49,7 +49,7 @@ const DEFAULT_FALLBACK_MODULES: ModuleInfo[] = [
     name: "Vehicle Management Desk",
     description: "Fleet, Trips & Maintenance Logistics",
     icon: "Car",
-    route_path: "/vehicle/dashboard",
+    route_path: "/vehicle",
     display_order: 2,
     is_active: true,
     is_default: false
@@ -60,7 +60,7 @@ const DEFAULT_FALLBACK_MODULES: ModuleInfo[] = [
     name: "Design & Drawing Tracking",
     description: "Architecture, Drawing Registers & Approvals",
     icon: "Compass",
-    route_path: "/design/dashboard",
+    route_path: "/design/matrix",
     display_order: 3,
     is_active: true,
     is_default: false
@@ -81,15 +81,26 @@ export async function getUserAllowedModules(targetUserId?: string): Promise<User
       userId = user.id;
     }
 
-    // Fetch user profile and role with maybeSingle
+    // Fetch user profile and role with maybeSingle + role_id fallback
     const { data: userProfile } = await supabaseAdmin
       .from("user_master")
-      .select("id, full_name, email, role:roles(code)")
+      .select("id, full_name, email, role_id, role:roles(code)")
       .eq("id", userId)
       .maybeSingle();
 
-    const roleCode = (userProfile?.role as any)?.code || "";
-    const isAdmin = roleCode === "SUPER_ADMIN" || roleCode === "ROLE_ADMIN";
+    let rawRoleCode = (userProfile?.role as any)?.code || "";
+    if (!rawRoleCode && userProfile?.role_id) {
+      const { data: fallbackRole } = await supabaseAdmin
+        .from("roles")
+        .select("code")
+        .eq("id", userProfile.role_id)
+        .maybeSingle();
+      if (fallbackRole?.code) {
+        rawRoleCode = fallbackRole.code;
+      }
+    }
+    const roleCode = String(rawRoleCode || "").toUpperCase();
+    const isAdmin = ["SUPER_ADMIN", "ROLE_SUPER_ADMIN", "ROLE_ADMIN", "ADMIN", "SUPERADMIN", "ADMIN_ROLE"].includes(roleCode);
 
     // Fetch all active modules (with 5-minute memory cache)
     let allActiveModules: any[] | null = null;
@@ -124,10 +135,17 @@ export async function getUserAllowedModules(targetUserId?: string): Promise<User
     // Filter modules based on user assignments (Super Admins see all active modules)
     let allowedModules: ModuleInfo[] = (allActiveModules || DEFAULT_FALLBACK_MODULES)
       .filter(m => isAdmin || assignedModuleIds.size === 0 || assignedModuleIds.has(m.id) || assignedModuleIds.has(m.code))
-      .map(m => ({
-        ...m,
-        is_default: defaultAssignment ? (defaultAssignment.module_id === m.id || defaultAssignment.module_id === m.code) : m.code === "TASK_WORKFLOW"
-      }));
+      .map(m => {
+        let route = m.route_path;
+        if (m.code === "TASK_WORKFLOW" && (!route || route === "/workspaces/tasks")) route = "/";
+        if (m.code === "VEHICLE_DESK" && (!route || route === "/vehicle/dashboard")) route = "/vehicle";
+        if (m.code === "DESIGN_TRACKING" && (!route || route === "/design/dashboard")) route = "/design/matrix";
+        return {
+          ...m,
+          route_path: route,
+          is_default: defaultAssignment ? (defaultAssignment.module_id === m.id || defaultAssignment.module_id === m.code) : m.code === "TASK_WORKFLOW"
+        };
+      });
 
     // If no specific rows matched, fallback to default modules
     if (allowedModules.length === 0) {

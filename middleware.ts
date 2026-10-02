@@ -29,9 +29,9 @@ export async function middleware(request: NextRequest) {
     const nextParam = request.nextUrl.searchParams.get("next");
     const activeModule = request.cookies.get("active_module")?.value;
     
-    let defaultDest = "/workspaces/tasks";
-    if (activeModule === "VEHICLE_DESK") defaultDest = "/vehicle/dashboard";
-    else if (activeModule === "DESIGN_TRACKING") defaultDest = "/design/dashboard";
+    let defaultDest = "/";
+    if (activeModule === "VEHICLE_DESK") defaultDest = "/vehicle";
+    else if (activeModule === "DESIGN_TRACKING") defaultDest = "/design/matrix";
 
     const target = nextParam && nextParam !== "/" ? nextParam : defaultDest;
     const redirectUrl = new URL(target, request.url);

@@ -119,16 +119,16 @@ export default function LoginPage() {
         const targetModule = data.defaultModule || data.modules?.find((m: any) => m.is_default) || data.modules?.[0];
         if (targetModule?.code) {
           const routeMap: Record<string, string> = {
-            TASK_WORKFLOW: "/workspaces/tasks",
-            VEHICLE_DESK: "/vehicle/dashboard",
-            DESIGN_TRACKING: "/design/dashboard"
+            TASK_WORKFLOW: "/",
+            VEHICLE_DESK: "/vehicle",
+            DESIGN_TRACKING: "/design/matrix"
           };
-          return routeMap[targetModule.code] || targetModule.route_path || "/workspaces/tasks";
+          return routeMap[targetModule.code] || targetModule.route_path || "/";
         }
       }
     } catch (e) {}
 
-    return "/workspaces/tasks";
+    return "/";
   };
 
   useEffect(() => {
@@ -355,7 +355,7 @@ export default function LoginPage() {
 
       const searchParams = new URLSearchParams(window.location.search);
       const rawNext = searchParams.get("next");
-      const next = rawNext && rawNext !== "/" && !rawNext.includes("/select-module") ? rawNext : "/workspaces/tasks";
+      const next = rawNext && rawNext !== "/" && !rawNext.includes("/select-module") ? rawNext : "/";
 
       // Check if user is already authenticated before initiating SSO
       const { data: { session } } = await supabase.auth.getSession();

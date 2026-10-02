@@ -372,18 +372,18 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
   const navContent = (
     <>
       {/* Navigation Group Links */}
-      <div className="flex-1 px-3 pt-2 pb-24 md:pb-4 space-y-6 overflow-y-auto overflow-x-hidden scrollbar-hide">
+      <div className="flex-1 px-2.5 pt-1.5 pb-24 md:pb-4 space-y-2 overflow-y-auto overflow-x-hidden scrollbar-hide">
         {visibleNavTree.map((group, groupIdx) => {
           return (
-            <div key={groupIdx} className="flex flex-col mb-2">
+            <div key={groupIdx} className="flex flex-col">
               {(!isCompact || isOpenMobile) && (
-                <div className={`px-3 mb-2 ${groupIdx === 0 ? "mt-1" : "mt-5"} flex items-center gap-1.5`}>
-                  <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-muted/70">
+                <div className={`px-3 py-1 ${groupIdx === 0 ? "mt-0.5" : "mt-2.5"} flex items-center gap-1.5 border-t border-border/40 pt-2 ${groupIdx === 0 ? "border-t-0 pt-0" : ""}`}>
+                  <span className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">
                     {group.label}
                   </span>
                 </div>
               )}
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 {group.items.map((item) => {
                 const IconComponent = item.icon;
                 
@@ -391,9 +391,9 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
                 if (item.href === "/") {
                   isBaseActive = pathname === "/";
                 } else if (item.href === "/design/matrix") {
-                  isBaseActive = pathname === "/design" || pathname === "/design/matrix";
+                  isBaseActive = pathname === "/design" || pathname === "/design/matrix" || pathname === "/design/dashboard";
                 } else if (item.href === "/vehicle") {
-                  isBaseActive = pathname === "/vehicle";
+                  isBaseActive = pathname === "/vehicle" || pathname === "/vehicle/dashboard";
                 } else if (item.href === "/design/masters") {
                   isBaseActive = pathname === "/design/masters" || 
                     pathname === "/design/projects" || 

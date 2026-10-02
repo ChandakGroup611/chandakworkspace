@@ -242,12 +242,15 @@ export default function ClientSessionManager() {
 
     // ── 4. Tab close handler & Bulletproof Deployment Sync Auto-Recovery ──────────
     const handleActionMismatch = (msg: string) => {
+      if (!msg) return;
+      const lower = msg.toLowerCase();
       if (
-        msg.includes('was not found on the server') ||
-        msg.includes('failed-to-find-server-action') ||
-        msg.includes('Failed to find Server Action') ||
-        msg.includes('UnrecognizedActionError') ||
-        (msg.includes('Server Action') && msg.includes('not found'))
+        lower.includes('was not found on the server') ||
+        lower.includes('failed-to-find-server-action') ||
+        lower.includes('failed to find server action') ||
+        lower.includes('unrecognizedactionerror') ||
+        lower.includes('could not find server action') ||
+        (lower.includes('action') && lower.includes('was not found on the server'))
       ) {
         console.warn('[Deployment Sync] Server Action hash mismatch detected. Auto-refreshing window for new deployment build.');
         if (typeof window !== 'undefined') {

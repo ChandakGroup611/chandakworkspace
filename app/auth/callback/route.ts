@@ -41,7 +41,7 @@ export async function GET(request: Request) {
       }
 
       // Determine proper landing destination for registered user
-      let destination = '/workspaces/tasks';
+      let destination = '/';
       let activeModuleCode = 'TASK_WORKFLOW';
 
       if (rawNext && rawNext !== '/' && rawNext !== '/select-module' && !rawNext.includes('/login')) {
@@ -62,16 +62,16 @@ export async function GET(request: Request) {
         const modRoute = (defaultUserModule?.module as any)?.route_path;
 
         if (modCode === 'VEHICLE_DESK') {
-          destination = '/vehicle/dashboard';
+          destination = '/vehicle';
           activeModuleCode = 'VEHICLE_DESK';
         } else if (modCode === 'DESIGN_TRACKING') {
-          destination = '/design/dashboard';
+          destination = '/design/matrix';
           activeModuleCode = 'DESIGN_TRACKING';
         } else if (modRoute) {
-          destination = modRoute;
+          destination = modRoute === '/workspaces/tasks' ? '/' : modRoute;
           activeModuleCode = modCode || 'TASK_WORKFLOW';
         } else {
-          destination = '/workspaces/tasks';
+          destination = '/';
           activeModuleCode = 'TASK_WORKFLOW';
         }
       }

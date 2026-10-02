@@ -28,7 +28,7 @@ const FALLBACK_MODULES_DATA: UserModulesResult = {
       name: "Task & Workspace Management",
       description: "Core Operations, Workspace, Tasks, Ticketing & AMC Governance",
       icon: "FolderKanban",
-      route_path: "/workspaces/tasks",
+      route_path: "/",
       display_order: 1,
       is_active: true,
       is_default: true,
@@ -39,7 +39,7 @@ const FALLBACK_MODULES_DATA: UserModulesResult = {
       name: "Vehicle Management Desk",
       description: "Fleet Master, Driver Rosters, Trip Sheets & Maintenance Logistics",
       icon: "Car",
-      route_path: "/vehicle/dashboard",
+      route_path: "/vehicle",
       display_order: 2,
       is_active: true,
       is_default: false,
@@ -50,7 +50,7 @@ const FALLBACK_MODULES_DATA: UserModulesResult = {
       name: "Design & Drawing Tracking",
       description: "Architectural Drawings, CAD/BIM Revision Control & Approvals",
       icon: "Compass",
-      route_path: "/design/dashboard",
+      route_path: "/design/matrix",
       display_order: 3,
       is_active: true,
       is_default: false,
@@ -138,11 +138,11 @@ export default function SelectModulePage() {
       let destination = result?.redirectUrl;
       if (!destination) {
         const fallbackRoutes: Record<string, string> = {
-          TASK_WORKFLOW: "/workspaces/tasks",
-          VEHICLE_DESK: "/vehicle/dashboard",
-          DESIGN_TRACKING: "/design/dashboard"
+          TASK_WORKFLOW: "/",
+          VEHICLE_DESK: "/vehicle",
+          DESIGN_TRACKING: "/design/matrix"
         };
-        destination = fallbackRoutes[targetCode] || "/workspaces/tasks";
+        destination = fallbackRoutes[targetCode] || "/";
       }
 
       if (nextParam && nextParam !== "/" && !nextParam.includes("/login")) {
@@ -160,12 +160,12 @@ export default function SelectModulePage() {
     } catch (err: any) {
       console.error("Error activating module:", err);
       const fallbackRoutes: Record<string, string> = {
-        TASK_WORKFLOW: "/workspaces/tasks",
-        VEHICLE_DESK: "/vehicle/dashboard",
-        DESIGN_TRACKING: "/design/dashboard"
+        TASK_WORKFLOW: "/",
+        VEHICLE_DESK: "/vehicle",
+        DESIGN_TRACKING: "/design/matrix"
       };
       document.cookie = `active_module=${targetCode}; path=/; max-age=2592000; SameSite=Lax`;
-      window.location.href = fallbackRoutes[targetCode] || "/workspaces/tasks";
+      window.location.href = fallbackRoutes[targetCode] || "/";
     }
   };
 

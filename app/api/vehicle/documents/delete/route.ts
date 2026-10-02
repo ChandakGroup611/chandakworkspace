@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { deleteVehicleDocumentAction } from "@/lib/actions/vehicle";
+import { getCachedUser } from "@/lib/auth/cached-user";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
+    const { user } = await getCachedUser();
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: "Unauthenticated" },
+        { status: 401 }
+      );
+    }
+
     const body = await req.json();
     const { documentId } = body;
 

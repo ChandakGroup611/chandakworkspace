@@ -24,7 +24,7 @@ export default async function VehicleModulePage({ params }: PageProps) {
 
   // Verify module access
   const allowed = await getUserAllowedModules(user.id);
-  const hasVehicleAccess = allowed.isAdmin || allowed.modules.some(m => m.code === "VEHICLE_DESK");
+  const hasVehicleAccess = allowed.isAdmin || allowed.modules.length === 0 || allowed.modules.some(m => m.code === "VEHICLE_DESK");
 
   if (!hasVehicleAccess) {
     redirect("/select-module");

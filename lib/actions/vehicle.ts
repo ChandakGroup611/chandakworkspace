@@ -3050,6 +3050,70 @@ export async function createVehicleDocumentAction(
   }
 }
 
+/**
+ * Update an existing vehicle document in vault
+ */
+export async function updateVehicleDocumentAction(
+  documentId: string,
+  updates: {
+    doc_type?: string;
+    title?: string;
+    document_number?: string | null;
+    file_name?: string;
+    file_url?: string;
+    file_size?: string | null;
+    file_type?: string | null;
+    expiry_date?: string | null;
+    status?: string | null;
+  }
+): Promise<{
+  success: boolean;
+  document?: VehicleDocumentRecord;
+  error?: string;
+}> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) {
+      return { success: false, error: "Unauthenticated" };
+    }
+    if (!documentId) {
+      return { success: false, error: "Document ID is required" };
+    }
+
+    const updatePayload: Record<string, any> = {};
+    if (updates.doc_type !== undefined) updatePayload.doc_type = updates.doc_type.toUpperCase();
+    if (updates.title !== undefined) updatePayload.title = updates.title.trim();
+    if (updates.document_number !== undefined) updatePayload.document_number = updates.document_number ? updates.document_number.trim() : null;
+    if (updates.expiry_date !== undefined) updatePayload.expiry_date = updates.expiry_date || null;
+    if (updates.status !== undefined) updatePayload.status = updates.status || "VALID";
+    if (updates.file_name !== undefined) updatePayload.file_name = updates.file_name;
+    if (updates.file_size !== undefined) updatePayload.file_size = updates.file_size;
+    if (updates.file_url !== undefined) updatePayload.file_url = updates.file_url;
+
+    const { data, error } = await supabaseAdmin
+      .from("vehicle_documents")
+      .update(updatePayload)
+      .eq("id", documentId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("[vehicle-actions] updateVehicleDocumentAction error:", error);
+      return { success: false, error: error.message };
+    }
+
+    return {
+      success: true,
+      document: {
+        ...data,
+        file_type: resolveMimeFromName(data.file_name)
+      } as VehicleDocumentRecord
+    };
+  } catch (err: any) {
+    console.error("[vehicle-actions] updateVehicleDocumentAction exception:", err);
+    return { success: false, error: err.message || "Failed to update vehicle document" };
+  }
+}
 
 export async function deleteVehicleAction(id: string): Promise<{
   success: boolean;

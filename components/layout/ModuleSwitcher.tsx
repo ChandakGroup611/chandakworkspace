@@ -29,12 +29,23 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
   const [data, setData] = useState<UserModulesResult | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Auto-detect current active module based on route, or stored cookie
+  // Auto-detect current active module strictly based on route
   const activeModuleCode = React.useMemo(() => {
     if (pathname.startsWith("/vehicle")) return "VEHICLE_DESK";
     if (pathname.startsWith("/design")) return "DESIGN_TRACKING";
-    return data?.activeModuleCode || "TASK_WORKFLOW";
-  }, [pathname, data]);
+    return "TASK_WORKFLOW";
+  }, [pathname]);
+
+  // Synchronize client-side active_module cookie when navigating across module boundaries
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      const match = document.cookie.match(/(?:^|; )active_module=([^;]*)/);
+      const currentCookie = match ? match[1] : null;
+      if (currentCookie !== activeModuleCode) {
+        document.cookie = `active_module=${activeModuleCode}; path=/; max-age=2592000; SameSite=Lax`;
+      }
+    }
+  }, [activeModuleCode]);
 
   useEffect(() => {
     let isMounted = true;
@@ -137,7 +148,7 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
       const resData = await res.json();
       if (resData.success) {
         onCloseMobile?.();
-        window.location.href = resData.redirectUrl || "/workspaces/tasks";
+        window.location.href = resData.redirectUrl || (code === "VEHICLE_DESK" ? "/vehicle" : code === "DESIGN_TRACKING" ? "/design/matrix" : "/");
       } else {
         setLoading(false);
       }
@@ -156,7 +167,7 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
       : "Workspace Module",
     description: null,
     icon: "FolderKanban",
-    route_path: activeModuleCode === "VEHICLE_DESK" ? "/vehicle/dashboard" : activeModuleCode === "DESIGN_TRACKING" ? "/design/dashboard" : "/workspaces/tasks",
+    route_path: activeModuleCode === "VEHICLE_DESK" ? "/vehicle" : activeModuleCode === "DESIGN_TRACKING" ? "/design/matrix" : "/",
     display_order: 1,
     is_active: true
   };
@@ -185,51 +196,59 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
         </AppButton>
 
         {open && hasMultipleModules && (
-          <div className="absolute left-full ml-2 top-0 z-50 w-72 rounded-2xl bg-surface dark:bg-[#0B0F19] border border-border shadow-2xl p-2.5 animate-in fade-in zoom-in-95 duration-150">
-            <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-muted border-b border-border/50 flex items-center justify-between">
-              <span>Switch Workspace</span>
-              <ArrowRightLeft className="h-3 w-3" />
+          <div className="absolute left-full ml-2 top-0 z-50 w-72 rounded-2xl bg-surface border border-border shadow-2xl p-2.5 animate-in fade-in zoom-in-95 duration-150">
+            <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border/50 flex items-center justify-between">
+              <span>Switch Module</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-elevated text-muted-foreground font-semibold">
+                {data?.modules.length} Available
+              </span>
             </div>
 
             <div className="py-2 space-y-1.5">
               {data?.modules.map((mod) => {
                 const ModIcon = getModuleIcon(mod.code);
-                const modTheme = getModuleTheme(mod.code);
                 const isCurrent = mod.code === activeModuleCode;
 
                 return (
                   <div
                     key={mod.id}
                     onClick={() => handleSelectModule(mod.code)}
-                    className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-left text-xs transition-all cursor-pointer ${
+                    className={`w-full flex items-start justify-between gap-2.5 px-3 py-2.5 rounded-xl text-left text-xs transition-all cursor-pointer ${
                       isCurrent
-                        ? `${modTheme.bg} ${modTheme.color} font-bold`
-                        : "text-foreground/80 hover:bg-surface-hover hover:text-foreground"
+                        ? "bg-theme-btn-primary/10 text-theme-btn-primary font-bold border border-theme-btn-primary/20 shadow-xs"
+                        : "text-foreground hover:bg-elevated"
                     }`}
                   >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <ModIcon className={`h-4 w-4 shrink-0 ${modTheme.color}`} />
-                      <div className="flex flex-col min-w-0">
-                        <span className="truncate">{mod.name}</span>
-                        {mod.is_default && (
-                          <span className="text-[9px] text-amber-500 font-semibold">★ Default Login</span>
-                        )}
+                    <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                      <div className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${isCurrent ? 'bg-theme-btn-primary text-white' : 'bg-elevated text-muted-foreground'}`}>
+                        <ModIcon className="h-4 w-4" />
+                      </div>
+                      <div className="flex flex-col min-w-0 flex-1">
+                        <span className="leading-snug font-semibold text-foreground break-words">{mod.name}</span>
+                        <div className="flex items-center gap-2 mt-1">
+                          {mod.is_default ? (
+                            <span className="text-[10px] text-amber-500 font-semibold flex items-center gap-0.5">
+                              ★ Default Login
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={(e) => handleSetDefaultModule(e, mod.code, mod.name)}
+                              title="Set as default login module"
+                              className="text-[10px] text-muted-foreground hover:text-amber-500 hover:underline transition-colors font-medium flex items-center gap-0.5"
+                            >
+                              ☆ Set Default
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1 shrink-0">
-                      {!mod.is_default && (
-                        <button
-                          type="button"
-                          onClick={(e) => handleSetDefaultModule(e, mod.code, mod.name)}
-                          title="Set as default login module"
-                          className="p-1 rounded text-[10px] text-muted hover:text-amber-500 hover:bg-amber-500/10 transition-colors"
-                        >
-                          ☆ Set Default
-                        </button>
-                      )}
-                      {isCurrent && <Check className="h-3.5 w-3.5" />}
-                    </div>
+                    {isCurrent && (
+                      <div className="h-6 flex items-center shrink-0">
+                        <Check className="h-4 w-4 text-theme-btn-primary" />
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -238,7 +257,7 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
             <div className="pt-2 border-t border-border/50">
               <a
                 href="/select-module"
-                className="w-full flex items-center justify-center gap-1.5 py-1.5 text-[11px] font-medium text-muted hover:text-foreground transition-colors rounded-lg hover:bg-surface-hover"
+                className="w-full flex items-center justify-center gap-1.5 py-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-elevated"
               >
                 <span>Change Default Module</span>
                 <ExternalLink className="h-3 w-3" />
@@ -287,7 +306,7 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
 
       {/* Dropdown Menu */}
       {open && hasMultipleModules && (
-        <div className="absolute top-full left-0 right-0 mt-2 z-50 rounded-2xl bg-surface border border-border shadow-2xl p-2.5 animate-in fade-in slide-in-from-top-2 duration-150">
+        <div className="absolute top-full left-0 right-0 sm:-right-2 sm:-left-2 mt-2 z-50 min-w-[240px] rounded-2xl bg-surface border border-border shadow-2xl p-2.5 animate-in fade-in slide-in-from-top-2 duration-150">
           <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border/50 flex items-center justify-between">
             <span>Switch Module</span>
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-elevated text-muted-foreground font-semibold">
@@ -295,7 +314,7 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
             </span>
           </div>
 
-          <div className="py-2 space-y-1">
+          <div className="py-2 space-y-1.5">
             {data?.modules.map((mod) => {
               const ModIcon = getModuleIcon(mod.code);
               const isCurrent = mod.code === activeModuleCode;
@@ -304,37 +323,42 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
                 <div
                   key={mod.id}
                   onClick={() => handleSelectModule(mod.code)}
-                  className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-left text-xs transition-all cursor-pointer ${
+                  className={`w-full flex items-start justify-between gap-2.5 px-3 py-2.5 rounded-xl text-left text-xs transition-all cursor-pointer ${
                     isCurrent
                       ? "bg-theme-btn-primary/10 text-theme-btn-primary font-bold border border-theme-btn-primary/20 shadow-xs"
                       : "text-foreground hover:bg-elevated"
                   }`}
                 >
-                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                    <div className={`h-6 w-6 rounded-md flex items-center justify-center shrink-0 ${isCurrent ? 'bg-theme-btn-primary text-white' : 'bg-elevated text-muted-foreground'}`}>
-                      <ModIcon className="h-3.5 w-3.5" />
+                  <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                    <div className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${isCurrent ? 'bg-theme-btn-primary text-white' : 'bg-elevated text-muted-foreground'}`}>
+                      <ModIcon className="h-4 w-4" />
                     </div>
-                    <div className="flex flex-col min-w-0">
-                      <span className="truncate leading-tight font-medium">{mod.name}</span>
-                      {mod.is_default && (
-                        <span className="text-[9px] text-amber-500 font-semibold mt-0.5">★ Default Login</span>
-                      )}
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="leading-snug font-semibold text-foreground break-words">{mod.name}</span>
+                      <div className="flex items-center gap-2 mt-1">
+                        {mod.is_default ? (
+                          <span className="text-[10px] text-amber-500 font-semibold flex items-center gap-0.5">
+                            ★ Default Login
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={(e) => handleSetDefaultModule(e, mod.code, mod.name)}
+                            title="Set this as your default module on login"
+                            className="text-[10px] text-muted-foreground hover:text-amber-500 hover:underline transition-colors font-medium flex items-center gap-0.5"
+                          >
+                            ☆ Set Default
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    {!mod.is_default && (
-                      <button
-                        type="button"
-                        onClick={(e) => handleSetDefaultModule(e, mod.code, mod.name)}
-                        title="Set this as your default module on login"
-                        className="px-2 py-0.5 rounded-md text-[10px] text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10 border border-transparent hover:border-amber-500/20 transition-all font-medium"
-                      >
-                        ☆ Set Default
-                      </button>
-                    )}
-                    {isCurrent && <Check className="h-3.5 w-3.5 text-theme-btn-primary shrink-0" />}
-                  </div>
+                  {isCurrent && (
+                    <div className="h-6 flex items-center shrink-0">
+                      <Check className="h-4 w-4 text-theme-btn-primary" />
+                    </div>
+                  )}
                 </div>
               );
             })}
