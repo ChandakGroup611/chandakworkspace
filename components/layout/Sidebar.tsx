@@ -171,6 +171,7 @@ const vehicleNavGroups: NavGroup[] = [
   {
     label: "Service & Assets",
     items: [
+      { label: "Document Vault", href: "/vehicle/documents", icon: FileCheck2, fleetModule: "VEHICLES" },
       { label: "Service Bills & Job Cards", href: "/vehicle/maintenance", icon: Wrench, fleetModule: "MAINTENANCE" },
       { label: "Parts & Accessories", href: "/vehicle/parts", icon: Package, fleetModule: "PARTS" },
       { label: "Insurance Vendor Master", href: "/vehicle/vendors", icon: ShieldCheck, fleetModule: "VENDORS" },

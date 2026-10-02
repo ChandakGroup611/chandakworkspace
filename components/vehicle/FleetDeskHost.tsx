@@ -55,6 +55,7 @@ import {
   Wind,
   Paperclip,
   UploadCloud,
+  Upload,
   Download,
   Image as ImageIcon,
   ZoomIn,
@@ -742,6 +743,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   // Active sub-navigation tab based on URL
   const activeTab: string = useMemo(() => {
     if (pathname.includes("/register") || pathname.includes("/new")) return "register";
+    if (pathname.includes("/documents") || pathname.includes("/vault")) return "documents";
     if (pathname.includes("/inventory")) return "inventory";
     if (pathname.includes("/trips")) return "trips";
     if (pathname.includes("/drivers")) return "drivers";
@@ -799,6 +801,12 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   const [viewingTrip, setViewingTrip] = useState<TripRecord | null>(null);
   const [viewingPart, setViewingPart] = useState<PartAccessoryRecord | null>(null);
   const [viewingVendor, setViewingVendor] = useState<InsuranceVendorRecord | null>(null);
+
+  // Enterprise Document Vault Tab Filter States
+  const [docVaultSearch, setDocVaultSearch] = useState("");
+  const [docVaultVehicleFilter, setDocVaultVehicleFilter] = useState("ALL");
+  const [docVaultCategoryFilter, setDocVaultCategoryFilter] = useState("ALL");
+  const [docVaultScanStatusFilter, setDocVaultScanStatusFilter] = useState<"ALL" | "ATTACHED" | "PENDING">("ALL");
 
   // Vehicle Master Dossier Multi-Column / Tab View States
   const [vehicleDossierTab, setVehicleDossierTab] = useState<
@@ -3470,6 +3478,67 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       hasPermit
     };
   }, [viewingVehicle, maintenance, parts, trips, drivers, viewingVehiclePolicies, viewingVehiclePucs, computeVehicleAggregatedDocs]);
+
+  // Master Enterprise Fleet Document Vault Aggregation (All Vehicles)
+  const allFleetVaultDocuments = useMemo(() => {
+    const list: Array<AggregatedVehicleDoc & { vehicleReg: string; vehicleMake: string; vehicleModel?: string; vehicleId: string; vehicleObj: VehicleRecord }> = [];
+    
+    vehicles.forEach((veh) => {
+      const vDocs = computeVehicleAggregatedDocs(
+        veh,
+        maintenance,
+        parts,
+        trips,
+        drivers
+      );
+      vDocs.forEach((d) => {
+        list.push({
+          ...d,
+          vehicleReg: veh.registration_number,
+          vehicleMake: veh.make,
+          vehicleModel: veh.model,
+          vehicleId: veh.id,
+          vehicleObj: veh
+        });
+      });
+    });
+
+    return list;
+  }, [vehicles, maintenance, parts, trips, drivers, computeVehicleAggregatedDocs]);
+
+  const filteredVaultDocuments = useMemo(() => {
+    return allFleetVaultDocuments.filter((doc) => {
+      // Vehicle filter
+      if (docVaultVehicleFilter !== "ALL" && doc.vehicleId !== docVaultVehicleFilter) {
+        return false;
+      }
+      // Category filter
+      if (docVaultCategoryFilter !== "ALL") {
+        if (docVaultCategoryFilter === "RC" && doc.doc_type !== "RC") return false;
+        if (docVaultCategoryFilter === "INSURANCE" && doc.doc_type !== "INSURANCE") return false;
+        if (docVaultCategoryFilter === "PUC" && doc.doc_type !== "PUC") return false;
+        if (docVaultCategoryFilter === "FITNESS" && doc.doc_type !== "FITNESS") return false;
+        if (docVaultCategoryFilter === "MAINTENANCE" && doc.doc_type !== "MAINTENANCE" && doc.sourceModule !== "SERVICE") return false;
+        if (docVaultCategoryFilter === "PART" && doc.doc_type !== "PART" && doc.sourceModule !== "PART") return false;
+      }
+      // Scan Status filter
+      if (docVaultScanStatusFilter === "ATTACHED" && !doc.file_url && !(doc as any).has_file) return false;
+      if (docVaultScanStatusFilter === "PENDING" && (doc.file_url || (doc as any).has_file)) return false;
+
+      // Text search
+      if (docVaultSearch.trim()) {
+        const q = docVaultSearch.toLowerCase();
+        const matchTitle = (doc.title || "").toLowerCase().includes(q);
+        const matchReg = (doc.vehicleReg || "").toLowerCase().includes(q);
+        const matchMake = (doc.vehicleMake || "").toLowerCase().includes(q);
+        const matchFile = (doc.file_name || "").toLowerCase().includes(q);
+        const matchNum = (doc.document_number || "").toLowerCase().includes(q);
+        const matchSource = (doc.sourceLabel || "").toLowerCase().includes(q);
+        return matchTitle || matchReg || matchMake || matchFile || matchNum || matchSource;
+      }
+      return true;
+    });
+  }, [allFleetVaultDocuments, docVaultVehicleFilter, docVaultCategoryFilter, docVaultScanStatusFilter, docVaultSearch]);
 
   const uploadVehicleDocumentViaRestOrAction = async (
     vehicleId: string,
@@ -6431,6 +6500,68 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
               title: "Expiring Policies (≤30d)",
               value: expiringInsuranceCount,
               subtext: "Policy renewal required",
+              icon: AlertTriangle,
+              iconColor: "text-amber-500",
+              iconBg: "bg-amber-500/10 border-amber-500/20"
+            }
+          ]
+        };
+
+      case "documents":
+        return {
+          category: "Service & Assets",
+          badge: "Document Vault",
+          badgeColor: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+          icon: FileCheck,
+          iconBg: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25",
+          title: "Enterprise Fleet Document Vault",
+          description: "Centralized archive of verified statutory certificates, registration cards, insurance policies & service attachments",
+          actionBtn: canCreateVehicle ? (
+            <AppButton
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                setDossierNewDocType("OTHER");
+                setDossierNewDocTitle("");
+                setDossierNewDocNumber("");
+                setDossierNewDocExpiry("");
+                setIsDossierAddDocOpen(true);
+              }}
+              className="text-xs h-9 px-3.5 font-bold shadow-xs bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text gap-1.5"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Upload Document</span>
+            </AppButton>
+          ) : null,
+          kpis: [
+            {
+              title: "Verified Scans in Vault",
+              value: vehicles.reduce((sum, v) => sum + (v.documents?.filter(d => d.file_url || (d as any).has_file).length || 0), 0),
+              subtext: "Uploaded authentic files",
+              icon: FileCheck,
+              iconColor: "text-emerald-500",
+              iconBg: "bg-emerald-500/10 border-emerald-500/20"
+            },
+            {
+              title: "Tracked Fleet Assets",
+              value: vehicles.length,
+              subtext: "Vehicles with dossier",
+              icon: Car,
+              iconColor: "text-blue-500",
+              iconBg: "bg-blue-500/10 border-blue-500/20"
+            },
+            {
+              title: "Active Statutory Records",
+              value: vehicles.filter(v => v.insurance_policy_number || v.puc_expiry_date).length,
+              subtext: "Compliance tracked",
+              icon: ShieldCheck,
+              iconColor: "text-theme-icon",
+              iconBg: "bg-surface border-border"
+            },
+            {
+              title: "Expiring in ≤30 Days",
+              value: complianceAlerts.filter(a => a.daysRemaining !== null && a.daysRemaining <= 30 && a.daysRemaining >= 0).length,
+              subtext: "Renewal window open",
               icon: AlertTriangle,
               iconColor: "text-amber-500",
               iconBg: "bg-amber-500/10 border-amber-500/20"
@@ -10983,6 +11114,327 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       )}
 
       {/* ---------------------------------------------------------------------- */}
+      {/* ENTERPRISE FLEET DOCUMENT VAULT TAB */}
+      {/* ---------------------------------------------------------------------- */}
+      {!isAnyTransactionFormOpen && activeTab === "documents" && (
+        <FleetErrorBoundary tabName="Enterprise Fleet Document Vault" onReset={() => loadAllData(true)}>
+          <div className="space-y-6">
+            {/* Filter & Search Toolbar */}
+            <AppCard className="border-border shadow-xs">
+              <AppCardContent className="p-4 space-y-4">
+                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+                  {/* Search Input */}
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <input
+                      type="text"
+                      placeholder="Search by vehicle plate, document title, doc #, insurer, or file name..."
+                      value={docVaultSearch}
+                      onChange={(e) => setDocVaultSearch(e.target.value)}
+                      className="w-full pl-9 pr-8 py-2 text-xs bg-surface border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-theme-btn-primary text-foreground placeholder:text-muted-foreground"
+                    />
+                    {docVaultSearch && (
+                      <button
+                        type="button"
+                        onClick={() => setDocVaultSearch("")}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Vehicle Selector Dropdown */}
+                  <div className="w-full md:w-64 shrink-0">
+                    <select
+                      value={docVaultVehicleFilter}
+                      onChange={(e) => setDocVaultVehicleFilter(e.target.value)}
+                      className="w-full py-2 px-3 text-xs bg-surface border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-theme-btn-primary text-foreground font-semibold"
+                    >
+                      <option value="ALL">All Fleet Vehicles ({vehicles.length})</option>
+                      {vehicles.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.registration_number} — {v.make} {v.model || ""}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Scan Attached vs Pending Toggle */}
+                  <div className="flex items-center gap-1 p-1 bg-surface border border-border rounded-lg shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setDocVaultScanStatusFilter("ALL")}
+                      className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
+                        docVaultScanStatusFilter === "ALL"
+                          ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-2xs"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      All Records ({allFleetVaultDocuments.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDocVaultScanStatusFilter("ATTACHED")}
+                      className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
+                        docVaultScanStatusFilter === "ATTACHED"
+                          ? "bg-emerald-600 text-white shadow-2xs"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      Scans Attached ({allFleetVaultDocuments.filter((d) => d.file_url || (d as any).has_file).length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDocVaultScanStatusFilter("PENDING")}
+                      className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
+                        docVaultScanStatusFilter === "PENDING"
+                          ? "bg-amber-600 text-white shadow-2xs"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      Pending Scans ({allFleetVaultDocuments.filter((d) => !d.file_url && !(d as any).has_file).length})
+                    </button>
+                  </div>
+                </div>
+
+                {/* Category Filter Pills */}
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-2 border-t border-border/50">
+                  {[
+                    { id: "ALL", label: "All Types", count: allFleetVaultDocuments.length },
+                    { id: "RC", label: "RC Cards", count: allFleetVaultDocuments.filter((d) => d.doc_type === "RC").length },
+                    { id: "INSURANCE", label: "Insurance Policies", count: allFleetVaultDocuments.filter((d) => d.doc_type === "INSURANCE").length },
+                    { id: "PUC", label: "PUC Certificates", count: allFleetVaultDocuments.filter((d) => d.doc_type === "PUC").length },
+                    { id: "FITNESS", label: "Transport Fitness", count: allFleetVaultDocuments.filter((d) => d.doc_type === "FITNESS").length },
+                    { id: "MAINTENANCE", label: "Service Invoices", count: allFleetVaultDocuments.filter((d) => d.doc_type === "MAINTENANCE" || d.sourceModule === "SERVICE").length },
+                    { id: "PART", label: "Part Warranties", count: allFleetVaultDocuments.filter((d) => d.doc_type === "PART" || d.sourceModule === "PART").length }
+                  ].map((cat) => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setDocVaultCategoryFilter(cat.id)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0 transition-all cursor-pointer flex items-center gap-1.5 ${
+                        docVaultCategoryFilter === cat.id
+                          ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs"
+                          : "bg-surface hover:bg-surface-elevated text-muted-foreground hover:text-foreground border border-border"
+                      }`}
+                    >
+                      <span>{cat.label}</span>
+                      <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-black/10 dark:bg-white/10">
+                        {cat.count}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </AppCardContent>
+            </AppCard>
+
+            {/* Document Cards Grid */}
+            {filteredVaultDocuments.length === 0 ? (
+              <AppCard className="border-border shadow-xs">
+                <AppCardContent className="p-12 text-center text-muted-foreground space-y-3">
+                  <FileCheck className="h-10 w-10 mx-auto text-muted-foreground/50" />
+                  <div className="font-semibold text-foreground text-sm">No documents found matching your filter criteria.</div>
+                  <p className="text-xs max-w-md mx-auto">Try clearing search filters or uploading new documents for your fleet vehicles.</p>
+                  <AppButton
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setDocVaultSearch("");
+                      setDocVaultVehicleFilter("ALL");
+                      setDocVaultCategoryFilter("ALL");
+                      setDocVaultScanStatusFilter("ALL");
+                    }}
+                    className="text-xs"
+                  >
+                    Reset All Filters
+                  </AppButton>
+                </AppCardContent>
+              </AppCard>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredVaultDocuments.map((doc, idx) => {
+                  const typeConfig = VEHICLE_DOC_TYPES.find((t) => t.value === doc.doc_type) || {
+                    badgeColor: "bg-surface text-foreground border-border",
+                    label: doc.categoryLabel || doc.doc_type || "Document"
+                  };
+                  const daysRemaining = doc.expiry_date ? calculateDaysRemaining(doc.expiry_date) : null;
+                  const versionTagMatch = (doc.title || "").match(/\((v?\d+(?:\.\d+)?)\)$/i);
+                  const versionTag = versionTagMatch ? versionTagMatch[1] : null;
+
+                  return (
+                    <div
+                      key={doc.id || idx}
+                      className="p-4 rounded-xl border border-border bg-surface hover:border-theme-btn-primary/50 transition-all shadow-2xs space-y-3 flex flex-col justify-between group"
+                    >
+                      <div className="space-y-2.5">
+                        {/* Header: Vehicle Plate & Type Badge */}
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-foreground border border-border flex items-center gap-1.5">
+                              <VehicleBrandLogo brand={doc.vehicleMake} model={doc.vehicleModel} size={14} />
+                              <span>{doc.vehicleReg}</span>
+                            </span>
+                            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border ${typeConfig.badgeColor}`}>
+                              {doc.categoryLabel || typeConfig.label}
+                            </span>
+                            {versionTag && (
+                              <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-foreground border border-border">
+                                {versionTag}
+                              </span>
+                            )}
+                          </div>
+                          {!doc.file_url && !(doc as any).has_file && (
+                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20">
+                              Digital Record
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Title & File Name */}
+                        <div className="flex items-start gap-3 pt-1">
+                          <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-border shrink-0 group-hover:scale-105 transition-transform">
+                            {renderAttachmentIcon(doc.file_type || resolveMimeFromName(doc.file_name || ""), doc.file_name || undefined)}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <h4 className="font-semibold text-foreground text-xs line-clamp-1" title={doc.title || doc.file_name || undefined}>
+                              {doc.title || doc.file_name}
+                            </h4>
+                            <div className="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-0.5 truncate">
+                              {doc.file_url || (doc as any).has_file ? (
+                                <>
+                                  <span className="truncate max-w-[160px] font-mono text-foreground font-medium">{doc.file_name || "scanned_document.pdf"}</span>
+                                  {doc.file_size && (
+                                    <>
+                                      <span>•</span>
+                                      <span>{formatFileSize(doc.file_size)}</span>
+                                    </>
+                                  )}
+                                </>
+                              ) : (
+                                <span className="text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1">
+                                  <AlertCircle className="h-3 w-3" /> No Scan Attached
+                                </span>
+                              )}
+                            </div>
+                            {doc.document_number && (
+                              <div className="text-[11px] font-mono text-muted-foreground mt-0.5 flex items-center gap-1 truncate">
+                                <span>Doc #:</span>
+                                <span className="text-foreground font-semibold">{doc.document_number}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Expiry Pill & Actions */}
+                      <div className="pt-2 border-t border-border flex items-center justify-between text-xs gap-2">
+                        <div>
+                          {doc.expiry_date ? (
+                            daysRemaining !== null && daysRemaining < 0 ? (
+                              <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20 inline-flex items-center gap-1">
+                                <AlertCircle className="h-3 w-3" />
+                                <span>Expired {Math.abs(daysRemaining)}d ago</span>
+                              </span>
+                            ) : daysRemaining !== null && daysRemaining <= 30 ? (
+                              <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 inline-flex items-center gap-1">
+                                <Clock className="h-3 w-3 text-amber-500" />
+                                <span>Exp in {daysRemaining}d</span>
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1">
+                                <ShieldCheck className="h-3 w-3 text-emerald-500" />
+                                <span>Valid ({daysRemaining}d)</span>
+                              </span>
+                            )
+                          ) : (
+                            <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-muted-foreground border border-border inline-flex items-center gap-1">
+                              <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                              <span>Lifetime Valid</span>
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {doc.file_url || (doc as any).has_file ? (
+                            <>
+                              <AppButton
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  handleViewAttachment({
+                                    ...doc,
+                                    vehicleReg: doc.vehicleReg
+                                  })
+                                }
+                                className="h-7 px-2 text-xs text-blue-600 dark:text-blue-400 border-blue-500/30 hover:bg-blue-500/10 gap-1 font-semibold"
+                                title="View / Preview Scanned Document"
+                              >
+                                <Eye className="h-3.5 w-3.5" />
+                                <span>View</span>
+                              </AppButton>
+                              <AppButton
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => downloadAttachment(doc)}
+                                className="h-7 px-2 text-xs text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10 gap-1 font-semibold"
+                                title="Download Document File"
+                              >
+                                <Download className="h-3.5 w-3.5" />
+                                <span>Download</span>
+                              </AppButton>
+                            </>
+                          ) : (
+                            <AppButton
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const targetVeh = doc.vehicleObj || vehicles.find((v) => v.id === doc.vehicleId);
+                                if (targetVeh) setViewingVehicle(targetVeh);
+                                setDossierNewDocType(doc.doc_type || "OTHER");
+                                setDossierNewDocTitle(doc.title || "");
+                                setDossierNewDocNumber(doc.document_number || "");
+                                setDossierNewDocExpiry(doc.expiry_date || "");
+                                setIsDossierAddDocOpen(true);
+                              }}
+                              className="h-7 px-2 text-xs text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/10 gap-1 font-semibold"
+                              title="Upload Scanned Document Copy"
+                            >
+                              <Upload className="h-3.5 w-3.5" />
+                              <span>Upload Scan</span>
+                            </AppButton>
+                          )}
+                          <AppButton
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={() => {
+                              const targetVeh = doc.vehicleObj || vehicles.find((v) => v.id === doc.vehicleId);
+                              if (targetVeh) {
+                                setViewingVehicle(targetVeh);
+                                setVehicleDossierTab("DOCS");
+                              }
+                            }}
+                            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                            title="Open Vehicle Dossier"
+                          >
+                            <ArrowRight className="h-3.5 w-3.5" />
+                          </AppButton>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </FleetErrorBoundary>
+      )}
+
+            {/* ---------------------------------------------------------------------- */}
       {/* COMPLIANCE & ALERTS TAB */}
       {/* ---------------------------------------------------------------------- */}
       {!isAnyTransactionFormOpen && activeTab === "alerts" && (
