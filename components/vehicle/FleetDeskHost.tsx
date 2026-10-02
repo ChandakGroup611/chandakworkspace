@@ -7374,125 +7374,107 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       )}
                       <span>Make / Brand *</span>
                     </label>
-                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      Quick-Pick Available
-                    </span>
                   </div>
                   <div className="relative flex items-center">
-                    <AppInput 
-                      value={newVehicleMake} 
-                      onChange={(e) => setNewVehicleMake(e.target.value)} 
-                      list="fleet-popular-makes-form"
-                      required
-                      className={newVehicleMake ? "pr-9" : ""}
-                    />
-                    {newVehicleMake && (
-                      <div className="absolute right-2.5 flex items-center pointer-events-none">
-                        <VehicleBrandLogo brand={newVehicleMake} size={18} />
-                      </div>
-                    )}
-                  </div>
-                  <datalist id="fleet-popular-makes-form">
-                    {Object.keys(POPULAR_BRANDS).map((b) => (
-                      <option key={b} value={b} />
-                    ))}
-                  </datalist>
-
-                  {/* Brand Quick-Pick Chips with Official Emblems */}
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {TOP_BRAND_NAMES.map((brand) => {
-                      const isSelected = (newVehicleMake || "").trim().toLowerCase() === brand.toLowerCase();
-                      return (
-                        <AppButton
-                          key={brand}
-                          type="button"
-                          variant={isSelected ? "primary" : "outline"}
-                          size="sm"
-                          onClick={() => {
-                            setNewVehicleMake(brand);
-                            const cfg = POPULAR_BRANDS[brand];
-                            if (cfg) {
-                              setNewVehicleCategory(cfg.category);
-                              if (cfg.models.length > 0 && (!newVehicleModel || !cfg.models.includes(newVehicleModel))) {
-                                setNewVehicleModel(cfg.models[0]);
-                                if (newPlateInfo.districtCode) {
-                                  setNewVehicleNickname(`${newPlateInfo.stateCode} ${brand} ${cfg.models[0]}`.trim());
-                                }
-                              }
+                    <select
+                      value={Object.keys(POPULAR_BRANDS).includes(newVehicleMake) ? newVehicleMake : (newVehicleMake ? "OTHER" : "")}
+                      onChange={(e) => {
+                        const brand = e.target.value;
+                        if (brand === "OTHER") {
+                          setNewVehicleMake("");
+                          return;
+                        }
+                        setNewVehicleMake(brand);
+                        const cfg = POPULAR_BRANDS[brand];
+                        if (cfg) {
+                          setNewVehicleCategory(cfg.category);
+                          if (cfg.models.length > 0) {
+                            setNewVehicleModel(cfg.models[0]);
+                            if (newPlateInfo.districtCode) {
+                              setNewVehicleNickname(`${newPlateInfo.stateCode} ${brand} ${cfg.models[0]}`.trim());
                             }
-                          }}
-                          className={`h-7 px-2.5 text-xs font-medium inline-flex items-center gap-1.5 ${
-                            isSelected
-                              ? "bg-theme-btn-primary text-theme-btn-primary-text border-theme-btn-primary font-semibold shadow-xs"
-                              : "border-border text-foreground hover:border-theme-btn-primary/40 bg-surface"
-                          }`}
-                        >
-                          <VehicleBrandLogo brand={brand} size={14} />
-                          <span>{brand}</span>
-                        </AppButton>
-                      );
-                    })}
+                          }
+                        }
+                      }}
+                      className="w-full h-10 rounded-xl border border-border bg-surface px-3 text-xs text-foreground font-medium focus:outline-none focus:border-theme-btn-primary shadow-2xs cursor-pointer"
+                      required
+                    >
+                      <option value="">-- Select Make / Brand --</option>
+                      {Object.keys(POPULAR_BRANDS).map((b) => (
+                        <option key={b} value={b}>{b}</option>
+                      ))}
+                      <option value="OTHER">+ Other / Custom Brand</option>
+                    </select>
                   </div>
+                  {(!Object.keys(POPULAR_BRANDS).includes(newVehicleMake) || newVehicleMake === "") && (
+                    <div className="mt-2">
+                      <AppInput 
+                        placeholder="Enter custom brand / manufacturer name"
+                        value={newVehicleMake} 
+                        onChange={(e) => setNewVehicleMake(e.target.value)} 
+                        required
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="text-xs font-semibold text-foreground">Model Name *</label>
-                    <span className="text-xs text-muted-foreground">Popular models for selected brand</span>
                   </div>
-                  <AppInput 
-                    value={newVehicleModel} 
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setNewVehicleModel(val);
-                      if (/\b(ev|electric)\b/i.test(val) || /ioniq|recharge/i.test(val)) {
-                        setNewVehicleFuel("Electric");
-                        setNewVehiclePucExpiry("");
-                      }
-                    }} 
-                    list="fleet-popular-models-form"
-                    required
-                  />
-                  <datalist id="fleet-popular-models-form">
-                    {(POPULAR_BRANDS[newVehicleMake]?.models || []).map((m) => (
-                      <option key={m} value={m} />
-                    ))}
-                  </datalist>
-
-                  {/* Model Quick-Pick Chips */}
-                  {POPULAR_BRANDS[newVehicleMake]?.models && (
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {POPULAR_BRANDS[newVehicleMake].models.slice(0, 6).map((m) => {
-                        const isSelected = (newVehicleModel || "").trim().toLowerCase() === m.toLowerCase();
-                        return (
-                          <AppButton
-                            key={m}
-                            type="button"
-                            variant={isSelected ? "primary" : "outline"}
-                            size="sm"
-                            onClick={() => {
-                              setNewVehicleModel(m);
-                              const cfg = POPULAR_BRANDS[newVehicleMake];
-                              if (cfg?.category) setNewVehicleCategory(cfg.category);
-                              if (/\b(ev|electric)\b/i.test(m) || /ioniq|recharge/i.test(m)) {
-                                setNewVehicleFuel("Electric");
-                                setNewVehiclePucExpiry("");
-                              }
-                              if (newPlateInfo.districtCode) {
-                                setNewVehicleNickname(`${newPlateInfo.stateCode} ${m}`.trim());
-                              }
-                            }}
-                            className={`h-7 px-2.5 text-xs font-medium ${
-                              isSelected
-                                ? "bg-theme-btn-primary text-theme-btn-primary-text border-theme-btn-primary font-semibold shadow-xs"
-                                : "border-border text-foreground hover:border-theme-btn-primary/40 bg-surface"
-                            }`}
-                          >
-                            <span>{m}</span>
-                          </AppButton>
-                        );
-                      })}
+                  {POPULAR_BRANDS[newVehicleMake]?.models ? (
+                    <div className="space-y-2">
+                      <select
+                        value={POPULAR_BRANDS[newVehicleMake].models.includes(newVehicleModel) ? newVehicleModel : (newVehicleModel ? "CUSTOM" : "")}
+                        onChange={(e) => {
+                          const m = e.target.value;
+                          if (m === "CUSTOM") {
+                            setNewVehicleModel("");
+                            return;
+                          }
+                          setNewVehicleModel(m);
+                          const cfg = POPULAR_BRANDS[newVehicleMake];
+                          if (cfg?.category) setNewVehicleCategory(cfg.category);
+                          if (/\b(ev|electric)\b/i.test(m) || /ioniq|recharge/i.test(m)) {
+                            setNewVehicleFuel("Electric");
+                            setNewVehiclePucExpiry("");
+                          }
+                          if (newPlateInfo.districtCode) {
+                            setNewVehicleNickname(`${newPlateInfo.stateCode} ${m}`.trim());
+                          }
+                        }}
+                        className="w-full h-10 rounded-xl border border-border bg-surface px-3 text-xs text-foreground font-medium focus:outline-none focus:border-theme-btn-primary shadow-2xs cursor-pointer"
+                        required
+                      >
+                        <option value="">-- Select Model --</option>
+                        {POPULAR_BRANDS[newVehicleMake].models.map((m) => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
+                        <option value="CUSTOM">+ Other / Custom Model</option>
+                      </select>
+                      {(!POPULAR_BRANDS[newVehicleMake].models.includes(newVehicleModel) || newVehicleModel === "") && (
+                        <AppInput 
+                          placeholder="Enter custom model name"
+                          value={newVehicleModel} 
+                          onChange={(e) => setNewVehicleModel(e.target.value)} 
+                          required
+                        />
+                      )}
                     </div>
+                  ) : (
+                    <AppInput 
+                      placeholder="Enter model name"
+                      value={newVehicleModel} 
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setNewVehicleModel(val);
+                        if (/\b(ev|electric)\b/i.test(val) || /ioniq|recharge/i.test(val)) {
+                          setNewVehicleFuel("Electric");
+                          setNewVehiclePucExpiry("");
+                        }
+                      }} 
+                      required
+                    />
                   )}
                 </div>
               </div>
@@ -7518,7 +7500,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                       setNewVehicleFuel(val);
                       if (isElectricFuel(val)) setNewVehiclePucExpiry("");
                     }}
-                    className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs text-foreground font-medium focus:outline-none focus:border-theme-btn-primary shadow-2xs"
+                    className="w-full h-10 rounded-xl border border-border bg-surface px-3 text-xs text-foreground font-medium focus:outline-none focus:border-theme-btn-primary shadow-2xs"
                   >
                     <option value="Petrol">Petrol</option>
                     <option value="Diesel">Diesel</option>
@@ -7534,7 +7516,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <select 
                     value={newVehicleCategory}
                     onChange={(e) => setNewVehicleCategory(e.target.value)}
-                    className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs text-foreground font-medium focus:outline-none focus:border-theme-btn-primary shadow-2xs"
+                    className="w-full h-10 rounded-xl border border-border bg-surface px-3 text-xs text-foreground font-medium focus:outline-none focus:border-theme-btn-primary shadow-2xs"
                   >
                     <option value="CAR">Car / SUV / Sedan</option>
                     <option value="BIKE">Motorbike / Scooter</option>
@@ -7551,68 +7533,32 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   <div className="flex gap-2 items-center">
                     <input 
                       type="color" 
-                      value={newVehicleColor.startsWith("#") ? newVehicleColor : "#1e293b"}
+                      value={newVehicleColor.startsWith("#") ? newVehicleColor : "#0f172a"}
                       onChange={(e) => setNewVehicleColor(e.target.value)}
-                      className="h-9 w-10 rounded border border-border cursor-pointer p-0.5 bg-surface"
+                      className="h-10 w-12 rounded-xl border border-border cursor-pointer p-0.5 bg-surface shrink-0"
                     />
-                    <AppInput 
-                      value={newVehicleColor} 
-                      onChange={(e) => setNewVehicleColor(e.target.value)} 
-                      className="flex-1"
-                    />
-                  </div>
-                  {/* Model-Aware OEM Paint Color Quick-Picks */}
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {(() => {
-                      const modelUpper = `${newVehicleMake} ${newVehicleModel}`.toUpperCase();
-                      const isRaider = modelUpper.includes("RAIDER");
-                      const isShine = modelUpper.includes("SHINE");
-                      const isActiva = modelUpper.includes("ACTIVA");
-
-                      const swatches = isRaider
-                        ? [
-                            { name: "Wicked Black", hex: "#0f172a" },
-                            { name: "Fiery Yellow", hex: "#eab308" },
-                            { name: "Striking Red", hex: "#dc2626" },
-                            { name: "Blazing Blue", hex: "#2563eb" },
-                            { name: "Forza Blue", hex: "#1d4ed8" }
-                          ]
-                        : isShine || isActiva
-                        ? [
-                            { name: "Geny Grey Metallic", hex: "#475569" },
-                            { name: "Black", hex: "#0f172a" },
-                            { name: "Rebel Red Metallic", hex: "#991b1b" },
-                            { name: "Athletic Blue", hex: "#1e40af" }
-                          ]
-                        : [
-                            { name: "Pearl White", hex: "#f8fafc" },
-                            { name: "Attitude Black", hex: "#0f172a" },
-                            { name: "Silver / Grey", hex: "#64748b" },
-                            { name: "Royal Blue", hex: "#2563eb" },
-                            { name: "Crimson Red", hex: "#dc2626" }
-                          ];
-
-                      return swatches.map((s) => (
-                        <AppButton
-                          key={s.name}
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setNewVehicleColor(s.name)}
-                          className={`h-7 px-2.5 rounded-full text-xs font-medium gap-1 ${
-                            newVehicleColor === s.name || newVehicleColor === s.hex
-                              ? "border-theme-btn-primary bg-theme-btn-primary/10 text-theme-btn-primary font-bold shadow-2xs"
-                              : "border-border/70 bg-surface/70 text-muted-foreground hover:bg-surface hover:text-foreground"
-                          }`}
-                        >
-                          <span
-                            className="w-2 h-2 rounded-full border border-black/20 shrink-0 inline-block"
-                            style={{ backgroundColor: s.hex }}
-                          />
-                          <span>{s.name}</span>
-                        </AppButton>
-                      ));
-                    })()}
+                    <select
+                      value={[
+                        "Pearl White", "Attitude Black", "Silver / Grey", "Royal Blue", "Crimson Red",
+                        "Emerald Green", "Champagne Gold", "Wicked Black", "Fiery Yellow", "Geny Grey Metallic"
+                      ].includes(newVehicleColor) ? newVehicleColor : "CUSTOM"}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val !== "CUSTOM") {
+                          setNewVehicleColor(val);
+                        }
+                      }}
+                      className="flex-1 h-10 rounded-xl border border-border bg-surface px-3 text-xs text-foreground font-medium focus:outline-none focus:border-theme-btn-primary shadow-2xs cursor-pointer"
+                    >
+                      <option value="Pearl White">Pearl White</option>
+                      <option value="Attitude Black">Attitude Black</option>
+                      <option value="Silver / Grey">Silver / Grey</option>
+                      <option value="Royal Blue">Royal Blue</option>
+                      <option value="Crimson Red">Crimson Red</option>
+                      <option value="Emerald Green">Emerald Green</option>
+                      <option value="Champagne Gold">Champagne Gold</option>
+                      <option value="CUSTOM">Custom Color / Hex Code</option>
+                    </select>
                   </div>
                 </div>
               </div>
@@ -12704,119 +12650,103 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         ) : (
                           <Sparkles className="h-3 w-3 text-amber-500" />
                         )}
-                        <span>Make (Brand)</span>
+                        <span>Make (Brand) *</span>
                       </label>
-                      <span className="text-xs text-muted-foreground flex items-center gap-0.5">
-                        Quick-pick
-                      </span>
                     </div>
                     <div className="relative flex items-center">
-                      <AppInput 
-                        value={editVehicleMake} 
-                        onChange={(e) => setEditVehicleMake(e.target.value)} 
-                        list="fleet-popular-makes-edit"
-                        className={editVehicleMake ? "pr-9" : ""}
-                      />
-                      {editVehicleMake && (
-                        <div className="absolute right-2.5 flex items-center pointer-events-none">
-                          <VehicleBrandLogo brand={editVehicleMake} size={16} />
-                        </div>
-                      )}
+                      <select
+                        value={Object.keys(POPULAR_BRANDS).includes(editVehicleMake) ? editVehicleMake : (editVehicleMake ? "OTHER" : "")}
+                        onChange={(e) => {
+                          const brand = e.target.value;
+                          if (brand === "OTHER") {
+                            setEditVehicleMake("");
+                            return;
+                          }
+                          setEditVehicleMake(brand);
+                          const cfg = POPULAR_BRANDS[brand];
+                          if (cfg) {
+                            setEditVehicleCategory(cfg.category);
+                            if (cfg.models.length > 0) {
+                              setEditVehicleModel(cfg.models[0]);
+                            }
+                          }
+                        }}
+                        className="w-full h-10 rounded-xl border border-border bg-surface px-3 text-xs text-foreground font-medium focus:outline-none focus:border-theme-btn-primary shadow-2xs cursor-pointer"
+                        required
+                      >
+                        <option value="">-- Select Make / Brand --</option>
+                        {Object.keys(POPULAR_BRANDS).map((b) => (
+                          <option key={b} value={b}>{b}</option>
+                        ))}
+                        <option value="OTHER">+ Other / Custom Brand</option>
+                      </select>
                     </div>
-                    <datalist id="fleet-popular-makes-edit">
-                      {Object.keys(POPULAR_BRANDS).map((b) => (
-                        <option key={b} value={b} />
-                      ))}
-                    </datalist>
-
-                    {/* Brand Quick-Pick Chips */}
-                    <div className="mt-1.5 flex flex-wrap gap-1">
-                      {TOP_BRAND_NAMES.map((brand) => {
-                        const isSelected = (editVehicleMake || "").trim().toLowerCase() === brand.toLowerCase();
-                        return (
-                          <AppButton
-                            key={brand}
-                            type="button"
-                            variant={isSelected ? "primary" : "outline"}
-                            size="sm"
-                            onClick={() => {
-                              setEditVehicleMake(brand);
-                              const cfg = POPULAR_BRANDS[brand];
-                              if (cfg) {
-                                setNewVehicleCategory(cfg.category);
-                                if (cfg.models.length > 0 && (!editVehicleModel || !cfg.models.includes(editVehicleModel))) {
-                                  setEditVehicleModel(cfg.models[0]);
-                                }
-                              }
-                            }}
-                            className={`h-7 px-2 text-xs font-medium inline-flex items-center gap-1 ${
-                              isSelected
-                                ? "bg-theme-btn-primary text-theme-btn-primary-text border-theme-btn-primary shadow-xs font-semibold"
-                                : "border-border text-foreground hover:border-theme-btn-primary/40 bg-surface"
-                            }`}
-                          >
-                            <VehicleBrandLogo brand={brand} size={13} />
-                            <span>{brand}</span>
-                          </AppButton>
-                        );
-                      })}
-                    </div>
+                    {(!Object.keys(POPULAR_BRANDS).includes(editVehicleMake) || editVehicleMake === "") && (
+                      <div className="mt-2">
+                        <AppInput 
+                          placeholder="Enter custom brand / manufacturer name"
+                          value={editVehicleMake} 
+                          onChange={(e) => setEditVehicleMake(e.target.value)} 
+                          required
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <label className="font-semibold block">Model</label>
-                      <span className="text-xs text-muted-foreground">Popular models</span>
+                      <label className="font-semibold block">Model *</label>
                     </div>
-                    <AppInput 
-                      value={editVehicleModel} 
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setEditVehicleModel(val);
-                        if (/\b(ev|electric)\b/i.test(val) || /ioniq|recharge/i.test(val)) {
-                          setEditVehicleFuel("Electric");
-                          setEditVehiclePucExpiry("");
-                        }
-                      }} 
-                      list="fleet-popular-models-edit"
-                    />
-                    <datalist id="fleet-popular-models-edit">
-                      {(POPULAR_BRANDS[editVehicleMake]?.models || []).map((m) => (
-                        <option key={m} value={m} />
-                      ))}
-                    </datalist>
-
-                    {/* Model Quick-Pick Chips */}
-                    {POPULAR_BRANDS[editVehicleMake]?.models && (
-                      <div className="mt-1.5 flex flex-wrap gap-1">
-                        {POPULAR_BRANDS[editVehicleMake].models.slice(0, 6).map((m) => {
-                          const isSelected = (editVehicleModel || "").trim().toLowerCase() === m.toLowerCase();
-                          return (
-                            <AppButton
-                              key={m}
-                              type="button"
-                              variant={isSelected ? "primary" : "outline"}
-                              size="sm"
-                              onClick={() => {
-                                setEditVehicleModel(m);
-                                const cfg = POPULAR_BRANDS[editVehicleMake];
-                                if (cfg?.category) setEditVehicleCategory(cfg.category);
-                                if (/\b(ev|electric)\b/i.test(m) || /ioniq|recharge/i.test(m)) {
-                                  setEditVehicleFuel("Electric");
-                                  setEditVehiclePucExpiry("");
-                                }
-                              }}
-                              className={`h-7 px-2.5 text-xs font-medium ${
-                                isSelected
-                                  ? "bg-theme-btn-primary text-theme-btn-primary-text border-theme-btn-primary shadow-xs font-semibold"
-                                  : "border-border text-foreground hover:border-theme-btn-primary/40 bg-surface"
-                              }`}
-                            >
-                              <span>{m}</span>
-                            </AppButton>
-                          );
-                        })}
+                    {POPULAR_BRANDS[editVehicleMake]?.models ? (
+                      <div className="space-y-2">
+                        <select
+                          value={POPULAR_BRANDS[editVehicleMake].models.includes(editVehicleModel) ? editVehicleModel : (editVehicleModel ? "CUSTOM" : "")}
+                          onChange={(e) => {
+                            const m = e.target.value;
+                            if (m === "CUSTOM") {
+                              setEditVehicleModel("");
+                              return;
+                            }
+                            setEditVehicleModel(m);
+                            const cfg = POPULAR_BRANDS[editVehicleMake];
+                            if (cfg?.category) setEditVehicleCategory(cfg.category);
+                            if (/\b(ev|electric)\b/i.test(m) || /ioniq|recharge/i.test(m)) {
+                              setEditVehicleFuel("Electric");
+                              setEditVehiclePucExpiry("");
+                            }
+                          }}
+                          className="w-full h-10 rounded-xl border border-border bg-surface px-3 text-xs text-foreground font-medium focus:outline-none focus:border-theme-btn-primary shadow-2xs cursor-pointer"
+                          required
+                        >
+                          <option value="">-- Select Model --</option>
+                          {POPULAR_BRANDS[editVehicleMake].models.map((m) => (
+                            <option key={m} value={m}>{m}</option>
+                          ))}
+                          <option value="CUSTOM">+ Other / Custom Model</option>
+                        </select>
+                        {(!POPULAR_BRANDS[editVehicleMake].models.includes(editVehicleModel) || editVehicleModel === "") && (
+                          <AppInput 
+                            placeholder="Enter custom model name"
+                            value={editVehicleModel} 
+                            onChange={(e) => setEditVehicleModel(e.target.value)} 
+                            required
+                          />
+                        )}
                       </div>
+                    ) : (
+                      <AppInput 
+                        placeholder="Enter model name"
+                        value={editVehicleModel} 
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setEditVehicleModel(val);
+                          if (/\b(ev|electric)\b/i.test(val) || /ioniq|recharge/i.test(val)) {
+                            setEditVehicleFuel("Electric");
+                            setEditVehiclePucExpiry("");
+                          }
+                        }} 
+                        required
+                      />
                     )}
                   </div>
                 </div>
@@ -12841,7 +12771,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         setEditVehicleFuel(val);
                         if (isElectricFuel(val)) setEditVehiclePucExpiry("");
                       }}
-                      className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs"
+                      className="w-full h-10 rounded-xl border border-border bg-surface px-3 text-xs text-foreground font-medium focus:outline-none focus:border-theme-btn-primary shadow-2xs"
                     >
                       <option value="Petrol">Petrol</option>
                       <option value="Diesel">Diesel</option>
@@ -12859,7 +12789,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <select 
                       value={editVehicleCategory}
                       onChange={(e) => setEditVehicleCategory(e.target.value)}
-                      className="w-full h-9 rounded-lg border border-border bg-surface px-3 text-xs"
+                      className="w-full h-10 rounded-xl border border-border bg-surface px-3 text-xs text-foreground font-medium focus:outline-none focus:border-theme-btn-primary shadow-2xs"
                     >
                       <option value="CAR">Car / SUV / Sedan</option>
                       <option value="BIKE">Motorbike / Scooter</option>
@@ -12875,68 +12805,32 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     <div className="flex gap-2 items-center">
                       <input 
                         type="color" 
-                        value={editVehicleColor.startsWith("#") ? editVehicleColor : "#1e293b"}
+                        value={editVehicleColor.startsWith("#") ? editVehicleColor : "#0f172a"}
                         onChange={(e) => setEditVehicleColor(e.target.value)}
-                        className="h-9 w-10 rounded border border-border cursor-pointer p-0.5 bg-surface"
+                        className="h-10 w-12 rounded-xl border border-border cursor-pointer p-0.5 bg-surface shrink-0"
                       />
-                      <AppInput 
-                        value={editVehicleColor} 
-                        onChange={(e) => setEditVehicleColor(e.target.value)} 
-                        className="flex-1"
-                      />
-                    </div>
-                    {/* Model-Aware OEM Paint Color Quick-Picks */}
-                    <div className="flex flex-wrap gap-1 mt-1.5">
-                      {(() => {
-                        const modelUpper = `${editVehicleMake} ${editVehicleModel}`.toUpperCase();
-                        const isRaider = modelUpper.includes("RAIDER");
-                        const isShine = modelUpper.includes("SHINE");
-                        const isActiva = modelUpper.includes("ACTIVA");
-
-                        const swatches = isRaider
-                          ? [
-                              { name: "Wicked Black", hex: "#0f172a" },
-                              { name: "Fiery Yellow", hex: "#eab308" },
-                              { name: "Striking Red", hex: "#dc2626" },
-                              { name: "Blazing Blue", hex: "#2563eb" },
-                              { name: "Forza Blue", hex: "#1d4ed8" }
-                            ]
-                          : isShine || isActiva
-                          ? [
-                              { name: "Geny Grey Metallic", hex: "#475569" },
-                              { name: "Black", hex: "#0f172a" },
-                              { name: "Rebel Red Metallic", hex: "#991b1b" },
-                              { name: "Athletic Blue", hex: "#1e40af" }
-                            ]
-                          : [
-                              { name: "Pearl White", hex: "#f8fafc" },
-                              { name: "Attitude Black", hex: "#0f172a" },
-                              { name: "Silver / Grey", hex: "#64748b" },
-                              { name: "Royal Blue", hex: "#2563eb" },
-                              { name: "Crimson Red", hex: "#dc2626" }
-                            ];
-
-                        return swatches.map((s) => (
-                          <AppButton
-                            key={s.name}
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setEditVehicleColor(s.name)}
-                            className={`h-7 px-2.5 rounded-full text-xs font-medium gap-1 ${
-                              editVehicleColor === s.name || editVehicleColor === s.hex
-                                ? "border-theme-btn-primary bg-theme-btn-primary/10 text-theme-btn-primary font-bold shadow-2xs"
-                                : "border-border/70 bg-surface/70 text-muted-foreground hover:bg-surface hover:text-foreground"
-                            }`}
-                          >
-                            <span
-                              className="w-2 h-2 rounded-full border border-black/20 shrink-0 inline-block"
-                              style={{ backgroundColor: s.hex }}
-                            />
-                            <span>{s.name}</span>
-                          </AppButton>
-                        ));
-                      })()}
+                      <select
+                        value={[
+                          "Pearl White", "Attitude Black", "Silver / Grey", "Royal Blue", "Crimson Red",
+                          "Emerald Green", "Champagne Gold", "Wicked Black", "Fiery Yellow", "Geny Grey Metallic"
+                        ].includes(editVehicleColor) ? editVehicleColor : "CUSTOM"}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val !== "CUSTOM") {
+                            setEditVehicleColor(val);
+                          }
+                        }}
+                        className="flex-1 h-10 rounded-xl border border-border bg-surface px-3 text-xs text-foreground font-medium focus:outline-none focus:border-theme-btn-primary shadow-2xs cursor-pointer"
+                      >
+                        <option value="Pearl White">Pearl White</option>
+                        <option value="Attitude Black">Attitude Black</option>
+                        <option value="Silver / Grey">Silver / Grey</option>
+                        <option value="Royal Blue">Royal Blue</option>
+                        <option value="Crimson Red">Crimson Red</option>
+                        <option value="Emerald Green">Emerald Green</option>
+                        <option value="Champagne Gold">Champagne Gold</option>
+                        <option value="CUSTOM">Custom Color / Hex Code</option>
+                      </select>
                     </div>
                   </div>
                 </div>
