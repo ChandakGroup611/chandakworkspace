@@ -219,9 +219,9 @@ export interface AggregatedVehicleDoc {
   doc_type: string;
   categoryLabel: string;
   title: string;
-  file_name: string;
+  file_name?: string | null;
   file_size?: string | number | null;
-  file_type?: string;
+  file_type?: string | null;
   file_url?: string | null;
   uploaded_at?: string;
   expiry_date?: string | null;
@@ -1566,15 +1566,18 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       }
     }
 
-    // Fallback: Verified digital certificate view
-    setPreviewAttachment(att);
-    setPreviewZoom(1);
-    setPreviewRotation(0);
+    // No actual file scan exists in storage
+    triggerToast(`No physical scanned copy is uploaded for ${att.title || 'this document'}. Please upload the original document scan.`, true);
+    setDossierNewDocType(att.doc_type || "OTHER");
+    setDossierNewDocTitle(att.title || "");
+    setDossierNewDocNumber(att.document_number || "");
+    setDossierNewDocExpiry(att.expiry_date || "");
+    setIsDossierAddDocOpen(true);
   };
 
   const downloadAttachment = async (att: {
     id?: string;
-    file_name?: string;
+    file_name?: string | null;
     file_url?: string | null;
     title?: string;
     doc_type?: string;
@@ -1604,45 +1607,19 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       if (fileUrl && (fileUrl.startsWith("http") || fileUrl.startsWith("data:") || fileUrl.startsWith("blob:"))) {
         const link = document.createElement("a");
         link.href = fileUrl;
-        link.download = att.file_name || "document";
+        link.download = att.file_name || `${(att.title || "document").replace(/\s+/g, "_")}.pdf`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        triggerToast(`Downloading ${att.file_name || "document"}...`);
+        triggerToast(`Downloading ${att.file_name || att.title || "document"}...`);
       } else {
-        const docTitle = att.title || att.file_name || "Digital Record";
-        const content = [
-          "============================================================",
-          "              CHANDAK FLEET OPERATIONS PORTAL              ",
-          "             STATUTORY COMPLIANCE DIGITAL RECORD            ",
-          "============================================================",
-          "",
-          `DOCUMENT TITLE:     ${docTitle}`,
-          `CATEGORY:           ${att.doc_type || "STATUTORY COMPLIANCE"}`,
-          `FILE / RECORD REF:  ${att.file_name || "OFFICIAL_DIGITAL_RECORD"}`,
-          `GENERATED AT:       ${new Date().toLocaleString("en-IN")}`,
-          "",
-          "------------------------------------------------------------",
-          "                       RECORD DETAILS                       ",
-          "------------------------------------------------------------",
-          "Status:             OFFICIALLY REGISTERED & VALIDATED",
-          "Verification Mode:  Digital System Ledger Record",
-          "",
-          "This document certifies the active statutory record in the",
-          "Chandak Group Enterprise Fleet Management System.",
-          "============================================================"
-        ].join("\n");
-
-        const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `${(att.file_name || docTitle).replace(/\.[^/.]+$/, "")}_Digital_Certificate.txt`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        triggerToast(`Downloaded Digital Certificate for ${docTitle}`);
+        const docTitle = att.title || att.file_name || "Document";
+        triggerToast(`No original document scan uploaded to download for ${docTitle}. Please upload the physical file copy.`, true);
+        setDossierNewDocType(att.doc_type || "OTHER");
+        setDossierNewDocTitle(att.title || "");
+        setDossierNewDocNumber(att.document_number || "");
+        setDossierNewDocExpiry(att.expiry_date || "");
+        setIsDossierAddDocOpen(true);
       }
     } catch (err) {
       console.error("Download error:", err);
@@ -3016,9 +2993,9 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         doc_type: "RC",
         categoryLabel: "RC Smart Card",
         title: `RC Smart Card (${veh.registration_number})`,
-        file_name: rcUrl ? `RC_${targetPlate}.pdf` : `RC_${targetPlate}.pdf`,
+        file_name: rcUrl ? `RC_${targetPlate}.pdf` : null,
         file_size: rcUrl ? "Official Certificate" : null,
-        file_type: "application/pdf",
+        file_type: rcUrl ? "application/pdf" : null,
         file_url: rcUrl,
         uploaded_at: veh.registration_date || veh.created_at,
         expiry_date: null,
@@ -3038,9 +3015,9 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         doc_type: "INSURANCE",
         categoryLabel: "Motor Insurance Policy",
         title: `Insurance Policy: ${veh.insurance_vendor || "Comprehensive"} (${veh.insurance_policy_number || targetPlate})`,
-        file_name: insUrl ? `Insurance_${targetPlate}.pdf` : `Insurance_${targetPlate}.pdf`,
+        file_name: insUrl ? `Insurance_${targetPlate}.pdf` : null,
         file_size: insUrl ? "Policy Document" : null,
-        file_type: "application/pdf",
+        file_type: insUrl ? "application/pdf" : null,
         file_url: insUrl,
         uploaded_at: veh.registration_date || veh.created_at,
         expiry_date: veh.insurance_expiry_date || null,
@@ -3060,9 +3037,9 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
           doc_type: "INSURANCE",
           categoryLabel: "Insurance Renewal Policy & Bill",
           title: `Insurance Renewal: ${pol.insurer_name} (₹${(Number(pol.premium_amount) || 0).toLocaleString()} Premium)`,
-          file_name: `Insurance_Policy_${pol.policy_number}.pdf`,
+          file_name: polDocUrl ? `Insurance_Policy_${pol.policy_number}.pdf` : null,
           file_size: polDocUrl ? "Renewal Bill" : null,
-          file_type: "application/pdf",
+          file_type: polDocUrl ? "application/pdf" : null,
           file_url: polDocUrl,
           uploaded_at: pol.start_date || pol.created_at,
           expiry_date: pol.end_date || null,
@@ -3083,9 +3060,9 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         doc_type: "PUC",
         categoryLabel: "PUC Certificate",
         title: `PUC Certificate (${veh.puc_certificate_number || targetPlate})`,
-        file_name: `PUC_${targetPlate}.pdf`,
+        file_name: pucUrl ? `PUC_${targetPlate}.pdf` : null,
         file_size: pucUrl ? "Emission Certificate" : null,
-        file_type: "application/pdf",
+        file_type: pucUrl ? "application/pdf" : null,
         file_url: pucUrl,
         uploaded_at: veh.registration_date || veh.created_at,
         expiry_date: veh.puc_expiry_date || null,
@@ -20232,10 +20209,10 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
 
                             <div className="flex items-start gap-3 pt-1">
                               <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-border shrink-0 group-hover:scale-105 transition-transform">
-                                {renderAttachmentIcon(doc.file_type || resolveMimeFromName(doc.file_name), doc.file_name)}
+                                {renderAttachmentIcon(doc.file_type || resolveMimeFromName(doc.file_name || ""), doc.file_name || undefined)}
                               </div>
                               <div className="min-w-0 flex-1">
-                                <h4 className="font-semibold text-foreground text-xs line-clamp-1" title={doc.title || doc.file_name}>
+                                <h4 className="font-semibold text-foreground text-xs line-clamp-1" title={doc.title || doc.file_name || undefined}>
                                   {doc.title || doc.file_name}
                                 </h4>
                                 {doc.document_number && (
@@ -20245,12 +20222,20 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                                   </div>
                                 )}
                                 <div className="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-0.5 truncate">
-                                  <span className="truncate max-w-[140px] font-mono">{doc.file_name}</span>
-                                  {doc.file_size && (
+                                  {doc.file_url ? (
                                     <>
-                                      <span>•</span>
-                                      <span>{formatFileSize(doc.file_size)}</span>
+                                      <span className="truncate max-w-[140px] font-mono text-foreground font-medium">{doc.file_name}</span>
+                                      {doc.file_size && (
+                                        <>
+                                          <span>•</span>
+                                          <span>{formatFileSize(doc.file_size)}</span>
+                                        </>
+                                      )}
                                     </>
+                                  ) : (
+                                    <span className="text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1">
+                                      <AlertCircle className="h-3 w-3" /> No Scan Attached
+                                    </span>
                                   )}
                                 </div>
                               </div>
@@ -20286,31 +20271,33 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                             </div>
 
                             <div className="flex items-center gap-1 shrink-0">
-                              <AppButton
-                                type="button"
-                                variant="outline"
-                                size="icon-sm"
-                                onClick={() => handleViewAttachment({
-                                  ...doc,
-                                  vehicleReg: viewingVehicle?.registration_number
-                                })}
-                                className="h-7 w-7 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
-                                title="View / Preview Document"
-                              >
-                                <Eye className="h-3.5 w-3.5" />
-                              </AppButton>
-                              <AppButton
-                                type="button"
-                                variant="outline"
-                                size="icon-sm"
-                                onClick={() => downloadAttachment(doc)}
-                                className="h-7 w-7 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
-                                title="Download Document"
-                              >
-                                <Download className="h-3.5 w-3.5" />
-                              </AppButton>
-
-                              {(!doc.has_file && !doc.file_url) && (
+                              {doc.file_url ? (
+                                <>
+                                  <AppButton
+                                    type="button"
+                                    variant="outline"
+                                    size="icon-sm"
+                                    onClick={() => handleViewAttachment({
+                                      ...doc,
+                                      vehicleReg: viewingVehicle?.registration_number
+                                    })}
+                                    className="h-7 w-7 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
+                                    title="View / Preview Document"
+                                  >
+                                    <Eye className="h-3.5 w-3.5" />
+                                  </AppButton>
+                                  <AppButton
+                                    type="button"
+                                    variant="outline"
+                                    size="icon-sm"
+                                    onClick={() => downloadAttachment(doc)}
+                                    className="h-7 w-7 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+                                    title="Download Document"
+                                  >
+                                    <Download className="h-3.5 w-3.5" />
+                                  </AppButton>
+                                </>
+                              ) : (
                                 <AppButton
                                   type="button"
                                   variant="outline"
@@ -21690,75 +21677,37 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                   className="w-full h-[70vh] rounded-lg border border-border bg-white shadow-inner"
                 />
               ) : !previewAttachment.file_url ? (
-                /* Digital Record Verified Certificate View */
-                <div className="w-full max-w-2xl bg-surface border-2 border-emerald-500/30 rounded-2xl shadow-xl p-6 sm:p-8 space-y-6 text-foreground animate-in zoom-in-95 duration-150">
-                  {/* Certificate Header with Seal */}
-                  <div className="flex items-start justify-between border-b border-border pb-4 gap-4 flex-wrap">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2.5">
-                        <div className="h-10 w-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/25 shrink-0">
-                          <ShieldCheck className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 block">
-                            Verified Statutory Digital Record
-                          </span>
-                          <h3 className="text-base font-bold text-foreground">
-                            {(previewAttachment as any).title || previewAttachment.file_name}
-                          </h3>
-                        </div>
-                      </div>
+                /* No Scanned File Attached — Prompt for Original Document Upload */
+                <div className="w-full max-w-xl bg-surface border border-border rounded-2xl shadow-xl p-6 sm:p-8 space-y-5 text-foreground animate-in zoom-in-95 duration-150">
+                  <div className="text-center space-y-2">
+                    <div className="h-12 w-12 rounded-2xl bg-amber-500/15 text-amber-600 dark:text-amber-400 mx-auto flex items-center justify-center border border-amber-500/25">
+                      <AlertCircle className="h-6 w-6" />
                     </div>
-                    <div>
-                      {renderHsrpPlate((previewAttachment as any).vehicleReg || viewingVehicle?.registration_number || "MH02GP9917")}
-                    </div>
+                    <h3 className="text-base font-bold text-foreground">
+                      No Scanned Copy Attached
+                    </h3>
+                    <p className="text-xs text-muted-foreground max-w-md mx-auto">
+                      A physical scan or PDF file has not been uploaded yet for <span className="font-semibold text-foreground">{(previewAttachment as any).title || previewAttachment.file_name}</span>. Please upload the original document below to enable viewing and downloading.
+                    </p>
                   </div>
 
-                  {/* Metadata Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs bg-slate-50/70 dark:bg-slate-900/50 p-4 rounded-xl border border-border/70">
+                  {/* Metadata Summary */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-50 dark:bg-slate-900/50 p-3.5 rounded-xl border border-border/70">
                     <div>
-                      <span className="text-muted-foreground block text-[11px] uppercase font-bold">Document Category</span>
+                      <span className="text-muted-foreground block text-[11px] uppercase font-bold">Category</span>
                       <span className="font-semibold text-foreground">
-                        {(previewAttachment as any).categoryLabel || (previewAttachment as any).doc_type || "Compliance Document"}
+                        {(previewAttachment as any).categoryLabel || (previewAttachment as any).doc_type || "Vehicle Document"}
                       </span>
                     </div>
                     <div>
-                      <span className="text-muted-foreground block text-[11px] uppercase font-bold">Document / Certificate / Policy #</span>
+                      <span className="text-muted-foreground block text-[11px] uppercase font-bold">Doc / Policy #</span>
                       <span className="font-mono font-bold text-foreground">
-                        {(previewAttachment as any).document_number || (previewAttachment as any).id || "SYSTEM-DIGITAL-RECORD"}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground block text-[11px] uppercase font-bold">Issuing Authority / Jurisdiction</span>
-                      <span className="font-medium text-foreground">
-                        {(previewAttachment as any).sourceLabel || "State Transport Authority / Chandak Fleet Desk"}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground block text-[11px] uppercase font-bold">Compliance Status</span>
-                      {(previewAttachment as any).expiry_date ? (
-                        <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                          Valid (Expiry: {(previewAttachment as any).expiry_date})
-                        </span>
-                      ) : (
-                        <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                          Active & Statutory Valid
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Verification Banner */}
-                  <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between text-xs gap-2">
-                    <div className="flex items-center gap-2">
-                      <FileCheck className="h-4 w-4 text-emerald-600 shrink-0" />
-                      <span className="text-emerald-900 dark:text-emerald-300 font-medium">
-                        This digital record is authenticated and validated within the enterprise fleet compliance register.
+                        {(previewAttachment as any).document_number || "—"}
                       </span>
                     </div>
                   </div>
 
-                  {/* Direct In-Viewer Document Upload Dropzone */}
+                  {/* Direct Document Upload Dropzone */}
                   <div
                     onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
                     onDrop={(e) => {
@@ -21768,7 +21717,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                         handleInlineViewerDocUpload(e.dataTransfer.files[0]);
                       }
                     }}
-                    className="p-4 rounded-xl border-2 border-dashed border-border hover:border-theme-btn-primary/60 bg-muted/20 hover:bg-theme-btn-primary/5 transition-all text-center flex flex-col items-center justify-center gap-2 cursor-pointer group"
+                    className="p-6 rounded-xl border-2 border-dashed border-border hover:border-theme-btn-primary/60 bg-muted/20 hover:bg-theme-btn-primary/5 transition-all text-center flex flex-col items-center justify-center gap-2.5 cursor-pointer group"
                     onClick={() => {
                       const input = document.getElementById("viewer-inline-file-picker") as HTMLInputElement;
                       if (input) input.click();
@@ -21790,52 +21739,37 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
                     </div>
                     <div>
                       <span className="text-xs font-bold text-foreground group-hover:text-theme-btn-primary transition-colors block">
-                        Drag & Drop or Click to Attach Scanned PDF / Image
+                        Upload Original Scanned PDF / Image
                       </span>
                       <span className="text-[11px] text-muted-foreground block">
-                        Upload physical copy to view original document scan directly in this previewer (Max 25MB)
+                        Supports PDF, PNG, JPG, WEBP (Max 25MB)
                       </span>
                     </div>
                   </div>
 
-                  {/* Actions Bar inside Canvas */}
-                  <div className="pt-2 border-t border-border flex items-center justify-between gap-3 flex-wrap">
+                  <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
                     <AppButton
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => window.print()}
-                      className="gap-1.5 text-xs font-semibold"
+                      onClick={() => setPreviewAttachment(null)}
+                      className="text-xs"
                     >
-                      <Printer className="h-3.5 w-3.5" />
-                      <span>Print Certificate</span>
+                      Close
                     </AppButton>
-
-                    <div className="flex items-center gap-2">
-                      <AppButton
-                        type="button"
-                        variant="primary"
-                        size="sm"
-                        onClick={() => downloadAttachment(previewAttachment)}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 text-xs font-semibold shadow-xs"
-                      >
-                        <Download className="h-3.5 w-3.5" />
-                        <span>Download Digital Certificate</span>
-                      </AppButton>
-                      <AppButton
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          const input = document.getElementById("viewer-inline-file-picker") as HTMLInputElement;
-                          if (input) input.click();
-                        }}
-                        className="gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-50 dark:hover:bg-amber-950/30"
-                      >
-                        <UploadCloud className="h-3.5 w-3.5" />
-                        <span>+ Attach Physical Scan</span>
-                      </AppButton>
-                    </div>
+                    <AppButton
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      onClick={() => {
+                        const input = document.getElementById("viewer-inline-file-picker") as HTMLInputElement;
+                        if (input) input.click();
+                      }}
+                      className="text-xs gap-1.5"
+                    >
+                      <UploadCloud className="h-3.5 w-3.5" />
+                      <span>Select & Upload Original File</span>
+                    </AppButton>
                   </div>
                 </div>
               ) : (
