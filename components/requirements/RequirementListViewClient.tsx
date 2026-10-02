@@ -113,6 +113,24 @@ const formatDate = (dateString: string | null | undefined): string => {
   }
 };
 
+const getPriorityVariant = (priorityName?: string | null): "danger" | "warning" | "info" | "neutral" => {
+  if (!priorityName) return "neutral";
+  const p = priorityName.toLowerCase();
+  if (p.includes("stopper") || p.includes("critical") || p.includes("blocker") || p.includes("urgent")) return "danger";
+  if (p.includes("high")) return "warning";
+  if (p.includes("medium")) return "info";
+  return "neutral";
+};
+
+const getStatusVariant = (statusName?: string | null): "success" | "warning" | "danger" | "neutral" => {
+  if (!statusName) return "neutral";
+  const s = statusName.toLowerCase();
+  if (s.includes("approved") || s.includes("closed") || s.includes("resolved") || s.includes("done")) return "success";
+  if (s.includes("rejected") || s.includes("cancelled")) return "danger";
+  if (s.includes("pending") || s.includes("in review") || s.includes("review")) return "warning";
+  return "neutral";
+};
+
 export default function RequirementListViewClient({ initialReqs }: { initialReqs: Requirement[] }) {
   const [reqs, setReqs] = useState<Requirement[]>(initialReqs || []);
   const [scope, setScope] = useState<"ALL" | "REQUESTER" | "APPROVER">("ALL");
@@ -406,26 +424,25 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
   return (
     <ExperienceProvider mode="operational">
       <div className="space-y-6">
-        <header className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
+        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex flex-col gap-1 shrink-0">
             <h1 className="text-xl font-bold tracking-tight text-foreground">Requirement Analysis &amp; Reports</h1>
           </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full xl:w-auto">
-            <ReportKPIBar kpis={kpis} variant="compact" className="mb-0" />
-            <div className="hidden sm:block h-6 w-px bg-border mx-1 shrink-0"></div>
-            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-              <AppButton variant="outline" size="sm" onClick={exportToExcel} leftIcon={<Upload className="h-4 w-4" />} className="h-9 px-3 sm:px-4 font-semibold border-border shadow-sm flex-1 sm:flex-initial justify-center">
-                Export Excel
-              </AppButton>
-              <AppButton variant="outline" size="sm" onClick={exportToPDF} leftIcon={<Download className="h-4 w-4" />} className="h-9 px-3 sm:px-4 font-semibold border-border shadow-sm flex-1 sm:flex-initial justify-center">
-                Export PDF
-              </AppButton>
-              <AppButton variant="outline" size="sm" onClick={() => setIsConfigOpen(true)} leftIcon={<Settings2 className="h-4 w-4" />} className="h-9 px-3 sm:px-4 font-semibold border-border shadow-sm shrink-0">
-                Columns
-              </AppButton>
-            </div>
+          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto">
+            <AppButton variant="outline" size="sm" onClick={exportToExcel} leftIcon={<Upload className="h-4 w-4" />} className="h-9 px-3 sm:px-4 font-semibold border-border shadow-sm flex-1 sm:flex-initial justify-center">
+              Export Excel
+            </AppButton>
+            <AppButton variant="outline" size="sm" onClick={exportToPDF} leftIcon={<Download className="h-4 w-4" />} className="h-9 px-3 sm:px-4 font-semibold border-border shadow-sm flex-1 sm:flex-initial justify-center">
+              Export PDF
+            </AppButton>
+            <AppButton variant="outline" size="sm" onClick={() => setIsConfigOpen(true)} leftIcon={<Settings2 className="h-4 w-4" />} className="h-9 px-3 sm:px-4 font-semibold border-border shadow-sm shrink-0">
+              Columns
+            </AppButton>
           </div>
         </header>
+
+        {/* Global KPI Summary Bar */}
+        <ReportKPIBar kpis={kpis} />
 
         <div className="theme-card-structural rounded-2xl shadow-sm flex flex-col">
           <div className="flex items-center justify-between border-b border-border px-4 pt-2 overflow-x-auto no-scrollbar">
@@ -532,14 +549,11 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
 
                     <div className="flex items-center gap-1.5 shrink-0">
                       {r.priority_name && r.priority_name !== "—" && (
-                        <span 
-                          className="px-2 py-0.5 rounded text-[10px] font-bold text-foreground shadow-sm"
-                          style={{ backgroundColor: r.priority?.priority_color || '#6B7280' }}
-                        >
+                        <AppBadge variant={getPriorityVariant(r.priority_name)} className="text-[10px] py-0.5 px-2">
                           {r.priority_name}
-                        </span>
+                        </AppBadge>
                       )}
-                      <AppBadge variant={r.status_name === 'Approved' ? 'success' : r.status_name === 'Rejected' ? 'danger' : r.status_name === 'Closed' ? 'success' : r.status_name?.includes('Pending') ? 'warning' : 'neutral'} className="text-[10px] py-0.5 px-2">
+                      <AppBadge variant={getStatusVariant(r.status_name)} className="text-[10px] py-0.5 px-2">
                         {r.status_name || 'Draft'}
                       </AppBadge>
                     </div>
@@ -645,16 +659,13 @@ export default function RequirementListViewClient({ initialReqs }: { initialReqs
                                     <Eye className="h-4 w-4" />
                                   </AppButton>
                                 ) : col.field_key === "status_name" ? (
-                                  <AppBadge variant={r.status_name === 'Approved' ? 'success' : r.status_name === 'Rejected' ? 'danger' : r.status_name === 'Closed' ? 'success' : r.status_name?.includes('Pending') ? 'warning' : 'neutral'}>
+                                  <AppBadge variant={getStatusVariant(r.status_name)}>
                                     {r.status_name}
                                   </AppBadge>
                                 ) : col.field_key === "priority_name" ? (
-                                  <span 
-                                    className="px-2 py-1 rounded text-[10px] font-bold text-foreground shadow-sm"
-                                    style={{ backgroundColor: r.priority?.priority_color || '#6B7280' }}
-                                  >
+                                  <AppBadge variant={getPriorityVariant(r.priority_name)} className="text-[11px] py-0.5 px-2.5">
                                     {r.priority_name !== "—" ? r.priority_name : "-"}
-                                  </span>
+                                  </AppBadge>
                                 ) : col.field_key === "code" ? (
                                   <span className="font-mono font-bold text-amber-500">{r.code || r.id}</span>
                                 ) : col.field_key === "title" ? (
