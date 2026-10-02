@@ -732,10 +732,10 @@ export async function fetchVehiclesList(params?: {
       }
     });
 
-    // Controlled Batch Lookup: Document metadata attached to these vehicles (omits heavy Base64 payloads)
+    // Controlled Batch Lookup: Document metadata attached to these vehicles
     const { data: docsData } = await supabaseAdmin
       .from("vehicle_documents")
-      .select("id, vehicle_id, doc_type, title, file_name, file_size, file_type, uploaded_at, expiry_date, status, document_number")
+      .select("id, vehicle_id, doc_type, title, file_name, file_size, file_type, uploaded_at, expiry_date, status, document_number, file_url")
       .in("vehicle_id", vehicleIds)
       .order("uploaded_at", { ascending: false });
 
@@ -745,8 +745,8 @@ export async function fetchVehiclesList(params?: {
         const list = docsMap.get(doc.vehicle_id) || [];
         list.push({
           ...doc,
-          file_url: "",
-          has_file: true,
+          file_url: doc.file_url || "",
+          has_file: Boolean(doc.file_url),
           file_type: doc.file_type || resolveMimeFromName(doc.file_name)
         });
         docsMap.set(doc.vehicle_id, list);
@@ -2877,7 +2877,7 @@ export async function fetchVehicleDocumentsAction(vehicleId: string): Promise<{
 
     const { data, error } = await supabaseAdmin
       .from("vehicle_documents")
-      .select("id, vehicle_id, doc_type, title, file_name, file_size, file_type, uploaded_at, expiry_date, status, document_number")
+      .select("id, vehicle_id, doc_type, title, file_name, file_size, file_type, uploaded_at, expiry_date, status, document_number, file_url")
       .eq("vehicle_id", vehicleId)
       .order("uploaded_at", { ascending: false });
 
@@ -2888,8 +2888,8 @@ export async function fetchVehicleDocumentsAction(vehicleId: string): Promise<{
 
     const docs = (data || []).map((d: any) => ({
       ...d,
-      file_url: "",
-      has_file: true,
+      file_url: d.file_url || "",
+      has_file: Boolean(d.file_url),
       file_type: d.file_type || resolveMimeFromName(d.file_name)
     })) as VehicleDocumentRecord[];
 
