@@ -7,9 +7,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  // if "next" is in param and not root, use it; otherwise route to workspace tasks
   const rawNext = searchParams.get('next');
-  const next = rawNext && rawNext !== '/' ? rawNext : '/workspaces/tasks';
 
   if (code) {
     const cookieStore = await cookies();
@@ -42,6 +40,42 @@ export async function GET(request: Request) {
         return NextResponse.redirect(`${redirectOrigin}/login?error=account-disabled`);
       }
 
+      // Determine proper landing destination for registered user
+      let destination = '/workspaces/tasks';
+      let activeModuleCode = 'TASK_WORKFLOW';
+
+      if (rawNext && rawNext !== '/' && rawNext !== '/select-module' && !rawNext.includes('/login')) {
+        destination = rawNext;
+        if (rawNext.startsWith('/vehicle')) activeModuleCode = 'VEHICLE_DESK';
+        else if (rawNext.startsWith('/design')) activeModuleCode = 'DESIGN_TRACKING';
+      } else {
+        // Resolve user's preferred or assigned default module
+        const { supabaseAdmin } = await import('@/lib/supabase/service_role');
+        const { data: defaultUserModule } = await supabaseAdmin
+          .from('user_modules')
+          .select('module:modules_master(code, route_path)')
+          .eq('user_id', sessionData.user.id)
+          .eq('is_default', true)
+          .maybeSingle();
+
+        const modCode = (defaultUserModule?.module as any)?.code;
+        const modRoute = (defaultUserModule?.module as any)?.route_path;
+
+        if (modCode === 'VEHICLE_DESK') {
+          destination = '/vehicle/dashboard';
+          activeModuleCode = 'VEHICLE_DESK';
+        } else if (modCode === 'DESIGN_TRACKING') {
+          destination = '/design/dashboard';
+          activeModuleCode = 'DESIGN_TRACKING';
+        } else if (modRoute) {
+          destination = modRoute;
+          activeModuleCode = modCode || 'TASK_WORKFLOW';
+        } else {
+          destination = '/workspaces/tasks';
+          activeModuleCode = 'TASK_WORKFLOW';
+        }
+      }
+
       // Check if user has an active session on another device/browser
       const { supabaseAdmin } = await import('@/lib/supabase/service_role');
       const { data: activeSession } = await supabaseAdmin
@@ -54,11 +88,19 @@ export async function GET(request: Request) {
         const lastActive = activeSession.last_active_at ? new Date(activeSession.last_active_at).getTime() : 0;
         const isRecent = (Date.now() - lastActive) < 24 * 60 * 60 * 1000;
         if (isRecent) {
-          return NextResponse.redirect(`${redirectOrigin}/login?oauth_conflict=1&next=${encodeURIComponent(next)}`);
+          return NextResponse.redirect(`${redirectOrigin}/login?oauth_conflict=1&next=${encodeURIComponent(destination)}`);
         }
       }
 
-      return NextResponse.redirect(`${redirectOrigin}${next}`);
+      const response = NextResponse.redirect(`${redirectOrigin}${destination}`);
+      response.cookies.set('active_module', activeModuleCode, {
+        path: '/',
+        maxAge: 60 * 60 * 24 * 30, // 30 days
+        sameSite: 'lax',
+        httpOnly: false,
+      });
+
+      return response;
     } else {
       console.error("Auth Callback Error:", error?.message || "User data missing in session");
     }

@@ -108,29 +108,27 @@ export default function LoginPage() {
   };
 
   const resolvePostLoginDestination = async (rawNext?: string | null): Promise<string> => {
+    if (rawNext && rawNext !== "/" && !rawNext.includes("/login") && !rawNext.includes("/select-module")) {
+      return rawNext;
+    }
+
     try {
       const res = await fetch("/api/modules", { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
-        if (data.hasExplicitDefault && data.defaultModule?.route_path) {
+        const targetModule = data.defaultModule || data.modules?.find((m: any) => m.is_default) || data.modules?.[0];
+        if (targetModule?.code) {
           const routeMap: Record<string, string> = {
             TASK_WORKFLOW: "/workspaces/tasks",
             VEHICLE_DESK: "/vehicle/dashboard",
             DESIGN_TRACKING: "/design/dashboard"
           };
-          const dest = routeMap[data.defaultModule.code] || data.defaultModule.route_path || "/workspaces/tasks";
-          if (rawNext && rawNext !== "/" && !rawNext.includes("/login")) {
-            return rawNext;
-          }
-          return dest;
+          return routeMap[targetModule.code] || targetModule.route_path || "/workspaces/tasks";
         }
       }
     } catch (e) {}
 
-    if (rawNext && rawNext !== "/" && !rawNext.includes("/login") && !rawNext.includes("/select-module")) {
-      return `/select-module?next=${encodeURIComponent(rawNext)}`;
-    }
-    return "/select-module";
+    return "/workspaces/tasks";
   };
 
   useEffect(() => {
@@ -357,7 +355,7 @@ export default function LoginPage() {
 
       const searchParams = new URLSearchParams(window.location.search);
       const rawNext = searchParams.get("next");
-      const next = rawNext && rawNext !== "/" ? rawNext : "/select-module";
+      const next = rawNext && rawNext !== "/" && !rawNext.includes("/select-module") ? rawNext : "/workspaces/tasks";
 
       // Check if user is already authenticated before initiating SSO
       const { data: { session } } = await supabase.auth.getSession();
