@@ -69,6 +69,7 @@ import {
 } from "@/lib/actions/vehicleRbac";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
+import { AppBadge } from "@/components/ui/AppBadge";
 import ChandakLoader from "@/components/ui/ChandakLoader";
 
 const ROLE_BADGE_COLORS = [
@@ -706,63 +707,63 @@ export default function FleetRbacGovernance() {
 
       {/* Navigation Tabs */}
       <div className="flex items-center gap-2 border-b border-border/60 overflow-x-auto scrollbar-hide pb-px">
-        <button
-          type="button"
+        <AppButton
+          variant="secondary"
           onClick={() => setActiveTab("ROLES_BUILDER")}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold transition-all border-b-2 cursor-pointer whitespace-nowrap ${
+          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold transition-all border-b-2 cursor-pointer whitespace-nowrap rounded-none ${
             activeTab === "ROLES_BUILDER"
-              ? "border-amber-500 text-foreground bg-amber-500/5 rounded-t-lg"
+              ? "border-theme-btn-primary text-theme-icon bg-theme-btn-primary/5 rounded-t-lg"
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
-          <Shield className="h-3.5 w-3.5 text-amber-500" />
+          <Shield className="h-3.5 w-3.5 text-theme-icon" />
           <span>Roles & Permissions</span>
-          <span className="px-2 py-0.5 rounded-full text-xs bg-amber-500/10 text-amber-500 font-bold border border-amber-500/20">
+          <span className="px-2 py-0.5 rounded-full text-xs bg-theme-btn-primary/10 text-theme-icon font-bold border border-theme-btn-primary/20">
             {allRoles.length}
           </span>
-        </button>
+        </AppButton>
 
-        <button
-          type="button"
+        <AppButton
+          variant="secondary"
           onClick={() => setActiveTab("PERSONNEL")}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold transition-all border-b-2 cursor-pointer whitespace-nowrap ${
+          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold transition-all border-b-2 cursor-pointer whitespace-nowrap rounded-none ${
             activeTab === "PERSONNEL"
-              ? "border-amber-500 text-foreground bg-amber-500/5 rounded-t-lg"
+              ? "border-theme-btn-primary text-theme-icon bg-theme-btn-primary/5 rounded-t-lg"
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
-          <Users className="h-3.5 w-3.5 text-blue-500" />
+          <Users className="h-3.5 w-3.5 text-theme-icon" />
           <span>Personnel Directory</span>
-          <span className="px-2 py-0.5 rounded-full text-xs bg-blue-500/10 text-blue-500 font-bold border border-blue-500/20">
+          <span className="px-2 py-0.5 rounded-full text-xs bg-theme-btn-primary/10 text-theme-icon font-bold border border-theme-btn-primary/20">
             {workspaceUsers.length}
           </span>
-        </button>
+        </AppButton>
 
-        <button
-          type="button"
+        <AppButton
+          variant="secondary"
           onClick={() => setActiveTab("POLICY_MATRIX")}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold transition-all border-b-2 cursor-pointer whitespace-nowrap ${
+          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold transition-all border-b-2 cursor-pointer whitespace-nowrap rounded-none ${
             activeTab === "POLICY_MATRIX"
-              ? "border-amber-500 text-foreground bg-amber-500/5 rounded-t-lg"
+              ? "border-theme-btn-primary text-theme-icon bg-theme-btn-primary/5 rounded-t-lg"
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
-          <Layers className="h-3.5 w-3.5 text-emerald-500" />
+          <Layers className="h-3.5 w-3.5 text-theme-icon" />
           <span>Policy Matrix</span>
-        </button>
+        </AppButton>
 
-        <button
-          type="button"
+        <AppButton
+          variant="secondary"
           onClick={() => setActiveTab("SIMULATOR")}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold transition-all border-b-2 cursor-pointer whitespace-nowrap ${
+          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold transition-all border-b-2 cursor-pointer whitespace-nowrap rounded-none ${
             activeTab === "SIMULATOR"
-              ? "border-amber-500 text-foreground bg-amber-500/5 rounded-t-lg"
+              ? "border-theme-btn-primary text-theme-icon bg-theme-btn-primary/5 rounded-t-lg"
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
           <Play className="h-3.5 w-3.5 text-theme-icon" />
           <span>Permission Tester</span>
-        </button>
+        </AppButton>
       </div>
 
       {/* TAB 1: ROLES & PERMISSIONS BUILDER */}
@@ -790,7 +791,7 @@ export default function FleetRbacGovernance() {
                     onClick={() => setSelectedBuilderRoleCode(role.code)}
                     className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
                       isSelected
-                        ? "bg-amber-500/10 border-amber-500/40 shadow-sm"
+                        ? "bg-theme-btn-primary/10 border-theme-btn-primary/40 shadow-sm"
                         : "bg-surface/50 border-border/40 hover:bg-surface hover:border-border"
                     }`}
                   >
