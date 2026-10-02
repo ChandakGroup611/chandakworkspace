@@ -714,7 +714,19 @@ function WorkingDocumentLayout({
   );
 }
 
-export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] }) {
+export interface FleetDeskHostProps {
+  initialSlug?: string[];
+  initialStats?: VehicleDashboardStats;
+  initialVehicles?: VehicleRecord[];
+  initialDrivers?: DriverRecord[];
+}
+
+export default function FleetDeskHost({ 
+  initialSlug,
+  initialStats,
+  initialVehicles,
+  initialDrivers
+}: FleetDeskHostProps) {
   const pathname = usePathname() || "/vehicle";
   const router = useRouter();
   const { hasPermission, roleCode, loading: permsLoading } = usePermissions();
@@ -765,13 +777,13 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
   }, [pathname]);
 
   // Loading and error states
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(() => !initialVehicles && !initialStats);
   const [refreshing, setRefreshing] = useState(false);
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
   const [successBanner, setSuccessBanner] = useState<string | null>(null);
 
   // Live Data States
-  const [stats, setStats] = useState<VehicleDashboardStats>({
+  const [stats, setStats] = useState<VehicleDashboardStats>(() => initialStats || {
     totalVehicles: 0,
     availableVehicles: 0,
     onRouteVehicles: 0,
@@ -779,8 +791,8 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
     activeDrivers: 0,
     activeTrips: 0
   });
-  const [vehicles, setVehicles] = useState<VehicleRecord[]>([]);
-  const [drivers, setDrivers] = useState<DriverRecord[]>([]);
+  const [vehicles, setVehicles] = useState<VehicleRecord[]>(() => initialVehicles || []);
+  const [drivers, setDrivers] = useState<DriverRecord[]>(() => initialDrivers || []);
   const [trips, setTrips] = useState<TripRecord[]>([]);
   const [maintenance, setMaintenance] = useState<MaintenanceRecord[]>([]);
   const [insuranceVendors, setInsuranceVendors] = useState<InsuranceVendorRecord[]>([]);
@@ -2548,18 +2560,18 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         return;
       }
 
-      if (!isSilent) setLoading(true);
+      const hasExistingData = (vehicles.length > 0 || Boolean(initialVehicles?.length)) && stats.totalVehicles > 0;
+      if (!isSilent && !hasExistingData) setLoading(true);
       else setRefreshing(true);
 
-      const [statsRes, vehiclesRes, driversRes, tripsRes, maintRes, vendorsRes, partsRes, docsRes] = await Promise.all([
+      const [statsRes, vehiclesRes, driversRes, tripsRes, maintRes, vendorsRes, partsRes] = await Promise.all([
         fetchVehicleDashboardStats(),
         fetchVehiclesList({ pageSize: 100 }),
         fetchDriversList(),
         fetchTripsList(),
         fetchMaintenanceList(),
         fetchInsuranceVendorsListAction(),
-        fetchVehiclePartsList(),
-        fetch("/api/vehicle/documents").then((r) => r.json()).catch(() => ({ success: false, documents: [] }))
+        fetchVehiclePartsList()
       ]);
 
       const newCache: {
@@ -2573,21 +2585,7 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
         timestamp: number;
       } = { timestamp: Date.now() };
 
-      let loadedVehicles = vehiclesRes.success ? vehiclesRes.vehicles : [];
-      if (docsRes?.success && Array.isArray(docsRes.documents) && docsRes.documents.length > 0) {
-        const docMap = new Map<string, VehicleDocumentRecord[]>();
-        docsRes.documents.forEach((d: any) => {
-          if (d.vehicle_id) {
-            const arr = docMap.get(d.vehicle_id) || [];
-            arr.push(d);
-            docMap.set(d.vehicle_id, arr);
-          }
-        });
-        loadedVehicles = loadedVehicles.map((v) => ({
-          ...v,
-          documents: docMap.get(v.id) || v.documents || []
-        }));
-      }
+      const loadedVehicles = vehiclesRes.success ? vehiclesRes.vehicles : [];
 
       if (statsRes.success) { setStats(statsRes.stats); newCache.stats = statsRes.stats; }
       if (vehiclesRes.success || loadedVehicles.length > 0) { setVehicles(loadedVehicles); newCache.vehicles = loadedVehicles; }
@@ -2609,14 +2607,15 @@ export default function FleetDeskHost({ initialSlug }: { initialSlug?: string[] 
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [vehicles.length, stats.totalVehicles, initialVehicles?.length]);
 
   useEffect(() => {
     if (typeof document !== "undefined") {
       document.cookie = "active_module=VEHICLE_DESK; path=/; max-age=2592000; SameSite=Lax";
     }
-    loadAllData();
-  }, [loadAllData]);
+    const hasPreloaded = Boolean((initialVehicles && initialVehicles.length > 0) || (initialStats && initialStats.totalVehicles > 0));
+    loadAllData(hasPreloaded);
+  }, [loadAllData, initialVehicles, initialStats]);
 
   // Toast banner triggers
   const triggerToast = (msg: string, isError = false) => {

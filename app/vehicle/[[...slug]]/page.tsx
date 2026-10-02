@@ -2,6 +2,7 @@ import React from "react";
 import { redirect } from "next/navigation";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { getUserAllowedModules } from "@/lib/actions/module-switcher";
+import { fetchVehicleDashboardStats, fetchVehiclesList } from "@/lib/actions/vehicle";
 import FleetDeskHost from "@/components/vehicle/FleetDeskHost";
 
 export const metadata = {
@@ -33,5 +34,17 @@ export default async function VehicleModulePage({ params }: PageProps) {
   const resolvedParams = await params;
   const slug = resolvedParams.slug || [];
 
-  return <FleetDeskHost initialSlug={slug} />;
+  // Server-side parallel pre-fetch for instant first paint
+  const [statsRes, vehiclesRes] = await Promise.all([
+    fetchVehicleDashboardStats().catch(() => ({ success: false, stats: undefined })),
+    fetchVehiclesList({ pageSize: 100 }).catch(() => ({ success: false, vehicles: [] }))
+  ]);
+
+  return (
+    <FleetDeskHost 
+      initialSlug={slug} 
+      initialStats={statsRes?.success ? statsRes.stats : undefined}
+      initialVehicles={vehiclesRes?.success ? vehiclesRes.vehicles : undefined}
+    />
+  );
 }
