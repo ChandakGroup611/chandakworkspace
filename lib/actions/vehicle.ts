@@ -5578,3 +5578,168 @@ export async function fetchVehicleUnifiedRenewalsTimelineAction(
     return { success: false, timeline: [], error: err.message || "Failed to load renewals timeline" };
   }
 }
+
+/**
+ * Triggers an instant statutory compliance expiry email reminder for a vehicle or driver
+ */
+export async function sendVehicleComplianceExpiryReminderAction(
+  vehicleId: string,
+  docType: string,
+  expiryDate?: string | null
+): Promise<{ success: boolean; message?: string; error?: string }> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) {
+      return { success: false, error: "Unauthenticated" };
+    }
+
+    if (!vehicleId) {
+      return { success: false, error: "Vehicle ID is required" };
+    }
+
+    const { data: veh, error } = await supabaseAdmin
+      .from("vehicles")
+      .select("*, assignedDriver:drivers!assigned_driver_id(id, full_name, phone, license_number, license_expiry_date)")
+      .eq("id", vehicleId)
+      .single();
+
+    if (error || !veh) {
+      return { success: false, error: error?.message || "Vehicle not found" };
+    }
+
+    const daysRemaining = expiryDate ? calculateDaysRemaining(expiryDate) : null;
+    const isExpired = daysRemaining !== null && daysRemaining < 0;
+    const isUrgent = daysRemaining !== null && daysRemaining <= 7 && daysRemaining >= 0;
+
+    let eventName = `${docType} Expiring Soon (30 Days)`;
+    if (isExpired) {
+      eventName = `${docType} Expired`;
+    } else if (isUrgent) {
+      eventName = `${docType} Expiring Urgent (7 Days)`;
+    }
+
+    const payload = {
+      entity_id: veh.id,
+      triggering_user_id: user.id,
+      registration_number: veh.registration_number,
+      vehicle_name: `${veh.make} ${veh.model}`,
+      doc_type: docType,
+      expiry_date: expiryDate ? String(expiryDate).split("T")[0] : "Pending Expiry",
+      days_remaining: daysRemaining !== null ? (isExpired ? `Expired ${Math.abs(daysRemaining)} days ago` : `${daysRemaining} Days Left`) : "Pending",
+      status: isExpired ? "EXPIRED" : (daysRemaining !== null && daysRemaining <= 30 ? "EXPIRING_SOON" : "VALID"),
+      insurance_vendor: veh.insurance_vendor || "Authorized Insurer",
+      insurance_policy_number: veh.insurance_policy_number || "—",
+      puc_certificate_number: veh.puc_certificate_number || "—",
+      driver_name: veh.assignedDriver?.full_name || "Unassigned",
+      driver_phone: veh.assignedDriver?.phone || "—",
+      rto_office: veh.rto_office || "State RTO",
+      odometer_km: veh.odometer_km ? `${veh.odometer_km} km` : "0 km",
+      link: `/vehicle`
+    };
+
+    const { queueBusinessEvent } = await import("./notification-engine");
+    await queueBusinessEvent("Vehicle (FleetDesk)", eventName, payload);
+    await queueBusinessEvent("Vehicle (FleetDesk)", "Statutory Expiry Alert", payload);
+
+    return { 
+      success: true, 
+      message: `Expiry notification queued for ${docType} (${veh.registration_number})` 
+    };
+  } catch (err: any) {
+    console.error("[vehicle-actions] sendVehicleComplianceExpiryReminderAction exception:", err);
+    return { success: false, error: err.message || "Failed to dispatch expiry notification" };
+  }
+}
+
+/**
+ * Scans all fleet vehicles & drivers for statutory compliance expiry thresholds
+ * and dispatches configured email notifications.
+ */
+export async function runFleetComplianceExpiryAuditAction(): Promise<{
+  success: boolean;
+  auditedVehicles: number;
+  expiriesDetected: number;
+  notificationsQueued: number;
+  error?: string;
+}> {
+  try {
+    const { data: vehicles, error: vErr } = await supabaseAdmin
+      .from("vehicles")
+      .select("id, registration_number, make, model, fuel_type, rto_office, insurance_vendor, insurance_policy_number, insurance_expiry_date, puc_expiry_date, fitness_expiry_date, assigned_driver_id, odometer_km, owner_id");
+
+    if (vErr) throw vErr;
+
+    const { queueBusinessEvent } = await import("./notification-engine");
+    let expiriesDetected = 0;
+    let notificationsQueued = 0;
+
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    for (const v of vehicles || []) {
+      const checkAndDispatch = async (docType: string, dateStr?: string | null) => {
+        if (!dateStr) return;
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return;
+        d.setHours(0, 0, 0, 0);
+        const diffDays = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+        if (diffDays <= 30) {
+          expiriesDetected++;
+          const isExpired = diffDays < 0;
+          const isUrgent = diffDays <= 7 && diffDays >= 0;
+
+          let eventName = `${docType} Expiring Soon (30 Days)`;
+          if (isExpired) {
+            eventName = `${docType} Expired`;
+          } else if (isUrgent) {
+            eventName = `${docType} Expiring Urgent (7 Days)`;
+          }
+
+          await queueBusinessEvent("Vehicle (FleetDesk)", eventName, {
+            entity_id: v.id,
+            triggering_user_id: "system-cron",
+            registration_number: v.registration_number,
+            vehicle_name: `${v.make} ${v.model}`,
+            doc_type: docType,
+            expiry_date: String(dateStr).split("T")[0],
+            days_remaining: isExpired ? `Expired ${Math.abs(diffDays)} days ago` : `${diffDays} Days Left`,
+            status: isExpired ? "EXPIRED" : "EXPIRING_SOON",
+            insurance_vendor: v.insurance_vendor,
+            insurance_policy_number: v.insurance_policy_number,
+            rto_office: v.rto_office,
+            link: `/vehicle`
+          });
+          notificationsQueued++;
+        }
+      };
+
+      if (v.insurance_expiry_date) {
+        await checkAndDispatch("Insurance", v.insurance_expiry_date);
+      }
+      if (v.puc_expiry_date) {
+        await checkAndDispatch("PUC", v.puc_expiry_date);
+      }
+      if (v.fitness_expiry_date) {
+        await checkAndDispatch("Fitness Certificate", v.fitness_expiry_date);
+      }
+    }
+
+    return {
+      success: true,
+      auditedVehicles: (vehicles || []).length,
+      expiriesDetected,
+      notificationsQueued
+    };
+  } catch (err: any) {
+    console.error("[vehicle-actions] runFleetComplianceExpiryAuditAction error:", err);
+    return {
+      success: false,
+      auditedVehicles: 0,
+      expiriesDetected: 0,
+      notificationsQueued: 0,
+      error: err.message || "Audit failed"
+    };
+  }
+}
+

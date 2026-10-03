@@ -177,6 +177,32 @@ export async function previewEmailTemplate(moduleName: string, htmlBody: string)
           link: `/workspaces`
         };
       }
+    } else if (moduleName === "Vehicle" || moduleName === "Vehicle (FleetDesk)") {
+      const { data } = await supabaseAdmin
+        .from("vehicles")
+        .select("id, registration_number, make, model, insurance_vendor, insurance_policy_number, insurance_expiry_date, puc_expiry_date, fitness_expiry_date, rto_office, odometer_km")
+        .limit(1)
+        .single();
+      
+      sampleData = {
+        ...sampleData,
+        registration_number: data?.registration_number || "MH-02-FE-4281",
+        vehicle_name: data?.make ? `${data.make} ${data.model}` : "Toyota Innova Crysta",
+        doc_type: "Motor Insurance Policy",
+        expiry_date: data?.insurance_expiry_date || "2026-11-15",
+        days_remaining: "28 Days Left",
+        insurance_vendor: data?.insurance_vendor || "HDFC ERGO General Insurance",
+        insurance_policy_number: data?.insurance_policy_number || "POL-2026-94821",
+        puc_certificate_number: "PUC-MH-2026-8812",
+        driver_name: "Ramesh Sharma",
+        driver_phone: "+91 98201 44892",
+        rto_office: data?.rto_office || "MH-02 Mumbai West RTO",
+        odometer_km: data?.odometer_km ? `${data.odometer_km} km` : "24,500 km",
+        service_type: "Scheduled 20,000 km Major Service",
+        service_due_date: "2026-11-01",
+        status: "EXPIRING_SOON",
+        link: `/vehicle`
+      };
     }
   } catch (e) {
     console.error("Preview sample fetch failed", e);

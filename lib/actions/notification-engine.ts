@@ -286,6 +286,39 @@ async function autoHydratePayload(payload: any, moduleName?: string) {
     }
   }
 
+  // Vehicle-specific auto-enrichment (FleetDesk & Statutory Expiries)
+  if ((moduleName === 'Vehicle' || moduleName === 'Vehicle (FleetDesk)') && payload.entity_id) {
+    try {
+      const { data: veh } = await supabaseAdmin
+        .from('vehicles')
+        .select('id, registration_number, make, model, fuel_type, rto_office, insurance_vendor, insurance_policy_number, insurance_expiry_date, puc_expiry_date, fitness_expiry_date, assigned_driver_id, odometer_km, owner_id')
+        .eq('id', payload.entity_id)
+        .maybeSingle();
+      if (veh) {
+        if (!hydrated.registration_number) hydrated.registration_number = veh.registration_number;
+        if (!hydrated.vehicle_name) hydrated.vehicle_name = `${veh.make} ${veh.model}`;
+        if (!hydrated.rto_office) hydrated.rto_office = veh.rto_office;
+        if (!hydrated.insurance_vendor) hydrated.insurance_vendor = veh.insurance_vendor;
+        if (!hydrated.insurance_policy_number) hydrated.insurance_policy_number = veh.insurance_policy_number;
+        if (!hydrated.insurance_expiry_date) hydrated.insurance_expiry_date = veh.insurance_expiry_date;
+        if (!hydrated.puc_expiry_date) hydrated.puc_expiry_date = veh.puc_expiry_date;
+        if (!hydrated.fitness_expiry_date) hydrated.fitness_expiry_date = veh.fitness_expiry_date;
+        if (!hydrated.odometer_km) hydrated.odometer_km = veh.odometer_km;
+        if (!hydrated.owner_id && veh.owner_id) hydrated.owner_id = veh.owner_id;
+        if (veh.assigned_driver_id && !hydrated.assigned_driver_id) {
+          hydrated.assigned_driver_id = veh.assigned_driver_id;
+          const { data: drv } = await supabaseAdmin.from('drivers').select('full_name, phone').eq('id', veh.assigned_driver_id).maybeSingle();
+          if (drv) {
+            hydrated.driver_name = drv.full_name;
+            hydrated.driver_phone = drv.phone;
+          }
+        }
+      }
+    } catch (e) {
+      console.error('[NotificationEngine] Vehicle auto-enrichment failed', e);
+    }
+  }
+
   const fieldMappings: Record<string, { table: string, column: string }> = {
     'assigned_to': { table: 'user_master', column: 'full_name' },
     'requester_id': { table: 'user_master', column: 'full_name' },
@@ -397,7 +430,37 @@ async function resolveRecipientType(type: string, moduleName: string, payload: a
         } else if (moduleName === "Workspace") {
           const { data } = await supabaseAdmin.from("workspaces").select("owner_id").eq("id", payload.entity_id).maybeSingle();
           if (data?.owner_id) ids.push(data.owner_id);
+        } else if (moduleName === "Vehicle" || moduleName === "Vehicle (FleetDesk)") {
+          if (payload.assigned_driver_id) ids.push(payload.assigned_driver_id);
         }
+      }
+      break;
+
+    case "Assigned Driver":
+      if (payload.assigned_driver_id) {
+        ids.push(payload.assigned_driver_id);
+      } else if (payload.driver_id) {
+        ids.push(payload.driver_id);
+      } else if (payload.entity_id && (moduleName === "Vehicle" || moduleName === "Vehicle (FleetDesk)")) {
+        const { data: veh } = await supabaseAdmin.from("vehicles").select("assigned_driver_id").eq("id", payload.entity_id).maybeSingle();
+        if (veh?.assigned_driver_id) ids.push(veh.assigned_driver_id);
+      }
+      break;
+
+    case "Fleet Manager / Admin":
+      const { data: fleetAdmins } = await supabaseAdmin
+        .from("user_roles")
+        .select("user_id, roles!inner(role_code)")
+        .or("role_code.eq.ROLE_SUPER_ADMIN,role_code.eq.ROLE_ADMIN", { foreignTable: "roles" });
+      if (fleetAdmins) fleetAdmins.forEach(fa => { if (fa.user_id) ids.push(fa.user_id); });
+      break;
+
+    case "Vehicle Owner":
+      if (payload.owner_id) {
+        ids.push(payload.owner_id);
+      } else if (payload.entity_id && (moduleName === "Vehicle" || moduleName === "Vehicle (FleetDesk)")) {
+        const { data: veh } = await supabaseAdmin.from("vehicles").select("owner_id").eq("id", payload.entity_id).maybeSingle();
+        if (veh?.owner_id) ids.push(veh.owner_id);
       }
       break;
 

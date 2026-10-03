@@ -79,7 +79,8 @@ import {
   TrendingDown,
   Activity,
   Filter,
-  Navigation
+  Navigation,
+  Mail
 } from "lucide-react";
 import { 
   POPULAR_BRANDS, 
@@ -97,6 +98,10 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useFleetPermissions } from "@/hooks/useFleetPermissions";
 import dynamic from "next/dynamic";
 const FleetRbacGovernance = dynamic(() => import("./FleetRbacGovernance"), {
+  ssr: false,
+  loading: () => <AppTableSkeleton rows={8} />
+});
+const TemplateDesigner = dynamic(() => import("@/components/settings/communication/TemplateDesigner"), {
   ssr: false,
   loading: () => <AppTableSkeleton rows={8} />
 });
@@ -171,7 +176,9 @@ import {
   createVehicleServiceEntitlementAction,
   redeemVehicleServiceEntitlementAction,
   deleteVehicleServiceEntitlementAction,
-  fetchVehicleUnifiedRenewalsTimelineAction
+  fetchVehicleUnifiedRenewalsTimelineAction,
+  sendVehicleComplianceExpiryReminderAction,
+  runFleetComplianceExpiryAuditAction
 } from "@/lib/actions/vehicle";
 
 export const MAINTENANCE_CATEGORIES = [
@@ -887,6 +894,9 @@ export default function FleetDeskHost({
   const [isEditVehicleOpen, setIsEditVehicleOpen] = useState(false);
   const [editVehicleSectionTab, setEditVehicleSectionTab] = useState<"SPECS" | "REGISTRATION" | "FINANCIALS" | "ALLOCATION" | "DOCS">("SPECS");
   const [selectedVehicleForEdit, setSelectedVehicleForEdit] = useState<VehicleRecord | null>(null);
+  const [sendingReminderId, setSendingReminderId] = useState<string | null>(null);
+  const [fleetSettingsTab, setFleetSettingsTab] = useState<"TEMPLATES" | "THRESHOLDS" | "VENDORS">("TEMPLATES");
+  const [runningFleetAudit, setRunningFleetAudit] = useState(false);
 
   const [isAddDriverOpen, setIsAddDriverOpen] = useState(false);
   const [isEditDriverOpen, setIsEditDriverOpen] = useState(false);
@@ -2551,15 +2561,24 @@ export default function FleetDeskHost({
   const loadAllData = useCallback(async (isSilent = false, forceRefresh = false) => {
     try {
       const now = Date.now();
-      // Use cached dataset on quick tab switching or re-renders
-      if (!forceRefresh && fleetDataCache && (now - fleetDataCache.timestamp < 60000)) {
-        if (fleetDataCache.stats) setStats(fleetDataCache.stats);
-        if (fleetDataCache.vehicles) setVehicles(fleetDataCache.vehicles);
-        if (fleetDataCache.drivers) setDrivers(fleetDataCache.drivers);
-        if (fleetDataCache.trips) setTrips(fleetDataCache.trips);
-        if (fleetDataCache.maintenance) setMaintenance(fleetDataCache.maintenance);
-        if (fleetDataCache.vendors) setInsuranceVendors(fleetDataCache.vendors);
-        if (fleetDataCache.parts) setParts(fleetDataCache.parts);
+      const isCompleteCache = Boolean(
+        fleetDataCache &&
+        fleetDataCache.maintenance !== undefined &&
+        fleetDataCache.trips !== undefined &&
+        fleetDataCache.vendors !== undefined &&
+        fleetDataCache.parts !== undefined &&
+        fleetDataCache.drivers !== undefined
+      );
+
+      // Use cached dataset on quick tab switching or re-renders only if all datasets are present
+      if (!forceRefresh && isCompleteCache && (now - fleetDataCache!.timestamp < 60000)) {
+        if (fleetDataCache!.stats) setStats(fleetDataCache!.stats);
+        if (fleetDataCache!.vehicles) setVehicles(fleetDataCache!.vehicles);
+        if (fleetDataCache!.drivers) setDrivers(fleetDataCache!.drivers);
+        if (fleetDataCache!.trips) setTrips(fleetDataCache!.trips);
+        if (fleetDataCache!.maintenance) setMaintenance(fleetDataCache!.maintenance);
+        if (fleetDataCache!.vendors) setInsuranceVendors(fleetDataCache!.vendors);
+        if (fleetDataCache!.parts) setParts(fleetDataCache!.parts);
         setLoading(false);
         return;
       }
@@ -2629,9 +2648,9 @@ export default function FleetDeskHost({
       }
       setLoading(false);
       // Asynchronously fetch secondary background tables (trips, maintenance, vendors, parts) without blocking UI
-      loadAllData(true);
+      loadAllData(true, true);
     } else {
-      loadAllData(false);
+      loadAllData(false, true);
     }
   }, [loadAllData, initialVehicles, initialStats, initialDrivers]);
 
@@ -3157,8 +3176,9 @@ export default function FleetDeskHost({
       });
     });
 
-    // 2. RC Smart Card & Vehicle Identity (Only include if actual scanned document URL exists)
+    // 2. RC Smart Card & Vehicle Identity
     const rcUrl = (veh as any).rc_doc_url || (veh as any).rc_document_url || (veh as any).rc_book_url || null;
+    const rcDocInVault = (veh.documents || []).find((d: any) => d.doc_type === "RC" || (d.title || "").toLowerCase().includes("rc "));
     if (rcUrl && !vaultDocTypes.has("RC")) {
       pushDoc({
         id: `master-doc-rc-${targetId}`,
@@ -3170,12 +3190,44 @@ export default function FleetDeskHost({
         file_type: "application/pdf",
         file_url: rcUrl,
         uploaded_at: veh.registration_date || veh.created_at,
-        expiry_date: null,
+        expiry_date: rcDocInVault?.expiry_date || (veh as any).rc_expiry_date || null,
         document_number: veh.vin_chassis_number || veh.registration_number,
         status: "VALID",
         sourceModule: "MASTER",
         sourceLabel: `RTO Transport Registry (${veh.rto_office || "State RTO"})`,
         isDirectVaultDoc: false
+      });
+    } else if (!vaultDocTypes.has("RC") && veh.registration_number) {
+      let rcExpiry: string | null = (veh as any).rc_expiry_date || null;
+      if (!rcExpiry && veh.registration_date) {
+        try {
+          const rd = new Date(veh.registration_date);
+          if (!isNaN(rd.getTime())) {
+            rd.setFullYear(rd.getFullYear() + 15);
+            rcExpiry = rd.toISOString().split("T")[0];
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      pushDoc({
+        id: `master-doc-rc-${targetId}`,
+        doc_type: "RC",
+        categoryLabel: "RC Smart Card",
+        title: `RC Smart Card: ${veh.registration_number}`,
+        file_name: null,
+        file_size: "Digital RTO Record",
+        file_type: "application/pdf",
+        file_url: null,
+        uploaded_at: veh.registration_date || veh.created_at,
+        expiry_date: rcExpiry,
+        document_number: veh.vin_chassis_number || veh.registration_number,
+        status: rcExpiry && calculateDaysRemaining(rcExpiry)! < 0 ? "EXPIRED" : "VALID",
+        sourceModule: "REGISTRATION",
+        sourceLabel: `RTO Passing: ${veh.rto_office || "Government Registry"}`,
+        isDirectVaultDoc: false,
+        has_file: false
       });
     }
 
@@ -3632,7 +3684,7 @@ export default function FleetDeskHost({
 
     const hasPuc = Boolean(allAggregatedDocs.some((d) => d.doc_type === "PUC") || viewingVehicle.puc_certificate_number);
     const hasInsurance = Boolean(allAggregatedDocs.some((d) => d.doc_type === "INSURANCE") || viewingVehicle.insurance_policy_number);
-    const hasRc = Boolean(allAggregatedDocs.some((d) => d.doc_type === "RC") || viewingVehicle.vin_chassis_number);
+    const hasRc = Boolean(allAggregatedDocs.some((d) => d.doc_type === "RC" && (d.file_url || (d as any).has_file)));
     const hasFitness = Boolean(allAggregatedDocs.some((d) => d.doc_type === "FITNESS") || viewingVehicle.fitness_expiry_date);
     const hasPermit = Boolean(allAggregatedDocs.some((d) => d.doc_type === "PERMIT"));
 
@@ -6309,6 +6361,28 @@ export default function FleetDeskHost({
         checkDoc("Pollution (PUC)", v.puc_expiry_date);
       }
       checkDoc("Fitness Certificate", v.fitness_expiry_date);
+
+      // Statutory Registration Certificate (RC) Compliance & 15-Year Validity Audit
+      let rcExp: string | null = (v as any).rc_expiry_date || null;
+      if (!rcExp) {
+        const rcDoc = (v.documents || []).find((d) => d.doc_type === "RC" && d.expiry_date);
+        if (rcDoc?.expiry_date) {
+          rcExp = rcDoc.expiry_date;
+        } else if (v.registration_date) {
+          try {
+            const rd = new Date(v.registration_date);
+            if (!isNaN(rd.getTime())) {
+              rd.setFullYear(rd.getFullYear() + 15);
+              rcExp = rd.toISOString().split("T")[0];
+            }
+          } catch {
+            // ignore
+          }
+        }
+      }
+      if (rcExp) {
+        checkDoc("Registration Certificate (RC)", rcExp);
+      }
     });
 
     drivers.forEach(d => {
@@ -6887,7 +6961,7 @@ export default function FleetDeskHost({
           icon: ShieldAlert,
           iconBg: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/25",
           title: "Fleet Compliance & Renewal Alerts",
-          description: "Automated expiry monitoring for insurance policies, PUC, fitness certificates & periodic services",
+          description: "Automated expiry monitoring for RC smart cards, insurance policies, PUC, fitness certificates & periodic services",
           actionBtn: null,
           kpis: [
             {
@@ -6897,6 +6971,14 @@ export default function FleetDeskHost({
               icon: ShieldAlert,
               iconColor: "text-rose-500",
               iconBg: "bg-rose-500/10 border-rose-500/20"
+            },
+            {
+              title: "RC Validations",
+              value: complianceAlerts.filter(a => a.docType.includes("RC") || a.docType.includes("Registration")).length,
+              subtext: "RC & Smart Cards",
+              icon: FileCheck,
+              iconColor: "text-theme-icon",
+              iconBg: "bg-surface border-border"
             },
             {
               title: "PUC Renewals",
@@ -7335,7 +7417,10 @@ export default function FleetDeskHost({
               <AppButton
                 variant="secondary"
                 size="sm"
-                onClick={() => loadAllData(true)}
+                onClick={() => {
+                  fleetDataCache = null;
+                  loadAllData(false, true);
+                }}
                 disabled={refreshing}
                 className="text-xs h-9 font-medium"
                 title="Refresh module data"
@@ -8421,6 +8506,53 @@ export default function FleetDeskHost({
                 <h3 className="text-base font-bold text-foreground">
                   Statutory Compliance & Document Validity
                 </h3>
+              </div>
+
+              {/* RC (Registration Certificate) Statutory Status */}
+              <div className="rounded-xl border border-blue-500/25 bg-blue-50/50 dark:bg-blue-950/20 p-3.5 space-y-2">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <FileCheck className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <span className="text-xs font-bold text-foreground">Registration Certificate (RC Smart Card) Compliance</span>
+                  </div>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-700 dark:text-blue-300 font-semibold font-mono">
+                    {newPlateInfo.formattedPlate || newVehiclePlate || "MH-02-FE-4281"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs pt-1">
+                  <div>
+                    <span className="text-muted-foreground block text-[11px]">RTO Authority:</span>
+                    <span className="font-semibold text-foreground">{newVehicleRtoOffice || newPlateInfo.districtCity || "State RTO"}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-[11px]">Registration Date:</span>
+                    <span className="font-semibold text-foreground font-mono">{newVehicleRegDate || "Not Set"}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-[11px]">Statutory 15-Year RC Validity:</span>
+                    {newVehicleRegDate ? (
+                      (() => {
+                        try {
+                          const rd = new Date(newVehicleRegDate);
+                          if (!isNaN(rd.getTime())) {
+                            rd.setFullYear(rd.getFullYear() + 15);
+                            const rcValStr = rd.toISOString().split("T")[0];
+                            const days = calculateDaysRemaining(rcValStr);
+                            return (
+                              <div className="flex items-center gap-1.5 font-mono">
+                                <span className="font-bold text-foreground">{rcValStr}</span>
+                                {days !== null && renderExpiryBadge(days)}
+                              </div>
+                            );
+                          }
+                        } catch {}
+                        return <span className="text-muted-foreground">—</span>;
+                      })()
+                    ) : (
+                      <span className="text-muted-foreground">Auto-calculated upon Reg Date</span>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 pt-2">
@@ -11241,7 +11373,14 @@ export default function FleetDeskHost({
                   {filteredMaintenance.length === 0 ? (
                     <AppTableRow>
                       <AppTableCell colSpan={8} className="text-center py-12 text-muted-foreground">
-                        No maintenance records yet. Click <strong>Log Service Job Card</strong> to record service work.
+                        {refreshing ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <RefreshCw className="h-4 w-4 animate-spin text-theme-icon" />
+                            <span>Loading workshop records...</span>
+                          </div>
+                        ) : (
+                          <>No maintenance records yet. Click <strong>Log Service Job Card</strong> to record service work.</>
+                        )}
                       </AppTableCell>
                     </AppTableRow>
                   ) : (
@@ -12092,6 +12231,21 @@ export default function FleetDeskHost({
                                       </AppButton>
                                     </>
                                   )}
+                                  {(item.docType.includes("RC") || item.docType.includes("Registration")) && (
+                                    <AppButton
+                                      variant="primary"
+                                      size="sm"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setEditVehicleSectionTab("DOCS");
+                                        openEditVehicleModal(item.vehicle!);
+                                      }}
+                                      className="h-7 text-xs px-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold gap-1 shadow-2xs"
+                                    >
+                                      <FileText className="h-3 w-3" />
+                                      <span>RC Details</span>
+                                    </AppButton>
+                                  )}
                                   {(item.docType === "Fitness Certificate" || item.docType.includes("Fitness")) && (
                                     <AppButton
                                       variant="primary"
@@ -12107,6 +12261,37 @@ export default function FleetDeskHost({
                                       <span>Renew Fitness</span>
                                     </AppButton>
                                   )}
+                                  <AppButton
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={sendingReminderId === item.id}
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      if (!item.vehicle) return;
+                                      try {
+                                        setSendingReminderId(item.id);
+                                        const res = await sendVehicleComplianceExpiryReminderAction(
+                                          item.vehicle.id,
+                                          item.docType,
+                                          item.expiryDate
+                                        );
+                                        if (res.success) {
+                                          toast.success(res.message || `Expiry email queued for ${item.docType}`);
+                                        } else {
+                                          toast.error(res.error || "Failed to dispatch reminder");
+                                        }
+                                      } catch (err: any) {
+                                        toast.error(err.message || "Failed to dispatch reminder");
+                                      } finally {
+                                        setSendingReminderId(null);
+                                      }
+                                    }}
+                                    className="h-7 text-xs px-2 text-indigo-600 dark:text-indigo-400 border-indigo-500/30 hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 gap-1 font-semibold shadow-2xs cursor-pointer"
+                                    title="Send instant compliance expiry email notification"
+                                  >
+                                    <Mail className="h-3 w-3" />
+                                    <span>{sendingReminderId === item.id ? "Sending..." : "Send Reminder"}</span>
+                                  </AppButton>
                                   <AppButton
                                     variant="outline"
                                     size="sm"
@@ -13127,67 +13312,174 @@ export default function FleetDeskHost({
       {!isAnyTransactionFormOpen && activeTab === "settings" && (
         <FleetErrorBoundary tabName="Fleet System Configuration" onReset={() => loadAllData(true)}>
           <div className="space-y-6">
-          <AppCard className="border-border shadow-xs">
-            <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50">
-              <AppCardTitle className="text-lg flex items-center gap-2">
-                <Settings className="h-5 w-5 text-muted-foreground" />
-                <span>Fleet Management System Configuration</span>
-              </AppCardTitle>
-            </AppCardHeader>
-            <AppCardContent className="p-5 space-y-5">
-              <div className="p-4 rounded-xl border border-border/70 bg-card shadow-2xs flex items-center justify-between">
-                <div>
-                  <h4 className="text-sm font-bold text-foreground">Government Parivahan / RTO RC API Gateway</h4>
-                  
-                </div>
-                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-                  Online & Active
-                </span>
-              </div>
-
-              <div className="p-4 rounded-xl border border-border/70 bg-card shadow-2xs flex items-center justify-between">
-                <div>
-                  <h4 className="text-sm font-bold text-foreground">Statutory Expiry Warning Window</h4>
-                  
-                </div>
-                <span className="font-mono text-xs font-bold text-foreground bg-surface px-3 py-1 rounded border border-border">
-                  30 Days Prior
-                </span>
-              </div>
-
-              <div className="p-4 rounded-xl border border-border/70 bg-card shadow-2xs flex items-center justify-between">
-                <div>
-                  <h4 className="text-sm font-bold text-foreground">Periodic Maintenance Trigger</h4>
-                  
-                </div>
-                <span className="font-mono text-xs font-bold text-foreground bg-surface px-3 py-1 rounded border border-border">
-                  Every 10,000 km
-                </span>
-              </div>
-            </AppCardContent>
-          </AppCard>
-
-          {/* Insurance Vendors Master Table Card */}
-          <AppCard className="border-border shadow-xs overflow-hidden">
-            <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <AppCardTitle className="text-lg flex items-center gap-2">
-                  <ShieldCheck className="h-5 w-5 text-blue-500" />
-                  <span>Fleet Insurance Vendors Master</span>
-                </AppCardTitle>
-              </div>
-
-              <AppButton
+            
+            {/* Settings Sub-Navigation Tabs */}
+            <div className="flex items-center gap-2 border-b border-border pb-3 flex-wrap">
+              <button
                 type="button"
-                variant="primary"
-                size="sm"
-                onClick={openCreateVendorModal}
-                className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-8 font-semibold gap-1.5 shadow-xs shrink-0"
+                onClick={() => setFleetSettingsTab("TEMPLATES")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  fleetSettingsTab === "TEMPLATES"
+                    ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-sm"
+                    : "bg-surface hover:bg-surface-elevated text-muted-foreground hover:text-foreground border border-border"
+                }`}
               >
-                <Plus className="h-3.5 w-3.5" />
-                <span>Add Insurance Vendor</span>
-              </AppButton>
-            </AppCardHeader>
+                <Mail className="h-4 w-4" />
+                <span>Email &amp; Expiry Notification Templates</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setFleetSettingsTab("THRESHOLDS")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  fleetSettingsTab === "THRESHOLDS"
+                    ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-sm"
+                    : "bg-surface hover:bg-surface-elevated text-muted-foreground hover:text-foreground border border-border"
+                }`}
+              >
+                <ShieldAlert className="h-4 w-4" />
+                <span>Statutory Expiry Thresholds &amp; Scanner</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setFleetSettingsTab("VENDORS")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  fleetSettingsTab === "VENDORS"
+                    ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-sm"
+                    : "bg-surface hover:bg-surface-elevated text-muted-foreground hover:text-foreground border border-border"
+                }`}
+              >
+                <ShieldCheck className="h-4 w-4" />
+                <span>Insurance Vendors Master ({insuranceVendors.length})</span>
+              </button>
+            </div>
+
+            {/* SUB-TAB 1: EMAIL & EXPIRY NOTIFICATION TEMPLATES DESIGNER */}
+            {fleetSettingsTab === "TEMPLATES" && (
+              <div className="space-y-4">
+                <TemplateDesigner initialModule="Vehicle (FleetDesk)" />
+              </div>
+            )}
+
+            {/* SUB-TAB 2: STATUTORY EXPIRY THRESHOLDS & SCANNER */}
+            {fleetSettingsTab === "THRESHOLDS" && (
+              <div className="space-y-6">
+                <AppCard className="border-border shadow-xs">
+                  <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <AppCardTitle className="text-lg flex items-center gap-2">
+                        <ShieldAlert className="h-5 w-5 text-amber-500" />
+                        <span>Automated Statutory Expiry Monitoring &amp; Scanner</span>
+                      </AppCardTitle>
+                    </div>
+                    <AppButton
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      disabled={runningFleetAudit}
+                      onClick={async () => {
+                        try {
+                          setRunningFleetAudit(true);
+                          const res = await runFleetComplianceExpiryAuditAction();
+                          if (res.success) {
+                            toast.success(
+                              `Audit Complete: ${res.auditedVehicles} vehicles scanned, ${res.expiriesDetected} expiries detected, ${res.notificationsQueued} emails queued.`
+                            );
+                          } else {
+                            toast.error(res.error || "Audit failed");
+                          }
+                        } catch (err: any) {
+                          toast.error(err.message || "Audit failed");
+                        } finally {
+                          setRunningFleetAudit(false);
+                        }
+                      }}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 font-semibold gap-1.5 shadow-xs shrink-0"
+                    >
+                      <RefreshCw className={`h-3.5 w-3.5 ${runningFleetAudit ? "animate-spin" : ""}`} />
+                      <span>{runningFleetAudit ? "Scanning Fleet..." : "Run Compliance Expiry Audit Now"}</span>
+                    </AppButton>
+                  </AppCardHeader>
+                  <AppCardContent className="p-5 space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="p-4 rounded-xl border border-border/70 bg-card shadow-2xs space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-foreground">30-Day Early Warning</span>
+                          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20">Active</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Notifies Assigned Driver and Fleet Managers 30 days prior to RC, Insurance, PUC, and Fitness expiry.
+                        </p>
+                      </div>
+
+                      <div className="p-4 rounded-xl border border-border/70 bg-card shadow-2xs space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-foreground">7-Day Urgent Notice</span>
+                          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-500/10 text-rose-600 border border-rose-500/20">Active</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Sends high-priority escalation alerts for statutory items expiring within 7 days.
+                        </p>
+                      </div>
+
+                      <div className="p-4 rounded-xl border border-border/70 bg-card shadow-2xs space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-foreground">Immediate Expiry Flag</span>
+                          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-600 text-white font-mono">Critical</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Flags vehicles with expired statutory papers and notifies fleet compliance officers.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="p-4 rounded-xl border border-border/70 bg-card shadow-2xs flex items-center justify-between flex-wrap gap-3">
+                      <div>
+                        <h4 className="text-sm font-bold text-foreground">Government Parivahan / RTO RC API Gateway</h4>
+                      </div>
+                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                        Online &amp; Active
+                      </span>
+                    </div>
+
+                    <div className="p-4 rounded-xl border border-border/70 bg-card shadow-2xs flex items-center justify-between flex-wrap gap-3">
+                      <div>
+                        <h4 className="text-sm font-bold text-foreground">Automated Daily Audit Cron Route</h4>
+                        <p className="text-xs font-mono text-muted-foreground mt-0.5">/api/cron/fleet-compliance-audit</p>
+                      </div>
+                      <span className="font-mono text-xs font-bold text-foreground bg-surface px-3 py-1 rounded border border-border">
+                        Daily 08:00 AM IST
+                      </span>
+                    </div>
+                  </AppCardContent>
+                </AppCard>
+              </div>
+            )}
+
+            {/* SUB-TAB 3: INSURANCE VENDORS MASTER */}
+            {fleetSettingsTab === "VENDORS" && (
+              <AppCard className="border-border shadow-xs">
+                <AppCardHeader className="bg-surface/50 pb-4 border-b border-border/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <AppCardTitle className="text-sm font-bold text-foreground">
+                      Insurance Providers & Underwriters Directory
+                    </AppCardTitle>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Maintain official fleet insurance underwriters, emergency claim contacts, and toll-free numbers.
+                    </p>
+                  </div>
+                  <AppButton
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    onClick={openCreateVendorModal}
+                    className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-8 font-semibold gap-1.5 shadow-xs shrink-0"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>Add Insurance Vendor</span>
+                  </AppButton>
+                </AppCardHeader>
 
             <AppCardContent className="p-0 overflow-x-auto">
               <AppTableContainer className="rounded-none border-none">
@@ -13293,9 +13585,10 @@ export default function FleetDeskHost({
               </AppTableContainer>
             </AppCardContent>
           </AppCard>
-        </div>
-        </FleetErrorBoundary>
-      )}
+        )}
+      </div>
+    </FleetErrorBoundary>
+  )}
 
       {/* ---------------------------------------------------------------------- */}
       {/* EDIT VEHICLE MODAL */}
@@ -14244,6 +14537,53 @@ export default function FleetDeskHost({
                 <div className="flex items-center gap-2 pb-2 border-b border-border/60 text-foreground font-semibold text-xs">
                   <ShieldCheck className="h-4 w-4 text-emerald-500" />
                   <span>Compliance & Insurance</span>
+                </div>
+
+                {/* RC (Registration Certificate) Compliance Summary */}
+                <div className="rounded-xl border border-blue-500/25 bg-blue-50/50 dark:bg-blue-950/20 p-3 space-y-2">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2">
+                      <FileCheck className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      <span className="text-xs font-bold text-foreground">Registration Certificate (RC Smart Card) Compliance</span>
+                    </div>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-700 dark:text-blue-300 font-semibold font-mono">
+                      {selectedVehicleForEdit?.registration_number || editVehiclePlate || "Plate"}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs pt-1">
+                    <div>
+                      <span className="text-muted-foreground block text-[11px]">RTO Passing Office:</span>
+                      <span className="font-semibold text-foreground">{editVehicleRtoOffice || "State RTO"}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block text-[11px]">Registration Date:</span>
+                      <span className="font-semibold text-foreground font-mono">{editVehicleRegDate || "Not Set"}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block text-[11px]">15-Year RC Validity:</span>
+                      {editVehicleRegDate ? (
+                        (() => {
+                          try {
+                            const rd = new Date(editVehicleRegDate);
+                            if (!isNaN(rd.getTime())) {
+                              rd.setFullYear(rd.getFullYear() + 15);
+                              const rcValStr = rd.toISOString().split("T")[0];
+                              const days = calculateDaysRemaining(rcValStr);
+                              return (
+                                <div className="flex items-center gap-1.5 font-mono">
+                                  <span className="font-bold text-foreground">{rcValStr}</span>
+                                  {days !== null && renderExpiryBadge(days)}
+                                </div>
+                              );
+                            }
+                          } catch {}
+                          return <span className="text-muted-foreground">—</span>;
+                        })()
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -20140,6 +20480,29 @@ export default function FleetDeskHost({
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">Registered Owner:</span>
                       <span className="font-semibold text-foreground">{viewingVehicle.registered_owner || "Corporate Fleet"}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">15-Year RC Expiry:</span>
+                      <span className="font-mono font-semibold text-foreground">
+                        {viewingVehicle.registration_date ? (
+                          (() => {
+                            try {
+                              const rd = new Date(viewingVehicle.registration_date);
+                              if (!isNaN(rd.getTime())) {
+                                rd.setFullYear(rd.getFullYear() + 15);
+                                return rd.toISOString().split("T")[0];
+                              }
+                            } catch {}
+                            return "—";
+                          })()
+                        ) : "—"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">RC Smart Card:</span>
+                      <span className={`font-semibold text-xs ${dossierData.hasRc ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
+                        {dossierData.hasRc ? "Archived in Vault" : "Pending Scan Upload"}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">RTO Registered Mobile:</span>

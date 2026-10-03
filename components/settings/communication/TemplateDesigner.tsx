@@ -11,6 +11,9 @@ import { previewEmailTemplate } from "@/lib/actions/email-config";
 const RECIPIENT_OPTIONS = [
   "Creator",
   "Assigned User",
+  "Assigned Driver",
+  "Fleet Manager / Admin",
+  "Vehicle Owner",
   "Executors",
   "Watchers",
   "Workspace Owner",
@@ -25,6 +28,7 @@ const MODULES = [
   "Ticket", 
   "Requirement", 
   "Approval",
+  "Vehicle (FleetDesk)",
   "AMC (Contracts)",
   "SLA Management",
   "IAM (Users/Roles)",
@@ -35,6 +39,23 @@ const MODULES = [
 ];
 
 const EVENTS = [
+  // Vehicle & Fleet Expiry Events (Statutory Compliance)
+  "RC Expiring Soon (30 Days)",
+  "RC Expired",
+  "Insurance Expiring Soon (30 Days)",
+  "Insurance Expiring Urgent (7 Days)",
+  "Insurance Expired",
+  "PUC Expiring Soon (30 Days)",
+  "PUC Expired",
+  "Fitness Certificate Expiring Soon",
+  "Fitness Certificate Expired",
+  "Driver License Expiring Soon",
+  "Driver License Expired",
+  "Vehicle Service Due",
+  "Vehicle Service Overdue",
+  "Vehicle Registered",
+  "Vehicle Driver Assigned",
+
   // General Lifecycle
   "Created", 
   "Updated", 
@@ -103,13 +124,32 @@ const MERGE_TAGS = [
   "{{due_date}}",
   "{{role}}",
   "{{remarks}}",
+  "{{registration_number}}",
+  "{{vehicle_name}}",
+  "{{doc_type}}",
+  "{{expiry_date}}",
+  "{{days_remaining}}",
+  "{{insurance_vendor}}",
+  "{{insurance_policy_number}}",
+  "{{puc_certificate_number}}",
+  "{{driver_name}}",
+  "{{driver_phone}}",
+  "{{rto_office}}",
+  "{{odometer_km}}",
+  "{{service_type}}",
+  "{{service_due_date}}",
   "{{link}}"
 ];
 
-export default function TemplateDesigner() {
+interface TemplateDesignerProps {
+  initialModule?: string;
+}
+
+export default function TemplateDesigner({ initialModule }: TemplateDesignerProps = {}) {
   const [templates, setTemplates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [toastMsg, setToastMsg] = useState<{type: "success" | "error", text: string} | null>(null);
+  const [moduleFilter, setModuleFilter] = useState<string>(() => initialModule || "ALL");
   
   // New Master-Detail state
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
@@ -143,6 +183,28 @@ export default function TemplateDesigner() {
 
   const handleAddTemplate = () => {
     const newId = "temp_" + Date.now();
+    const isVeh = moduleFilter === "Vehicle (FleetDesk)" || initialModule === "Vehicle (FleetDesk)";
+
+    const vehicleStarter = `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background-color: #ffffff;">
+  <div style="border-bottom: 2px solid #ef4444; padding-bottom: 12px; margin-bottom: 16px;">
+    <h2 style="color: #0f172a; margin: 0; font-size: 18px; font-weight: 700;">⚠️ Vehicle Statutory Expiry Alert</h2>
+    <p style="margin: 4px 0 0 0; font-size: 12px; color: #64748b;">Automated Fleet Compliance Expiry Notice</p>
+  </div>
+  <p style="font-size: 14px; color: #334155; margin-bottom: 16px;">
+    This is an automated compliance alert regarding vehicle <strong>{{registration_number}}</strong> ({{vehicle_name}}).
+  </p>
+  <div style="background-color: #f8fafc; border-left: 4px solid #ef4444; padding: 16px 20px; margin: 16px 0; border-radius: 4px;">
+    <p style="margin: 6px 0; font-size: 14px; color: #334155;"><strong style="color: #0f172a;">Document / Item:</strong> {{doc_type}}</p>
+    <p style="margin: 6px 0; font-size: 14px; color: #334155;"><strong style="color: #0f172a;">Expiry Date:</strong> {{expiry_date}} ({{days_remaining}})</p>
+    <p style="margin: 6px 0; font-size: 14px; color: #334155;"><strong style="color: #0f172a;">Assigned Chauffeur:</strong> {{driver_name}} ({{driver_phone}})</p>
+    <p style="margin: 6px 0; font-size: 14px; color: #334155;"><strong style="color: #0f172a;">RTO Passing Authority:</strong> {{rto_office}}</p>
+    <p style="margin: 6px 0; font-size: 14px; color: #334155;"><strong style="color: #0f172a;">Insurance Vendor:</strong> {{insurance_vendor}} (Policy #{{insurance_policy_number}})</p>
+  </div>
+  <div style="margin-top: 24px;">
+    <a href="{{link}}" style="display: inline-block; background-color: #2563eb; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 14px;">Open Fleet Desk & Renew</a>
+  </div>
+</div>`;
+
     const standardStarter = `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background-color: #ffffff;">
   <h2 style="color: #1e293b; margin-top: 0; margin-bottom: 16px; font-size: 20px; font-weight: 700;">Task Updated</h2>
   <div style="background-color: #f8fafc; border-left: 4px solid #2563eb; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
@@ -158,14 +220,14 @@ export default function TemplateDesigner() {
     setTemplates(prev => [
       {
         id: newId,
-        module: "Task",
-        event: "Updated",
-        template_name: "Task Updated",
-        subject: "Task Updated: {{task_name}}",
-        html_body: standardStarter,
+        module: isVeh ? "Vehicle (FleetDesk)" : (moduleFilter !== "ALL" ? moduleFilter : "Task"),
+        event: isVeh ? "Insurance Expiring Soon (30 Days)" : "Updated",
+        template_name: isVeh ? "Vehicle Expiry Notice" : "Task Updated",
+        subject: isVeh ? "⚠️ Expiry Warning: {{doc_type}} for {{registration_number}} ({{days_remaining}})" : "Task Updated: {{task_name}}",
+        html_body: isVeh ? vehicleStarter : standardStarter,
         is_active: true,
         is_new: true,
-        recipient_types: ["Assigned User", "Creator"]
+        recipient_types: isVeh ? ["Assigned Driver", "Fleet Manager / Admin"] : ["Assigned User", "Creator"]
       },
       ...prev
     ]);
@@ -286,43 +348,72 @@ export default function TemplateDesigner() {
       </div>
 
       {/* View Router */}
-      <div className="space-y-8">
+      <div className="space-y-6">
         
         {/* LIST VIEW */}
         {!editingTemplateId && (
-          <div className="theme-card-structural rounded-xl overflow-hidden ">
-            {templates.length === 0 ? (
-              <div className="text-center py-12">
-                <LayoutTemplate className="w-12 h-12 text-subtle mx-auto mb-4" />
-                <h3 className="text-lg font-bold text-muted">No Templates Designed</h3>
+          <div className="space-y-4">
+            {/* Filter Pills */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar text-xs">
+              <span className="font-bold text-muted-foreground shrink-0 mr-1">Module:</span>
+              {["ALL", ...MODULES].map((mod) => (
+                <button
+                  key={mod}
+                  type="button"
+                  onClick={() => setModuleFilter(mod)}
+                  className={`px-3 py-1.5 rounded-lg font-semibold shrink-0 transition-all cursor-pointer ${
+                    moduleFilter === mod
+                      ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs"
+                      : "bg-surface hover:bg-surface-elevated text-muted-foreground hover:text-foreground border border-border"
+                  }`}
+                >
+                  {mod === "ALL" ? "All Modules" : mod}
+                  <span className="ml-1.5 text-[10px] font-mono font-bold opacity-75">
+                    ({mod === "ALL" ? templates.length : templates.filter(t => t.module === mod || (mod === "Vehicle (FleetDesk)" && (t.module === "Vehicle" || t.module === "Vehicle (FleetDesk)"))).length})
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <div className="theme-card-structural rounded-xl overflow-hidden border border-border">
+            {(() => {
+              const visibleTemplates = moduleFilter === "ALL"
+                ? templates
+                : templates.filter(t => t.module === moduleFilter || (moduleFilter === "Vehicle (FleetDesk)" && (t.module === "Vehicle" || t.module === "Vehicle (FleetDesk)")));
+
+              return visibleTemplates.length === 0 ? (
+                <div className="text-center py-12">
+                  <LayoutTemplate className="w-12 h-12 text-subtle mx-auto mb-4" />
+                  <h3 className="text-lg font-bold text-muted">No Templates for {moduleFilter === "ALL" ? "System" : moduleFilter}</h3>
+                  <p className="text-xs text-muted-foreground mt-1">Click "Add Template" to construct a new notification payload.</p>
                 </div>
-            ) : (
-              <AppTable className="w-full text-left text-sm">
-                <thead className="bg-background border-b border-border">
-                  <tr>
-                    <th className="px-6 py-4 font-bold text-muted uppercase tracking-wider">Template Name</th>
-                    <th className="px-6 py-4 font-bold text-muted uppercase tracking-wider">Module</th>
-                    <th className="px-6 py-4 font-bold text-muted uppercase tracking-wider">Event</th>
-                    <th className="px-6 py-4 font-bold text-muted uppercase tracking-wider text-center">Status</th>
-                    <th className="px-6 py-4 font-bold text-muted uppercase tracking-wider text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {templates.map((item) => (
-                    <tr 
-                      key={item.id} 
-                      className="hover:bg-background/50 transition-colors cursor-pointer group"
-                      onClick={() => setEditingTemplateId(item.id)}
-                    >
-                      <td className="px-6 py-4 font-medium text-foreground">{item.template_name}</td>
-                      <td className="px-6 py-4 text-muted">{item.module}</td>
-                      <td className="px-6 py-4 text-muted">{item.event}</td>
-                      <td className="px-6 py-4 text-center">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${item.is_active ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>
-                          {item.is_active ? 'Active' : 'Inactive'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
+              ) : (
+                <AppTable className="w-full text-left text-sm">
+                  <thead className="bg-background border-b border-border">
+                    <tr>
+                      <th className="px-6 py-4 font-bold text-muted uppercase tracking-wider">Template Name</th>
+                      <th className="px-6 py-4 font-bold text-muted uppercase tracking-wider">Module</th>
+                      <th className="px-6 py-4 font-bold text-muted uppercase tracking-wider">Event</th>
+                      <th className="px-6 py-4 font-bold text-muted uppercase tracking-wider text-center">Status</th>
+                      <th className="px-6 py-4 font-bold text-muted uppercase tracking-wider text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {visibleTemplates.map((item) => (
+                      <tr 
+                        key={item.id} 
+                        className="hover:bg-background/50 transition-colors cursor-pointer group"
+                        onClick={() => setEditingTemplateId(item.id)}
+                      >
+                        <td className="px-6 py-4 font-medium text-foreground">{item.template_name}</td>
+                        <td className="px-6 py-4 text-muted">{item.module}</td>
+                        <td className="px-6 py-4 text-muted">{item.event}</td>
+                        <td className="px-6 py-4 text-center">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${item.is_active ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>
+                            {item.is_active ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <AppButton 
                             onClick={(e) => { e.stopPropagation(); setEditingTemplateId(item.id); }}
@@ -344,7 +435,9 @@ export default function TemplateDesigner() {
                   ))}
                 </tbody>
               </AppTable>
-            )}
+            );
+          })()}
+            </div>
           </div>
         )}
 
