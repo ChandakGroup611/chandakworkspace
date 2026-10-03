@@ -732,10 +732,10 @@ export async function fetchVehiclesList(params?: {
       }
     });
 
-    // Controlled Batch Lookup: Document metadata attached to these vehicles (lightweight payload)
+    // Controlled Batch Lookup: Document metadata attached to these vehicles (lightweight metadata payload; binary files loaded on-demand)
     const { data: docsData } = await supabaseAdmin
       .from("vehicle_documents")
-      .select("id, vehicle_id, doc_type, title, file_name, file_size, uploaded_at, expiry_date, status, document_number, file_url")
+      .select("id, vehicle_id, doc_type, title, file_name, file_size, uploaded_at, expiry_date, status, document_number")
       .in("vehicle_id", vehicleIds)
       .order("uploaded_at", { ascending: false });
 
@@ -743,10 +743,10 @@ export async function fetchVehiclesList(params?: {
     (docsData || []).forEach((doc: any) => {
       if (doc.vehicle_id) {
         const list = docsMap.get(doc.vehicle_id) || [];
-        const hasActualFile = Boolean(doc.file_name && doc.file_name.trim()) || Boolean(doc.file_url && doc.file_url.length > 5);
+        const hasActualFile = Boolean(doc.file_name && doc.file_name.trim());
         list.push({
           ...doc,
-          file_url: doc.file_url || "",
+          file_url: "", // Stripped from list payload for enterprise scale; retrieved on-demand via fetchVehicleDocumentContentAction
           has_file: hasActualFile,
           file_type: resolveMimeFromName(doc.file_name)
         });

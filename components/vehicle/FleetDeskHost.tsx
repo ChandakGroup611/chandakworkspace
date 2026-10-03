@@ -2614,8 +2614,22 @@ export default function FleetDeskHost({
       document.cookie = "active_module=VEHICLE_DESK; path=/; max-age=2592000; SameSite=Lax";
     }
     const hasPreloaded = Boolean((initialVehicles && initialVehicles.length > 0) || (initialStats && initialStats.totalVehicles > 0));
-    loadAllData(hasPreloaded);
-  }, [loadAllData, initialVehicles, initialStats]);
+    if (hasPreloaded) {
+      if (!fleetDataCache) {
+        fleetDataCache = {
+          stats: initialStats,
+          vehicles: initialVehicles,
+          drivers: initialDrivers || [],
+          timestamp: Date.now()
+        };
+      }
+      setLoading(false);
+      // Asynchronously fetch secondary background tables (trips, maintenance, vendors, parts) without blocking UI
+      loadAllData(true);
+    } else {
+      loadAllData(false);
+    }
+  }, [loadAllData, initialVehicles, initialStats, initialDrivers]);
 
   // Toast banner triggers
   const triggerToast = (msg: string, isError = false) => {
@@ -7208,7 +7222,9 @@ export default function FleetDeskHost({
     isRedeemEntitlementModalOpen
   ]);
 
-  if (loading || isPermissionsResolving) {
+  const hasRenderableData = vehicles.length > 0 || Boolean(initialVehicles && initialVehicles.length > 0) || Boolean(initialStats && initialStats.totalVehicles > 0);
+
+  if ((loading || isPermissionsResolving) && !hasRenderableData) {
     return (
       <div className="w-full flex-1 flex flex-col items-center justify-center min-h-[60vh] min-w-0 animate-in fade-in duration-300">
         <ChandakLoader
