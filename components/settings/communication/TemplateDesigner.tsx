@@ -22,6 +22,14 @@ const RECIPIENT_OPTIONS = [
   "Requester"
 ];
 
+export const VEHICLE_RECIPIENT_OPTIONS = [
+  "Assigned Driver",
+  "Fleet Manager / Admin",
+  "Vehicle Owner",
+  "Creator",
+  "Department Admin"
+];
+
 const MODULES = [
   "Task", 
   "Workspace", 
@@ -38,13 +46,12 @@ const MODULES = [
   "Masters (Vendors/Companies)"
 ];
 
-const EVENTS = [
-  // Vehicle & Fleet Expiry Events (Statutory Compliance)
-  "RC Expiring Soon (30 Days)",
-  "RC Expired",
+export const VEHICLE_EVENTS = [
   "Insurance Expiring Soon (30 Days)",
   "Insurance Expiring Urgent (7 Days)",
   "Insurance Expired",
+  "RC Expiring Soon (30 Days)",
+  "RC Expired",
   "PUC Expiring Soon (30 Days)",
   "PUC Expired",
   "Fitness Certificate Expiring Soon",
@@ -55,6 +62,15 @@ const EVENTS = [
   "Vehicle Service Overdue",
   "Vehicle Registered",
   "Vehicle Driver Assigned",
+  "Created", 
+  "Updated", 
+  "Deleted/Archived",
+  "Comment Added"
+];
+
+const EVENTS = [
+  // Vehicle & Fleet Expiry Events (Statutory Compliance)
+  ...VEHICLE_EVENTS,
 
   // General Lifecycle
   "Created", 
@@ -109,6 +125,27 @@ const EVENTS = [
   "Course Completed",
   "Article Published"
 ];
+
+export const VEHICLE_MERGE_TAGS = [
+  "{{registration_number}}",
+  "{{vehicle_name}}",
+  "{{doc_type}}",
+  "{{expiry_date}}",
+  "{{days_remaining}}",
+  "{{insurance_vendor}}",
+  "{{insurance_policy_number}}",
+  "{{puc_certificate_number}}",
+  "{{driver_name}}",
+  "{{driver_phone}}",
+  "{{rto_office}}",
+  "{{odometer_km}}",
+  "{{service_type}}",
+  "{{service_due_date}}",
+  "{{creator_name}}",
+  "{{remarks}}",
+  "{{link}}"
+];
+
 const MERGE_TAGS = [
   "{{ticket_no}}",
   "{{ticket_title}}",
@@ -124,21 +161,7 @@ const MERGE_TAGS = [
   "{{due_date}}",
   "{{role}}",
   "{{remarks}}",
-  "{{registration_number}}",
-  "{{vehicle_name}}",
-  "{{doc_type}}",
-  "{{expiry_date}}",
-  "{{days_remaining}}",
-  "{{insurance_vendor}}",
-  "{{insurance_policy_number}}",
-  "{{puc_certificate_number}}",
-  "{{driver_name}}",
-  "{{driver_phone}}",
-  "{{rto_office}}",
-  "{{odometer_km}}",
-  "{{service_type}}",
-  "{{service_due_date}}",
-  "{{link}}"
+  ...VEHICLE_MERGE_TAGS
 ];
 
 interface TemplateDesignerProps {
@@ -309,18 +332,26 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
 
   // Active Template for Editor View
   const tpl = editingTemplateId ? templates.find(t => t.id === editingTemplateId) : null;
+  const isLockedToModule = Boolean(initialModule);
+  const isVeh = moduleFilter === "Vehicle (FleetDesk)" || initialModule === "Vehicle (FleetDesk)";
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       
       {/* Dynamic Header */}
-      <div className="flex justify-between items-center bg-background border border-border p-4 rounded-xl shadow-lg">
+      <div className="flex justify-between items-center bg-background border border-border p-4 rounded-xl shadow-xs">
         <div>
           <h2 className="text-lg font-bold text-foreground">
-            {editingTemplateId ? "Edit Template" : "Dynamic Template Designer"}
+            {editingTemplateId 
+              ? (isVeh ? "Edit Vehicle Notification Template" : "Edit Template") 
+              : (isVeh ? "Vehicle Notification & Expiry Templates" : "Dynamic Template Designer")}
           </h2>
-          <p className="text-xs text-muted">
-            {editingTemplateId ? "Modify HTML and configuration." : "Construct HTML payloads with runtime merge tag hydration."}
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {editingTemplateId 
+              ? "Modify HTML layout and recipient trigger configuration." 
+              : (isVeh 
+                  ? "Configure automated statutory expiry warnings (Insurance, RC, PUC, Fitness) and fleet reminder emails." 
+                  : "Construct HTML payloads with runtime merge tag hydration.")}
           </p>
         </div>
         
@@ -333,16 +364,16 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
               }
               setEditingTemplateId(null);
             }}
-            className="flex items-center gap-2 theme-card-structural hover:/80 text-foreground px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-all"
+            className="flex items-center gap-2 theme-card-structural hover:bg-surface text-foreground px-4 py-2 rounded-lg text-sm font-bold shadow-xs transition-all"
           >
             <ArrowLeft className="w-4 h-4" /> Back to List
           </AppButton>
         ) : (
           <AppButton
             onClick={handleAddTemplate}
-            className="flex items-center gap-2 bg-theme-btn-primary hover:opacity-90/90 text-theme-btn-primary-text px-4 py-2 rounded-lg text-sm font-bold shadow-lg shadow-theme-btn-primary/20 transition-all"
+            className="flex items-center gap-2 bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text px-4 py-2 rounded-lg text-sm font-bold shadow-xs transition-all"
           >
-            <Plus className="w-4 h-4" /> Add Template
+            <Plus className="w-4 h-4" /> {isVeh ? "Add Vehicle Template" : "Add Template"}
           </AppButton>
         )}
       </div>
@@ -353,27 +384,29 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
         {/* LIST VIEW */}
         {!editingTemplateId && (
           <div className="space-y-4">
-            {/* Filter Pills */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar text-xs">
-              <span className="font-bold text-muted-foreground shrink-0 mr-1">Module:</span>
-              {["ALL", ...MODULES].map((mod) => (
-                <button
-                  key={mod}
-                  type="button"
-                  onClick={() => setModuleFilter(mod)}
-                  className={`px-3 py-1.5 rounded-lg font-semibold shrink-0 transition-all cursor-pointer ${
-                    moduleFilter === mod
-                      ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs"
-                      : "bg-surface hover:bg-surface-elevated text-muted-foreground hover:text-foreground border border-border"
-                  }`}
-                >
-                  {mod === "ALL" ? "All Modules" : mod}
-                  <span className="ml-1.5 text-[10px] font-mono font-bold opacity-75">
-                    ({mod === "ALL" ? templates.length : templates.filter(t => t.module === mod || (mod === "Vehicle (FleetDesk)" && (t.module === "Vehicle" || t.module === "Vehicle (FleetDesk)"))).length})
-                  </span>
-                </button>
-              ))}
-            </div>
+            {/* Filter Pills - only shown in global communication settings */}
+            {!isLockedToModule && (
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar text-xs">
+                <span className="font-bold text-muted-foreground shrink-0 mr-1">Module:</span>
+                {["ALL", ...MODULES].map((mod) => (
+                  <button
+                    key={mod}
+                    type="button"
+                    onClick={() => setModuleFilter(mod)}
+                    className={`px-3 py-1.5 rounded-lg font-semibold shrink-0 transition-all cursor-pointer ${
+                      moduleFilter === mod
+                        ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs"
+                        : "bg-surface hover:bg-surface-elevated text-muted-foreground hover:text-foreground border border-border"
+                    }`}
+                  >
+                    {mod === "ALL" ? "All Modules" : mod}
+                    <span className="ml-1.5 text-[10px] font-mono font-bold opacity-75">
+                      ({mod === "ALL" ? templates.length : templates.filter(t => t.module === mod || (mod === "Vehicle (FleetDesk)" && (t.module === "Vehicle" || t.module === "Vehicle (FleetDesk)"))).length})
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
 
             <div className="theme-card-structural rounded-xl overflow-hidden border border-border">
             {(() => {
@@ -383,9 +416,9 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
 
               return visibleTemplates.length === 0 ? (
                 <div className="text-center py-12">
-                  <LayoutTemplate className="w-12 h-12 text-subtle mx-auto mb-4" />
-                  <h3 className="text-lg font-bold text-muted">No Templates for {moduleFilter === "ALL" ? "System" : moduleFilter}</h3>
-                  <p className="text-xs text-muted-foreground mt-1">Click "Add Template" to construct a new notification payload.</p>
+                  <LayoutTemplate className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
+                  <h3 className="text-lg font-bold text-foreground">No Templates for {isVeh ? "Vehicle Desk" : (moduleFilter === "ALL" ? "System" : moduleFilter)}</h3>
+                  <p className="text-xs text-muted-foreground mt-1">Click "{isVeh ? "Add Vehicle Template" : "Add Template"}" to construct a new notification payload.</p>
                 </div>
               ) : (
                 <AppTable className="w-full text-left text-sm">
@@ -457,13 +490,22 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-bold text-muted uppercase">Trigger Module</label>
-                <select 
-                  value={tpl.module || ''}
-                  onChange={(e) => updateLocal(tpl.id, "module", e.target.value)}
-                  className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-theme-btn-primary"
-                >
-                  {MODULES.map(m => <option key={m} value={m}>{m}</option>)}
-                </select>
+                {isLockedToModule ? (
+                  <div className="w-full bg-surface border border-border rounded-md px-3 py-2 text-sm text-foreground font-semibold flex items-center justify-between">
+                    <span>{tpl.module || initialModule}</span>
+                    <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 font-bold">
+                      Vehicle Scoped
+                    </span>
+                  </div>
+                ) : (
+                  <select 
+                    value={tpl.module || ''}
+                    onChange={(e) => updateLocal(tpl.id, "module", e.target.value)}
+                    className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-theme-btn-primary"
+                  >
+                    {MODULES.map(m => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                )}
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-bold text-muted uppercase">Trigger Event</label>
@@ -472,7 +514,7 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
                   onChange={(e) => updateLocal(tpl.id, "event", e.target.value)}
                   className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-theme-btn-primary"
                 >
-                  {EVENTS.map(e => <option key={e} value={e}>{e}</option>)}
+                  {(isVeh ? VEHICLE_EVENTS : EVENTS).map(e => <option key={e} value={e}>{e}</option>)}
                 </select>
               </div>
               <div className="md:col-span-3 space-y-2">
@@ -482,7 +524,7 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
                   value={tpl.subject || ''}
                   onChange={(e) => updateLocal(tpl.id, "subject", e.target.value)}
                   className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:border-theme-btn-primary font-mono"
-                  placeholder="e.g. Action Required: {{task_name}}"
+                  placeholder="e.g. Action Required: {{registration_number}}"
                 />
               </div>
 
@@ -490,7 +532,7 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
               <div className="md:col-span-3 space-y-2 mt-2">
                 <label className="text-sm font-bold text-muted uppercase">Target Recipients (Dynamic)</label>
                 <div className="flex flex-wrap gap-3">
-                  {RECIPIENT_OPTIONS.map(opt => (
+                  {(isVeh ? VEHICLE_RECIPIENT_OPTIONS : RECIPIENT_OPTIONS).map(opt => (
                     <label key={opt} className="flex items-center gap-2 cursor-pointer px-3 py-2 border border-border rounded-md bg-background hover:border-theme-btn-primary transition-colors select-none">
                       <input 
                         type="checkbox"
@@ -516,9 +558,10 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
             {/* Merge Tags Helper */}
             <div className="px-6 py-3 border-b border-border bg-background flex flex-wrap gap-2 items-center">
               <span className="text-xs font-bold text-muted mr-2">AVAILABLE TAGS:</span>
-              {MERGE_TAGS.map(tag => (
+              {(isVeh ? VEHICLE_MERGE_TAGS : MERGE_TAGS).map(tag => (
                 <AppButton 
                   key={tag} 
+                  type="button"
                   onClick={() => {
                     const el = document.getElementById(`editor_${tpl.id}`) as HTMLTextAreaElement;
                     if (el) {
@@ -529,7 +572,7 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
                       updateLocal(tpl.id, "html_body", newBody);
                     }
                   }}
-                  className="px-2 py-1 bg-theme-btn-primary text-theme-btn-primary-text hover:opacity-90/90 text-xs font-mono rounded transition-colors shadow-sm"
+                  className="px-2 py-1 bg-theme-btn-primary text-theme-btn-primary-text hover:bg-theme-btn-primary-secondary text-xs font-mono rounded transition-colors shadow-2xs cursor-pointer"
                 >
                   {tag}
                 </AppButton>
