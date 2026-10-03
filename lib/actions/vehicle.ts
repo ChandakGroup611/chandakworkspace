@@ -743,11 +743,10 @@ export async function fetchVehiclesList(params?: {
     (docsData || []).forEach((doc: any) => {
       if (doc.vehicle_id) {
         const list = docsMap.get(doc.vehicle_id) || [];
-        const isHttpUrl = doc.file_url && doc.file_url.startsWith("http");
         const hasActualFile = Boolean(doc.file_name && doc.file_name.trim()) || Boolean(doc.file_url && doc.file_url.length > 5);
         list.push({
           ...doc,
-          file_url: isHttpUrl ? doc.file_url : "",
+          file_url: doc.file_url || "",
           has_file: hasActualFile,
           file_type: resolveMimeFromName(doc.file_name)
         });

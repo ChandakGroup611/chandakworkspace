@@ -53,13 +53,25 @@ export async function GET(request: Request) {
         const { supabaseAdmin } = await import('@/lib/supabase/service_role');
         const { data: defaultUserModule } = await supabaseAdmin
           .from('user_modules')
-          .select('module:modules_master(code, route_path)')
+          .select('module_id, is_default, module:modules_master(code, route_path)')
           .eq('user_id', sessionData.user.id)
           .eq('is_default', true)
           .maybeSingle();
 
-        const modCode = (defaultUserModule?.module as any)?.code;
-        const modRoute = (defaultUserModule?.module as any)?.route_path;
+        let modCode = (defaultUserModule?.module as any)?.code;
+        let modRoute = (defaultUserModule?.module as any)?.route_path;
+
+        if (!modCode && defaultUserModule?.module_id) {
+          const { data: modRec } = await supabaseAdmin
+            .from('modules_master')
+            .select('code, route_path')
+            .eq('id', defaultUserModule.module_id)
+            .maybeSingle();
+          if (modRec?.code) {
+            modCode = modRec.code;
+            modRoute = modRec.route_path;
+          }
+        }
 
         if (modCode === 'VEHICLE_DESK') {
           destination = '/vehicle';

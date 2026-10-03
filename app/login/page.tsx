@@ -107,13 +107,20 @@ export default function LoginPage() {
     }
   };
 
-  const resolvePostLoginDestination = async (rawNext?: string | null): Promise<string> => {
+  const resolvePostLoginDestination = async (rawNext?: string | null, userId?: string): Promise<string> => {
     if (rawNext && rawNext !== "/" && !rawNext.includes("/login") && !rawNext.includes("/select-module")) {
+      let targetCode = "TASK_WORKFLOW";
+      if (rawNext.startsWith("/vehicle")) targetCode = "VEHICLE_DESK";
+      else if (rawNext.startsWith("/design")) targetCode = "DESIGN_TRACKING";
+      if (typeof document !== "undefined") {
+        document.cookie = `active_module=${targetCode}; path=/; max-age=2592000; SameSite=Lax`;
+      }
       return rawNext;
     }
 
     try {
-      const res = await fetch("/api/modules", { cache: "no-store" });
+      const url = userId ? `/api/modules?userId=${encodeURIComponent(userId)}` : "/api/modules";
+      const res = await fetch(url, { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
         const targetModule = data.defaultModule || data.modules?.find((m: any) => m.is_default) || data.modules?.[0];
@@ -123,7 +130,11 @@ export default function LoginPage() {
             VEHICLE_DESK: "/vehicle",
             DESIGN_TRACKING: "/design/matrix"
           };
-          return routeMap[targetModule.code] || targetModule.route_path || "/";
+          const dest = routeMap[targetModule.code] || targetModule.route_path || "/";
+          if (typeof document !== "undefined") {
+            document.cookie = `active_module=${targetModule.code}; path=/; max-age=2592000; SameSite=Lax`;
+          }
+          return dest;
         }
       }
     } catch (e) {}
@@ -162,7 +173,7 @@ export default function LoginPage() {
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
           if (event === "SIGNED_IN" && session) {
             const rawNext = searchParams.get("next");
-            const destination = await resolvePostLoginDestination(rawNext);
+            const destination = await resolvePostLoginDestination(rawNext, session.user.id);
             
             const conflictRes = await checkConflictViaApi(session.user.id);
             
@@ -241,7 +252,7 @@ export default function LoginPage() {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           const rawNext = searchParams.get("next");
-          const destination = await resolvePostLoginDestination(rawNext);
+          const destination = await resolvePostLoginDestination(rawNext, session.user.id);
 
           const conflictRes = await checkConflictViaApi(session.user.id);
 
@@ -269,6 +280,10 @@ export default function LoginPage() {
       const newToken = crypto.randomUUID();
       if (typeof window !== "undefined") {
         localStorage.setItem("app_session_token", newToken);
+        let activeMod = "TASK_WORKFLOW";
+        if (destination.startsWith("/vehicle")) activeMod = "VEHICLE_DESK";
+        else if (destination.startsWith("/design")) activeMod = "DESIGN_TRACKING";
+        document.cookie = `active_module=${activeMod}; path=/; max-age=2592000; SameSite=Lax`;
       }
       
       // Register session via REST endpoint
@@ -324,7 +339,7 @@ export default function LoginPage() {
       if (data.user) {
         const searchParams = new URLSearchParams(window.location.search);
         const rawNext = searchParams.get("next");
-        const destination = await resolvePostLoginDestination(rawNext);
+        const destination = await resolvePostLoginDestination(rawNext, data.user.id);
 
         const conflictRes = await checkConflictViaApi(data.user.id);
 

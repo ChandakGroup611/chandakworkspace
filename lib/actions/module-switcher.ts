@@ -318,6 +318,11 @@ export async function assignUserModules(
         is_default: code === defaultCode
       }));
 
+    // Ensure at least one module is designated default
+    if (rowsToInsert.length > 0 && !rowsToInsert.some(r => r.is_default)) {
+      rowsToInsert[0].is_default = true;
+    }
+
     if (rowsToInsert.length > 0) {
       const { error: insertErr } = await supabaseAdmin
         .from("user_modules")

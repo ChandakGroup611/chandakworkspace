@@ -3066,13 +3066,13 @@ export default function FleetDeskHost({
       const cleanTitle = (doc.title || "").replace(/\s*\(v?\d+(?:\.\d+)?\)\s*$/i, "").trim().toLowerCase();
       const docNum = (doc.document_number || "").trim().toLowerCase();
 
-      // If pushing a synthetic / master digital record (no file_url), do not push if vault already has this doc
-      if (!doc.file_url) {
+      // If pushing a synthetic / master digital record (no file_url and not direct vault doc), do not push if vault already has this doc
+      if (!doc.isDirectVaultDoc && !doc.file_url) {
         if (vaultDocTitles.has(cleanTitle)) return;
         if (docNum && vaultDocNumbers.has(docNum)) return;
       }
 
-      const key = doc.file_url ? `url:${doc.file_url}` : `type:${doc.doc_type}:${doc.document_number || doc.title}`;
+      const key = doc.id ? `id:${doc.id}` : (doc.file_url ? `url:${doc.file_url}` : `type:${doc.doc_type}:${doc.document_number || doc.title}`);
       if (existingKeys.has(key)) return;
       existingKeys.add(key);
       docs.push(doc);

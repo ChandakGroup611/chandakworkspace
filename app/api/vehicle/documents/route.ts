@@ -49,11 +49,10 @@ export async function GET(request: NextRequest) {
     }
 
     const documents = (data || []).map((d: any) => {
-      const isHttpUrl = d.file_url && d.file_url.startsWith("http");
       const hasFile = Boolean(d.file_name && d.file_name.trim()) || Boolean(d.file_url && d.file_url.length > 5);
       return {
         ...d,
-        file_url: isHttpUrl ? d.file_url : "",
+        file_url: d.file_url || "",
         has_file: hasFile,
         file_type: resolveMimeFromName(d.file_name)
       };

@@ -56,16 +56,18 @@ export async function GET(request: NextRequest) {
     );
 
     const { data: { user } } = await supabase.auth.getUser();
+    const userIdParam = request.nextUrl.searchParams.get("userId");
+    const targetUserId = user?.id || userIdParam;
 
     let userProfile = null;
     let isAdmin = false;
     let userAssignments: any[] = [];
 
-    if (user?.id) {
+    if (targetUserId) {
       const { data: profile } = await supabaseAdmin
         .from("user_master")
         .select("id, full_name, email, role_id, role:roles(code)")
-        .eq("id", user.id)
+        .eq("id", targetUserId)
         .maybeSingle();
 
       userProfile = profile;
@@ -86,7 +88,7 @@ export async function GET(request: NextRequest) {
       const { data: assignments } = await supabaseAdmin
         .from("user_modules")
         .select("module_id, is_default, module:modules_master(code)")
-        .eq("user_id", user.id);
+        .eq("user_id", targetUserId);
 
       userAssignments = assignments || [];
     }
@@ -113,7 +115,7 @@ export async function GET(request: NextRequest) {
         return {
           ...m,
           route_path: route,
-          is_default: defaultAssignment ? (defaultAssignment.module_id === m.id || defaultAssignment.module_id === m.code) : false
+          is_default: defaultAssignment ? (defaultAssignment.module_id === m.id || defaultAssignment.module_id === m.code) : m.code === "TASK_WORKFLOW"
         };
       });
 
@@ -124,7 +126,8 @@ export async function GET(request: NextRequest) {
     const defaultModule =
       allowedModules.find(m => m.is_default) ||
       allowedModules.find(m => m.code === "TASK_WORKFLOW") ||
-      allowedModules[0];
+      allowedModules[0] ||
+      DEFAULT_MODULES[0];
 
     const activeCookie = request.cookies.get("active_module")?.value;
     const isValidActive = activeCookie && allowedModules.some(m => m.code === activeCookie);
@@ -132,7 +135,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       modules: allowedModules,
-      defaultModule: hasExplicitDefault ? defaultModule : null,
+      defaultModule,
       hasExplicitDefault,
       activeModuleCode,
       isAdmin,
@@ -143,7 +146,7 @@ export async function GET(request: NextRequest) {
     console.error("[API /api/modules] GET error:", err);
     return NextResponse.json({
       modules: DEFAULT_MODULES,
-      defaultModule: null,
+      defaultModule: DEFAULT_MODULES[0],
       hasExplicitDefault: false,
       activeModuleCode: "TASK_WORKFLOW",
       isAdmin: false
@@ -154,7 +157,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}));
-    const { moduleCode, setAsDefault } = body || {};
+    const { moduleCode, setAsDefault, userId: bodyUserId } = body || {};
 
     const targetCode = moduleCode || "TASK_WORKFLOW";
 
@@ -182,7 +185,8 @@ export async function POST(request: NextRequest) {
           }
         );
         const { data: { user } } = await supabase.auth.getUser();
-        if (user?.id) {
+        const effectiveUserId = user?.id || bodyUserId;
+        if (effectiveUserId) {
           const { data: mod } = await supabaseAdmin
             .from("modules_master")
             .select("id")
@@ -194,13 +198,13 @@ export async function POST(request: NextRequest) {
             await supabaseAdmin
               .from("user_modules")
               .update({ is_default: false })
-              .eq("user_id", user.id);
+              .eq("user_id", effectiveUserId);
 
             // Check if record already exists
             const { data: existing } = await supabaseAdmin
               .from("user_modules")
               .select("id")
-              .eq("user_id", user.id)
+              .eq("user_id", effectiveUserId)
               .eq("module_id", mod.id)
               .maybeSingle();
 
@@ -213,7 +217,7 @@ export async function POST(request: NextRequest) {
               await supabaseAdmin
                 .from("user_modules")
                 .insert({
-                  user_id: user.id,
+                  user_id: effectiveUserId,
                   module_id: mod.id,
                   is_default: true
                 });

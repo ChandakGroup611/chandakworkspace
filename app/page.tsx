@@ -46,6 +46,43 @@ export default async function Page() {
       }
     }
 
+  // Check active module cookie or user's default module preference
+  const activeModuleCookie = cookieStore.get("active_module")?.value;
+  if (activeModuleCookie === "VEHICLE_DESK") {
+    redirect("/vehicle");
+  } else if (activeModuleCookie === "DESIGN_TRACKING") {
+    redirect("/design/matrix");
+  } else if (!activeModuleCookie) {
+    // If no active_module cookie is set, check user's default module in DB
+    try {
+      const { supabaseAdmin } = await import("@/lib/supabase/service_role");
+      const { data: defaultUserModule } = await supabaseAdmin
+        .from("user_modules")
+        .select("module_id, is_default, module:modules_master(code, route_path)")
+        .eq("user_id", user.id)
+        .eq("is_default", true)
+        .maybeSingle();
+
+      let defaultCode = (defaultUserModule?.module as any)?.code;
+      if (!defaultCode && defaultUserModule?.module_id) {
+        const { data: modRec } = await supabaseAdmin
+          .from("modules_master")
+          .select("code, route_path")
+          .eq("id", defaultUserModule.module_id)
+          .maybeSingle();
+        if (modRec?.code) defaultCode = modRec.code;
+      }
+
+      if (defaultCode === "VEHICLE_DESK") {
+        redirect("/vehicle");
+      } else if (defaultCode === "DESIGN_TRACKING") {
+        redirect("/design/matrix");
+      }
+    } catch (e) {
+      // Ignore DB lookup errors and proceed to default dashboard
+    }
+  }
+
   // Render dashboard shell immediately to allow fast route transitions without blocking on heavy SSR aggregation
   return (
     <div className="flex-1 min-h-0 min-w-0 animate-in fade-in-50 duration-500 flex flex-col">
