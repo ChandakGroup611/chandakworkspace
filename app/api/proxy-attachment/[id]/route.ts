@@ -101,6 +101,15 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
         let { data: ticketAttachment } = await supabaseAdmin.from('ticket_attachments').select('*').eq('id', id).single();
         if (ticketAttachment && ticketAttachment.file_url) {
           attachment = ticketAttachment;
+        } else {
+          let { data: vehDoc } = await supabaseAdmin.from('vehicle_documents').select('*').eq('id', id).maybeSingle();
+          if (vehDoc && vehDoc.file_url) {
+            attachment = {
+              file_name: vehDoc.file_name || vehDoc.title || 'vehicle_document.pdf',
+              file_url: vehDoc.file_url,
+              file_type: vehDoc.file_type || null
+            };
+          }
         }
       }
     }

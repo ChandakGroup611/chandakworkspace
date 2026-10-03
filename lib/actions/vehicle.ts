@@ -2860,6 +2860,51 @@ export async function updateVehicleAction(
 }
 
 /**
+ * Asynchronously uploads Base64 file buffers directly to Supabase Object Storage (vehicle-documents)
+ * to maintain strict database metadata vs. binary object separation at enterprise scale.
+ */
+async function uploadBase64ToVehicleStorage(
+  vehicleId: string,
+  docId: string,
+  fileName: string,
+  base64DataUrl: string
+): Promise<string> {
+  if (!base64DataUrl || !base64DataUrl.startsWith("data:")) {
+    return base64DataUrl || "";
+  }
+  try {
+    const commaIdx = base64DataUrl.indexOf(",");
+    if (commaIdx === -1) return base64DataUrl;
+
+    const meta = base64DataUrl.slice(0, commaIdx);
+    const rawBase64 = base64DataUrl.slice(commaIdx + 1);
+    const mimeMatch = meta.match(/data:([^;]+)/);
+    const mimeType = mimeMatch ? mimeMatch[1] : resolveMimeFromName(fileName);
+    const buffer = Buffer.from(rawBase64, "base64");
+
+    const cleanFileName = (fileName || "document.pdf").replace(/[^a-zA-Z0-9._-]/g, "_");
+    const storagePath = `documents/${vehicleId || "general"}/${docId}_${cleanFileName}`;
+
+    const { error: upErr } = await supabaseAdmin.storage
+      .from("vehicle-documents")
+      .upload(storagePath, buffer, {
+        contentType: mimeType,
+        upsert: true
+      });
+
+    if (upErr) {
+      console.warn("[vehicle-actions] Supabase Storage upload warning:", upErr.message);
+      return base64DataUrl;
+    }
+
+    return `storage:vehicle-documents:${storagePath}`;
+  } catch (err) {
+    console.error("[vehicle-actions] uploadBase64ToVehicleStorage error:", err);
+    return base64DataUrl;
+  }
+}
+
+/**
  * Fetch all legal & compliance documents metadata for a specific vehicle (lightweight listing)
  */
 export async function fetchVehicleDocumentsAction(vehicleId: string): Promise<{
@@ -2903,7 +2948,7 @@ export async function fetchVehicleDocumentsAction(vehicleId: string): Promise<{
 
 /**
  * Securely fetch full document content / file_url on-demand for View or Download.
- * Performs strict server-side authorization check.
+ * Resolves private Supabase Storage signed URLs on-demand.
  */
 export async function fetchVehicleDocumentContentAction(documentId: string): Promise<{
   success: boolean;
@@ -2930,14 +2975,29 @@ export async function fetchVehicleDocumentContentAction(documentId: string): Pro
       return { success: false, error: error?.message || "Document not found." };
     }
 
+    let resolvedUrl = data.file_url || "";
+    if (resolvedUrl.startsWith("storage:")) {
+      const parts = resolvedUrl.replace("storage:", "").split(":");
+      const bucket = parts[0];
+      const storagePath = parts.slice(1).join(":");
+      const { data: signedData } = await supabaseAdmin
+        .storage
+        .from(bucket)
+        .createSignedUrl(storagePath, 60 * 60 * 4); // 4 hours
+      if (signedData?.signedUrl) {
+        resolvedUrl = signedData.signedUrl;
+      }
+    }
+
     return {
       success: true,
       document: {
         ...data,
+        file_url: resolvedUrl,
         has_file: !!data.file_url,
         file_type: resolveMimeFromName(data.file_name)
       },
-      file_url: data.file_url || ""
+      file_url: resolvedUrl
     };
   } catch (err: any) {
     console.error("[vehicle-actions] fetchVehicleDocumentContentAction error:", err);
@@ -2979,7 +3039,7 @@ export async function deleteVehicleDocumentAction(documentId: string): Promise<{
 }
 
 /**
- * Add / upload a single vehicle document directly to vault
+ * Add / upload a single vehicle document directly to vault with automatic Supabase Storage persistence
  */
 export async function createVehicleDocumentAction(
   vehicleId: string,
@@ -3012,6 +3072,8 @@ export async function createVehicleDocumentAction(
     }
 
     const newDocId = `vdoc-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const persistedFileUrl = await uploadBase64ToVehicleStorage(vehicleId, newDocId, doc.file_name, doc.file_url);
+
     const newDocRow = {
       id: newDocId,
       vehicle_id: vehicleId,
@@ -3019,7 +3081,7 @@ export async function createVehicleDocumentAction(
       title: doc.title?.trim() || doc.file_name || "Vehicle Document",
       file_name: doc.file_name,
       file_size: doc.file_size || null,
-      file_url: doc.file_url,
+      file_url: persistedFileUrl,
       document_number: doc.document_number?.trim() || null,
       expiry_date: doc.expiry_date || null,
       status: doc.status || "VALID",
@@ -3051,7 +3113,7 @@ export async function createVehicleDocumentAction(
 }
 
 /**
- * Update an existing vehicle document in vault
+ * Update an existing vehicle document in vault with automatic Supabase Storage persistence
  */
 export async function updateVehicleDocumentAction(
   documentId: string,
@@ -3065,6 +3127,7 @@ export async function updateVehicleDocumentAction(
     file_type?: string | null;
     expiry_date?: string | null;
     status?: string | null;
+    vehicle_id?: string;
   }
 ): Promise<{
   success: boolean;
@@ -3088,7 +3151,16 @@ export async function updateVehicleDocumentAction(
     if (updates.status !== undefined) updatePayload.status = updates.status || "VALID";
     if (updates.file_name !== undefined) updatePayload.file_name = updates.file_name;
     if (updates.file_size !== undefined) updatePayload.file_size = updates.file_size;
-    if (updates.file_url !== undefined) updatePayload.file_url = updates.file_url;
+
+    if (updates.file_url !== undefined) {
+      const persistedFileUrl = await uploadBase64ToVehicleStorage(
+        updates.vehicle_id || "general",
+        documentId,
+        updates.file_name || "document.pdf",
+        updates.file_url
+      );
+      updatePayload.file_url = persistedFileUrl;
+    }
 
     const { data, error } = await supabaseAdmin
       .from("vehicle_documents")
