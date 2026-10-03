@@ -1,16 +1,37 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { DesignDiscipline, DrawingItem } from "../types";
 import { DesignMasterStore } from "../services/designMasterStore";
-import { Upload, FileText, Sparkles, Building2, Layers, Tag, Save } from "lucide-react";
+import { 
+  Upload, 
+  FileText, 
+  Building2, 
+  Tag, 
+  Save, 
+  Eye, 
+  Download, 
+  Trash2, 
+  Paperclip,
+  CheckCircle2,
+  AlertCircle
+} from "lucide-react";
 import { TransactionFormLayout } from "./DesignTransactionLayout";
 import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
+import { uploadDesignDrawingFileAction } from "@/lib/actions/design";
 
 interface UploadDrawingModalProps {
   isOpen: boolean;
   onClose: () => void;
   onDrawingUploaded: (drawing: Omit<DrawingItem, "id">) => void;
+}
+
+function formatBytes(bytes: number): string {
+  if (!bytes || bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB", "TB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
 
 export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
@@ -26,17 +47,106 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
   const [revision, setRevision] = useState("R0");
   const [consultant, setConsultant] = useState("");
   const [description, setDescription] = useState("");
-  const [fileSize, setFileSize] = useState("18.4 MB");
+  const [fileSize, setFileSize] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  // Staged local file state
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e?: React.FormEvent) => {
+  const handleFileChange = (file: File | null) => {
+    setUploadError(null);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
+    if (!file) {
+      setSelectedFile(null);
+      setFileSize("");
+      return;
+    }
+    setSelectedFile(file);
+    const formatted = formatBytes(file.size);
+    setFileSize(formatted);
+    const objUrl = URL.createObjectURL(file);
+    setPreviewUrl(objUrl);
+
+    // Auto-fill drawing sheet title if empty
+    if (!title.trim()) {
+      const baseName = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
+      setTitle(baseName);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFileChange(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handlePreviewFile = () => {
+    if (previewUrl) {
+      window.open(previewUrl, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  const handleDownloadStagedFile = () => {
+    if (previewUrl && selectedFile) {
+      const a = document.createElement("a");
+      a.href = previewUrl;
+      a.download = selectedFile.name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  };
+
+  const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!code.trim() || !title.trim()) return;
 
     setSubmitting(true);
-    setTimeout(() => {
+    setUploadError(null);
+
+    let storageUrl: string | undefined = undefined;
+    let fileName: string | undefined = undefined;
+    let fileType: string | undefined = undefined;
+    let finalFileSize = fileSize || "N/A";
+
+    try {
+      if (selectedFile) {
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+        formData.append("project", project || (projects[0]?.name || "General"));
+        formData.append("code", code.trim().toUpperCase());
+
+        const uploadRes = await uploadDesignDrawingFileAction(formData);
+        if (!uploadRes.success) {
+          throw new Error(uploadRes.error || "Failed to upload drawing file to secure storage");
+        }
+        storageUrl = uploadRes.storageUrl;
+        fileName = uploadRes.fileName;
+        fileType = uploadRes.fileType;
+        finalFileSize = uploadRes.fileSize || finalFileSize;
+      }
+
       onDrawingUploaded({
         code: code.trim().toUpperCase(),
         title: title.trim(),
@@ -46,21 +156,39 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
         status: "Under Review",
         consultant: consultant.trim() || "Design Consultant",
         submittedDate: new Date().toISOString().split("T")[0],
-        fileSize,
+        fileSize: finalFileSize,
+        fileUrl: storageUrl,
+        fileName: fileName || selectedFile?.name,
+        fileType: fileType || selectedFile?.type,
         description: description.trim() || undefined
       });
+
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
       setSubmitting(false);
       onClose();
-    }, 300);
+    } catch (err: any) {
+      console.error("Drawing upload error:", err);
+      setUploadError(err.message || "An error occurred while uploading drawing.");
+      setSubmitting(false);
+    }
   };
 
   const handleReset = () => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
+    setSelectedFile(null);
     setCode("");
     setTitle("");
     setDiscipline("Architectural");
     setRevision("R0");
     setConsultant("");
     setDescription("");
+    setFileSize("");
+    setUploadError(null);
   };
 
   return (
@@ -70,7 +198,7 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
       category="Design Tracking"
       icon={Upload}
       iconBg="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
-      description="Register new CAD, DWG, DXF, or PDF revision into the official drawing control register."
+      description="Register new CAD, DWG, DXF, STEP, or PDF revision into the official drawing control register."
       breadcrumbs={[
         { label: "Drawing Register", onClick: onClose },
         { label: "Upload Drawing Sheet" }
@@ -85,6 +213,13 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
       isSaveDisabled={!code.trim() || !title.trim()}
     >
       <div className="space-y-6 max-w-4xl">
+        {uploadError && (
+          <div className="p-3.5 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-400 text-xs font-semibold flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>{uploadError}</span>
+          </div>
+        )}
+
         {/* Section 1: Project & Discipline Specs */}
         <AppCard className="border-border shadow-xs">
           <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
@@ -189,12 +324,12 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">CAD / PDF File Size</label>
+                <label className="text-xs font-bold text-foreground">File Size Indicator</label>
                 <input
                   type="text"
                   value={fileSize}
                   onChange={(e) => setFileSize(e.target.value)}
-                  placeholder="e.g. 18.4 MB"
+                  placeholder="Auto-calculated on attachment (e.g. 18.4 MB)"
                   className="w-full h-10 rounded-xl border border-border bg-background px-3 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary font-mono"
                 />
               </div>
@@ -213,27 +348,113 @@ export const UploadDrawingModal: React.FC<UploadDrawingModalProps> = ({
           </AppCardContent>
         </AppCard>
 
-        {/* Section 3: Attachment Dropzone Simulation */}
+        {/* Section 3: Interactive File Attachment Dropzone with Zero Blind Uploads */}
         <AppCard className="border-border shadow-xs">
           <AppCardHeader className="bg-surface/50 border-b border-border/50 pb-3">
-            <AppCardTitle className="text-sm font-bold flex items-center gap-2">
-              <FileText className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-              <span>Digital File Attachment</span>
+            <AppCardTitle className="text-sm font-bold flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                <span>Digital CAD / PDF File Attachment</span>
+              </div>
+              <span className="text-[11px] font-normal text-muted-foreground">
+                Supported: PDF, DWG, DXF, STEP, STP, STL, ZIP, PNG, JPG
+              </span>
             </AppCardTitle>
           </AppCardHeader>
           <AppCardContent className="p-5">
-            <div className="p-6 rounded-2xl border-2 border-dashed border-border bg-muted/20 text-center space-y-2">
-              <FileText className="h-9 w-9 text-muted-foreground mx-auto" />
-              <div className="text-sm text-foreground font-bold">
-                CAD Drawing Sheet / DWG / DXF / PDF Attached
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.dwg,.dxf,.step,.stp,.stl,.zip,.png,.jpg,.jpeg,.xlsx,.docx"
+              onChange={(e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                  handleFileChange(e.target.files[0]);
+                }
+              }}
+              className="hidden"
+            />
+
+            {!selectedFile ? (
+              <div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+                className={`p-8 rounded-2xl border-2 border-dashed transition-all text-center space-y-3 cursor-pointer ${
+                  isDragging
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:border-primary/50 hover:bg-muted/10 bg-muted/5"
+                }`}
+              >
+                <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto border border-emerald-500/20">
+                  <Upload className="h-6 w-6" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-foreground">
+                    Click to browse or drag and drop drawing file
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Direct-to-storage upload pipeline • Up to 250 MB per CAD file
+                  </div>
+                </div>
               </div>
-              <div className="text-xs text-muted-foreground font-mono">
-                Auto-scanned: {fileSize} • Clean Checksum • Ready for Revision Control
+            ) : (
+              <div className="p-4 rounded-xl border border-border bg-surface flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20">
+                    <Paperclip className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold text-foreground truncate select-all">
+                      {selectedFile.name}
+                    </div>
+                    <div className="text-[11px] text-muted-foreground font-mono flex items-center gap-2 mt-0.5">
+                      <span>{fileSize}</span>
+                      <span>•</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5 font-semibold">
+                        <CheckCircle2 className="h-3 w-3" /> Ready for Upload
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Staged File Action Buttons (Mandatory Zero Blind Upload Verification) */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={handlePreviewFile}
+                    className="h-8 px-2.5 rounded-lg border border-border bg-background hover:bg-muted/50 text-foreground text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                    title="View staged document in preview"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                    <span>View</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleDownloadStagedFile}
+                    className="h-8 px-2.5 rounded-lg border border-border bg-background hover:bg-muted/50 text-foreground text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                    title="Download staged document"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    <span>Download</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleFileChange(null)}
+                    className="h-8 w-8 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 inline-flex items-center justify-center transition-colors cursor-pointer"
+                    title="Remove selected file"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </AppCardContent>
         </AppCard>
       </div>
     </TransactionFormLayout>
   );
 };
+

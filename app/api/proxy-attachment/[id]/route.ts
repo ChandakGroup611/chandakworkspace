@@ -44,7 +44,15 @@ const MIME_MAP: Record<string, string> = {
   rar: 'application/x-rar-compressed',
   '7z': 'application/x-7z-compressed',
   tar: 'application/x-tar',
-  gz: 'application/gzip'
+  gz: 'application/gzip',
+  // Engineering CAD & 3D Formats
+  dwg: 'application/acad',
+  dxf: 'application/dxf',
+  step: 'application/step',
+  stp: 'application/step',
+  stl: 'model/stl',
+  ifc: 'application/x-step',
+  rvt: 'application/octet-stream'
 };
 
 function getMimeType(fileName?: string, providedMime?: string | null): string {
@@ -82,35 +90,63 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     const isDownload = searchParams.get('download') === '1' || searchParams.get('download') === 'true' || searchParams.get('action') === 'download';
     const isRaw = searchParams.get('raw') === '1';
 
-    let attachment = null;
+    let attachment: { file_name: string; file_url: string; file_type?: string | null } | null = null;
     
-    // 1. Check unified attachments table first
-    let { data: unifiedAtt } = await supabaseAdmin.from('attachments').select('*').eq('id', id).single();
-    if (unifiedAtt && unifiedAtt.storage_path) {
+    // Direct storage URL or query param resolution
+    const directStorageUrl = searchParams.get('storage_url') || (id.startsWith('storage%3A') || id.startsWith('storage:') ? decodeURIComponent(id) : null);
+    if (directStorageUrl && directStorageUrl.startsWith('storage:')) {
       attachment = {
-        file_name: unifiedAtt.original_file_name || unifiedAtt.file_name,
-        file_url: `storage:${unifiedAtt.module_type === 'ticket' ? 'ticket-attachments' : unifiedAtt.module_type === 'chat' ? 'chat-attachments' : unifiedAtt.module_type === 'requirement' ? 'requirement-files' : unifiedAtt.module_type === 'task' ? 'ticket-attachments' : 'resolution-files'}:${unifiedAtt.storage_path}`,
-        file_type: unifiedAtt.mime_type
+        file_name: searchParams.get('file_name') || 'engineering_document',
+        file_url: directStorageUrl,
+        file_type: searchParams.get('file_type') || null
       };
-    } else {
+    }
+
+    // 1. Check unified attachments table first
+    if (!attachment) {
+      let { data: unifiedAtt } = await supabaseAdmin.from('attachments').select('*').eq('id', id).single();
+      if (unifiedAtt && unifiedAtt.storage_path) {
+        attachment = {
+          file_name: unifiedAtt.original_file_name || unifiedAtt.file_name,
+          file_url: `storage:${unifiedAtt.module_type === 'ticket' ? 'ticket-attachments' : unifiedAtt.module_type === 'chat' ? 'chat-attachments' : unifiedAtt.module_type === 'requirement' ? 'requirement-files' : unifiedAtt.module_type === 'task' ? 'ticket-attachments' : 'resolution-files'}:${unifiedAtt.storage_path}`,
+          file_type: unifiedAtt.mime_type
+        };
+      }
+    }
+
+    if (!attachment) {
       let { data: taskAttachment } = await supabaseAdmin.from('task_attachments').select('*').eq('id', id).single();
-      
       if (taskAttachment && taskAttachment.file_url) {
         attachment = taskAttachment;
-      } else {
-        let { data: ticketAttachment } = await supabaseAdmin.from('ticket_attachments').select('*').eq('id', id).single();
-        if (ticketAttachment && ticketAttachment.file_url) {
-          attachment = ticketAttachment;
-        } else {
-          let { data: vehDoc } = await supabaseAdmin.from('vehicle_documents').select('*').eq('id', id).maybeSingle();
-          if (vehDoc && vehDoc.file_url) {
-            attachment = {
-              file_name: vehDoc.file_name || vehDoc.title || 'vehicle_document.pdf',
-              file_url: vehDoc.file_url,
-              file_type: vehDoc.file_type || null
-            };
-          }
-        }
+      }
+    }
+
+    if (!attachment) {
+      let { data: ticketAttachment } = await supabaseAdmin.from('ticket_attachments').select('*').eq('id', id).single();
+      if (ticketAttachment && ticketAttachment.file_url) {
+        attachment = ticketAttachment;
+      }
+    }
+
+    if (!attachment) {
+      let { data: vehDoc } = await supabaseAdmin.from('vehicle_documents').select('*').eq('id', id).maybeSingle();
+      if (vehDoc && vehDoc.file_url) {
+        attachment = {
+          file_name: vehDoc.file_name || vehDoc.title || 'vehicle_document.pdf',
+          file_url: vehDoc.file_url,
+          file_type: vehDoc.file_type || null
+        };
+      }
+    }
+
+    if (!attachment) {
+      let { data: drawingDoc } = await supabaseAdmin.from('design_drawings').select('*').eq('id', id).maybeSingle();
+      if (drawingDoc && drawingDoc.file_url) {
+        attachment = {
+          file_name: drawingDoc.file_name || drawingDoc.title || `${drawingDoc.code || 'drawing'}.pdf`,
+          file_url: drawingDoc.file_url,
+          file_type: drawingDoc.file_type || null
+        };
       }
     }
     

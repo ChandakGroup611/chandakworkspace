@@ -27,6 +27,9 @@ export interface DrawingItem {
   submittedDate: string;
   approvedDate?: string;
   fileSize: string;
+  fileUrl?: string;
+  fileName?: string;
+  fileType?: string;
   description?: string;
 }
 

@@ -27,6 +27,7 @@ import { DesignMultiSelectDropdown, DropdownOption } from "./DesignMultiSelectDr
 import { WorkingDocumentLayout } from "./DesignTransactionLayout";
 import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
+import { fetchDesignDrawingSignedUrlAction } from "@/lib/actions/design";
 
 interface DrawingRegisterProps {
   drawings: DrawingItem[];
@@ -189,6 +190,48 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleViewDrawing = async (item: DrawingItem) => {
+    if (item.fileUrl) {
+      if (item.fileUrl.startsWith("storage:")) {
+        const res = await fetchDesignDrawingSignedUrlAction(item.fileUrl);
+        if (res.success && res.signedUrl) {
+          window.open(res.signedUrl, "_blank", "noopener,noreferrer");
+          return;
+        }
+      } else {
+        window.open(item.fileUrl, "_blank", "noopener,noreferrer");
+        return;
+      }
+    }
+    setPreviewDrawing(item);
+  };
+
+  const handleDownloadDrawing = async (item: DrawingItem) => {
+    if (item.fileUrl) {
+      if (item.fileUrl.startsWith("storage:")) {
+        const res = await fetchDesignDrawingSignedUrlAction(item.fileUrl);
+        if (res.success && res.signedUrl) {
+          const a = document.createElement("a");
+          a.href = res.signedUrl;
+          a.download = item.fileName || `${item.code}_${item.revision}.pdf`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          return;
+        }
+      } else {
+        const a = document.createElement("a");
+        a.href = item.fileUrl;
+        a.download = item.fileName || `${item.code}_${item.revision}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        return;
+      }
+    }
+    setPreviewDrawing(item);
   };
 
   return (
@@ -451,12 +494,30 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
                         </div>
                       )}
                     </td>
-                    <td className="p-3.5 text-right whitespace-nowrap min-w-[180px]">
+                    <td className="p-3.5 text-right whitespace-nowrap min-w-[240px]">
                       <div className="inline-flex items-center justify-end gap-1.5 whitespace-nowrap">
                         <button
                           type="button"
+                          onClick={() => handleViewDrawing(item)}
+                          className="h-7 px-2 rounded-lg border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground font-semibold text-xs inline-flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap"
+                          title="View drawing document"
+                        >
+                          <Eye className="h-3 w-3 shrink-0" />
+                          <span>View</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadDrawing(item)}
+                          className="h-7 px-2 rounded-lg border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground font-semibold text-xs inline-flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap"
+                          title="Download drawing file"
+                        >
+                          <Download className="h-3 w-3 shrink-0" />
+                          <span>Download</span>
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => setPreviewDrawing(item)}
-                          className="h-7 px-2.5 rounded-lg border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground font-semibold text-xs inline-flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap"
+                          className="h-7 px-2 rounded-lg border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground font-semibold text-xs inline-flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap"
                           title="Blueprint CAD Preview"
                         >
                           <Maximize2 className="h-3 w-3 shrink-0" />
@@ -465,10 +526,10 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
                         <button
                           type="button"
                           onClick={() => onOpenReviewModal(item)}
-                          className="h-7 px-2.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-semibold text-xs inline-flex items-center gap-1 transition-colors hover:bg-emerald-500/20 cursor-pointer whitespace-nowrap"
+                          className="h-7 px-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-semibold text-xs inline-flex items-center gap-1 transition-colors hover:bg-emerald-500/20 cursor-pointer whitespace-nowrap"
                           title="Review / GFC Stamp"
                         >
-                          <Eye className="h-3 w-3 shrink-0" />
+                          <ShieldCheck className="h-3 w-3 shrink-0" />
                           <span>Review</span>
                         </button>
                         <button
@@ -514,6 +575,30 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
           backLabel="Back to Drawing Register"
           headerActions={
             <div className="flex items-center gap-2">
+              {previewDrawing.fileUrl && (
+                <>
+                  <AppButton
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleViewDrawing(previewDrawing)}
+                    className="text-xs h-9 font-semibold gap-1.5"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                    <span>View Source File</span>
+                  </AppButton>
+                  <AppButton
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDownloadDrawing(previewDrawing)}
+                    className="text-xs h-9 font-semibold gap-1.5"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    <span>Download File</span>
+                  </AppButton>
+                </>
+              )}
               <AppButton
                 type="button"
                 variant="outline"

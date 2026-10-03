@@ -112,3 +112,116 @@ export async function fetchConsultantsAction(): Promise<{
     return { success: false, consultants: [], error: err.message || "Failed to fetch consultants" };
   }
 }
+
+function formatFileSize(bytes: number): string {
+  if (!bytes || bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB", "TB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+}
+
+/**
+ * Enterprise Drawing Storage Upload Pipeline
+ * Directly uploads large engineering CAD, BIM, DWG, DXF, or PDF files to private Supabase Storage.
+ * Stores lightweight `storage:<bucket>:<path>` URI in metadata, ensuring 0 Base64 strings in PostgreSQL.
+ */
+export async function uploadDesignDrawingFileAction(formData: FormData): Promise<{
+  success: boolean;
+  storageUrl?: string;
+  fileName?: string;
+  fileSize?: string;
+  fileType?: string;
+  error?: string;
+}> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    const file = formData.get("file") as File | null;
+    if (!file) return { success: false, error: "No file provided" };
+
+    const project = (formData.get("project") as string) || "General";
+    const code = (formData.get("code") as string) || "DRW";
+
+    const cleanProject = project.replace(/[^a-zA-Z0-9_-]/g, "_");
+    const cleanCode = code.replace(/[^a-zA-Z0-9_-]/g, "_");
+    const cleanFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const timestamp = Date.now();
+    const storagePath = `drawings/${cleanProject}/${cleanCode}_${timestamp}_${cleanFileName}`;
+
+    const buffer = Buffer.from(await file.arrayBuffer());
+
+    // Upload to design-drawings bucket with automatic fallback to ticket-attachments
+    let bucket = "design-drawings";
+    let { error: upErr } = await supabaseAdmin.storage
+      .from(bucket)
+      .upload(storagePath, buffer, {
+        contentType: file.type || "application/octet-stream",
+        upsert: true
+      });
+
+    if (upErr) {
+      bucket = "ticket-attachments";
+      const { error: fallbackErr } = await supabaseAdmin.storage
+        .from(bucket)
+        .upload(storagePath, buffer, {
+          contentType: file.type || "application/octet-stream",
+          upsert: true
+        });
+      if (fallbackErr) {
+        return { success: false, error: fallbackErr.message || upErr.message };
+      }
+    }
+
+    const storageUrl = `storage:${bucket}:${storagePath}`;
+
+    return {
+      success: true,
+      storageUrl,
+      fileName: file.name,
+      fileSize: formatFileSize(file.size),
+      fileType: file.type || "application/octet-stream"
+    };
+  } catch (err: any) {
+    console.error("uploadDesignDrawingFileAction error:", err);
+    return { success: false, error: err?.message || "Failed to upload drawing file" };
+  }
+}
+
+/**
+ * Resolves short-lived (4 hours) authenticated signed URL for private drawing files.
+ */
+export async function fetchDesignDrawingSignedUrlAction(storageUrlOrId: string): Promise<{
+  success: boolean;
+  signedUrl?: string;
+  error?: string;
+}> {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    if (!storageUrlOrId) return { success: false, error: "Missing URL/ID" };
+
+    if (storageUrlOrId.startsWith("storage:")) {
+      const parts = storageUrlOrId.replace("storage:", "").split(":");
+      const bucket = parts[0];
+      const path = parts.slice(1).join(":");
+
+      const { data, error } = await supabaseAdmin.storage
+        .from(bucket)
+        .createSignedUrl(path, 60 * 60 * 4); // 4 hours
+
+      if (error || !data?.signedUrl) {
+        return { success: false, error: error?.message || "Failed to create signed URL" };
+      }
+
+      return { success: true, signedUrl: data.signedUrl };
+    }
+
+    return { success: true, signedUrl: storageUrlOrId };
+  } catch (err: any) {
+    return { success: false, error: err?.message || "Failed to resolve file URL" };
+  }
+}
+
