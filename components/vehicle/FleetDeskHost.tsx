@@ -3616,6 +3616,7 @@ export default function FleetDeskHost({
         hasPuc: false,
         hasInsurance: false,
         hasRc: false,
+        hasRcRecord: false,
         hasFitness: false,
         hasPermit: false
       };
@@ -3685,6 +3686,7 @@ export default function FleetDeskHost({
     const hasPuc = Boolean(allAggregatedDocs.some((d) => d.doc_type === "PUC") || viewingVehicle.puc_certificate_number);
     const hasInsurance = Boolean(allAggregatedDocs.some((d) => d.doc_type === "INSURANCE") || viewingVehicle.insurance_policy_number);
     const hasRc = Boolean(allAggregatedDocs.some((d) => d.doc_type === "RC" && (d.file_url || (d as any).has_file)));
+    const hasRcRecord = Boolean(allAggregatedDocs.some((d) => d.doc_type === "RC") || viewingVehicle.registration_number);
     const hasFitness = Boolean(allAggregatedDocs.some((d) => d.doc_type === "FITNESS") || viewingVehicle.fitness_expiry_date);
     const hasPermit = Boolean(allAggregatedDocs.some((d) => d.doc_type === "PERMIT"));
 
@@ -3708,6 +3710,7 @@ export default function FleetDeskHost({
       hasPuc,
       hasInsurance,
       hasRc,
+      hasRcRecord,
       hasFitness,
       hasPermit
     };
@@ -4070,6 +4073,115 @@ export default function FleetDeskHost({
     if (fileInput) fileInput.value = "";
   };
 
+  const handleCardDirectScanUpload = async (fileList: FileList | File[], doc: AggregatedVehicleDoc) => {
+    if (!viewingVehicle) return;
+    const files = Array.from(fileList);
+    if (!files.length) return;
+
+    const file = files[0];
+    const MAX_FILE_SIZE = 25 * 1024 * 1024;
+    const BLOCKED_EXTS = ["exe", "bat", "cmd", "sh", "vbs", "js", "scr", "msi", "dll"];
+    const ext = file.name.split(".").pop()?.toLowerCase() || "";
+    if (BLOCKED_EXTS.includes(ext)) {
+      triggerToast(`Executable/script files (.${ext}) are not permitted.`, true);
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      triggerToast(`File "${file.name}" exceeds maximum allowed size (25MB).`, true);
+      return;
+    }
+
+    let base64Url = "";
+    try {
+      base64Url = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve((e.target?.result as string) || "");
+        reader.onerror = (e) => reject(e);
+        reader.readAsDataURL(file);
+      });
+    } catch (err: any) {
+      triggerToast(err.message || `Error reading ${file.name}`, true);
+      return;
+    }
+
+    if (!base64Url) {
+      triggerToast(`Failed to read file: ${file.name}`, true);
+      return;
+    }
+
+    setDossierUploadingDoc(true);
+    try {
+      const docType = doc.doc_type || "OTHER";
+      const title = doc.title || `${doc.categoryLabel || "Document"} (${viewingVehicle.registration_number})`;
+      const docNumber = doc.document_number || null;
+      const expiryDate = doc.expiry_date || null;
+
+      const res = await uploadVehicleDocumentViaRestOrAction(viewingVehicle.id, {
+        doc_type: docType,
+        title: title,
+        document_number: docNumber,
+        expiry_date: expiryDate,
+        file_name: file.name,
+        file_size: formatFileSize(file.size),
+        file_type: file.type || resolveMimeFromName(file.name),
+        file_url: base64Url,
+        status: doc.status || "VALID"
+      });
+
+      if (res.success && res.document) {
+        const newDoc = res.document;
+        const vehUpdates: any = {};
+        if (docType === "RC" || doc.id.startsWith("master-doc-rc")) {
+          vehUpdates.rc_doc_url = newDoc.file_url;
+        } else if (docType === "INSURANCE" || doc.id.startsWith("master-doc-ins")) {
+          vehUpdates.insurance_doc_url = newDoc.file_url;
+        } else if (docType === "PUC" || doc.id.startsWith("master-doc-puc")) {
+          vehUpdates.puc_doc_url = newDoc.file_url;
+        } else if (docType === "FITNESS" || doc.id.startsWith("master-doc-fit")) {
+          vehUpdates.fitness_doc_url = newDoc.file_url;
+        }
+
+        if (Object.keys(vehUpdates).length > 0) {
+          try {
+            await updateVehicleAction(viewingVehicle.id, vehUpdates);
+          } catch (vErr) {
+            console.warn("Could not sync vehicle master column:", vErr);
+          }
+        }
+
+        setViewingVehicle((prev) => {
+          if (!prev) return null;
+          const curDocs = prev.documents || [];
+          return {
+            ...prev,
+            ...vehUpdates,
+            documents: [newDoc, ...curDocs.filter((d) => d.id !== newDoc.id)]
+          };
+        });
+
+        setVehicles((prev) =>
+          prev.map((v) => {
+            if (v.id !== viewingVehicle.id) return v;
+            const curDocs = v.documents || [];
+            return {
+              ...v,
+              ...vehUpdates,
+              documents: [newDoc, ...curDocs.filter((d) => d.id !== newDoc.id)]
+            };
+          })
+        );
+
+        triggerToast(`Scanned copy attached to ${title} successfully.`);
+      } else {
+        triggerToast(res.error || `Failed to attach scan.`, true);
+      }
+    } catch (err: any) {
+      triggerToast(err.message || "Failed to attach document scan", true);
+    } finally {
+      setDossierUploadingDoc(false);
+    }
+  };
+
   const handleUniversalDeleteDocument = async (doc: AggregatedVehicleDoc) => {
     if (!viewingVehicle) return;
     const isVaultDoc = doc.isDirectVaultDoc || doc.id.startsWith("vdoc-");
@@ -4199,7 +4311,7 @@ export default function FleetDeskHost({
       }
 
       let res: any = null;
-      if (docId && !docId.startsWith("temp-") && !docId.startsWith("master-doc-")) {
+      if (docId && !docId.startsWith("temp-") && !docId.startsWith("master-doc-") && !docId.startsWith("ins-pol-") && !docId.startsWith("puc-test-")) {
         try {
           const apiRes = await fetch("/api/vehicle/documents/update", {
             method: "POST",
@@ -4215,6 +4327,7 @@ export default function FleetDeskHost({
           res = await updateVehicleDocumentAction(docId, updates);
         }
       } else if (targetVehicleId) {
+        // Master record or synthetic doc
         if (editModalDocFile && editModalDocFileBase64) {
           res = await uploadVehicleDocumentViaRestOrAction(targetVehicleId, {
             doc_type: editModalDocType,
@@ -4228,20 +4341,48 @@ export default function FleetDeskHost({
             status: editModalDocStatus || "VALID"
           });
         }
+
+        // Also update master columns on vehicles table
+        const vehUpdates: any = {};
+        if (editModalDocType === "RC" || (docId && docId.startsWith("master-doc-rc"))) {
+          if (editModalDocNumber.trim()) vehUpdates.vin_chassis_number = editModalDocNumber.trim();
+          if (editModalDocExpiry) vehUpdates.rc_expiry_date = editModalDocExpiry;
+          if (res?.document?.file_url) vehUpdates.rc_doc_url = res.document.file_url;
+        } else if (editModalDocType === "INSURANCE" || (docId && docId.startsWith("master-doc-ins"))) {
+          if (editModalDocNumber.trim()) vehUpdates.insurance_policy_number = editModalDocNumber.trim();
+          if (editModalDocExpiry) vehUpdates.insurance_expiry_date = editModalDocExpiry;
+          if (res?.document?.file_url) vehUpdates.insurance_doc_url = res.document.file_url;
+        } else if (editModalDocType === "PUC" || (docId && docId.startsWith("master-doc-puc"))) {
+          if (editModalDocNumber.trim()) vehUpdates.puc_certificate_number = editModalDocNumber.trim();
+          if (editModalDocExpiry) vehUpdates.puc_expiry_date = editModalDocExpiry;
+          if (res?.document?.file_url) vehUpdates.puc_doc_url = res.document.file_url;
+        } else if (editModalDocType === "FITNESS" || (docId && docId.startsWith("master-doc-fit"))) {
+          if (editModalDocExpiry) vehUpdates.fitness_expiry_date = editModalDocExpiry;
+          if (res?.document?.file_url) vehUpdates.fitness_doc_url = res.document.file_url;
+        }
+
+        if (Object.keys(vehUpdates).length > 0) {
+          const vRes = await updateVehicleAction(targetVehicleId, vehUpdates);
+          if (!res && vRes.success) {
+            res = { success: true, vehicleUpdated: true };
+          }
+        }
       }
 
-      if (res && res.success && res.document) {
+      if (res && res.success) {
         const updated = res.document;
         // Update viewingVehicle
         if (viewingVehicle && targetVehicleId === viewingVehicle.id) {
           setViewingVehicle((prev) => {
             if (!prev) return null;
-            const curDocs = prev.documents || [];
-            const exists = curDocs.some((d) => d.id === updated.id);
-            const newDocs = exists
-              ? curDocs.map((d) => (d.id === updated.id ? { ...d, ...updated } : d))
-              : [updated, ...curDocs];
-            return { ...prev, documents: newDocs };
+            let newDocs = prev.documents || [];
+            if (updated) {
+              const exists = newDocs.some((d) => d.id === updated.id);
+              newDocs = exists
+                ? newDocs.map((d) => (d.id === updated.id ? { ...d, ...updated } : d))
+                : [updated, ...newDocs];
+            }
+            return { ...prev, ...updates, documents: newDocs };
           });
         }
 
@@ -4249,12 +4390,14 @@ export default function FleetDeskHost({
         setVehicles((prev) =>
           prev.map((v) => {
             if (v.id !== targetVehicleId) return v;
-            const curDocs = v.documents || [];
-            const exists = curDocs.some((d) => d.id === updated.id);
-            const newDocs = exists
-              ? curDocs.map((d) => (d.id === updated.id ? { ...d, ...updated } : d))
-              : [updated, ...curDocs];
-            return { ...v, documents: newDocs };
+            let newDocs = v.documents || [];
+            if (updated) {
+              const exists = newDocs.some((d) => d.id === updated.id);
+              newDocs = exists
+                ? newDocs.map((d) => (d.id === updated.id ? { ...d, ...updated } : d))
+                : [updated, ...newDocs];
+            }
+            return { ...v, ...updates, documents: newDocs };
           })
         );
 
@@ -21185,10 +21328,16 @@ export default function FleetDeskHost({
                   <span className={`px-2 py-0.5 rounded-full text-xs font-bold border flex items-center gap-1 ${
                     dossierData.hasRc
                       ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/25"
+                      : dossierData.hasRcRecord
+                      ? "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/25"
                       : "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/25"
                   }`}>
-                    <CheckCircle2 className="h-3 w-3" />
-                    <span>RC Smart Card: {dossierData.hasRc ? "Archived" : "Missing"}</span>
+                    {dossierData.hasRc ? (
+                      <CheckCircle2 className="h-3 w-3" />
+                    ) : (
+                      <Clock className="h-3 w-3" />
+                    )}
+                    <span>RC Smart Card: {dossierData.hasRc ? "Archived" : dossierData.hasRcRecord ? "Scan Pending" : "Missing"}</span>
                   </span>
 
                   <span className={`px-2 py-0.5 rounded-full text-xs font-bold border flex items-center gap-1 ${
@@ -21651,25 +21800,27 @@ export default function FleetDeskHost({
                                   </AppButton>
                                 </>
                               ) : (
-                                <AppButton
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    setDossierNewDocType(doc.doc_type || "OTHER");
-                                    setDossierNewDocTitle(doc.title || "");
-                                    setDossierNewDocNumber(doc.document_number || "");
-                                    setDossierNewDocExpiry(doc.expiry_date || "");
-                                    setIsDossierAddDocOpen(true);
-                                    const el = document.getElementById("dossier-direct-doc-file-input");
-                                    if (el) el.scrollIntoView({ behavior: "smooth" });
-                                  }}
-                                  className="h-7 px-2 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 gap-1"
+                                <label
+                                  className={`h-7 px-2 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg flex items-center gap-1 cursor-pointer transition-colors shadow-2xs ${
+                                    dossierUploadingDoc ? "opacity-50 pointer-events-none" : ""
+                                  }`}
                                   title="Upload and attach scanned document file"
                                 >
                                   <UploadCloud className="h-3 w-3" />
                                   <span>+ Attach Scan</span>
-                                </AppButton>
+                                  <input
+                                    type="file"
+                                    accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                                    className="hidden"
+                                    disabled={dossierUploadingDoc}
+                                    onChange={(e) => {
+                                      if (e.target.files && e.target.files.length > 0) {
+                                        handleCardDirectScanUpload(e.target.files, doc);
+                                      }
+                                      e.target.value = "";
+                                    }}
+                                  />
+                                </label>
                               )}
 
                               {canEditVehicle && (
