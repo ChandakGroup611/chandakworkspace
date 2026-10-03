@@ -28,23 +28,74 @@ import {
   Send,
   HelpCircle
 } from "lucide-react";
-import { TenderDesignMatrix } from "../../Design_Tracking/src/components/TenderDesignMatrix";
-import { LookAheadDashboard } from "../../Design_Tracking/src/components/LookAheadDashboard";
-import { LiaisoningTracker } from "../../Design_Tracking/src/components/LiaisoningTracker";
-import { DesignStagesRoadmap } from "../../Design_Tracking/src/components/DesignStagesRoadmap";
-import { DrawingRegister } from "../../Design_Tracking/src/components/DrawingRegister";
-import { ApprovalsReviewQueue } from "../../Design_Tracking/src/components/ApprovalsReviewQueue";
-import { RevisionHistoryLogs } from "../../Design_Tracking/src/components/RevisionHistoryLogs";
-import { GfcHandoverView } from "../../Design_Tracking/src/components/GfcHandoverView";
-import { TransmittalManager } from "../../Design_Tracking/src/components/TransmittalManager";
-import { DesignRfiTracker } from "../../Design_Tracking/src/components/DesignRfiTracker";
-import { ConsultantDirectory } from "../../Design_Tracking/src/components/ConsultantDirectory";
-import { DesignReportsAnalytics } from "../../Design_Tracking/src/components/DesignReportsAnalytics";
-import { UploadDrawingModal } from "../../Design_Tracking/src/components/UploadDrawingModal";
-import { ReviewApprovalModal } from "../../Design_Tracking/src/components/ReviewApprovalModal";
-import { MastersSetupView } from "../../Design_Tracking/src/components/MastersSetupView";
-import { DesignRbacGovernance } from "../../Design_Tracking/src/components/DesignRbacGovernance";
-import { DataEntryFormsModal } from "../../Design_Tracking/src/components/DataEntryFormsModal";
+import dynamic from "next/dynamic";
+import { AppTableSkeleton } from "@/components/ui/AppSkeleton";
+
+const TenderDesignMatrix = dynamic(() => import("../../Design_Tracking/src/components/TenderDesignMatrix").then(m => m.TenderDesignMatrix), {
+  ssr: false,
+  loading: () => <AppTableSkeleton rows={8} />
+});
+const LookAheadDashboard = dynamic(() => import("../../Design_Tracking/src/components/LookAheadDashboard").then(m => m.LookAheadDashboard), {
+  ssr: false,
+  loading: () => <AppTableSkeleton rows={6} />
+});
+const LiaisoningTracker = dynamic(() => import("../../Design_Tracking/src/components/LiaisoningTracker").then(m => m.LiaisoningTracker), {
+  ssr: false,
+  loading: () => <AppTableSkeleton rows={8} />
+});
+const DesignStagesRoadmap = dynamic(() => import("../../Design_Tracking/src/components/DesignStagesRoadmap").then(m => m.DesignStagesRoadmap), {
+  ssr: false,
+  loading: () => <AppTableSkeleton rows={6} />
+});
+const DrawingRegister = dynamic(() => import("../../Design_Tracking/src/components/DrawingRegister").then(m => m.DrawingRegister), {
+  ssr: false,
+  loading: () => <AppTableSkeleton rows={10} />
+});
+const ApprovalsReviewQueue = dynamic(() => import("../../Design_Tracking/src/components/ApprovalsReviewQueue").then(m => m.ApprovalsReviewQueue), {
+  ssr: false,
+  loading: () => <AppTableSkeleton rows={8} />
+});
+const RevisionHistoryLogs = dynamic(() => import("../../Design_Tracking/src/components/RevisionHistoryLogs").then(m => m.RevisionHistoryLogs), {
+  ssr: false,
+  loading: () => <AppTableSkeleton rows={8} />
+});
+const GfcHandoverView = dynamic(() => import("../../Design_Tracking/src/components/GfcHandoverView").then(m => m.GfcHandoverView), {
+  ssr: false,
+  loading: () => <AppTableSkeleton rows={8} />
+});
+const TransmittalManager = dynamic(() => import("../../Design_Tracking/src/components/TransmittalManager").then(m => m.TransmittalManager), {
+  ssr: false,
+  loading: () => <AppTableSkeleton rows={8} />
+});
+const DesignRfiTracker = dynamic(() => import("../../Design_Tracking/src/components/DesignRfiTracker").then(m => m.DesignRfiTracker), {
+  ssr: false,
+  loading: () => <AppTableSkeleton rows={8} />
+});
+const ConsultantDirectory = dynamic(() => import("../../Design_Tracking/src/components/ConsultantDirectory").then(m => m.ConsultantDirectory), {
+  ssr: false,
+  loading: () => <AppTableSkeleton rows={8} />
+});
+const DesignReportsAnalytics = dynamic(() => import("../../Design_Tracking/src/components/DesignReportsAnalytics").then(m => m.DesignReportsAnalytics), {
+  ssr: false,
+  loading: () => <AppTableSkeleton rows={6} />
+});
+const UploadDrawingModal = dynamic(() => import("../../Design_Tracking/src/components/UploadDrawingModal").then(m => m.UploadDrawingModal), {
+  ssr: false
+});
+const ReviewApprovalModal = dynamic(() => import("../../Design_Tracking/src/components/ReviewApprovalModal").then(m => m.ReviewApprovalModal), {
+  ssr: false
+});
+const MastersSetupView = dynamic(() => import("../../Design_Tracking/src/components/MastersSetupView").then(m => m.MastersSetupView), {
+  ssr: false,
+  loading: () => <AppTableSkeleton rows={8} />
+});
+const DesignRbacGovernance = dynamic(() => import("../../Design_Tracking/src/components/DesignRbacGovernance").then(m => m.DesignRbacGovernance), {
+  ssr: false,
+  loading: () => <AppTableSkeleton rows={8} />
+});
+const DataEntryFormsModal = dynamic(() => import("../../Design_Tracking/src/components/DataEntryFormsModal").then(m => m.DataEntryFormsModal), {
+  ssr: false
+});
 import { DesignMasterStore } from "../../Design_Tracking/src/services/designMasterStore";
 import { DrawingItem, DrawingStatus, ConsultantPartner, GfcRelease } from "../../Design_Tracking/src/types";
 

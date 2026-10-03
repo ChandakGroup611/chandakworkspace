@@ -95,7 +95,11 @@ import { AppButton } from "@/components/ui/AppButton";
 import { AppInput } from "@/components/ui/AppInput";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useFleetPermissions } from "@/hooks/useFleetPermissions";
-import FleetRbacGovernance from "./FleetRbacGovernance";
+import dynamic from "next/dynamic";
+const FleetRbacGovernance = dynamic(() => import("./FleetRbacGovernance"), {
+  ssr: false,
+  loading: () => <AppTableSkeleton rows={8} />
+});
 import { 
   AppTableContainer, 
   AppTable, 
