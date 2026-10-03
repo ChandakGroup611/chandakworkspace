@@ -15,8 +15,12 @@ import { createClient } from "@/utils/supabase/client";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { usePermissions } from "@/hooks/usePermissions";
 import Link from "next/link";
-import TaskCreationWizard from "@/components/tasks/TaskCreationWizard";
 import dynamic from "next/dynamic";
+
+const TaskCreationWizard = dynamic(() => import("@/components/tasks/TaskCreationWizard"), {
+  ssr: false
+});
+
 import SafeHtml from "@/components/ui/SafeHtml";
 import { sanitizeErrorMessage } from "@/lib/utils";
 import { LazyQuill } from "@/components/ui/LazyQuill";

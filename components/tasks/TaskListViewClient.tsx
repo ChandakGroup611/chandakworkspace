@@ -51,9 +51,18 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, horizontalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { getAllReportCustomFields } from "@/lib/actions/workspace_reports";
-import TaskCreationWizard from "@/components/tasks/TaskCreationWizard";
-import TaskBoardView from "@/components/tasks/TaskBoardView";
-import TaskTimelineView from "@/components/tasks/TaskTimelineView";
+import dynamic from "next/dynamic";
+
+const TaskCreationWizard = dynamic(() => import("@/components/tasks/TaskCreationWizard"), {
+  ssr: false
+});
+const TaskBoardView = dynamic(() => import("@/components/tasks/TaskBoardView"), {
+  ssr: false
+});
+const TaskTimelineView = dynamic(() => import("@/components/tasks/TaskTimelineView"), {
+  ssr: false
+});
+
 import { LayoutGrid, List as ListIcon, CalendarDays } from "lucide-react";
 import { useSavedFilters, SavedFilter } from "@/hooks/useSavedFilters";
 import { SavedFiltersDropdown } from "@/components/ui/SavedFiltersDropdown";

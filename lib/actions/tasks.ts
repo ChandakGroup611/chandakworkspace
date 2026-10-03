@@ -239,16 +239,45 @@ export async function createTask(payload: {
       }
     }
 
-    // Insert Attachments
+    // Insert Attachments (with automated storage upload to prevent base64 DB bloat)
     if (payload.attachments && payload.attachments.length > 0) {
-      const attachmentData = payload.attachments.map((att) => ({
-        task_id: task.id,
-        file_name: att.file_name,
-        file_url: att.file_url,
-        file_type: att.file_type,
-        size: att.size,
-        uploaded_by: creatorId
+      const attachmentData = await Promise.all(payload.attachments.map(async (att) => {
+        let finalFileUrl = att.file_url;
+        if (finalFileUrl && finalFileUrl.startsWith("data:")) {
+          try {
+            const commaIdx = finalFileUrl.indexOf(",");
+            if (commaIdx !== -1) {
+              const meta = finalFileUrl.slice(0, commaIdx);
+              const b64 = finalFileUrl.slice(commaIdx + 1);
+              const mimeMatch = meta.match(/data:([^;]+)/);
+              const detectedMime = mimeMatch ? mimeMatch[1] : (att.file_type || "application/octet-stream");
+              const buffer = Buffer.from(b64, "base64");
+              const cleanFileName = (att.file_name || "attachment").replace(/[^a-zA-Z0-9._-]/g, "_");
+              const storagePath = `tasks/${task.id}/${Date.now()}_${cleanFileName}`;
+
+              const { error: upErr } = await supabaseAdmin.storage
+                .from("ticket-attachments")
+                .upload(storagePath, buffer, { contentType: detectedMime, upsert: true });
+
+              if (!upErr) {
+                finalFileUrl = `storage:ticket-attachments:${storagePath}`;
+              }
+            }
+          } catch (uploadErr) {
+            console.warn("[createTask] attachment storage upload fallback:", uploadErr);
+          }
+        }
+
+        return {
+          task_id: task.id,
+          file_name: att.file_name,
+          file_url: finalFileUrl,
+          file_type: att.file_type,
+          size: att.size,
+          uploaded_by: creatorId
+        };
       }));
+
       const { error: attErr } = await supabaseAdmin.from('task_attachments').insert(attachmentData);
       if (attErr) {
         console.error("[createTask] Attachments Insert Error:", attErr);
@@ -1054,9 +1083,35 @@ export async function createTaskAttachment(taskId: string, fileName: string, bas
     const userId = user?.id;
     if (!userId) return { error: "Unauthenticated" };
 
+    let finalFileUrl = base64Url;
+    if (finalFileUrl && finalFileUrl.startsWith("data:")) {
+      try {
+        const commaIdx = finalFileUrl.indexOf(",");
+        if (commaIdx !== -1) {
+          const meta = finalFileUrl.slice(0, commaIdx);
+          const b64 = finalFileUrl.slice(commaIdx + 1);
+          const mimeMatch = meta.match(/data:([^;]+)/);
+          const detectedMime = mimeMatch ? mimeMatch[1] : "application/octet-stream";
+          const buffer = Buffer.from(b64, "base64");
+          const cleanFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
+          const storagePath = `tasks/${taskId}/${Date.now()}_${cleanFileName}`;
+
+          const { error: upErr } = await supabaseAdmin.storage
+            .from("ticket-attachments")
+            .upload(storagePath, buffer, { contentType: detectedMime, upsert: true });
+
+          if (!upErr) {
+            finalFileUrl = `storage:ticket-attachments:${storagePath}`;
+          }
+        }
+      } catch (uploadErr) {
+        console.warn("[createTaskAttachment] storage upload fallback:", uploadErr);
+      }
+    }
+
     const { data, error } = await supabaseAdmin
       .from('task_attachments')
-      .insert([{ task_id: taskId, file_name: fileName, file_url: base64Url, size, uploaded_by: userId, file_type: 'file' }])
+      .insert([{ task_id: taskId, file_name: fileName, file_url: finalFileUrl, size, uploaded_by: userId, file_type: 'file' }])
       .select()
       .single();
     if (error) return { error: error.message };

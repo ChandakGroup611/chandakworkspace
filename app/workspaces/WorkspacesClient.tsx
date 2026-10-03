@@ -29,14 +29,22 @@ import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
 import { useSavedFilters, SavedFilter } from "@/hooks/useSavedFilters";
 import { SavedFiltersDropdown } from "@/components/ui/SavedFiltersDropdown";
-import TaskCreationWizard from "@/components/tasks/TaskCreationWizard";
-import TaskExecutionController from "@/components/tasks/TaskExecutionController";
-import { TaskDetailDrawer } from "@/components/tasks/TaskDetailDrawer";
+import dynamic from "next/dynamic";
+
+const TaskCreationWizard = dynamic(() => import("@/components/tasks/TaskCreationWizard"), {
+  ssr: false
+});
+const TaskDetailDrawer = dynamic(() => import("@/components/tasks/TaskDetailDrawer").then(m => m.TaskDetailDrawer), {
+  ssr: false
+});
+const SprintBoard = dynamic(() => import("@/components/workspaces/sprints/SprintBoard").then(m => m.SprintBoard), {
+  ssr: false
+});
+
 import { SidePeekDrawer } from "@/components/ui/SidePeekDrawer";
 import { getTaskDetails, updateNodeStatus, deleteTask, createTask } from "@/lib/actions/tasks";
 import { useRouter, useSearchParams } from "next/navigation";
 import { WorkspaceMasterTable } from "@/components/workspaces/WorkspaceMasterTable";
-import { SprintBoard } from "@/components/workspaces/sprints/SprintBoard";
 import { PageContainer } from "@/components/layout/PageContainer";
 import ChandakLoader from "@/components/ui/ChandakLoader";
 import { PageHeader } from "@/components/layout/PageHeader";
