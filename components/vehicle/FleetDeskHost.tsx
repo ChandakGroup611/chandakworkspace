@@ -3197,38 +3197,6 @@ export default function FleetDeskHost({
         sourceLabel: `RTO Transport Registry (${veh.rto_office || "State RTO"})`,
         isDirectVaultDoc: false
       });
-    } else if (!vaultDocTypes.has("RC") && veh.registration_number) {
-      let rcExpiry: string | null = (veh as any).rc_expiry_date || null;
-      if (!rcExpiry && veh.registration_date) {
-        try {
-          const rd = new Date(veh.registration_date);
-          if (!isNaN(rd.getTime())) {
-            rd.setFullYear(rd.getFullYear() + 15);
-            rcExpiry = rd.toISOString().split("T")[0];
-          }
-        } catch {
-          // ignore
-        }
-      }
-
-      pushDoc({
-        id: `master-doc-rc-${targetId}`,
-        doc_type: "RC",
-        categoryLabel: "RC Smart Card",
-        title: `RC Smart Card: ${veh.registration_number}`,
-        file_name: null,
-        file_size: "Digital RTO Record",
-        file_type: "application/pdf",
-        file_url: null,
-        uploaded_at: veh.registration_date || veh.created_at,
-        expiry_date: rcExpiry,
-        document_number: veh.vin_chassis_number || veh.registration_number,
-        status: rcExpiry && calculateDaysRemaining(rcExpiry)! < 0 ? "EXPIRED" : "VALID",
-        sourceModule: "REGISTRATION",
-        sourceLabel: `RTO Passing: ${veh.rto_office || "Government Registry"}`,
-        isDirectVaultDoc: false,
-        has_file: false
-      });
     }
 
     // 3. Insurance Policies (Only include if actual policy document file URL exists)
@@ -20381,35 +20349,15 @@ export default function FleetDeskHost({
                   <FileCheck className="h-3.5 w-3.5 text-muted-foreground" />
                   <span>Document Vault</span>
                 </span>
-                <span className={`text-xs font-mono font-bold px-1.5 py-0.5 rounded ${
-                  dossierData.scannedDocsCount > 0
-                    ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
-                    : "bg-amber-500/15 text-amber-700 dark:text-amber-400"
-                }`}>
-                  {dossierData.scannedDocsCount} Files {dossierData.pendingDocsCount > 0 ? `(${dossierData.pendingDocsCount} Pending)` : ""}
+                <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-muted/20 text-foreground">
+                  {dossierData.docs.length}
                 </span>
               </div>
-              <div className="text-xs sm:text-sm font-bold text-foreground mt-1 truncate">
-                {dossierData.expiredDocsCount > 0 ? (
-                  <span className="text-rose-600 dark:text-rose-400 font-bold">
-                    {dossierData.expiredDocsCount} Expired Record(s)
-                  </span>
-                ) : dossierData.scannedDocsCount > 0 && dossierData.pendingDocsCount === 0 ? (
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                    All {dossierData.scannedDocsCount} Files Archived
-                  </span>
-                ) : dossierData.scannedDocsCount > 0 ? (
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                    {dossierData.scannedDocsCount} Archived • {dossierData.pendingDocsCount} Pending Scan
-                  </span>
-                ) : dossierData.pendingDocsCount > 0 ? (
-                  <span className="text-amber-600 dark:text-amber-400 font-semibold">
-                    0 Files ({dossierData.pendingDocsCount} Statutory Records Pending Scan)
-                  </span>
+              <div className="text-sm sm:text-base font-bold text-foreground mt-1 truncate">
+                {dossierData.docs.length > 0 ? (
+                  <span>{dossierData.docs.length} <span className="text-xs text-muted-foreground font-normal">Files Attached</span></span>
                 ) : (
-                  <span className="text-muted-foreground font-medium">
-                    No Files Attached
-                  </span>
+                  <span className="text-xs text-muted-foreground font-normal">No Documents Attached</span>
                 )}
               </div>
             </button>
@@ -20427,7 +20375,7 @@ export default function FleetDeskHost({
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span>Trips & Journeys</span>
+                  <span>Trips &amp; Journeys</span>
                 </span>
                 <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-muted/20 text-foreground">
                   {dossierData.trips.length}
@@ -20503,7 +20451,7 @@ export default function FleetDeskHost({
               }`}
             >
               <FileCheck className="h-3.5 w-3.5" />
-              <span>Documents ({dossierData.scannedDocsCount}{dossierData.pendingDocsCount > 0 ? ` / ${dossierData.totalDocsCount}` : ""})</span>
+              <span>Documents ({dossierData.docs.length})</span>
             </button>
 
             <button
@@ -21321,54 +21269,6 @@ export default function FleetDeskHost({
                 </div>
               </div>
 
-              {/* Compliance Checklist Summary Pills */}
-              <div className="p-3 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/40 flex items-center justify-between gap-3 flex-wrap text-xs">
-                <span className="font-bold text-foreground">Compliance Checklist:</span>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-bold border flex items-center gap-1 ${
-                    dossierData.hasRc
-                      ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/25"
-                      : dossierData.hasRcRecord
-                      ? "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/25"
-                      : "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/25"
-                  }`}>
-                    {dossierData.hasRc ? (
-                      <CheckCircle2 className="h-3 w-3" />
-                    ) : (
-                      <Clock className="h-3 w-3" />
-                    )}
-                    <span>RC Smart Card: {dossierData.hasRc ? "Archived" : dossierData.hasRcRecord ? "Scan Pending" : "Missing"}</span>
-                  </span>
-
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-bold border flex items-center gap-1 ${
-                    dossierData.hasInsurance
-                      ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/25"
-                      : "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/25"
-                  }`}>
-                    <ShieldCheck className="h-3 w-3" />
-                    <span>Insurance: {dossierData.hasInsurance ? "Covered" : "Missing"}</span>
-                  </span>
-
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-bold border flex items-center gap-1 ${
-                    dossierData.hasPuc
-                      ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/25"
-                      : "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/25"
-                  }`}>
-                    <Wind className="h-3 w-3" />
-                    <span>PUC: {dossierData.hasPuc ? "Valid" : "Pending"}</span>
-                  </span>
-
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-bold border flex items-center gap-1 ${
-                    dossierData.hasFitness
-                      ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/25"
-                      : "bg-slate-200 dark:bg-slate-700 text-muted-foreground border-border"
-                  }`}>
-                    <FileText className="h-3 w-3" />
-                    <span>Fitness: {dossierData.hasFitness ? "Valid" : "N/A"}</span>
-                  </span>
-                </div>
-              </div>
-
               {/* INLINE DOCUMENT UPLOAD FORM (Directly inside dossier screen) */}
               {isDossierAddDocOpen && (
                 <div className="p-4 rounded-xl border border-border bg-surface space-y-4 animate-in fade-in duration-200">
@@ -21478,7 +21378,7 @@ export default function FleetDeskHost({
 
               {/* Category Filter Toolbar & Search Bar */}
               <div className="flex flex-col gap-2.5 p-3 rounded-xl border border-border bg-surface/50">
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                <div className="flex items-center justify-between gap-3">
                   {/* Search in Documents */}
                   <div className="relative flex-1 max-w-md">
                     <Search className="h-3.5 w-3.5 absolute left-3 top-2.5 text-muted-foreground pointer-events-none" />
@@ -21499,91 +21399,50 @@ export default function FleetDeskHost({
                       </button>
                     )}
                   </div>
-
-                  {/* Scan Attached vs Pending Status Toggle */}
-                  <div className="flex items-center gap-1 p-1 bg-surface border border-border rounded-lg shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => setDossierDocScanStatusFilter("ALL")}
-                      className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer ${
-                        dossierDocScanStatusFilter === "ALL"
-                          ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-2xs"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      All Records ({dossierData.totalDocsCount})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDossierDocScanStatusFilter("ATTACHED")}
-                      className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer flex items-center gap-1 ${
-                        dossierDocScanStatusFilter === "ATTACHED"
-                          ? "bg-emerald-600 text-white shadow-2xs"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      <CheckCircle2 className="h-3 w-3" />
-                      <span>Scans Attached ({dossierData.scannedDocsCount})</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDossierDocScanStatusFilter("PENDING")}
-                      className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer flex items-center gap-1 ${
-                        dossierDocScanStatusFilter === "PENDING"
-                          ? "bg-amber-600 text-white shadow-2xs"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      <Clock className="h-3 w-3" />
-                      <span>Pending Scans ({dossierData.pendingDocsCount})</span>
-                    </button>
-                  </div>
                 </div>
 
                 {/* Category Pills */}
-                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-2 border-t border-border/50">
-                  {[
-                    { id: "ALL", label: "All Archives", count: dossierData.docs.length },
-                    { id: "RC", label: "RC Card", count: dossierData.docs.filter(d => d.doc_type === "RC").length },
-                    { id: "INSURANCE", label: "Insurance", count: dossierData.docs.filter(d => d.doc_type === "INSURANCE").length },
-                    { id: "PUC", label: "PUC", count: dossierData.docs.filter(d => d.doc_type === "PUC").length },
-                    { id: "MAINTENANCE", label: "Service & Bills", count: dossierData.docs.filter(d => d.doc_type === "MAINTENANCE" || d.sourceModule === "SERVICE").length },
-                    { id: "PART", label: "Part Warranties", count: dossierData.docs.filter(d => d.doc_type === "PART" || d.sourceModule === "PART").length },
-                    { id: "TRIP", label: "Trips & Fuel", count: dossierData.docs.filter(d => d.doc_type === "TRIP" || d.sourceModule === "TRIP").length },
-                    { id: "DRIVER", label: "Chauffeur IDs", count: dossierData.docs.filter(d => d.doc_type === "DRIVER" || d.sourceModule === "DRIVER").length },
-                    { id: "FITNESS", label: "Fitness / Permit", count: dossierData.docs.filter(d => d.doc_type === "FITNESS" || d.doc_type === "PERMIT").length },
-                    { id: "INVOICE", label: "Purchase Bills", count: dossierData.docs.filter(d => d.doc_type === "INVOICE" || d.doc_type === "ROAD_TAX").length }
-                  ].filter(cat => cat.id === "ALL" || cat.count > 0).map((cat) => (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => setDossierDocCategoryFilter(cat.id)}
-                      className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
-                        dossierDocCategoryFilter === cat.id
-                          ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs"
-                          : "text-slate-600 dark:text-slate-400 hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
-                      }`}
-                    >
-                      <span>{cat.label}</span>
-                      <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
-                        dossierDocCategoryFilter === cat.id
-                          ? "bg-black/10 text-theme-btn-primary-text dark:bg-white/20"
-                          : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
-                      }`}>
-                        {cat.count}
-                      </span>
-                    </button>
-                  ))}
-                </div>
+                {dossierData.docs.length > 0 && (
+                  <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-2 border-t border-border/50">
+                    {[
+                      { id: "ALL", label: "All Archives", count: dossierData.docs.length },
+                      { id: "RC", label: "RC Card", count: dossierData.docs.filter(d => d.doc_type === "RC").length },
+                      { id: "INSURANCE", label: "Insurance", count: dossierData.docs.filter(d => d.doc_type === "INSURANCE").length },
+                      { id: "PUC", label: "PUC", count: dossierData.docs.filter(d => d.doc_type === "PUC").length },
+                      { id: "MAINTENANCE", label: "Service & Bills", count: dossierData.docs.filter(d => d.doc_type === "MAINTENANCE" || d.sourceModule === "SERVICE").length },
+                      { id: "PART", label: "Part Warranties", count: dossierData.docs.filter(d => d.doc_type === "PART" || d.sourceModule === "PART").length },
+                      { id: "TRIP", label: "Trips & Fuel", count: dossierData.docs.filter(d => d.doc_type === "TRIP" || d.sourceModule === "TRIP").length },
+                      { id: "DRIVER", label: "Chauffeur IDs", count: dossierData.docs.filter(d => d.doc_type === "DRIVER" || d.sourceModule === "DRIVER").length },
+                      { id: "FITNESS", label: "Fitness / Permit", count: dossierData.docs.filter(d => d.doc_type === "FITNESS" || d.doc_type === "PERMIT").length },
+                      { id: "INVOICE", label: "Purchase Bills", count: dossierData.docs.filter(d => d.doc_type === "INVOICE" || d.doc_type === "ROAD_TAX").length }
+                    ].filter(cat => cat.id === "ALL" || cat.count > 0).map((cat) => (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => setDossierDocCategoryFilter(cat.id)}
+                        className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
+                          dossierDocCategoryFilter === cat.id
+                            ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs"
+                            : "text-slate-600 dark:text-slate-400 hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                        }`}
+                      >
+                        <span>{cat.label}</span>
+                        <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
+                          dossierDocCategoryFilter === cat.id
+                            ? "bg-black/10 text-theme-btn-primary-text dark:bg-white/20"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                        }`}>
+                          {cat.count}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Documents Grid */}
               {(() => {
                 const filteredDossierDocs = dossierData.docs.filter((doc) => {
-                  // Scan Status filter
-                  if (dossierDocScanStatusFilter === "ATTACHED" && !doc.file_url && !(doc as any).has_file) return false;
-                  if (dossierDocScanStatusFilter === "PENDING" && (doc.file_url || (doc as any).has_file)) return false;
-
                   if (dossierDocCategoryFilter !== "ALL") {
                     if (dossierDocCategoryFilter === "MAINTENANCE") {
                       if (doc.doc_type !== "MAINTENANCE" && doc.sourceModule !== "SERVICE") return false;
@@ -21619,20 +21478,19 @@ export default function FleetDeskHost({
                     <div className="p-8 text-center rounded-xl border border-dashed border-border bg-slate-50/50 dark:bg-slate-900/30 space-y-2">
                       <FileCheck className="h-8 w-8 text-muted-foreground mx-auto opacity-50" />
                       <p className="text-xs font-semibold text-foreground">
-                        {dossierDocSearchQuery || dossierDocCategoryFilter !== "ALL" || dossierDocScanStatusFilter !== "ALL"
+                        {dossierDocSearchQuery || dossierDocCategoryFilter !== "ALL"
                           ? "No documents match the current filter or search criteria"
-                          : "No documents currently archived for this vehicle"}
+                          : "No documents currently uploaded for this vehicle"}
                       </p>
                       
                       <div className="pt-2">
-                        {dossierDocSearchQuery || dossierDocCategoryFilter !== "ALL" || dossierDocScanStatusFilter !== "ALL" ? (
+                        {dossierDocSearchQuery || dossierDocCategoryFilter !== "ALL" ? (
                           <AppButton
                             type="button"
                             variant="outline"
                             size="sm"
                             onClick={() => {
                               setDossierDocCategoryFilter("ALL");
-                              setDossierDocScanStatusFilter("ALL");
                               setDossierDocSearchQuery("");
                             }}
                             className="text-xs h-8 px-3"
@@ -21648,7 +21506,7 @@ export default function FleetDeskHost({
                             className="text-xs h-8 px-3 gap-1.5 font-semibold"
                           >
                             <UploadCloud className="h-3.5 w-3.5" />
-                            <span>Upload First Document</span>
+                            <span>Upload Document</span>
                           </AppButton>
                         )}
                       </div>
@@ -21670,11 +21528,7 @@ export default function FleetDeskHost({
                       return (
                         <div
                           key={doc.id || idx}
-                          className={`p-3.5 rounded-xl border bg-surface transition-colors shadow-2xs space-y-2.5 flex flex-col justify-between group ${
-                            hasScan
-                              ? "border-border hover:border-emerald-500/40"
-                              : "border-amber-500/30 bg-amber-500/5 hover:border-amber-500/60"
-                          }`}
+                          className="p-3.5 rounded-xl border border-border bg-surface hover:border-theme-btn-primary/40 transition-colors shadow-2xs space-y-2.5 flex flex-col justify-between group"
                         >
                           <div className="space-y-2">
                             {/* Header Category & Origin Source Pill */}
@@ -21688,17 +21542,6 @@ export default function FleetDeskHost({
                                     {versionTag}
                                   </span>
                                 )}
-                                {hasScan ? (
-                                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-0.5">
-                                    <CheckCircle2 className="h-2.5 w-2.5" />
-                                    <span>Scan Attached</span>
-                                  </span>
-                                ) : (
-                                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25 flex items-center gap-0.5">
-                                    <Clock className="h-2.5 w-2.5" />
-                                    <span>Scan Pending</span>
-                                  </span>
-                                )}
                               </div>
                               {doc.sourceLabel && doc.sourceLabel !== (doc.categoryLabel || typeConfig.label) && (
                                 <span className="text-[10px] font-medium text-muted-foreground truncate max-w-[160px]" title={doc.sourceLabel}>
@@ -21708,9 +21551,7 @@ export default function FleetDeskHost({
                             </div>
 
                             <div className="flex items-start gap-3 pt-1">
-                              <div className={`h-10 w-10 rounded-xl flex items-center justify-center border shrink-0 group-hover:scale-105 transition-transform ${
-                                hasScan ? "bg-slate-100 dark:bg-slate-800 border-border" : "bg-amber-500/10 border-amber-500/20 text-amber-600"
-                              }`}>
+                              <div className="h-10 w-10 rounded-xl flex items-center justify-center border shrink-0 bg-slate-100 dark:bg-slate-800 border-border group-hover:scale-105 transition-transform">
                                 {renderAttachmentIcon(doc.file_type || resolveMimeFromName(doc.file_name || ""), doc.file_name || undefined)}
                               </div>
                               <div className="min-w-0 flex-1">
@@ -21724,20 +21565,12 @@ export default function FleetDeskHost({
                                   </div>
                                 )}
                                 <div className="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-0.5 truncate">
-                                  {hasScan ? (
+                                  <span className="truncate max-w-[140px] font-mono text-foreground font-medium">{doc.file_name || "Document File"}</span>
+                                  {doc.file_size && (
                                     <>
-                                      <span className="truncate max-w-[140px] font-mono text-foreground font-medium">{doc.file_name}</span>
-                                      {doc.file_size && (
-                                        <>
-                                          <span>•</span>
-                                          <span>{formatFileSize(doc.file_size)}</span>
-                                        </>
-                                      )}
+                                      <span>•</span>
+                                      <span>{formatFileSize(doc.file_size)}</span>
                                     </>
-                                  ) : (
-                                    <span className="text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1">
-                                      <AlertCircle className="h-3 w-3" /> Physical scan not uploaded yet
-                                    </span>
                                   )}
                                 </div>
                               </div>
@@ -21773,55 +21606,29 @@ export default function FleetDeskHost({
                             </div>
 
                             <div className="flex items-center gap-1 shrink-0">
-                              {hasScan ? (
-                                <>
-                                  <AppButton
-                                    type="button"
-                                    variant="outline"
-                                    size="icon-sm"
-                                    onClick={() => handleViewAttachment({
-                                      ...doc,
-                                      vehicleReg: viewingVehicle?.registration_number
-                                    })}
-                                    className="h-7 w-7 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
-                                    title="View / Preview Document"
-                                  >
-                                    <Eye className="h-3.5 w-3.5" />
-                                  </AppButton>
-                                  <AppButton
-                                    type="button"
-                                    variant="outline"
-                                    size="icon-sm"
-                                    onClick={() => downloadAttachment(doc)}
-                                    className="h-7 w-7 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
-                                    title="Download Document"
-                                  >
-                                    <Download className="h-3.5 w-3.5" />
-                                  </AppButton>
-                                </>
-                              ) : (
-                                <label
-                                  className={`h-7 px-2 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg flex items-center gap-1 cursor-pointer transition-colors shadow-2xs ${
-                                    dossierUploadingDoc ? "opacity-50 pointer-events-none" : ""
-                                  }`}
-                                  title="Upload and attach scanned document file"
-                                >
-                                  <UploadCloud className="h-3 w-3" />
-                                  <span>+ Attach Scan</span>
-                                  <input
-                                    type="file"
-                                    accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
-                                    className="hidden"
-                                    disabled={dossierUploadingDoc}
-                                    onChange={(e) => {
-                                      if (e.target.files && e.target.files.length > 0) {
-                                        handleCardDirectScanUpload(e.target.files, doc);
-                                      }
-                                      e.target.value = "";
-                                    }}
-                                  />
-                                </label>
-                              )}
+                              <AppButton
+                                type="button"
+                                variant="outline"
+                                size="icon-sm"
+                                onClick={() => handleViewAttachment({
+                                  ...doc,
+                                  vehicleReg: viewingVehicle?.registration_number
+                                })}
+                                className="h-7 w-7 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
+                                title="View / Preview Document"
+                              >
+                                <Eye className="h-3.5 w-3.5" />
+                              </AppButton>
+                              <AppButton
+                                type="button"
+                                variant="outline"
+                                size="icon-sm"
+                                onClick={() => downloadAttachment(doc)}
+                                className="h-7 w-7 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+                                title="Download Document"
+                              >
+                                <Download className="h-3.5 w-3.5" />
+                              </AppButton>
 
                               {canEditVehicle && (
                                 <AppButton
@@ -21836,7 +21643,7 @@ export default function FleetDeskHost({
                                 </AppButton>
                               )}
 
-                              {canEditVehicle && hasScan && (
+                              {canEditVehicle && (
                                 <AppButton
                                   type="button"
                                   variant="outline"
