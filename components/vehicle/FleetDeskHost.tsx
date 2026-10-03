@@ -3176,51 +3176,7 @@ export default function FleetDeskHost({
       });
     });
 
-    // 2. RC Smart Card & Vehicle Identity
-    const rcUrl = (veh as any).rc_doc_url || (veh as any).rc_document_url || (veh as any).rc_book_url || null;
-    const rcDocInVault = (veh.documents || []).find((d: any) => d.doc_type === "RC" || (d.title || "").toLowerCase().includes("rc "));
-    if (rcUrl && !vaultDocTypes.has("RC")) {
-      pushDoc({
-        id: `master-doc-rc-${targetId}`,
-        doc_type: "RC",
-        categoryLabel: "RC Smart Card",
-        title: `RC Smart Card (${veh.registration_number})`,
-        file_name: `RC_${targetPlate}.pdf`,
-        file_size: "Official Certificate",
-        file_type: "application/pdf",
-        file_url: rcUrl,
-        uploaded_at: veh.registration_date || veh.created_at,
-        expiry_date: rcDocInVault?.expiry_date || (veh as any).rc_expiry_date || null,
-        document_number: veh.vin_chassis_number || veh.registration_number,
-        status: "VALID",
-        sourceModule: "MASTER",
-        sourceLabel: `RTO Transport Registry (${veh.rto_office || "State RTO"})`,
-        isDirectVaultDoc: false
-      });
-    }
-
-    // 3. Insurance Policies (Only include if actual policy document file URL exists)
-    const insUrl = (veh as any).insurance_doc_url || (veh as any).policy_document_url || (veh as any).insurance_policy_doc_url || null;
-    if (insUrl && !vaultDocTypes.has("INSURANCE")) {
-      pushDoc({
-        id: `master-doc-ins-${targetId}`,
-        doc_type: "INSURANCE",
-        categoryLabel: "Motor Insurance Policy",
-        title: `Insurance Policy: ${veh.insurance_vendor || "Comprehensive"} (${veh.insurance_policy_number || targetPlate})`,
-        file_name: `Insurance_${targetPlate}.pdf`,
-        file_size: "Policy Document",
-        file_type: "application/pdf",
-        file_url: insUrl,
-        uploaded_at: veh.registration_date || veh.created_at,
-        expiry_date: veh.insurance_expiry_date || null,
-        document_number: veh.insurance_policy_number || null,
-        status: "VALID",
-        sourceModule: "INSURANCE",
-        sourceLabel: `Insurance Policy (${veh.insurance_vendor || "Authorized Provider"})`,
-        isDirectVaultDoc: false
-      });
-    }
-
+    // 2. Insurance Policy Renewals & Bills
     additionalPolicies.forEach((pol) => {
       const polDocUrl = pol.policy_document_url || (pol as any).document_url || null;
       if (polDocUrl) {
@@ -3244,28 +3200,7 @@ export default function FleetDeskHost({
       }
     });
 
-    // 4. PUC Emission Certificates (Only include if actual certificate file URL exists)
-    const pucUrl = (veh as any).puc_doc_url || (veh as any).certificate_doc_url || (veh as any).puc_certificate_doc_url || null;
-    if (pucUrl && !vaultDocTypes.has("PUC")) {
-      pushDoc({
-        id: `master-doc-puc-${targetId}`,
-        doc_type: "PUC",
-        categoryLabel: "PUC Certificate",
-        title: `PUC Certificate (${veh.puc_certificate_number || targetPlate})`,
-        file_name: `PUC_${targetPlate}.pdf`,
-        file_size: "Emission Certificate",
-        file_type: "application/pdf",
-        file_url: pucUrl,
-        uploaded_at: veh.registration_date || veh.created_at,
-        expiry_date: veh.puc_expiry_date || null,
-        document_number: veh.puc_certificate_number || null,
-        status: "VALID",
-        sourceModule: "PUC",
-        sourceLabel: `Emission Clearance (${veh.puc_expiry_date ? "Valid upto " + veh.puc_expiry_date : "RTO Approved"})`,
-        isDirectVaultDoc: false
-      });
-    }
-
+    // 3. PUC Emission Certificates
     additionalPucs.forEach((puc) => {
       const pucDocUrl = puc.document_url || null;
       if (pucDocUrl) {
