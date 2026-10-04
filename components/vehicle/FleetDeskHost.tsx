@@ -6585,20 +6585,9 @@ export default function FleetDeskHost({
       });
     }
 
-    const totalHistorical = last6Months.reduce((acc, x) => acc + x.spend, 0);
-    if (totalHistorical === 0 && fleetReportsData.totalMaintenanceSpend > 0) {
-      const total = fleetReportsData.totalMaintenanceSpend;
-      last6Months[0].spend = Math.round(total * 0.12);
-      last6Months[1].spend = Math.round(total * 0.18);
-      last6Months[2].spend = Math.round(total * 0.15);
-      last6Months[3].spend = Math.round(total * 0.22);
-      last6Months[4].spend = Math.round(total * 0.14);
-      last6Months[5].spend = Math.round(total * 0.19);
-    }
-
     const maxSpend = Math.max(...last6Months.map(x => x.spend), 1000);
     return { data: last6Months, maxSpend };
-  }, [maintenance, fleetReportsData.totalMaintenanceSpend]);
+  }, [maintenance]);
 
   // Executive Telemetry: Top Authorized Workshop Partners Ranking
   const topWorkshops = useMemo(() => {
@@ -7959,32 +7948,6 @@ export default function FleetDeskHost({
                         </>
                       )}
                     </AppButton>
-                  </div>
-
-                  {/* Sample Quick-Test Buttons */}
-                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                    <span className="text-xs font-medium text-muted-foreground mr-1">Quick Sample:</span>
-                    {[
-                      { plate: "MH02FE4281", label: "MH-02 Mumbai" },
-                      { plate: "DL01AB1234", label: "DL-01 Delhi" },
-                      { plate: "HR26CQ9999", label: "HR-26 Gurugram" },
-                      { plate: "KA01MJ5555", label: "KA-01 Bangalore" },
-                      { plate: "GJ01AB1122", label: "GJ-01 Ahmedabad" }
-                    ].map((sample) => (
-                      <AppButton
-                        key={sample.plate}
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setNewVehiclePlate(sample.plate);
-                          if (portalLookupMsg) setPortalLookupMsg(null);
-                        }}
-                        className="h-7 px-2.5 text-xs font-mono font-medium border-border/80 bg-surface text-foreground shadow-2xs hover:border-theme-btn-primary"
-                      >
-                        <span>{sample.label}</span>
-                      </AppButton>
-                    ))}
                   </div>
                 </div>
 
