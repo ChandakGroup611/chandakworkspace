@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  turbopack: {},
   generateBuildId: async () => {
     return `build-${Date.now()}`;
   },
@@ -8,6 +9,15 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '30mb',
     },
+  },
+  webpack: (config, { dev, isServer }) => {
+    if (dev) {
+      config.watchOptions = {
+        poll: false,
+        aggregateTimeout: 300,
+      };
+    }
+    return config;
   },
   async headers() {
     return [
@@ -33,15 +43,6 @@ const nextConfig = {
           {
             key: 'Expires',
             value: '0',
-          },
-        ],
-      },
-      {
-        source: '/_next/static/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=0, must-revalidate',
           },
         ],
       },

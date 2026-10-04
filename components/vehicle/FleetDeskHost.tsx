@@ -817,6 +817,10 @@ export default function FleetDeskHost({
   const [dashboardTripFilter, setDashboardTripFilter] = useState<"ALL" | "IN_PROGRESS" | "PLANNED">("ALL");
   const [dashboardVehicleFilter, setDashboardVehicleFilter] = useState<"ALL" | "IN_STOCK" | "MAINTENANCE">("ALL");
   const [dashboardFuelFilter, setDashboardFuelFilter] = useState<string | null>(null);
+  const [dashboardRenewalHorizon, setDashboardRenewalHorizon] = useState<"ALL" | "OVERDUE" | "7D" | "30D" | "90D">("ALL");
+  const [dashboardRenewalDocType, setDashboardRenewalDocType] = useState<"ALL" | "INSURANCE" | "PUC" | "FITNESS" | "RC" | "DRIVER_DL">("ALL");
+  const [dashboardExpenseSort, setDashboardExpenseSort] = useState<"SPEND_DESC" | "SPEND_ASC" | "SERVICES_DESC" | "KM_DESC" | "COST_PER_KM_DESC">("SPEND_DESC");
+  const [dashboardExpenseSearch, setDashboardExpenseSearch] = useState<string>("");
 
   // Insurance Vendors Filter & Search States
   const [vendorSearch, setVendorSearch] = useState("");
@@ -1276,7 +1280,9 @@ export default function FleetDeskHost({
     return (
       <div className="inline-flex items-stretch rounded-sm border-2 border-slate-900 bg-white shadow-xs overflow-hidden select-none">
         <div className="bg-[#003399] px-1.5 py-0.5 flex flex-col items-center justify-center border-r border-[#002266] shrink-0">
-          <span className="text-[9px] leading-none text-white font-black tracking-normal">IND</span>
+          <span className="text-[9px] leading-none font-black tracking-normal !text-white select-none" style={{ color: "#ffffff", fontWeight: 900 }}>
+            IND
+          </span>
         </div>
         <div className="px-2 py-0.5 font-mono text-xs font-black tracking-wider text-slate-950 uppercase bg-white">
           {plateNumber}
@@ -6630,6 +6636,232 @@ export default function FleetDeskHost({
   }, [trips, dashboardTripFilter, searchQuery]);
 
   // Executive Telemetry: Filtered Vehicles Depot List
+  // Executive Telemetry: Detailed Expiry & Renewal Radar Item List
+  const complianceRenewalRadar = useMemo(() => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    const list: Array<{
+      id: string;
+      title: string;
+      subtitle: string;
+      docType: string;
+      rawDocType: "INSURANCE" | "PUC" | "FITNESS" | "RC" | "DRIVER_DL";
+      docNumber?: string | null;
+      expiryDate: string;
+      daysRemaining: number;
+      horizon: "OVERDUE" | "7D" | "30D" | "90D" | "VALID";
+      vehicle?: VehicleRecord;
+      driver?: DriverRecord;
+    }> = [];
+
+    vehicles.forEach(v => {
+      const checkDoc = (
+        docLabel: string, 
+        rawType: "INSURANCE" | "PUC" | "FITNESS" | "RC", 
+        dateStr?: string | null,
+        docNum?: string | null
+      ) => {
+        if (!dateStr) return;
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return;
+        d.setHours(0, 0, 0, 0);
+        const diffDays = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        const horizon = diffDays < 0 ? "OVERDUE" : diffDays <= 7 ? "7D" : diffDays <= 30 ? "30D" : diffDays <= 90 ? "90D" : "VALID";
+        list.push({
+          id: `${v.id}-${rawType}`,
+          title: v.registration_number,
+          subtitle: `${v.make} ${v.model}`,
+          docType: docLabel,
+          rawDocType: rawType,
+          docNumber: docNum || null,
+          expiryDate: String(dateStr).split("T")[0],
+          daysRemaining: diffDays,
+          horizon,
+          vehicle: v
+        });
+      };
+
+      const isEv = isElectricFuel(v.fuel_type);
+      checkDoc("Insurance Policy", "INSURANCE", v.insurance_expiry_date, v.insurance_policy_number);
+      if (!isEv) {
+        checkDoc("PUC Certificate", "PUC", v.puc_expiry_date, (v as any).puc_number);
+      }
+      checkDoc("Fitness Certificate", "FITNESS", v.fitness_expiry_date, (v as any).fitness_number);
+
+      let rcExp: string | null = (v as any).rc_expiry_date || null;
+      if (!rcExp) {
+        const rcDoc = (v.documents || []).find((d) => d.doc_type === "RC" && d.expiry_date);
+        if (rcDoc?.expiry_date) {
+          rcExp = rcDoc.expiry_date;
+        } else if (v.registration_date) {
+          try {
+            const rd = new Date(v.registration_date);
+            if (!isNaN(rd.getTime())) {
+              rd.setFullYear(rd.getFullYear() + 15);
+              rcExp = rd.toISOString().split("T")[0];
+            }
+          } catch {
+            // ignore
+          }
+        }
+      }
+      if (rcExp) {
+        checkDoc("Registration Certificate (RC)", "RC", rcExp, v.registration_number);
+      }
+    });
+
+    drivers.forEach(d => {
+      if (d.license_expiry_date) {
+        const dt = new Date(d.license_expiry_date);
+        if (!isNaN(dt.getTime())) {
+          dt.setHours(0, 0, 0, 0);
+          const diffDays = Math.ceil((dt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+          const horizon = diffDays < 0 ? "OVERDUE" : diffDays <= 7 ? "7D" : diffDays <= 30 ? "30D" : diffDays <= 90 ? "90D" : "VALID";
+          list.push({
+            id: `${d.id}-license`,
+            title: d.full_name,
+            subtitle: `Lic: ${d.license_number || "DL"}`,
+            docType: "Driver License",
+            rawDocType: "DRIVER_DL",
+            docNumber: d.license_number,
+            expiryDate: String(d.license_expiry_date).split("T")[0],
+            daysRemaining: diffDays,
+            horizon,
+            driver: d
+          });
+        }
+      }
+    });
+
+    return list.sort((a, b) => a.daysRemaining - b.daysRemaining);
+  }, [vehicles, drivers]);
+
+  // Filtered Expiry & Renewal Items for Dashboard
+  const filteredRenewalRadar = useMemo(() => {
+    let result = complianceRenewalRadar;
+
+    if (dashboardRenewalHorizon !== "ALL") {
+      result = result.filter(item => {
+        if (dashboardRenewalHorizon === "OVERDUE") return item.daysRemaining < 0;
+        if (dashboardRenewalHorizon === "7D") return item.daysRemaining >= 0 && item.daysRemaining <= 7;
+        if (dashboardRenewalHorizon === "30D") return item.daysRemaining >= 0 && item.daysRemaining <= 30;
+        if (dashboardRenewalHorizon === "90D") return item.daysRemaining >= 0 && item.daysRemaining <= 90;
+        return true;
+      });
+    }
+
+    if (dashboardRenewalDocType !== "ALL") {
+      result = result.filter(item => item.rawDocType === dashboardRenewalDocType);
+    }
+
+    if ((searchQuery || "").trim()) {
+      const q = (searchQuery || "").toLowerCase().trim();
+      result = result.filter(item => 
+        item.title.toLowerCase().includes(q) ||
+        item.subtitle.toLowerCase().includes(q) ||
+        item.docType.toLowerCase().includes(q) ||
+        (item.docNumber || "").toLowerCase().includes(q)
+      );
+    }
+
+    return result;
+  }, [complianceRenewalRadar, dashboardRenewalHorizon, dashboardRenewalDocType, searchQuery]);
+
+  // Renewal Radar Metrics Counts
+  const renewalRadarCounts = useMemo(() => {
+    const overdue = complianceRenewalRadar.filter(i => i.daysRemaining < 0).length;
+    const due7d = complianceRenewalRadar.filter(i => i.daysRemaining >= 0 && i.daysRemaining <= 7).length;
+    const due30d = complianceRenewalRadar.filter(i => i.daysRemaining >= 0 && i.daysRemaining <= 30).length;
+    const due90d = complianceRenewalRadar.filter(i => i.daysRemaining >= 0 && i.daysRemaining <= 90).length;
+    const valid = complianceRenewalRadar.filter(i => i.daysRemaining > 90).length;
+    return { overdue, due7d, due30d, due90d, valid, total: complianceRenewalRadar.length };
+  }, [complianceRenewalRadar]);
+
+  // Executive Telemetry: Vehicle-Wise Expense Summary List
+  const vehicleExpenseSummaries = useMemo(() => {
+    const totalFleetSpend = maintenance.reduce((sum, m) => sum + (Number(m.cost) || 0), 0);
+
+    const list = vehicles.map(v => {
+      const matchingLogs = maintenance.filter(m => 
+        (m.vehicle_id && m.vehicle_id === v.id) || 
+        (m.vehicle_reg && v.registration_number && m.vehicle_reg.trim().toUpperCase() === v.registration_number.trim().toUpperCase())
+      );
+      const totalSpend = matchingLogs.reduce((acc, m) => acc + (Number(m.cost) || 0), 0);
+      const jobCount = matchingLogs.length;
+      const avgSpend = jobCount > 0 ? Math.round(totalSpend / jobCount) : 0;
+      const odo = Number(v.odometer_km) || 0;
+      const costPerKm = odo > 0 && totalSpend > 0 ? (totalSpend / odo).toFixed(2) : "0.00";
+      const spendSharePct = totalFleetSpend > 0 ? Math.round((totalSpend / totalFleetSpend) * 100) : 0;
+
+      const sortedLogs = [...matchingLogs].sort((a, b) => {
+        const da = a.service_date ? new Date(a.service_date).getTime() : 0;
+        const db = b.service_date ? new Date(b.service_date).getTime() : 0;
+        return db - da;
+      });
+
+      const lastLog = sortedLogs[0];
+      const lastServiceDate = lastLog?.service_date ? String(lastLog.service_date).split("T")[0] : null;
+      const lastServiceType = lastLog?.service_type || null;
+      const lastServiceCenter = lastLog?.service_center || null;
+      const nextDueLog = sortedLogs.find(m => m.next_service_due_date);
+      const nextServiceDueDate = nextDueLog?.next_service_due_date ? String(nextDueLog.next_service_due_date).split("T")[0] : null;
+
+      return {
+        vehicle: v,
+        id: v.id,
+        reg: v.registration_number,
+        make: v.make,
+        model: v.model,
+        fuel_type: v.fuel_type,
+        assignedDriver: v.assignedDriver?.full_name || null,
+        status: v.status,
+        odometer_km: odo,
+        totalSpend,
+        jobCount,
+        avgSpend,
+        costPerKm,
+        spendSharePct,
+        lastServiceDate,
+        lastServiceType,
+        lastServiceCenter,
+        nextServiceDueDate,
+        insuranceExpiry: v.insurance_expiry_date ? String(v.insurance_expiry_date).split("T")[0] : null,
+        pucExpiry: v.puc_expiry_date ? String(v.puc_expiry_date).split("T")[0] : null,
+        fitnessExpiry: v.fitness_expiry_date ? String(v.fitness_expiry_date).split("T")[0] : null
+      };
+    });
+
+    return list;
+  }, [vehicles, maintenance]);
+
+  // Filtered & Sorted Vehicle Expense Summaries
+  const filteredVehicleExpenses = useMemo(() => {
+    let result = [...vehicleExpenseSummaries];
+
+    const q = (dashboardExpenseSearch || searchQuery || "").toLowerCase().trim();
+    if (q) {
+      result = result.filter(item => 
+        (item.reg || "").toLowerCase().includes(q) ||
+        (item.make || "").toLowerCase().includes(q) ||
+        (item.model || "").toLowerCase().includes(q) ||
+        (item.assignedDriver || "").toLowerCase().includes(q) ||
+        (item.fuel_type || "").toLowerCase().includes(q)
+      );
+    }
+
+    result.sort((a, b) => {
+      if (dashboardExpenseSort === "SPEND_DESC") return b.totalSpend - a.totalSpend;
+      if (dashboardExpenseSort === "SPEND_ASC") return a.totalSpend - b.totalSpend;
+      if (dashboardExpenseSort === "SERVICES_DESC") return b.jobCount - a.jobCount;
+      if (dashboardExpenseSort === "KM_DESC") return b.odometer_km - a.odometer_km;
+      if (dashboardExpenseSort === "COST_PER_KM_DESC") return parseFloat(b.costPerKm) - parseFloat(a.costPerKm);
+      return 0;
+    });
+
+    return result;
+  }, [vehicleExpenseSummaries, dashboardExpenseSearch, searchQuery, dashboardExpenseSort]);
+
   const filteredDashboardVehicles = useMemo(() => {
     let list = vehicles;
     if (dashboardVehicleFilter !== "ALL") {
@@ -7479,50 +7711,52 @@ export default function FleetDeskHost({
             </div>
           </div>
 
-          {/* Dynamic Module KPI Cards (Interactive Drill-Downs) */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {(moduleMeta?.kpis || []).map((kpi, idx) => {
-              const IconComp = kpi?.icon || LayoutDashboard;
-              const handleKpiClick = () => {
-                const title = (kpi?.title || "").toLowerCase();
-                if (title.includes("fleet") || title.includes("available") || title.includes("registered") || title.includes("depot")) {
-                  if (title.includes("available") || title.includes("depot")) setSelectedStatus("IN_STOCK");
-                  else setSelectedStatus("ALL");
-                  router.push("/vehicle/inventory");
-                } else if (title.includes("route") || title.includes("trip") || title.includes("transit") || title.includes("dispatch")) {
-                  router.push("/vehicle/trips");
-                } else if (title.includes("workshop") || title.includes("maintenance") || title.includes("service") || title.includes("job card")) {
-                  router.push("/vehicle/maintenance");
-                } else if (title.includes("driver") || title.includes("roster")) {
-                  router.push("/vehicle/drivers");
-                } else if (title.includes("expir") || title.includes("alert") || title.includes("risk") || title.includes("compliance")) {
-                  router.push("/vehicle/alerts");
-                } else if (title.includes("part") || title.includes("accessor")) {
-                  router.push("/vehicle/parts");
-                } else if (title.includes("vendor") || title.includes("insurance")) {
-                  router.push("/vehicle/vendors");
-                }
-              };
+          {/* Dynamic Module KPI Cards (Interactive Drill-Downs) — Rendered on sub-module tabs */}
+          {activeTab !== "dashboard" && (moduleMeta?.kpis || []).length > 0 && (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {(moduleMeta?.kpis || []).map((kpi, idx) => {
+                const IconComp = kpi?.icon || LayoutDashboard;
+                const handleKpiClick = () => {
+                  const title = (kpi?.title || "").toLowerCase();
+                  if (title.includes("fleet") || title.includes("available") || title.includes("registered") || title.includes("depot")) {
+                    if (title.includes("available") || title.includes("depot")) setSelectedStatus("IN_STOCK");
+                    else setSelectedStatus("ALL");
+                    router.push("/vehicle/inventory");
+                  } else if (title.includes("route") || title.includes("trip") || title.includes("transit") || title.includes("dispatch")) {
+                    router.push("/vehicle/trips");
+                  } else if (title.includes("workshop") || title.includes("maintenance") || title.includes("service") || title.includes("job card")) {
+                    router.push("/vehicle/maintenance");
+                  } else if (title.includes("driver") || title.includes("roster")) {
+                    router.push("/vehicle/drivers");
+                  } else if (title.includes("expir") || title.includes("alert") || title.includes("risk") || title.includes("compliance")) {
+                    router.push("/vehicle/alerts");
+                  } else if (title.includes("part") || title.includes("accessor")) {
+                    router.push("/vehicle/parts");
+                  } else if (title.includes("vendor") || title.includes("insurance")) {
+                    router.push("/vehicle/vendors");
+                  }
+                };
 
-              return (
-                <AppCard
-                  key={idx}
-                  onClick={handleKpiClick}
-                  className="border-border shadow-xs hover:border-theme-btn-primary/50 hover:shadow-md transition-all cursor-pointer group"
-                >
-                  <AppCardContent className="p-4 flex items-center justify-between">
-                    <div>
-                      <p className="text-xs font-semibold text-muted-foreground group-hover:text-foreground transition-colors">{kpi?.title}</p>
-                      <h3 className="text-2xl font-bold mt-1 text-foreground group-hover:text-theme-btn-primary transition-colors">{kpi?.value}</h3>
-                    </div>
-                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center border ${kpi?.iconBg || "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-border"} ${kpi?.iconColor || ""} group-hover:scale-110 transition-transform`}>
-                      <IconComp className="h-5 w-5" />
-                    </div>
-                  </AppCardContent>
-                </AppCard>
-              );
-            })}
-          </div>
+                return (
+                  <AppCard
+                    key={idx}
+                    onClick={handleKpiClick}
+                    className="border-border shadow-xs hover:border-theme-btn-primary/50 hover:shadow-md transition-all cursor-pointer group"
+                  >
+                    <AppCardContent className="p-4 flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-semibold text-muted-foreground group-hover:text-foreground transition-colors">{kpi?.title}</p>
+                        <h3 className="text-2xl font-bold mt-1 text-foreground group-hover:text-theme-btn-primary transition-colors">{kpi?.value}</h3>
+                      </div>
+                      <div className={`h-10 w-10 rounded-xl flex items-center justify-center border ${kpi?.iconBg || "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-border"} ${kpi?.iconColor || ""} group-hover:scale-110 transition-transform`}>
+                        <IconComp className="h-5 w-5" />
+                      </div>
+                    </AppCardContent>
+                  </AppCard>
+                );
+              })}
+            </div>
+          )}
         </>
       )}
 
@@ -7771,9 +8005,11 @@ export default function FleetDeskHost({
                   <div className="h-11 px-3 bg-white dark:bg-slate-100 border-2 border-slate-900 rounded-md flex items-center justify-between shadow-xs select-none">
                     <div className="flex items-center gap-2">
                       {/* Blue IND Badge */}
-                      <div className="flex flex-col items-center justify-center bg-blue-700 text-white rounded-xs px-1.5 py-0.5 leading-none">
+                      <div className="flex flex-col items-center justify-center bg-[#003399] text-white rounded-xs px-1.5 py-0.5 leading-none">
                         <span className="text-xs">🇮🇳</span>
-                        <span className="text-[9px] font-mono font-black tracking-normal">IND</span>
+                        <span className="text-[9px] font-mono font-black tracking-normal !text-white" style={{ color: "#ffffff", fontWeight: 900 }}>
+                          IND
+                        </span>
                       </div>
                       {/* Plate Text */}
                       <span className="font-mono font-black text-slate-900 tracking-widest text-sm sm:text-base uppercase">
@@ -9083,1202 +9319,1670 @@ export default function FleetDeskHost({
       {/* ---------------------------------------------------------------------- */}
       {!isAnyTransactionFormOpen && activeTab === "dashboard" && (
         <FleetErrorBoundary tabName="Fleet Executive Dashboard" onReset={() => loadAllData(true)}>
-          <div className="space-y-6 animate-in fade-in duration-300">
+          <div className="space-y-7 animate-in fade-in duration-300">
 
-          {/* 1. EXECUTIVE TELEMETRY CONTROL BAR & TIMEFRAME SELECTOR */}
-          <div className="p-4 rounded-2xl bg-surface/90 border border-border/80 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4 backdrop-blur-xs">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="h-10 w-10 rounded-xl bg-theme-btn-primary/10 text-theme-btn-primary flex items-center justify-center border border-theme-btn-primary/20">
-                  <Activity className="h-5 w-5 animate-pulse" />
-                </div>
-                <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                </span>
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-sm text-foreground">Fleet Telemetry Live Feed</span>
-                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                    {stats.totalVehicles > 0 ? `${utilizationRate}% Active Utilization` : "Ready"}
+            {/* 1. TELEMETRY CONTROL BAR & TIMEFRAME SELECTOR */}
+            <div className="p-4 rounded-2xl bg-surface border border-border/80 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className="relative shrink-0">
+                  <div className="h-11 w-11 rounded-xl bg-theme-btn-primary/10 text-theme-btn-primary flex items-center justify-center border border-theme-btn-primary/20 shadow-2xs">
+                    <Activity className="h-5 w-5" />
+                  </div>
+                  <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border-2 border-surface"></span>
                   </span>
                 </div>
-              </div>
-            </div>
-
-            {/* Timeframe Switcher & Search Bar */}
-            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-              <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-border">
-                {(["24H", "7D", "30D", "FY"] as const).map((tf) => (
-                  <button
-                    key={tf}
-                    type="button"
-                    onClick={() => setDashboardTimeframe(tf)}
-                    className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                      dashboardTimeframe === tf
-                        ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs font-bold"
-                        : "text-slate-600 dark:text-slate-400 hover:text-foreground hover:bg-surface/50"
-                    }`}
-                  >
-                    {tf === "24H" ? "24H Live" : tf === "7D" ? "7 Days" : tf === "30D" ? "30 Days" : "FY 25-26"}
-                  </button>
-                ))}
-              </div>
-
-              <div className="relative min-w-[180px] sm:w-56">
-                <Search className="h-3.5 w-3.5 absolute left-2.5 top-2.5 text-muted-foreground pointer-events-none" />
-                <input
-                  type="text"
-                  placeholder="Filter dashboard..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-8 pr-7 py-1.5 text-xs rounded-xl border border-border/80 bg-surface text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-theme-btn-primary shadow-2xs"
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-2 top-2 text-muted-foreground hover:text-foreground"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* 2. STATUTORY COMPLIANCE RADAR BANNER */}
-          {complianceAlerts.filter(a => a.status === "EXPIRED" || a.daysRemaining <= 15).length > 0 ? (
-            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 shadow-xs space-y-3">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-amber-500/20 pb-2.5">
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-xl bg-amber-500/20 text-amber-700 dark:text-amber-300 flex items-center justify-center shrink-0">
-                    <ShieldAlert className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-xs uppercase tracking-wider text-amber-800 dark:text-amber-300">
-                      Compliance Radar Alert ({complianceAlerts.filter(a => a.status === "EXPIRED" || a.daysRemaining <= 15).length} Action Items)
-                    </h3>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-bold text-sm text-foreground tracking-tight">Fleet Overview</span>
+                    <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                      {stats.totalVehicles > 0 ? `${utilizationRate}% Utilization` : "Depot Ready"}
+                    </span>
+                    <span className="text-[11px] font-medium text-muted-foreground hidden sm:inline-flex items-center gap-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-slate-400 dark:bg-slate-500"></span>
+                      {stats.totalVehicles} Assets
+                    </span>
                   </div>
                 </div>
-                <AppButton
-                  size="sm"
-                  variant="outline"
-                  onClick={() => router.push("/vehicle/alerts")}
-                  className="text-xs h-7 px-2.5 gap-1 font-semibold border-amber-500/40 text-amber-800 dark:text-amber-300 hover:bg-amber-500/20 self-start sm:self-auto"
-                >
-                  <span>Open Compliance Desk</span>
-                  <ArrowRight className="h-3 w-3" />
-                </AppButton>
               </div>
 
-              {/* Urgent Item Chips Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
-                {complianceAlerts
-                  .filter(a => a.status === "EXPIRED" || a.daysRemaining <= 15)
-                  .slice(0, 3)
-                  .map(alert => (
-                    <div
-                      key={alert.id}
-                      className="p-2.5 rounded-xl bg-surface/80 border border-border/80 flex items-center justify-between gap-2 shadow-2xs hover:border-amber-500/50 transition-colors"
+              {/* Controls: Timeframe Switcher, Global Filter & Refresh */}
+              <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+                {/* Timeframe Switcher */}
+                <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800/90 rounded-xl border border-border">
+                  {(["24H", "7D", "30D", "FY"] as const).map((tf) => (
+                    <button
+                      key={tf}
+                      type="button"
+                      onClick={() => setDashboardTimeframe(tf)}
+                      className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                        dashboardTimeframe === tf
+                          ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs"
+                          : "text-muted-foreground hover:text-foreground hover:bg-surface/60"
+                      }`}
                     >
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-bold text-xs text-foreground truncate">{alert.title}</span>
-                          <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
-                            alert.status === "EXPIRED" 
-                              ? "bg-rose-500/15 text-rose-700 dark:text-rose-400" 
-                              : "bg-amber-500/15 text-amber-700 dark:text-amber-400"
-                          }`}>
-                            {alert.docType}
-                          </span>
-                        </div>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">
-                          {alert.daysRemaining < 0
-                            ? `Expired ${Math.abs(alert.daysRemaining)} days ago`
-                            : alert.daysRemaining === 0
-                            ? "Expires today"
-                            : `Due in ${alert.daysRemaining} days`}
-                        </p>
-                      </div>
+                      {tf === "24H" ? "24H" : tf === "7D" ? "7D" : tf === "30D" ? "30D" : "FY 25-26"}
+                    </button>
+                  ))}
+                </div>
 
-                      {alert.vehicle && alert.docType.includes("Insurance") && (
-                        <AppButton
-                          size="sm"
-                          variant="primary"
-                          onClick={() => handleOpenVehiclePolicyRenewModal(alert.vehicle!)}
-                          className="text-[11px] h-6 px-2 bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text shrink-0 font-semibold"
-                        >
-                          Renew
-                        </AppButton>
+                {/* Search / Filter Input */}
+                <div className="relative min-w-[200px] sm:w-60">
+                  <Search className="h-3.5 w-3.5 absolute left-3 top-2.5 text-muted-foreground pointer-events-none" />
+                  <input
+                    type="text"
+                    placeholder="Search fleet, plates, drivers..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-8 pr-8 py-1.5 text-xs rounded-xl border border-border/80 bg-surface text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary/20 shadow-2xs transition-all"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-2.5 top-2 text-muted-foreground hover:text-foreground cursor-pointer"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Refresh Data Trigger */}
+                <AppButton
+                  variant="outline"
+                  size="icon-sm"
+                  title="Refresh"
+                  onClick={() => loadAllData(true)}
+                  className="h-8 w-8 shrink-0 rounded-xl text-muted-foreground hover:text-foreground hover:bg-surface"
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin text-theme-btn-primary" : ""}`} />
+                </AppButton>
+              </div>
+            </div>
+
+            {/* 2. STATUTORY EXPIRIES & RENEWALS */}
+            <AppCard className="border-border shadow-xs overflow-hidden">
+              <AppCardHeader className="bg-surface/50 pb-3 border-b border-border/60">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-8 w-8 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center border border-amber-500/20 shrink-0">
+                      <CalendarClock className="h-4 w-4" />
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <AppCardTitle className="text-sm font-bold flex items-center gap-2">
+                        <span>Statutory Renewals & Expiries</span>
+                      </AppCardTitle>
+                      {renewalRadarCounts.overdue > 0 && (
+                        <span className="px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-700 dark:text-rose-400 text-[10px] font-bold border border-rose-500/25 flex items-center gap-1">
+                          <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                          {renewalRadarCounts.overdue} Overdue
+                        </span>
                       )}
-                      {alert.vehicle && alert.docType.includes("PUC") && (
-                        <AppButton
-                          size="sm"
-                          variant="primary"
-                          onClick={() => handleOpenVehiclePucRenewModal(alert.vehicle!)}
-                          className="text-[11px] h-6 px-2 bg-amber-600 hover:bg-amber-700 text-white shrink-0 font-semibold"
-                        >
-                          Renew
-                        </AppButton>
-                      )}
-                      {alert.driver && (
-                        <AppButton
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setViewingDriver(alert.driver!)}
-                          className="text-[11px] h-6 px-2 shrink-0 font-semibold"
-                        >
-                          Inspect
-                        </AppButton>
+                      {renewalRadarCounts.due7d > 0 && (
+                        <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-400 text-[10px] font-bold border border-amber-500/25">
+                          {renewalRadarCounts.due7d} Due in ≤ 7d
+                        </span>
                       )}
                     </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 self-start lg:self-auto">
+                    <AppButton
+                      size="sm"
+                      variant="outline"
+                      onClick={() => router.push("/vehicle/alerts")}
+                      className="text-xs h-7 px-2.5 font-semibold gap-1"
+                    >
+                      <span>Compliance Desk</span>
+                      <ArrowRight className="h-3 w-3" />
+                    </AppButton>
+                  </div>
+                </div>
+
+                {/* Horizon KPI Ribbon */}
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-3 mt-1">
+                  <button
+                    type="button"
+                    onClick={() => setDashboardRenewalHorizon("ALL")}
+                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      dashboardRenewalHorizon === "ALL"
+                        ? "bg-slate-100 dark:bg-slate-800 border-border text-foreground ring-2 ring-slate-400/20 font-bold"
+                        : "bg-surface/50 border-border/70 hover:bg-surface text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <span className="text-[10px] font-bold uppercase tracking-wider block">All</span>
+                    <span className="text-base font-extrabold text-foreground mt-0.5 block">{renewalRadarCounts.total}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDashboardRenewalHorizon("OVERDUE")}
+                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      dashboardRenewalHorizon === "OVERDUE"
+                        ? "bg-rose-500/15 border-rose-500 text-rose-700 dark:text-rose-300 ring-2 ring-rose-500/30 font-bold"
+                        : "bg-surface/50 border-border/70 hover:border-rose-500/40 hover:bg-rose-500/5 text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 block flex items-center gap-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-rose-500"></span>
+                      Overdue
+                    </span>
+                    <span className="text-base font-extrabold text-rose-700 dark:text-rose-400 mt-0.5 block">{renewalRadarCounts.overdue}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDashboardRenewalHorizon("7D")}
+                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      dashboardRenewalHorizon === "7D"
+                        ? "bg-amber-500/15 border-amber-500 text-amber-700 dark:text-amber-300 ring-2 ring-amber-500/30 font-bold"
+                        : "bg-surface/50 border-border/70 hover:border-amber-500/40 hover:bg-amber-500/5 text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block flex items-center gap-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
+                      Due ≤ 7d
+                    </span>
+                    <span className="text-base font-extrabold text-amber-700 dark:text-amber-400 mt-0.5 block">{renewalRadarCounts.due7d}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDashboardRenewalHorizon("30D")}
+                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      dashboardRenewalHorizon === "30D"
+                        ? "bg-blue-500/15 border-blue-500 text-blue-700 dark:text-blue-300 ring-2 ring-blue-500/30 font-bold"
+                        : "bg-surface/50 border-border/70 hover:border-blue-500/40 hover:bg-blue-500/5 text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 block flex items-center gap-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
+                      Due ≤ 30d
+                    </span>
+                    <span className="text-base font-extrabold text-blue-700 dark:text-blue-400 mt-0.5 block">{renewalRadarCounts.due30d}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDashboardRenewalHorizon("90D")}
+                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer col-span-2 sm:col-span-1 ${
+                      dashboardRenewalHorizon === "90D"
+                        ? "bg-emerald-500/15 border-emerald-500 text-emerald-700 dark:text-emerald-300 ring-2 ring-emerald-500/30 font-bold"
+                        : "bg-surface/50 border-border/70 hover:border-emerald-500/40 hover:bg-emerald-500/5 text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block flex items-center gap-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                      Due ≤ 90d
+                    </span>
+                    <span className="text-base font-extrabold text-emerald-700 dark:text-emerald-400 mt-0.5 block">{renewalRadarCounts.due90d}</span>
+                  </button>
+                </div>
+
+                {/* Secondary Filter Pills: Document Categories */}
+                <div className="flex items-center gap-1.5 pt-3 overflow-x-auto no-scrollbar">
+                  {[
+                    { id: "ALL", label: "All Types" },
+                    { id: "INSURANCE", label: "Insurance" },
+                    { id: "PUC", label: "PUC" },
+                    { id: "FITNESS", label: "Fitness" },
+                    { id: "RC", label: "RC Book" },
+                    { id: "DRIVER_DL", label: "Driver DL" }
+                  ].map((cat) => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setDashboardRenewalDocType(cat.id as any)}
+                      className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap cursor-pointer border ${
+                        dashboardRenewalDocType === cat.id
+                          ? "bg-theme-btn-primary text-theme-btn-primary-text border-theme-btn-primary shadow-xs"
+                          : "bg-surface text-muted-foreground hover:text-foreground border-border hover:bg-surface-hover"
+                      }`}
+                    >
+                      {cat.label}
+                    </button>
                   ))}
-              </div>
-            </div>
-          ) : (
-            <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-900 dark:text-emerald-200 text-xs flex items-center justify-between shadow-xs">
-              <div className="flex items-center gap-2.5">
-                <div className="h-7 w-7 rounded-xl bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0">
-                  <ShieldCheck className="h-4 w-4" />
                 </div>
-                <div>
-                  <span className="font-bold">100% Statutory Health Verified:</span> All registered vehicles, PUC certificates, insurance policies, and driver licenses are up-to-date.
-                </div>
-              </div>
-              <AppButton
-                size="sm"
-                variant="ghost"
-                onClick={() => router.push("/vehicle/alerts")}
-                className="text-xs h-7 px-2.5 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-500/10 font-semibold"
-              >
-                Audit Log
-              </AppButton>
-            </div>
-          )}
-
-          {/* 3. BENTO KPI COMMAND CARDS (4 Ultra-Luxurious Interactive Cards with Native SVG Radial Rings & Sparklines) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            
-            {/* KPI 1: Fleet Asset Utilization % */}
-            <div
-              onClick={() => {
-                setSelectedStatus("IN_SERVICE");
-                router.push("/vehicle/inventory");
-              }}
-              className="p-5 rounded-2xl bg-surface border border-border/80 hover:border-theme-btn-primary/60 transition-all hover:shadow-md cursor-pointer group flex flex-col justify-between space-y-4"
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                    Asset Utilization Rate
-                  </span>
-                  <div className="flex items-baseline gap-2 mt-1">
-                    <span className="text-3xl font-extrabold text-foreground group-hover:text-theme-btn-primary transition-colors">
-                      {utilizationRate}%
-                    </span>
-                    <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center">
-                      <TrendingUp className="h-3 w-3 mr-0.5" /> High
-                    </span>
-                  </div>
-                </div>
-                {/* SVG Radial Gauge */}
-                <div className="relative h-12 w-12 flex items-center justify-center">
-                  <svg className="h-12 w-12 -rotate-90" viewBox="0 0 36 36">
-                    <path
-                      className="text-muted/40"
-                      strokeWidth="3.5"
-                      stroke="currentColor"
-                      fill="none"
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    />
-                    <path
-                      className="text-theme-btn-primary"
-                      strokeDasharray={`${utilizationRate}, 100`}
-                      strokeWidth="3.5"
-                      strokeLinecap="round"
-                      stroke="currentColor"
-                      fill="none"
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    />
-                  </svg>
-                  <Car className="h-4 w-4 absolute text-theme-btn-primary" />
-                </div>
-              </div>
-
-              <div className="pt-2 border-t border-border/50 flex items-center justify-between text-[11px] text-muted-foreground">
-                <span>{stats.onRouteVehicles} on route</span>
-                <span>•</span>
-                <span>{stats.availableVehicles} depot ready</span>
-                <span>•</span>
-                <span>{stats.inMaintenanceVehicles} workshop</span>
-              </div>
-            </div>
-
-            {/* KPI 2: Monthly Operating & Workshop Spend */}
-            <div
-              onClick={() => router.push("/vehicle/maintenance")}
-              className="p-5 rounded-2xl bg-surface border border-border/80 hover:border-amber-500/60 transition-all hover:shadow-md cursor-pointer group flex flex-col justify-between space-y-4"
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                    Maintenance & Service Spend
-                  </span>
-                  <div className="flex items-baseline gap-2 mt-1">
-                    <span className="text-3xl font-extrabold text-foreground group-hover:text-amber-600 transition-colors">
-                      ₹{fleetReportsData.totalMaintenanceSpend.toLocaleString("en-IN")}
-                    </span>
-                  </div>
-                </div>
-                <div className="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center border border-amber-500/20">
-                  <Receipt className="h-5 w-5" />
-                </div>
-              </div>
-
-              {/* Mini Sparkline indicator */}
-              <div className="pt-2 border-t border-border/50 flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-[11px] text-amber-700 dark:text-amber-400 font-semibold">
-                  <Wrench className="h-3 w-3" />
-                  <span>{maintenance.length} total job cards</span>
-                </div>
-                <span className="text-[10px] text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-border/60 px-1.5 py-0.5 rounded font-medium">
-                  {maintenance.length > 0 ? `Avg ₹${Math.round(fleetReportsData.totalMaintenanceSpend / maintenance.length).toLocaleString()}` : "No bills"}
-                </span>
-              </div>
-            </div>
-
-            {/* KPI 3: Aggregate Telemetry Distance (KM) */}
-            <div
-              onClick={() => router.push("/vehicle/trips")}
-              className="p-5 rounded-2xl bg-surface border border-border/80 hover:border-blue-500/60 transition-all hover:shadow-md cursor-pointer group flex flex-col justify-between space-y-4"
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                    Aggregate Fleet Run (KM)
-                  </span>
-                  <div className="flex items-baseline gap-1 mt-1">
-                    <span className="text-3xl font-extrabold text-foreground group-hover:text-blue-600 transition-colors">
-                      {fleetReportsData.totalOdometerKm.toLocaleString("en-IN")}
-                    </span>
-                    <span className="text-xs font-bold text-muted-foreground">km</span>
-                  </div>
-                </div>
-                <div className="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center border border-blue-500/20">
-                  <Gauge className="h-5 w-5" />
-                </div>
-              </div>
-
-              <div className="pt-2 border-t border-border/50 flex items-center justify-between text-[11px] text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <MapPin className="h-3 w-3 text-blue-500" />
-                  <span>{fleetReportsData.avgOdometer.toLocaleString()} km avg/unit</span>
-                </span>
-                <span className="text-theme-btn-primary font-semibold group-hover:underline">
-                  Logistics →
-                </span>
-              </div>
-            </div>
-
-            {/* KPI 4: Statutory Compliance Health Index */}
-            <div
-              onClick={() => router.push("/vehicle/alerts")}
-              className="p-5 rounded-2xl bg-surface border border-border/80 hover:border-emerald-500/60 transition-all hover:shadow-md cursor-pointer group flex flex-col justify-between space-y-4"
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                    Compliance Health Score
-                  </span>
-                  <div className="flex items-baseline gap-2 mt-1">
-                    <span className="text-3xl font-extrabold text-foreground group-hover:text-emerald-600 transition-colors">
-                      {complianceHealthScore}%
-                    </span>
-                    <span className={`text-xs font-bold ${complianceHealthScore >= 90 ? "text-emerald-600" : "text-amber-600"}`}>
-                      {complianceHealthScore >= 90 ? "Optimal" : "Attention"}
-                    </span>
-                  </div>
-                </div>
-                <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center border border-emerald-500/20">
-                  <ShieldCheck className="h-5 w-5" />
-                </div>
-              </div>
-
-              <div className="pt-2 border-t border-border/50 flex items-center justify-between text-[11px] text-muted-foreground">
-                <span>{complianceAlerts.filter(a => a.daysRemaining <= 30).length} renewals due in 30d</span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-semibold group-hover:underline">
-                  Audit Radar →
-                </span>
-              </div>
-            </div>
-
-          </div>
-
-          {/* 4. FLEET POWERTRAIN & FUEL ECOSYSTEM MATRIX (Interactive Multi-Segmented Visualizer) */}
-          <AppCard className="border-border shadow-xs overflow-hidden">
-            <AppCardHeader className="bg-surface/50 pb-3 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div>
-                <AppCardTitle className="text-sm font-bold flex items-center gap-2">
-                  <Fuel className="h-4 w-4 text-theme-btn-primary" />
-                  <span>Fleet Powertrain & Fuel Mix Distribution</span>
-                </AppCardTitle>
-                <p className="text-[11px] text-muted-foreground mt-0.5">
-                  Live inventory breakdown by propulsion technology and fuel efficiency profiles
-                </p>
-              </div>
-              {dashboardFuelFilter && (
-                <AppButton
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setDashboardFuelFilter(null)}
-                  className="text-xs h-7 px-2.5 gap-1 text-muted-foreground hover:text-foreground"
-                >
-                  <X className="h-3 w-3" />
-                  <span>Clear Fuel Filter: {dashboardFuelFilter}</span>
-                </AppButton>
-              )}
-            </AppCardHeader>
-            <AppCardContent className="p-5 space-y-4">
-              {/* Segmented Stacked Progress Bar */}
-              <div className="h-3 w-full bg-slate-200 dark:bg-slate-700/80 rounded-full overflow-hidden flex shadow-inner">
-                {fuelMixBreakdown.petrol.pct > 0 && (
-                  <div
-                    style={{ width: `${fuelMixBreakdown.petrol.pct}%` }}
-                    className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-500"
-                    title={`Petrol: ${fuelMixBreakdown.petrol.count} (${fuelMixBreakdown.petrol.pct}%)`}
-                  />
-                )}
-                {fuelMixBreakdown.diesel.pct > 0 && (
-                  <div
-                    style={{ width: `${fuelMixBreakdown.diesel.pct}%` }}
-                    className="h-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-500"
-                    title={`Diesel: ${fuelMixBreakdown.diesel.count} (${fuelMixBreakdown.diesel.pct}%)`}
-                  />
-                )}
-                {fuelMixBreakdown.cng.pct > 0 && (
-                  <div
-                    style={{ width: `${fuelMixBreakdown.cng.pct}%` }}
-                    className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 transition-all duration-500"
-                    title={`CNG: ${fuelMixBreakdown.cng.count} (${fuelMixBreakdown.cng.pct}%)`}
-                  />
-                )}
-                {fuelMixBreakdown.electric.pct > 0 && (
-                  <div
-                    style={{ width: `${fuelMixBreakdown.electric.pct}%` }}
-                    className="h-full bg-gradient-to-r from-cyan-400 to-emerald-400 transition-all duration-500"
-                    title={`Electric / EV: ${fuelMixBreakdown.electric.count} (${fuelMixBreakdown.electric.pct}%)`}
-                  />
-                )}
-                {fuelMixBreakdown.other.pct > 0 && (
-                  <div
-                    style={{ width: `${fuelMixBreakdown.other.pct}%` }}
-                    className="h-full bg-slate-400 transition-all duration-500"
-                    title={`Other: ${fuelMixBreakdown.other.count} (${fuelMixBreakdown.other.pct}%)`}
-                  />
-                )}
-              </div>
-
-              {/* Clickable Powertrain Chips */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setDashboardFuelFilter(dashboardFuelFilter === "PETROL" ? null : "PETROL")}
-                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
-                    dashboardFuelFilter === "PETROL"
-                      ? "bg-blue-500/15 border-blue-500 text-blue-700 dark:text-blue-300 ring-2 ring-blue-500/30"
-                      : "bg-surface border-border/70 hover:border-blue-500/40 hover:bg-blue-500/5"
-                  }`}
-                >
-                  <div>
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase flex items-center gap-1">
-                      <span className="h-2 w-2 rounded-full bg-blue-500 inline-block"></span>
-                      Petrol Powertrain
-                    </span>
-                    <p className="text-base font-extrabold text-foreground mt-0.5">
-                      {fuelMixBreakdown.petrol.count} <span className="text-xs font-medium text-muted-foreground">({fuelMixBreakdown.petrol.pct}%)</span>
-                    </p>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setDashboardFuelFilter(dashboardFuelFilter === "DIESEL" ? null : "DIESEL")}
-                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
-                    dashboardFuelFilter === "DIESEL"
-                      ? "bg-amber-500/15 border-amber-500 text-amber-700 dark:text-amber-300 ring-2 ring-amber-500/30"
-                      : "bg-surface border-border/70 hover:border-amber-500/40 hover:bg-amber-500/5"
-                  }`}
-                >
-                  <div>
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase flex items-center gap-1">
-                      <span className="h-2 w-2 rounded-full bg-amber-500 inline-block"></span>
-                      Diesel Heavy Fleet
-                    </span>
-                    <p className="text-base font-extrabold text-foreground mt-0.5">
-                      {fuelMixBreakdown.diesel.count} <span className="text-xs font-medium text-muted-foreground">({fuelMixBreakdown.diesel.pct}%)</span>
-                    </p>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setDashboardFuelFilter(dashboardFuelFilter === "CNG" ? null : "CNG")}
-                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
-                    dashboardFuelFilter === "CNG"
-                      ? "bg-teal-500/15 border-teal-500 text-teal-700 dark:text-teal-300 ring-2 ring-teal-500/30"
-                      : "bg-surface border-border/70 hover:border-teal-500/40 hover:bg-teal-500/5"
-                  }`}
-                >
-                  <div>
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase flex items-center gap-1">
-                      <span className="h-2 w-2 rounded-full bg-teal-500 inline-block"></span>
-                      CNG Eco-Fleet
-                    </span>
-                    <p className="text-base font-extrabold text-foreground mt-0.5">
-                      {fuelMixBreakdown.cng.count} <span className="text-xs font-medium text-muted-foreground">({fuelMixBreakdown.cng.pct}%)</span>
-                    </p>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setDashboardFuelFilter(dashboardFuelFilter === "ELECTRIC" ? null : "ELECTRIC")}
-                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
-                    dashboardFuelFilter === "ELECTRIC"
-                      ? "bg-emerald-500/15 border-emerald-500 text-emerald-700 dark:text-emerald-300 ring-2 ring-emerald-500/30"
-                      : "bg-surface border-border/70 hover:border-emerald-500/40 hover:bg-emerald-500/5"
-                  }`}
-                >
-                  <div>
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase flex items-center gap-1">
-                      <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block"></span>
-                      Electric & Clean EV
-                    </span>
-                    <p className="text-base font-extrabold text-foreground mt-0.5">
-                      {fuelMixBreakdown.electric.count} <span className="text-xs font-medium text-muted-foreground">({fuelMixBreakdown.electric.pct}%)</span>
-                    </p>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </button>
-              </div>
-            </AppCardContent>
-          </AppCard>
-
-          {/* 5. 6-MONTH MAINTENANCE EXPENDITURE & WORKSHOP SPEND ANALYTICS (SVG Area/Bar Visualizer + Workshop Leaderboard) */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            {/* 6-Month Expenditure Trend (2 Cols) */}
-            <AppCard className="lg:col-span-2 border-border shadow-xs overflow-hidden">
-              <AppCardHeader className="bg-surface/50 pb-3 border-b border-border/50 flex flex-row items-center justify-between">
-                <div>
-                  <AppCardTitle className="text-sm font-bold flex items-center gap-2">
-                    <LineChart className="h-4 w-4 text-theme-btn-primary" />
-                    <span>Workshop Maintenance Expenditure Curve (6-Month Trajectory)</span>
-                  </AppCardTitle>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">
-                    Monthly billing volume and workshop job-card financial flow
-                  </p>
-                </div>
-                <AppButton
-                  size="sm"
-                  variant="outline"
-                  onClick={() => router.push("/vehicle/reports")}
-                  className="text-xs h-7 px-2.5 font-semibold"
-                >
-                  <span>Detailed Ledger</span>
-                  <ArrowRight className="h-3 w-3 ml-1" />
-                </AppButton>
               </AppCardHeader>
-              <AppCardContent className="p-5">
-                {/* Visual Bar/Trend Chart */}
-                <div className="space-y-4">
-                  <div className="h-48 w-full flex items-end justify-between gap-3 pt-4 pb-2 px-3 border-b border-border/60">
-                    {monthlySpendHistory.data.map((item, idx) => {
-                      const heightPct = Math.max(10, Math.round((item.spend / monthlySpendHistory.maxSpend) * 100));
+
+              <AppCardContent className="p-0">
+                {filteredRenewalRadar.length === 0 ? (
+                  <div className="p-8 text-center text-xs text-muted-foreground">
+                    <div className="flex flex-col items-center gap-2">
+                      <ShieldCheck className="h-7 w-7 text-emerald-500 opacity-60" />
+                      <span className="font-semibold text-foreground">No statutory documents matching selected filter.</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-border/60 max-h-[420px] overflow-y-auto">
+                    {filteredRenewalRadar.slice(0, 10).map((item) => {
+                      const isExpired = item.daysRemaining < 0;
+                      const isDue7d = item.daysRemaining >= 0 && item.daysRemaining <= 7;
+                      const isDue30d = item.daysRemaining > 7 && item.daysRemaining <= 30;
+
                       return (
-                        <div key={idx} className="flex-1 flex flex-col items-center gap-2 h-full group min-w-0">
-                          <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 group-hover:bg-blue-500/10 group-hover:text-blue-600 dark:group-hover:text-blue-400 border border-border/50 transition-colors whitespace-nowrap">
-                            {item.spend > 0 ? `₹${(item.spend / 1000).toFixed(1)}k` : "₹0"}
-                          </span>
-                          <div className="flex-1 w-full max-w-[42px] bg-slate-100 dark:bg-slate-800/70 rounded-t-xl overflow-hidden flex flex-col justify-end p-0.5 border border-slate-200/60 dark:border-slate-700/60 shadow-inner">
-                            <div
-                              style={{ height: `${heightPct}%` }}
-                              className="w-full bg-gradient-to-t from-blue-600 via-indigo-500 to-indigo-400 dark:from-blue-500 dark:via-indigo-500 dark:to-cyan-400 group-hover:brightness-110 transition-all duration-500 rounded-t-lg shadow-sm"
-                              title={`${item.month} ${item.year}: ₹${item.spend.toLocaleString()} (${item.count} services)`}
-                            />
+                        <div
+                          key={item.id}
+                          className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors text-xs"
+                        >
+                          {/* Left: Entity & Document Details */}
+                          <div className="flex items-center gap-3 min-w-0">
+                            {item.vehicle ? (
+                              <div className="shrink-0">
+                                {renderHsrpPlate(item.vehicle.registration_number)}
+                              </div>
+                            ) : (
+                              <div className="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 text-foreground flex items-center justify-center font-bold text-xs shrink-0 border border-border">
+                                {item.title.charAt(0)}
+                              </div>
+                            )}
+
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-bold text-foreground truncate">{item.title}</span>
+                                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                                  item.rawDocType === "INSURANCE"
+                                    ? "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/25"
+                                    : item.rawDocType === "PUC"
+                                    ? "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/25"
+                                    : item.rawDocType === "FITNESS"
+                                    ? "bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/25"
+                                    : item.rawDocType === "RC"
+                                    ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/25"
+                                    : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
+                                }`}>
+                                  {item.docType}
+                                </span>
+                                {item.docNumber && (
+                                  <span className="text-[10px] font-mono text-muted-foreground bg-slate-100 dark:bg-slate-800/80 px-1.5 py-0.2 rounded border border-border/50">
+                                    #{item.docNumber}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-muted-foreground mt-0.5">
+                                {item.subtitle}
+                              </p>
+                            </div>
                           </div>
-                          <span className="text-xs font-bold text-foreground">
-                            {item.month}
-                          </span>
+
+                          {/* Right: Expiry Timeline & Actions */}
+                          <div className="flex items-center gap-2.5 flex-wrap self-end sm:self-center shrink-0">
+                            {/* Expiry Pill */}
+                            <div className="text-right">
+                              <div className="flex items-center gap-1.5 justify-end">
+                                <span className="text-[11px] font-mono font-bold text-foreground">
+                                  {item.expiryDate}
+                                </span>
+                                <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase border ${
+                                  isExpired
+                                    ? "bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-500/30 animate-pulse"
+                                    : isDue7d
+                                    ? "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30"
+                                    : isDue30d
+                                    ? "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30"
+                                    : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
+                                }`}>
+                                  {isExpired
+                                    ? `Expired ${Math.abs(item.daysRemaining)}d ago`
+                                    : item.daysRemaining === 0
+                                    ? "Expires Today"
+                                    : `${item.daysRemaining}d Left`}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Direct Action Triggers */}
+                            <div className="flex items-center gap-1">
+                              {item.vehicle && item.rawDocType === "INSURANCE" && (
+                                <AppButton
+                                  size="sm"
+                                  variant="primary"
+                                  onClick={() => handleOpenVehiclePolicyRenewModal(item.vehicle!)}
+                                  className="h-7 text-xs px-2.5 font-semibold gap-1"
+                                >
+                                  <RotateCcw className="h-3 w-3" />
+                                  <span>Renew Policy</span>
+                                </AppButton>
+                              )}
+
+                              {item.vehicle && item.rawDocType === "PUC" && (
+                                <AppButton
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleOpenVehiclePucRenewModal(item.vehicle!)}
+                                  className="h-7 text-xs px-2.5 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30 border-amber-500/30 font-semibold gap-1"
+                                >
+                                  <Wind className="h-3 w-3" />
+                                  <span>Renew PUC</span>
+                                </AppButton>
+                              )}
+
+                              {item.vehicle && (item.rawDocType === "FITNESS" || item.rawDocType === "RC") && (
+                                <AppButton
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleOpenVehicleUnifiedRenewalsModal(item.vehicle!)}
+                                  className="h-7 text-xs px-2.5 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950/30 border-purple-500/30 font-semibold gap-1"
+                                >
+                                  <ShieldCheck className="h-3 w-3" />
+                                  <span>Timeline</span>
+                                </AppButton>
+                              )}
+
+                              {item.vehicle && (
+                                <AppButton
+                                  size="sm"
+                                  variant="ghost"
+                                  disabled={sendingReminderId === item.id}
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    if (!item.vehicle) return;
+                                    try {
+                                      setSendingReminderId(item.id);
+                                      const res = await sendVehicleComplianceExpiryReminderAction(
+                                        item.vehicle.id,
+                                        item.docType,
+                                        item.expiryDate
+                                      );
+                                      if (res.success) {
+                                        toast.success(res.message || `Expiry email queued for ${item.docType}`);
+                                      } else {
+                                        toast.error(res.error || "Failed to dispatch reminder");
+                                      }
+                                    } catch (err: any) {
+                                      toast.error(err.message || "Failed to dispatch reminder");
+                                    } finally {
+                                      setSendingReminderId(null);
+                                    }
+                                  }}
+                                  className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                                  title="Send Email Expiry Reminder"
+                                >
+                                  <Mail className="h-3.5 w-3.5" />
+                                </AppButton>
+                              )}
+
+                              {item.driver && (
+                                <AppButton
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setViewingDriver(item.driver!)}
+                                  className="h-7 text-xs px-2.5 font-semibold"
+                                >
+                                  Inspect
+                                </AppButton>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       );
                     })}
                   </div>
-
-                  <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
-                    <span className="flex items-center gap-1.5">
-                      <span className="h-2.5 w-2.5 rounded-full bg-surface0 inline-block shadow-xs"></span>
-                      <span className="font-medium text-foreground">Authorized Workshop Job Cards</span>
-                    </span>
-                    <span>Total Aggregate Spend: <strong className="text-foreground">₹{fleetReportsData.totalMaintenanceSpend.toLocaleString("en-IN")}</strong></span>
-                  </div>
-                </div>
-              </AppCardContent>
-            </AppCard>
-
-            {/* Top Workshop Partners Leaderboard (1 Col) */}
-            <AppCard className="border-border shadow-xs overflow-hidden">
-              <AppCardHeader className="bg-surface/50 pb-3 border-b border-border/50 flex flex-row items-center justify-between">
-                <AppCardTitle className="text-sm font-bold flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-theme-btn-primary" />
-                  <span>Workshop Partners</span>
-                </AppCardTitle>
-                <AppButton
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => router.push("/vehicle/vendors")}
-                  className="text-xs h-7 px-2 font-semibold text-theme-btn-primary"
-                >
-                  All Vendors ({insuranceVendors.length})
-                </AppButton>
-              </AppCardHeader>
-              <AppCardContent className="p-0">
-                {topWorkshops.length === 0 ? (
-                  <div className="p-8 text-center text-xs text-muted-foreground">
-                    <Building2 className="h-8 w-8 mx-auto mb-2 opacity-40" />
-                    <span>No workshop billing data logged yet.</span>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-border/60">
-                    {topWorkshops.map((partner, idx) => (
-                      <div
-                        key={idx}
-                        onClick={() => router.push("/vehicle/vendors")}
-                        className="p-3.5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group text-xs"
-                      >
-                        <div className="min-w-0 pr-2">
-                          <p className="font-bold text-foreground group-hover:text-theme-btn-primary transition-colors truncate">
-                            {partner.name}
-                          </p>
-                          <p className="text-[11px] text-muted-foreground mt-0.5">
-                            {partner.count} service {partner.count === 1 ? "event" : "events"} completed
-                          </p>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <span className="font-extrabold text-foreground text-xs block">
-                            ₹{partner.spend.toLocaleString()}
-                          </span>
-                          <span className="text-[10px] text-emerald-600 font-semibold">
-                            Authorized
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
                 )}
               </AppCardContent>
             </AppCard>
 
-          </div>
-
-          {/* 6. TIER 1: LIVE DISPATCHES & FLEET DEPOT SNAPSHOT (2 BALANCED COLUMNS) */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            
-            {/* Left: Active Dispatches & Trips */}
+            {/* 3. VEHICLE-WISE EXPENSES & MAINTENANCE MATRIX */}
             <AppCard className="border-border shadow-xs overflow-hidden">
-              <AppCardHeader className="bg-surface/50 pb-3 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                <div>
-                  <AppCardTitle className="text-sm font-bold flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-theme-btn-primary" />
-                    <span>Real-Time Dispatches & Transit Routes</span>
-                  </AppCardTitle>
-                </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  {/* Status Pills */}
-                  <div className="flex items-center p-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg border border-border text-[11px]">
-                    {(["ALL", "IN_PROGRESS", "PLANNED"] as const).map((st) => (
-                      <button
-                        key={st}
-                        type="button"
-                        onClick={() => setDashboardTripFilter(st)}
-                        className={`px-2.5 py-1 font-bold rounded-md transition-all cursor-pointer ${
-                          dashboardTripFilter === st
-                            ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs font-bold"
-                            : "text-slate-600 dark:text-slate-400 hover:text-foreground hover:bg-surface/50"
-                        }`}
-                      >
-                        {st === "ALL" ? "All" : st === "IN_PROGRESS" ? "On Route" : "Planned"}
-                      </button>
-                    ))}
-                  </div>
-
-                  {canDispatchTrips && (
-                    <AppButton
-                      variant="primary"
-                      size="sm"
-                      onClick={() => setIsDispatchTripOpen(true)}
-                      className="text-xs h-7 px-2.5 font-semibold gap-1"
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                      <span>Dispatch</span>
-                    </AppButton>
-                  )}
-                  <AppButton
-                    variant="outline"
-                    size="sm"
-                    onClick={() => router.push("/vehicle/trips")}
-                    className="text-xs font-bold rounded-lg border-border hover:bg-surface-hover h-7 px-2.5"
-                  >
-                    View All ({trips.length})
-                  </AppButton>
-                </div>
-              </AppCardHeader>
-              <AppCardContent className="p-0">
-                {filteredDashboardTrips.length === 0 ? (
-                  <div className="p-10 text-center text-xs text-muted-foreground">
-                    <div className="flex flex-col items-center gap-2.5">
-                      <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 border border-border/60">
-                        <MapPin className="h-5 w-5" />
-                      </div>
-                      <span>No transit dispatches matching current filter.</span>
-                      {canDispatchTrips && (
-                        <AppButton
-                          variant="primary"
-                          size="sm"
-                          onClick={() => setIsDispatchTripOpen(true)}
-                          className="h-8 px-4 text-xs font-semibold rounded-lg"
-                        >
-                          Dispatch First Trip
-                        </AppButton>
-                      )}
+              <AppCardHeader className="bg-surface/50 pb-3 border-b border-border/60">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-8 w-8 rounded-xl bg-theme-btn-primary/10 text-theme-btn-primary flex items-center justify-center border border-theme-btn-primary/20 shrink-0">
+                      <Receipt className="h-4 w-4" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <AppCardTitle className="text-sm font-bold flex items-center gap-2">
+                        <span>Vehicle Maintenance & Expenses</span>
+                      </AppCardTitle>
+                      <span className="px-2 py-0.5 rounded-full bg-theme-btn-primary/10 text-theme-btn-primary text-[10px] font-bold border border-theme-btn-primary/20">
+                        ₹{fleetReportsData.totalMaintenanceSpend.toLocaleString("en-IN")} Total Spend
+                      </span>
                     </div>
                   </div>
+
+                  {/* Search & Sort Controls */}
+                  <div className="flex items-center gap-2 flex-wrap self-start lg:self-auto">
+                    <div className="relative min-w-[160px] sm:w-48">
+                      <Search className="h-3 w-3 absolute left-2.5 top-2 text-muted-foreground pointer-events-none" />
+                      <input
+                        type="text"
+                        placeholder="Search vehicle or driver..."
+                        value={dashboardExpenseSearch}
+                        onChange={(e) => setDashboardExpenseSearch(e.target.value)}
+                        className="w-full pl-7 pr-6 py-1 text-xs rounded-lg border border-border/80 bg-surface text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-theme-btn-primary"
+                      />
+                      {dashboardExpenseSearch && (
+                        <button
+                          type="button"
+                          onClick={() => setDashboardExpenseSearch("")}
+                          className="absolute right-2 top-1.5 text-muted-foreground hover:text-foreground cursor-pointer"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
+
+                    <select
+                      value={dashboardExpenseSort}
+                      onChange={(e) => setDashboardExpenseSort(e.target.value as any)}
+                      className="text-xs py-1 px-2.5 rounded-lg border border-border/80 bg-surface text-foreground font-semibold focus:outline-none focus:border-theme-btn-primary cursor-pointer shadow-2xs"
+                    >
+                      <option value="SPEND_DESC">Highest Spend</option>
+                      <option value="SPEND_ASC">Lowest Spend</option>
+                      <option value="SERVICES_DESC">Most Services</option>
+                      <option value="KM_DESC">Highest Mileage</option>
+                      <option value="COST_PER_KM_DESC">Running Cost</option>
+                    </select>
+
+                    <AppButton
+                      size="sm"
+                      variant="outline"
+                      onClick={() => router.push("/vehicle/reports")}
+                      className="text-xs h-7 px-2.5 font-semibold gap-1"
+                    >
+                      <span>Ledger</span>
+                      <ArrowRight className="h-3 w-3" />
+                    </AppButton>
+                  </div>
+                </div>
+
+                {/* Expense Summary KPI Strip */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-3 mt-1">
+                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-border/70">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">Total Spend</span>
+                    <span className="text-base font-extrabold text-foreground mt-0.5 block">
+                      ₹{fleetReportsData.totalMaintenanceSpend.toLocaleString("en-IN")}
+                    </span>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-border/70">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">Avg / Vehicle</span>
+                    <span className="text-base font-extrabold text-foreground mt-0.5 block">
+                      ₹{vehicles.length > 0 ? Math.round(fleetReportsData.totalMaintenanceSpend / vehicles.length).toLocaleString("en-IN") : "0"}
+                    </span>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-border/70">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">Total Services</span>
+                    <span className="text-base font-extrabold text-foreground mt-0.5 block">
+                      {maintenance.length}
+                    </span>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-border/70">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">Cost / km</span>
+                    <span className="text-base font-extrabold text-foreground mt-0.5 block">
+                      {fleetReportsData.totalOdometerKm > 0 && fleetReportsData.totalMaintenanceSpend > 0
+                        ? `₹${(fleetReportsData.totalMaintenanceSpend / fleetReportsData.totalOdometerKm).toFixed(2)} / km`
+                        : "₹0.00 / km"}
+                    </span>
+                  </div>
+                </div>
+              </AppCardHeader>
+
+              <AppCardContent className="p-0">
+                {filteredVehicleExpenses.length === 0 ? (
+                  <div className="p-8 text-center text-xs text-muted-foreground">
+                    <Car className="h-7 w-7 mx-auto mb-2 opacity-40" />
+                    <span>No vehicle expense records found.</span>
+                  </div>
                 ) : (
-                  <div className="divide-y divide-border/60">
-                    {filteredDashboardTrips.slice(0, 5).map(trp => (
-                      <div 
-                        key={trp.id} 
-                        onClick={() => setViewingTrip(trp)}
-                        className="p-3.5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-xs cursor-pointer group"
-                      >
-                        <div className="space-y-1.5 min-w-0 pr-2 flex-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {renderHsrpPlate(trp.vehicle_reg)}
-                            <span className="text-foreground font-semibold group-hover:text-theme-btn-primary transition-colors truncate">
-                              {trp.traveler_name}
+                  <div className="max-h-[460px] overflow-y-auto">
+                    {/* Frozen / Sticky Table Column Header */}
+                    <div className="sticky top-0 z-10 bg-slate-50 dark:bg-slate-800 border-b border-border px-3.5 py-2.5 hidden lg:grid grid-cols-12 gap-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground select-none shadow-2xs items-center">
+                      <div className="col-span-3">Vehicle & Driver</div>
+                      <div className="col-span-2 text-center">Total Spend</div>
+                      <div className="col-span-1 text-center">Services</div>
+                      <div className="col-span-1 text-center">Cost / KM</div>
+                      <div className="col-span-2 text-center">Statutory Expiry</div>
+                      <div className="col-span-3 text-right">Service & Actions</div>
+                    </div>
+
+                    <div className="divide-y divide-border/60">
+                      {filteredVehicleExpenses.map((item) => (
+                        <div
+                          key={item.id}
+                          onClick={() => setViewingVehicle(item.vehicle)}
+                          className="p-3.5 flex flex-col lg:grid lg:grid-cols-12 gap-3 items-start lg:items-center hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors text-xs cursor-pointer group"
+                        >
+                          {/* Column 1: Vehicle Identity & Driver (3 Cols) */}
+                          <div className="flex items-center gap-2.5 min-w-0 lg:col-span-3 w-full">
+                            <div className="shrink-0">
+                              {renderHsrpPlate(item.reg)}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5 font-semibold text-foreground group-hover:text-theme-btn-primary transition-colors truncate">
+                                <VehicleBrandLogo brand={item.make} size={15} />
+                                <span className="truncate">{item.make} {item.model}</span>
+                                {item.fuel_type && (
+                                  <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded-full border bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/25 shrink-0">
+                                    {item.fuel_type}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1.5 truncate">
+                                <span className="truncate">{item.assignedDriver ? item.assignedDriver : "Unassigned"}</span>
+                                <span>•</span>
+                                <span className="shrink-0">{item.odometer_km.toLocaleString()} km</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Column 2: Total Spend (2 Cols) */}
+                          <div className="flex flex-col items-start lg:items-center lg:col-span-2 w-full">
+                            <span className="lg:hidden text-[10px] font-bold text-muted-foreground uppercase">Total Spend</span>
+                            <span className="font-extrabold text-foreground text-sm whitespace-nowrap">
+                              ₹{item.totalSpend.toLocaleString("en-IN")}
                             </span>
-                            {trp.driver_name && (
-                              <span className="text-[10px] text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-border/60 px-2 py-0.5 rounded-full font-medium">
-                                Driver: {trp.driver_name}
+                            {/* Visual Spend Share Bar */}
+                            <div className="w-20 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden mt-1 border border-border/50">
+                              <div
+                                style={{ width: `${Math.max(5, item.spendSharePct)}%` }}
+                                className="h-full bg-theme-btn-primary rounded-full"
+                                title={`${item.spendSharePct}% of total fleet maintenance spend`}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Column 3: Services (1 Col) */}
+                          <div className="flex flex-col items-start lg:items-center lg:col-span-1 w-full">
+                            <span className="lg:hidden text-[10px] font-bold text-muted-foreground uppercase">Services</span>
+                            <span className="font-semibold text-foreground text-xs whitespace-nowrap">
+                              {item.jobCount} {item.jobCount === 1 ? "Service" : "Services"}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                              {item.jobCount > 0 ? `Avg ₹${Math.round(item.avgSpend / 1000)}k` : "No bills"}
+                            </span>
+                          </div>
+
+                          {/* Column 4: Cost / km (1 Col) */}
+                          <div className="flex flex-col items-start lg:items-center lg:col-span-1 w-full">
+                            <span className="lg:hidden text-[10px] font-bold text-muted-foreground uppercase">Cost / km</span>
+                            <span className="font-mono font-semibold text-foreground text-xs whitespace-nowrap">
+                              ₹{item.costPerKm}/km
+                            </span>
+                          </div>
+
+                          {/* Column 5: Compliance / Statutory Expiries (2 Cols) */}
+                          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-start lg:justify-center gap-1.5 lg:col-span-2 w-full">
+                            {item.insuranceExpiry && (
+                              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-border/60 text-muted-foreground whitespace-nowrap">
+                                Ins: {item.insuranceExpiry}
                               </span>
+                            )}
+                            {item.pucExpiry && (
+                              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-border/60 text-muted-foreground whitespace-nowrap">
+                                PUC: {item.pucExpiry}
+                              </span>
+                            )}
+                            {!item.insuranceExpiry && !item.pucExpiry && (
+                              <span className="text-[10px] text-muted-foreground/60 italic">—</span>
                             )}
                           </div>
 
-                          {/* Route Flow Visualizer */}
-                          <div className="text-muted-foreground text-xs flex items-center gap-2">
-                            <span className="font-medium text-foreground truncate max-w-[120px]">{trp.origin}</span>
-                            <div className="flex items-center text-theme-btn-primary shrink-0">
-                              <span className="h-0.5 w-6 bg-theme-btn-primary/40 inline-block"></span>
-                              <Navigation className="h-3 w-3 inline text-theme-btn-primary -ml-1 -rotate-45" />
+                          {/* Column 6: Last Service & Actions (3 Cols) */}
+                          <div className="flex items-center gap-2.5 justify-between lg:justify-end lg:col-span-3 w-full shrink-0">
+                            <div className="text-right whitespace-nowrap">
+                              <div className="text-[11px] text-muted-foreground">
+                                {item.lastServiceDate ? (
+                                  <span>Last: <strong className="text-foreground">{item.lastServiceDate}</strong></span>
+                                ) : (
+                                  <span className="text-[10px] text-muted-foreground italic">No service</span>
+                                )}
+                              </div>
                             </div>
-                            <span className="font-medium text-foreground truncate max-w-[120px]">{trp.destination}</span>
+
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <AppButton
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenVehicleUnifiedRenewalsModal(item.vehicle);
+                                }}
+                                className="h-7 text-xs px-2.5 font-semibold shrink-0"
+                              >
+                                Timeline
+                              </AppButton>
+                              {canManageMaintenance && (
+                                <AppButton
+                                  variant="primary"
+                                  size="icon-sm"
+                                  title="Log Service Job Card"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    resetMaintenanceForm();
+                                    setNewMaintVehicleId(item.id);
+                                    setIsAddMaintenanceOpen(true);
+                                  }}
+                                  className="h-7 w-7 text-theme-btn-primary-text shrink-0"
+                                >
+                                  <Wrench className="h-3.5 w-3.5" />
+                                </AppButton>
+                              )}
+                            </div>
                           </div>
                         </div>
-
-                        <div className="flex items-center gap-2 shrink-0">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
-                            trp.status === "IN_PROGRESS"
-                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                              : trp.status === "COMPLETED"
-                              ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
-                              : trp.status === "CANCELLED"
-                              ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
-                              : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
-                          }`}>
-                            {trp.status === "IN_PROGRESS" ? "On Route" : trp.status}
-                          </span>
-                          {trp.status === "PLANNED" && canDispatchTrips && (
-                            <AppButton
-                              variant="outline"
-                              size="icon-sm"
-                              title="Start Route"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleUpdateTripStatus(trp.id, "IN_PROGRESS");
-                              }}
-                              className="h-7 w-7 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
-                            >
-                              <Play className="h-3.5 w-3.5" />
-                            </AppButton>
-                          )}
-                          {trp.status === "IN_PROGRESS" && canDispatchTrips && (
-                            <AppButton
-                              variant="outline"
-                              size="icon-sm"
-                              title="Complete Trip"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleUpdateTripStatus(trp.id, "COMPLETED");
-                              }}
-                              className="h-7 w-7 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40"
-                            >
-                              <Check className="h-3.5 w-3.5" />
-                            </AppButton>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 )}
               </AppCardContent>
             </AppCard>
 
-            {/* Right: Fleet Depot Snapshot & Vehicles Ready */}
+            {/* 4. KPI CARDS */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              
+              {/* KPI 1: Fleet Utilization */}
+              <div
+                onClick={() => {
+                  setSelectedStatus("IN_SERVICE");
+                  router.push("/vehicle/inventory");
+                }}
+                className="p-5 rounded-2xl bg-surface border border-border/80 hover:border-theme-btn-primary/60 transition-all hover:shadow-md cursor-pointer group flex flex-col justify-between space-y-4"
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                      Utilization Rate
+                    </span>
+                    <div className="flex items-baseline gap-2 mt-1">
+                      <span className="text-3xl font-extrabold text-foreground group-hover:text-theme-btn-primary transition-colors">
+                        {utilizationRate}%
+                      </span>
+                      <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center">
+                        <TrendingUp className="h-3 w-3 mr-0.5" /> Optimal
+                      </span>
+                    </div>
+                  </div>
+                  {/* SVG Radial Gauge */}
+                  <div className="relative h-12 w-12 flex items-center justify-center">
+                    <svg className="h-12 w-12 -rotate-90" viewBox="0 0 36 36">
+                      <path
+                        className="text-muted/40"
+                        strokeWidth="3.5"
+                        stroke="currentColor"
+                        fill="none"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+                      <path
+                        className="text-theme-btn-primary transition-all duration-700"
+                        strokeDasharray={`${utilizationRate}, 100`}
+                        strokeWidth="3.5"
+                        strokeLinecap="round"
+                        stroke="currentColor"
+                        fill="none"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+                    </svg>
+                    <Car className="h-4 w-4 absolute text-theme-btn-primary" />
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-border/60 flex items-center justify-between text-[11px] text-muted-foreground">
+                  <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>{stats.onRouteVehicles} on route</span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-blue-500"></span>{stats.availableVehicles} ready</span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-amber-500"></span>{stats.inMaintenanceVehicles} workshop</span>
+                </div>
+              </div>
+
+              {/* KPI 2: Maintenance Spend */}
+              <div
+                onClick={() => router.push("/vehicle/maintenance")}
+                className="p-5 rounded-2xl bg-surface border border-border/80 hover:border-amber-500/60 transition-all hover:shadow-md cursor-pointer group flex flex-col justify-between space-y-4"
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                      Maintenance Spend
+                    </span>
+                    <div className="flex items-baseline gap-2 mt-1">
+                      <span className="text-3xl font-extrabold text-foreground group-hover:text-amber-600 transition-colors">
+                        ₹{fleetReportsData.totalMaintenanceSpend.toLocaleString("en-IN")}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center border border-amber-500/20 shadow-2xs">
+                    <Receipt className="h-5 w-5" />
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-border/60 flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-[11px] text-amber-700 dark:text-amber-400 font-semibold">
+                    <Wrench className="h-3 w-3" />
+                    <span>{maintenance.length} services</span>
+                  </div>
+                  <span className="text-[10px] text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-border/60 px-2 py-0.5 rounded font-medium">
+                    {maintenance.length > 0 ? `Avg ₹${Math.round(fleetReportsData.totalMaintenanceSpend / maintenance.length).toLocaleString()}` : "No bills"}
+                  </span>
+                </div>
+              </div>
+
+              {/* KPI 3: Total Mileage */}
+              <div
+                onClick={() => router.push("/vehicle/trips")}
+                className="p-5 rounded-2xl bg-surface border border-border/80 hover:border-blue-500/60 transition-all hover:shadow-md cursor-pointer group flex flex-col justify-between space-y-4"
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                      Total Mileage
+                    </span>
+                    <div className="flex items-baseline gap-1 mt-1">
+                      <span className="text-3xl font-extrabold text-foreground group-hover:text-blue-600 transition-colors">
+                        {fleetReportsData.totalOdometerKm.toLocaleString("en-IN")}
+                      </span>
+                      <span className="text-xs font-bold text-muted-foreground">km</span>
+                    </div>
+                  </div>
+                  <div className="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center border border-blue-500/20 shadow-2xs">
+                    <Gauge className="h-5 w-5" />
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-border/60 flex items-center justify-between text-[11px] text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <MapPin className="h-3 w-3 text-blue-500" />
+                    <span>{fleetReportsData.avgOdometer.toLocaleString()} km avg/unit</span>
+                  </span>
+                  <span className="text-theme-btn-primary font-semibold group-hover:underline">
+                    Trips →
+                  </span>
+                </div>
+              </div>
+
+              {/* KPI 4: Compliance Score */}
+              <div
+                onClick={() => router.push("/vehicle/alerts")}
+                className="p-5 rounded-2xl bg-surface border border-border/80 hover:border-emerald-500/60 transition-all hover:shadow-md cursor-pointer group flex flex-col justify-between space-y-4"
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                      Compliance Score
+                    </span>
+                    <div className="flex items-baseline gap-2 mt-1">
+                      <span className="text-3xl font-extrabold text-foreground group-hover:text-emerald-600 transition-colors">
+                        {complianceHealthScore}%
+                      </span>
+                      <span className={`text-xs font-semibold ${complianceHealthScore >= 90 ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
+                        {complianceHealthScore >= 90 ? "Healthy" : "Action Needed"}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center border border-emerald-500/20 shadow-2xs">
+                    <ShieldCheck className="h-5 w-5" />
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-border/60 flex items-center justify-between text-[11px] text-muted-foreground">
+                  <span>{vehicles.length} Vehicles</span>
+                  <span>•</span>
+                  <span>{drivers.length} Drivers</span>
+                </div>
+              </div>
+
+            </div>
+
+            {/* 5. FUEL DISTRIBUTION */}
             <AppCard className="border-border shadow-xs overflow-hidden">
-              <AppCardHeader className="bg-surface/50 pb-3 border-b border-border/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                <div>
+              <AppCardHeader className="bg-surface/50 pb-3 border-b border-border/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                <AppCardTitle className="text-sm font-bold flex items-center gap-2">
+                  <Fuel className="h-4 w-4 text-theme-btn-primary" />
+                  <span>Fuel Distribution</span>
+                </AppCardTitle>
+                {dashboardFuelFilter && (
+                  <button
+                    type="button"
+                    onClick={() => setDashboardFuelFilter(null)}
+                    className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-foreground hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer border border-border"
+                  >
+                    <span>Filter: {dashboardFuelFilter}</span>
+                    <X className="h-3 w-3 text-muted-foreground" />
+                  </button>
+                )}
+              </AppCardHeader>
+              <AppCardContent className="p-5 space-y-4">
+                {/* Segmented Stacked Progress Bar */}
+                <div className="w-full h-3 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden flex shadow-inner border border-border/60">
+                  {fuelMixBreakdown.petrol.pct > 0 && (
+                    <div
+                      style={{ width: `${fuelMixBreakdown.petrol.pct}%` }}
+                      className="h-full bg-blue-500 transition-all duration-500 hover:opacity-90"
+                      title={`Petrol: ${fuelMixBreakdown.petrol.count} (${fuelMixBreakdown.petrol.pct}%)`}
+                    />
+                  )}
+                  {fuelMixBreakdown.diesel.pct > 0 && (
+                    <div
+                      style={{ width: `${fuelMixBreakdown.diesel.pct}%` }}
+                      className="h-full bg-amber-500 transition-all duration-500 hover:opacity-90"
+                      title={`Diesel: ${fuelMixBreakdown.diesel.count} (${fuelMixBreakdown.diesel.pct}%)`}
+                    />
+                  )}
+                  {fuelMixBreakdown.cng.pct > 0 && (
+                    <div
+                      style={{ width: `${fuelMixBreakdown.cng.pct}%` }}
+                      className="h-full bg-emerald-500 transition-all duration-500 hover:opacity-90"
+                      title={`CNG: ${fuelMixBreakdown.cng.count} (${fuelMixBreakdown.cng.pct}%)`}
+                    />
+                  )}
+                  {fuelMixBreakdown.electric.pct > 0 && (
+                    <div
+                      style={{ width: `${fuelMixBreakdown.electric.pct}%` }}
+                      className="h-full bg-teal-500 transition-all duration-500 hover:opacity-90"
+                      title={`Electric: ${fuelMixBreakdown.electric.count} (${fuelMixBreakdown.electric.pct}%)`}
+                    />
+                  )}
+                  {fuelMixBreakdown.other.pct > 0 && (
+                    <div
+                      style={{ width: `${fuelMixBreakdown.other.pct}%` }}
+                      className="h-full bg-purple-500 transition-all duration-500 hover:opacity-90"
+                      title={`Other / Hybrid: ${fuelMixBreakdown.other.count} (${fuelMixBreakdown.other.pct}%)`}
+                    />
+                  )}
+                </div>
+
+                {/* Clickable Fuel Chips */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setDashboardFuelFilter(dashboardFuelFilter === "PETROL" ? null : "PETROL")}
+                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+                      dashboardFuelFilter === "PETROL"
+                        ? "bg-blue-500/15 border-blue-500 text-blue-700 dark:text-blue-300 ring-2 ring-blue-500/30 shadow-xs"
+                        : "bg-surface border-border/80 hover:border-blue-500/40 hover:bg-blue-500/5"
+                    }`}
+                  >
+                    <div>
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full bg-blue-500 inline-block"></span>
+                        Petrol
+                      </span>
+                      <p className="text-base font-extrabold text-foreground mt-0.5">
+                        {fuelMixBreakdown.petrol.count} <span className="text-xs font-medium text-muted-foreground">({fuelMixBreakdown.petrol.pct}%)</span>
+                      </p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDashboardFuelFilter(dashboardFuelFilter === "DIESEL" ? null : "DIESEL")}
+                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+                      dashboardFuelFilter === "DIESEL"
+                        ? "bg-amber-500/15 border-amber-500 text-amber-700 dark:text-amber-300 ring-2 ring-amber-500/30 shadow-xs"
+                        : "bg-surface border-border/80 hover:border-amber-500/40 hover:bg-amber-500/5"
+                    }`}
+                  >
+                    <div>
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full bg-amber-500 inline-block"></span>
+                        Diesel
+                      </span>
+                      <p className="text-base font-extrabold text-foreground mt-0.5">
+                        {fuelMixBreakdown.diesel.count} <span className="text-xs font-medium text-muted-foreground">({fuelMixBreakdown.diesel.pct}%)</span>
+                      </p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDashboardFuelFilter(dashboardFuelFilter === "CNG" ? null : "CNG")}
+                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+                      dashboardFuelFilter === "CNG"
+                        ? "bg-emerald-500/15 border-emerald-500 text-emerald-700 dark:text-emerald-300 ring-2 ring-emerald-500/30 shadow-xs"
+                        : "bg-surface border-border/80 hover:border-emerald-500/40 hover:bg-emerald-500/5"
+                    }`}
+                  >
+                    <div>
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block"></span>
+                        CNG
+                      </span>
+                      <p className="text-base font-extrabold text-foreground mt-0.5">
+                        {fuelMixBreakdown.cng.count} <span className="text-xs font-medium text-muted-foreground">({fuelMixBreakdown.cng.pct}%)</span>
+                      </p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDashboardFuelFilter(dashboardFuelFilter === "ELECTRIC" ? null : "ELECTRIC")}
+                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+                      dashboardFuelFilter === "ELECTRIC"
+                        ? "bg-teal-500/15 border-teal-500 text-teal-700 dark:text-teal-300 ring-2 ring-teal-500/30 shadow-xs"
+                        : "bg-surface border-border/80 hover:border-teal-500/40 hover:bg-teal-500/5"
+                    }`}
+                  >
+                    <div>
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full bg-teal-500 inline-block"></span>
+                        Electric
+                      </span>
+                      <p className="text-base font-extrabold text-foreground mt-0.5">
+                        {fuelMixBreakdown.electric.count} <span className="text-xs font-medium text-muted-foreground">({fuelMixBreakdown.electric.pct}%)</span>
+                      </p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDashboardFuelFilter(dashboardFuelFilter === "OTHER" ? null : "OTHER")}
+                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between col-span-2 sm:col-span-4 lg:col-span-1 ${
+                      dashboardFuelFilter === "OTHER"
+                        ? "bg-purple-500/15 border-purple-500 text-purple-700 dark:text-purple-300 ring-2 ring-purple-500/30 shadow-xs"
+                        : "bg-surface border-border/80 hover:border-purple-500/40 hover:bg-purple-500/5"
+                    }`}
+                  >
+                    <div>
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full bg-purple-500 inline-block"></span>
+                        Other / Hybrid
+                      </span>
+                      <p className="text-base font-extrabold text-foreground mt-0.5">
+                        {fuelMixBreakdown.other.count} <span className="text-xs font-medium text-muted-foreground">({fuelMixBreakdown.other.pct}%)</span>
+                      </p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </button>
+                </div>
+              </AppCardContent>
+            </AppCard>
+
+            {/* 6. MAINTENANCE TREND & WORKSHOP PARTNERS */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              
+              {/* 6-Month Expenditure Trend */}
+              <AppCard className="lg:col-span-2 border-border shadow-xs overflow-hidden">
+                <AppCardHeader className="bg-surface/50 pb-3 border-b border-border/60 flex flex-row items-center justify-between">
+                  <AppCardTitle className="text-sm font-bold flex items-center gap-2">
+                    <LineChart className="h-4 w-4 text-theme-btn-primary" />
+                    <span>Maintenance Trajectory (6M)</span>
+                  </AppCardTitle>
+                  <AppButton
+                    size="sm"
+                    variant="outline"
+                    onClick={() => router.push("/vehicle/reports")}
+                    className="text-xs h-7 px-2.5 font-semibold"
+                  >
+                    <span>Ledger</span>
+                    <ArrowRight className="h-3 w-3 ml-1" />
+                  </AppButton>
+                </AppCardHeader>
+                <AppCardContent className="p-5">
+                  <div className="space-y-4">
+                    <div className="h-48 w-full flex items-end justify-between gap-3 pt-4 pb-2 px-3 border-b border-border/60">
+                      {monthlySpendHistory.data.map((item, idx) => {
+                        const heightPct = Math.max(12, Math.round((item.spend / monthlySpendHistory.maxSpend) * 100));
+                        return (
+                          <div key={idx} className="flex-1 flex flex-col items-center gap-2 h-full group min-w-0">
+                            <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 group-hover:bg-theme-btn-primary/10 group-hover:text-theme-btn-primary border border-border/60 transition-colors whitespace-nowrap">
+                              {item.spend > 0 ? `₹${(item.spend / 1000).toFixed(1)}k` : "₹0"}
+                            </span>
+                            <div className="flex-1 w-full max-w-[44px] bg-slate-100 dark:bg-slate-800/80 rounded-t-xl overflow-hidden flex flex-col justify-end p-0.5 border border-slate-200/60 dark:border-slate-700/60 shadow-inner">
+                              <div
+                                style={{ height: `${heightPct}%` }}
+                                className="w-full bg-theme-btn-primary group-hover:opacity-90 transition-all duration-500 rounded-t-lg shadow-2xs"
+                                title={`${item.month} ${item.year}: ₹${item.spend.toLocaleString()} (${item.count} services)`}
+                              />
+                            </div>
+                            <span className="text-xs font-semibold text-foreground">
+                              {item.month}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full bg-theme-btn-primary inline-block"></span>
+                        <span className="font-medium text-foreground">Authorized Services</span>
+                      </span>
+                      <span>Total: <strong className="text-foreground">₹{fleetReportsData.totalMaintenanceSpend.toLocaleString("en-IN")}</strong></span>
+                    </div>
+                  </div>
+                </AppCardContent>
+              </AppCard>
+
+              {/* Workshop Partners */}
+              <AppCard className="border-border shadow-xs overflow-hidden">
+                <AppCardHeader className="bg-surface/50 pb-3 border-b border-border/60 flex flex-row items-center justify-between">
+                  <AppCardTitle className="text-sm font-bold flex items-center gap-2">
+                    <Building2 className="h-4 w-4 text-theme-btn-primary" />
+                    <span>Workshop Partners</span>
+                  </AppCardTitle>
+                  <AppButton
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => router.push("/vehicle/vendors")}
+                    className="text-xs h-7 px-2 font-semibold text-theme-btn-primary"
+                  >
+                    All ({insuranceVendors.length})
+                  </AppButton>
+                </AppCardHeader>
+                <AppCardContent className="p-0">
+                  {topWorkshops.length === 0 ? (
+                    <div className="p-8 text-center text-xs text-muted-foreground">
+                      <Building2 className="h-7 w-7 mx-auto mb-2 opacity-40" />
+                      <span>No workshop partners logged.</span>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-border/60">
+                      {topWorkshops.map((partner, idx) => (
+                        <div
+                          key={idx}
+                          onClick={() => router.push("/vehicle/vendors")}
+                          className="p-3.5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group text-xs"
+                        >
+                          <div className="min-w-0 pr-2">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] font-bold text-muted-foreground">#{idx + 1}</span>
+                              <p className="font-semibold text-foreground group-hover:text-theme-btn-primary transition-colors truncate">
+                                {partner.name}
+                              </p>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground mt-0.5">
+                              {partner.count} {partner.count === 1 ? "service" : "services"}
+                            </p>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <span className="font-bold text-foreground text-xs block">
+                              ₹{partner.spend.toLocaleString()}
+                            </span>
+                            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                              Authorized
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </AppCardContent>
+              </AppCard>
+
+            </div>
+
+            {/* 7. LIVE DISPATCHES & FLEET AVAILABILITY */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              
+              {/* Left: Active Dispatches */}
+              <AppCard className="border-border shadow-xs overflow-hidden">
+                <AppCardHeader className="bg-surface/50 pb-3 border-b border-border/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                  <AppCardTitle className="text-sm font-bold flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-theme-btn-primary" />
+                    <span>Live Dispatches</span>
+                  </AppCardTitle>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center p-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg border border-border text-[11px]">
+                      {(["ALL", "IN_PROGRESS", "PLANNED"] as const).map((st) => (
+                        <button
+                          key={st}
+                          type="button"
+                          onClick={() => setDashboardTripFilter(st)}
+                          className={`px-2.5 py-1 font-semibold rounded-md transition-all cursor-pointer ${
+                            dashboardTripFilter === st
+                              ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs"
+                              : "text-muted-foreground hover:text-foreground hover:bg-surface/50"
+                          }`}
+                        >
+                          {st === "ALL" ? "All" : st === "IN_PROGRESS" ? "In Transit" : "Planned"}
+                        </button>
+                      ))}
+                    </div>
+
+                    {canDispatchTrips && (
+                      <AppButton
+                        variant="primary"
+                        size="sm"
+                        onClick={() => setIsDispatchTripOpen(true)}
+                        className="text-xs h-7 px-2.5 font-semibold gap-1"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        <span>Dispatch</span>
+                      </AppButton>
+                    )}
+                    <AppButton
+                      variant="outline"
+                      size="sm"
+                      onClick={() => router.push("/vehicle/trips")}
+                      className="text-xs font-semibold rounded-lg border-border hover:bg-surface-hover h-7 px-2.5"
+                    >
+                      All ({trips.length})
+                    </AppButton>
+                  </div>
+                </AppCardHeader>
+                <AppCardContent className="p-0">
+                  {filteredDashboardTrips.length === 0 ? (
+                    <div className="p-8 text-center text-xs text-muted-foreground">
+                      <div className="flex flex-col items-center gap-2.5">
+                        <MapPin className="h-6 w-6 text-muted-foreground/60" />
+                        <span>No active dispatches.</span>
+                        {canDispatchTrips && (
+                          <AppButton
+                            variant="primary"
+                            size="sm"
+                            onClick={() => setIsDispatchTripOpen(true)}
+                            className="h-7 px-3 text-xs font-semibold rounded-lg"
+                          >
+                            Dispatch Trip
+                          </AppButton>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-border/60">
+                      {filteredDashboardTrips.slice(0, 5).map(trp => (
+                        <div 
+                          key={trp.id} 
+                          onClick={() => setViewingTrip(trp)}
+                          className="p-3.5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-xs cursor-pointer group"
+                        >
+                          <div className="min-w-0 pr-2">
+                            <div className="flex items-center gap-2 font-semibold text-foreground group-hover:text-theme-btn-primary transition-colors flex-wrap">
+                              <span className="truncate">{trp.origin || "Depot"}</span>
+                              <ArrowRight className="h-3.5 w-3.5 text-theme-btn-primary shrink-0" />
+                              <span className="truncate">{trp.destination || "Destination"}</span>
+                            </div>
+                            <div className="text-[11px] text-muted-foreground mt-1 flex items-center gap-2 flex-wrap">
+                              {renderHsrpPlate(trp.vehicle_reg || trp.vehicle_id)}
+                              <span>•</span>
+                              <span>Driver: <strong>{trp.driver_name || "Assigned Driver"}</strong></span>
+                              {trp.traveler_name && (
+                                <>
+                                  <span>•</span>
+                                  <span>Passenger: {trp.traveler_name}</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
+                              trp.status === "IN_PROGRESS"
+                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                                : trp.status === "PLANNED"
+                                ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
+                                : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
+                            }`}>
+                              {trp.status === "IN_PROGRESS" ? "In Transit" : trp.status}
+                            </span>
+                            {trp.status === "IN_PROGRESS" && canDispatchTrips && (
+                              <AppButton
+                                variant="outline"
+                                size="icon-sm"
+                                title="Complete Trip"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleUpdateTripStatus(trp.id, "COMPLETED");
+                                }}
+                                className="h-7 w-7 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+                              >
+                                <Check className="h-3.5 w-3.5" />
+                              </AppButton>
+                            )}
+                            <AppButton
+                              variant="ghost"
+                              size="icon-sm"
+                              title="View Dispatch"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setViewingTrip(trp);
+                              }}
+                              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                            >
+                              <ChevronRight className="h-4 w-4" />
+                            </AppButton>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </AppCardContent>
+              </AppCard>
+
+              {/* Right: Fleet Availability */}
+              <AppCard className="border-border shadow-xs overflow-hidden">
+                <AppCardHeader className="bg-surface/50 pb-3 border-b border-border/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                   <AppCardTitle className="text-sm font-bold flex items-center gap-2">
                     <Car className="h-4 w-4 text-theme-btn-primary" />
-                    <span>Depot Fleet Availability</span>
+                    <span>Fleet Availability</span>
                   </AppCardTitle>
-                </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  {/* Vehicle Status Filter */}
-                  <div className="flex items-center p-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg border border-border text-[11px]">
-                    {(["ALL", "IN_STOCK", "MAINTENANCE"] as const).map((st) => (
-                      <button
-                        key={st}
-                        type="button"
-                        onClick={() => setDashboardVehicleFilter(st)}
-                        className={`px-2.5 py-1 font-bold rounded-md transition-all cursor-pointer ${
-                          dashboardVehicleFilter === st
-                            ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs font-bold"
-                            : "text-slate-600 dark:text-slate-400 hover:text-foreground hover:bg-surface/50"
-                        }`}
-                      >
-                        {st === "ALL" ? "All" : st === "IN_STOCK" ? "Available" : "Workshop"}
-                      </button>
-                    ))}
-                  </div>
-
-                  {canCreateVehicle && (
-                    <AppButton
-                      variant="primary"
-                      size="sm"
-                      onClick={() => router.push("/vehicle/register")}
-                      className="text-xs h-7 px-2.5 font-semibold gap-1"
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                      <span>Add Vehicle</span>
-                    </AppButton>
-                  )}
-                  <AppButton
-                    variant="outline"
-                    size="sm"
-                    onClick={() => router.push("/vehicle/inventory")}
-                    className="text-xs font-bold rounded-lg border-border hover:bg-surface-hover h-7 px-2.5"
-                  >
-                    Manage ({vehicles.length})
-                  </AppButton>
-                </div>
-              </AppCardHeader>
-              <AppCardContent className="p-0">
-                {filteredDashboardVehicles.length === 0 ? (
-                  <div className="p-10 text-center text-xs text-muted-foreground">
-                    <div className="flex flex-col items-center gap-2.5">
-                      <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 border border-border/60">
-                        <Car className="h-5 w-5" />
-                      </div>
-                      <span>No vehicles matching selected filter.</span>
-                      {canCreateVehicle && (
-                        <AppButton
-                          variant="primary"
-                          size="sm"
-                          onClick={() => router.push("/vehicle/register")}
-                          className="h-8 px-4 text-xs font-semibold rounded-lg"
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center p-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg border border-border text-[11px]">
+                      {(["ALL", "IN_STOCK", "MAINTENANCE"] as const).map((st) => (
+                        <button
+                          key={st}
+                          type="button"
+                          onClick={() => setDashboardVehicleFilter(st)}
+                          className={`px-2.5 py-1 font-semibold rounded-md transition-all cursor-pointer ${
+                            dashboardVehicleFilter === st
+                              ? "bg-theme-btn-primary text-theme-btn-primary-text shadow-xs"
+                              : "text-muted-foreground hover:text-foreground hover:bg-surface/50"
+                          }`}
                         >
-                          Register Vehicle
-                        </AppButton>
-                      )}
+                          {st === "ALL" ? "All" : st === "IN_STOCK" ? "Ready" : "Workshop"}
+                        </button>
+                      ))}
                     </div>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-border/60">
-                    {filteredDashboardVehicles.slice(0, 5).map(veh => (
-                      <div 
-                        key={veh.id} 
-                        onClick={() => setViewingVehicle(veh)}
-                        className="p-3.5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-xs cursor-pointer group"
+
+                    {canCreateVehicle && (
+                      <AppButton
+                        variant="primary"
+                        size="sm"
+                        onClick={() => router.push("/vehicle/register")}
+                        className="text-xs h-7 px-2.5 font-semibold gap-1"
                       >
-                        <div className="min-w-0 pr-2">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {renderHsrpPlate(veh.registration_number)}
-                            <div className="flex items-center gap-1.5 font-semibold text-foreground group-hover:text-theme-btn-primary transition-colors truncate">
-                              <VehicleBrandLogo brand={veh.make} size={16} />
-                              <span>{veh.make} {veh.model}</span>
-                            </div>
-                            {veh.fuel_type && (
-                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full border bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/25">
-                                {veh.fuel_type}
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-2">
-                            <span>{veh.assignedDriver ? `Driver: ${veh.assignedDriver.full_name}` : "Driver: Unassigned"}</span>
-                            <span>•</span>
-                            <span>{(veh.odometer_km || 0).toLocaleString()} km</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
-                            veh.status === "IN_STOCK"
-                              ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
-                              : veh.status === "IN_SERVICE"
-                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                              : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                          }`}>
-                            {veh.status === "IN_STOCK" ? "Available" : veh.status === "IN_SERVICE" ? "On Route" : veh.status}
-                          </span>
-                          <div className="flex items-center gap-1">
-                            <AppButton
-                              variant="outline"
-                              size="icon-sm"
-                              title="Renew Insurance Policy"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleOpenVehiclePolicyRenewModal(veh);
-                              }}
-                              className="h-7 w-7 text-theme-icon hover:bg-surface dark:hover:bg-cyan-950/40"
-                            >
-                              <RotateCcw className="h-3.5 w-3.5" />
-                            </AppButton>
-                            <AppButton
-                              variant="outline"
-                              size="icon-sm"
-                              title="Renew PUC Certificate"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleOpenVehiclePucRenewModal(veh);
-                              }}
-                              className="h-7 w-7 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40"
-                            >
-                              <Wind className="h-3.5 w-3.5" />
-                            </AppButton>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </AppCardContent>
-            </AppCard>
-
-          </div>
-
-          {/* 7. TIER 2: WORKSHOP SERVICE LOGS & DRIVER DIRECTORY (2 BALANCED COLUMNS) */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-            {/* Left: Workshop Service Logs & Maintenance */}
-            <AppCard className="border-border shadow-xs overflow-hidden">
-              <AppCardHeader className="bg-surface/50 pb-3 border-b border-border/50 flex flex-row items-center justify-between">
-                <div>
-                  <AppCardTitle className="text-sm font-bold flex items-center gap-2">
-                    <Wrench className="h-4 w-4 text-theme-btn-primary" />
-                    <span>Recent Workshop Services & Job Cards</span>
-                  </AppCardTitle>
-                </div>
-                <div className="flex items-center gap-2">
-                  {canManageMaintenance && (
+                        <Plus className="h-3.5 w-3.5" />
+                        <span>Add Vehicle</span>
+                      </AppButton>
+                    )}
                     <AppButton
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
-                      onClick={() => {
-                        resetMaintenanceForm();
-                        setIsAddMaintenanceOpen(true);
-                      }}
-                      className="text-xs h-7 px-2 font-bold text-theme-btn-primary hover:bg-theme-btn-primary/10"
+                      onClick={() => router.push("/vehicle/inventory")}
+                      className="text-xs font-semibold rounded-lg border-border hover:bg-surface-hover h-7 px-2.5"
                     >
-                      <Plus className="h-3.5 w-3.5 mr-1" />
-                      <span>Log Service</span>
+                      Manage ({vehicles.length})
                     </AppButton>
-                  )}
-                  <AppButton
-                    variant="outline"
-                    size="sm"
-                    onClick={() => router.push("/vehicle/maintenance")}
-                    className="text-xs font-bold rounded-lg border-border hover:bg-surface-hover h-7 px-2.5"
-                  >
-                    View All ({maintenance.length})
-                  </AppButton>
-                </div>
-              </AppCardHeader>
-              <AppCardContent className="p-0">
-                {maintenance.length === 0 ? (
-                  <div className="p-10 text-center text-xs text-muted-foreground">
-                    <div className="flex flex-col items-center gap-2.5">
-                      <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 border border-border/60">
-                        <Wrench className="h-5 w-5" />
-                      </div>
-                      <span>No maintenance job cards recorded yet.</span>
-                      {canManageMaintenance && (
-                        <AppButton
-                          variant="primary"
-                          size="sm"
-                          onClick={() => {
-                            resetMaintenanceForm();
-                            setIsAddMaintenanceOpen(true);
-                          }}
-                          className="h-7 px-3 text-xs font-bold rounded-lg bg-theme-btn-primary text-theme-btn-primary-text"
-                        >
-                          Create Job Card
-                        </AppButton>
-                      )}
-                    </div>
                   </div>
-                ) : (
-                  <div className="divide-y divide-border/60">
-                    {maintenance.slice(0, 5).map(m => {
-                      const partsData = typeof m.parts_replaced === "object" && m.parts_replaced !== null ? m.parts_replaced : {};
-                      return (
-                        <div
-                          key={m.id}
-                          onClick={() => setSelectedMaintenanceForView(m)}
+                </AppCardHeader>
+                <AppCardContent className="p-0">
+                  {filteredDashboardVehicles.length === 0 ? (
+                    <div className="p-8 text-center text-xs text-muted-foreground">
+                      <div className="flex flex-col items-center gap-2.5">
+                        <Car className="h-6 w-6 text-muted-foreground/60" />
+                        <span>No vehicles matching filter.</span>
+                        {canCreateVehicle && (
+                          <AppButton
+                            variant="primary"
+                            size="sm"
+                            onClick={() => router.push("/vehicle/register")}
+                            className="h-7 px-3 text-xs font-semibold rounded-lg"
+                          >
+                            Register Vehicle
+                          </AppButton>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-border/60">
+                      {filteredDashboardVehicles.slice(0, 5).map(veh => (
+                        <div 
+                          key={veh.id} 
+                          onClick={() => setViewingVehicle(veh)}
                           className="p-3.5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-xs cursor-pointer group"
                         >
                           <div className="min-w-0 pr-2">
                             <div className="flex items-center gap-2 flex-wrap">
-                              {renderHsrpPlate(m.vehicle_reg || m.vehicle_id)}
-                              <span className="font-semibold text-foreground group-hover:text-theme-btn-primary transition-colors truncate">
-                                {m.service_type || "Periodic Inspection"}
-                              </span>
+                              {renderHsrpPlate(veh.registration_number)}
+                              <div className="flex items-center gap-1.5 font-semibold text-foreground group-hover:text-theme-btn-primary transition-colors truncate">
+                                <VehicleBrandLogo brand={veh.make} size={16} />
+                                <span>{veh.make} {veh.model}</span>
+                              </div>
+                              {veh.fuel_type && (
+                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full border bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/25">
+                                  {veh.fuel_type}
+                                </span>
+                              )}
                             </div>
                             <div className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-2">
-                              <span>{m.service_center || "Authorized Center"}</span>
+                              <span>{veh.assignedDriver ? `Driver: ${veh.assignedDriver.full_name}` : "Driver: Unassigned"}</span>
                               <span>•</span>
-                              <span>{m.service_date ? m.service_date.split("T")[0] : "Recent"}</span>
+                              <span>{(veh.odometer_km || 0).toLocaleString()} km</span>
                             </div>
                           </div>
-                          <div className="text-right shrink-0">
-                            <span className="font-bold text-foreground text-xs block">
-                              ₹{(Number(m.cost) || 0).toLocaleString()}
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
+                              veh.status === "IN_STOCK"
+                                ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
+                                : veh.status === "IN_SERVICE"
+                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                                : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                            }`}>
+                              {veh.status === "IN_STOCK" ? "Ready" : veh.status === "IN_SERVICE" ? "On Route" : veh.status}
                             </span>
-                            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.2 rounded">
-                              {partsData.payment_status || "PAID"}
-                            </span>
+                            <div className="flex items-center gap-1">
+                              <AppButton
+                                variant="outline"
+                                size="icon-sm"
+                                title="Renew Insurance Policy"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenVehiclePolicyRenewModal(veh);
+                                }}
+                                className="h-7 w-7 text-theme-icon hover:bg-surface"
+                              >
+                                <RotateCcw className="h-3.5 w-3.5" />
+                              </AppButton>
+                              <AppButton
+                                variant="outline"
+                                size="icon-sm"
+                                title="Renew PUC Certificate"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenVehiclePucRenewModal(veh);
+                                }}
+                                className="h-7 w-7 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40"
+                              >
+                                <Wind className="h-3.5 w-3.5" />
+                              </AppButton>
+                            </div>
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </AppCardContent>
-            </AppCard>
+                      ))}
+                    </div>
+                  )}
+                </AppCardContent>
+              </AppCard>
 
-            {/* Right: Active Drivers Directory Snapshot */}
-            <AppCard className="border-border shadow-xs overflow-hidden">
-              <AppCardHeader className="bg-surface/50 pb-3 border-b border-border/50 flex flex-row items-center justify-between">
-                <div>
+            </div>
+
+            {/* 8. SERVICES & DRIVERS */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              
+              {/* Left: Workshop Service Logs */}
+              <AppCard className="border-border shadow-xs overflow-hidden">
+                <AppCardHeader className="bg-surface/50 pb-3 border-b border-border/60 flex flex-row items-center justify-between">
+                  <AppCardTitle className="text-sm font-bold flex items-center gap-2">
+                    <Wrench className="h-4 w-4 text-theme-btn-primary" />
+                    <span>Recent Services</span>
+                  </AppCardTitle>
+                  <div className="flex items-center gap-2">
+                    {canManageMaintenance && (
+                      <AppButton
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          resetMaintenanceForm();
+                          setIsAddMaintenanceOpen(true);
+                        }}
+                        className="text-xs h-7 px-2 font-bold text-theme-btn-primary hover:bg-theme-btn-primary/10"
+                      >
+                        <Plus className="h-3.5 w-3.5 mr-1" />
+                        <span>Log Service</span>
+                      </AppButton>
+                    )}
+                    <AppButton
+                      variant="outline"
+                      size="sm"
+                      onClick={() => router.push("/vehicle/maintenance")}
+                      className="text-xs font-semibold rounded-lg border-border hover:bg-surface-hover h-7 px-2.5"
+                    >
+                      All ({maintenance.length})
+                    </AppButton>
+                  </div>
+                </AppCardHeader>
+                <AppCardContent className="p-0">
+                  {maintenance.length === 0 ? (
+                    <div className="p-8 text-center text-xs text-muted-foreground">
+                      <div className="flex flex-col items-center gap-2.5">
+                        <Wrench className="h-6 w-6 text-muted-foreground/60" />
+                        <span>No maintenance records.</span>
+                        {canManageMaintenance && (
+                          <AppButton
+                            variant="primary"
+                            size="sm"
+                            onClick={() => {
+                              resetMaintenanceForm();
+                              setIsAddMaintenanceOpen(true);
+                            }}
+                            className="h-7 px-3 text-xs font-bold rounded-lg bg-theme-btn-primary text-theme-btn-primary-text"
+                          >
+                            Log Service
+                          </AppButton>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-border/60">
+                      {maintenance.slice(0, 5).map(m => {
+                        const partsData = typeof m.parts_replaced === "object" && m.parts_replaced !== null ? m.parts_replaced : {};
+                        return (
+                          <div
+                            key={m.id}
+                            onClick={() => setSelectedMaintenanceForView(m)}
+                            className="p-3.5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-xs cursor-pointer group"
+                          >
+                            <div className="min-w-0 pr-2">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {renderHsrpPlate(m.vehicle_reg || m.vehicle_id)}
+                                <span className="font-semibold text-foreground group-hover:text-theme-btn-primary transition-colors truncate">
+                                  {m.service_type || "Periodic Inspection"}
+                                </span>
+                              </div>
+                              <div className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-2">
+                                <span>{m.service_center || "Authorized Center"}</span>
+                                <span>•</span>
+                                <span>{m.service_date ? m.service_date.split("T")[0] : "Recent"}</span>
+                              </div>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <span className="font-bold text-foreground text-xs block">
+                                ₹{(Number(m.cost) || 0).toLocaleString()}
+                              </span>
+                              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.2 rounded">
+                                {partsData.payment_status || "PAID"}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </AppCardContent>
+              </AppCard>
+
+              {/* Right: Drivers Roster */}
+              <AppCard className="border-border shadow-xs overflow-hidden">
+                <AppCardHeader className="bg-surface/50 pb-3 border-b border-border/60 flex flex-row items-center justify-between">
                   <AppCardTitle className="text-sm font-bold flex items-center gap-2">
                     <Users className="h-4 w-4 text-theme-btn-primary" />
-                    <span>Drivers Directory & Roster</span>
+                    <span>Drivers Roster</span>
                   </AppCardTitle>
-                </div>
-                <div className="flex items-center gap-2">
-                  {canManageDrivers && (
-                    <AppButton
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsAddDriverOpen(true)}
-                      className="text-xs h-7 px-2 font-bold text-theme-btn-primary hover:bg-theme-btn-primary/10"
-                    >
-                      <Plus className="h-3.5 w-3.5 mr-1" />
-                      <span>Onboard</span>
-                    </AppButton>
-                  )}
-                  <AppButton
-                    variant="outline"
-                    size="sm"
-                    onClick={() => router.push("/vehicle/drivers")}
-                    className="text-xs font-bold rounded-lg border-border hover:bg-surface-hover h-7 px-2.5"
-                  >
-                    View Roster ({drivers.length})
-                  </AppButton>
-                </div>
-              </AppCardHeader>
-              <AppCardContent className="p-0">
-                {drivers.length === 0 ? (
-                  <div className="p-10 text-center text-xs text-muted-foreground">
-                    <div className="flex flex-col items-center gap-2.5">
-                      <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 border border-border/60">
-                        <Users className="h-5 w-5" />
-                      </div>
-                      <span>No drivers registered in fleet roster.</span>
-                      {canManageDrivers && (
-                        <AppButton
-                          variant="primary"
-                          size="sm"
-                          onClick={() => setIsAddDriverOpen(true)}
-                          className="h-7 px-3 text-xs font-bold rounded-lg bg-theme-btn-primary text-theme-btn-primary-text"
-                        >
-                          Onboard Driver
-                        </AppButton>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-border/60">
-                    {drivers.slice(0, 5).map(drv => (
-                      <div
-                        key={drv.id}
-                        onClick={() => setViewingDriver(drv)}
-                        className="p-3.5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-xs cursor-pointer group"
+                  <div className="flex items-center gap-2">
+                    {canManageDrivers && (
+                      <AppButton
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsAddDriverOpen(true)}
+                        className="text-xs h-7 px-2 font-bold text-theme-btn-primary hover:bg-theme-btn-primary/10"
                       >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="h-8 w-8 rounded-full bg-theme-btn-primary/15 text-theme-btn-primary flex items-center justify-center font-bold text-xs shrink-0">
-                            {drv.full_name.charAt(0).toUpperCase()}
-                          </div>
-                          <div className="min-w-0 pr-2">
-                            <p className="font-semibold text-foreground group-hover:text-theme-btn-primary transition-colors truncate">
-                              {drv.full_name}
-                            </p>
-                            <p className="text-[11px] text-muted-foreground truncate">
-                              Lic: {drv.license_number} • {drv.phone}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
-                            drv.is_active
-                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                              : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
-                          }`}>
-                            {drv.is_active ? "Active" : "Inactive"}
-                          </span>
-                          <span className="text-[10px] text-slate-700 dark:text-slate-300 font-medium bg-slate-100 dark:bg-slate-800 border border-border/60 px-2 py-0.5 rounded-full">
-                            {drv.experience_years || 0}y Exp
-                          </span>
-                        </div>
+                        <Plus className="h-3.5 w-3.5 mr-1" />
+                        <span>Onboard</span>
+                      </AppButton>
+                    )}
+                    <AppButton
+                      variant="outline"
+                      size="sm"
+                      onClick={() => router.push("/vehicle/drivers")}
+                      className="text-xs font-semibold rounded-lg border-border hover:bg-surface-hover h-7 px-2.5"
+                    >
+                      Roster ({drivers.length})
+                    </AppButton>
+                  </div>
+                </AppCardHeader>
+                <AppCardContent className="p-0">
+                  {drivers.length === 0 ? (
+                    <div className="p-8 text-center text-xs text-muted-foreground">
+                      <div className="flex flex-col items-center gap-2.5">
+                        <Users className="h-6 w-6 text-muted-foreground/60" />
+                        <span>No drivers registered.</span>
+                        {canManageDrivers && (
+                          <AppButton
+                            variant="primary"
+                            size="sm"
+                            onClick={() => setIsAddDriverOpen(true)}
+                            className="h-7 px-3 text-xs font-bold rounded-lg bg-theme-btn-primary text-theme-btn-primary-text"
+                          >
+                            Onboard Driver
+                          </AppButton>
+                        )}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-border/60">
+                      {drivers.slice(0, 5).map(drv => (
+                        <div
+                          key={drv.id}
+                          onClick={() => setViewingDriver(drv)}
+                          className="p-3.5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-xs cursor-pointer group"
+                        >
+                          <div className="min-w-0 pr-2">
+                            <div className="flex items-center gap-2">
+                              <div className="h-7 w-7 rounded-full bg-slate-100 dark:bg-slate-800 text-foreground flex items-center justify-center font-bold text-xs shrink-0 border border-border">
+                                {drv.full_name?.charAt(0) || "D"}
+                              </div>
+                              <div>
+                                <span className="font-semibold text-foreground group-hover:text-theme-btn-primary transition-colors">
+                                  {drv.full_name}
+                                </span>
+                                <div className="text-[11px] text-muted-foreground flex items-center gap-2">
+                                  <span>{drv.phone || "No phone"}</span>
+                                  {drv.license_number && (
+                                    <>
+                                      <span>•</span>
+                                      <span>DL: {drv.license_number}</span>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
+                              drv.is_active
+                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                                : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
+                            }`}>
+                              {drv.is_active ? "Active" : "Inactive"}
+                            </span>
+                            <span className="text-[10px] text-slate-700 dark:text-slate-300 font-medium bg-slate-100 dark:bg-slate-800 border border-border/60 px-2 py-0.5 rounded-full">
+                              {drv.experience_years || 0}y Exp
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </AppCardContent>
+              </AppCard>
+
+            </div>
+
+            {/* 9. QUICK ACTIONS */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-theme-btn-primary" />
+                  <span>Quick Actions</span>
+                </h3>
+              </div>
+
+              {/* Quick Action Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                {canCreateVehicle && (
+                  <button
+                    type="button"
+                    onClick={() => router.push("/vehicle/register")}
+                    className="p-3.5 rounded-2xl bg-surface border border-border/80 hover:border-theme-btn-primary/50 hover:bg-theme-btn-primary/5 transition-all text-left group flex flex-col justify-between space-y-3 shadow-2xs cursor-pointer"
+                  >
+                    <div className="h-8 w-8 rounded-xl bg-theme-btn-primary/10 text-theme-btn-primary flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Car className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-xs text-foreground group-hover:text-theme-btn-primary transition-colors">Register Vehicle</p>
+                      <p className="text-[10px] text-muted-foreground">Add to master</p>
+                    </div>
+                  </button>
                 )}
-              </AppCardContent>
-            </AppCard>
 
-          </div>
+                {canManageMaintenance && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      resetMaintenanceForm();
+                      setIsAddMaintenanceOpen(true);
+                    }}
+                    className="p-3.5 rounded-2xl bg-surface border border-border/80 hover:border-amber-500/50 hover:bg-amber-500/5 transition-all text-left group flex flex-col justify-between space-y-3 shadow-2xs cursor-pointer"
+                  >
+                    <div className="h-8 w-8 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Wrench className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-xs text-foreground group-hover:text-amber-600 transition-colors">Log Service</p>
+                      <p className="text-[10px] text-muted-foreground">Job card</p>
+                    </div>
+                  </button>
+                )}
 
-          {/* 8. TIER 3: EXECUTIVE OPERATIONS LAUNCHPAD (6 BALANCED COLUMNS) */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-                <Zap className="h-4 w-4 text-theme-btn-primary" />
-                <span>Executive Operations Launchpad</span>
-              </h3>
+                {canManageDrivers && (
+                  <button
+                    type="button"
+                    onClick={() => setIsAddDriverOpen(true)}
+                    className="p-3.5 rounded-2xl bg-surface border border-border/80 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all text-left group flex flex-col justify-between space-y-3 shadow-2xs cursor-pointer"
+                  >
+                    <div className="h-8 w-8 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Users className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-xs text-foreground group-hover:text-blue-600 transition-colors">Onboard Driver</p>
+                      <p className="text-[10px] text-muted-foreground">Driver roster</p>
+                    </div>
+                  </button>
+                )}
+
+                {canDispatchTrips && (
+                  <button
+                    type="button"
+                    onClick={() => setIsDispatchTripOpen(true)}
+                    className="p-3.5 rounded-2xl bg-surface border border-border/80 hover:border-theme-btn-primary/50 hover:bg-theme-btn-primary/5 transition-all text-left group flex flex-col justify-between space-y-3 shadow-2xs cursor-pointer"
+                  >
+                    <div className="h-8 w-8 rounded-xl bg-theme-btn-primary/10 text-theme-btn-primary flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <MapPin className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-xs text-foreground group-hover:text-theme-btn-primary transition-colors">Dispatch Trip</p>
+                      <p className="text-[10px] text-muted-foreground">Transit</p>
+                    </div>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => router.push("/vehicle/parts")}
+                  className="p-3.5 rounded-2xl bg-surface border border-border/80 hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all text-left group flex flex-col justify-between space-y-3 shadow-2xs cursor-pointer"
+                >
+                  <div className="h-8 w-8 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Package className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-xs text-foreground group-hover:text-emerald-600 transition-colors">Spare Parts</p>
+                    <p className="text-[10px] text-muted-foreground">Inventory</p>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={exportVehiclesCSV}
+                  className="p-3.5 rounded-2xl bg-surface border border-border/80 hover:border-theme-btn-primary/50 hover:bg-theme-btn-primary/5 transition-all text-left group flex flex-col justify-between space-y-3 shadow-2xs cursor-pointer"
+                >
+                  <div className="h-8 w-8 rounded-xl bg-surface text-theme-icon flex items-center justify-center group-hover:scale-110 transition-transform border border-border/60">
+                    <FileSpreadsheet className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-xs text-foreground group-hover:text-theme-icon transition-colors">Export Register</p>
+                    <p className="text-[10px] text-muted-foreground">CSV audit</p>
+                  </div>
+                </button>
+              </div>
             </div>
 
-            {/* Quick Action Grid (6 Balanced Columns) */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-              {canCreateVehicle && (
-                <button
-                  type="button"
-                  onClick={() => router.push("/vehicle/register")}
-                  className="p-3.5 rounded-2xl bg-surface border border-border/70 hover:border-theme-btn-primary/50 hover:bg-theme-btn-primary/5 transition-all text-left group flex flex-col justify-between space-y-3 shadow-2xs cursor-pointer"
-                >
-                  <div className="h-8 w-8 rounded-xl bg-theme-btn-primary/10 text-theme-btn-primary flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Car className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-xs text-foreground group-hover:text-theme-btn-primary transition-colors">Register Vehicle</p>
-                    <p className="text-[10px] text-muted-foreground">Add to fleet master</p>
-                  </div>
-                </button>
-              )}
-
-              {canManageMaintenance && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    resetMaintenanceForm();
-                    setIsAddMaintenanceOpen(true);
-                  }}
-                  className="p-3.5 rounded-2xl bg-surface border border-border/70 hover:border-amber-500/50 hover:bg-amber-500/5 transition-all text-left group flex flex-col justify-between space-y-3 shadow-2xs cursor-pointer"
-                >
-                  <div className="h-8 w-8 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Wrench className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-xs text-foreground group-hover:text-amber-600 transition-colors">Log Service</p>
-                    <p className="text-[10px] text-muted-foreground">Workshop job card</p>
-                  </div>
-                </button>
-              )}
-
-              {canManageDrivers && (
-                <button
-                  type="button"
-                  onClick={() => setIsAddDriverOpen(true)}
-                  className="p-3.5 rounded-2xl bg-surface border border-border/70 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all text-left group flex flex-col justify-between space-y-3 shadow-2xs cursor-pointer"
-                >
-                  <div className="h-8 w-8 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Users className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-xs text-foreground group-hover:text-blue-600 transition-colors">Onboard Driver</p>
-                    <p className="text-[10px] text-muted-foreground">Add to driver roster</p>
-                  </div>
-                </button>
-              )}
-
-              {canDispatchTrips && (
-                <button
-                  type="button"
-                  onClick={() => setIsDispatchTripOpen(true)}
-                  className="p-3.5 rounded-2xl bg-surface border border-border/70 hover:border-theme-btn-primary/50 hover:bg-surface transition-all text-left group flex flex-col justify-between space-y-3 shadow-2xs cursor-pointer"
-                >
-                  <div className="h-8 w-8 rounded-xl bg-surface text-theme-icon flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <MapPin className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-xs text-foreground group-hover:text-theme-icon transition-colors">Dispatch Trip</p>
-                    <p className="text-[10px] text-muted-foreground">Employee transit route</p>
-                  </div>
-                </button>
-              )}
-
-              <button
-                type="button"
-                onClick={() => router.push("/vehicle/parts")}
-                className="p-3.5 rounded-2xl bg-surface border border-border/70 hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all text-left group flex flex-col justify-between space-y-3 shadow-2xs cursor-pointer"
-              >
-                <div className="h-8 w-8 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Package className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="font-bold text-xs text-foreground group-hover:text-emerald-600 transition-colors">Spare Parts</p>
-                  <p className="text-[10px] text-muted-foreground">Inventory & warranty</p>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={exportVehiclesCSV}
-                className="p-3.5 rounded-2xl bg-surface border border-border/70 hover:border-theme-btn-primary/50 hover:bg-surface transition-all text-left group flex flex-col justify-between space-y-3 shadow-2xs cursor-pointer"
-              >
-                <div className="h-8 w-8 rounded-xl bg-surface text-theme-icon flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <FileSpreadsheet className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="font-bold text-xs text-foreground group-hover:text-theme-icon transition-colors">Export Register</p>
-                  <p className="text-[10px] text-muted-foreground">Download CSV audit</p>
-                </div>
-              </button>
-            </div>
-          </div>
           </div>
         </FleetErrorBoundary>
       )}

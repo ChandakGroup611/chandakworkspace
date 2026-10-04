@@ -1,7 +1,7 @@
 {
   "scripts": {
-    "dev": "next dev --webpack",
-    "build": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" next build",
+    "dev": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" next dev --webpack",
+    "build": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" next build --webpack",
     "start": "next start",
     "lint": "npx eslint .",
     "deploy": "node scripts/deploy.js"
