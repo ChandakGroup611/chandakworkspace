@@ -25,17 +25,6 @@ export default async function RbacPage() {
     redirect("/select-module");
   }
 
-  const activeModuleCode = allowed.activeModuleCode || allowed.defaultModule?.code || "TASK_WORKFLOW";
-
-  // Dedicated module routing - strict module isolation
-  if (activeModuleCode === "VEHICLE_DESK") {
-    redirect("/vehicle/rbac");
-  }
-
-  if (activeModuleCode === "DESIGN_TRACKING") {
-    redirect("/design/rbac");
-  }
-
   return (
     <div className="w-full flex-1 flex flex-col min-w-0">
       <IAMGovernanceCockpit />

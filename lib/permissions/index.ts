@@ -22,9 +22,9 @@ async function getUserContext(userId: string): Promise<{ perms: Set<string>, rol
   const [roleRes, permRes] = await Promise.all([
     supabaseAdmin
       .from("user_master")
-      .select("role:roles(code), email")
+      .select("role:roles(code), role_id, email")
       .eq("id", userId)
-      .single(),
+      .maybeSingle(),
     supabaseAdmin
       .from("user_permissions_snapshot")
       .select("permission_code")
@@ -34,6 +34,17 @@ async function getUserContext(userId: string): Promise<{ perms: Set<string>, rol
   let dbRoleCode = Array.isArray(roleRes.data?.role) 
     ? (roleRes.data?.role[0] as any)?.code 
     : (roleRes.data?.role as any)?.code;
+
+  if (!dbRoleCode && roleRes.data?.role_id) {
+    const { data: fallbackRole } = await supabaseAdmin
+      .from("roles")
+      .select("code")
+      .eq("id", roleRes.data.role_id)
+      .maybeSingle();
+    if (fallbackRole?.code) {
+      dbRoleCode = fallbackRole.code;
+    }
+  }
 
   if (dbRoleCode) {
     const upper = dbRoleCode.toUpperCase();
