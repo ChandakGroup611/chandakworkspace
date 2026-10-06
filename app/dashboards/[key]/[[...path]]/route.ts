@@ -65,6 +65,8 @@ async function handle(req: NextRequest, ctx: Ctx) {
   }
   const fwd = req.headers.get("x-forwarded-for");
   if (fwd) headers.set("x-forwarded-for", fwd);
+  // Microsoft Dev Tunnels (used while testing) would otherwise show its warning page.
+  headers.set("x-tunnel-skip-antiphishing-page", "true");
 
   if (user) {
     const profile = await getPortalUserProfile(user.id, user.email || "");
