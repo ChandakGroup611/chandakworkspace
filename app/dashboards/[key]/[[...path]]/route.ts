@@ -1,8 +1,9 @@
+import { createHash } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
 import { engineUrl, getDashboard } from "@/lib/dashboards/registry";
-import { getDashboardAccess, getPortalUserProfile, signDashboardToken } from "@/lib/dashboards/access";
+import { getDashboardAccess, getPortalUserProfile, signDashboardToken, type DashboardAccess } from "@/lib/dashboards/access";
 
 // =========================================================================
 // /dashboards/<key>/<path>  →  dashboard engine on Azure
@@ -21,6 +22,58 @@ const REQUEST_HEADERS = ["accept", "accept-language", "content-type", "x-request
 const RESPONSE_HEADERS = ["content-type", "content-disposition", "cache-control", "etag", "last-modified", "location"];
 
 type Ctx = { params: Promise<{ key: string; path?: string[] }> };
+
+// A dashboard page makes many API calls. Checking the session with Supabase and re-reading the profile
+// and dashboard permissions on every one of them made each call wait on several round trips, so the
+// result is kept for a short time per session token (permissions already change with a 1-minute delay).
+const AUTH_TTL_MS = Number(process.env.DASHBOARD_AUTH_CACHE_MS ?? 60_000);
+type Identity = { id: string; email: string; name: string; active: boolean };
+const identityCache = new Map<string, { exp: number; who: Identity }>();
+const accessCache = new Map<string, { exp: number; access: DashboardAccess }>();
+
+function remember<T>(map: Map<string, { exp: number } & T>, key: string, value: T) {
+  if (map.size > 1000) {
+    const now = Date.now();
+    for (const [k, v] of map) if (v.exp < now) map.delete(k);
+    if (map.size > 1000) map.clear();
+  }
+  map.set(key, { exp: Date.now() + AUTH_TTL_MS, ...value } as { exp: number } & T);
+}
+
+type Who = { who: Identity | null; transient: boolean };
+
+async function currentIdentity(): Promise<Who> {
+  const supabase = createClient(await cookies());
+  // Reads (and if needed refreshes) the session from the cookies; the token is then verified with
+  // Supabase at most once a minute.
+  const { data: s } = await supabase.auth.getSession();
+  const token = s.session?.access_token;
+  if (!token) return { who: null, transient: false };
+  const tokenKey = createHash("sha256").update(token).digest("hex");
+  const hit = identityCache.get(tokenKey);
+  if (hit && hit.exp > Date.now()) return { who: hit.who, transient: false };
+
+  const { data, error } = await supabase.auth.getUser(token);
+  if (!data.user) {
+    // A network hiccup or Supabase outage is not a sign-out: let the page retry instead of logging out.
+    const status = (error as { status?: number } | null)?.status ?? 0;
+    const retryable = !!error && (error.name === "AuthRetryableFetchError" || status === 0 || status >= 500);
+    return { who: null, transient: retryable };
+  }
+  const profile = await getPortalUserProfile(data.user.id, data.user.email || "");
+  const who: Identity = { id: data.user.id, email: profile.email, name: profile.name, active: profile.active };
+  remember(identityCache, tokenKey, { who });
+  return { who, transient: false };
+}
+
+async function accessFor(userId: string, def: NonNullable<ReturnType<typeof getDashboard>>) {
+  const key = `${userId}:${def.key}`;
+  const hit = accessCache.get(key);
+  if (hit && hit.exp > Date.now()) return hit.access;
+  const access = await getDashboardAccess(userId, def);
+  remember(accessCache, key, { access });
+  return access;
+}
 
 function isApiPath(segments: string[]) {
   return segments[0] === "api";
@@ -46,9 +99,10 @@ async function handle(req: NextRequest, ctx: Ctx) {
   // Static files (CSS, JS, chart library) carry no data; everything else needs a session.
   const isStatic = path[0] === "static";
 
-  const supabase = createClient(await cookies());
-  const { data: { user } } = await supabase.auth.getUser();
+  // Static files need no sign-in check at all (the engine serves them to anyone).
+  const { who: user, transient } = isStatic ? { who: null, transient: false } : await currentIdentity();
   if (!user && !isStatic) {
+    if (transient) return deny(api, 503, "Could not check your sign-in just now. Please try again in a moment.");
     if (api) return deny(true, 401, "Your session ended. Sign in again.");
     const login = new URL("/login", req.url);
     login.searchParams.set("next", req.nextUrl.pathname + req.nextUrl.search);
@@ -69,13 +123,12 @@ async function handle(req: NextRequest, ctx: Ctx) {
   headers.set("x-tunnel-skip-antiphishing-page", "true");
 
   if (user) {
-    const profile = await getPortalUserProfile(user.id, user.email || "");
-    if (!profile.active) return deny(api, 403, "Your portal account is disabled.");
-    const access = await getDashboardAccess(user.id, def);
+    if (!user.active) return deny(api, 403, "Your portal account is disabled.");
+    const access = await accessFor(user.id, def);
     if (!access.perms.includes("view")) {
       return deny(api, 403, `You don't have access to the ${def.name} dashboard. Ask your portal administrator.`);
     }
-    headers.set("x-portal-auth", signDashboardToken(def, { id: user.id, email: profile.email, name: profile.name }, access));
+    headers.set("x-portal-auth", signDashboardToken(def, { id: user.id, email: user.email, name: user.name }, access));
   }
 
   // Only safe path segments reach the engine.
@@ -96,10 +149,11 @@ async function handle(req: NextRequest, ctx: Ctx) {
       body,
       redirect: "manual",
       cache: "no-store",
-      signal: AbortSignal.timeout(120_000),
+      // Stay under the web server's 60 s gateway limit so users get our message, not nginx's 504.
+      signal: AbortSignal.timeout(50_000),
     });
   } catch {
-    return deny(api, 502, "The dashboard engine is not responding. Try again in a minute.");
+    return deny(api, 502, "The dashboard server is not reachable right now. Try again in a few minutes; if it continues, contact IT.");
   }
 
   const out = new Headers();

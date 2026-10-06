@@ -2,9 +2,15 @@ import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/utils/supabase/middleware";
 
 export async function middleware(request: NextRequest) {
-  const { supabaseResponse, user } = await updateSession(request);
-
   const pathname = request.nextUrl.pathname;
+
+  // Dashboard engine calls and files: the /dashboards route checks the session itself (and refreshes
+  // its cookies), so skip the extra Supabase round trip here.
+  if (/^\/dashboards\/[^/]+\/(api|static)\//.test(pathname)) {
+    return NextResponse.next();
+  }
+
+  const { supabaseResponse, user } = await updateSession(request);
 
   const isAuthPage = pathname === "/login" || pathname === "/register";
   // Dashboard engine API calls (/dashboards/<key>/api/...) answer 401 JSON themselves.
