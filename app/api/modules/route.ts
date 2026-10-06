@@ -38,6 +38,17 @@ const DEFAULT_MODULES = [
     is_active: true,
     is_default: false,
   },
+  {
+    id: "mod-dashboards",
+    code: "DASHBOARDS",
+    name: "Dashboards",
+    description: "Department budget & expense dashboards on live IN4 data",
+    icon: "LineChart",
+    route_path: "/dashboards",
+    display_order: 4,
+    is_active: true,
+    is_default: false,
+  },
 ];
 
 export async function GET(request: NextRequest) {
@@ -62,6 +73,7 @@ export async function GET(request: NextRequest) {
     let userProfile = null;
     let isAdmin = false;
     let userAssignments: any[] = [];
+    let hasDashboardPerms = false;
 
     if (targetUserId) {
       const { data: profile } = await supabaseAdmin
@@ -91,6 +103,15 @@ export async function GET(request: NextRequest) {
         .eq("user_id", targetUserId);
 
       userAssignments = assignments || [];
+
+      if (!isAdmin) {
+        const { data: dashPerms } = await supabaseAdmin
+          .from("user_permissions_snapshot")
+          .select("permission_code")
+          .eq("user_id", targetUserId)
+          .like("permission_code", "DASH_%");
+        hasDashboardPerms = Array.isArray(dashPerms) && dashPerms.length > 0;
+      }
     }
 
     // Fetch active modules from modules_master
@@ -106,12 +127,18 @@ export async function GET(request: NextRequest) {
     const hasExplicitDefault = !!defaultAssignment;
 
     let allowedModules = allActive
-      .filter(m => isAdmin || assignedModuleIds.size === 0 || assignedModuleIds.has(m.id) || assignedModuleIds.has(m.code))
+      .filter(m => {
+        if (isAdmin) return true;
+        if (m.code === "DASHBOARDS" && hasDashboardPerms) return true;
+        if (assignedModuleIds.size === 0) return true;
+        return assignedModuleIds.has(m.id) || assignedModuleIds.has(m.code);
+      })
       .map(m => {
         let route = m.route_path;
         if (m.code === "TASK_WORKFLOW" && (!route || route === "/workspaces/tasks")) route = "/";
         if (m.code === "VEHICLE_DESK" && (!route || route === "/vehicle/dashboard")) route = "/vehicle";
         if (m.code === "DESIGN_TRACKING" && (!route || route === "/design/dashboard")) route = "/design/matrix";
+        if (m.code === "DASHBOARDS" && !route) route = "/dashboards";
         return {
           ...m,
           route_path: route,
@@ -164,7 +191,8 @@ export async function POST(request: NextRequest) {
     const routeMap: Record<string, string> = {
       TASK_WORKFLOW: "/",
       VEHICLE_DESK: "/vehicle",
-      DESIGN_TRACKING: "/design/matrix"
+      DESIGN_TRACKING: "/design/matrix",
+      DASHBOARDS: "/dashboards"
     };
 
     const redirectUrl = routeMap[targetCode] || "/";

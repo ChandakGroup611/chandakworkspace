@@ -7,6 +7,7 @@ import {
   Car, 
   Compass, 
   Layers, 
+  LineChart,
   ChevronDown, 
   Check, 
   Sparkles,
@@ -33,6 +34,7 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
   const activeModuleCode = React.useMemo(() => {
     if (pathname.startsWith("/vehicle")) return "VEHICLE_DESK";
     if (pathname.startsWith("/design")) return "DESIGN_TRACKING";
+    if (pathname.startsWith("/dashboards")) return "DASHBOARDS";
     return "TASK_WORKFLOW";
   }, [pathname]);
 
@@ -88,6 +90,8 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
         return Car;
       case "DESIGN_TRACKING":
         return Compass;
+      case "DASHBOARDS":
+        return LineChart;
       default:
         return Layers;
     }
@@ -148,7 +152,7 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
       const resData = await res.json();
       if (resData.success) {
         onCloseMobile?.();
-        window.location.href = resData.redirectUrl || (code === "VEHICLE_DESK" ? "/vehicle" : code === "DESIGN_TRACKING" ? "/design/matrix" : "/");
+        window.location.href = resData.redirectUrl || (code === "VEHICLE_DESK" ? "/vehicle" : code === "DESIGN_TRACKING" ? "/design/matrix" : code === "DASHBOARDS" ? "/dashboards" : "/");
       } else {
         setLoading(false);
       }
@@ -164,10 +168,12 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
       ? "Vehicle Module" 
       : activeModuleCode === "DESIGN_TRACKING" 
       ? "Design Tracking" 
+      : activeModuleCode === "DASHBOARDS"
+      ? "Dashboards"
       : "Workspace Module",
     description: null,
     icon: "FolderKanban",
-    route_path: activeModuleCode === "VEHICLE_DESK" ? "/vehicle" : activeModuleCode === "DESIGN_TRACKING" ? "/design/matrix" : "/",
+    route_path: activeModuleCode === "VEHICLE_DESK" ? "/vehicle" : activeModuleCode === "DESIGN_TRACKING" ? "/design/matrix" : activeModuleCode === "DASHBOARDS" ? "/dashboards" : "/",
     display_order: 1,
     is_active: true
   };

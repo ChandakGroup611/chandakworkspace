@@ -56,6 +56,17 @@ const FALLBACK_MODULES_DATA: UserModulesResult = {
       is_active: true,
       is_default: false,
     },
+    {
+      id: "f1a2e3d4-c5b6-7a8b-9c0d-1e2f3a4b5c6d",
+      code: "DASHBOARDS",
+      name: "Dashboards",
+      description: "Department Budget, Spend Analytics & Real-Time IN4 Governance",
+      icon: "LineChart",
+      route_path: "/dashboards",
+      display_order: 4,
+      is_active: true,
+      is_default: false,
+    },
   ],
   defaultModule: null,
   hasExplicitDefault: false,
@@ -294,7 +305,7 @@ export default function SelectModulePage() {
       </header>
 
       {/* Main Content */}
-      <main className="relative z-10 flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 md:py-12 flex flex-col justify-center">
+      <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-8 md:py-12 flex flex-col justify-center">
 
         <div className="text-center max-w-xl mx-auto mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-2">
@@ -369,7 +380,7 @@ export default function SelectModulePage() {
         </div>
 
         {/* Interactive Module Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6 mb-8">
           {(data?.modules || [])
             .slice()
             .sort((a, b) => {

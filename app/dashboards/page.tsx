@@ -26,6 +26,11 @@ export default async function DashboardsPage() {
 
   const dashboards = await listAccessibleDashboards(user.id);
 
+  // If the user only has access to a single dashboard, open it directly
+  if (dashboards.length === 1) {
+    redirect(`/dashboards/${dashboards[0].def.key}`);
+  }
+
   return (
     <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-col gap-6">
       <div>

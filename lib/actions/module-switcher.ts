@@ -64,6 +64,17 @@ const DEFAULT_FALLBACK_MODULES: ModuleInfo[] = [
     display_order: 3,
     is_active: true,
     is_default: false
+  },
+  {
+    id: "mod-dashboards",
+    code: "DASHBOARDS",
+    name: "Dashboards",
+    description: "Department budget & expense dashboards on live IN4 data",
+    icon: "LineChart",
+    route_path: "/dashboards",
+    display_order: 4,
+    is_active: true,
+    is_default: false
   }
 ];
 
@@ -132,14 +143,31 @@ export async function getUserAllowedModules(targetUserId?: string): Promise<User
     const assignedModuleIds = new Set((userAssignments || []).map(a => a.module_id));
     const defaultAssignment = (userAssignments || []).find(a => a.is_default);
 
-    // Filter modules based on user assignments (Super Admins see all active modules)
+    // Check if user has dashboard RBAC permissions (DASH_*)
+    let hasDashboardPerms = false;
+    if (!isAdmin) {
+      const { data: dashPerms } = await supabaseAdmin
+        .from("user_permissions_snapshot")
+        .select("permission_code")
+        .eq("user_id", userId)
+        .like("permission_code", "DASH_%");
+      hasDashboardPerms = Array.isArray(dashPerms) && dashPerms.length > 0;
+    }
+
+    // Filter modules based on user assignments and RBAC permissions (Super Admins see all active modules)
     let allowedModules: ModuleInfo[] = (allActiveModules || DEFAULT_FALLBACK_MODULES)
-      .filter(m => isAdmin || assignedModuleIds.size === 0 || assignedModuleIds.has(m.id) || assignedModuleIds.has(m.code))
+      .filter(m => {
+        if (isAdmin) return true;
+        if (m.code === "DASHBOARDS" && hasDashboardPerms) return true;
+        if (assignedModuleIds.size === 0) return true;
+        return assignedModuleIds.has(m.id) || assignedModuleIds.has(m.code);
+      })
       .map(m => {
         let route = m.route_path;
         if (m.code === "TASK_WORKFLOW" && (!route || route === "/workspaces/tasks")) route = "/";
         if (m.code === "VEHICLE_DESK" && (!route || route === "/vehicle/dashboard")) route = "/vehicle";
         if (m.code === "DESIGN_TRACKING" && (!route || route === "/design/dashboard")) route = "/design/matrix";
+        if (m.code === "DASHBOARDS" && !route) route = "/dashboards";
         return {
           ...m,
           route_path: route,
