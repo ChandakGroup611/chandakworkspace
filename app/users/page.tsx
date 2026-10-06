@@ -158,24 +158,47 @@ export default function UserMasterPage() {
 
   // Invite Modal States
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [inviteFullName, setInviteFullName] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<string>("");
+  const [inviteDepartment, setInviteDepartment] = useState<string>("");
+  const [inviteDesignation, setInviteDesignation] = useState<string>("");
+  const [inviteSelectedModules, setInviteSelectedModules] = useState<string[]>(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING"]);
+  const [inviteDefaultModule, setInviteDefaultModule] = useState<string>("TASK_WORKFLOW");
   const [inviteLoading, setInviteLoading] = useState(false);
 
   const handleSendInvite = async () => {
-    if (!inviteEmail) {
-      triggerToast("Email is required.", true);
+    if (!inviteEmail || !inviteEmail.includes("@")) {
+      triggerToast("A valid email address is required.", true);
+      return;
+    }
+    if (inviteSelectedModules.length === 0) {
+      triggerToast("At least one operational module must be selected.", true);
       return;
     }
     setInviteLoading(true);
-    const res = await inviteUserAction(inviteEmail, inviteRole || null);
+    const res = await inviteUserAction({
+      email: inviteEmail,
+      fullName: inviteFullName,
+      roleId: inviteRole || null,
+      departmentId: inviteDepartment || null,
+      designationId: inviteDesignation || null,
+      moduleCodes: inviteSelectedModules,
+      defaultModuleCode: inviteDefaultModule
+    });
     if (res.success) {
-      triggerToast(res.message || "Invite sent.");
+      triggerToast(res.message || "Invitation sent successfully.");
       setInviteModalOpen(false);
+      setInviteFullName("");
       setInviteEmail("");
       setInviteRole("");
+      setInviteDepartment("");
+      setInviteDesignation("");
+      setInviteSelectedModules(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING"]);
+      setInviteDefaultModule("TASK_WORKFLOW");
+      fetchUsersDirectory();
     } else {
-      triggerToast(res.error || "Failed to send invite.", true);
+      triggerToast(res.error || "Failed to send invitation.", true);
     }
     setInviteLoading(false);
   };
@@ -715,41 +738,229 @@ export default function UserMasterPage() {
 
       {/* Invite Modal */}
       {inviteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-background border border-border w-full max-w-md rounded-xl shadow-2xl p-6">
-            <h3 className="text-lg font-bold mb-4">Invite New User</h3>
-            <p className="text-sm text-muted mb-4">Send an email invitation allowing a new user to securely join the application.</p>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="text-xs font-semibold mb-1 block">Email Address *</label>
-                <AppInput 
-                  type="email" 
-                  placeholder="user@example.com" 
-                  value={inviteEmail} 
-                  onChange={e => setInviteEmail(e.target.value)} 
-                />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-surface dark:bg-slate-900 border border-border w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[92vh]">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-border/60 bg-surface/50 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-theme-btn-primary/10 text-theme-btn-primary flex items-center justify-center border border-theme-btn-primary/20">
+                  <Mail className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">
+                    Invite User to Organization
+                  </h3>
+                  <p className="text-xs text-muted">
+                    Dispatch an email invitation with predefined roles and module access permissions.
+                  </p>
+                </div>
               </div>
-              
-              <div>
-                <label className="text-xs font-semibold mb-1 block">Initial Role (Optional)</label>
-                <select 
-                  className="w-full text-sm bg-surface border border-border rounded-md px-3 py-2 outline-none focus:border-theme-btn-primary"
-                  value={inviteRole}
-                  onChange={e => setInviteRole(e.target.value)}
-                >
-                  <option value="">-- No Role (Assign Later) --</option>
-                  {roles.map(r => (
-                    <option key={r.id} value={r.id}>{r.name}</option>
-                  ))}
-                </select>
+              <AppButton 
+                variant="ghost" 
+                size="icon-sm" 
+                onClick={() => setInviteModalOpen(false)}
+                className="text-muted hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </AppButton>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 space-y-4 overflow-y-auto flex-1">
+              {/* Basic Details */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold mb-1 block text-foreground">Full Name</label>
+                  <AppInput 
+                    type="text" 
+                    placeholder="e.g. John Doe" 
+                    value={inviteFullName} 
+                    onChange={e => setInviteFullName(e.target.value)} 
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold mb-1 block text-foreground">Email Address *</label>
+                  <AppInput 
+                    type="email" 
+                    placeholder="user@example.com" 
+                    value={inviteEmail} 
+                    onChange={e => setInviteEmail(e.target.value)} 
+                  />
+                </div>
+              </div>
+
+              {/* Organization & Role */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-xs font-semibold mb-1 block text-foreground">Initial Role</label>
+                  <select 
+                    className="w-full text-xs bg-surface border border-border rounded-lg px-3 py-2 outline-none focus:border-theme-btn-primary"
+                    value={inviteRole}
+                    onChange={e => setInviteRole(e.target.value)}
+                  >
+                    <option value="">-- Select Role --</option>
+                    {roles.map(r => (
+                      <option key={r.id} value={r.id}>{r.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold mb-1 block text-foreground">Department</label>
+                  <select 
+                    className="w-full text-xs bg-surface border border-border rounded-lg px-3 py-2 outline-none focus:border-theme-btn-primary"
+                    value={inviteDepartment}
+                    onChange={e => {
+                      setInviteDepartment(e.target.value);
+                      setInviteDesignation("");
+                    }}
+                  >
+                    <option value="">-- Select Department --</option>
+                    {departments.map(d => (
+                      <option key={d.id} value={d.id}>{d.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold mb-1 block text-foreground">Designation</label>
+                  <select 
+                    className="w-full text-xs bg-surface border border-border rounded-lg px-3 py-2 outline-none focus:border-theme-btn-primary"
+                    value={inviteDesignation}
+                    onChange={e => setInviteDesignation(e.target.value)}
+                  >
+                    <option value="">-- Select Designation --</option>
+                    {designations
+                      .filter(ds => !inviteDepartment || ds.department_id === inviteDepartment)
+                      .map(ds => (
+                        <option key={ds.id} value={ds.id}>{ds.name}</option>
+                      ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Module Access Configuration */}
+              <div className="pt-2 border-t border-border/60">
+                <div className="flex items-center justify-between mb-2.5">
+                  <div>
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-muted">Operational Module Access</h4>
+                    <p className="text-[11px] text-muted">Select modules the user will be provisioned access to upon accepting invite</p>
+                  </div>
+                  <AppBadge variant="info">Auto-Provisioned</AppBadge>
+                </div>
+
+                <div className="space-y-2">
+                  {[
+                    { 
+                      code: "TASK_WORKFLOW", 
+                      name: "Workspace & Tasks", 
+                      desc: "Task tracker, sprints, ticketing/helpdesk, requirements & AMC lifecycle.", 
+                      icon: FolderKanban, 
+                      color: "text-blue-500 bg-blue-500/10 border-blue-500/20" 
+                    },
+                    { 
+                      code: "VEHICLE_DESK", 
+                      name: "Vehicle Management Desk", 
+                      desc: "Fleet master, vehicle allocation, trip sheets, driver roster, maintenance & spare parts.", 
+                      icon: Car, 
+                      color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20" 
+                    },
+                    { 
+                      code: "DESIGN_TRACKING", 
+                      name: "Design & Drawing Tracking", 
+                      desc: "Architectural & structural drawing registers, consultant reviews, revisions & site GFC.", 
+                      icon: Compass, 
+                      color: "text-purple-500 bg-purple-500/10 border-purple-500/20" 
+                    }
+                  ].map((mod) => {
+                    const isChecked = inviteSelectedModules.includes(mod.code);
+                    const isDefault = inviteDefaultModule === mod.code;
+                    const IconComp = mod.icon;
+
+                    return (
+                      <div 
+                        key={mod.code}
+                        className={`p-3 rounded-xl border transition-all flex items-center justify-between gap-3 ${
+                          isChecked 
+                            ? "bg-surface border-theme-btn-primary/40 shadow-xs" 
+                            : "bg-surface/40 border-border/60 opacity-60 hover:opacity-100"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <input 
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setInviteSelectedModules(prev => [...prev, mod.code]);
+                              } else {
+                                if (inviteSelectedModules.length <= 1) {
+                                  triggerToast("User must have at least one module assigned.", true);
+                                  return;
+                                }
+                                const remaining = inviteSelectedModules.filter(c => c !== mod.code);
+                                setInviteSelectedModules(remaining);
+                                if (inviteDefaultModule === mod.code) {
+                                  setInviteDefaultModule(remaining[0] || "TASK_WORKFLOW");
+                                }
+                              }
+                            }}
+                            className="h-4 w-4 rounded text-theme-btn-primary focus:ring-theme-btn-primary cursor-pointer"
+                          />
+                          <div className={`h-8 w-8 rounded-lg flex items-center justify-center border shrink-0 ${mod.color}`}>
+                            <IconComp className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                              {mod.name}
+                              {isDefault && (
+                                <span className="text-[10px] bg-theme-btn-primary/15 text-theme-btn-primary font-medium px-1.5 py-0.5 rounded border border-theme-btn-primary/30">
+                                  Default Landing
+                                </span>
+                              )}
+                            </span>
+                            <p className="text-[11px] text-muted truncate">{mod.desc}</p>
+                          </div>
+                        </div>
+
+                        {isChecked && (
+                          <button
+                            type="button"
+                            onClick={() => setInviteDefaultModule(mod.code)}
+                            className={`shrink-0 text-[11px] px-2.5 py-1 rounded-md border font-medium transition-colors ${
+                              isDefault
+                                ? "bg-theme-btn-primary text-theme-btn-primary-text border-theme-btn-primary"
+                                : "bg-surface text-muted hover:text-foreground border-border hover:border-theme-btn-primary/40"
+                            }`}
+                          >
+                            {isDefault ? "Default" : "Set Default"}
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
-            
-            <div className="flex items-center justify-end gap-3 mt-6">
-              <AppButton variant="ghost" onClick={() => setInviteModalOpen(false)}>Cancel</AppButton>
-              <AppButton variant="primary" onClick={handleSendInvite} disabled={inviteLoading}>
-                {inviteLoading ? "Sending..." : "Send Invite"}
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-border/60 bg-surface/50 flex items-center justify-end gap-2.5">
+              <AppButton 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setInviteModalOpen(false)}
+                disabled={inviteLoading}
+              >
+                Cancel
+              </AppButton>
+              <AppButton 
+                variant="primary" 
+                size="sm"
+                onClick={handleSendInvite} 
+                disabled={inviteLoading}
+                leftIcon={<Mail className={`h-3.5 w-3.5 ${inviteLoading ? "animate-spin" : ""}`} />}
+              >
+                {inviteLoading ? "Sending Invitation..." : "Send Invitation"}
               </AppButton>
             </div>
           </div>

@@ -1618,6 +1618,25 @@ export default function FleetDeskHost({
       return;
     }
 
+    const sId = att.service_id || att.serviceRecordId || selectedMaintenanceForEdit?.id || selectedMaintenanceForView?.id;
+
+    // On-demand fetch for service record attachment
+    if (sId || att.id?.startsWith("att-")) {
+      triggerToast("Opening service attachment scan...");
+      try {
+        const res = await fetchServiceAttachmentContentAction(sId || att.id, att.id || att.file_name);
+        if (res.success && res.file_url) {
+          const enriched = { ...att, file_url: res.file_url };
+          setPreviewAttachment(enriched);
+          setPreviewZoom(1);
+          setPreviewRotation(0);
+          return;
+        }
+      } catch (err) {
+        console.warn("Failed to retrieve service attachment via server action:", err);
+      }
+    }
+
     // On-demand fetch for vehicle document
     if (att.id && !att.id.startsWith("temp-") && !att.id.startsWith("vdoc-temp-") && (att.id.startsWith("vdoc-") || att.vehicle_id || att.doc_type || att.isDirectVaultDoc)) {
       triggerToast("Opening secure document preview...");
@@ -1633,10 +1652,13 @@ export default function FleetDeskHost({
       } catch (err) {
         console.warn("fetchVehicleDocumentContentAction error, trying API fallback:", err);
       }
+    }
 
-      // REST API fallback for document retrieval
-      try {
-        const apiRes = await fetch(`/api/vehicle/document-content?id=${encodeURIComponent(att.id)}`).then((r) => r.json());
+    // REST API fallback for document retrieval
+    try {
+      const docIdentifier = att.id || att.file_name;
+      if (docIdentifier) {
+        const apiRes = await fetch(`/api/vehicle/document-content?id=${encodeURIComponent(docIdentifier)}`).then((r) => r.json());
         if (apiRes.success && apiRes.file_url) {
           const enriched = { ...att, file_url: apiRes.file_url };
           setPreviewAttachment(enriched);
@@ -1644,32 +1666,15 @@ export default function FleetDeskHost({
           setPreviewRotation(0);
           return;
         }
-      } catch (apiErr) {
-        console.error("API document content error:", apiErr);
       }
-    }
-
-    // On-demand fetch for service record attachment
-    if (att.service_id || att.serviceRecordId) {
-      triggerToast("Opening service attachment scan...");
-      try {
-        const res = await fetchServiceAttachmentContentAction(att.service_id || att.serviceRecordId, att.id);
-        if (res.success && res.file_url) {
-          const enriched = { ...att, file_url: res.file_url };
-          setPreviewAttachment(enriched);
-          setPreviewZoom(1);
-          setPreviewRotation(0);
-          return;
-        }
-      } catch (err) {
-        console.error("Failed to retrieve service attachment:", err);
-      }
+    } catch (apiErr) {
+      console.error("API document content error:", apiErr);
     }
 
     // No actual file scan exists in storage
-    triggerToast(`No physical scanned copy is uploaded for ${att.title || 'this document'}. Please upload the original document scan.`, true);
+    triggerToast(`No physical scanned copy is uploaded for ${att.title || att.file_name || 'this document'}. Please upload the original document scan.`, true);
     setDossierNewDocType(att.doc_type || "OTHER");
-    setDossierNewDocTitle(att.title || "");
+    setDossierNewDocTitle(att.title || att.file_name || "");
     setDossierNewDocNumber(att.document_number || "");
     setDossierNewDocExpiry(att.expiry_date || "");
     setIsDossierAddDocOpen(true);
@@ -1688,30 +1693,40 @@ export default function FleetDeskHost({
   }) => {
     try {
       let fileUrl = att.file_url;
+      const sId = att.service_id || att.serviceRecordId || selectedMaintenanceForEdit?.id || selectedMaintenanceForView?.id;
 
       // If file_url is not in memory, retrieve on-demand
-      if (!fileUrl && att.id && !att.id.startsWith("temp-") && !att.id.startsWith("vdoc-temp-")) {
+      if (!fileUrl && (att.id || att.file_name) && !att.id?.startsWith("temp-") && !att.id?.startsWith("vdoc-temp-")) {
         triggerToast("Fetching file for download...");
-        if (att.id.startsWith("vdoc-") || att.vehicle_id || att.doc_type || att.isDirectVaultDoc) {
+
+        // Try service record attachments first if sId or att prefix matches
+        if (sId || att.id?.startsWith("att-")) {
           try {
-            const res = await fetchVehicleDocumentContentAction(att.id);
+            const res = await fetchServiceAttachmentContentAction(sId || att.id || "", att.id || att.file_name || "");
+            if (res.success && res.file_url) fileUrl = res.file_url;
+          } catch (sErr) {
+            console.warn("fetchServiceAttachmentContentAction download failed:", sErr);
+          }
+        }
+
+        if (!fileUrl && (att.id?.startsWith("vdoc-") || att.vehicle_id || att.doc_type || att.isDirectVaultDoc)) {
+          try {
+            const res = await fetchVehicleDocumentContentAction(att.id!);
             if (res.success && res.file_url) fileUrl = res.file_url;
           } catch (e) {
             console.warn("fetchVehicleDocumentContentAction failed for download, trying API:", e);
           }
-          if (!fileUrl) {
-            try {
-              const apiRes = await fetch(`/api/vehicle/document-content?id=${encodeURIComponent(att.id)}`).then((r) => r.json());
+        }
+
+        if (!fileUrl) {
+          try {
+            const docIdentifier = att.id || att.file_name;
+            if (docIdentifier) {
+              const apiRes = await fetch(`/api/vehicle/document-content?id=${encodeURIComponent(docIdentifier)}`).then((r) => r.json());
               if (apiRes.success && apiRes.file_url) fileUrl = apiRes.file_url;
-            } catch (apiE) {
-              console.error("API download fetch error:", apiE);
             }
-          }
-        } else if (att.service_id || att.serviceRecordId) {
-          const sId = att.service_id || att.serviceRecordId;
-          if (sId) {
-            const res = await fetchServiceAttachmentContentAction(sId, att.id);
-            if (res.success && res.file_url) fileUrl = res.file_url;
+          } catch (apiE) {
+            console.error("API download fetch error:", apiE);
           }
         }
       }
@@ -1752,7 +1767,7 @@ export default function FleetDeskHost({
         const docTitle = att.title || att.file_name || "Document";
         triggerToast(`No original document scan uploaded to download for ${docTitle}. Please upload the physical file copy.`, true);
         setDossierNewDocType(att.doc_type || "OTHER");
-        setDossierNewDocTitle(att.title || "");
+        setDossierNewDocTitle(att.title || att.file_name || "");
         setDossierNewDocNumber(att.document_number || "");
         setDossierNewDocExpiry(att.expiry_date || "");
         setIsDossierAddDocOpen(true);
@@ -1831,9 +1846,31 @@ export default function FleetDeskHost({
     setEditMaintNotes(partsData.technician_notes || "");
     setEditMaintPostStatus(partsData.post_service_status || "IN_STOCK");
     setEditMaintActiveSection("SCOPE_WORKSHOP");
-    const existingAtts = Array.isArray(partsData.attachments) ? partsData.attachments : [];
+    const existingAtts = Array.isArray(partsData.attachments) 
+      ? partsData.attachments.map((a: any, idx: number) => ({
+          ...a,
+          id: a.id || `att-${m.id}-${idx}`,
+          service_id: m.id,
+          serviceRecordId: m.id
+        }))
+      : [];
     setEditMaintAttachments(existingAtts);
     setIsEditMaintenanceOpen(true);
+
+    // If any attachment lacks file_url, fetch on-demand asynchronously
+    if (existingAtts.some((a: any) => !a.file_url)) {
+      fetchServiceAttachmentContentAction(m.id).then((res) => {
+        if (res.success && Array.isArray(res.attachments) && res.attachments.length > 0) {
+          const map = new Map(res.attachments.map((a: any) => [a.id || a.file_name, a.file_url]));
+          setEditMaintAttachments((prev) =>
+            prev.map((att) => ({
+              ...att,
+              file_url: att.file_url || map.get(att.id) || map.get(att.file_name) || ""
+            }))
+          );
+        }
+      }).catch(console.error);
+    }
   };
 
   const handleSelectMaintVehicle = (vehId: string) => {
@@ -16788,9 +16825,7 @@ export default function FleetDeskHost({
                                   size="icon-sm"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    setPreviewAttachment(att);
-                                    setPreviewZoom(1);
-                                    setPreviewRotation(0);
+                                    handleViewAttachment(att);
                                   }}
                                   className="h-7 w-7 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
                                   title="View / Preview File"
@@ -17601,9 +17636,10 @@ export default function FleetDeskHost({
                                   size="icon-sm"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    setPreviewAttachment(att);
-                                    setPreviewZoom(1);
-                                    setPreviewRotation(0);
+                                    handleViewAttachment({
+                                      ...att,
+                                      service_id: selectedMaintenanceForEdit?.id
+                                    });
                                   }}
                                   className="h-7 w-7 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
                                   title="View / Preview File"
@@ -17616,7 +17652,10 @@ export default function FleetDeskHost({
                                   size="icon-sm"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    downloadAttachment(att);
+                                    downloadAttachment({
+                                      ...att,
+                                      service_id: selectedMaintenanceForEdit?.id
+                                    });
                                   }}
                                   className="h-7 w-7 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
                                   title="Download File"
@@ -18956,9 +18995,7 @@ export default function FleetDeskHost({
                             size="icon-sm"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setPreviewAttachment(att);
-                              setPreviewZoom(1);
-                              setPreviewRotation(0);
+                              handleViewAttachment(att);
                             }}
                             className="h-7 w-7 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
                             title="View / Preview Document"
@@ -23253,9 +23290,7 @@ export default function FleetDeskHost({
                                   variant="ghost"
                                   size="icon-sm"
                                   onClick={() => {
-                                    setPreviewAttachment(att);
-                                    setPreviewZoom(1);
-                                    setPreviewRotation(0);
+                                    handleViewAttachment(att);
                                   }}
                                   className="h-7 w-7 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
                                   title="View / Preview Document"

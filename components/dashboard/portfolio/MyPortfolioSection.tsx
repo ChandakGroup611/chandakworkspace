@@ -55,9 +55,10 @@ export function MyPortfolioSection() {
       if (res.error) throw new Error(res.error);
       return res;
     },
-    refetchInterval: 15000,
-    staleTime: 5000,
-    refetchOnWindowFocus: true
+    refetchInterval: 120000,
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchIntervalInBackground: false
   });
 
   const rawItems: PortfolioItem[] = data?.items || [];

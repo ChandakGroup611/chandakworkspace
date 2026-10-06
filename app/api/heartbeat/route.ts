@@ -138,7 +138,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ ok: true, serverTime: now });
+    let buildId = 'build-latest';
+    try {
+      const fs = await import('fs');
+      const path = await import('path');
+      const buildIdPath = path.join(process.cwd(), '.next', 'BUILD_ID');
+      if (fs.existsSync(buildIdPath)) {
+        buildId = fs.readFileSync(buildIdPath, 'utf8').trim();
+      }
+    } catch (e) {}
+
+    return NextResponse.json({ ok: true, serverTime: now, buildId });
   } catch (e: any) {
     console.error("[Heartbeat] Unhandled error:", e);
     return NextResponse.json(

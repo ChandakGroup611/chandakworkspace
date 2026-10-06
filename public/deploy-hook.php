@@ -9,9 +9,28 @@ ini_set('display_errors', 0);
 header('Content-Type: application/json');
 
 $token = isset($_GET['key']) ? $_GET['key'] : '';
-$expectedToken = 'chandak_deploy_secret_2026_matrix';
 
-if ($token !== $expectedToken) {
+// Resolve expected deploy secret securely from server environment or external config outside public web root
+$expectedToken = getenv('HOSTINGER_DEPLOY_KEY') ?: getenv('DEPLOY_SECRET');
+
+if (empty($expectedToken)) {
+    $secretFiles = [
+        '/home/u859582759/.deploy_secret',
+        '/home/u859582759/domains/chandakgroup.tech/hbuilds/config/deploy_secret.txt',
+        dirname(__DIR__) . '/.deploy_secret',
+    ];
+    foreach ($secretFiles as $sFile) {
+        if (file_exists($sFile) && is_readable($sFile)) {
+            $content = trim(@file_get_contents($sFile));
+            if (!empty($content)) {
+                $expectedToken = $content;
+                break;
+            }
+        }
+    }
+}
+
+if (empty($expectedToken) || empty($token) || !hash_equals($expectedToken, $token)) {
     http_response_code(403);
     echo json_encode(['success' => false, 'error' => 'Unauthorized']);
     exit;
@@ -242,11 +261,11 @@ if ($zipFile && class_exists('ZipArchive')) {
     @unlink($domainRoot . '/public_html/.ftp-deploy-sync-state.json');
 }
 
-// Base anti-caching header for LiteSpeed & Apache
-$htaccessHeader = "<IfModule LiteSpeed>\n    CacheLookup off\n    SetEnv no-lscache 1\n</IfModule>\n\n<IfModule mod_headers.c>\n    <FilesMatch \"\\.(html|htm|php|json|js|css)$\">\n        Header set Cache-Control \"no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0\"\n        Header set CDN-Cache-Control \"no-store\"\n        Header set Surrogate-Control \"no-store\"\n        Header set Pragma \"no-cache\"\n        Header set Expires \"0\"\n    </FilesMatch>\n    <FilesMatch \"\\.(woff|woff2|svg|png|jpg|jpeg|gif|webp|ico)$\">\n        Header set Cache-Control \"public, max-age=3600, must-revalidate\"\n    </FilesMatch>\n</IfModule>\n\n";
+// Base performance caching header for LiteSpeed & Apache
+$htaccessHeader = "<IfModule LiteSpeed>\n    CacheLookup on\n</IfModule>\n\n<IfModule mod_headers.c>\n    <FilesMatch \"\\.(woff|woff2|ttf|eot|svg|png|jpg|jpeg|gif|webp|ico)$\">\n        Header set Cache-Control \"public, max-age=31536000, immutable\"\n    </FilesMatch>\n    <FilesMatch \"\\.(html|htm|php|json)$\">\n        Header set Cache-Control \"no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0\"\n        Header set CDN-Cache-Control \"no-store\"\n        Header set Surrogate-Control \"no-store\"\n        Header set Pragma \"no-cache\"\n        Header set Expires \"0\"\n    </FilesMatch>\n</IfModule>\n\n";
 
-// Rewrite rules & Passenger configurations
-$passengerDirective = "PassengerAppType node\nPassengerNodejs /opt/alt/alt-nodejs20/root/bin/node\nPassengerStartupFile server.js\nPassengerBaseURI /\nSetEnv NODE_OPTIONS \"--require /home/u859582759/domains/chandakgroup.tech/hbuilds/config/preload-timestamp.js\"\nSetEnv LSNODE_CONSOLE_LOG console.log\nSetEnv TOKIO_WORKER_THREADS 2\nRewriteRule ^\\.builds - [F,L]\n";
+// Passenger process limits & memory bounds for Hostinger Business container limits (1.5GB RAM)
+$passengerDirective = "PassengerAppType node\nPassengerNodejs /opt/alt/alt-nodejs20/root/bin/node\nPassengerStartupFile server.js\nPassengerBaseURI /\nPassengerMaxInstances 1\nPassengerMinInstances 1\nPassengerMaxPoolSize 2\nPassengerPoolIdleTime 300\nPassengerHighPerformance on\nSetEnv NODE_OPTIONS \"--max-old-space-size=400 --require /home/u859582759/domains/chandakgroup.tech/hbuilds/config/preload-timestamp.js\"\nSetEnv LSNODE_CONSOLE_LOG console.log\nSetEnv TOKIO_WORKER_THREADS 2\nRewriteRule ^\\.builds - [F,L]\n";
 
 // 1. Write to public_html/.htaccess
 $pubHtaccess = $htaccessHeader . "PassengerAppRoot /home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs\nPassengerRestartDir /home/u859582759/domains/chandakgroup.tech/hbuilds/current/nodejs/tmp\n" . $passengerDirective;

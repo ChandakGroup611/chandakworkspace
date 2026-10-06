@@ -365,6 +365,37 @@ export async function assignUserModules(
       }
     }
 
+    // Synchronize fleet_user_access if VEHICLE_DESK is included
+    if (moduleCodes.includes("VEHICLE_DESK")) {
+      try {
+        const { data: existingFleet } = await supabaseAdmin
+          .from("fleet_user_access")
+          .select("id")
+          .eq("user_id", targetUserId)
+          .maybeSingle();
+
+        if (!existingFleet) {
+          await supabaseAdmin
+            .from("fleet_user_access")
+            .insert({
+              user_id: targetUserId,
+              fleet_role: "FLEET_STAFF",
+              scope_type: "ALL_VEHICLES",
+              assigned_vehicle_ids: [],
+              can_manage_vehicles: true,
+              can_manage_drivers: true,
+              can_dispatch_trips: true,
+              can_manage_maintenance: true,
+              can_view_reports: true,
+              can_manage_settings: false,
+              updated_at: new Date().toISOString()
+            });
+        }
+      } catch (fleetErr) {
+        console.warn("[assignUserModules] fleet_user_access sync warning:", fleetErr);
+      }
+    }
+
     return { success: true };
   } catch (error: any) {
     console.error("[assignUserModules] Error:", error);

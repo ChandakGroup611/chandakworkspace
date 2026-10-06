@@ -18,7 +18,7 @@ export async function GET(request: Request) {
     
     if (!error && sessionData?.user) {
       // Check if user is registered in the system
-      const { data: userRecord } = await supabase
+      const { data: rawUserRecord } = await supabase
         .from('user_master')
         .select('id, is_active, is_deleted')
         .eq('id', sessionData.user.id)
@@ -28,8 +28,42 @@ export async function GET(request: Request) {
       const isLocalEnv = process.env.NODE_ENV === 'development';
       const redirectOrigin = (forwardedHost && !isLocalEnv) ? `https://${forwardedHost}` : origin;
 
+      let userRecord = rawUserRecord;
+
       if (!userRecord) {
-        // User not found in user_master
+        // Self-heal: If user is authenticated in Supabase Auth (e.g. accepted invite or SSO), provision user_master profile
+        try {
+          const { supabaseAdmin } = await import('@/lib/supabase/service_role');
+          const userCode = `USR-${sessionData.user.id.substring(0, 8).toUpperCase()}`;
+          const name = sessionData.user.user_metadata?.full_name || sessionData.user.email?.split('@')[0] || 'New Personnel';
+
+          const { data: createdUser, error: insertError } = await supabaseAdmin
+            .from('user_master')
+            .upsert({
+              id: sessionData.user.id,
+              email: sessionData.user.email,
+              full_name: name,
+              user_code: userCode,
+              is_active: true,
+              is_deleted: false,
+              created_at: new Date().toISOString()
+            }, { onConflict: 'id' })
+            .select('id, is_active, is_deleted')
+            .single();
+
+          if (!insertError && createdUser) {
+            userRecord = createdUser;
+            // Assign default operational modules
+            const { assignUserModules } = await import('@/lib/actions/module-switcher');
+            await assignUserModules(sessionData.user.id, ['TASK_WORKFLOW', 'VEHICLE_DESK', 'DESIGN_TRACKING'], 'TASK_WORKFLOW');
+          }
+        } catch (healErr) {
+          console.error('[Auth Callback] Profile self-healing error:', healErr);
+        }
+      }
+
+      if (!userRecord) {
+        // If still not resolvable, sign out
         await supabase.auth.signOut();
         return NextResponse.redirect(`${redirectOrigin}/login?error=not-registered`);
       }

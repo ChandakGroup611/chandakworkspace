@@ -149,6 +149,56 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
         };
       }
     }
+
+    if (!attachment) {
+      // Check if ID matches an attachment inside service_records
+      const { data: srvRecords } = await supabaseAdmin
+        .from('service_records')
+        .select('id, parts_replaced')
+        .not('parts_replaced', 'is', null);
+
+      if (srvRecords) {
+        for (const sr of srvRecords) {
+          const atts = sr.parts_replaced?.attachments;
+          if (Array.isArray(atts)) {
+            const match = atts.find((a: any) => a.id === id || a.file_name === id);
+            if (match && match.file_url) {
+              attachment = {
+                file_name: match.file_name || 'service_document.pdf',
+                file_url: match.file_url,
+                file_type: match.file_type || null
+              };
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    if (!attachment) {
+      // Check if ID matches an attachment inside vehicle_parts
+      const { data: partRecords } = await supabaseAdmin
+        .from('vehicle_parts')
+        .select('id, attachments')
+        .not('attachments', 'is', null);
+
+      if (partRecords) {
+        for (const pr of partRecords) {
+          const atts = pr.attachments;
+          if (Array.isArray(atts)) {
+            const match = atts.find((a: any) => a.id === id || a.file_name === id);
+            if (match && match.file_url) {
+              attachment = {
+                file_name: match.file_name || 'part_document.pdf',
+                file_url: match.file_url,
+                file_type: match.file_type || null
+              };
+              break;
+            }
+          }
+        }
+      }
+    }
     
     if (!attachment) {
       return new NextResponse('Attachment Not Found', { status: 404 });

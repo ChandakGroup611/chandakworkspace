@@ -3429,14 +3429,16 @@ export async function fetchMaintenanceList(): Promise<{
       if (typeof pr === "object" && pr !== null && Array.isArray(pr.attachments)) {
         pr = {
           ...pr,
-          attachments: pr.attachments.map((a: any) => ({
-            id: a.id || `att-${Date.now()}`,
+          attachments: pr.attachments.map((a: any, idx: number) => ({
+            id: a.id || `att-${r.id}-${idx}`,
+            service_id: r.id,
+            serviceRecordId: r.id,
             file_name: a.file_name,
             file_size: a.file_size,
             file_type: a.file_type || resolveMimeFromName(a.file_name || ""),
             uploaded_at: a.uploaded_at,
             has_file: !!a.file_url,
-            file_url: ""
+            file_url: a.file_url || ""
           }))
         };
       }
@@ -3480,24 +3482,49 @@ export async function fetchServiceAttachmentContentAction(
       .eq("id", serviceId)
       .maybeSingle();
 
-    if (error || !data) {
-      return { success: false, error: error?.message || "Service record not found." };
+    let targetRecord: any = data;
+    if (!targetRecord) {
+      // Try searching service_records for the attachment id
+      const { data: allServices } = await supabaseAdmin
+        .from("service_records")
+        .select("id, vehicle_id, parts_replaced")
+        .not("parts_replaced", "is", null);
+
+      if (allServices) {
+        targetRecord = allServices.find((sr: any) => {
+          const atts = sr.parts_replaced?.attachments;
+          return Array.isArray(atts) && atts.some((a: any) => a.id === serviceId || a.id === attachmentId || a.file_name === serviceId || a.file_name === attachmentId);
+        }) || null;
+      }
     }
 
-    const partsData = typeof data.parts_replaced === "object" && data.parts_replaced !== null ? data.parts_replaced : {};
+    if (!targetRecord) {
+      return { success: false, error: error?.message || "Service record or attachment not found." };
+    }
+
+    const partsData = typeof targetRecord.parts_replaced === "object" && targetRecord.parts_replaced !== null ? targetRecord.parts_replaced : {};
     const rawAttachments: any[] = Array.isArray(partsData.attachments) ? partsData.attachments : [];
 
     let targetFileUrl = "";
     if (attachmentId) {
       const match = rawAttachments.find((a: any) => a.id === attachmentId || a.file_name === attachmentId);
       if (match) targetFileUrl = match.file_url || "";
-    } else if (rawAttachments.length > 0) {
+    } else if (serviceId) {
+      const match = rawAttachments.find((a: any) => a.id === serviceId || a.file_name === serviceId);
+      if (match) targetFileUrl = match.file_url || "";
+    }
+    if (!targetFileUrl && rawAttachments.length > 0) {
       targetFileUrl = rawAttachments[0].file_url || "";
     }
 
     return {
       success: true,
-      attachments: rawAttachments,
+      attachments: rawAttachments.map((a: any, idx: number) => ({
+        ...a,
+        id: a.id || `att-${targetRecord.id}-${idx}`,
+        service_id: targetRecord.id,
+        serviceRecordId: targetRecord.id
+      })),
       file_url: targetFileUrl
     };
   } catch (err: any) {

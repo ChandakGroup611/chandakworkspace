@@ -42,18 +42,52 @@ export async function GET(request: NextRequest) {
       .eq("id", documentId)
       .maybeSingle();
 
-    if (error || !data) {
-      return NextResponse.json({ success: false, error: error?.message || "Document not found" }, { status: 404 });
+    let docData = data;
+    if (!docData) {
+      // Check service_records
+      const { data: srvRecords } = await supabaseAdmin
+        .from("service_records")
+        .select("id, vehicle_id, parts_replaced")
+        .not("parts_replaced", "is", null);
+
+      if (srvRecords) {
+        for (const sr of srvRecords) {
+          const atts = sr.parts_replaced?.attachments;
+          if (Array.isArray(atts)) {
+            const match = atts.find((a: any) => a.id === documentId || a.file_name === documentId);
+            if (match) {
+              docData = {
+                id: match.id || documentId,
+                vehicle_id: sr.vehicle_id,
+                doc_type: "SERVICE_INVOICE",
+                title: match.file_name || "Service Invoice",
+                file_name: match.file_name || "service_document.pdf",
+                file_size: match.file_size,
+                uploaded_at: match.uploaded_at,
+                expiry_date: null,
+                status: "VALID",
+                document_number: sr.parts_replaced?.invoice_number || null,
+                file_url: match.file_url || ""
+              };
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    if (!docData) {
+      return NextResponse.json({ success: false, error: "Document not found" }, { status: 404 });
     }
 
     return NextResponse.json({
       success: true,
       document: {
-        ...data,
-        has_file: Boolean(data.file_url),
-        file_type: resolveMimeFromName(data.file_name)
+        ...docData,
+        has_file: Boolean(docData.file_url),
+        file_type: resolveMimeFromName(docData.file_name)
       },
-      file_url: data.file_url || ""
+      file_url: docData.file_url || ""
     });
   } catch (err: any) {
     console.error("[api-vehicle-document-content] Exception:", err);

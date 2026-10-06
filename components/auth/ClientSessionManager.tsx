@@ -85,31 +85,26 @@ export default function ClientSessionManager() {
         return;
       }
       
-      // Automatic deployment version check & background refresh
-      try {
-        const buildRes = await fetch("/api/build-info", { cache: "no-store" });
-        if (buildRes.ok) {
-          const buildData = await buildRes.json();
-          if (buildData.buildId) {
-            const currentBuild = sessionStorage.getItem("app_active_build_id");
-            if (!currentBuild) {
-              sessionStorage.setItem("app_active_build_id", buildData.buildId);
-            } else if (currentBuild !== buildData.buildId) {
-              console.log("[ClientSessionManager] New deployment build detected on server. Synchronizing client frontend:", buildData.buildId);
-              sessionStorage.setItem("app_active_build_id", buildData.buildId);
-              if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
-                window.location.reload();
-                return;
-              }
-            }
-          }
-        }
-      } catch (buildErr) {}
-
       const clientReceived = Date.now();
       try {
         const data = await res.json();
-        if (data.serverTime) {
+        
+        // Automatic deployment version check & background refresh (consolidated into heartbeat)
+        if (data?.buildId) {
+          const currentBuild = sessionStorage.getItem("app_active_build_id");
+          if (!currentBuild) {
+            sessionStorage.setItem("app_active_build_id", data.buildId);
+          } else if (currentBuild !== data.buildId) {
+            console.log("[ClientSessionManager] New deployment build detected on server. Synchronizing client frontend:", data.buildId);
+            sessionStorage.setItem("app_active_build_id", data.buildId);
+            if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
+              window.location.reload();
+              return;
+            }
+          }
+        }
+
+        if (data?.serverTime) {
           // Calculate clock skew offset
           const serverMs = new Date(data.serverTime).getTime();
           const clientMs = (clientSent + clientReceived) / 2;

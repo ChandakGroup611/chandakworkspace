@@ -536,7 +536,21 @@ export async function deleteUserAction(userId: string) {
   return { success: true };
 }
 
-export async function inviteUserAction(email: string, roleId: string | null) {
+export interface InviteUserPayload {
+  email: string;
+  fullName?: string;
+  roleId?: string | null;
+  departmentId?: string | null;
+  designationId?: string | null;
+  moduleCodes?: string[];
+  defaultModuleCode?: string;
+  redirectTo?: string;
+}
+
+export async function inviteUserAction(
+  emailOrPayload: string | InviteUserPayload,
+  legacyRoleId?: string | null
+) {
   const cookieStore = await cookies();
   const supabase = createServerClient(cookieStore);
 
@@ -567,38 +581,150 @@ export async function inviteUserAction(email: string, roleId: string | null) {
     return { success: false, error: "Missing Service Role Key. Cannot send invites from this environment." };
   }
 
+  const payload: InviteUserPayload = typeof emailOrPayload === "string" 
+    ? { email: emailOrPayload, roleId: legacyRoleId }
+    : emailOrPayload;
+
+  const email = payload.email?.trim().toLowerCase();
+  if (!email || !email.includes("@")) {
+    return { success: false, error: "A valid email address is required." };
+  }
+
+  const fullName = payload.fullName?.trim() || "";
+  const roleId = payload.roleId || null;
+  const departmentId = payload.departmentId || null;
+  const designationId = payload.designationId || null;
+  const moduleCodes = payload.moduleCodes && payload.moduleCodes.length > 0 
+    ? payload.moduleCodes 
+    : ["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING"];
+  const defaultModuleCode = payload.defaultModuleCode || moduleCodes[0] || "TASK_WORKFLOW";
+
   const adminClient = getAdminClient();
 
-  // 3. Send the invite
-  const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email);
+  // 3. Send the invite via Supabase Auth Admin
+  const inviteOptions: any = {
+    data: {
+      full_name: fullName || email.split("@")[0],
+      invited_by: authUser.id
+    }
+  };
+
+  if (payload.redirectTo) {
+    inviteOptions.redirectTo = payload.redirectTo;
+  } else if (process.env.NEXT_PUBLIC_SITE_URL) {
+    inviteOptions.redirectTo = `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?next=/`;
+  }
+
+  const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, inviteOptions);
+
+  let targetUserId: string | null = inviteData?.user?.id || null;
 
   if (inviteError) {
-    console.error("[Server Action] Invite error:", inviteError);
-    return { success: false, error: `Invite failed: ${inviteError.message}` };
+    // If the user already exists in auth.users, fetch their ID and update roles/modules
+    const isAlreadyRegistered = inviteError.message.toLowerCase().includes("already") || 
+      inviteError.message.toLowerCase().includes("registered") ||
+      inviteError.message.toLowerCase().includes("exists");
+
+    if (isAlreadyRegistered) {
+      // Find existing user in user_master
+      const { data: existingUser } = await adminClient
+        .from("user_master")
+        .select("id, is_deleted")
+        .eq("email", email)
+        .maybeSingle();
+
+      if (existingUser) {
+        targetUserId = existingUser.id;
+      } else {
+        // Find in auth.users
+        const { data: listData } = await adminClient.auth.admin.listUsers();
+        const found = listData?.users?.find(u => u.email?.toLowerCase() === email);
+        if (found) {
+          targetUserId = found.id;
+        }
+      }
+
+      if (!targetUserId) {
+        return { success: false, error: `Invite failed: ${inviteError.message}` };
+      }
+    } else {
+      console.error("[Server Action] Invite error:", inviteError);
+      return { success: false, error: `Invite failed: ${inviteError.message}` };
+    }
   }
 
-  const newUserId = inviteData.user.id;
+  if (!targetUserId) {
+    return { success: false, error: "Failed to resolve invited user ID." };
+  }
 
-  // 4. Update the user_master with the requested role
-  // (The trigger handle_new_user should have already created the row when inviteUserByEmail executed)
+  // 4. Update / Upsert user profile in user_master
+  const userCode = `USR-${targetUserId.substring(0, 8).toUpperCase()}`;
   const updatePayload: any = {
-    is_active: true
+    id: targetUserId,
+    email: email,
+    full_name: fullName || email.split("@")[0],
+    user_code: userCode,
+    is_active: true,
+    is_deleted: false,
+    updated_at: new Date().toISOString()
   };
-  
-  if (roleId) {
-    updatePayload.role_id = roleId;
-    await adminClient.from("user_roles").insert({ user_id: newUserId, role_id: roleId }).select();
-  }
+
+  if (roleId) updatePayload.role_id = roleId;
+  if (departmentId) updatePayload.department_id = departmentId;
+  if (designationId) updatePayload.designation_id = designationId;
 
   const { error: dbError } = await adminClient
     .from("user_master")
-    .update(updatePayload)
-    .eq("id", newUserId);
+    .upsert(updatePayload, { onConflict: "id" });
 
   if (dbError) {
-    console.error("[Server Action] DB role update error for invite:", dbError);
+    console.error("[Server Action] DB upsert error for invite:", dbError);
+  }
+
+  // 5. Update user_roles mapping
+  if (roleId) {
+    await adminClient.from("user_roles").delete().eq("user_id", targetUserId);
+    await adminClient.from("user_roles").insert({ user_id: targetUserId, role_id: roleId });
+  }
+
+  // 6. Refresh permissions snapshot
+  try {
+    await adminClient.rpc("refresh_single_user_permissions_snapshot", { p_user_id: targetUserId });
+  } catch (snapErr) {
+    // Handled by DB triggers
+  }
+
+  // 7. Configure and assign operational modules
+  try {
+    const { assignUserModules } = await import("@/lib/actions/module-switcher");
+    await assignUserModules(targetUserId, moduleCodes, defaultModuleCode);
+  } catch (modErr) {
+    console.error("[Server Action] Error assigning modules during invite:", modErr);
+  }
+
+  // 8. Log audit entry
+  try {
+    await adminClient.from("user_master_audit_logs").insert({
+      user_id: targetUserId,
+      operation: "INVITE",
+      performed_by: authUser.id,
+      payload: {
+        email,
+        full_name: fullName,
+        role_id: roleId,
+        department_id: departmentId,
+        designation_id: designationId,
+        module_codes: moduleCodes,
+        default_module: defaultModuleCode
+      }
+    });
+  } catch (auditErr) {
+    // Non-blocking
   }
 
   revalidatePath("/users");
-  return { success: true, message: `Invite sent successfully to ${email}` };
+  return { 
+    success: true, 
+    message: `Invitation successfully sent to ${email} with assigned role and module access.` 
+  };
 }

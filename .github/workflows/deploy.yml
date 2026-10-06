@@ -37,10 +37,10 @@ jobs:
       - name: Build Next.js
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
-          NEXT_PUBLIC_SUPABASE_URL: "https://tkovzymkubxtpcgynkgd.supabase.co"
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRrb3Z6eW1rdWJ4dHBjZ3lua2dkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5ODA2MjIsImV4cCI6MjA5NjU1NjYyMn0.CHw9iXsbW8Im7Ul4hnShVEOeZLWYHEJbvc3QG0VoK68"
-          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRrb3Z6eW1rdWJ4dHBjZ3lua2dkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5ODA2MjIsImV4cCI6MjA5NjU1NjYyMn0.CHw9iXsbW8Im7Ul4hnShVEOeZLWYHEJbvc3QG0VoK68"
-          SUPABASE_SERVICE_ROLE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRrb3Z6eW1rdWJ4dHBjZ3lua2dkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MDk4MDYyMiwiZXhwIjoyMDk2NTU2NjIyfQ.UsBMx2jpsI5cJavw2cFqYQJZO8tN7YHWwzvb2LYJ5wY"
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: npm run build
 
       # Copy static assets and deploy-hook into standalone folder so everything is self-contained and zip it
@@ -206,8 +206,8 @@ jobs:
       - name: Extract Payload via Webhook
         run: |
           echo "Triggering deploy hook via HTTP..."
-          curl -sS --retry 3 --retry-delay 3 "https://chandakgroup.tech/public/deploy-hook.php?key=chandak_deploy_secret_2026_matrix" || true
-          RESPONSE=$(curl -sS --retry 5 --retry-delay 3 "https://chandakgroup.tech/deploy-hook.php?key=chandak_deploy_secret_2026_matrix" || echo '{"success":true}')
+          curl -sS --retry 3 --retry-delay 3 "https://chandakgroup.tech/public/deploy-hook.php?key=${{ secrets.HOSTINGER_DEPLOY_KEY }}" || true
+          RESPONSE=$(curl -sS --retry 5 --retry-delay 3 "https://chandakgroup.tech/deploy-hook.php?key=${{ secrets.HOSTINGER_DEPLOY_KEY }}" || echo '{"success":true}')
           echo "Hook Response: $RESPONSE"
 
       # Final Live Status Verification
@@ -215,7 +215,7 @@ jobs:
         run: |
           sleep 3
           echo "Verifying server status..."
-          INFO=$(curl -sS "https://chandakgroup.tech/deploy-hook.php?key=chandak_deploy_secret_2026_matrix&info=1" || echo "no-info")
+          INFO=$(curl -sS "https://chandakgroup.tech/deploy-hook.php?key=${{ secrets.HOSTINGER_DEPLOY_KEY }}&info=1" || echo "no-info")
           echo "Server Info: $INFO"
 
       - name: Update Deployment Status
