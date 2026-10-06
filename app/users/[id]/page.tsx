@@ -27,6 +27,7 @@ import {
   Car,
   Compass,
   Layers,
+  LineChart,
   Star,
   CheckCircle2
 } from "lucide-react";
@@ -63,6 +64,12 @@ const getModuleMeta = (code: string) => {
         icon: FolderKanban,
         badgeBg: "bg-blue-500/15 text-blue-500 border-blue-500/30",
         description: "Executive task tracker, sprints, ticketing/helpdesk, requirements lifecycle & AMC."
+      };
+    case "DASHBOARDS":
+      return {
+        icon: LineChart,
+        badgeBg: "bg-fuchsia-500/15 text-fuchsia-500 border-fuchsia-500/30",
+        description: "IT & Marketing budget dashboards on live IN4 data. Actions are set by DASH_* role permissions."
       };
     case "DESIGN_TRACKING":
       return {

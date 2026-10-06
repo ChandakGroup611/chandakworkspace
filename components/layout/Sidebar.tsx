@@ -190,6 +190,19 @@ const vehicleNavGroups: NavGroup[] = [
   }
 ];
 
+// Department dashboards: each link opens the dashboard engine through /dashboards/<key>
+// (full-page reload, so plain links; the engine page has its own "Portal home" button).
+const dashboardsNavGroups: NavGroup[] = [
+  {
+    label: "Dashboards",
+    items: [
+      { label: "All Dashboards", href: "/dashboards", icon: LayoutDashboard },
+      { label: "IT Budget & Expense", href: "/dashboards/it", icon: LineChart, permission: "DASH_IT_VIEW" },
+      { label: "Marketing Budget", href: "/dashboards/mkt", icon: LineChart, permission: "DASH_MKT_VIEW" },
+    ]
+  }
+];
+
 const designNavGroups: NavGroup[] = [
   {
     label: "Tender & Pre-Construction",
@@ -244,18 +257,21 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
   const activeModuleCode = React.useMemo(() => {
     if (pathname.startsWith("/vehicle")) return "VEHICLE_DESK";
     if (pathname.startsWith("/design")) return "DESIGN_TRACKING";
+    if (pathname.startsWith("/dashboards")) return "DASHBOARDS";
     return "TASK_WORKFLOW";
   }, [pathname]);
 
   const navGroups = React.useMemo(() => {
     if (activeModuleCode === "VEHICLE_DESK") return vehicleNavGroups;
     if (activeModuleCode === "DESIGN_TRACKING") return designNavGroups;
+    if (activeModuleCode === "DASHBOARDS") return dashboardsNavGroups;
     return taskNavGroups;
   }, [activeModuleCode]);
 
   const moduleHomeHref = React.useMemo(() => {
     if (activeModuleCode === "VEHICLE_DESK") return "/vehicle";
     if (activeModuleCode === "DESIGN_TRACKING") return "/design";
+    if (activeModuleCode === "DASHBOARDS") return "/dashboards";
     return "/";
   }, [activeModuleCode]);
   const searchParams = useSearchParams();

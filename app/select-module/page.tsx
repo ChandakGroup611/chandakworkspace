@@ -8,6 +8,7 @@ import {
   Car, 
   Compass, 
   Layers, 
+  LineChart, 
   ArrowRight, 
   CheckCircle2, 
   ChevronDown, 
@@ -140,17 +141,20 @@ export default function SelectModulePage() {
         const fallbackRoutes: Record<string, string> = {
           TASK_WORKFLOW: "/",
           VEHICLE_DESK: "/vehicle",
-          DESIGN_TRACKING: "/design/matrix"
+          DESIGN_TRACKING: "/design/matrix",
+          DASHBOARDS: "/dashboards"
         };
         destination = fallbackRoutes[targetCode] || "/";
       }
 
       if (nextParam && nextParam !== "/" && !nextParam.includes("/login")) {
-        if (targetCode === "TASK_WORKFLOW" && !nextParam.startsWith("/vehicle") && !nextParam.startsWith("/design")) {
+        if (targetCode === "TASK_WORKFLOW" && !nextParam.startsWith("/vehicle") && !nextParam.startsWith("/design") && !nextParam.startsWith("/dashboards")) {
           destination = nextParam;
         } else if (targetCode === "VEHICLE_DESK" && nextParam.startsWith("/vehicle")) {
           destination = nextParam;
         } else if (targetCode === "DESIGN_TRACKING" && nextParam.startsWith("/design")) {
+          destination = nextParam;
+        } else if (targetCode === "DASHBOARDS" && nextParam.startsWith("/dashboards")) {
           destination = nextParam;
         }
       }
@@ -162,7 +166,8 @@ export default function SelectModulePage() {
       const fallbackRoutes: Record<string, string> = {
         TASK_WORKFLOW: "/",
         VEHICLE_DESK: "/vehicle",
-        DESIGN_TRACKING: "/design/matrix"
+        DESIGN_TRACKING: "/design/matrix",
+        DASHBOARDS: "/dashboards"
       };
       document.cookie = `active_module=${targetCode}; path=/; max-age=2592000; SameSite=Lax`;
       window.location.href = fallbackRoutes[targetCode] || "/";
@@ -200,6 +205,21 @@ export default function SelectModulePage() {
             "Helpdesk Ticketing & Operations",
             "Requirement Lifecycle & Approvals",
             "AMC & Software Governance"
+          ]
+        };
+      case "DASHBOARDS":
+        return {
+          icon: LineChart,
+          gradient: "from-fuchsia-500/15 via-pink-500/5 to-transparent",
+          badgeBg: "bg-fuchsia-100 dark:bg-fuchsia-500/20 text-fuchsia-800 dark:text-fuchsia-200 border-fuchsia-300 dark:border-fuchsia-500/30",
+          accentColor: "#C026D3",
+          badge: "Budgets & Analytics",
+          launchLabel: "Open Dashboards",
+          features: [
+            "IT Budget & Expense on live IN4 data",
+            "Marketing Budget, Certificates & Agencies",
+            "KPI drill-downs, details & Excel exports",
+            "Scheduled report emails"
           ]
         };
       case "DESIGN_TRACKING":
@@ -353,7 +373,7 @@ export default function SelectModulePage() {
           {(data?.modules || [])
             .slice()
             .sort((a, b) => {
-              const order: Record<string, number> = { TASK_WORKFLOW: 1, VEHICLE_DESK: 2, DESIGN_TRACKING: 3 };
+              const order: Record<string, number> = { TASK_WORKFLOW: 1, VEHICLE_DESK: 2, DESIGN_TRACKING: 3, DASHBOARDS: 4 };
               return (order[a.code] || 99) - (order[b.code] || 99);
             })
             .map((module) => {

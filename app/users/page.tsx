@@ -54,7 +54,8 @@ import {
   Key,
   AlertCircle,
   EyeOff,
-  Compass
+  Compass,
+  LineChart
 } from "lucide-react";
 
 // Initial premium fallback/mock user datasets to guarantee absolute rich presentation
@@ -1005,7 +1006,8 @@ export default function UserMasterPage() {
                 [
                   { code: "VEHICLE_DESK", name: "Vehicle Module", desc: "Fleet inventory, trip sheets, driver rosters, maintenance & spare parts.", icon: Car, color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20" },
                   { code: "TASK_WORKFLOW", name: "Workspace Module", desc: "Executive task tracker, sprints, ticketing/helpdesk, requirements & AMC.", icon: FolderKanban, color: "text-blue-500 bg-blue-500/10 border-blue-500/20" },
-                  { code: "DESIGN_TRACKING", name: "Design Tracking", desc: "Architectural & structural drawing registers, consultant reviews & site GFC.", icon: Layers, color: "text-theme-icon bg-surface border-border" }
+                  { code: "DESIGN_TRACKING", name: "Design Tracking", desc: "Architectural & structural drawing registers, consultant reviews & site GFC.", icon: Layers, color: "text-theme-icon bg-surface border-border" },
+                  { code: "DASHBOARDS", name: "Dashboards", desc: "IT & Marketing budget dashboards. What each user can do is set by DASH_* role permissions.", icon: LineChart, color: "text-fuchsia-500 bg-fuchsia-500/10 border-fuchsia-500/20" }
                 ].map((mod) => {
                   const isChecked = modalSelectedCodes.includes(mod.code);
                   const isDefault = modalDefaultCode === mod.code;
@@ -1637,6 +1639,13 @@ export default function UserMasterPage() {
                       desc: "Vehicle allocations, driver roster, trip sheets, maintenance, parts inventory & logistics.",
                       icon: Car,
                       color: "text-amber-500 border-amber-500/30 bg-amber-500/10"
+                    },
+                    {
+                      code: "DASHBOARDS",
+                      name: "Department Dashboards",
+                      desc: "IT & Marketing budget dashboards on live IN4 data. Actions are set by DASH_* role permissions.",
+                      icon: LineChart,
+                      color: "text-fuchsia-500 border-fuchsia-500/30 bg-fuchsia-500/10"
                     }
                   ].map(mod => {
                     const isSelected = modalSelectedCodes.includes(mod.code);
@@ -1708,7 +1717,7 @@ export default function UserMasterPage() {
                   >
                     {modalSelectedCodes.map(code => (
                       <option key={code} value={code}>
-                        {code === "TASK_WORKFLOW" ? "Workspace Tasks" : code === "DESIGN_TRACKING" ? "Design Tracking" : "Vehicle Desk"}
+                        {code === "TASK_WORKFLOW" ? "Workspace Tasks" : code === "DESIGN_TRACKING" ? "Design Tracking" : code === "DASHBOARDS" ? "Dashboards" : "Vehicle Desk"}
                       </option>
                     ))}
                   </select>

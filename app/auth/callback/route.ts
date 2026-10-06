@@ -82,6 +82,7 @@ export async function GET(request: Request) {
         destination = rawNext;
         if (rawNext.startsWith('/vehicle')) activeModuleCode = 'VEHICLE_DESK';
         else if (rawNext.startsWith('/design')) activeModuleCode = 'DESIGN_TRACKING';
+        else if (rawNext.startsWith('/dashboards')) activeModuleCode = 'DASHBOARDS';
       } else {
         // Resolve user's preferred or assigned default module
         const { supabaseAdmin } = await import('@/lib/supabase/service_role');

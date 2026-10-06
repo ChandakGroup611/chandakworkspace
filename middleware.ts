@@ -7,7 +7,8 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   const isAuthPage = pathname === "/login" || pathname === "/register";
-  const isApiRoute = pathname.startsWith("/api");
+  // Dashboard engine API calls (/dashboards/<key>/api/...) answer 401 JSON themselves.
+  const isApiRoute = pathname.startsWith("/api") || /^\/dashboards\/[^/]+\/(api|static)\//.test(pathname);
   const isAuthCallback = pathname.startsWith("/auth/");
 
   // If user is not authenticated and trying to access protected routes, redirect to /login
@@ -42,6 +43,11 @@ export async function middleware(request: NextRequest) {
       response.cookies.set(cookie.name, cookie.value, cookie);
     });
     return response;
+  }
+
+  // Dashboard engine static files (versioned CSS/JS, chart library) may be cached by the browser
+  if (/^\/dashboards\/[^/]+\/static\//.test(pathname)) {
+    return supabaseResponse;
   }
 
   // Prevent browser & CDN caching for all dynamic pages to ensure instant deploy reflection
