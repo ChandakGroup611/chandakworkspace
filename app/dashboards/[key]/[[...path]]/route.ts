@@ -26,6 +26,7 @@ type Ctx = { params: Promise<{ key: string; path?: string[] }> };
 // A dashboard page makes many API calls. Checking the session with Supabase and re-reading the profile
 // and dashboard permissions on every one of them made each call wait on several round trips, so the
 // result is kept for a short time per session token (permissions already change with a 1-minute delay).
+const BOUNCE_COOKIE = "dash_login_bounce";
 const AUTH_TTL_MS = Number(process.env.DASHBOARD_AUTH_CACHE_MS ?? 60_000);
 type Identity = { id: string; email: string; name: string; active: boolean };
 const identityCache = new Map<string, { exp: number; who: Identity }>();
@@ -104,9 +105,18 @@ async function handle(req: NextRequest, ctx: Ctx) {
   if (!user && !isStatic) {
     if (transient) return deny(api, 503, "Could not check your sign-in just now. Please try again in a moment.");
     if (api) return deny(true, 401, "Your session ended. Sign in again.");
+    // Loop guard: if we already sent this browser to the login page a moment ago and it came straight
+    // back (the login page thinks it is signed in), show an error instead of redirecting forever.
+    if (req.cookies.get(BOUNCE_COOKIE)) {
+      const r = deny(false, 401, "Your portal sign-in could not be confirmed for dashboards. Sign out of the portal, sign in again and retry. If it keeps happening, contact IT.");
+      r.cookies.delete(BOUNCE_COOKIE);
+      return r;
+    }
     const login = new URL("/login", req.url);
     login.searchParams.set("next", req.nextUrl.pathname + req.nextUrl.search);
-    return NextResponse.redirect(login);
+    const r = NextResponse.redirect(login);
+    r.cookies.set(BOUNCE_COOKIE, "1", { maxAge: 20, path: "/dashboards", httpOnly: true, sameSite: "lax", secure: true });
+    return r;
   }
 
   const base = engineUrl(def);
@@ -156,6 +166,17 @@ async function handle(req: NextRequest, ctx: Ctx) {
     return deny(api, 502, "The dashboard server is not reachable right now. Try again in a few minutes; if it continues, contact IT.");
   }
 
+  // The engine refused the portal's pass and wants the user to sign in, but the user IS signed in to the
+  // portal: following that redirect would loop. Explain instead (usually a secret or clock mismatch).
+  if (upstream.status >= 300 && upstream.status < 400) {
+    const to = upstream.headers.get("location") || "";
+    let loginRedirect = false;
+    try { const u = new URL(to, req.url); loginRedirect = u.pathname === "/login" && u.searchParams.has("next"); } catch { /* ignore */ }
+    if (loginRedirect) {
+      return deny(api, 502, "The dashboard server did not accept the portal sign-in. IT: check that DASHBOARD_PROXY_SECRET in the portal settings matches the dashboard server, and that the server clock is right.");
+    }
+  }
+
   const out = new Headers();
   for (const h of RESPONSE_HEADERS) {
     const v = upstream.headers.get(h);
@@ -172,7 +193,9 @@ async function handle(req: NextRequest, ctx: Ctx) {
   out.set("x-content-type-options", "nosniff");
   out.set("referrer-policy", "same-origin");
 
-  return new NextResponse(upstream.body, { status: upstream.status, headers: out });
+  const res = new NextResponse(upstream.body, { status: upstream.status, headers: out });
+  if (req.cookies.get(BOUNCE_COOKIE)) res.cookies.delete(BOUNCE_COOKIE);
+  return res;
 }
 
 export { handle as GET, handle as POST, handle as HEAD };
