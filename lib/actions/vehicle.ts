@@ -4753,11 +4753,17 @@ export async function fetchVehicleInsurancePoliciesAction(vehicleId: string): Pr
     }
 
     const rawPolicies = (data || []) as any[];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     const enrichedPolicies: VehicleInsurancePolicyRecord[] = rawPolicies.map((p) => {
       const daysRemaining = calculateDaysRemaining(p.end_date);
       let statusBadge: "ACTIVE" | "EXPIRING_SOON" | "EXPIRED" | "UPCOMING" = "ACTIVE";
 
-      if (p.start_date && new Date(p.start_date) > new Date()) {
+      const startDateObj = p.start_date ? new Date(p.start_date) : null;
+      if (startDateObj) startDateObj.setHours(0, 0, 0, 0);
+
+      if (startDateObj && startDateObj.getTime() > today.getTime()) {
         statusBadge = "UPCOMING";
       } else if (daysRemaining !== null && daysRemaining < 0) {
         statusBadge = "EXPIRED";
@@ -5007,11 +5013,17 @@ export async function fetchVehiclePucCertificatesAction(vehicleId: string): Prom
     }
 
     const rawCerts = (data || []) as any[];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     const enrichedCerts: VehiclePucCertificateRecord[] = rawCerts.map((c) => {
       const daysRemaining = calculateDaysRemaining(c.valid_upto);
       let statusBadge: "ACTIVE" | "EXPIRING_SOON" | "EXPIRED" | "UPCOMING" = "ACTIVE";
 
-      if (c.valid_from && new Date(c.valid_from) > new Date()) {
+      const validFromDate = c.valid_from ? new Date(c.valid_from) : null;
+      if (validFromDate) validFromDate.setHours(0, 0, 0, 0);
+
+      if (validFromDate && validFromDate.getTime() > today.getTime()) {
         statusBadge = "UPCOMING";
       } else if (daysRemaining !== null && daysRemaining < 0) {
         statusBadge = "EXPIRED";
@@ -5336,6 +5348,9 @@ export async function fetchVehicleServiceEntitlementsAction(
     }
 
     const raw = (data || []) as any[];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     const enriched: VehicleServiceEntitlementRecord[] = raw.map((ent) => {
       const daysRemaining = calculateDaysRemaining(ent.valid_to_date);
       const odo = currentOdo ?? 0;
@@ -5343,9 +5358,12 @@ export async function fetchVehicleServiceEntitlementsAction(
 
       let statusBadge: "ACTIVE" | "EXPIRING_SOON" | "EXPIRED" | "REDEEMED" | "UPCOMING" = "ACTIVE";
 
+      const validFromDate = ent.valid_from_date ? new Date(ent.valid_from_date) : null;
+      if (validFromDate) validFromDate.setHours(0, 0, 0, 0);
+
       if (ent.status === "REDEEMED") {
         statusBadge = "REDEEMED";
-      } else if (ent.valid_from_date && new Date(ent.valid_from_date) > new Date()) {
+      } else if (validFromDate && validFromDate.getTime() > today.getTime()) {
         statusBadge = "UPCOMING";
       } else if ((daysRemaining !== null && daysRemaining < 0) || (kmRemaining !== null && kmRemaining < 0)) {
         statusBadge = "EXPIRED";
@@ -5564,13 +5582,19 @@ export async function fetchVehicleUnifiedRenewalsTimelineAction(
     }
 
     const raw = (data || []) as any[];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     const enriched: UnifiedVehicleRenewalTimelineItem[] = raw.map((item) => {
       const daysRemaining = calculateDaysRemaining(item.valid_upto);
       let statusBadge: "ACTIVE" | "EXPIRING_SOON" | "EXPIRED" | "UPCOMING" | "REDEEMED" = "ACTIVE";
 
+      const validFromDate = item.valid_from ? new Date(item.valid_from) : null;
+      if (validFromDate) validFromDate.setHours(0, 0, 0, 0);
+
       if (item.metadata?.status === "REDEEMED") {
         statusBadge = "REDEEMED";
-      } else if (item.valid_from && new Date(item.valid_from) > new Date()) {
+      } else if (validFromDate && validFromDate.getTime() > today.getTime()) {
         statusBadge = "UPCOMING";
       } else if (daysRemaining !== null && daysRemaining < 0) {
         statusBadge = "EXPIRED";

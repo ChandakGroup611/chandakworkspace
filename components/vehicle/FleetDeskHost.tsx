@@ -5677,10 +5677,23 @@ export default function FleetDeskHost({
 
   const openRenewPartModal = (part: PartAccessoryRecord) => {
     setSelectedPartForRenew(part);
-    const curDate = part.renewal_date ? new Date(part.renewal_date) : new Date();
-    const nextDate = new Date(curDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let baseDate = today;
+    if (part.renewal_date) {
+      const existingRen = new Date(part.renewal_date);
+      if (!isNaN(existingRen.getTime())) {
+        existingRen.setHours(0, 0, 0, 0);
+        if (existingRen.getTime() > today.getTime()) {
+          baseDate = existingRen;
+        }
+      }
+    }
+    const nextDate = new Date(baseDate);
     nextDate.setFullYear(nextDate.getFullYear() + 1);
-    setRenewModalDate(nextDate.toISOString().split("T")[0]);
+    const nextDateStr = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, "0")}-${String(nextDate.getDate()).padStart(2, "0")}`;
+    setRenewModalDate(nextDateStr);
     setRenewModalCost(part.renewal_cost || 0);
     setRenewModalVendor(part.renewal_vendor || part.vendor_name || "");
     setRenewModalPolicyNumber(part.renewal_policy_number || "");
@@ -5735,23 +5748,31 @@ export default function FleetDeskHost({
     setSelectedVehicleForPolicyRenew(veh);
     
     // Auto-calculate continuous cycle dates:
-    // Start Date: Old expiry date + 1 day (or today if unset)
-    let startDateStr = new Date().toISOString().split("T")[0];
+    // If the old policy is still active into the future (> today), start next day after expiry.
+    // If expired (<= today) or unset, the newly issued policy starts TODAY.
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+    let startDateStr = todayStr;
     if (veh.insurance_expiry_date) {
       const oldExp = new Date(veh.insurance_expiry_date);
       if (!isNaN(oldExp.getTime())) {
-        const nextDay = new Date(oldExp);
-        nextDay.setDate(nextDay.getDate() + 1);
-        startDateStr = nextDay.toISOString().split("T")[0];
+        oldExp.setHours(0, 0, 0, 0);
+        if (oldExp.getTime() > today.getTime()) {
+          const nextDay = new Date(oldExp);
+          nextDay.setDate(nextDay.getDate() + 1);
+          startDateStr = `${nextDay.getFullYear()}-${String(nextDay.getMonth() + 1).padStart(2, "0")}-${String(nextDay.getDate()).padStart(2, "0")}`;
+        }
       }
     }
     
     // End Date: Start Date + 1 Year - 1 Day
-    const st = new Date(startDateStr);
-    const end = new Date(st);
+    const [sYear, sMonth, sDay] = startDateStr.split("-").map(Number);
+    const end = new Date(sYear, sMonth - 1, sDay);
     end.setFullYear(end.getFullYear() + 1);
     end.setDate(end.getDate() - 1);
-    const endDateStr = end.toISOString().split("T")[0];
+    const endDateStr = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
 
     setRenewPolicyStartDate(startDateStr);
     setRenewPolicyEndDate(endDateStr);
@@ -5881,24 +5902,32 @@ export default function FleetDeskHost({
   const handleOpenVehiclePucRenewModal = (veh: VehicleRecord) => {
     setSelectedVehicleForPucRenew(veh);
 
-    // Auto-calculate continuous cycle dates:
-    // Start Date: Old expiry date + 1 day (or today if unset)
-    let startDateStr = new Date().toISOString().split("T")[0];
+    // Auto-calculate cycle dates:
+    // If old PUC is still active into the future (> today), start next day after expiry.
+    // If old PUC is already expired (<= today) or unset, the newly tested PUC starts TODAY.
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+    let startDateStr = todayStr;
     if (veh.puc_expiry_date) {
       const oldExp = new Date(veh.puc_expiry_date);
       if (!isNaN(oldExp.getTime())) {
-        const nextDay = new Date(oldExp);
-        nextDay.setDate(nextDay.getDate() + 1);
-        startDateStr = nextDay.toISOString().split("T")[0];
+        oldExp.setHours(0, 0, 0, 0);
+        if (oldExp.getTime() > today.getTime()) {
+          const nextDay = new Date(oldExp);
+          nextDay.setDate(nextDay.getDate() + 1);
+          startDateStr = `${nextDay.getFullYear()}-${String(nextDay.getMonth() + 1).padStart(2, "0")}-${String(nextDay.getDate()).padStart(2, "0")}`;
+        }
       }
     }
 
-    // End Date: Start Date + 1 Year - 1 Day
-    const st = new Date(startDateStr);
-    const end = new Date(st);
+    // End Date: Start Date + 1 Year - 1 Day (standard 1-year PUC for BS-IV / BS-VI)
+    const [sYear, sMonth, sDay] = startDateStr.split("-").map(Number);
+    const end = new Date(sYear, sMonth - 1, sDay);
     end.setFullYear(end.getFullYear() + 1);
     end.setDate(end.getDate() - 1);
-    const endDateStr = end.toISOString().split("T")[0];
+    const endDateStr = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
 
     setRenewPucValidFrom(startDateStr);
     setRenewPucValidUpto(endDateStr);
@@ -19129,28 +19158,60 @@ export default function FleetDeskHost({
           isSubmitting={modalSubmitting}
         >
           <div className="space-y-4">
-              {/* Current Active Policy Banner */}
-              <div className="p-3.5 rounded-xl border border-border bg-surface/50 dark:bg-surface flex flex-wrap items-center justify-between gap-2">
-                <div className="space-y-0.5">
-                  <div className="text-xs font-bold uppercase tracking-wider text-foreground dark:text-muted-foreground flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    <span>Current Active Policy Info</span>
+              {/* Current Active / Expired Policy Banner */}
+              {(() => {
+                const insDays = selectedVehicleForPolicyRenew.insurance_expire_days ?? calculateDaysRemaining(selectedVehicleForPolicyRenew.insurance_expiry_date);
+                const isExpired = insDays !== null && insDays !== undefined && insDays < 0;
+                const isExpiringSoon = insDays !== null && insDays !== undefined && insDays >= 0 && insDays <= 30;
+
+                const bannerStyle = isExpired
+                  ? "border-rose-500/25 bg-rose-50/60 dark:bg-rose-950/20"
+                  : isExpiringSoon
+                  ? "border-amber-500/25 bg-amber-50/60 dark:bg-amber-950/20"
+                  : selectedVehicleForPolicyRenew.insurance_expiry_date
+                  ? "border-emerald-500/25 bg-emerald-50/50 dark:bg-emerald-950/20"
+                  : "border-border bg-surface/50 dark:bg-surface";
+
+                const headerTextStyle = isExpired
+                  ? "text-rose-700 dark:text-rose-400"
+                  : isExpiringSoon
+                  ? "text-amber-700 dark:text-amber-400"
+                  : selectedVehicleForPolicyRenew.insurance_expiry_date
+                  ? "text-emerald-700 dark:text-emerald-400"
+                  : "text-foreground dark:text-muted-foreground";
+
+                const headerTitle = isExpired
+                  ? "Expired Insurance Policy Record"
+                  : isExpiringSoon
+                  ? "Expiring Soon Policy Info"
+                  : selectedVehicleForPolicyRenew.insurance_expiry_date
+                  ? "Current Active Policy Info"
+                  : "Insurance Policy Record";
+
+                return (
+                  <div className={`p-3.5 rounded-xl border ${bannerStyle} flex flex-wrap items-center justify-between gap-2`}>
+                    <div className="space-y-0.5">
+                      <div className={`text-xs font-bold uppercase tracking-wider ${headerTextStyle} flex items-center gap-1`}>
+                        <Clock className="h-3 w-3" />
+                        <span>{headerTitle}</span>
+                      </div>
+                      <div className="text-xs font-semibold text-foreground flex items-center gap-1.5 flex-wrap">
+                        <VehicleBrandLogo brand={selectedVehicleForPolicyRenew.make} model={selectedVehicleForPolicyRenew.model} size={15} />
+                        <span>{selectedVehicleForPolicyRenew.make} {selectedVehicleForPolicyRenew.model} —</span>
+                        <span>{selectedVehicleForPolicyRenew.insurance_policy_number || "No Policy Number on File"}</span>
+                        <span className="text-muted-foreground font-normal"> ({selectedVehicleForPolicyRenew.insurance_vendor || "Vendor Not Assigned"})</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">Expires:</span>
+                      <span className="font-mono font-bold text-foreground">
+                        {selectedVehicleForPolicyRenew.insurance_expiry_date ? String(selectedVehicleForPolicyRenew.insurance_expiry_date).split("T")[0] : "Expired / Unset"}
+                      </span>
+                      {renderExpiryBadge(insDays)}
+                    </div>
                   </div>
-                  <div className="text-xs font-semibold text-foreground flex items-center gap-1.5 flex-wrap">
-                    <VehicleBrandLogo brand={selectedVehicleForPolicyRenew.make} model={selectedVehicleForPolicyRenew.model} size={15} />
-                    <span>{selectedVehicleForPolicyRenew.make} {selectedVehicleForPolicyRenew.model} —</span>
-                    <span>{selectedVehicleForPolicyRenew.insurance_policy_number || "No Policy Number on File"}</span>
-                    <span className="text-muted-foreground font-normal"> ({selectedVehicleForPolicyRenew.insurance_vendor || "Vendor Not Assigned"})</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Expires:</span>
-                  <span className="font-mono font-bold text-foreground">
-                    {selectedVehicleForPolicyRenew.insurance_expiry_date ? String(selectedVehicleForPolicyRenew.insurance_expiry_date).split("T")[0] : "Expired / Unset"}
-                  </span>
-                  {renderExpiryBadge(selectedVehicleForPolicyRenew.insurance_expire_days ?? calculateDaysRemaining(selectedVehicleForPolicyRenew.insurance_expiry_date))}
-                </div>
-              </div>
+                );
+              })()}
 
               {/* Vendor & Policy Number */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -19254,11 +19315,12 @@ export default function FleetDeskHost({
                     <button
                       type="button"
                       onClick={() => {
-                        const st = renewPolicyStartDate ? new Date(renewPolicyStartDate) : new Date();
-                        const end = new Date(st);
-                        end.setFullYear(end.getFullYear() + 1);
+                        const baseStr = renewPolicyStartDate || new Date().toISOString().split("T")[0];
+                        const [sy, sm, sd] = baseStr.split("-").map(Number);
+                        const end = new Date(sy + 1, sm - 1, sd);
                         end.setDate(end.getDate() - 1);
-                        setRenewPolicyEndDate(end.toISOString().split("T")[0]);
+                        const endStr = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
+                        setRenewPolicyEndDate(endStr);
                       }}
                       className="px-2 py-0.5 rounded text-xs font-semibold bg-surface text-theme-icon dark:text-muted-foreground hover:bg-surface transition-colors"
                     >
@@ -19267,11 +19329,12 @@ export default function FleetDeskHost({
                     <button
                       type="button"
                       onClick={() => {
-                        const st = renewPolicyStartDate ? new Date(renewPolicyStartDate) : new Date();
-                        const end = new Date(st);
-                        end.setFullYear(end.getFullYear() + 3);
+                        const baseStr = renewPolicyStartDate || new Date().toISOString().split("T")[0];
+                        const [sy, sm, sd] = baseStr.split("-").map(Number);
+                        const end = new Date(sy + 3, sm - 1, sd);
                         end.setDate(end.getDate() - 1);
-                        setRenewPolicyEndDate(end.toISOString().split("T")[0]);
+                        const endStr = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
+                        setRenewPolicyEndDate(endStr);
                       }}
                       className="px-2 py-0.5 rounded text-xs font-semibold bg-surface text-theme-icon dark:text-muted-foreground hover:bg-surface transition-colors"
                     >
@@ -19626,28 +19689,60 @@ export default function FleetDeskHost({
           isSubmitting={modalSubmitting}
         >
           <div className="space-y-4">
-              {/* Current PUC Info Banner */}
-              <div className="p-3.5 rounded-xl border border-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-950/20 flex flex-wrap items-center justify-between gap-2">
-                <div className="space-y-0.5">
-                  <div className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    <span>Current Active PUC Info</span>
+              {/* Current PUC Info Banner (Dynamic: Active / Expiring Soon / Expired) */}
+              {(() => {
+                const pucDays = selectedVehicleForPucRenew.puc_expire_days ?? calculateDaysRemaining(selectedVehicleForPucRenew.puc_expiry_date);
+                const isExpired = pucDays !== null && pucDays !== undefined && pucDays < 0;
+                const isExpiringSoon = pucDays !== null && pucDays !== undefined && pucDays >= 0 && pucDays <= 30;
+
+                const bannerStyle = isExpired
+                  ? "border-rose-500/25 bg-rose-50/60 dark:bg-rose-950/20"
+                  : isExpiringSoon
+                  ? "border-amber-500/25 bg-amber-50/60 dark:bg-amber-950/20"
+                  : selectedVehicleForPucRenew.puc_expiry_date
+                  ? "border-emerald-500/25 bg-emerald-50/50 dark:bg-emerald-950/20"
+                  : "border-border bg-slate-50/50 dark:bg-slate-900/30";
+
+                const headerTextStyle = isExpired
+                  ? "text-rose-700 dark:text-rose-400"
+                  : isExpiringSoon
+                  ? "text-amber-700 dark:text-amber-400"
+                  : selectedVehicleForPucRenew.puc_expiry_date
+                  ? "text-emerald-700 dark:text-emerald-400"
+                  : "text-muted-foreground";
+
+                const headerTitle = isExpired
+                  ? "Expired PUC Record"
+                  : isExpiringSoon
+                  ? "Expiring Soon PUC Info"
+                  : selectedVehicleForPucRenew.puc_expiry_date
+                  ? "Current Active PUC Info"
+                  : "Previous PUC Record";
+
+                return (
+                  <div className={`p-3.5 rounded-xl border ${bannerStyle} flex flex-wrap items-center justify-between gap-2`}>
+                    <div className="space-y-0.5">
+                      <div className={`text-xs font-bold uppercase tracking-wider ${headerTextStyle} flex items-center gap-1`}>
+                        <Clock className="h-3 w-3" />
+                        <span>{headerTitle}</span>
+                      </div>
+                      <div className="text-xs font-semibold text-foreground flex items-center gap-1.5 flex-wrap">
+                        <VehicleBrandLogo brand={selectedVehicleForPucRenew.make} model={selectedVehicleForPucRenew.model} size={15} />
+                        <span>{selectedVehicleForPucRenew.make} {selectedVehicleForPucRenew.model} —</span>
+                        <span>{selectedVehicleForPucRenew.puc_certificate_number || "No PUC Number on File"}</span>
+                        <span className="text-muted-foreground font-normal"> ({selectedVehicleForPucRenew.fuel_type || "Standard Fuel"})</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">Expires:</span>
+                      <span className="font-mono font-bold text-foreground">
+                        {selectedVehicleForPucRenew.puc_expiry_date ? String(selectedVehicleForPucRenew.puc_expiry_date).split("T")[0] : "Expired / Unset"}
+                      </span>
+                      {renderExpiryBadge(pucDays)}
+                    </div>
                   </div>
-                  <div className="text-xs font-semibold text-foreground flex items-center gap-1.5 flex-wrap">
-                    <VehicleBrandLogo brand={selectedVehicleForPucRenew.make} model={selectedVehicleForPucRenew.model} size={15} />
-                    <span>{selectedVehicleForPucRenew.make} {selectedVehicleForPucRenew.model} —</span>
-                    <span>{selectedVehicleForPucRenew.puc_certificate_number || "No PUC Number on File"}</span>
-                    <span className="text-muted-foreground font-normal"> ({selectedVehicleForPucRenew.fuel_type || "Standard Fuel"})</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Expires:</span>
-                  <span className="font-mono font-bold text-foreground">
-                    {selectedVehicleForPucRenew.puc_expiry_date ? String(selectedVehicleForPucRenew.puc_expiry_date).split("T")[0] : "Expired / Unset"}
-                  </span>
-                  {renderExpiryBadge(selectedVehicleForPucRenew.puc_expire_days ?? calculateDaysRemaining(selectedVehicleForPucRenew.puc_expiry_date))}
-                </div>
-              </div>
+                );
+              })()}
 
               {/* Certificate Number & Testing Center */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -19687,11 +19782,12 @@ export default function FleetDeskHost({
                     <button
                       type="button"
                       onClick={() => {
-                        const st = renewPucValidFrom ? new Date(renewPucValidFrom) : new Date();
-                        const end = new Date(st);
-                        end.setMonth(end.getMonth() + 6);
+                        const baseStr = renewPucValidFrom || new Date().toISOString().split("T")[0];
+                        const [sy, sm, sd] = baseStr.split("-").map(Number);
+                        const end = new Date(sy, (sm - 1) + 6, sd);
                         end.setDate(end.getDate() - 1);
-                        setRenewPucValidUpto(end.toISOString().split("T")[0]);
+                        const endStr = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
+                        setRenewPucValidUpto(endStr);
                       }}
                       className="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors"
                     >
@@ -19700,11 +19796,12 @@ export default function FleetDeskHost({
                     <button
                       type="button"
                       onClick={() => {
-                        const st = renewPucValidFrom ? new Date(renewPucValidFrom) : new Date();
-                        const end = new Date(st);
-                        end.setFullYear(end.getFullYear() + 1);
+                        const baseStr = renewPucValidFrom || new Date().toISOString().split("T")[0];
+                        const [sy, sm, sd] = baseStr.split("-").map(Number);
+                        const end = new Date(sy + 1, sm - 1, sd);
                         end.setDate(end.getDate() - 1);
-                        setRenewPucValidUpto(end.toISOString().split("T")[0]);
+                        const endStr = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
+                        setRenewPucValidUpto(endStr);
                       }}
                       className="px-2 py-0.5 rounded text-xs font-semibold bg-teal-500/10 text-teal-600 dark:text-teal-400 hover:bg-teal-500/20 transition-colors"
                     >
