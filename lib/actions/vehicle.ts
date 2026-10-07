@@ -757,13 +757,33 @@ export async function fetchVehiclesList(params?: {
     // Merge driver assignments, documents, and compute live expiration countdowns
     const enrichedVehicles = vehiclesList.map((v) => {
       const isEv = isElectricFuel(v.fuel_type);
+      const vehicleDocs = docsMap.get(v.id) || [];
+
+      // Resolve latest PUC expiry & certificate number from documents or vehicle row
+      const pucDoc = vehicleDocs.find((d) => (d.doc_type === "PUC" || d.doc_type === "PUC_CERTIFICATE") && d.expiry_date);
+      const effectivePucExp = isEv ? null : (pucDoc?.expiry_date || v.puc_expiry_date || null);
+      const effectivePucNo = isEv ? null : (pucDoc?.document_number || v.puc_certificate_number || null);
+
+      // Resolve latest Insurance expiry & policy number from documents or vehicle row
+      const insDoc = vehicleDocs.find((d) => (d.doc_type === "INSURANCE" || d.doc_type === "INSURANCE_POLICY") && d.expiry_date);
+      const effectiveInsExp = insDoc?.expiry_date || v.insurance_expiry_date || null;
+      const effectiveInsNo = insDoc?.document_number || v.insurance_policy_number || null;
+
+      // Resolve latest Fitness expiry
+      const fitDoc = vehicleDocs.find((d) => (d.doc_type === "FITNESS" || d.doc_type === "FITNESS_CERTIFICATE") && d.expiry_date);
+      const effectiveFitExp = fitDoc?.expiry_date || v.fitness_expiry_date || null;
+
       return {
         ...v,
-        puc_expiry_date: isEv ? null : v.puc_expiry_date,
-        puc_expire_days: isEv ? null : calculateDaysRemaining(v.puc_expiry_date),
-        insurance_expire_days: calculateDaysRemaining(v.insurance_expiry_date),
+        puc_expiry_date: effectivePucExp,
+        puc_certificate_number: effectivePucNo,
+        puc_expire_days: isEv ? null : calculateDaysRemaining(effectivePucExp),
+        insurance_expiry_date: effectiveInsExp,
+        insurance_policy_number: effectiveInsNo,
+        insurance_expire_days: calculateDaysRemaining(effectiveInsExp),
+        fitness_expiry_date: effectiveFitExp,
         assignedDriver: driverMap.get(v.id) || null,
-        documents: docsMap.get(v.id) || []
+        documents: vehicleDocs
       };
     });
 
@@ -3099,6 +3119,24 @@ export async function createVehicleDocumentAction(
       return { success: false, error: error.message };
     }
 
+    // Synchronize statutory dates to vehicles table if applicable
+    const normDocType = (doc.doc_type || "").toUpperCase();
+    const vehSyncUpdates: Record<string, any> = {};
+    if ((normDocType === "PUC" || normDocType === "PUC_CERTIFICATE") && doc.expiry_date) {
+      vehSyncUpdates.puc_expiry_date = doc.expiry_date;
+      if (doc.document_number) vehSyncUpdates.puc_certificate_number = doc.document_number.trim();
+    } else if ((normDocType === "INSURANCE" || normDocType === "INSURANCE_POLICY") && doc.expiry_date) {
+      vehSyncUpdates.insurance_expiry_date = doc.expiry_date;
+      if (doc.document_number) vehSyncUpdates.insurance_policy_number = doc.document_number.trim();
+    } else if ((normDocType === "FITNESS" || normDocType === "FITNESS_CERTIFICATE") && doc.expiry_date) {
+      vehSyncUpdates.fitness_expiry_date = doc.expiry_date;
+    }
+
+    if (Object.keys(vehSyncUpdates).length > 0) {
+      vehSyncUpdates.updated_at = new Date().toISOString();
+      await supabaseAdmin.from("vehicles").update(vehSyncUpdates).eq("id", vehicleId);
+    }
+
     return {
       success: true,
       document: {
@@ -3172,6 +3210,26 @@ export async function updateVehicleDocumentAction(
     if (error) {
       console.error("[vehicle-actions] updateVehicleDocumentAction error:", error);
       return { success: false, error: error.message };
+    }
+
+    // Synchronize statutory dates to vehicles table if applicable
+    const targetVehId = data.vehicle_id || updates.vehicle_id;
+    if (targetVehId) {
+      const normDocType = (data.doc_type || "").toUpperCase();
+      const vehSyncUpdates: Record<string, any> = {};
+      if ((normDocType === "PUC" || normDocType === "PUC_CERTIFICATE") && data.expiry_date) {
+        vehSyncUpdates.puc_expiry_date = data.expiry_date;
+        if (data.document_number) vehSyncUpdates.puc_certificate_number = data.document_number.trim();
+      } else if ((normDocType === "INSURANCE" || normDocType === "INSURANCE_POLICY") && data.expiry_date) {
+        vehSyncUpdates.insurance_expiry_date = data.expiry_date;
+        if (data.document_number) vehSyncUpdates.insurance_policy_number = data.document_number.trim();
+      } else if ((normDocType === "FITNESS" || normDocType === "FITNESS_CERTIFICATE") && data.expiry_date) {
+        vehSyncUpdates.fitness_expiry_date = data.expiry_date;
+      }
+      if (Object.keys(vehSyncUpdates).length > 0) {
+        vehSyncUpdates.updated_at = new Date().toISOString();
+        await supabaseAdmin.from("vehicles").update(vehSyncUpdates).eq("id", targetVehId);
+      }
     }
 
     return {

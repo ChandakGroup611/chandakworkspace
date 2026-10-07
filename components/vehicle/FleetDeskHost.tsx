@@ -3798,13 +3798,27 @@ export default function FleetDeskHost({
       });
 
       if (res.success && res.document) {
+        const normDocType = (params.docType || "").toUpperCase();
+        const dynUpdates: Partial<VehicleRecord> = {};
+        if ((normDocType === "PUC" || normDocType === "PUC_CERTIFICATE") && params.expiryDate) {
+          dynUpdates.puc_expiry_date = params.expiryDate;
+          dynUpdates.puc_expire_days = calculateDaysRemaining(params.expiryDate);
+          if (params.documentNumber) dynUpdates.puc_certificate_number = params.documentNumber;
+        } else if ((normDocType === "INSURANCE" || normDocType === "INSURANCE_POLICY") && params.expiryDate) {
+          dynUpdates.insurance_expiry_date = params.expiryDate;
+          dynUpdates.insurance_expire_days = calculateDaysRemaining(params.expiryDate);
+          if (params.documentNumber) dynUpdates.insurance_policy_number = params.documentNumber;
+        } else if ((normDocType === "FITNESS" || normDocType === "FITNESS_CERTIFICATE") && params.expiryDate) {
+          dynUpdates.fitness_expiry_date = params.expiryDate;
+        }
+
         setViewingVehicle((prev) => {
           if (!prev) return null;
           let updatedDocs = prev.documents || [];
           if (params.replaceDocId) {
             updatedDocs = updatedDocs.filter((d) => d.id !== params.replaceDocId);
           }
-          return { ...prev, documents: [res.document!, ...updatedDocs] };
+          return { ...prev, ...dynUpdates, documents: [res.document!, ...updatedDocs] };
         });
         setVehicles((prev) =>
           prev.map((v) => {
@@ -3813,7 +3827,7 @@ export default function FleetDeskHost({
             if (params.replaceDocId) {
               updatedDocs = updatedDocs.filter((d) => d.id !== params.replaceDocId);
             }
-            return { ...v, documents: [res.document!, ...updatedDocs] };
+            return { ...v, ...dynUpdates, documents: [res.document!, ...updatedDocs] };
           })
         );
         triggerToast("Document successfully archived into vehicle vault.");
@@ -22432,245 +22446,261 @@ export default function FleetDeskHost({
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Motor Insurance Policy Card */}
-                <div className="p-4 rounded-xl border border-border bg-surface space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs font-bold uppercase tracking-wider text-cyan-800 dark:text-muted-foreground flex items-center gap-1.5">
-                      <ShieldCheck className="h-4 w-4 text-theme-icon" />
-                      <span>Motor Insurance Policy</span>
+                {/* Insurance Policy Card */}
+                {(() => {
+                  const insDoc = dossierData.docs.find(d => (d.doc_type === "INSURANCE" || d.doc_type === "INSURANCE_POLICY") && d.expiry_date);
+                  const insExpiry = insDoc?.expiry_date || viewingVehicle.insurance_expiry_date;
+                  const insPolicyNo = insDoc?.document_number || viewingVehicle.insurance_policy_number;
+                  const insDays = calculateDaysRemaining(insExpiry);
+
+                  return (
+                    <div className="p-4 rounded-xl border border-border bg-surface/60 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs font-bold uppercase tracking-wider text-theme-icon flex items-center gap-1.5">
+                          <ShieldCheck className="h-4 w-4" />
+                          <span>Insurance Policy</span>
+                        </div>
+                        {insExpiry && (() => {
+                          if (insDays === null) return null;
+                          return insDays < 0 ? (
+                            <span className="px-2 py-0.5 rounded text-xs font-bold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/25">
+                              Expired {Math.abs(insDays)}d ago
+                            </span>
+                          ) : insDays <= 30 ? (
+                            <span className="px-2 py-0.5 rounded text-xs font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25">
+                              Expires in {insDays}d
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25">
+                              Valid ({insDays}d)
+                            </span>
+                          );
+                        })()}
+                      </div>
+                      <div className="space-y-1.5 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Underwriter:</span>
+                          <span className="font-semibold text-foreground">{viewingVehicle.insurance_vendor || "—"}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Policy Number:</span>
+                          <span className="font-mono font-bold text-foreground">{insPolicyNo || "—"}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Expiry Date:</span>
+                          <span className="font-mono font-bold text-foreground">{insExpiry || "—"}</span>
+                        </div>
+                      </div>
+                      <div className="pt-2 border-t border-border flex items-center justify-end gap-2 flex-wrap">
+                        <AppButton
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const doc = dossierData.docs.find(d => d.doc_type === "INSURANCE");
+                            handleViewAttachment(doc || {
+                              id: `ins-view-${viewingVehicle.id}`,
+                              file_name: `Insurance_${viewingVehicle.registration_number}.pdf`,
+                              file_size: "Policy Document",
+                              file_type: "application/pdf",
+                              file_url: "",
+                              uploaded_at: viewingVehicle.created_at,
+                              title: `Motor Insurance Policy: ${viewingVehicle.insurance_vendor || "Comprehensive"}`,
+                              doc_type: "INSURANCE",
+                              document_number: insPolicyNo,
+                              expiry_date: insExpiry,
+                              sourceLabel: `Underwriter: ${viewingVehicle.insurance_vendor || "Authorized Provider"}`,
+                              status: "VALID",
+                              vehicleReg: viewingVehicle.registration_number
+                            });
+                          }}
+                          className="h-7 text-xs px-2 text-blue-600 dark:text-blue-400 border-blue-500/30 gap-1 font-semibold"
+                          title="View / Inspect Insurance Document"
+                        >
+                          <Eye className="h-3 w-3" />
+                          <span>View</span>
+                        </AppButton>
+                        <AppButton
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const doc = dossierData.docs.find(d => d.doc_type === "INSURANCE");
+                            downloadAttachment(doc || {
+                              file_name: `Insurance_${viewingVehicle.registration_number}.pdf`,
+                              file_url: "",
+                              title: `Motor Insurance Policy - ${viewingVehicle.registration_number}`,
+                              doc_type: "INSURANCE"
+                            });
+                          }}
+                          className="h-7 text-xs px-2 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 gap-1 font-semibold"
+                          title="Download Insurance Policy"
+                        >
+                          <Download className="h-3 w-3" />
+                          <span>Download</span>
+                        </AppButton>
+                        <AppButton
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const v = { ...viewingVehicle, insurance_expiry_date: insExpiry, insurance_policy_number: insPolicyNo };
+                            setDossierOriginVehicle(v);
+                            setDossierOriginTab(vehicleDossierTab);
+                            setViewingVehicle(null);
+                            handleOpenVehiclePolicyHistoryModal(v);
+                          }}
+                          className="h-7 text-xs px-2.5 text-foreground dark:text-muted-foreground border-border gap-1"
+                        >
+                          <History className="h-3 w-3" />
+                          <span>History</span>
+                        </AppButton>
+                        <AppButton
+                          variant="primary"
+                          size="sm"
+                          onClick={() => {
+                            const v = { ...viewingVehicle, insurance_expiry_date: insExpiry, insurance_policy_number: insPolicyNo };
+                            setDossierOriginVehicle(v);
+                            setDossierOriginTab(vehicleDossierTab);
+                            setViewingVehicle(null);
+                            handleOpenVehiclePolicyRenewModal(v);
+                          }}
+                          className="h-7 text-xs px-2.5 bg-theme-btn-primary hover:opacity-90 text-white gap-1 shadow-2xs font-semibold"
+                        >
+                          <RotateCcw className="h-3 w-3" />
+                          <span>Renew Policy</span>
+                        </AppButton>
+                      </div>
                     </div>
-                    {viewingVehicle.insurance_expiry_date && (() => {
-                      const days = calculateDaysRemaining(viewingVehicle.insurance_expiry_date);
-                      if (days === null) return null;
-                      return days < 0 ? (
-                        <span className="px-2 py-0.5 rounded text-xs font-bold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/25">
-                          Expired {Math.abs(days)}d ago
-                        </span>
-                      ) : days <= 30 ? (
-                        <span className="px-2 py-0.5 rounded text-xs font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25">
-                          Expires in {days}d
-                        </span>
-                      ) : (
-                        <span className="px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25">
-                          Valid ({days}d)
-                        </span>
-                      );
-                    })()}
-                  </div>
-                  <div className="space-y-1.5 text-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Underwriter:</span>
-                      <span className="font-semibold text-foreground">{viewingVehicle.insurance_vendor || "—"}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Policy Number:</span>
-                      <span className="font-mono font-bold text-foreground">{viewingVehicle.insurance_policy_number || "—"}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Expiry Date:</span>
-                      <span className="font-mono font-bold text-foreground">{viewingVehicle.insurance_expiry_date || "—"}</span>
-                    </div>
-                  </div>
-                  <div className="pt-2 border-t border-border flex items-center justify-end gap-2 flex-wrap">
-                    <AppButton
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const doc = dossierData.docs.find(d => d.doc_type === "INSURANCE");
-                        handleViewAttachment(doc || {
-                          id: `ins-view-${viewingVehicle.id}`,
-                          file_name: `Insurance_${viewingVehicle.registration_number}.pdf`,
-                          file_size: "Policy Document",
-                          file_type: "application/pdf",
-                          file_url: "",
-                          uploaded_at: viewingVehicle.created_at,
-                          title: `Motor Insurance Policy: ${viewingVehicle.insurance_vendor || "Comprehensive"}`,
-                          doc_type: "INSURANCE",
-                          document_number: viewingVehicle.insurance_policy_number,
-                          expiry_date: viewingVehicle.insurance_expiry_date,
-                          sourceLabel: `Underwriter: ${viewingVehicle.insurance_vendor || "Authorized Provider"}`,
-                          status: "VALID",
-                          vehicleReg: viewingVehicle.registration_number
-                        });
-                      }}
-                      className="h-7 text-xs px-2 text-blue-600 dark:text-blue-400 border-blue-500/30 gap-1 font-semibold"
-                      title="View / Inspect Insurance Document"
-                    >
-                      <Eye className="h-3 w-3" />
-                      <span>View</span>
-                    </AppButton>
-                    <AppButton
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const doc = dossierData.docs.find(d => d.doc_type === "INSURANCE");
-                        downloadAttachment(doc || {
-                          file_name: `Insurance_${viewingVehicle.registration_number}.pdf`,
-                          file_url: "",
-                          title: `Motor Insurance Policy - ${viewingVehicle.registration_number}`,
-                          doc_type: "INSURANCE"
-                        });
-                      }}
-                      className="h-7 text-xs px-2 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 gap-1 font-semibold"
-                      title="Download Insurance Policy"
-                    >
-                      <Download className="h-3 w-3" />
-                      <span>Download</span>
-                    </AppButton>
-                    <AppButton
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const v = viewingVehicle;
-                        setDossierOriginVehicle(v);
-                        setDossierOriginTab(vehicleDossierTab);
-                        setViewingVehicle(null);
-                        handleOpenVehiclePolicyHistoryModal(v);
-                      }}
-                      className="h-7 text-xs px-2.5 text-foreground dark:text-muted-foreground border-border gap-1"
-                    >
-                      <History className="h-3 w-3" />
-                      <span>History</span>
-                    </AppButton>
-                    <AppButton
-                      variant="primary"
-                      size="sm"
-                      onClick={() => {
-                        const v = viewingVehicle;
-                        setDossierOriginVehicle(v);
-                        setDossierOriginTab(vehicleDossierTab);
-                        setViewingVehicle(null);
-                        handleOpenVehiclePolicyRenewModal(v);
-                      }}
-                      className="h-7 text-xs px-2.5 bg-theme-btn-primary hover:opacity-90 text-white gap-1 shadow-2xs font-semibold"
-                    >
-                      <RotateCcw className="h-3 w-3" />
-                      <span>Renew Policy</span>
-                    </AppButton>
-                  </div>
-                </div>
+                  );
+                })()}
 
                 {/* PUC Certificate Card */}
-                <div className="p-4 rounded-xl border border-emerald-500/20 bg-emerald-50/5 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
-                      <Wind className="h-4 w-4 text-emerald-600" />
-                      <span>Pollution Under Control (PUC)</span>
+                {(() => {
+                  const pucDoc = dossierData.docs.find(d => (d.doc_type === "PUC" || d.doc_type === "PUC_CERTIFICATE") && d.expiry_date);
+                  const pucExpiry = pucDoc?.expiry_date || viewingVehicle.puc_expiry_date;
+                  const pucCertNo = pucDoc?.document_number || viewingVehicle.puc_certificate_number;
+                  const pucDays = calculateDaysRemaining(pucExpiry);
+
+                  return (
+                    <div className="p-4 rounded-xl border border-emerald-500/20 bg-emerald-50/5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                          <Wind className="h-4 w-4 text-emerald-600" />
+                          <span>Pollution Under Control (PUC)</span>
+                        </div>
+                        {pucExpiry && (() => {
+                          if (pucDays === null) return null;
+                          return pucDays < 0 ? (
+                            <span className="px-2 py-0.5 rounded text-xs font-bold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/25">
+                              Expired {Math.abs(pucDays)}d ago
+                            </span>
+                          ) : pucDays <= 30 ? (
+                            <span className="px-2 py-0.5 rounded text-xs font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25">
+                              Expires in {pucDays}d
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25">
+                              Valid ({pucDays}d)
+                            </span>
+                          );
+                        })()}
+                      </div>
+                      <div className="space-y-1.5 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Certificate #:</span>
+                          <span className="font-mono font-bold text-foreground">{pucCertNo || "—"}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Expiry Date:</span>
+                          <span className="font-mono font-bold text-foreground">{pucExpiry || "—"}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Fitness Expiry:</span>
+                          <span className="font-mono font-bold text-foreground">{viewingVehicle.fitness_expiry_date || "—"}</span>
+                        </div>
+                      </div>
+                      <div className="pt-2 border-t border-emerald-500/20 flex items-center justify-end gap-2 flex-wrap">
+                        <AppButton
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const doc = dossierData.docs.find(d => d.doc_type === "PUC");
+                            handleViewAttachment(doc || {
+                              id: `puc-view-${viewingVehicle.id}`,
+                              file_name: `PUC_${viewingVehicle.registration_number}.pdf`,
+                              file_size: "Emission Certificate",
+                              file_type: "application/pdf",
+                              file_url: "",
+                              uploaded_at: viewingVehicle.created_at,
+                              title: `PUC Emission Certificate (${pucCertNo || viewingVehicle.registration_number})`,
+                              doc_type: "PUC",
+                              document_number: pucCertNo,
+                              expiry_date: pucExpiry,
+                              sourceLabel: "Emission Clearance Test Certificate",
+                              status: "VALID",
+                              vehicleReg: viewingVehicle.registration_number
+                            });
+                          }}
+                          className="h-7 text-xs px-2 text-blue-600 dark:text-blue-400 border-blue-500/30 gap-1 font-semibold"
+                          title="View / Inspect PUC Certificate"
+                        >
+                          <Eye className="h-3 w-3" />
+                          <span>View</span>
+                        </AppButton>
+                        <AppButton
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const doc = dossierData.docs.find(d => d.doc_type === "PUC");
+                            downloadAttachment(doc || {
+                              file_name: `PUC_${viewingVehicle.registration_number}.pdf`,
+                              file_url: "",
+                              title: `PUC Emission Certificate - ${viewingVehicle.registration_number}`,
+                              doc_type: "PUC"
+                            });
+                          }}
+                          className="h-7 text-xs px-2 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 gap-1 font-semibold"
+                          title="Download PUC Certificate"
+                        >
+                          <Download className="h-3 w-3" />
+                          <span>Download</span>
+                        </AppButton>
+                        <AppButton
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const v = { ...viewingVehicle, puc_expiry_date: pucExpiry, puc_certificate_number: pucCertNo };
+                            setDossierOriginVehicle(v);
+                            setDossierOriginTab(vehicleDossierTab);
+                            setViewingVehicle(null);
+                            handleOpenVehiclePucHistoryModal(v);
+                          }}
+                          className="h-7 text-xs px-2.5 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 gap-1"
+                        >
+                          <History className="h-3 w-3" />
+                          <span>History</span>
+                        </AppButton>
+                        <AppButton
+                          variant="primary"
+                          size="sm"
+                          onClick={() => {
+                            const v = { ...viewingVehicle, puc_expiry_date: pucExpiry, puc_certificate_number: pucCertNo };
+                            setDossierOriginVehicle(v);
+                            setDossierOriginTab(vehicleDossierTab);
+                            setViewingVehicle(null);
+                            handleOpenVehiclePucRenewModal(v);
+                          }}
+                          className="h-7 text-xs px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white gap-1 shadow-2xs font-semibold"
+                        >
+                          <Wind className="h-3 w-3" />
+                          <span>Renew PUC</span>
+                        </AppButton>
+                      </div>
                     </div>
-                    {viewingVehicle.puc_expiry_date && (() => {
-                      const days = calculateDaysRemaining(viewingVehicle.puc_expiry_date);
-                      if (days === null) return null;
-                      return days < 0 ? (
-                        <span className="px-2 py-0.5 rounded text-xs font-bold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/25">
-                          Expired {Math.abs(days)}d ago
-                        </span>
-                      ) : days <= 30 ? (
-                        <span className="px-2 py-0.5 rounded text-xs font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25">
-                          Expires in {days}d
-                        </span>
-                      ) : (
-                        <span className="px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25">
-                          Valid ({days}d)
-                        </span>
-                      );
-                    })()}
-                  </div>
-                  <div className="space-y-1.5 text-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Certificate #:</span>
-                      <span className="font-mono font-bold text-foreground">{viewingVehicle.puc_certificate_number || "—"}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Expiry Date:</span>
-                      <span className="font-mono font-bold text-foreground">{viewingVehicle.puc_expiry_date || "—"}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Fitness Expiry:</span>
-                      <span className="font-mono font-bold text-foreground">{viewingVehicle.fitness_expiry_date || "—"}</span>
-                    </div>
-                  </div>
-                  <div className="pt-2 border-t border-emerald-500/20 flex items-center justify-end gap-2 flex-wrap">
-                    <AppButton
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const doc = dossierData.docs.find(d => d.doc_type === "PUC");
-                        handleViewAttachment(doc || {
-                          id: `puc-view-${viewingVehicle.id}`,
-                          file_name: `PUC_${viewingVehicle.registration_number}.pdf`,
-                          file_size: "Emission Certificate",
-                          file_type: "application/pdf",
-                          file_url: "",
-                          uploaded_at: viewingVehicle.created_at,
-                          title: `PUC Emission Certificate (${viewingVehicle.puc_certificate_number || viewingVehicle.registration_number})`,
-                          doc_type: "PUC",
-                          document_number: viewingVehicle.puc_certificate_number,
-                          expiry_date: viewingVehicle.puc_expiry_date,
-                          sourceLabel: "Emission Clearance Test Certificate",
-                          status: "VALID",
-                          vehicleReg: viewingVehicle.registration_number
-                        });
-                      }}
-                      className="h-7 text-xs px-2 text-blue-600 dark:text-blue-400 border-blue-500/30 gap-1 font-semibold"
-                      title="View / Inspect PUC Certificate"
-                    >
-                      <Eye className="h-3 w-3" />
-                      <span>View</span>
-                    </AppButton>
-                    <AppButton
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const doc = dossierData.docs.find(d => d.doc_type === "PUC");
-                        downloadAttachment(doc || {
-                          file_name: `PUC_${viewingVehicle.registration_number}.pdf`,
-                          file_url: "",
-                          title: `PUC Emission Certificate - ${viewingVehicle.registration_number}`,
-                          doc_type: "PUC"
-                        });
-                      }}
-                      className="h-7 text-xs px-2 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 gap-1 font-semibold"
-                      title="Download PUC Certificate"
-                    >
-                      <Download className="h-3 w-3" />
-                      <span>Download</span>
-                    </AppButton>
-                    <AppButton
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const v = viewingVehicle;
-                        setDossierOriginVehicle(v);
-                        setDossierOriginTab(vehicleDossierTab);
-                        setViewingVehicle(null);
-                        handleOpenVehiclePucHistoryModal(v);
-                      }}
-                      className="h-7 text-xs px-2.5 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 gap-1"
-                    >
-                      <History className="h-3 w-3" />
-                      <span>History</span>
-                    </AppButton>
-                    <AppButton
-                      variant="primary"
-                      size="sm"
-                      onClick={() => {
-                        const v = viewingVehicle;
-                        setDossierOriginVehicle(v);
-                        setDossierOriginTab(vehicleDossierTab);
-                        setViewingVehicle(null);
-                        handleOpenVehiclePucRenewModal(v);
-                      }}
-                      className="h-7 text-xs px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white gap-1 shadow-2xs font-semibold"
-                    >
-                      <Wind className="h-3 w-3" />
-                      <span>Renew PUC</span>
-                    </AppButton>
-                  </div>
-                </div>
+                  );
+                })()}
 
                 {/* Statutory Fitness & Extended Validity Card */}
                 <div className="p-4 rounded-xl border border-border bg-surface/5 space-y-3">
