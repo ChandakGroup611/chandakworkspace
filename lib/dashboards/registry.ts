@@ -17,6 +17,7 @@ export interface DashboardDef {
   description: string;
   permissionPrefix: string; // permission codes are <prefix>_VIEW, <prefix>_EXPORT, ...
   engineUrlEnv: string;     // env var holding the engine's https base URL
+  defaultEngineUrl?: string; // used when the env var is not set
   accent: string;
 }
 
@@ -37,6 +38,15 @@ export const DASHBOARDS: DashboardDef[] = [
     engineUrlEnv: "DASHBOARD_ENGINE_URL_MKT",
     accent: "#EC4899",
   },
+  {
+    key: "adm",
+    name: "Admin Access",
+    description: "Who holds which In4 role, staffing on companies and projects, sign-ins and an access review.",
+    permissionPrefix: "DASH_ADM",
+    engineUrlEnv: "DASHBOARD_ENGINE_URL_ADM",
+    defaultEngineUrl: "https://v9tbp89l-8083.inc1.devtunnels.ms",
+    accent: "#0C6E8A",
+  },
 ];
 
 export function getDashboard(key: string): DashboardDef | undefined {
@@ -44,6 +54,6 @@ export function getDashboard(key: string): DashboardDef | undefined {
 }
 
 export function engineUrl(def: DashboardDef): string | null {
-  const raw = (process.env[def.engineUrlEnv] || "").trim().replace(/\/+$/, "");
+  const raw = (process.env[def.engineUrlEnv] || def.defaultEngineUrl || "").trim().replace(/\/+$/, "");
   return raw.startsWith("https://") || raw.startsWith("http://") ? raw : null;
 }
