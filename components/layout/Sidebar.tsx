@@ -38,7 +38,8 @@ import {
   Building2,
   Send,
   HelpCircle,
-  Key
+  Key,
+  FolderTree
 } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useFleetPermissions } from "@/hooks/useFleetPermissions";
@@ -208,6 +209,7 @@ const designNavGroups: NavGroup[] = [
   {
     label: "Tender & Pre-Construction",
     items: [
+      { label: "Building Section Matrix", href: "/design/building-matrix", icon: Building2 },
       { label: "Tender Design Matrix", href: "/design/matrix", icon: Layers },
       { label: "Look-Ahead Forecast", href: "/design/look-ahead", icon: Clock },
       { label: "Statutory Liaisoning", href: "/design/liaisoning", icon: ShieldCheck },
@@ -217,6 +219,7 @@ const designNavGroups: NavGroup[] = [
   {
     label: "Drawings & Site Execution",
     items: [
+      { label: "DMS Folder Vault", href: "/design/dms", icon: FolderTree },
       { label: "Drawing Register", href: "/design/drawings", icon: FileText },
       { label: "Design Approvals", href: "/design/approvals", icon: CheckCircle2 },
       { label: "Revision History", href: "/design/revisions", icon: RotateCcw },

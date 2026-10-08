@@ -1,0 +1,370 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Drawing Approval Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Public+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: app shell; KPI strip, then a building-section matrix (Terrace on top) beside work queues; detail drawer slides in from the right */
+:root{
+  --bg:#f3f6f7; --surface:#ffffff; --ink:#14222a; --muted:#5a6971; --line:#d5dde1; --accent:#1d5c7a;
+  --none-bg:#eceff1; --none-fg:#6b777e;
+  --rev-bg:#dcebf6; --rev-fg:#1b5a86;
+  --ret-bg:#fbe9d2; --ret-fg:#9a5410;
+  --app-bg:#dff0e2; --app-fg:#2c6a39;
+  --gfc-bg:#2f7a45; --gfc-fg:#ffffff;
+  --late:#c0392b;
+  --display:"Archivo","Arial Narrow",system-ui,sans-serif;
+  --body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f171b; --surface:#162128; --ink:#e2eaee; --muted:#98a9b2; --line:#29383f; --accent:#7fbcd9;
+  --none-bg:#1e2a30; --none-fg:#8d9da5; --rev-bg:#173246; --rev-fg:#8cc3ea; --ret-bg:#3b2a15; --ret-fg:#f0b26b;
+  --app-bg:#183424; --app-fg:#8fd3a0; --gfc-bg:#3f9a5c; --gfc-fg:#08140c; --late:#ff7b6b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f171b; --surface:#162128; --ink:#e2eaee; --muted:#98a9b2; --line:#29383f; --accent:#7fbcd9;
+  --none-bg:#1e2a30; --none-fg:#8d9da5; --rev-bg:#173246; --rev-fg:#8cc3ea; --ret-bg:#3b2a15; --ret-fg:#f0b26b;
+  --app-bg:#183424; --app-fg:#8fd3a0; --gfc-bg:#3f9a5c; --gfc-fg:#08140c; --late:#ff7b6b; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--body);padding-inline:16px;padding-block:0 48px}
+.shell{max-width:1240px;margin:0 auto}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;padding-block:28px 16px;border-bottom:1px solid var(--line)}
+.eyebrow{font:600 11.5px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font:800 clamp(24px,4vw,34px)/1.1 var(--display);margin:8px 0 4px;letter-spacing:-.01em}
+.sub{color:var(--muted);margin:0;font-size:14px}
+.sample{display:inline-block;font:600 11px/1 var(--mono);letter-spacing:.05em;text-transform:uppercase;padding:5px 8px;border:1px dashed var(--muted);color:var(--muted);border-radius:3px}
+.tabs{display:flex;gap:4px}
+.tabs button{font:600 14px/1 var(--body);padding:10px 14px;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:4px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button:focus-visible,.cell:focus-visible,.qitem:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:20px 0}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;cursor:pointer;text-align:left;font:inherit;color:inherit}
+.kpi .v{font:800 28px/1.1 var(--display);font-variant-numeric:tabular-nums}
+.kpi .l{font-size:13px;color:var(--muted)}
+.kpi .x{font:600 12px/1.3 var(--mono);color:var(--late);min-height:16px}
+.kpi.active{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.kpi .sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:baseline}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+@media (max-width:980px){.grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:6px;min-width:0}
+.panel h2{font:700 16px/1.2 var(--display);margin:0;padding:14px 16px 10px}
+.panel .hint{font-size:13px;color:var(--muted);padding:0 16px 10px;margin:0}
+.mx-wrap{overflow-x:auto;padding:0 16px 16px}
+table.mx{border-collapse:separate;border-spacing:4px;width:100%;min-width:640px}
+.mx th{font:600 11px/1.2 var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);text-align:center;padding:4px 2px}
+.mx th.lvl{text-align:right;padding-right:8px;white-space:nowrap}
+.mx td.prog{font:600 12px/1 var(--mono);color:var(--muted);white-space:nowrap;padding-left:6px;font-variant-numeric:tabular-nums}
+.bar{display:inline-block;width:46px;height:6px;background:var(--none-bg);border-radius:3px;vertical-align:middle;margin-right:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--app-fg)}
+.cell{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;min-height:44px;border:0;border-radius:4px;cursor:pointer;font:600 12px/1.15 var(--body);padding:4px 2px;transition:opacity .15s}
+.cell .r{font:600 11px/1 var(--mono);opacity:.85}
+.cell.dim{opacity:.18}
+.cell .late{position:absolute;top:3px;right:4px;width:7px;height:7px;border-radius:50%;background:var(--late)}
+.s-none{background:var(--none-bg);color:var(--none-fg)}
+.s-review{background:var(--rev-bg);color:var(--rev-fg)}
+.s-returned{background:var(--ret-bg);color:var(--ret-fg)}
+.s-approved{background:var(--app-bg);color:var(--app-fg)}
+.s-gfc{background:var(--gfc-bg);color:var(--gfc-fg)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;padding:0 16px 14px;font-size:12.5px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:12px;height:12px;border-radius:2px;display:inline-block}
+.legend .dot{width:7px;height:7px;border-radius:50%;background:var(--late)}
+.side{display:flex;flex-direction:column;gap:20px;min-width:0}
+.queue{list-style:none;margin:0;padding:0 8px 10px;max-height:330px;overflow:auto}
+.qitem{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:8px;border-radius:4px;cursor:pointer;width:100%;border:0;background:none;color:inherit;font:inherit;text-align:left}
+.qitem:hover{background:var(--bg)}
+.qitem .no{font:600 12.5px/1.3 var(--mono)}
+.qitem .t{grid-column:1/2;font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qitem .d{grid-row:1/3;grid-column:2;align-self:center;font:700 13px/1 var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+.qitem .d small{display:block;font:400 11px/1.3 var(--body);color:var(--muted)}
+.d.over{color:var(--late)}
+.pill{display:inline-block;font:600 11px/1 var(--mono);padding:4px 7px;border-radius:3px;white-space:nowrap}
+.empty{padding:8px 16px 16px;color:var(--muted);font-size:13px}
+/* drawer */
+.scrim{position:fixed;inset:0;background:rgba(10,20,25,.35)}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(520px,100%);background:var(--surface);border-left:1px solid var(--line);overflow:auto;padding:calc(env(safe-area-inset-top,0px) + 20px) 20px calc(env(safe-area-inset-bottom,0px) + 24px)}
+.drawer .close{float:right;font:600 13px/1 var(--body);padding:8px 10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:4px;cursor:pointer}
+.drawer h2{font:800 22px/1.15 var(--display);margin:10px 0 4px}
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:16px 0}
+.facts div{background:var(--bg);border-radius:4px;padding:8px 10px}
+.facts b{display:block;font:700 15px/1.3 var(--display)}
+.facts span{font-size:12px;color:var(--muted)}
+.lanes{display:grid;grid-template-columns:1fr 1fr;font:600 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:18px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.lanes span:last-child{text-align:right}
+.tl{list-style:none;margin:0;padding:8px 0 0;position:relative}
+.tl:before{content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;background:var(--line);transform:translateX(-1px)}
+.ev{position:relative;width:calc(50% - 16px);margin:8px 0;padding:10px 12px;border-radius:5px;background:var(--bg);font-size:13.5px}
+.ev.eng{margin-left:calc(50% + 16px)}
+.ev:after{content:"";position:absolute;top:14px;width:10px;height:10px;border-radius:50%;background:var(--accent)}
+.ev.des:after{right:-22px}.ev.eng:after{left:-22px}
+.ev.ret:after{background:var(--ret-fg)}.ev.ok:after{background:var(--app-fg)}.ev.wait:after{background:var(--surface);border:2px solid var(--muted)}
+.ev b{display:block;font-weight:700}
+.ev .when{font:12px/1.3 var(--mono);color:var(--muted)}
+.ev.wait{border:1px dashed var(--muted);background:transparent}
+.cmts{margin:6px 0 0;padding-left:16px;font-size:12.5px}
+.cmts li{margin:3px 0}
+.cmts .ok{color:var(--app-fg);font-weight:600}
+.cmts .open{color:var(--ret-fg);font-weight:600}
+/* how it works */
+.how{max-width:860px}
+.how h2{font:700 22px/1.2 var(--display);margin:36px 0 10px}
+.how p,.how li{max-width:70ch}
+.flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:10px;margin:16px 0}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 14px;font-size:14px}
+.step .k{font:600 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px}
+.step b{display:block;margin-bottom:4px}
+.loopnote{font-size:14px;padding:10px 14px;border-left:3px solid var(--ret-fg);background:var(--surface);border-radius:0 6px 6px 0}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface);margin:12px 0}
+.tbl table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px}
+.tbl th,.tbl td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line)}
+.tbl tr:last-child td{border-bottom:0}
+.tbl th{font:600 11px/1.3 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+.feat{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:12px;margin:12px 0}
+.feat div{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 14px;font-size:14px}
+.feat b{display:block;margin-bottom:4px}
+@media (prefers-reduced-motion:reduce){.cell{transition:none}}
+</style>
+
+<div class="shell">
+<header class="top">
+  <div>
+    <div class="eyebrow">DMAC · Drawing review &amp; approval</div>
+    <h1>Tower A (G+10) drawing status</h1>
+    <p class="sub">Every drawing, every revision, and who has it right now. <span class="sample">Sample data</span></p>
+  </div>
+  <div class="tabs" role="tablist">
+    <button role="tab" id="tab-dash" aria-selected="true" aria-controls="view-dash">Dashboard</button>
+    <button role="tab" id="tab-how" aria-selected="false" aria-controls="view-how">How it works</button>
+  </div>
+</header>
+
+<section id="view-dash" role="tabpanel" aria-labelledby="tab-dash">
+  <div class="kpis" id="kpis"></div>
+  <div class="grid">
+    <div class="panel">
+      <h2>Building view: floor × department</h2>
+      <p class="hint">Each box is a drawing. The label shows its latest revision. Click a box to see the full back-and-forth history.</p>
+      <div class="legend" id="legend"></div>
+      <div class="mx-wrap"><table class="mx" id="mx"></table></div>
+    </div>
+    <div class="side">
+      <div class="panel"><h2>Waiting longest</h2><p class="hint">Engineering target: 5 days to review. Design target: 7 days to revise.</p><ul class="queue" id="q-wait"></ul></div>
+      <div class="panel"><h2>Latest activity</h2><ul class="queue" id="q-act"></ul></div>
+    </div>
+  </div>
+</section>
+
+<section id="view-how" role="tabpanel" aria-labelledby="tab-how" hidden>
+<div class="how">
+  <h2>The review cycle</h2>
+  <p>Each drawing goes back and forth between the department that drew it and Engineering until it is approved. Every pass is saved as a new revision, so nothing is overwritten and the full history stays visible.</p>
+  <div class="flow">
+    <div class="step"><span class="k">Design</span><b>Submit R0</b>Department uploads the drawing for a floor, with drawing number and title.</div>
+    <div class="step"><span class="k">Engineering</span><b>Review</b>Engineer marks up the drawing and records each issue as a numbered comment.</div>
+    <div class="step"><span class="k">Engineering</span><b>Decide</b>Approve, or return with comments. A return sends it back to Design.</div>
+    <div class="step"><span class="k">Design</span><b>Revise and resubmit</b>Design answers every comment, uploads R1, R2 and so on. The old revision is stamped Superseded.</div>
+    <div class="step"><span class="k">Both</span><b>Approved → Issued for construction</b>Only the latest approved revision can be issued to site.</div>
+  </div>
+  <p class="loopnote">Steps 2 to 4 repeat until the drawing is approved. The dashboard counts how many rounds each drawing took and how long each side held it.</p>
+
+  <h2>Statuses</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Status</th><th>Meaning</th><th>Who has it</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill s-none">Not submitted</span></td><td>Planned in the drawing register, no file yet</td><td>Design</td></tr>
+      <tr><td><span class="pill s-review">Under review</span></td><td>Submitted (any revision), waiting for Engineering’s decision</td><td>Engineering</td></tr>
+      <tr><td><span class="pill s-returned">Returned</span></td><td>Engineering sent it back with comments; Design must revise</td><td>Design</td></tr>
+      <tr><td><span class="pill s-approved">Approved</span></td><td>Engineering accepted this revision</td><td>None</td></tr>
+      <tr><td><span class="pill s-gfc">Issued for construction</span></td><td>Approved revision released to site</td><td>None</td></tr>
+    </tbody></table></div>
+
+  <h2>How the records fit together</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Record</th><th>Holds</th></tr></thead>
+    <tbody>
+      <tr><td>Project → Building → Floor</td><td>The structure, so drawings can be grouped floor by floor (B1, Ground, 1–10, Terrace)</td></tr>
+      <tr><td>Department</td><td>Architecture, Structural, Plumbing, Electrical, HVAC, Fire fighting; each has a design owner and an engineering reviewer</td></tr>
+      <tr><td>Drawing</td><td>Number (e.g. TA-STR-F03-01), title, floor, department, current status, who has it</td></tr>
+      <tr><td>Revision</td><td>R0, R1… with the file, submitted by/on, reviewed by/on, decision</td></tr>
+      <tr><td>Comment</td><td>Number, text, markup location, Design’s response, open or closed</td></tr>
+      <tr><td>Activity log</td><td>Every submit, return, approval, download and view, with person and time</td></tr>
+    </tbody></table></div>
+  <p>This sits on top of the document system already analysed: floors become folders, departments map to document types, and drawing number, floor and revision become fields.</p>
+
+  <h2>Advanced features to add</h2>
+  <div class="feat">
+    <div><b>Mark up in the browser</b>Engineers draw clouds, arrows and notes on the PDF or DWG and link each one to a comment.</div>
+    <div><b>Compare revisions</b>Overlay R1 on R2 to highlight what changed, so reviewers check only the changes.</div>
+    <div><b>Comment response sheet</b>Design must answer every open comment before resubmitting; the sheet exports to Excel or PDF.</div>
+    <div><b>Reminders and escalation</b>Email or WhatsApp reminders when a drawing passes its target days, escalating to the department head.</div>
+    <div><b>Several reviewers at once</b>Structural, MEP and Fire review in parallel; Engineering sends back one combined return.</div>
+    <div><b>Site check by QR code</b>A QR code on each printed sheet shows on a phone whether it is still the latest approved revision.</div>
+    <div><b>Transmittals and register</b>Every send and return is logged as a numbered transmittal; the drawing register exports any time.</div>
+    <div><b>Turnaround reports</b>Average days per round, rounds per drawing, and the most frequent comment types by department.</div>
+  </div>
+</div>
+</section>
+</div>
+
+<div id="drawer-root" hidden>
+  <div class="scrim" id="scrim"></div>
+  <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dw-title"></aside>
+</div>
+
+<script>
+(function(){
+const TODAY = Date.UTC(2026,9,7);
+const DAY = 864e5;
+const SLA = {review:5, returned:7};
+function rng(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const r = rng(20261007);
+const LEVELS = [{c:'TR',n:'Terrace'}].concat(Array.from({length:10},(_,i)=>({c:'F'+String(10-i).padStart(2,'0'),n:'Floor '+(10-i)}))).concat([{c:'GF',n:'Ground'},{c:'B1',n:'Basement'}]);
+const DEPTS = [
+  {k:'ARC',n:'Architecture',t:'Floor plan',o:.08},
+  {k:'STR',n:'Structural',t:'Slab & beam layout',o:.18},
+  {k:'PLB',n:'Plumbing',t:'Plumbing & drainage layout',o:-.04},
+  {k:'ELE',n:'Electrical',t:'Electrical & lighting layout',o:-.06},
+  {k:'HVAC',n:'HVAC',t:'HVAC ducting layout',o:-.12},
+  {k:'FIRE',n:'Fire fighting',t:'Sprinkler & hydrant layout',o:-.1}
+];
+const CMTS = {
+  ARC:['Staircase width below 1.2 m at landing','Door swing clashes with shaft access','Show sill levels for all windows','Toilet layout differs from approved plan','Lift lobby dimensions missing','Balcony railing height not marked'],
+  STR:['Beam depth clashes with duct at grid C/4','Column sizes do not match GA drawing','Provide slab openings for plumbing shafts','Cantilever reinforcement detail missing','Lintel levels not coordinated with ARC','Add expansion joint detail'],
+  PLB:['Floor trap location clashes with beam','Show slope for drainage lines','Shaft size insufficient for stacks','Rainwater pipe outlets not shown','Valve chamber access missing'],
+  ELE:['DB location conflicts with door','Lighting levels not per spec for lobby','Riser route not coordinated with STR','Earthing layout missing','Socket heights not indicated'],
+  HVAC:['Duct crosses beam below clear height','Grille positions clash with lights','Outdoor unit ledge load not checked','Fresh air intake too close to exhaust'],
+  FIRE:['Sprinkler spacing exceeds 4.6 m','Hydrant valve missing in lobby','Fire exit signage not shown','Pipe sizing calc not attached']
+};
+function pick(a){return a[Math.floor(r()*a.length)]}
+const fmt = t => new Date(t).toLocaleDateString('en-GB',{day:'numeric',month:'short',timeZone:'UTC'});
+
+const drawings=[];
+LEVELS.forEach((L,li)=>{
+  const fromBottom = li/(LEVELS.length-1);
+  DEPTS.forEach(D=>{
+    const f = .12 + fromBottom*.78 + D.o + (r()-.5)*.4;
+    const d = {no:`TA-${D.k}-${L.c}-01`, title:`${D.t}, ${L.n}`, level:L, dept:D, revs:[], state:'none', since:null};
+    if(f>=.2){
+      const pr=r(); const returns = pr<.28?0:pr<.62?1:pr<.86?2:3;
+      let t = TODAY - Math.round(f*95)*DAY, k=0;
+      while(true){
+        const rev={rev:'R'+k, submitted:t};
+        const tr = t + (2+Math.floor(r()*10))*DAY;
+        if(tr>TODAY){rev.pending=true;d.revs.push(rev);d.state='review';d.since=t;break}
+        if(k<returns){
+          const pool=CMTS[D.k].slice(); const n=2+Math.floor(r()*4); rev.comments=[];
+          for(let i=0;i<n&&pool.length;i++){rev.comments.push(pool.splice(Math.floor(r()*pool.length),1)[0])}
+          rev.returned=tr; d.revs.push(rev);
+          const tn = tr + (3+Math.floor(r()*13))*DAY;
+          if(tn>TODAY){d.state='returned';d.since=tr;break}
+          t=tn;k++;continue;
+        }
+        rev.approved=tr; d.revs.push(rev); d.state='approved'; d.since=tr;
+        if(f>.5 && r()<.8){const g=tr+(1+Math.floor(r()*4))*DAY; if(g<=TODAY){d.state='gfc';d.gfc=g;d.since=g}}
+        break;
+      }
+    }
+    d.wait = d.since!=null ? Math.round((TODAY-d.since)/DAY) : null;
+    d.late = (d.state==='review'&&d.wait>SLA.review)||(d.state==='returned'&&d.wait>SLA.returned);
+    drawings.push(d);
+  });
+});
+
+const ST = {
+  none:{l:'Not submitted',s:'Not sent',who:'Design'},
+  review:{l:'Under review',s:'With Engg',who:'Engineering'},
+  returned:{l:'Returned for revision',s:'With Design',who:'Design'},
+  approved:{l:'Approved',s:'Approved',who:'Nobody'},
+  gfc:{l:'Issued for construction',s:'GFC',who:'Nobody'}
+};
+let filter = null;
+
+function kpis(){
+  const c = s => drawings.filter(d=>d.state===s);
+  const done = drawings.filter(d=>d.state==='approved'||d.state==='gfc');
+  const rounds = done.length? (done.reduce((a,d)=>a+d.revs.length,0)/done.length).toFixed(1):'0';
+  const items = [
+    {f:null,v:drawings.length,l:'Drawings in register',x:''},
+    {f:'review',v:c('review').length,l:'With Engineering',x:c('review').filter(d=>d.late).length+' overdue',sw:'s-review'},
+    {f:'returned',v:c('returned').length,l:'With Design for revision',x:c('returned').filter(d=>d.late).length+' overdue',sw:'s-returned'},
+    {f:'approved',v:done.length,l:'Approved ('+Math.round(done.length/drawings.length*100)+'%)',x:'',sw:'s-approved'},
+    {f:'none',v:c('none').length,l:'Not yet submitted',x:'',sw:'s-none'},
+    {f:'rounds',v:rounds,l:'Avg rounds to approval',x:''}
+  ];
+  document.getElementById('kpis').innerHTML = items.map((k,i)=>`<button class="kpi${filter===k.f&&k.f?' active':''}" data-f="${k.f??''}" ${k.f==='rounds'||k.f===null?'data-nofilter="1"':''}>
+    <span class="v">${k.v}</span><span class="l">${k.sw?`<i class="sw ${k.sw}"></i>`:''}${k.l}</span><span class="x">${k.x.startsWith('0 ')?'':k.x}</span></button>`).join('');
+  document.querySelectorAll('.kpi').forEach(b=>b.onclick=()=>{
+    const f=b.dataset.f; filter = (b.dataset.nofilter||filter===f)?null:f; render();
+  });
+}
+function matches(d){ if(!filter) return true; if(filter==='approved') return d.state==='approved'||d.state==='gfc'; return d.state===filter }
+function matrix(){
+  let h = '<thead><tr><th class="lvl">Floor</th>'+DEPTS.map(D=>`<th title="${D.n}">${D.k==='FIRE'?'Fire':D.k==='HVAC'?'HVAC':D.n.slice(0,5)}</th>`).join('')+'<th>Approved</th></tr></thead><tbody>';
+  LEVELS.forEach(L=>{
+    const row = drawings.filter(d=>d.level===L);
+    const ok = row.filter(d=>d.state==='approved'||d.state==='gfc').length;
+    h += `<tr><th class="lvl" scope="row">${L.n}</th>`+row.map(d=>{
+      const idx=drawings.indexOf(d); const rv=d.revs.length?d.revs[d.revs.length-1].rev:'–';
+      return `<td><button class="cell s-${d.state}${matches(d)?'':' dim'}" data-i="${idx}" aria-label="${d.no}: ${ST[d.state].l}${d.late?', overdue':''}">${d.late?'<span class="late"></span>':''}<span class="r">${rv}</span>${ST[d.state].s}</button></td>`
+    }).join('')+`<td class="prog"><span class="bar"><i style="width:${ok/6*100}%"></i></span>${ok}/6</td></tr>`;
+  });
+  document.getElementById('mx').innerHTML = h+'</tbody>';
+  document.querySelectorAll('.cell').forEach(b=>b.onclick=()=>open(+b.dataset.i));
+  document.getElementById('legend').innerHTML = Object.entries(ST).map(([k,v])=>`<span><i class="s-${k}"></i>${v.l}</span>`).join('')+'<span><i class="dot"></i>Past target days</span>';
+}
+function queues(){
+  const w = drawings.filter(d=>d.state==='review'||d.state==='returned').sort((a,b)=>(b.wait-(b.state==='review'?SLA.review:SLA.returned))-(a.wait-(a.state==='review'?SLA.review:SLA.returned))).slice(0,12);
+  document.getElementById('q-wait').innerHTML = w.map(d=>`<li><button class="qitem" data-i="${drawings.indexOf(d)}"><span class="no">${d.no} · ${d.revs[d.revs.length-1].rev}</span><span class="d ${d.late?'over':''}">${d.wait}d<small>${ST[d.state].who==='Engineering'?'Engineering':'Design'}</small></span><span class="t">${d.title}</span></button></li>`).join('');
+  const ev=[];
+  drawings.forEach(d=>d.revs.forEach(rv=>{
+    ev.push({t:rv.submitted,d,txt:`${rv.rev} submitted by ${d.dept.n}`});
+    if(rv.returned) ev.push({t:rv.returned,d,txt:`${rv.rev} returned with ${rv.comments.length} comments`});
+    if(rv.approved) ev.push({t:rv.approved,d,txt:`${rv.rev} approved`});
+  }));
+  drawings.filter(d=>d.gfc).forEach(d=>ev.push({t:d.gfc,d,txt:'Issued for construction'}));
+  ev.sort((a,b)=>b.t-a.t);
+  document.getElementById('q-act').innerHTML = ev.slice(0,12).map(e=>`<li><button class="qitem" data-i="${drawings.indexOf(e.d)}"><span class="no">${e.d.no}</span><span class="d" style="font-weight:400">${fmt(e.t)}</span><span class="t">${e.txt}</span></button></li>`).join('');
+  document.querySelectorAll('.qitem').forEach(b=>b.onclick=()=>open(+b.dataset.i));
+}
+let lastFocus=null;
+function open(i){
+  const d=drawings[i]; lastFocus=document.activeElement;
+  let tl='';
+  d.revs.forEach((rv,k)=>{
+    const next=d.revs[k+1];
+    tl += `<li class="ev des"><b>${rv.rev} submitted</b><span class="when">${fmt(rv.submitted)}${k>0?` · Design took ${Math.round((rv.submitted-d.revs[k-1].returned)/DAY)}d`:''}</span></li>`;
+    if(rv.returned){
+      tl += `<li class="ev eng ret"><b>Returned with ${rv.comments.length} comments</b><span class="when">${fmt(rv.returned)} · review took ${Math.round((rv.returned-rv.submitted)/DAY)}d</span><ol class="cmts">${rv.comments.map(c=>`<li>${c} — ${next?`<span class="ok">closed in ${next.rev}</span>`:'<span class="open">open</span>'}</li>`).join('')}</ol></li>`;
+    } else if(rv.approved){
+      tl += `<li class="ev eng ok"><b>Approved</b><span class="when">${fmt(rv.approved)} · review took ${Math.round((rv.approved-rv.submitted)/DAY)}d</span></li>`;
+    } else {
+      tl += `<li class="ev eng wait"><b>Waiting for Engineering</b><span class="when">${d.wait} days so far${d.late?' · past 5-day target':''}</span></li>`;
+    }
+  });
+  if(d.state==='returned') tl += `<li class="ev des wait"><b>Waiting for revised ${'R'+d.revs.length}</b><span class="when">${d.wait} days so far${d.late?' · past 7-day target':''}</span></li>`;
+  if(d.gfc) tl += `<li class="ev des ok"><b>Issued for construction</b><span class="when">${fmt(d.gfc)}</span></li>`;
+  if(!d.revs.length) tl = `<li class="ev des wait"><b>Not submitted yet</b><span class="when">Planned in the drawing register</span></li>`;
+  const total = d.revs.length? Math.round(((d.gfc||d.revs[d.revs.length-1].approved||TODAY)-d.revs[0].submitted)/DAY):0;
+  document.getElementById('drawer').innerHTML = `<button class="close" id="dw-close">Close</button>
+    <div class="eyebrow">${d.dept.n} · ${d.level.n}</div>
+    <h2 id="dw-title">${d.no}</h2><div style="color:var(--muted)">${d.title}</div>
+    <div style="margin-top:10px"><span class="pill s-${d.state}">${ST[d.state].l}</span></div>
+    <div class="facts"><div><b>${d.revs.length?d.revs[d.revs.length-1].rev:'–'}</b><span>Latest revision</span></div><div><b>${ST[d.state].who}</b><span>Has it now</span></div><div><b>${total}d</b><span>Since first submission</span></div></div>
+    <div class="lanes"><span>Design (${d.dept.n})</span><span>Engineering</span></div>
+    <ul class="tl">${tl}</ul>`;
+  document.getElementById('drawer-root').hidden=false;
+  document.getElementById('dw-close').onclick=close; document.getElementById('dw-close').focus();
+}
+function close(){document.getElementById('drawer-root').hidden=true; if(lastFocus) lastFocus.focus()}
+document.getElementById('scrim').onclick=close;
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.getElementById('drawer-root').hidden)close()});
+function render(){kpis();matrix();queues()}
+render();
+const tabs={dash:['tab-dash','view-dash'],how:['tab-how','view-how']};
+function show(k){Object.entries(tabs).forEach(([n,[t,v]])=>{document.getElementById(t).setAttribute('aria-selected',n===k);document.getElementById(v).hidden=n!==k});try{localStorage.setItem('dat-tab',k)}catch(e){}}
+document.getElementById('tab-dash').onclick=()=>show('dash');
+document.getElementById('tab-how').onclick=()=>show('how');
+if(location.hash==='#how') show('how');
+})();
+</script>
+
+</body></html>

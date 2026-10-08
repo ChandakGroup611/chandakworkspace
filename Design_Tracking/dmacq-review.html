@@ -1,0 +1,302 @@
+<title>dMACQ DMS Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Public+Sans:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: single reading column like a filed records memo, index-card tables, a sticky section rail on wide screens */
+:root{
+  --bg:#f6f8f9; --surface:#ffffff; --ink:#15232b; --muted:#56656e; --line:#d6dee2;
+  --accent:#1d5c7a; --accent-soft:#e3eef3; --flag:#a2591a; --flag-soft:#f8ecdf; --ok:#2f6b3c; --ok-soft:#e4f0e6;
+  --display:"Archivo","Arial Narrow",system-ui,sans-serif;
+  --body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#10181d; --surface:#172229; --ink:#e3ebef; --muted:#9aabb5; --line:#2a3a43;
+  --accent:#7fbcd9; --accent-soft:#1c3340; --flag:#e3a462; --flag-soft:#3a2a1a; --ok:#86c795; --ok-soft:#1d3323; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#10181d; --surface:#172229; --ink:#e3ebef; --muted:#9aabb5; --line:#2a3a43;
+  --accent:#7fbcd9; --accent-soft:#1c3340; --flag:#e3a462; --flag-soft:#3a2a1a; --ok:#86c795; --ok-soft:#1d3323; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.6 var(--body);padding-inline:16px;padding-block:0 64px}
+.wrap{max-width:1080px;margin:0 auto;display:grid;grid-template-columns:200px minmax(0,1fr);gap:48px}
+@media (max-width:860px){.wrap{grid-template-columns:minmax(0,1fr);gap:0}.rail{display:none}}
+.rail{position:sticky;top:env(safe-area-inset-top,0px);align-self:start;padding-top:56px;font:13px/1.5 var(--body)}
+.rail a{display:block;color:var(--muted);text-decoration:none;padding:4px 0 4px 10px;border-left:2px solid var(--line)}
+.rail a:hover,.rail a:focus-visible{color:var(--accent);border-left-color:var(--accent);outline:none}
+main{min-width:0}
+header{padding-block:48px 24px;border-bottom:1px solid var(--line)}
+.eyebrow{font:600 12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font:800 clamp(30px,5vw,44px)/1.1 var(--display);margin:12px 0 12px;text-wrap:balance;letter-spacing:-.01em}
+h2{font:700 26px/1.2 var(--display);margin:56px 0 12px;text-wrap:balance}
+h3{font:700 18px/1.3 var(--display);margin:28px 0 8px}
+p,li{max-width:70ch}
+.lede{font-size:18px;color:var(--muted);margin:0}
+.meta{font:13px/1.5 var(--mono);color:var(--muted);margin-top:16px}
+a{color:var(--accent)}
+code,.mono{font-family:var(--mono);font-size:.88em}
+.verdict{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:20px 24px;margin-top:28px}
+.verdict h2{margin-top:0;font-size:20px}
+.verdict ul{margin:0;padding-left:20px;display:grid;gap:8px}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface);margin:16px 0}
+table{border-collapse:collapse;width:100%;font-size:14.5px;min-width:560px}
+th,td{text-align:left;vertical-align:top;padding:10px 14px;border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:0}
+th{font:600 11.5px/1.3 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+td:first-child{font-weight:600}
+.src{font:12px/1.4 var(--mono);color:var(--muted);white-space:nowrap}
+.pill{display:inline-block;font:600 11px/1 var(--mono);letter-spacing:.04em;padding:4px 7px;border-radius:3px;white-space:nowrap}
+.p1{background:var(--ok-soft);color:var(--ok)}
+.p2{background:var(--accent-soft);color:var(--accent)}
+.p3{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.gap{background:var(--flag-soft);color:var(--flag)}
+.layers{list-style:none;padding:0;margin:16px 0;display:grid;gap:0;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--surface);max-width:none}
+.layers li{display:grid;grid-template-columns:44px minmax(0,1fr);gap:12px;padding:14px 16px;border-bottom:1px solid var(--line);max-width:none}
+.layers li:last-child{border-bottom:0}
+.layers .n{font:700 20px/1 var(--display);color:var(--accent)}
+.layers b{display:block}
+.layers span{color:var(--muted);font-size:14.5px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px;margin:16px 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px 18px}
+.card h3{margin:0 0 6px;font-size:16px}
+.card p{margin:0;font-size:14.5px;color:var(--muted)}
+.card .src{display:block;margin-top:8px}
+pre.mermaid{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px;overflow-x:auto;margin:16px 0}
+.phase{border-left:3px solid var(--accent);padding:4px 0 4px 16px;margin:20px 0}
+.phase.two{border-left-color:var(--muted)}
+.phase.three{border-left-color:var(--line)}
+.phase h3{margin-top:0}
+.phase ul{margin:6px 0 0;padding-left:20px}
+ol.q{padding-left:22px;display:grid;gap:10px}
+.note{font-size:14px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+</style>
+
+<div class="wrap">
+<nav class="rail" aria-label="Sections">
+  <a href="#summary">Summary</a>
+  <a href="#sources">What was reviewed</a>
+  <a href="#model">How dMACQ is built</a>
+  <a href="#security">Security model</a>
+  <a href="#capabilities">Capability inventory</a>
+  <a href="#gaps">Limits to fix</a>
+  <a href="#blueprint">In-house blueprint</a>
+  <a href="#roadmap">Phased roadmap</a>
+  <a href="#questions">Open questions</a>
+</nav>
+<main>
+<header>
+  <div class="eyebrow">DMAC · Chandak Group · Reference analysis</div>
+  <h1>dMACQ DMS 7.0 review and the in-house build it implies</h1>
+  <p class="lede">What the vendor product does, where it falls short, and what a Chandak Group document management application needs to match and improve on it.</p>
+  <div class="meta">Source: 8 uploaded dMACQ documents (Admin Guide 148 pp, feature deck, tech notes) · Reviewed 7 Oct 2026</div>
+</header>
+
+<section class="verdict" id="summary">
+  <h2>Summary</h2>
+  <ul>
+    <li><b>dMACQ is a metadata-driven document repository</b>, not a workflow engine. Its whole design rests on five linked objects: workspaces (“Deal Rooms”), a folder tree (“Categories”), document types (“Doc Sets”), free-entry fields (“Index Groups”) and master-data lookup tables (“Index Masters”).</li>
+    <li><b>Its strongest ideas are worth copying</b>: per-folder metadata schemas, tagging documents against master records (employee, vendor, PO) imported from ERP/HRMS, a five-layer permission model, and bulk indexing from filenames, folder trees and Excel.</li>
+    <li><b>The “workflow” is a single approve/reject step</b> per folder. The docs describe no version history, no audit trail, no multi-step routing and no retention rules. Those are the clearest places an in-house build can do better.</li>
+    <li><b>Several limits are design debt</b> we should not reproduce: globally unique filenames, 26 banned filename characters, search limited to one folder, irreversible data loss when a field is deleted or a document is moved, and OS cron jobs plus fragile Excel templates for every bulk operation.</li>
+    <li><b>A practical MVP</b> covers workspaces, folders, document types, custom fields, master tables, permissions, upload with indexing, a browser viewer, field search and QC approval, with versioning and audit logging built in from day one. The roadmap below phases the rest.</li>
+  </ul>
+</section>
+
+<section id="sources">
+<h2>What was reviewed</h2>
+<p>Four of the eight files are the same Admin Guide: one is the full 148-page text, three are PDF excerpts with screenshots. The feature deck is titled “Document Management System &amp; Document Workflow”, but its workflow content is only the QC approval step.</p>
+<div class="tbl"><table>
+<thead><tr><th>Document</th><th>Contents</th><th>Pages</th></tr></thead>
+<tbody>
+<tr><td>Admin Guide (full text)</td><td>All 28 sections: login, users, groups, rights, deal rooms, categories, doc sets, index groups and masters, upload, document actions, search, QC approval, auto-indexing, auto-renaming</td><td class="src">148</td></tr>
+<tr><td>Admin Guide excerpt</td><td>§17 Uploading (no index, single, multiple), §18 Document actions</td><td class="src">24</td></tr>
+<tr><td>Admin Guide excerpt</td><td>§23 Searching: content/OCR, field search, saved searches</td><td class="src">13</td></tr>
+<tr><td>Admin Guide excerpt</td><td>§21 List views, §23.3 field search</td><td class="src">7</td></tr>
+<tr><td>Features deck</td><td>Concepts, deal rooms, rights summary, AD/SSO/2FA, licensing, Excel indexing, architecture, SMTP gateway</td><td class="src">35 slides</td></tr>
+<tr><td>Supported formats</td><td>Viewer support for Office, PDF, images, CAD (DWG/DXF/DWF/CDR), audio, video, ZIP/RAR, MSG/EML, MPP</td><td class="src">2</td></tr>
+<tr><td>Recommendations</td><td>Browsers (Chrome preferred) and 26 characters banned in filenames</td><td class="src">1</td></tr>
+<tr><td>TechNote: structure creation</td><td>The 9-step setup order: doc set → index group → category → link → groups → users → doc-set permissions → category rights → field rights</td><td class="src">1</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="model">
+<h2>How dMACQ is built</h2>
+<p>Everything hangs off the folder. An administrator links each folder to the document types it may hold and the field sets its documents carry. Upload, search columns and filters are all driven by those links.</p>
+<pre class="mermaid">
+flowchart LR
+  WS["Workspace<br/>(Deal Room)"] --> F["Folder tree<br/>(Category)"]
+  WS --> DTS["Document type sets<br/>(Doc Set)"]
+  WS --> FG["Field groups<br/>(Index Group)"]
+  WS --> MT["Master tables<br/>(Index Master)"]
+  F -- "allowed types (1+ required)" --> DTS
+  F -- "fields to capture" --> FG
+  F -- "lookups to tag" --> MT
+  D["Document"] -- "host folder (1)" --> F
+  D -- "extra folders (tagging)" --> F
+  D -- "exactly 1 type" --> DTS
+  D -- "typed values" --> FG
+  D -- "tagged record(s)" --> MT
+  D -- "one-way links" --> D
+  ERP["ERP / HRMS / Excel"] -. "scheduled import" .-> MT
+</pre>
+
+<h3>Terms, and what we would call them</h3>
+<div class="tbl"><table>
+<thead><tr><th>dMACQ term</th><th>What it is</th><th>Plain name for our app</th></tr></thead>
+<tbody>
+<tr><td>Deal Room</td><td>A partition of users, folders, types and fields, e.g. one per group company or division</td><td>Workspace / Company</td></tr>
+<tr><td>Category</td><td>Virtual folder in a tree; carries links, approval setting and naming patterns</td><td>Folder</td></tr>
+<tr><td>Doc Set / Doc Set value</td><td>A named group of document types (HR Docs → Resume, Identity Proof). A global library holds all types</td><td>Document type (grouped)</td></tr>
+<tr><td>Index Group</td><td>Fields typed in by the uploader: Text, Numeric, Date, Dropdown; optional mandatory flag</td><td>Custom fields</td></tr>
+<tr><td>Index Master</td><td>A lookup table (Employee, Vendor, PO) whose row is tagged to a document. Field types add Alphanumeric, Text-area, Email; flags for unique, auto-increment, duplicates allowed, required</td><td>Master data / Lookup table</td></tr>
+<tr><td>Category Tagging</td><td>Show a document in more folders without copying it</td><td>Also file in…</td></tr>
+<tr><td>Archive</td><td>Recycle bin with restore and purge</td><td>Recycle bin</td></tr>
+<tr><td>QC Approval</td><td>Per-folder publish gate: Unapproved → Approved / Rejected, mandatory comment</td><td>Approval</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="security">
+<h2>Security model</h2>
+<p>A user sees and does something only when every layer allows it. This is the part of dMACQ most worth reproducing faithfully, because users will expect the same behaviour.</p>
+<ol class="layers">
+  <li><span class="n">1</span><div><b>Role (group) functional rights</b><span>Per module: View, Create, Modify, Delete, Purge, Export. Controls which menus and buttons appear. Global across workspaces. Built-in groups: Super Administrators, Deal Managers, QC Approvers, Users. New groups start with everything denied; rights can be copied from another group. <span class="src">§4–5</span></span></div></li>
+  <li><span class="n">2</span><div><b>Workspace membership</b><span>A user enters only the deal rooms assigned to them. <span class="src">§3, §6.5</span></span></div></li>
+  <li><span class="n">3</span><div><b>Folder access</b><span>Visible or hidden per user or group. A hidden folder means no upload, view, search, download or print inside it. <span class="src">§8</span></span></div></li>
+  <li><span class="n">4</span><div><b>Document-type permissions per group</b><span>Add, View, Print, Edit (metadata), Delete, Download, Mail, and Private View (only the uploader sees it, for payslips, medical records and similar). <span class="src">§10</span></span></div></li>
+  <li><span class="n">5</span><div><b>Field visibility per group</b><span>Each custom field and master field can be shown in lists and/or offered in search, per group. <span class="src">§13, §15.1</span></span></div></li>
+  <li><span class="n">6</span><div><b>Master table rights</b><span>Per user or group: create tables; view, modify, delete or export each table; add, edit or delete its rows; view its reports. <span class="src">§15.2</span></span></div></li>
+</ol>
+<p class="note">Account controls alongside: local or Active Directory login, optional two-factor and SSO, password policy (8–15 chars, mixed case, digit, symbol, expiry), inactive status, access start and end dates, one live session per username, named vs concurrent licences.</p>
+</section>
+
+<section id="capabilities">
+<h2>Capability inventory</h2>
+<p>Everything the documents describe, with a suggested phase for the in-house build. <span class="pill p1">MVP</span> <span class="pill p2">Phase 2</span> <span class="pill p3">Phase 3</span></p>
+<div class="tbl"><table>
+<thead><tr><th>Area</th><th>dMACQ behaviour</th><th>Phase</th><th>Ref</th></tr></thead>
+<tbody>
+<tr><td>Structure setup</td><td>Workspaces, folder tree (list and tree view, favourites), document types and library, custom field groups, master tables, folder linking; copy settings from another folder</td><td><span class="pill p1">MVP</span></td><td class="src">§3,7,9,12,14,16</td></tr>
+<tr><td>Users and roles</td><td>Single, grid and Excel bulk user creation; copy rights from another user; force password change; profile and page-size preferences</td><td><span class="pill p1">MVP</span></td><td class="src">§2,4,6</td></tr>
+<tr><td>Master data entry</td><td>Add rows one by one or via Excel template (insert and update matched on the unique field); search rows with AND/OR and ranges; count of documents per row</td><td><span class="pill p1">MVP</span></td><td class="src">§14.10–14.14</td></tr>
+<tr><td>Upload</td><td>Pick folder → pick type per file → no indexing, one set of values for all files, or different values per file; select master row or add a new one inline; upload from a master row</td><td><span class="pill p1">MVP</span></td><td class="src">§17</td></tr>
+<tr><td>Viewer</td><td>Browser preview for ~45 formats; Office files converted in the background; originals kept for download</td><td><span class="pill p1">MVP</span> core formats, CAD/media later</td><td class="src">§17.1,18.2</td></tr>
+<tr><td>Document actions</td><td>Info, edit properties, re-index alongside viewer, delete to recycle bin (restore/purge), download, download with metadata (ZIP + Excel), favourites</td><td><span class="pill p1">MVP</span></td><td class="src">§18</td></tr>
+<tr><td>QC approval</td><td>Per-folder on/off (on by default); unpublished docs visible only to uploader and approvers; approve/reject with comment, singly, in bulk or whole folder; status filter</td><td><span class="pill p1">MVP</span></td><td class="src">§24</td></tr>
+<tr><td>Folder field search</td><td>Up to 10 field conditions with AND/OR, type-ahead after 3 letters, date/number ranges; current folder only</td><td><span class="pill p1">MVP</span></td><td class="src">§23.3</td></tr>
+<tr><td>List views</td><td>Choose columns from properties, custom and master fields; save named views; one default per folder; filters for indexed / unindexed / approval status</td><td><span class="pill p1">MVP</span> columns, <span class="pill p2">P2</span> saved</td><td class="src">§20–21</td></tr>
+<tr><td>Global search</td><td>Across folders; filters for content, name, file type, upload date, uploader, types, any field; operators Like, =, &lt;, &gt;, ≤, ≥, Range; saved searches</td><td><span class="pill p2">Phase 2</span></td><td class="src">§23.4</td></tr>
+<tr><td>Content search and OCR</td><td>Text extracted from Office/PDF; OCR for scans (paid add-on in dMACQ, multi-language, printed text only)</td><td><span class="pill p2">Phase 2</span></td><td class="src">§18.8,23.2</td></tr>
+<tr><td>Bulk list actions</td><td>File in more folders, move folder, bulk re-index, Excel indexing (export, fill, import by document ID), bulk download, export list to XLS/DOC/PDF/CSV, print index, email links or ZIP</td><td><span class="pill p2">Phase 2</span></td><td class="src">§22</td></tr>
+<tr><td>Document linking</td><td>One-way links between related documents across folders (“virtual stapling”)</td><td><span class="pill p2">Phase 2</span></td><td class="src">§18.10</td></tr>
+<tr><td>Dashboard</td><td>Recent updates; favourite documents, folders and master tables; due / overdue / upcoming report from any date field</td><td><span class="pill p2">Phase 2</span></td><td class="src">§12.2,18.1</td></tr>
+<tr><td>Filename auto-indexing</td><td>Folder pattern of up to 5 filename parts split by _ - or . mapping to type, custom field, master field or ignore</td><td><span class="pill p2">Phase 2</span></td><td class="src">§25.1</td></tr>
+<tr><td>Auto-rename</td><td>Folder pattern builds filenames from type and field values, on download or in place</td><td><span class="pill p2">Phase 2</span></td><td class="src">§28</td></tr>
+<tr><td>Hot-folder bulk import</td><td>Server folders picked up on a schedule, indexed by filename or by a folder tree up to 5 levels deep</td><td><span class="pill p3">Phase 3</span></td><td class="src">§25.2,27</td></tr>
+<tr><td>Scheduled master import</td><td>Excel dropped into a server folder updates a master table on a schedule</td><td><span class="pill p3">Phase 3</span></td><td class="src">§14.10.2.2</td></tr>
+<tr><td>Re-indexing</td><td>Re-match documents to master rows from filenames, optionally limited by upload date and record date</td><td><span class="pill p3">Phase 3</span></td><td class="src">§26</td></tr>
+<tr><td>Integration</td><td>REST API to third-party systems; SMTP gateway with per-sender display name and reply-to; AD sync</td><td><span class="pill p3">Phase 3</span> API, <span class="pill p1">MVP</span> SMTP</td><td class="src">Deck</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="gaps">
+<h2>Limits to fix in-house</h2>
+<p>Items marked “not described” are absent from all eight documents; dMACQ may offer them elsewhere, but we should not assume so.</p>
+<div class="cards">
+  <div class="card"><h3><span class="pill gap">Not described</span> Version history</h3><p>No check-in/out, versions or replace-file action appear anywhere. Every serious DMS needs this. Build it in from day one.</p></div>
+  <div class="card"><h3><span class="pill gap">Not described</span> Audit trail</h3><p>No record of who viewed, downloaded, edited or deleted what. Needed for compliance and for trust in Private View documents.</p></div>
+  <div class="card"><h3><span class="pill gap">Thin</span> Workflow</h3><p>One approve/reject gate per folder. No multi-step routing, assignees, due dates or reminders. A configurable approval chain is a natural Phase 3 item.</p><span class="src">§24</span></div>
+  <div class="card"><h3>Filename rules</h3><p>Duplicate filenames are rejected and 26 characters are banned because of the firewall. Store files by internal ID and keep the original name as plain metadata.</p><span class="src">§17.2 · Recommendations</span></div>
+  <div class="card"><h3>Search scope</h3><p>Folder search ignores sub-folders, and unindexed documents are searchable only by name, type and date. Default to “this folder and below”.</p><span class="src">§23.3</span></div>
+  <div class="card"><h3>Silent data loss</h3><p>Deleting a field or field group erases its values permanently; moving a document to a folder without the same fields drops its values. Use soft deletes and keep values on move.</p><span class="src">§12.4, 12.8, 22.4</span></div>
+  <div class="card"><h3>Fragile Excel templates</h3><p>Every bulk path depends on a template that fails if any cell is edited. Accept plain CSV/XLSX with header matching and a row-level error report.</p><span class="src">§6.1.3, 14.10.2, 22.3</span></div>
+  <div class="card"><h3>Ops burden</h3><p>Conversion, OCR, imports and indexing are OS cron jobs; server paths are typed with doubled backslashes. Use a managed job queue with a status screen.</p><span class="src">§14.10.2.2, 18.2, 25.2</span></div>
+  <div class="card"><h3>Private saved views</h3><p>Views and searches belong to one user and cannot be renamed. Allow sharing with a group and renaming.</p><span class="src">§21.2, 23.3.1</span></div>
+  <div class="card"><h3>Rigid one-to-ones</h3><p>One type per document, one unique field per master table, each type in only one set per workspace. Keep these as defaults but avoid hard-coding them.</p><span class="src">§9, 14.6, 17</span></div>
+  <div class="card"><h3>View-only viewer</h3><p>No annotations, redaction, watermarking or print-with-watermark. Download/print control exists but the content leaves unmarked.</p><span class="src">§18.2</span></div>
+  <div class="card"><h3>Single session</h3><p>One login per username at a time, tied to licence counting. Not needed in-house; allow multiple sessions with session management.</p><span class="src">§2.1</span></div>
+</div>
+</section>
+
+<section id="blueprint">
+<h2>In-house blueprint</h2>
+<h3>Suggested stack</h3>
+<p>dMACQ runs PHP on Apache with MySQL or SQL Server and plain file-system storage, on Ubuntu or Windows Server. The default below keeps it on-premises and Linux-based, but uses current components. It is a recommendation to confirm with whoever will maintain the app.</p>
+<div class="tbl"><table>
+<thead><tr><th>Layer</th><th>Default choice</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Web app</td><td>React (Next.js) + TypeScript</td><td>Rich list, tree and viewer screens; one language across the stack</td></tr>
+<tr><td>API</td><td>NestJS (Node, TypeScript), REST + OpenAPI</td><td>Structured modules for rights checks; the API doubles as the integration API</td></tr>
+<tr><td>Database</td><td>PostgreSQL</td><td>Relational rights model, JSONB for per-folder field values, built-in full-text search for the MVP</td></tr>
+<tr><td>File storage</td><td>MinIO (S3-compatible, on-prem)</td><td>Files stored by ID and checksum; versioning and lifecycle rules built in</td></tr>
+<tr><td>Background jobs</td><td>Redis + BullMQ</td><td>Replaces cron: conversion, OCR, imports and re-indexing with retries and a status screen</td></tr>
+<tr><td>Preview</td><td>LibreOffice (via Gotenberg) to PDF, shown in PDF.js</td><td>Covers Office, text and images; CAD and media added later</td></tr>
+<tr><td>OCR and content search</td><td>Tesseract (English + Hindi/Marathi as needed), OpenSearch in Phase 2</td><td>Free, multi-language; OpenSearch when cross-folder content search arrives</td></tr>
+<tr><td>Login</td><td>Microsoft Entra ID / AD via OIDC or LDAP, plus local accounts and TOTP 2FA</td><td>Matches dMACQ’s AD, SSO and 2FA support</td></tr>
+<tr><td>Deploy</td><td>Docker Compose on an Ubuntu server, nightly DB + storage backup</td><td>Simple for an internal IT team to run</td></tr>
+</tbody></table></div>
+
+<h3>Core data model</h3>
+<div class="tbl"><table>
+<thead><tr><th>Entity</th><th>Key fields</th><th>Replaces</th></tr></thead>
+<tbody>
+<tr><td>workspace</td><td>name, code</td><td>Deal Room</td></tr>
+<tr><td>user, group, membership</td><td>login type, status, access window, MFA; group rights matrix (module × action)</td><td>User, Group, Group Rights</td></tr>
+<tr><td>folder</td><td>workspace, parent, path, approval required, filename pattern, rename pattern</td><td>Category</td></tr>
+<tr><td>folder_access</td><td>folder, user or group</td><td>Category Rights</td></tr>
+<tr><td>doc_type, doc_type_set</td><td>name, description, set</td><td>Doc Set Library, Doc Set</td></tr>
+<tr><td>doc_type_permission</td><td>type, group, add / view / print / edit / delete / download / mail / private</td><td>Doc Set Rights</td></tr>
+<tr><td>field_group, field_def</td><td>name, type, required, options, visible-to, searchable-by</td><td>Index Group + field rights</td></tr>
+<tr><td>master_table, master_field, master_record</td><td>field flags (unique, auto-number, duplicates, required); record values as JSONB</td><td>Index Master</td></tr>
+<tr><td>folder links</td><td>folder ↔ doc types, field groups, master tables</td><td>Set indexes to category</td></tr>
+<tr><td>document</td><td>workspace, host folder, type, original name, approval status, uploader, deleted_at</td><td>Document</td></tr>
+<tr><td>document_version <span class="pill gap">new</span></td><td>document, version no., storage key, sha256, size, mime, uploaded by/at, rendition and text status</td><td>(none)</td></tr>
+<tr><td>document_values, document_master_tag</td><td>field values; tagged master records</td><td>Indexing</td></tr>
+<tr><td>document_folder_tag, document_link</td><td>extra folders; one-way links</td><td>Category Tagging, Link documents</td></tr>
+<tr><td>approval_event</td><td>document, status, comment, by, at</td><td>File Status Comments</td></tr>
+<tr><td>saved_view</td><td>owner, shared-with group, folder or global, columns, conditions, default</td><td>Views, saved searches</td></tr>
+<tr><td>job</td><td>kind (convert, OCR, import, reindex), source, target, progress, errors</td><td>Cron jobs, dashboards</td></tr>
+<tr><td>audit_log <span class="pill gap">new</span></td><td>actor, action, object, before/after, IP, time</td><td>(none)</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="roadmap">
+<h2>Phased roadmap</h2>
+<div class="phase"><h3>MVP: replace day-to-day use</h3><ul>
+  <li>Workspaces, folder tree, document types, custom fields, master tables (manual + Excel import with error report), folder linking</li>
+  <li>Users, groups, AD login, 2FA, the six permission layers including Private View</li>
+  <li>Upload with no / single / per-file indexing, inline new master row, upload from a master row</li>
+  <li>Viewer for PDF, Office, images and text; download and download-with-metadata; recycle bin</li>
+  <li>Folder field search (including sub-folders), column picker, status filters</li>
+  <li>QC approval per folder with comments and bulk approve</li>
+  <li>Version history and audit log from the first release</li>
+</ul></div>
+<div class="phase two"><h3>Phase 2: power-user features</h3><ul>
+  <li>Global search with operators, content search, OCR, shareable saved views and searches</li>
+  <li>Bulk actions: file in more folders, move (keeping values), Excel indexing, bulk download, list export, email links</li>
+  <li>Document links, dashboard with favourites and due-date report</li>
+  <li>Filename auto-indexing and auto-rename patterns</li>
+</ul></div>
+<div class="phase three"><h3>Phase 3: automation and integration</h3><ul>
+  <li>Hot-folder and folder-tree bulk import, scheduled master imports from ERP/HRMS, re-indexing</li>
+  <li>Multi-step approval workflows with assignees, due dates and reminders</li>
+  <li>Retention and expiry rules, watermarking, CAD and media preview, public REST API</li>
+  <li>Migration tool for existing dMACQ content and metadata, if Chandak Group runs dMACQ today</li>
+</ul></div>
+</section>
+
+<section id="questions">
+<h2>Open questions</h2>
+<p>These change scope and design. Answers in the project thread are enough.</p>
+<ol class="q">
+  <li><b>Does Chandak Group run dMACQ today?</b> If so, roughly how many documents and how much storage would need migrating with their metadata?</li>
+  <li><b>Which companies or divisions become workspaces</b>, and roughly how many users in each?</li>
+  <li><b>Hosting:</b> an on-premises server (the default assumed here) or a cloud provider?</li>
+  <li><b>Login:</b> Microsoft Active Directory / Entra ID, Google Workspace, or local accounts only?</li>
+  <li><b>Masters to import:</b> which systems hold employee, vendor and PO data (ERP, HRMS, Tally, SAP)?</li>
+  <li><b>Beyond dMACQ:</b> which of version history, multi-step approvals, e-signature, retention rules and mobile access are must-haves?</li>
+  <li><b>Tech stack:</b> does the IT team have a preferred language or framework to maintain?</li>
+</ol>
+</section>
+</main>
+</div>

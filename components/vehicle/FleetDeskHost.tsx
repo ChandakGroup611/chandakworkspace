@@ -856,6 +856,11 @@ export default function FleetDeskHost({
   const [dossierDocCategoryFilter, setDossierDocCategoryFilter] = useState<string>("ALL");
   const [dossierDocScanStatusFilter, setDossierDocScanStatusFilter] = useState<"ALL" | "ATTACHED" | "PENDING">("ALL");
   const [dossierDocSearchQuery, setDossierDocSearchQuery] = useState<string>("");
+  const [dossierServiceSearchQuery, setDossierServiceSearchQuery] = useState<string>("");
+  const [dossierServiceCategoryFilter, setDossierServiceCategoryFilter] = useState<string>("ALL");
+  const [dossierPartSearchQuery, setDossierPartSearchQuery] = useState<string>("");
+  const [dossierPartTypeFilter, setDossierPartTypeFilter] = useState<string>("ALL");
+  const [dossierTripSearchQuery, setDossierTripSearchQuery] = useState<string>("");
   const [duplicateDocPrompt, setDuplicateDocPrompt] = useState<{
     file: File;
     base64Url: string;
@@ -2699,14 +2704,34 @@ export default function FleetDeskHost({
 
   // Toast banner triggers
   const triggerToast = (msg: string, isError = false) => {
+    let displayMsg = msg || (isError ? "An error occurred. Please try again." : "Operation completed successfully.");
+    if (isError && typeof msg === "string") {
+      const lower = msg.toLowerCase();
+      if (
+        lower.includes("was not found on the server") ||
+        lower.includes("failed-to-find-server-action") ||
+        lower.includes("failed to find server action") ||
+        lower.includes("unrecognizedactionerror")
+      ) {
+        displayMsg = "New portal updates detected. Refreshing to sync latest version...";
+        if (typeof window !== "undefined") {
+          const lastReload = Number(sessionStorage.getItem("last_action_reload_ts") || 0);
+          if (Date.now() - lastReload > 4000) {
+            sessionStorage.setItem("last_action_reload_ts", String(Date.now()));
+            setTimeout(() => window.location.reload(), 1200);
+          }
+        }
+      }
+    }
+
     if (isError) {
-      setErrorBanner(msg);
+      setErrorBanner(displayMsg);
       setSuccessBanner(null);
-      toast.error(msg);
+      toast.error(displayMsg);
     } else {
-      setSuccessBanner(msg);
+      setSuccessBanner(displayMsg);
       setErrorBanner(null);
-      toast.success(msg);
+      toast.success(displayMsg);
     }
     setTimeout(() => {
       setErrorBanner(null);
@@ -21591,184 +21616,335 @@ export default function FleetDeskHost({
                 </div>
               </div>
 
-              {/* Service Records List */}
-              {dossierData.services.length === 0 ? (
-                <div className="p-8 text-center rounded-xl border border-dashed border-border bg-slate-50/50 dark:bg-slate-900/30 space-y-2">
-                  <Wrench className="h-8 w-8 text-muted-foreground mx-auto opacity-50" />
-                  <p className="text-xs font-semibold text-foreground">No service records logged for this vehicle</p>
-                  
-                  {canManageMaintenance && (
-                    <div className="pt-2">
-                      <AppButton
-                        type="button"
-                        variant="primary"
-                        size="sm"
-                        onClick={() => {
-                          setDossierOriginVehicle(viewingVehicle);
-                          setDossierOriginTab(vehicleDossierTab);
-                          resetMaintenanceForm();
-                          setNewMaintVehicleId(viewingVehicle.id);
-                          setIsAddMaintenanceOpen(true);
-                        }}
-                        className="text-xs h-8 px-3 gap-1.5 font-semibold"
-                      >
-                        <Plus className="h-3.5 w-3.5" />
-                        <span>Log First Service Job Card</span>
-                      </AppButton>
+              {/* Service Records List Table */}
+              {(() => {
+                const filteredDossierServices = dossierData.services.filter((svc) => {
+                  const partsData = (svc.parts_replaced && typeof svc.parts_replaced === "object") ? svc.parts_replaced : null;
+                  if (dossierServiceCategoryFilter !== "ALL") {
+                    if ((partsData?.category || "PERIODIC_SERVICE") !== dossierServiceCategoryFilter) return false;
+                  }
+                  if (dossierServiceSearchQuery.trim()) {
+                    const q = dossierServiceSearchQuery.toLowerCase();
+                    const matchId = (svc.id || "").toLowerCase().includes(q);
+                    const matchType = (svc.service_type || "").toLowerCase().includes(q);
+                    const matchCenter = (svc.service_center || "").toLowerCase().includes(q);
+                    const matchTech = (svc.technician_name || "").toLowerCase().includes(q);
+                    const matchInv = (partsData?.invoice_number || "").toLowerCase().includes(q);
+                    const matchNotes = (partsData?.notes || "").toLowerCase().includes(q);
+                    const matchDate = (svc.service_date || "").toLowerCase().includes(q);
+                    if (!matchId && !matchType && !matchCenter && !matchTech && !matchInv && !matchNotes && !matchDate) {
+                      return false;
+                    }
+                  }
+                  return true;
+                });
+
+                if (dossierData.services.length === 0) {
+                  return (
+                    <div className="p-8 text-center rounded-xl border border-dashed border-border bg-slate-50/50 dark:bg-slate-900/30 space-y-2">
+                      <Wrench className="h-8 w-8 text-muted-foreground mx-auto opacity-50" />
+                      <p className="text-xs font-semibold text-foreground">No service records logged for this vehicle</p>
+                      
+                      {canManageMaintenance && (
+                        <div className="pt-2">
+                          <AppButton
+                            type="button"
+                            variant="primary"
+                            size="sm"
+                            onClick={() => {
+                              setDossierOriginVehicle(viewingVehicle);
+                              setDossierOriginTab(vehicleDossierTab);
+                              resetMaintenanceForm();
+                              setNewMaintVehicleId(viewingVehicle.id);
+                              setIsAddMaintenanceOpen(true);
+                            }}
+                            className="text-xs h-8 px-3 gap-1.5 font-semibold"
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                            <span>Log First Service Job Card</span>
+                          </AppButton>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {dossierData.services.map((svc) => {
-                    const partsData = (svc.parts_replaced && typeof svc.parts_replaced === "object") ? svc.parts_replaced : null;
-                    const attachments = Array.isArray(partsData?.attachments) ? partsData.attachments : [];
-                    return (
-                      <div
-                        key={svc.id}
-                        className="p-4 rounded-xl border border-border bg-surface hover:border-amber-500/40 transition-colors shadow-2xs space-y-3"
-                      >
-                        <div className="flex items-start justify-between gap-3 flex-wrap">
-                          <div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-border text-foreground">
-                                WO#{svc.id.slice(0, 8)}
-                              </span>
-                              <span className="text-xs font-bold text-foreground">
-                                {svc.service_type || "Routine Maintenance"}
-                              </span>
-                              <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
-                                {partsData?.category || "PERIODIC_SERVICE"}
-                              </span>
-                              {partsData?.payment_status && (
-                                <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                                  partsData.payment_status === "PAID"
-                                    ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20"
-                                    : "bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/20"
-                                }`}>
-                                  {partsData.payment_status}
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-xs text-muted-foreground flex items-center gap-3 mt-1 flex-wrap">
-                              <span className="flex items-center gap-1">
-                                <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                                <span className="font-mono font-medium">{svc.service_date}</span>
-                              </span>
-                              <span>•</span>
-                              <span className="flex items-center gap-1">
-                                <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
-                                <span>{svc.service_center || "Authorized Workshop"}</span>
-                              </span>
-                              {svc.technician_name && (
-                                <>
-                                  <span>•</span>
-                                  <span>Technician: <strong className="text-foreground font-medium">{svc.technician_name}</strong></span>
-                                </>
-                              )}
-                              <span>•</span>
-                              <span className="font-mono text-muted-foreground">Odo: <strong>{svc.odometer_km ? `${svc.odometer_km.toLocaleString()} km` : "—"}</strong></span>
-                            </div>
-                          </div>
+                  );
+                }
 
-                          <div className="flex items-center gap-2">
-                            <div className="text-right">
-                              <div className="text-base font-bold text-foreground font-mono">
-                                ₹{Number(svc.cost || 0).toLocaleString("en-IN")}
-                              </div>
-                              {partsData?.invoice_number && (
-                                <div className="text-xs font-mono text-muted-foreground">
-                                  Inv #{partsData.invoice_number}
-                                </div>
-                              )}
-                            </div>
-                            <AppButton
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setDossierOriginVehicle(viewingVehicle);
-                                setDossierOriginTab(vehicleDossierTab);
-                                setSelectedMaintenanceForView(svc);
-                              }}
-                              className="h-8 text-xs px-2.5 text-amber-700 dark:text-amber-300 border-amber-500/30 hover:bg-amber-500/10 gap-1 font-semibold"
-                            >
-                              <Eye className="h-3.5 w-3.5" />
-                              <span>View Job Sheet</span>
-                            </AppButton>
-                          </div>
-                        </div>
-
-                        {/* Breakdown Pills */}
-                        <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/40 border border-border/70 flex items-center gap-4 text-xs flex-wrap">
-                          <div>
-                            <span className="text-xs text-muted-foreground block">Labour Cost:</span>
-                            <span className="font-mono font-semibold text-foreground">₹{Number(partsData?.labour_cost || 0).toLocaleString("en-IN")}</span>
-                          </div>
-                          <div className="border-l border-border pl-4">
-                            <span className="text-xs text-muted-foreground block">Parts Cost:</span>
-                            <span className="font-mono font-semibold text-foreground">₹{Number(partsData?.parts_cost || 0).toLocaleString("en-IN")}</span>
-                          </div>
-                          <div className="border-l border-border pl-4">
-                            <span className="text-xs text-muted-foreground block">Taxes / GST:</span>
-                            <span className="font-mono font-semibold text-foreground">₹{Number(partsData?.tax_cost || 0).toLocaleString("en-IN")}</span>
-                          </div>
-                          {partsData?.notes && (
-                            <div className="border-l border-border pl-4 flex-1 min-w-[200px]">
-                              <span className="text-xs text-muted-foreground block">Service Notes:</span>
-                              <span className="text-foreground text-xs truncate block" title={partsData.notes}>
-                                {partsData.notes}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Service Invoices & Bills Attachments */}
-                        {attachments.length > 0 && (
-                          <div className="space-y-1.5 pt-1 border-t border-border">
-                            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                              <Paperclip className="h-3 w-3 text-amber-500" />
-                              <span>Attached Invoices & Work Orders ({attachments.length})</span>
-                            </span>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              {attachments.map((att: any, attIdx: number) => (
-                                <div
-                                  key={att.id || attIdx}
-                                  className="px-2.5 py-1 rounded-lg border border-border bg-surface text-xs flex items-center gap-2 hover:border-theme-btn-primary/40"
-                                >
-                                  <span className="font-medium text-foreground truncate max-w-[150px]" title={att.file_name}>
-                                    {att.file_name}
-                                  </span>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleViewAttachment({
-                                      ...att,
-                                      service_id: svc.id
-                                    })}
-                                    className="text-blue-600 dark:text-blue-400 hover:underline text-xs font-semibold"
-                                  >
-                                    View
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => downloadAttachment({
-                                      ...att,
-                                      service_id: svc.id
-                                    })}
-                                    className="text-emerald-600 dark:text-emerald-400 hover:underline text-xs font-semibold"
-                                  >
-                                    Download
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
+                return (
+                  <div className="space-y-3">
+                    {/* Search & Filter Toolbar */}
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 rounded-xl border border-border bg-surface/50">
+                      <div className="relative flex-1 max-w-md">
+                        <Search className="h-3.5 w-3.5 absolute left-3 top-2.5 text-muted-foreground pointer-events-none" />
+                        <input
+                          type="text"
+                          value={dossierServiceSearchQuery}
+                          onChange={(e) => setDossierServiceSearchQuery(e.target.value)}
+                          placeholder="Search records by WO#, invoice #, workshop, technician, or scope..."
+                          className="w-full pl-8 pr-8 py-1.5 text-xs rounded-lg border border-border bg-surface text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-theme-btn-primary shadow-2xs"
+                        />
+                        {dossierServiceSearchQuery && (
+                          <button
+                            type="button"
+                            onClick={() => setDossierServiceSearchQuery("")}
+                            className="absolute right-2.5 top-2 text-muted-foreground hover:text-foreground p-0.5"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
                         )}
                       </div>
-                    );
-                  })}
-                </div>
-              )}
+
+                      <div className="flex items-center gap-2 flex-wrap justify-between sm:justify-end">
+                        <span className="text-xs text-muted-foreground font-medium">
+                          Showing <strong className="text-foreground font-mono">{filteredDossierServices.length}</strong> of {dossierData.services.length} Records
+                        </span>
+                        {(dossierServiceSearchQuery || dossierServiceCategoryFilter !== "ALL") && (
+                          <AppButton
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setDossierServiceSearchQuery("");
+                              setDossierServiceCategoryFilter("ALL");
+                            }}
+                            className="h-7 text-xs px-2"
+                          >
+                            Clear Filters
+                          </AppButton>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Table View */}
+                    <AppCard className="border-border shadow-xs overflow-hidden">
+                      <AppCardContent className="p-0 overflow-x-auto">
+                        <AppTableContainer className="rounded-none border-none">
+                          <AppTable className="w-full text-left text-xs">
+                            <AppTableHeader className="bg-slate-50 dark:bg-slate-900/60 border-b border-border text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                              <AppTableRow>
+                                <AppTableHead className="p-3.5 whitespace-nowrap">Service Date &amp; Job Card</AppTableHead>
+                                <AppTableHead className="p-3.5 min-w-[240px]">Scope &amp; Category</AppTableHead>
+                                <AppTableHead className="p-3.5 min-w-[190px]">Workshop &amp; Technician</AppTableHead>
+                                <AppTableHead className="p-3.5 whitespace-nowrap">Odometer</AppTableHead>
+                                <AppTableHead className="p-3.5 min-w-[160px]">Cost &amp; Breakdown</AppTableHead>
+                                <AppTableHead className="p-3.5 min-w-[220px]">Attached Invoices &amp; Bills</AppTableHead>
+                                <AppTableHead className="p-3.5 text-right whitespace-nowrap">Actions</AppTableHead>
+                              </AppTableRow>
+                            </AppTableHeader>
+                            <AppTableBody className="divide-y divide-border/60">
+                              {filteredDossierServices.length === 0 ? (
+                                <AppTableRow>
+                                  <AppTableCell colSpan={7} className="text-center py-10 text-muted-foreground">
+                                    <Wrench className="h-6 w-6 text-muted-foreground mx-auto opacity-50 mb-2" />
+                                    <p className="font-semibold text-foreground text-xs">
+                                      {dossierServiceSearchQuery || dossierServiceCategoryFilter !== "ALL"
+                                        ? "No service records match your search query"
+                                        : "No service records logged for this vehicle"}
+                                    </p>
+                                  </AppTableCell>
+                                </AppTableRow>
+                              ) : (
+                                filteredDossierServices.map((svc) => {
+                                  const partsData = (svc.parts_replaced && typeof svc.parts_replaced === "object") ? svc.parts_replaced : null;
+                                  const attachments = Array.isArray(partsData?.attachments) ? partsData.attachments : [];
+                                  const catId = partsData?.category;
+                                  const catInfo = MAINTENANCE_CATEGORIES.find((c) => c.id === catId) || {
+                                    id: "PERIODIC_SERVICE",
+                                    label: catId || "Periodic Service",
+                                    icon: "🔧",
+                                    badge: "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20"
+                                  };
+
+                                  return (
+                                    <AppTableRow
+                                      key={svc.id}
+                                      className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors"
+                                    >
+                                      {/* Col 1: Date & Job Card / Inv # */}
+                                      <AppTableCell className="p-3.5 align-top whitespace-nowrap">
+                                        <div className="font-mono font-bold text-foreground text-xs">{svc.service_date}</div>
+                                        <div className="inline-flex items-center gap-1 font-mono text-[11px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-border text-foreground mt-1">
+                                          WO#{svc.id.slice(0, 8)}
+                                        </div>
+                                        {partsData?.invoice_number && (
+                                          <div className="text-[11px] font-mono text-muted-foreground flex items-center gap-1 mt-1">
+                                            <Receipt className="h-3 w-3 text-amber-500 shrink-0" />
+                                            <span>Inv #{partsData.invoice_number}</span>
+                                          </div>
+                                        )}
+                                      </AppTableCell>
+
+                                      {/* Col 2: Scope & Category */}
+                                      <AppTableCell className="p-3.5 align-top">
+                                        <div className="flex items-center gap-1.5 flex-wrap mb-1">
+                                          <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold border inline-flex items-center gap-1 ${catInfo.badge}`}>
+                                            <span>{catInfo.icon}</span>
+                                            <span>{catInfo.label}</span>
+                                          </span>
+                                          {partsData?.payment_status && (
+                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                              partsData.payment_status === "PAID"
+                                                ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20"
+                                                : "bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/20"
+                                            }`}>
+                                              {partsData.payment_status}
+                                            </span>
+                                          )}
+                                        </div>
+                                        <div className="font-bold text-foreground text-xs leading-snug">
+                                          {svc.service_type || "Routine Maintenance"}
+                                        </div>
+                                        {partsData?.notes && (
+                                          <div className="text-[11px] text-muted-foreground mt-1 line-clamp-2" title={partsData.notes}>
+                                            <span className="font-semibold text-foreground/80">Notes: </span>{partsData.notes}
+                                          </div>
+                                        )}
+                                      </AppTableCell>
+
+                                      {/* Col 3: Workshop & Technician */}
+                                      <AppTableCell className="p-3.5 align-top">
+                                        <div className="font-semibold text-foreground text-xs flex items-center gap-1.5">
+                                          <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                          <span className="truncate max-w-[170px]" title={svc.service_center || "Authorized Workshop"}>
+                                            {svc.service_center || "Authorized Workshop"}
+                                          </span>
+                                        </div>
+                                        {svc.technician_name && (
+                                          <div className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1">
+                                            <span>Technician:</span>
+                                            <strong className="text-foreground font-medium truncate max-w-[130px]" title={svc.technician_name}>
+                                              {svc.technician_name}
+                                            </strong>
+                                          </div>
+                                        )}
+                                      </AppTableCell>
+
+                                      {/* Col 4: Odometer */}
+                                      <AppTableCell className="p-3.5 align-top font-mono text-xs whitespace-nowrap">
+                                        <div className="text-foreground font-semibold">
+                                          {svc.odometer_km ? `${svc.odometer_km.toLocaleString()} km` : "—"}
+                                        </div>
+                                      </AppTableCell>
+
+                                      {/* Col 5: Cost & Breakdown */}
+                                      <AppTableCell className="p-3.5 align-top">
+                                        <div className="text-sm font-bold text-foreground font-mono">
+                                          ₹{Number(svc.cost || 0).toLocaleString("en-IN")}
+                                        </div>
+                                        <div className="text-[10px] text-muted-foreground space-y-0.5 mt-1">
+                                          {partsData?.labour_cost !== undefined && (
+                                            <div className="flex items-center justify-between gap-2 font-mono">
+                                              <span>Labour:</span>
+                                              <span className="text-foreground font-medium">₹{Number(partsData.labour_cost || 0).toLocaleString("en-IN")}</span>
+                                            </div>
+                                          )}
+                                          {partsData?.parts_cost !== undefined && (
+                                            <div className="flex items-center justify-between gap-2 font-mono">
+                                              <span>Parts:</span>
+                                              <span className="text-foreground font-medium">₹{Number(partsData.parts_cost || 0).toLocaleString("en-IN")}</span>
+                                            </div>
+                                          )}
+                                          {partsData?.tax_cost !== undefined && Number(partsData.tax_cost) > 0 && (
+                                            <div className="flex items-center justify-between gap-2 font-mono">
+                                              <span>Taxes/GST:</span>
+                                              <span className="text-foreground font-medium">₹{Number(partsData.tax_cost || 0).toLocaleString("en-IN")}</span>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </AppTableCell>
+
+                                      {/* Col 6: Attached Invoices & Work Orders */}
+                                      <AppTableCell className="p-3.5 align-top">
+                                        {attachments.length > 0 ? (
+                                          <div className="space-y-1.5 max-w-[240px]">
+                                            {attachments.map((att: any, attIdx: number) => (
+                                              <div
+                                                key={att.id || attIdx}
+                                                className="px-2 py-1 rounded-lg border border-border bg-surface text-xs flex items-center justify-between gap-2 hover:border-theme-btn-primary/40 shadow-2xs"
+                                              >
+                                                <span className="font-medium text-foreground truncate max-w-[110px] text-[11px]" title={att.file_name}>
+                                                  {att.file_name}
+                                                </span>
+                                                <div className="flex items-center gap-1.5 shrink-0">
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => handleViewAttachment({
+                                                      ...att,
+                                                      service_id: svc.id
+                                                    })}
+                                                    className="text-blue-600 dark:text-blue-400 hover:underline text-[11px] font-semibold"
+                                                    title="Preview Invoice / Job Sheet Document"
+                                                  >
+                                                    View
+                                                  </button>
+                                                  <span className="text-muted-foreground/50">•</span>
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => downloadAttachment({
+                                                      ...att,
+                                                      service_id: svc.id
+                                                    })}
+                                                    className="text-emerald-600 dark:text-emerald-400 hover:underline text-[11px] font-semibold"
+                                                    title="Download Attachment"
+                                                  >
+                                                    Download
+                                                  </button>
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        ) : (
+                                          <span className="text-[11px] text-muted-foreground italic">No attached files</span>
+                                        )}
+                                      </AppTableCell>
+
+                                      {/* Col 7: Actions */}
+                                      <AppTableCell className="p-3.5 align-top text-right whitespace-nowrap">
+                                        <div className="inline-flex items-center justify-end gap-1.5">
+                                          <AppButton
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
+                                              setDossierOriginVehicle(viewingVehicle);
+                                              setDossierOriginTab(vehicleDossierTab);
+                                              setSelectedMaintenanceForView(svc);
+                                            }}
+                                            className="h-7 text-xs px-2.5 text-amber-700 dark:text-amber-300 border-amber-500/30 hover:bg-amber-500/10 gap-1 font-semibold"
+                                            title="View Detailed Service Job Sheet"
+                                          >
+                                            <Eye className="h-3.5 w-3.5" />
+                                            <span>Job Sheet</span>
+                                          </AppButton>
+                                          {canManageMaintenance && (
+                                            <AppButton
+                                              type="button"
+                                              variant="outline"
+                                              size="sm"
+                                              onClick={() => {
+                                                setDossierOriginVehicle(viewingVehicle);
+                                                setDossierOriginTab(vehicleDossierTab);
+                                                openEditMaintenanceModal(svc);
+                                              }}
+                                              className="h-7 text-xs px-2 text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 gap-1 font-semibold"
+                                              title="Edit Service Record"
+                                            >
+                                              <Edit2 className="h-3 w-3" />
+                                            </AppButton>
+                                          )}
+                                        </div>
+                                      </AppTableCell>
+                                    </AppTableRow>
+                                  );
+                                })
+                              )}
+                            </AppTableBody>
+                          </AppTable>
+                        </AppTableContainer>
+                      </AppCardContent>
+                    </AppCard>
+                  </div>
+                );
+              })()}
             </div>
           )}
 
@@ -21832,155 +22008,280 @@ export default function FleetDeskHost({
                 </div>
               </div>
 
-              {/* Spare Parts Cards */}
-              {dossierData.parts.length === 0 ? (
-                <div className="p-8 text-center rounded-xl border border-dashed border-border bg-slate-50/50 dark:bg-slate-900/30 space-y-2">
-                  <Package className="h-8 w-8 text-muted-foreground mx-auto opacity-50" />
-                  <p className="text-xs font-semibold text-foreground">No spare parts or accessories mounted to this vehicle</p>
-                  <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                    Track mounted tires with serial numbers, battery warranty cards, GPS trackers, dashcams and toolkits.
-                  </p>
-                  <div className="pt-2">
-                    <AppButton
-                      type="button"
-                      variant="primary"
-                      size="sm"
-                      onClick={() => {
-                        setDossierOriginVehicle(viewingVehicle);
-                        setDossierOriginTab(vehicleDossierTab);
-                        openCreatePartModal();
-                        setPartFormVehicleId(viewingVehicle.id);
-                        setPartFormAssignedVehicleReg(viewingVehicle.registration_number);
-                      }}
-                      className="text-xs h-8 px-3 gap-1.5 font-semibold"
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                      <span>Mount First Spare Part</span>
-                    </AppButton>
-                  </div>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {dossierData.parts.map((p) => {
-                    const daysRemaining = p.warranty_expiry_date ? calculateDaysRemaining(p.warranty_expiry_date) : null;
-                    return (
-                      <div
-                        key={p.id}
-                        className="p-4 rounded-xl border border-border bg-surface hover:border-blue-500/40 transition-colors shadow-2xs space-y-3"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20">
-                                {p.item_type || "SPARE_PART"}
-                              </span>
-                              {p.part_number && (
-                                <span className="font-mono text-xs font-semibold text-muted-foreground px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-border">
-                                  #{p.part_number}
-                                </span>
-                              )}
-                              <span className="px-2 py-0.5 rounded text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-foreground border border-border">
-                                {p.condition || "NEW"}
-                              </span>
-                            </div>
-                            <h4 className="text-sm font-bold text-foreground mt-1">
-                              {p.name}
-                            </h4>
-                            <div className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5">
-                              <span>Brand: <strong className="text-foreground">{p.brand || "OEM"}</strong></span>
-                              {p.serial_number && (
-                                <>
-                                  <span>•</span>
-                                  <span className="font-mono">S/N: {p.serial_number}</span>
-                                </>
-                              )}
-                            </div>
-                          </div>
+              {/* Spare Parts List Table */}
+              {(() => {
+                const filteredDossierParts = dossierData.parts.filter((p) => {
+                  if (dossierPartTypeFilter !== "ALL") {
+                    if (p.item_type !== dossierPartTypeFilter) return false;
+                  }
+                  if (dossierPartSearchQuery.trim()) {
+                    const q = dossierPartSearchQuery.toLowerCase();
+                    const matchName = (p.name || "").toLowerCase().includes(q);
+                    const matchBrand = (p.brand || "").toLowerCase().includes(q);
+                    const matchPartNum = (p.part_number || "").toLowerCase().includes(q);
+                    const matchSerial = (p.serial_number || "").toLowerCase().includes(q);
+                    const matchType = (p.item_type || "").toLowerCase().includes(q);
+                    if (!matchName && !matchBrand && !matchPartNum && !matchSerial && !matchType) return false;
+                  }
+                  return true;
+                });
 
-                          <div className="text-right shrink-0">
-                            <div className="text-sm font-mono font-bold text-foreground">
-                              ₹{Number(p.purchase_amount || 0).toLocaleString("en-IN")}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              Qty: {p.quantity || 1}
-                            </div>
-                          </div>
-                        </div>
+                if (dossierData.parts.length === 0) {
+                  return (
+                    <div className="p-8 text-center rounded-xl border border-dashed border-border bg-slate-50/50 dark:bg-slate-900/30 space-y-2">
+                      <Package className="h-8 w-8 text-muted-foreground mx-auto opacity-50" />
+                      <p className="text-xs font-semibold text-foreground">No spare parts or accessories mounted to this vehicle</p>
+                      <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                        Track mounted tires with serial numbers, battery warranty cards, GPS trackers, dashcams and toolkits.
+                      </p>
+                      <div className="pt-2">
+                        <AppButton
+                          type="button"
+                          variant="primary"
+                          size="sm"
+                          onClick={() => {
+                            setDossierOriginVehicle(viewingVehicle);
+                            setDossierOriginTab(vehicleDossierTab);
+                            openCreatePartModal();
+                            setPartFormVehicleId(viewingVehicle.id);
+                            setPartFormAssignedVehicleReg(viewingVehicle.registration_number);
+                          }}
+                          className="text-xs h-8 px-3 gap-1.5 font-semibold"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          <span>Mount First Spare Part</span>
+                        </AppButton>
+                      </div>
+                    </div>
+                  );
+                }
 
-                        {/* Installation & Warranty Details */}
-                        <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/40 border border-border/70 text-xs space-y-1.5">
-                          <div className="flex items-center justify-between">
-                            <span className="text-muted-foreground">Installed Date & Odo:</span>
-                            <span className="font-mono font-semibold text-foreground">
-                              {p.installation_date || "—"} {p.installed_odometer_km ? `(${p.installed_odometer_km.toLocaleString()} km)` : ""}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-muted-foreground">Warranty Status:</span>
-                            {p.warranty_expiry_date ? (
-                              daysRemaining !== null && daysRemaining < 0 ? (
-                                <span className="text-xs font-bold text-rose-600 dark:text-rose-400">
-                                  Expired ({Math.abs(daysRemaining)}d ago)
-                                </span>
-                              ) : daysRemaining !== null && daysRemaining <= 30 ? (
-                                <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
-                                  Expires in {daysRemaining}d
-                                </span>
-                              ) : (
-                                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                                  Valid ({daysRemaining}d remaining)
-                                </span>
-                              )
-                            ) : (
-                              <span className="text-muted-foreground italic">No Warranty Registered</span>
-                            )}
-                          </div>
-                          {p.has_renewal_policy && (
-                            <div className="flex items-center justify-between pt-1 border-t border-border">
-                              <span className="text-muted-foreground">IoT SIM Recharge:</span>
-                              <span className="text-theme-btn-primary font-semibold">
-                                {p.renewal_policy_type || "GPS"} (Due: {p.renewal_date || "—"})
-                              </span>
-                            </div>
+                return (
+                  <div className="space-y-3">
+                    {/* Search & Filter Toolbar */}
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 rounded-xl border border-border bg-surface/50">
+                      <div className="flex flex-1 items-center gap-2 max-w-lg">
+                        <div className="relative flex-1">
+                          <Search className="h-3.5 w-3.5 absolute left-3 top-2.5 text-muted-foreground pointer-events-none" />
+                          <input
+                            type="text"
+                            value={dossierPartSearchQuery}
+                            onChange={(e) => setDossierPartSearchQuery(e.target.value)}
+                            placeholder="Search parts by name, brand, part #, or serial number..."
+                            className="w-full pl-8 pr-8 py-1.5 text-xs rounded-lg border border-border bg-surface text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-theme-btn-primary shadow-2xs"
+                          />
+                          {dossierPartSearchQuery && (
+                            <button
+                              type="button"
+                              onClick={() => setDossierPartSearchQuery("")}
+                              className="absolute right-2.5 top-2 text-muted-foreground hover:text-foreground p-0.5"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
                           )}
                         </div>
 
-                        {/* Part Card Actions */}
-                        <div className="flex items-center justify-end gap-1.5 pt-1">
-                          <AppButton
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setDossierOriginVehicle(viewingVehicle);
-                              setDossierOriginTab(vehicleDossierTab);
-                              setViewingPart(p);
-                            }}
-                            className="h-7 text-xs px-2.5 text-blue-600 dark:text-blue-400 border-blue-500/30 hover:bg-blue-500/10 gap-1 font-semibold"
-                          >
-                            <Eye className="h-3 w-3" />
-                            <span>Inspect Part</span>
-                          </AppButton>
-                          <AppButton
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setDossierOriginVehicle(viewingVehicle);
-                              setDossierOriginTab(vehicleDossierTab);
-                              openEditPartModal(p);
-                            }}
-                            className="h-7 text-xs px-2.5 text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 gap-1 font-semibold"
-                          >
-                            <Edit2 className="h-3 w-3" />
-                            <span>Edit Part</span>
-                          </AppButton>
-                        </div>
+                        <select
+                          value={dossierPartTypeFilter}
+                          onChange={(e) => setDossierPartTypeFilter(e.target.value)}
+                          className="py-1.5 px-2.5 text-xs rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:border-theme-btn-primary font-semibold shrink-0"
+                        >
+                          <option value="ALL">All Item Types</option>
+                          <option value="SPARE_PART">Spare Parts</option>
+                          <option value="TYRE">Tyres & Wheels</option>
+                          <option value="BATTERY">Batteries & Electrical</option>
+                          <option value="GPS_DEVICE">GPS & Telematics</option>
+                          <option value="DASHCAM">Dashcam & Vision</option>
+                          <option value="ACCESSORY">Accessories</option>
+                          <option value="TOOL">Tools & Equipment</option>
+                        </select>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
+
+                      <div className="flex items-center gap-2 flex-wrap justify-between sm:justify-end">
+                        <span className="text-xs text-muted-foreground font-medium">
+                          Showing <strong className="text-foreground font-mono">{filteredDossierParts.length}</strong> of {dossierData.parts.length} Assets
+                        </span>
+                        {(dossierPartSearchQuery || dossierPartTypeFilter !== "ALL") && (
+                          <AppButton
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setDossierPartSearchQuery("");
+                              setDossierPartTypeFilter("ALL");
+                            }}
+                            className="h-7 text-xs px-2"
+                          >
+                            Clear Filters
+                          </AppButton>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Table View */}
+                    <AppCard className="border-border shadow-xs overflow-hidden">
+                      <AppCardContent className="p-0 overflow-x-auto">
+                        <AppTableContainer className="rounded-none border-none">
+                          <AppTable className="w-full text-left text-xs">
+                            <AppTableHeader className="bg-slate-50 dark:bg-slate-900/60 border-b border-border text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                              <AppTableRow>
+                                <AppTableHead className="p-3.5 min-w-[200px]">Part &amp; Type</AppTableHead>
+                                <AppTableHead className="p-3.5 min-w-[170px]">Brand &amp; Part / Serial #</AppTableHead>
+                                <AppTableHead className="p-3.5 whitespace-nowrap">Installation &amp; Odo</AppTableHead>
+                                <AppTableHead className="p-3.5 whitespace-nowrap">Valuation &amp; Qty</AppTableHead>
+                                <AppTableHead className="p-3.5 min-w-[190px]">Warranty &amp; Lifecycle</AppTableHead>
+                                <AppTableHead className="p-3.5 text-right whitespace-nowrap">Actions</AppTableHead>
+                              </AppTableRow>
+                            </AppTableHeader>
+                            <AppTableBody className="divide-y divide-border/60">
+                              {filteredDossierParts.length === 0 ? (
+                                <AppTableRow>
+                                  <AppTableCell colSpan={6} className="text-center py-10 text-muted-foreground">
+                                    <Package className="h-6 w-6 text-muted-foreground mx-auto opacity-50 mb-2" />
+                                    <p className="font-semibold text-foreground text-xs">
+                                      {dossierPartSearchQuery || dossierPartTypeFilter !== "ALL"
+                                        ? "No mounted parts match your search criteria"
+                                        : "No mounted parts found"}
+                                    </p>
+                                  </AppTableCell>
+                                </AppTableRow>
+                              ) : (
+                                filteredDossierParts.map((p) => {
+                                  const daysRemaining = p.warranty_expiry_date ? calculateDaysRemaining(p.warranty_expiry_date) : null;
+                                  return (
+                                    <AppTableRow
+                                      key={p.id}
+                                      className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors"
+                                    >
+                                      {/* Col 1: Part & Type */}
+                                      <AppTableCell className="p-3.5 align-top">
+                                        <div className="flex items-center gap-1.5 flex-wrap mb-1">
+                                          <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20">
+                                            {p.item_type || "SPARE_PART"}
+                                          </span>
+                                          <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-foreground border border-border">
+                                            {p.condition || "NEW"}
+                                          </span>
+                                        </div>
+                                        <div className="font-bold text-foreground text-xs leading-snug">
+                                          {p.name}
+                                        </div>
+                                      </AppTableCell>
+
+                                      {/* Col 2: Brand & Part / Serial # */}
+                                      <AppTableCell className="p-3.5 align-top">
+                                        <div className="font-semibold text-foreground text-xs">
+                                          Brand: <strong className="text-foreground">{p.brand || "OEM"}</strong>
+                                        </div>
+                                        {p.part_number && (
+                                          <div className="text-[11px] font-mono text-muted-foreground mt-0.5">
+                                            Part #: <span className="font-semibold text-foreground">{p.part_number}</span>
+                                          </div>
+                                        )}
+                                        {p.serial_number && (
+                                          <div className="text-[11px] font-mono text-muted-foreground mt-0.5">
+                                            S/N: <span className="font-semibold text-foreground">{p.serial_number}</span>
+                                          </div>
+                                        )}
+                                      </AppTableCell>
+
+                                      {/* Col 3: Installation & Odo */}
+                                      <AppTableCell className="p-3.5 align-top font-mono text-xs whitespace-nowrap">
+                                        <div className="text-foreground font-semibold">
+                                          {p.installation_date || "—"}
+                                        </div>
+                                        {p.installed_odometer_km ? (
+                                          <div className="text-[11px] text-muted-foreground mt-0.5">
+                                            @ {p.installed_odometer_km.toLocaleString()} km
+                                          </div>
+                                        ) : null}
+                                      </AppTableCell>
+
+                                      {/* Col 4: Valuation & Qty */}
+                                      <AppTableCell className="p-3.5 align-top whitespace-nowrap">
+                                        <div className="font-mono font-bold text-foreground text-xs">
+                                          ₹{Number(p.purchase_amount || 0).toLocaleString("en-IN")}
+                                        </div>
+                                        <div className="text-[11px] text-muted-foreground mt-0.5">
+                                          Qty: <span className="font-mono font-semibold text-foreground">{p.quantity || 1}</span>
+                                        </div>
+                                      </AppTableCell>
+
+                                      {/* Col 5: Warranty & Lifecycle */}
+                                      <AppTableCell className="p-3.5 align-top">
+                                        {p.warranty_expiry_date ? (
+                                          daysRemaining !== null && daysRemaining < 0 ? (
+                                            <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20 inline-flex items-center gap-1">
+                                              <AlertCircle className="h-3 w-3" />
+                                              <span>Expired ({Math.abs(daysRemaining)}d ago)</span>
+                                            </span>
+                                          ) : daysRemaining !== null && daysRemaining <= 30 ? (
+                                            <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 inline-flex items-center gap-1">
+                                              <Clock className="h-3 w-3 text-amber-500" />
+                                              <span>Expires in {daysRemaining}d</span>
+                                            </span>
+                                          ) : (
+                                            <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1">
+                                              <ShieldCheck className="h-3 w-3 text-emerald-500" />
+                                              <span>Valid ({daysRemaining}d)</span>
+                                            </span>
+                                          )
+                                        ) : (
+                                          <span className="text-[11px] text-muted-foreground italic">No Warranty Registered</span>
+                                        )}
+                                        {p.has_renewal_policy && (
+                                          <div className="text-[11px] text-theme-btn-primary font-medium mt-1">
+                                            {p.renewal_policy_type || "IoT"} Recharge (Due: {p.renewal_date || "—"})
+                                          </div>
+                                        )}
+                                      </AppTableCell>
+
+                                      {/* Col 6: Actions */}
+                                      <AppTableCell className="p-3.5 align-top text-right whitespace-nowrap">
+                                        <div className="inline-flex items-center justify-end gap-1.5">
+                                          <AppButton
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
+                                              setDossierOriginVehicle(viewingVehicle);
+                                              setDossierOriginTab(vehicleDossierTab);
+                                              setViewingPart(p);
+                                            }}
+                                            className="h-7 text-xs px-2.5 text-blue-600 dark:text-blue-400 border-blue-500/30 hover:bg-blue-500/10 gap-1 font-semibold"
+                                            title="Inspect Part Details"
+                                          >
+                                            <Eye className="h-3.5 w-3.5" />
+                                            <span>Inspect</span>
+                                          </AppButton>
+                                          <AppButton
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
+                                              setDossierOriginVehicle(viewingVehicle);
+                                              setDossierOriginTab(vehicleDossierTab);
+                                              openEditPartModal(p);
+                                            }}
+                                            className="h-7 text-xs px-2 text-foreground hover:bg-slate-100 dark:hover:bg-slate-800 gap-1 font-semibold"
+                                            title="Edit Part"
+                                          >
+                                            <Edit2 className="h-3 w-3" />
+                                          </AppButton>
+                                        </div>
+                                      </AppTableCell>
+                                    </AppTableRow>
+                                  );
+                                })
+                              )}
+                            </AppTableBody>
+                          </AppTable>
+                        </AppTableContainer>
+                      </AppCardContent>
+                    </AppCard>
+                  </div>
+                );
+              })()}
             </div>
           )}
 
@@ -22265,152 +22566,177 @@ export default function FleetDeskHost({
                 }
 
                 return (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {filteredDossierDocs.map((doc, idx) => {
-                      const typeConfig = VEHICLE_DOC_TYPES.find((t) => t.value === doc.doc_type) || {
-                        label: doc.doc_type,
-                        badgeColor: "bg-slate-500/10 text-slate-600 border-slate-500/20"
-                      };
-                      const daysRemaining = doc.expiry_date ? calculateDaysRemaining(doc.expiry_date) : null;
-                      const versionTag = extractVersionFromTitle(doc.title || "");
-                      const hasScan = Boolean(doc.file_url || (doc as any).has_file);
+                  <AppCard className="border-border shadow-xs overflow-hidden">
+                    <AppCardContent className="p-0 overflow-x-auto">
+                      <AppTableContainer className="rounded-none border-none">
+                        <AppTable className="w-full text-left text-xs">
+                          <AppTableHeader className="bg-slate-50 dark:bg-slate-900/60 border-b border-border text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                            <AppTableRow>
+                              <AppTableHead className="p-3.5 min-w-[220px]">Document &amp; File</AppTableHead>
+                              <AppTableHead className="p-3.5 min-w-[170px]">Category &amp; Doc #</AppTableHead>
+                              <AppTableHead className="p-3.5 whitespace-nowrap">Validity &amp; Expiry</AppTableHead>
+                              <AppTableHead className="p-3.5 min-w-[150px]">File Details</AppTableHead>
+                              <AppTableHead className="p-3.5 text-right whitespace-nowrap">Actions</AppTableHead>
+                            </AppTableRow>
+                          </AppTableHeader>
+                          <AppTableBody className="divide-y divide-border/60">
+                            {filteredDossierDocs.map((doc, idx) => {
+                              const typeConfig = VEHICLE_DOC_TYPES.find((t) => t.value === doc.doc_type) || {
+                                label: doc.doc_type,
+                                badgeColor: "bg-slate-500/10 text-slate-600 border-slate-500/20"
+                              };
+                              const daysRemaining = doc.expiry_date ? calculateDaysRemaining(doc.expiry_date) : null;
+                              const versionTag = extractVersionFromTitle(doc.title || "");
+                              const hasScan = Boolean(doc.file_url || (doc as any).has_file);
 
-                      return (
-                        <div
-                          key={doc.id || idx}
-                          className="p-3.5 rounded-xl border border-border bg-surface hover:border-theme-btn-primary/40 transition-colors shadow-2xs space-y-2.5 flex flex-col justify-between group"
-                        >
-                          <div className="space-y-2">
-                            {/* Header Category & Origin Source Pill */}
-                            <div className="flex items-center justify-between gap-2 flex-wrap">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border ${typeConfig.badgeColor}`}>
-                                  {doc.categoryLabel || typeConfig.label}
-                                </span>
-                                {versionTag && (
-                                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-foreground border border-border">
-                                    {versionTag}
-                                  </span>
-                                )}
-                              </div>
-                              {doc.sourceLabel && doc.sourceLabel !== (doc.categoryLabel || typeConfig.label) && (
-                                <span className="text-[10px] font-medium text-muted-foreground truncate max-w-[160px]" title={doc.sourceLabel}>
-                                  {doc.sourceLabel}
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="flex items-start gap-3 pt-1">
-                              <div className="h-10 w-10 rounded-xl flex items-center justify-center border shrink-0 bg-slate-100 dark:bg-slate-800 border-border group-hover:scale-105 transition-transform">
-                                {renderAttachmentIcon(doc.file_type || resolveMimeFromName(doc.file_name || ""), doc.file_name || undefined)}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <h4 className="font-semibold text-foreground text-xs line-clamp-1" title={doc.title || doc.file_name || undefined}>
-                                  {doc.title || doc.file_name}
-                                </h4>
-                                {doc.document_number && (
-                                  <div className="text-[11px] font-mono text-muted-foreground mt-0.5 flex items-center gap-1 truncate">
-                                    <span>Doc #:</span>
-                                    <span className="text-foreground font-semibold">{doc.document_number}</span>
-                                  </div>
-                                )}
-                                <div className="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-0.5 truncate">
-                                  <span className="truncate max-w-[140px] font-mono text-foreground font-medium">{doc.file_name || "Document File"}</span>
-                                  {doc.file_size && (
-                                    <>
-                                      <span>•</span>
-                                      <span>{formatFileSize(doc.file_size)}</span>
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Expiry Pill & Actions */}
-                          <div className="pt-2 border-t border-border flex items-center justify-between text-xs gap-2">
-                            <div>
-                              {doc.expiry_date ? (
-                                daysRemaining !== null && daysRemaining < 0 ? (
-                                  <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20 inline-flex items-center gap-1">
-                                    <AlertCircle className="h-3 w-3" />
-                                    <span>Expired {Math.abs(daysRemaining)}d ago</span>
-                                  </span>
-                                ) : daysRemaining !== null && daysRemaining <= 30 ? (
-                                  <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 inline-flex items-center gap-1">
-                                    <Clock className="h-3 w-3 text-amber-500" />
-                                    <span>Exp in {daysRemaining}d</span>
-                                  </span>
-                                ) : (
-                                  <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1">
-                                    <ShieldCheck className="h-3 w-3 text-emerald-500" />
-                                    <span>Valid ({daysRemaining}d)</span>
-                                  </span>
-                                )
-                              ) : (
-                                <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-muted-foreground border border-border inline-flex items-center gap-1">
-                                  <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-                                  <span>Lifetime Valid</span>
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="flex items-center gap-1 shrink-0">
-                              <AppButton
-                                type="button"
-                                variant="outline"
-                                size="icon-sm"
-                                onClick={() => handleViewAttachment({
-                                  ...doc,
-                                  vehicleReg: viewingVehicle?.registration_number
-                                })}
-                                className="h-7 w-7 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
-                                title="View / Preview Document"
-                              >
-                                <Eye className="h-3.5 w-3.5" />
-                              </AppButton>
-                              <AppButton
-                                type="button"
-                                variant="outline"
-                                size="icon-sm"
-                                onClick={() => downloadAttachment(doc)}
-                                className="h-7 w-7 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
-                                title="Download Document"
-                              >
-                                <Download className="h-3.5 w-3.5" />
-                              </AppButton>
-
-                              {canEditVehicle && (
-                                <AppButton
-                                  type="button"
-                                  variant="outline"
-                                  size="icon-sm"
-                                  onClick={() => openEditDocumentModal(doc)}
-                                  className="h-7 w-7 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10"
-                                  title="Edit Document Details"
+                              return (
+                                <AppTableRow
+                                  key={doc.id || idx}
+                                  className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors"
                                 >
-                                  <Edit2 className="h-3.5 w-3.5" />
-                                </AppButton>
-                              )}
+                                  {/* Col 1: Document & File */}
+                                  <AppTableCell className="p-3.5 align-top">
+                                    <div className="flex items-start gap-2.5">
+                                      <div className="h-8 w-8 rounded-lg flex items-center justify-center border shrink-0 bg-slate-100 dark:bg-slate-800 border-border">
+                                        {renderAttachmentIcon(doc.file_type || resolveMimeFromName(doc.file_name || ""), doc.file_name || undefined)}
+                                      </div>
+                                      <div className="min-w-0 flex-1">
+                                        <div className="font-bold text-foreground text-xs line-clamp-1" title={doc.title || doc.file_name || undefined}>
+                                          {doc.title || doc.file_name}
+                                        </div>
+                                        {doc.sourceLabel && doc.sourceLabel !== (doc.categoryLabel || typeConfig.label) && (
+                                          <div className="text-[10px] text-muted-foreground mt-0.5 truncate max-w-[180px]" title={doc.sourceLabel}>
+                                            {doc.sourceLabel}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </AppTableCell>
 
-                              {canEditVehicle && (
-                                <AppButton
-                                  type="button"
-                                  variant="outline"
-                                  size="icon-sm"
-                                  onClick={() => handleUniversalDeleteDocument(doc)}
-                                  className="h-7 w-7 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10"
-                                  title="Delete Document"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </AppButton>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                                  {/* Col 2: Category & Doc # */}
+                                  <AppTableCell className="p-3.5 align-top">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border ${typeConfig.badgeColor}`}>
+                                        {doc.categoryLabel || typeConfig.label}
+                                      </span>
+                                      {versionTag && (
+                                        <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-foreground border border-border">
+                                          {versionTag}
+                                        </span>
+                                      )}
+                                    </div>
+                                    {doc.document_number && (
+                                      <div className="text-[11px] font-mono text-muted-foreground mt-1 flex items-center gap-1">
+                                        <span>Doc #:</span>
+                                        <span className="text-foreground font-semibold">{doc.document_number}</span>
+                                      </div>
+                                    )}
+                                  </AppTableCell>
+
+                                  {/* Col 3: Validity & Expiry */}
+                                  <AppTableCell className="p-3.5 align-top whitespace-nowrap">
+                                    {doc.expiry_date ? (
+                                      daysRemaining !== null && daysRemaining < 0 ? (
+                                        <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20 inline-flex items-center gap-1">
+                                          <AlertCircle className="h-3 w-3" />
+                                          <span>Expired {Math.abs(daysRemaining)}d ago</span>
+                                        </span>
+                                      ) : daysRemaining !== null && daysRemaining <= 30 ? (
+                                        <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 inline-flex items-center gap-1">
+                                          <Clock className="h-3 w-3 text-amber-500" />
+                                          <span>Exp in {daysRemaining}d</span>
+                                        </span>
+                                      ) : (
+                                        <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1">
+                                          <ShieldCheck className="h-3 w-3 text-emerald-500" />
+                                          <span>Valid ({daysRemaining}d)</span>
+                                        </span>
+                                      )
+                                    ) : (
+                                      <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-muted-foreground border border-border inline-flex items-center gap-1">
+                                        <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                                        <span>Lifetime Valid</span>
+                                      </span>
+                                    )}
+                                    {doc.expiry_date && (
+                                      <div className="text-[10px] font-mono text-muted-foreground mt-0.5">
+                                        Due: {doc.expiry_date}
+                                      </div>
+                                    )}
+                                  </AppTableCell>
+
+                                  {/* Col 4: File Details */}
+                                  <AppTableCell className="p-3.5 align-top">
+                                    <div className="font-mono text-[11px] text-foreground font-medium truncate max-w-[150px]" title={doc.file_name || undefined}>
+                                      {doc.file_name || (hasScan ? "scanned_copy.pdf" : "—")}
+                                    </div>
+                                    <div className="text-[10px] text-muted-foreground mt-0.5">
+                                      {doc.file_size ? formatFileSize(doc.file_size) : (hasScan ? "Attached" : "No scan file")}
+                                    </div>
+                                  </AppTableCell>
+
+                                  {/* Col 5: Actions */}
+                                  <AppTableCell className="p-3.5 align-top text-right whitespace-nowrap">
+                                    <div className="inline-flex items-center justify-end gap-1.5">
+                                      <AppButton
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleViewAttachment({
+                                          ...doc,
+                                          vehicleReg: viewingVehicle?.registration_number
+                                        })}
+                                        className="h-7 text-xs px-2 text-blue-600 dark:text-blue-400 border-blue-500/30 hover:bg-blue-500/10 gap-1 font-semibold"
+                                        title="View Document"
+                                      >
+                                        <Eye className="h-3.5 w-3.5" />
+                                        <span>View</span>
+                                      </AppButton>
+                                      <AppButton
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => downloadAttachment(doc)}
+                                        className="h-7 text-xs px-2 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10 gap-1 font-semibold"
+                                        title="Download Document"
+                                      >
+                                        <Download className="h-3.5 w-3.5" />
+                                        <span>Download</span>
+                                      </AppButton>
+                                      {canEditVehicle && (
+                                        <AppButton
+                                          type="button"
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => openEditDocumentModal(doc)}
+                                          className="h-7 text-xs px-2 text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/10 gap-1 font-semibold"
+                                          title="Edit Document Details"
+                                        >
+                                          <Edit2 className="h-3 w-3" />
+                                        </AppButton>
+                                      )}
+                                      {canEditVehicle && (
+                                        <AppButton
+                                          type="button"
+                                          variant="outline"
+                                          size="icon-sm"
+                                          onClick={() => handleUniversalDeleteDocument(doc)}
+                                          className="h-7 w-7 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 border-rose-500/30"
+                                          title="Delete Document"
+                                        >
+                                          <Trash2 className="h-3.5 w-3.5" />
+                                        </AppButton>
+                                      )}
+                                    </div>
+                                  </AppTableCell>
+                                </AppTableRow>
+                              );
+                            })}
+                          </AppTableBody>
+                        </AppTable>
+                      </AppTableContainer>
+                    </AppCardContent>
+                  </AppCard>
                 );
               })()}
             </div>
@@ -22841,66 +23167,186 @@ export default function FleetDeskHost({
                 </div>
               </div>
 
-              {dossierData.trips.length === 0 ? (
-                <div className="p-8 text-center rounded-xl border border-dashed border-border bg-slate-50/50 dark:bg-slate-900/30 space-y-2">
-                  <MapPin className="h-8 w-8 text-muted-foreground mx-auto opacity-50" />
-                  <p className="text-xs font-semibold text-foreground">No trip movements logged for this vehicle</p>
-                  
-                </div>
-              ) : (
-                <div className="space-y-2.5">
-                  {dossierData.trips.map((t) => (
-                    <div
-                      key={t.id}
-                      className="p-3.5 rounded-xl border border-border bg-surface hover:border-theme-btn-primary/40 transition-colors shadow-2xs flex items-center justify-between gap-3 flex-wrap text-xs"
-                    >
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-border text-foreground">
-                            {t.trip_code || `#${t.id.slice(0, 6)}`}
-                          </span>
-                          <span className="font-bold text-foreground">
-                            {t.traveler_name || "Executive Traveler"}
-                          </span>
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                            t.status === "COMPLETED"
-                              ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20"
-                              : t.status === "ON_ROUTE"
-                              ? "bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20"
-                              : "bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20"
-                          }`}>
-                            {t.status}
-                          </span>
-                        </div>
-                        <div className="text-muted-foreground flex items-center gap-2 text-xs flex-wrap">
-                          <span>Route: <strong className="text-foreground">{t.origin}</strong> → <strong className="text-foreground">{t.destination}</strong></span>
-                          <span>•</span>
-                          <span>Chauffeur: <strong className="text-foreground">{t.driver_name || "Assigned Driver"}</strong></span>
-                          <span>•</span>
-                          <span className="font-mono">Date: {t.plan_date || t.planned_start_time?.split("T")[0] || "—"}</span>
-                        </div>
+              {/* Trip Records List Table */}
+              {(() => {
+                const filteredDossierTrips = dossierData.trips.filter((t) => {
+                  if (dossierTripSearchQuery.trim()) {
+                    const q = dossierTripSearchQuery.toLowerCase();
+                    const matchCode = (t.trip_code || "").toLowerCase().includes(q);
+                    const matchId = (t.id || "").toLowerCase().includes(q);
+                    const matchTraveler = (t.traveler_name || "").toLowerCase().includes(q);
+                    const matchPurpose = (t.purpose || "").toLowerCase().includes(q);
+                    const matchOrigin = (t.origin || "").toLowerCase().includes(q);
+                    const matchDest = (t.destination || "").toLowerCase().includes(q);
+                    const matchDriver = (t.driver_name || "").toLowerCase().includes(q);
+                    if (!matchCode && !matchId && !matchTraveler && !matchPurpose && !matchOrigin && !matchDest && !matchDriver) {
+                      return false;
+                    }
+                  }
+                  return true;
+                });
+
+                if (dossierData.trips.length === 0) {
+                  return (
+                    <div className="p-8 text-center rounded-xl border border-dashed border-border bg-slate-50/50 dark:bg-slate-900/30 space-y-2">
+                      <MapPin className="h-8 w-8 text-muted-foreground mx-auto opacity-50" />
+                      <p className="text-xs font-semibold text-foreground">No trip movements logged for this vehicle</p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="space-y-3">
+                    {/* Search Toolbar */}
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 rounded-xl border border-border bg-surface/50">
+                      <div className="relative flex-1 max-w-md">
+                        <Search className="h-3.5 w-3.5 absolute left-3 top-2.5 text-muted-foreground pointer-events-none" />
+                        <input
+                          type="text"
+                          value={dossierTripSearchQuery}
+                          onChange={(e) => setDossierTripSearchQuery(e.target.value)}
+                          placeholder="Search trips by code, traveler, route, or driver..."
+                          className="w-full pl-8 pr-8 py-1.5 text-xs rounded-lg border border-border bg-surface text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-theme-btn-primary shadow-2xs"
+                        />
+                        {dossierTripSearchQuery && (
+                          <button
+                            type="button"
+                            onClick={() => setDossierTripSearchQuery("")}
+                            className="absolute right-2.5 top-2 text-muted-foreground hover:text-foreground p-0.5"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <AppButton
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setDossierOriginVehicle(viewingVehicle);
-                            setDossierOriginTab(vehicleDossierTab);
-                            setViewingTrip(t);
-                          }}
-                          className="h-7 text-xs px-2.5 text-foreground dark:text-muted-foreground border-border hover:bg-surface gap-1 font-semibold"
-                        >
-                          <Eye className="h-3 w-3" />
-                          <span>Inspect Trip</span>
-                        </AppButton>
+                      <div className="flex items-center gap-2 flex-wrap justify-between sm:justify-end">
+                        <span className="text-xs text-muted-foreground font-medium">
+                          Showing <strong className="text-foreground font-mono">{filteredDossierTrips.length}</strong> of {dossierData.trips.length} Trips
+                        </span>
+                        {dossierTripSearchQuery && (
+                          <AppButton
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setDossierTripSearchQuery("")}
+                            className="h-7 text-xs px-2"
+                          >
+                            Clear
+                          </AppButton>
+                        )}
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
+
+                    {/* Table View */}
+                    <AppCard className="border-border shadow-xs overflow-hidden">
+                      <AppCardContent className="p-0 overflow-x-auto">
+                        <AppTableContainer className="rounded-none border-none">
+                          <AppTable className="w-full text-left text-xs">
+                            <AppTableHeader className="bg-slate-50 dark:bg-slate-900/60 border-b border-border text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                              <AppTableRow>
+                                <AppTableHead className="p-3.5 whitespace-nowrap">Trip Code &amp; Date</AppTableHead>
+                                <AppTableHead className="p-3.5 min-w-[200px]">Traveler &amp; Purpose</AppTableHead>
+                                <AppTableHead className="p-3.5 min-w-[200px]">Journey Route</AppTableHead>
+                                <AppTableHead className="p-3.5 min-w-[160px]">Chauffeur / Driver</AppTableHead>
+                                <AppTableHead className="p-3.5 text-center whitespace-nowrap">Movement Status</AppTableHead>
+                                <AppTableHead className="p-3.5 text-right whitespace-nowrap">Actions</AppTableHead>
+                              </AppTableRow>
+                            </AppTableHeader>
+                            <AppTableBody className="divide-y divide-border/60">
+                              {filteredDossierTrips.length === 0 ? (
+                                <AppTableRow>
+                                  <AppTableCell colSpan={6} className="text-center py-10 text-muted-foreground">
+                                    <MapPin className="h-6 w-6 text-muted-foreground mx-auto opacity-50 mb-2" />
+                                    <p className="font-semibold text-foreground text-xs">
+                                      {dossierTripSearchQuery ? "No trips match your search query" : "No trip records found"}
+                                    </p>
+                                  </AppTableCell>
+                                </AppTableRow>
+                              ) : (
+                                filteredDossierTrips.map((t) => (
+                                  <AppTableRow
+                                    key={t.id}
+                                    className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors"
+                                  >
+                                    {/* Col 1: Trip Code & Date */}
+                                    <AppTableCell className="p-3.5 align-top whitespace-nowrap">
+                                      <div className="font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-border text-foreground inline-block">
+                                        {t.trip_code || `#${t.id.slice(0, 6)}`}
+                                      </div>
+                                      <div className="text-[11px] font-mono text-muted-foreground mt-1">
+                                        {t.plan_date || t.planned_start_time?.split("T")[0] || "—"}
+                                      </div>
+                                    </AppTableCell>
+
+                                    {/* Col 2: Traveler & Purpose */}
+                                    <AppTableCell className="p-3.5 align-top">
+                                      <div className="font-bold text-foreground text-xs">
+                                        {t.traveler_name || "Executive Traveler"}
+                                      </div>
+                                      <div className="text-[11px] text-muted-foreground mt-0.5">
+                                        {t.purpose || "Official Commute"}
+                                      </div>
+                                    </AppTableCell>
+
+                                    {/* Col 3: Journey Route */}
+                                    <AppTableCell className="p-3.5 align-top">
+                                      <div className="flex items-center gap-1.5 text-xs text-foreground font-medium">
+                                        <span>{t.origin || "Origin"}</span>
+                                        <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                                        <span className="text-theme-btn-primary font-semibold">{t.destination || "Destination"}</span>
+                                      </div>
+                                    </AppTableCell>
+
+                                    {/* Col 4: Chauffeur / Driver */}
+                                    <AppTableCell className="p-3.5 align-top">
+                                      <div className="font-semibold text-foreground text-xs">
+                                        {t.driver_name || "Assigned Driver"}
+                                      </div>
+                                    </AppTableCell>
+
+                                    {/* Col 5: Movement Status */}
+                                    <AppTableCell className="p-3.5 align-top text-center whitespace-nowrap">
+                                      <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider inline-block ${
+                                        t.status === "COMPLETED"
+                                          ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20"
+                                          : t.status === "ON_ROUTE" || t.status === "IN_PROGRESS"
+                                          ? "bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20"
+                                          : t.status === "CANCELLED"
+                                          ? "bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/20"
+                                          : "bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20"
+                                      }`}>
+                                        {t.status}
+                                      </span>
+                                    </AppTableCell>
+
+                                    {/* Col 6: Actions */}
+                                    <AppTableCell className="p-3.5 align-top text-right whitespace-nowrap">
+                                      <AppButton
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                          setDossierOriginVehicle(viewingVehicle);
+                                          setDossierOriginTab(vehicleDossierTab);
+                                          setViewingTrip(t);
+                                        }}
+                                        className="h-7 text-xs px-2.5 text-foreground hover:bg-surface border-border gap-1 font-semibold"
+                                      >
+                                        <Eye className="h-3.5 w-3.5" />
+                                        <span>Inspect Trip</span>
+                                      </AppButton>
+                                    </AppTableCell>
+                                  </AppTableRow>
+                                ))
+                              )}
+                            </AppTableBody>
+                          </AppTable>
+                        </AppTableContainer>
+                      </AppCardContent>
+                    </AppCard>
+                  </div>
+                );
+              })()}
             </div>
           )}
         </WorkingDocumentLayout>

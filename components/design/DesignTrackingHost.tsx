@@ -31,6 +31,14 @@ import {
 import dynamic from "next/dynamic";
 import { AppTableSkeleton } from "@/components/ui/AppSkeleton";
 
+const BuildingSectionMatrix = dynamic(() => import("../../Design_Tracking/src/components/BuildingSectionMatrix").then(m => m.BuildingSectionMatrix), {
+  ssr: false,
+  loading: () => <AppTableSkeleton rows={8} />
+});
+const DmsFolderRepository = dynamic(() => import("../../Design_Tracking/src/components/DmsFolderRepository").then(m => m.DmsFolderRepository), {
+  ssr: false,
+  loading: () => <AppTableSkeleton rows={8} />
+});
 const TenderDesignMatrix = dynamic(() => import("../../Design_Tracking/src/components/TenderDesignMatrix").then(m => m.TenderDesignMatrix), {
   ssr: false,
   loading: () => <AppTableSkeleton rows={8} />
@@ -114,6 +122,8 @@ interface DesignTrackingHostProps {
 
 type ActiveTabType = 
   | "MATRIX" 
+  | "BUILDING_MATRIX"
+  | "DMS"
   | "LOOK_AHEAD" 
   | "LIAISONING" 
   | "STAGES" 
@@ -193,6 +203,8 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
     const currentPath = (pathname || "/design").toLowerCase();
     const combined = `${currentPath}/${slugStr}`;
 
+    if (combined.includes("/design/dms") || combined.includes("folder-repo") || combined.includes("doc-repo") || combined.includes("repository")) return "DMS";
+    if (combined.includes("building-matrix") || combined.includes("section-matrix") || combined.includes("heat-matrix") || combined.includes("floor-matrix")) return "BUILDING_MATRIX";
     if (combined.includes("sub-package") || combined.includes("subpackage") || combined.includes("/design/sub-packages")) return "SUB_PACKAGES";
     if (combined.includes("category") || combined.includes("categories") || combined.includes("discipline")) return "PACKAGES";
     if (combined.includes("sub-project") || combined.includes("subproject") || combined.includes("wing")) return "SUB_PROJECTS";
@@ -219,6 +231,8 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
   const handleTabChange = (tab: ActiveTabType) => {
     const routeMap: Record<ActiveTabType, string> = {
       MATRIX: "/design/matrix",
+      BUILDING_MATRIX: "/design/building-matrix",
+      DMS: "/design/dms",
       LOOK_AHEAD: "/design/look-ahead",
       LIAISONING: "/design/liaisoning",
       STAGES: "/design/stages",
@@ -433,6 +447,22 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
               </button>
             </div>
           </div>
+
+          {/* Tab 0: Building Section Heat Matrix */}
+          {activeTab === "BUILDING_MATRIX" && (
+            <BuildingSectionMatrix 
+              onOpenReviewModal={(drawingId) => {
+                const found = accessibleDrawings.find(d => d.id === drawingId || d.code === drawingId);
+                if (found) setSelectedDrawingForReview(found);
+              }}
+              onOpenUploadModal={() => setIsUploadOpen(true)}
+            />
+          )}
+
+          {/* Tab DMS: Enterprise DMS Folder Repository & Split Indexing */}
+          {activeTab === "DMS" && (
+            <DmsFolderRepository currentUser={currentUser} />
+          )}
 
           {/* Tab 1: Master Tender Design Matrix */}
           {activeTab === "MATRIX" && (
