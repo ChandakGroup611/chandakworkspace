@@ -15,49 +15,9 @@ import {
   ArrowRight, 
   AlertCircle, 
   User,
-  Zap,
-  Smartphone,
-  Laptop,
-  Globe,
-  Clock,
-  LogOut
+  Zap
 } from "lucide-react";
 import ChandakLoader from "@/components/ui/ChandakLoader";
-import { checkActiveSessionConflict, registerUserSession } from "@/lib/actions/iam";
-
-function formatUserAgent(ua?: string) {
-  if (!ua || ua === "Unknown Browser" || ua === "Unknown Device") return "Active Browser / Device";
-  let browser = "Web Browser";
-  let os = "Device";
-
-  if (ua.includes("Firefox/")) browser = "Mozilla Firefox";
-  else if (ua.includes("Edg/")) browser = "Microsoft Edge";
-  else if (ua.includes("Chrome/")) browser = "Google Chrome";
-  else if (ua.includes("Safari/")) browser = "Apple Safari";
-  else if (ua.includes("MSIE") || ua.includes("Trident/")) browser = "Internet Explorer";
-
-  if (ua.includes("Windows")) os = "Windows PC";
-  else if (ua.includes("Macintosh") || ua.includes("Mac OS")) os = "Mac";
-  else if (ua.includes("iPhone")) os = "iPhone";
-  else if (ua.includes("iPad")) os = "iPad";
-  else if (ua.includes("Android")) os = "Android Device";
-  else if (ua.includes("Linux")) os = "Linux";
-
-  return `${browser} on ${os}`;
-}
-
-function formatRelativeTime(dateString?: string) {
-  if (!dateString) return "Recently active";
-  const date = new Date(dateString);
-  const diffMs = Date.now() - date.getTime();
-  const diffMinutes = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMinutes / 60);
-
-  if (diffMinutes < 1) return "Active just now";
-  if (diffMinutes < 60) return `Active ${diffMinutes} min${diffMinutes > 1 ? "s" : ""} ago`;
-  if (diffHours < 24) return `Active ${diffHours} hr${diffHours > 1 ? "s" : ""} ago`;
-  return `Active on ${date.toLocaleDateString([], { month: "short", day: "numeric" })}`;
-}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -72,40 +32,6 @@ export default function LoginPage() {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [noticeMsg, setNoticeMsg] = useState<{ type: 'warning' | 'info' | 'error'; title: string; description: string } | null>(null);
   const [isOAuthCallback, setIsOAuthCallback] = useState(false);
-  const [conflictModalOpen, setConflictModalOpen] = useState(false);
-  const [conflictData, setConflictData] = useState<{ 
-    user: any; 
-    destination: string;
-    existingSession?: {
-      userAgent?: string;
-      ipAddress?: string;
-      loginTime?: string;
-      lastActiveAt?: string;
-    };
-  } | null>(null);
-
-  const checkConflictViaApi = async (userId: string) => {
-    try {
-      const currentToken = typeof window !== "undefined" ? localStorage.getItem("app_session_token") : null;
-      const res = await fetch("/api/session/conflict", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, currentSessionToken: currentToken || undefined })
-      });
-      if (res.ok) {
-        return await res.json();
-      }
-    } catch (e) {
-      console.warn("[Login] Conflict check API warning:", e);
-    }
-    // Fallback to server action
-    try {
-      const currentToken = typeof window !== "undefined" ? localStorage.getItem("app_session_token") : null;
-      return await checkActiveSessionConflict(userId, currentToken || undefined);
-    } catch {
-      return { hasConflict: false };
-    }
-  };
 
   const resolvePostLoginDestination = async (rawNext?: string | null, userId?: string): Promise<string> => {
     if (rawNext && rawNext !== "/" && !rawNext.includes("/login") && !rawNext.includes("/select-module")) {
@@ -174,20 +100,6 @@ export default function LoginPage() {
           if (event === "SIGNED_IN" && session) {
             const rawNext = searchParams.get("next");
             const destination = await resolvePostLoginDestination(rawNext, session.user.id);
-            
-            const conflictRes = await checkConflictViaApi(session.user.id);
-            
-            if (conflictRes.hasConflict) {
-              setIsOAuthCallback(false);
-              setConflictData({ 
-                user: session.user, 
-                destination,
-                existingSession: conflictRes.existingSession
-              });
-              setConflictModalOpen(true);
-              return;
-            }
-
             await completeLogin(session.user, destination);
           }
         });
@@ -253,19 +165,6 @@ export default function LoginPage() {
         if (session) {
           const rawNext = searchParams.get("next");
           const destination = await resolvePostLoginDestination(rawNext, session.user.id);
-
-          const conflictRes = await checkConflictViaApi(session.user.id);
-
-          if (isOAuthConflict || conflictRes.hasConflict) {
-            setConflictData({ 
-              user: session.user, 
-              destination,
-              existingSession: conflictRes.existingSession
-            });
-            setConflictModalOpen(true);
-            return;
-          }
-
           window.location.href = destination;
         }
       }
@@ -302,19 +201,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleCancelConflictLogin = async () => {
-    setConflictModalOpen(false);
-    setConflictData(null);
-    setLoading(false);
-    await supabase.auth.signOut().catch(() => {});
-  };
-
-  const handleConfirmConflictLogin = async () => {
-    if (!conflictData) return;
-    setConflictModalOpen(false);
-    await completeLogin(conflictData.user, conflictData.destination);
-  };
-
   const handleStandardAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
@@ -340,20 +226,6 @@ export default function LoginPage() {
         const searchParams = new URLSearchParams(window.location.search);
         const rawNext = searchParams.get("next");
         const destination = await resolvePostLoginDestination(rawNext, data.user.id);
-
-        const conflictRes = await checkConflictViaApi(data.user.id);
-
-        if (conflictRes.hasConflict) {
-          setConflictData({ 
-            user: data.user, 
-            destination,
-            existingSession: conflictRes.existingSession
-          });
-          setConflictModalOpen(true);
-          setLoading(false);
-          return;
-        }
-
         await completeLogin(data.user, destination);
       }
     } catch (err: any) {
@@ -617,85 +489,6 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
-
-      {/* Active Session Confirmation Modal: "Do you want to continue here?" */}
-      {conflictModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative w-full max-w-lg p-6 bg-surface rounded-2xl border border-border shadow-2xl space-y-5 animate-in zoom-in-95 duration-200 text-foreground">
-            <div className="flex items-center gap-3.5">
-              <div className="h-12 w-12 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 shadow-sm">
-                <Laptop className="h-6 w-6" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-foreground">Active Session Detected</h3>
-                <p className="text-xs text-muted-foreground">Single Active Device Policy</p>
-              </div>
-            </div>
-
-            {/* Existing Session Summary Card */}
-            {conflictData?.existingSession && (
-              <div className="p-3.5 rounded-xl bg-elevated/70 border border-border/80 space-y-2.5 text-xs">
-                <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">
-                  Currently Active Device
-                </span>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-foreground">
-                  <div className="flex items-center gap-2 bg-surface/60 p-2 rounded-lg border border-border/40">
-                    <Laptop className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-                    <span className="truncate font-medium" title={conflictData.existingSession.userAgent}>
-                      {formatUserAgent(conflictData.existingSession.userAgent)}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2 bg-surface/60 p-2 rounded-lg border border-border/40">
-                    <Globe className="h-3.5 w-3.5 text-blue-500 shrink-0" />
-                    <span className="truncate font-mono text-[11px]" title={conflictData.existingSession.ipAddress}>
-                      IP: {conflictData.existingSession.ipAddress || "Unknown"}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1.5 text-muted-foreground pt-1">
-                  <Clock className="h-3.5 w-3.5 text-amber-500/80 shrink-0" />
-                  <span>{formatRelativeTime(conflictData.existingSession.lastActiveAt)}</span>
-                </div>
-              </div>
-            )}
-
-            {/* Explanation Alert */}
-            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-sm text-foreground space-y-2">
-              <p className="font-bold text-foreground text-sm flex items-center gap-1.5">
-                <AlertCircle className="h-4 w-4 text-amber-500 shrink-0" />
-                <span>Do you want to continue here?</span>
-              </p>
-              <p className="text-muted-foreground leading-relaxed text-xs">
-                Signing in on this device will <strong className="text-foreground">automatically log out and close your previous session</strong> on the other device or browser.
-              </p>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <AppButton
-                type="button"
-                variant="outline"
-                onClick={handleCancelConflictLogin}
-                className="h-10 px-4 text-xs font-semibold border border-border hover:bg-surface/60 text-muted-foreground hover:text-foreground"
-              >
-                Cancel (Keep Other Session)
-              </AppButton>
-              <AppButton
-                type="button"
-                variant="primary"
-                onClick={handleConfirmConflictLogin}
-                className="h-10 px-5 text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-lg shadow-amber-600/20 flex items-center gap-2"
-              >
-                <LogOut className="h-3.5 w-3.5" />
-                <span>Yes, Continue & Log In Here</span>
-              </AppButton>
-            </div>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 }
