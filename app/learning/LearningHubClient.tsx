@@ -1,119 +1,291 @@
 "use client";
 
 import React, { useState } from "react";
-import { AppButton } from '@/components/ui/AppButton';
+import { AppButton } from "@/components/ui/AppButton";
 import { learningModules } from "@/lib/data/learning-data";
 import ModuleRenderer from "@/components/learning/ModuleRenderer";
+import ModuleDependencyGraph from "@/components/learning/ModuleDependencyGraph";
 import { useTheme } from "@/components/theme/ThemeProvider";
-import { GraduationCap, ChevronDown } from "lucide-react";
+import { 
+  GraduationCap, 
+  ChevronDown, 
+  Workflow, 
+  Layers, 
+  Search, 
+  BookOpen, 
+  Compass, 
+  Ticket, 
+  FileCheck2, 
+  Car, 
+  ShieldCheck, 
+  UserCheck, 
+  ShieldAlert, 
+  FolderKanban, 
+  Database,
+  Sparkles,
+  ArrowRight
+} from "lucide-react";
+import { AppTableContainer, AppTable, AppTableHeader, AppTableBody, AppTableRow, AppTableHead, AppTableCell } from "@/components/ui/AppTable";
 
 export default function LearningHubClient() {
   const { theme } = useTheme();
-  const isLight = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
   
-  const [selectedModuleId, setSelectedModuleId] = useState<string>("");
+  const [activeTopTab, setActiveTopTab] = useState<"DIAGRAM" | "MODULE_SPECS" | "GLOBAL_FIELDS">("DIAGRAM");
+  const [selectedModuleId, setSelectedModuleId] = useState<string>("design_tracking");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [globalFieldQuery, setGlobalFieldQuery] = useState("");
 
-  const selectedModule = learningModules.find(m => m.id === selectedModuleId);
+  const selectedModule = learningModules.find(m => m.id === selectedModuleId) || learningModules[0];
+
+  // Aggregated fields across all modules for global search
+  const allGlobalFields = learningModules.flatMap(m => 
+    (m.fields || []).map(f => ({
+      ...f,
+      moduleId: m.id,
+      moduleTitle: m.title,
+      moduleCode: m.code
+    }))
+  );
+
+  const filteredGlobalFields = allGlobalFields.filter(f => {
+    if (!globalFieldQuery) return true;
+    const q = globalFieldQuery.toLowerCase();
+    return (
+      f.name.toLowerCase().includes(q) ||
+      f.dbColumn.toLowerCase().includes(q) ||
+      f.description.toLowerCase().includes(q) ||
+      f.purpose.toLowerCase().includes(q) ||
+      f.moduleTitle.toLowerCase().includes(q)
+    );
+  });
+
+  const handleSelectModuleFromGraph = (moduleId: string) => {
+    setSelectedModuleId(moduleId);
+  };
 
   return (
-    <div className="w-full min-h-[calc(100vh-4rem)] p-6 md:p-12 relative flex flex-col items-center">
+    <div className="w-full min-h-[calc(100vh-4rem)] p-4 md:p-8 relative flex flex-col items-center max-w-7xl mx-auto space-y-8">
       
-      {/* Hero / Selection Header */}
-      <div className={`w-full max-w-3xl mx-auto text-center space-y-6 mb-12 animate-in fade-in slide-in-from-top-4 duration-500`}>
-        <div className="flex justify-center">
-          <div className={`p-4 rounded-3xl bg-gradient-to-tr from-blue-100 to-indigo-100 text-theme-icon shadow-xl shadow-blue-500/10`}>
-            <GraduationCap className="h-12 w-12" />
-          </div>
+      {/* Top Hero Banner */}
+      <div className="w-full text-center space-y-4 pt-2">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-theme-btn-primary/10 text-theme-btn-primary border border-theme-btn-primary/20 mb-1">
+          <GraduationCap className="h-4 w-4" />
+          <span>Enterprise Platform Learning Hub & Knowledge Center</span>
         </div>
         
-        <div className="space-y-2">
-          <h1 className={`text-2xl font-bold tracking-tight text-foreground`}>
-            Enterprise Learning Hub
-          </h1>
-          <p className={`text-lg md:text-xl max-w-2xl mx-auto text-muted-foreground`}>
-            Master the core concepts of the Chandak Workspace platform. Select a module below to begin your detailed learning journey.
-          </p>
-        </div>
+        <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-foreground">
+          System Architecture, Module Connections & CRUD Operations
+        </h1>
+        <p className="text-sm md:text-base max-w-3xl mx-auto text-muted-foreground leading-relaxed">
+          Master how modules connect, understand downstream data flows and ripple impacts, and explore complete field-to-field specifications for every entity in the platform.
+        </p>
 
-        {/* Custom Dropdown Selector */}
-        <div className="relative w-full max-w-md mx-auto mt-8 z-20">
-          <AppButton variant="secondary"
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className={`w-full flex items-center justify-between px-6 h-auto py-4 rounded-2xl border-2 text-left transition-all ${
-              "bg-surface border-blue-100 hover:border-theme-btn-primary/30 shadow-lg text-foreground"
-            } ${isDropdownOpen ? ("border-theme-btn-primary ring-4 ring-theme-btn-primary/10") : ""}`}
-            rightIcon={<ChevronDown className={`h-5 w-5 transition-transform duration-300 ${isDropdownOpen ? "rotate-180" : ""}`} />}
+        {/* Primary Navigation Tabs */}
+        <div className="flex flex-wrap items-center justify-center gap-2 pt-4">
+          <button
+            onClick={() => setActiveTopTab("DIAGRAM")}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all border ${
+              activeTopTab === "DIAGRAM"
+                ? "bg-theme-btn-primary text-white border-theme-btn-primary shadow-lg shadow-theme-btn-primary/20"
+                : "bg-surface hover:bg-elevated border-border text-muted-foreground hover:text-foreground"
+            }`}
           >
-            <div className="flex items-center gap-3">
-              {selectedModule ? (
-                <>
-                  <selectedModule.icon className={`h-6 w-6 text-theme-icon`} />
-                  <span className="font-bold text-lg">{selectedModule.title}</span>
-                </>
-              ) : (
-                <span className={`font-semibold text-lg text-muted-foreground`}>Select a Learning Module...</span>
-              )}
-            </div>
-          </AppButton>
+            <Workflow className="h-4 w-4" />
+            <span>1. Architecture & Module Diagram</span>
+          </button>
 
-          {isDropdownOpen && (
-            <div className={`absolute top-full left-0 right-0 mt-2 p-2 rounded-2xl border shadow-2xl animate-in fade-in zoom-in-95 duration-200 ${
-              "bg-surface/90 border-border"
-            }`}>
-              <div className="space-y-1">
-                {learningModules.map((module) => (
-                  <AppButton variant="secondary"
-                    key={module.id}
-                    onClick={() => {
-                      setSelectedModuleId(module.id);
-                      setIsDropdownOpen(false);
-                    }}
-                    className={`w-full flex items-start justify-start gap-4 px-4 h-auto py-3 rounded-xl transition-all border border-transparent ${
-                      selectedModuleId === module.id
-                        ? ("bg-theme-btn-primary/10 border-theme-btn-primary/20 text-theme-icon font-bold")
-                        : ("hover:bg-elevated hover:border-border text-foreground")
-                    }`}
-                    leftIcon={
-                      <div className={`p-2 rounded-lg shrink-0 ${
-                        selectedModuleId === module.id 
-                          ? ("bg-theme-btn-primary/20 text-theme-icon")
-                          : ("bg-surface border border-border text-muted-foreground")
-                      }`}>
-                        <module.icon className="h-5 w-5" />
-                      </div>
-                    }
-                  >
-                    <div className="text-left flex-1 min-w-0">
-                      <div className="font-semibold text-sm">{module.title}</div>
-                      <div className={`text-[11px] mt-0.5 text-muted-foreground leading-snug font-normal`}>{module.description}</div>
-                    </div>
-                  </AppButton>
-                ))}
-              </div>
-            </div>
-          )}
+          <button
+            onClick={() => setActiveTopTab("MODULE_SPECS")}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all border ${
+              activeTopTab === "MODULE_SPECS"
+                ? "bg-theme-btn-primary text-white border-theme-btn-primary shadow-lg shadow-theme-btn-primary/20"
+                : "bg-surface hover:bg-elevated border-border text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Layers className="h-4 w-4" />
+            <span>2. Module Deep-Dive & CRUD Playbooks</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTopTab("GLOBAL_FIELDS")}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all border ${
+              activeTopTab === "GLOBAL_FIELDS"
+                ? "bg-theme-btn-primary text-white border-theme-btn-primary shadow-lg shadow-theme-btn-primary/20"
+                : "bg-surface hover:bg-elevated border-border text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Database className="h-4 w-4" />
+            <span>3. Global Field & Schema Index</span>
+          </button>
         </div>
       </div>
 
-      {/* Module Content Area */}
-      <div className="w-full flex-1 relative z-10">
-        {selectedModule ? (
-          <ModuleRenderer module={selectedModule} />
-        ) : (
-          <div className={`flex flex-col items-center justify-center py-20 animate-in fade-in duration-1000 text-muted`}>
-            <div className="relative">
-              <GraduationCap className="h-24 w-24 opacity-20" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <ChevronDown className="h-8 w-8 animate-bounce opacity-50" />
+      {/* Main Tab Content */}
+      <div className="w-full">
+        
+        {/* TAB 1: ARCHITECTURE & MODULE DIAGRAM */}
+        {activeTopTab === "DIAGRAM" && (
+          <ModuleDependencyGraph
+            onSelectModule={(modId) => {
+              setSelectedModuleId(modId);
+              setActiveTopTab("MODULE_SPECS");
+            }}
+          />
+        )}
+
+        {/* TAB 2: MODULE DEEP-DIVE & CRUD PLAYBOOKS */}
+        {activeTopTab === "MODULE_SPECS" && (
+          <div className="w-full space-y-8 animate-in fade-in duration-300">
+            
+            {/* Module Picker Bar */}
+            <div className="bg-surface rounded-2xl p-4 border border-border flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-muted-foreground uppercase">Select Module:</span>
+                <span className="font-bold text-sm text-foreground">{selectedModule.title}</span>
+              </div>
+
+              {/* Module Dropdown Selector */}
+              <div className="relative w-full md:w-80">
+                <button
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl border border-border bg-elevated text-left text-xs font-bold text-foreground hover:border-theme-btn-primary transition-all"
+                >
+                  <div className="flex items-center gap-2 truncate">
+                    {React.createElement(selectedModule.icon, { className: "h-4 w-4 text-theme-btn-primary shrink-0" })}
+                    <span className="truncate">{selectedModule.title}</span>
+                  </div>
+                  <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
+                </button>
+
+                {isDropdownOpen && (
+                  <div className="absolute right-0 left-0 top-full mt-2 p-2 rounded-xl border border-border bg-surface shadow-2xl z-30 space-y-1">
+                    {learningModules.map((m) => {
+                      const Icon = m.icon;
+                      const isCurr = m.id === selectedModuleId;
+                      return (
+                        <button
+                          key={m.id}
+                          onClick={() => {
+                            setSelectedModuleId(m.id);
+                            setIsDropdownOpen(false);
+                          }}
+                          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-xs transition-colors ${
+                            isCurr
+                              ? "bg-theme-btn-primary/10 text-theme-btn-primary font-bold"
+                              : "hover:bg-elevated text-foreground"
+                          }`}
+                        >
+                          <Icon className="h-4 w-4 shrink-0" />
+                          <div className="truncate">
+                            <div>{m.title}</div>
+                            <div className="text-[10px] text-muted-foreground font-mono">{m.code}</div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
-            <p className="mt-6 font-medium tracking-wide">Awaiting module selection...</p>
+
+            {/* Render Selected Module Detailed Specs */}
+            <ModuleRenderer module={selectedModule} />
           </div>
         )}
+
+        {/* TAB 3: GLOBAL FIELD & SCHEMA INDEX */}
+        {activeTopTab === "GLOBAL_FIELDS" && (
+          <div className="w-full space-y-6 animate-in fade-in duration-300">
+            <div className="bg-surface rounded-2xl p-6 border border-border shadow-sm space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-xl font-bold text-foreground">
+                    Universal Field & Database Schema Index
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Search and cross-reference all {allGlobalFields.length} documented fields across all enterprise modules.
+                  </p>
+                </div>
+
+                <div className="relative w-full sm:w-80">
+                  <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Search across all fields, tables, or modules..."
+                    value={globalFieldQuery}
+                    onChange={(e) => setGlobalFieldQuery(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-elevated border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/30"
+                  />
+                </div>
+              </div>
+
+              <div className="rounded-xl overflow-hidden border border-border">
+                <AppTableContainer>
+                  <AppTable className="w-full text-left text-xs">
+                    <AppTableHeader className="bg-elevated text-muted-foreground font-semibold uppercase text-[11px] border-b border-border">
+                      <AppTableRow>
+                        <AppTableHead className="px-4 py-3">Module</AppTableHead>
+                        <AppTableHead className="px-4 py-3">Field Label</AppTableHead>
+                        <AppTableHead className="px-4 py-3">DB Column</AppTableHead>
+                        <AppTableHead className="px-4 py-3">Type</AppTableHead>
+                        <AppTableHead className="px-4 py-3">Requirement</AppTableHead>
+                        <AppTableHead className="px-4 py-3">Description</AppTableHead>
+                        <AppTableHead className="px-4 py-3">Business Purpose & FK</AppTableHead>
+                      </AppTableRow>
+                    </AppTableHeader>
+                    <AppTableBody className="divide-y divide-border">
+                      {filteredGlobalFields.map((field, idx) => (
+                        <AppTableRow key={idx} className="hover:bg-elevated/60 transition-colors">
+                          <AppTableCell className="px-4 py-3.5 whitespace-nowrap">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-theme-btn-primary/10 text-theme-btn-primary">
+                              {field.moduleCode}
+                            </span>
+                          </AppTableCell>
+                          <AppTableCell className="px-4 py-3.5 font-bold text-foreground whitespace-nowrap">
+                            {field.name}
+                          </AppTableCell>
+                          <AppTableCell className="px-4 py-3.5 font-mono text-[11px] text-theme-btn-primary">
+                            {field.dbColumn}
+                          </AppTableCell>
+                          <AppTableCell className="px-4 py-3.5">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-elevated text-muted-foreground">
+                              {field.type}
+                            </span>
+                          </AppTableCell>
+                          <AppTableCell className="px-4 py-3.5">
+                            {field.isRequired ? (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400">
+                                Mandatory
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-500/10 text-muted-foreground">
+                                Optional
+                              </span>
+                            )}
+                          </AppTableCell>
+                          <AppTableCell className="px-4 py-3.5 text-muted-foreground max-w-xs">
+                            {field.description}
+                          </AppTableCell>
+                          <AppTableCell className="px-4 py-3.5 text-muted-foreground max-w-xs">
+                            <div>{field.purpose}</div>
+                            {field.foreignKeyRelation && (
+                              <div className="text-[10px] font-mono text-sky-600 dark:text-sky-400 mt-0.5 font-semibold">
+                                FK ➔ {field.foreignKeyRelation}
+                              </div>
+                            )}
+                          </AppTableCell>
+                        </AppTableRow>
+                      ))}
+                    </AppTableBody>
+                  </AppTable>
+                </AppTableContainer>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
 
     </div>
   );
 }
-

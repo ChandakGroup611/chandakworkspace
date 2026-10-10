@@ -51,6 +51,34 @@ import {
   CHANDAK_EY_CLEARANCES
 } from "../data/eyTenderData";
 
+import {
+  saveProjectAction,
+  deleteProjectAction,
+  saveTowerAction,
+  deleteTowerAction,
+  savePackageAction,
+  deletePackageAction,
+  saveSubPackageAction,
+  deleteSubPackageAction,
+  saveConsultantAction,
+  deleteConsultantAction,
+  saveStatutoryAuthorityAction,
+  deleteStatutoryAuthorityAction,
+  saveStatutoryClearanceAction,
+  saveMatrixEntryAction,
+  saveBatchMatrixEntriesAction,
+  saveLookAheadAction,
+  deleteLookAheadAction,
+  saveDrawingAction,
+  deleteDrawingAction,
+  saveDrawingRevisionAction,
+  saveTransmittalAction,
+  deleteTransmittalAction,
+  saveRfiAction,
+  deleteRfiAction,
+  recordMatrixAuditAction
+} from "@/lib/actions/designTracking";
+
 const STORAGE_KEY = "CHANDAK_DESIGN_MASTER_STORE_V4";
 
 export const DEFAULT_DESIGN_CATEGORIES: PackageMaster[] = [
@@ -425,6 +453,300 @@ export class DesignMasterStore {
     }
   }
 
+  /**
+   * Hydrates the in-memory & localStorage store state from Supabase database tables
+   */
+  public static hydrateFromDatabase(dbData: any) {
+    if (!dbData) return;
+    const state = this.getState();
+    let hasChanges = false;
+
+    if (dbData.projects && Array.isArray(dbData.projects) && dbData.projects.length > 0) {
+      state.projects = dbData.projects.map((p: any) => ({
+        id: p.id,
+        code: p.code,
+        name: p.name,
+        location: p.location || "",
+        isSubProject: !!p.is_sub_project,
+        parentProjectId: p.parent_project_id || undefined,
+        parentProjectName: p.parent_project_name || undefined,
+        subProjectName: p.sub_project_name || undefined,
+        projectType: p.project_type || "Residential High-Rise",
+        plotArea: p.plot_area || undefined,
+        builtUpArea: p.built_up_area || undefined,
+        estimatedBudget: p.estimated_budget || undefined,
+        reraNumber: p.rera_number || undefined,
+        projectStatus: p.project_status || "Planning & Design",
+        targetCompletionDate: p.target_completion_date || undefined,
+        leadManager: p.lead_manager || undefined,
+        leadManagerEmail: p.lead_manager_email || undefined,
+        taggedConsultants: p.tagged_consultants || [],
+        taggedCategories: p.tagged_categories || [],
+        taggedPackages: p.tagged_packages || [],
+        subProjectConsultants: p.sub_project_consultants || {},
+        subProjectCategories: p.sub_project_categories || {},
+        subProjectPackages: p.sub_project_packages || {},
+        description: p.description || undefined,
+        createdAt: p.created_at || new Date().toISOString()
+      }));
+      hasChanges = true;
+    }
+
+    if (dbData.towers && Array.isArray(dbData.towers) && dbData.towers.length > 0) {
+      state.towers = dbData.towers.map((t: any) => ({
+        id: t.id,
+        projectId: t.project_id,
+        projectName: t.project_name || undefined,
+        towerName: t.tower_name,
+        subProjectCode: t.sub_project_code || undefined,
+        towerType: t.tower_type || "Sale",
+        totalFloors: t.total_floors || 0,
+        heightMeters: t.height_meters || 0,
+        targetCompletionDate: t.target_completion_date || undefined,
+        taggedConsultants: t.tagged_consultants || [],
+        taggedCategories: t.tagged_categories || [],
+        taggedPackages: t.tagged_packages || [],
+        description: t.description || undefined,
+        createdAt: t.created_at || new Date().toISOString()
+      }));
+      hasChanges = true;
+    }
+
+    if (dbData.packages && Array.isArray(dbData.packages) && dbData.packages.length > 0) {
+      state.disciplines = dbData.packages.map((pkg: any) => ({
+        id: pkg.id,
+        name: pkg.name,
+        code: pkg.code,
+        icon: pkg.icon || "📁",
+        color: pkg.color || "blue",
+        description: pkg.description || undefined,
+        createdAt: pkg.created_at || new Date().toISOString()
+      }));
+      hasChanges = true;
+    }
+
+    if (dbData.subPackages && Array.isArray(dbData.subPackages) && dbData.subPackages.length > 0) {
+      state.packages = dbData.subPackages.map((sp: any) => ({
+        id: sp.id,
+        disciplineId: sp.discipline_id,
+        disciplineName: sp.discipline_name || "",
+        packageName: sp.package_name,
+        packageCode: sp.package_code,
+        subPackageName: sp.sub_package_name || sp.package_name,
+        subPackageCode: sp.sub_package_code || sp.package_code,
+        defaultConsultant: sp.default_consultant || undefined,
+        defaultDurationDays: sp.default_duration_days || 14,
+        description: sp.description || undefined
+      }));
+      hasChanges = true;
+    }
+
+    if (dbData.consultants && Array.isArray(dbData.consultants) && dbData.consultants.length > 0) {
+      state.consultants = dbData.consultants.map((c: any) => ({
+        id: c.id,
+        name: c.firm_name,
+        category: c.discipline,
+        firmName: c.firm_name,
+        discipline: c.discipline,
+        categories: c.categories || [],
+        packages: c.packages || [],
+        expertise: c.expertise || [],
+        subPackages: c.sub_packages || [],
+        contactPerson: c.contact_person || undefined,
+        email: c.email || undefined,
+        phone: c.phone || undefined,
+        activeProjects: c.active_projects || [],
+        onboardingStatus: c.onboarding_status || "Onboard",
+        rating: c.rating || 4.5,
+        totalDrawingsSubmitted: c.total_drawings_submitted || 0,
+        averageTatDays: c.average_tat_days || 5,
+        createdAt: c.created_at || new Date().toISOString()
+      }));
+      hasChanges = true;
+    }
+
+    if (dbData.packageStatuses && Array.isArray(dbData.packageStatuses) && dbData.packageStatuses.length > 0) {
+      const statusMap: Record<string, PackageStatusEntry> = {};
+      dbData.packageStatuses.forEach((ps: any) => {
+        const key = ps.entry_key || `${ps.project_id}__${ps.tower_id}__${ps.package_id}`;
+        statusMap[key] = {
+          id: ps.id,
+          entryKey: key,
+          projectId: ps.project_id,
+          projectName: ps.project_name || undefined,
+          towerId: ps.tower_id,
+          towerName: ps.tower_name || undefined,
+          packageId: ps.package_id,
+          packageName: ps.package_name || undefined,
+          disciplineName: ps.discipline_name || undefined,
+          currentStage: ps.current_stage || undefined,
+          status: ps.status || "Pending",
+          plannedDate: ps.planned_date || undefined,
+          actualDate: ps.actual_date || undefined,
+          targetDate: ps.target_date || undefined,
+          consultantId: ps.consultant_id || undefined,
+          consultantName: ps.consultant_name || undefined,
+          remarks: ps.remarks || undefined,
+          updatedAt: ps.updated_at || undefined,
+          updatedBy: ps.updated_by || undefined
+        };
+      });
+      state.packageStatuses = { ...state.packageStatuses, ...statusMap };
+      hasChanges = true;
+    }
+
+    if (dbData.lookAheads && Array.isArray(dbData.lookAheads) && dbData.lookAheads.length > 0) {
+      state.lookAheads = dbData.lookAheads.map((la: any) => ({
+        id: la.id,
+        projectId: la.project_id,
+        towerId: la.tower_id || undefined,
+        packageId: la.package_id || undefined,
+        deliverableDescription: la.deliverable_description,
+        milestoneType: la.milestone_type || "Consultant Submission",
+        plannedDate: la.planned_date,
+        forecastDate: la.forecast_date || undefined,
+        actualDate: la.actual_date || undefined,
+        status: la.status || "On Track",
+        leadDiscipline: la.lead_discipline || undefined,
+        consultantResponsible: la.consultant_responsible || undefined,
+        isCriticalPath: !!la.is_critical_path,
+        remarks: la.remarks || undefined
+      }));
+      hasChanges = true;
+    }
+
+    if (dbData.statutoryClearances && Array.isArray(dbData.statutoryClearances) && dbData.statutoryClearances.length > 0) {
+      const clearanceMap: Record<string, StatutoryClearanceEntry> = {};
+      dbData.statutoryClearances.forEach((sc: any) => {
+        const key = sc.entry_key || `${sc.project_id}__${sc.tower_id || "all"}__${sc.authority_id}`;
+        clearanceMap[key] = {
+          id: sc.id,
+          projectId: sc.project_id,
+          towerId: sc.tower_id || "",
+          authorityId: sc.authority_id,
+          authorityName: sc.authority_name || undefined,
+          onboardingStatus: sc.status || "Not Applied",
+          applicationDate: sc.planned_date || undefined,
+          nocApprovalDate: sc.actual_date || undefined,
+          targetApprovalDate: sc.target_date || undefined,
+          fileReferenceNumber: sc.document_ref || undefined,
+          remarks: sc.remarks || undefined
+        };
+      });
+      state.statutoryClearances = { ...state.statutoryClearances, ...clearanceMap };
+      hasChanges = true;
+    }
+
+    if (dbData.drawings && Array.isArray(dbData.drawings) && dbData.drawings.length > 0) {
+      state.drawings = dbData.drawings.map((d: any) => ({
+        id: d.id,
+        projectId: d.project_id || undefined,
+        project: d.project || "",
+        towerName: d.tower_name || undefined,
+        code: d.code,
+        title: d.title,
+        discipline: d.discipline,
+        subPackage: d.sub_package || undefined,
+        currentRevision: d.current_revision || "R0",
+        status: d.status || "Under Review",
+        consultantName: d.consultant_name || undefined,
+        fileUrl: d.file_url || undefined,
+        fileSize: d.file_size || undefined,
+        submittedDate: d.submitted_date || new Date().toISOString().split("T")[0],
+        approvedDate: d.approved_date || undefined,
+        tags: d.tags || [],
+        isGfc: !!d.is_gfc,
+        gfcReleasedDate: d.gfc_released_date || undefined,
+        gfcRecipient: d.gfc_recipient || undefined
+      }));
+      hasChanges = true;
+    }
+
+    if (dbData.transmittals && Array.isArray(dbData.transmittals) && dbData.transmittals.length > 0) {
+      state.transmittals = dbData.transmittals.map((t: any) => ({
+        id: t.id,
+        transmittalNumber: t.transmittal_number,
+        projectId: t.project_id || undefined,
+        projectName: t.project_name,
+        towerName: t.tower_name || "",
+        issueDate: t.issue_date,
+        purpose: t.purpose,
+        recipientAgency: t.recipient_agency,
+        recipientContact: t.recipient_contact || undefined,
+        issuedBy: t.issued_by,
+        drawingIds: t.drawing_ids || [],
+        drawingDetails: t.drawings_data || [],
+        remarks: t.remarks || undefined,
+        status: t.status,
+        acknowledgedAt: t.acknowledged_at || undefined,
+        acknowledgedBy: t.acknowledged_by || undefined
+      }));
+      hasChanges = true;
+    }
+
+    if (dbData.rfis && Array.isArray(dbData.rfis) && dbData.rfis.length > 0) {
+      state.rfis = dbData.rfis.map((r: any) => ({
+        id: r.id,
+        rfiNumber: r.rfi_number,
+        projectId: r.project_id || undefined,
+        projectName: r.project_name,
+        towerName: r.tower_name || "",
+        discipline: r.discipline,
+        drawingCode: r.drawing_code || undefined,
+        drawingTitle: r.drawing_title || undefined,
+        subject: r.subject,
+        queryDescription: r.query_description,
+        raisedBy: r.raised_by,
+        raisedDate: r.raised_date,
+        assignedConsultant: r.assigned_consultant,
+        priority: r.priority,
+        targetResolutionDate: r.target_resolution_date || undefined,
+        status: r.status,
+        consultantResponse: r.consultant_response || undefined,
+        respondedBy: r.responded_by || undefined,
+        respondedDate: r.responded_date || undefined,
+        resolvingRevisionNumber: r.resolving_revision_number || undefined
+      }));
+      hasChanges = true;
+    }
+
+    if (dbData.auditLogs && Array.isArray(dbData.auditLogs) && dbData.auditLogs.length > 0) {
+      state.auditLogs = dbData.auditLogs.map((a: any) => ({
+        id: a.id,
+        entryKey: a.entry_key || undefined,
+        action: a.action || "STATUS_CHANGE",
+        entityType: a.entity_type || undefined,
+        entityId: a.entity_id || undefined,
+        entityName: a.entity_name || undefined,
+        projectId: a.project_id || undefined,
+        projectName: a.project_name || undefined,
+        towerId: a.tower_id || undefined,
+        towerName: a.tower_name || undefined,
+        packageId: a.package_id || undefined,
+        packageName: a.package_name || undefined,
+        disciplineName: a.discipline_name || undefined,
+        previousStatus: a.previous_status || undefined,
+        newStatus: a.new_status || undefined,
+        previousPlannedDate: a.previous_planned_date || undefined,
+        newPlannedDate: a.new_planned_date || undefined,
+        previousActualDate: a.previous_actual_date || undefined,
+        newActualDate: a.new_actual_date || undefined,
+        consultantName: a.consultant_name || undefined,
+        changedBy: a.changed_by,
+        changedByEmail: a.changed_by_email || undefined,
+        timestamp: a.timestamp,
+        remarks: a.remarks || undefined,
+        impactSummary: a.impact_summary || undefined
+      }));
+      hasChanges = true;
+    }
+
+    if (hasChanges) {
+      this.saveToStorage(true);
+      this.notify();
+    }
+  }
+
   // ============================================================================
   // Foreign Key Dependency & Referential Integrity Analysis
   // ============================================================================
@@ -473,6 +795,14 @@ export class DesignMasterStore {
     if (state.auditLogs.length > 5000) {
       state.auditLogs = state.auditLogs.slice(0, 5000);
     }
+
+    // Persist to database in background
+    try {
+      recordMatrixAuditAction(newLog).catch(e => console.warn("Background audit log sync note:", e));
+    } catch (e) {
+      // suppress
+    }
+
     return newLog;
   }
 
@@ -979,6 +1309,14 @@ export class DesignMasterStore {
       remarks: `Created ${newProj.name} (${newProj.code})`
     });
 
+    // Background Database Persistence
+    try {
+      saveProjectAction(newProj).catch(e => console.warn("Background saveProjectAction note:", e));
+      saveTowerAction(defaultTower).catch(e => console.warn("Background saveTowerAction note:", e));
+    } catch (e) {
+      // suppress
+    }
+
     this.notify();
     return newProj;
   }
@@ -1066,6 +1404,13 @@ export class DesignMasterStore {
       remarks: reason || `Updated parameters for ${updatedProj.name}`
     });
 
+    // Background Database Persistence
+    try {
+      saveProjectAction(updatedProj).catch(e => console.warn("Background saveProjectAction update note:", e));
+    } catch (e) {
+      // suppress
+    }
+
     this.notify();
     return state.projects[idx];
   }
@@ -1125,6 +1470,13 @@ export class DesignMasterStore {
       remarks: reason || `Deleted project "${proj?.name}" and cascaded all foreign key dependencies.`
     });
 
+    // Background Database Persistence
+    try {
+      deleteProjectAction(id, reason).catch(e => console.warn("Background deleteProjectAction note:", e));
+    } catch (e) {
+      // suppress
+    }
+
     this.notify();
     return depReport;
   }
@@ -1171,6 +1523,13 @@ export class DesignMasterStore {
       impactSummary: `Created Wing "${newTower.towerName}" (${newTower.towerType}) under ${parentProj?.name || "Project"}`,
       changedBy: createdBy
     });
+
+    // Background Database Persistence
+    try {
+      saveTowerAction(newTower).catch(e => console.warn("Background saveTowerAction note:", e));
+    } catch (e) {
+      // suppress
+    }
 
     this.notify();
     return newTower;
@@ -1223,6 +1582,13 @@ export class DesignMasterStore {
       reason
     });
 
+    // Background Database Persistence
+    try {
+      saveTowerAction(updatedTower).catch(e => console.warn("Background saveTowerAction update note:", e));
+    } catch (e) {
+      // suppress
+    }
+
     this.notify();
     return state.towers[idx];
   }
@@ -1262,6 +1628,13 @@ export class DesignMasterStore {
       changedBy: deletedBy,
       reason
     });
+
+    // Background Database Persistence
+    try {
+      deleteTowerAction(id, reason).catch(e => console.warn("Background deleteTowerAction note:", e));
+    } catch (e) {
+      // suppress
+    }
 
     this.notify();
     return depReport;
@@ -1316,6 +1689,13 @@ export class DesignMasterStore {
       impactSummary: `Created Package Master "${newPkg.name}" (${newPkg.code})`,
       changedBy: createdBy
     });
+
+    // Background Database Persistence
+    try {
+      savePackageAction(newPkg).catch(e => console.warn("Background savePackageAction note:", e));
+    } catch (e) {
+      // suppress
+    }
 
     this.notify();
     return newPkg;
@@ -1391,6 +1771,13 @@ export class DesignMasterStore {
       reason
     });
 
+    // Background Database Persistence
+    try {
+      savePackageAction(updatedPkg).catch(e => console.warn("Background savePackageAction update note:", e));
+    } catch (e) {
+      // suppress
+    }
+
     this.notify();
     return state.disciplines[idx];
   }
@@ -1445,6 +1832,13 @@ export class DesignMasterStore {
       changedBy: deletedBy,
       reason
     });
+
+    // Background Database Persistence
+    try {
+      deletePackageAction(id).catch(e => console.warn("Background deletePackageAction note:", e));
+    } catch (e) {
+      // suppress
+    }
 
     this.notify();
     return depReport;
@@ -1572,6 +1966,13 @@ export class DesignMasterStore {
       changedBy: createdBy
     });
 
+    // Background Database Persistence
+    try {
+      saveSubPackageAction(newSubPkg).catch(e => console.warn("Background saveSubPackageAction note:", e));
+    } catch (e) {
+      // suppress
+    }
+
     this.notify();
     return newSubPkg;
   }
@@ -1621,6 +2022,13 @@ export class DesignMasterStore {
       reason
     });
 
+    // Background Database Persistence
+    try {
+      saveSubPackageAction(updatedPkg).catch(e => console.warn("Background saveSubPackageAction update note:", e));
+    } catch (e) {
+      // suppress
+    }
+
     this.notify();
     return state.packages[idx];
   }
@@ -1661,6 +2069,13 @@ export class DesignMasterStore {
       reason
     });
 
+    // Background Database Persistence
+    try {
+      deleteSubPackageAction(id).catch(e => console.warn("Background deleteSubPackageAction note:", e));
+    } catch (e) {
+      // suppress
+    }
+
     this.notify();
     return depReport;
   }
@@ -1693,6 +2108,13 @@ export class DesignMasterStore {
       changedBy: createdBy
     });
 
+    // Background Database Persistence
+    try {
+      saveStatutoryAuthorityAction(newAuth).catch(e => console.warn("Background saveStatutoryAuthorityAction note:", e));
+    } catch (e) {
+      // suppress
+    }
+
     this.notify();
     return newAuth;
   }
@@ -1723,6 +2145,13 @@ export class DesignMasterStore {
       reason
     });
 
+    // Background Database Persistence
+    try {
+      saveStatutoryAuthorityAction(updatedAuth).catch(e => console.warn("Background saveStatutoryAuthorityAction update note:", e));
+    } catch (e) {
+      // suppress
+    }
+
     this.notify();
     return state.authorities[idx];
   }
@@ -1749,6 +2178,13 @@ export class DesignMasterStore {
       changedBy: deletedBy,
       reason
     });
+
+    // Background Database Persistence
+    try {
+      deleteStatutoryAuthorityAction(id).catch(e => console.warn("Background deleteStatutoryAuthorityAction note:", e));
+    } catch (e) {
+      // suppress
+    }
 
     this.notify();
     return depReport;
@@ -1805,6 +2241,13 @@ export class DesignMasterStore {
       impactSummary: `Registered Consultant Partner "${newC.name}" with ${categories.length} mapped categories and status "${onboardingStatus}"`,
       changedBy: createdBy
     });
+
+    // Background Database Persistence
+    try {
+      saveConsultantAction(newC).catch(e => console.warn("Background saveConsultantAction note:", e));
+    } catch (e) {
+      // suppress
+    }
 
     this.notify();
     return newC;
@@ -1881,6 +2324,13 @@ export class DesignMasterStore {
       reason
     });
 
+    // Background Database Persistence
+    try {
+      saveConsultantAction(updatedCons).catch(e => console.warn("Background saveConsultantAction update note:", e));
+    } catch (e) {
+      // suppress
+    }
+
     this.notify();
     return state.consultants[idx];
   }
@@ -1925,6 +2375,13 @@ export class DesignMasterStore {
       changedBy: deletedBy,
       reason
     });
+
+    // Background Database Persistence
+    try {
+      deleteConsultantAction(id).catch(e => console.warn("Background deleteConsultantAction note:", e));
+    } catch (e) {
+      // suppress
+    }
 
     this.notify();
     return depReport;
@@ -2560,6 +3017,15 @@ export class DesignMasterStore {
       state.auditLogs = state.auditLogs.slice(0, 500);
     }
 
+    // Background Database Persistence
+    try {
+      saveMatrixEntryAction(state.packageStatuses[key], changedBy, "design.head@chandakgroup.com").catch(e => 
+        console.warn("Background saveMatrixEntryAction note:", e)
+      );
+    } catch (e) {
+      // suppress
+    }
+
     this.notify();
   }
 
@@ -2584,6 +3050,8 @@ export class DesignMasterStore {
 
     if (!state.auditLogs) state.auditLogs = [];
 
+    const updatedEntriesList: PackageStatusEntry[] = [];
+
     updates.forEach(u => {
       const key = `${u.projectId}__${u.towerId}__${u.packageId}`;
       const prevEntry = state.packageStatuses[key];
@@ -2606,6 +3074,8 @@ export class DesignMasterStore {
         updatedAt: now,
         updatedBy: changedBy
       };
+
+      updatedEntriesList.push(state.packageStatuses[key]);
 
       const proj = state.projects.find(p => p.id === u.projectId);
       const twr = state.towers.find(t => t.id === u.towerId);
@@ -2642,6 +3112,17 @@ export class DesignMasterStore {
 
     if (state.auditLogs.length > 500) {
       state.auditLogs = state.auditLogs.slice(0, 500);
+    }
+
+    // Background Database Persistence
+    try {
+      if (updatedEntriesList.length > 0) {
+        saveBatchMatrixEntriesAction(updatedEntriesList, changedBy).catch(e =>
+          console.warn("Background saveBatchMatrixEntriesAction note:", e)
+        );
+      }
+    } catch (e) {
+      // suppress
     }
 
     this.notify();
@@ -3215,6 +3696,9 @@ export class DesignMasterStore {
     const newItem: LookAheadEntry = { ...entry, id, isExpedited: false };
     state.lookAheads.unshift(newItem);
     this.notify();
+    saveLookAheadAction(newItem).catch(err => {
+      console.error("Failed to sync LookAhead create to database:", err);
+    });
     return newItem;
   }
 
@@ -3224,6 +3708,9 @@ export class DesignMasterStore {
     if (idx === -1) return null;
     state.lookAheads[idx] = { ...state.lookAheads[idx], ...updates };
     this.notify();
+    saveLookAheadAction(state.lookAheads[idx]).catch(err => {
+      console.error("Failed to sync LookAhead update to database:", err);
+    });
     return state.lookAheads[idx];
   }
 
@@ -3233,6 +3720,9 @@ export class DesignMasterStore {
     if (target) {
       target.isExpedited = !target.isExpedited;
       this.notify();
+      saveLookAheadAction(target).catch(err => {
+        console.error("Failed to sync LookAhead expedite to database:", err);
+      });
     }
   }
 
@@ -3240,6 +3730,9 @@ export class DesignMasterStore {
     const state = this.getState();
     state.lookAheads = state.lookAheads.filter(i => i.id !== id);
     this.notify();
+    deleteLookAheadAction(id).catch(err => {
+      console.error("Failed to sync LookAhead delete to database:", err);
+    });
   }
 
   // ============================================================================
@@ -3256,7 +3749,7 @@ export class DesignMasterStore {
   ): void {
     const state = this.getState();
     const key = `${projectId}__${towerId}__${authorityId}`;
-    state.statutoryClearances[key] = {
+    const clearanceEntry: StatutoryClearanceEntry = {
       id: key,
       projectId,
       towerId,
@@ -3265,7 +3758,11 @@ export class DesignMasterStore {
       targetApprovalDate,
       remarks
     };
+    state.statutoryClearances[key] = clearanceEntry;
     this.notify();
+    saveStatutoryClearanceAction(clearanceEntry).catch(err => {
+      console.error("Failed to sync Statutory Clearance to database:", err);
+    });
   }
 
   public static getStatutoryClearance(projectId: string, towerId: string, authorityId: string): StatutoryClearanceEntry | undefined {
@@ -3295,6 +3792,9 @@ export class DesignMasterStore {
       state.drawings.unshift(drawing);
     }
     this.notify();
+    saveDrawingAction(drawing).catch(err => {
+      console.error("Failed to sync Drawing to database:", err);
+    });
   }
 
   public static updateDrawingStatus(id: string, status: DrawingItem["status"], approvedDate?: string): void {
@@ -3304,6 +3804,9 @@ export class DesignMasterStore {
       item.status = status;
       if (approvedDate) item.approvedDate = approvedDate;
       this.notify();
+      saveDrawingAction(item).catch(err => {
+        console.error("Failed to sync Drawing status update to database:", err);
+      });
     }
   }
 
@@ -3311,6 +3814,9 @@ export class DesignMasterStore {
     const state = this.getState();
     state.drawings = (state.drawings || []).filter(d => d.id !== id);
     this.notify();
+    deleteDrawingAction(id).catch(err => {
+      console.error("Failed to sync Drawing delete to database:", err);
+    });
   }
 
   // ============================================================================
@@ -3335,6 +3841,9 @@ export class DesignMasterStore {
       state.transmittals.unshift(transmittal);
     }
     this.notify();
+    saveTransmittalAction(transmittal).catch(err => {
+      console.error("Failed to sync Transmittal to database:", err);
+    });
   }
 
   public static acknowledgeTransmittal(id: string, acknowledgedBy: string): void {
@@ -3345,6 +3854,9 @@ export class DesignMasterStore {
       item.acknowledgedAt = new Date().toISOString().split("T")[0];
       item.acknowledgedBy = acknowledgedBy;
       this.notify();
+      saveTransmittalAction(item).catch(err => {
+        console.error("Failed to sync Transmittal acknowledgment to database:", err);
+      });
     }
   }
 
@@ -3352,6 +3864,9 @@ export class DesignMasterStore {
     const state = this.getState();
     state.transmittals = (state.transmittals || []).filter(t => t.id !== id);
     this.notify();
+    deleteTransmittalAction(id).catch(err => {
+      console.error("Failed to sync Transmittal delete to database:", err);
+    });
   }
 
   // ============================================================================
@@ -3376,6 +3891,9 @@ export class DesignMasterStore {
       state.rfis.unshift(rfi);
     }
     this.notify();
+    saveRfiAction(rfi).catch(err => {
+      console.error("Failed to sync RFI to database:", err);
+    });
   }
 
   public static resolveRfi(
@@ -3395,6 +3913,9 @@ export class DesignMasterStore {
         item.resolvingRevisionNumber = resolvingRevisionNumber;
       }
       this.notify();
+      saveRfiAction(item).catch(err => {
+        console.error("Failed to sync RFI resolution to database:", err);
+      });
     }
   }
 
@@ -3402,6 +3923,9 @@ export class DesignMasterStore {
     const state = this.getState();
     state.rfis = (state.rfis || []).filter(r => r.id !== id);
     this.notify();
+    deleteRfiAction(id).catch(err => {
+      console.error("Failed to sync RFI delete to database:", err);
+    });
   }
 
   // ============================================================================
