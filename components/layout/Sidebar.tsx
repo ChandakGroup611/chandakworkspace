@@ -122,7 +122,7 @@ const taskNavGroups: NavGroup[] = [
       { label: "User Master", href: "/users", icon: Users, permission: "USERS_VIEW" },
       { label: "RBAC Access Policies", href: "/rbac", icon: Key, permission: "USERS_VIEW" },
       { label: "IAM Controls", href: "/iam", icon: UserCheck, permission: "IAM_VIEW" },
-      { label: "Learning Hub", href: "/learning", icon: BookOpen, permission: "LEARNING_VIEW" },
+      { label: "Learning Hub", href: "/learning", icon: BookOpen },
     ]
   },
   {

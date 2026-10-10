@@ -8,6 +8,8 @@ import {
   Compass, 
   Layers, 
   LineChart,
+  BookOpen,
+  ShieldCheck,
   ChevronDown, 
   Check, 
   Sparkles,
@@ -35,6 +37,8 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
     if (pathname.startsWith("/vehicle")) return "VEHICLE_DESK";
     if (pathname.startsWith("/design")) return "DESIGN_TRACKING";
     if (pathname.startsWith("/dashboards")) return "DASHBOARDS";
+    if (pathname.startsWith("/learning")) return "LEARNING_HUB";
+    if (pathname.startsWith("/amc")) return "AMC_CONTRACTS";
     return "TASK_WORKFLOW";
   }, [pathname]);
 
@@ -92,6 +96,10 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
         return Compass;
       case "DASHBOARDS":
         return LineChart;
+      case "LEARNING_HUB":
+        return BookOpen;
+      case "AMC_CONTRACTS":
+        return ShieldCheck;
       default:
         return Layers;
     }
