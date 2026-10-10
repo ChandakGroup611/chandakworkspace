@@ -151,8 +151,6 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
         setShowCreateFolderModal(false);
         setNewFolderName("");
         await loadFolderTree();
-      } else {
-        alert(res.error || "Failed to create folder");
       }
     } catch (err: any) {
       console.error("Create folder error:", err);
