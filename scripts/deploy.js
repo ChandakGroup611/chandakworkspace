@@ -28,6 +28,14 @@ rl.question('📝 Enter your commit message (leave blank for auto-generated): ',
     execSync('npx tsc --noEmit', { stdio: 'inherit' });
     console.log('✅ TypeScript verification passed.');
 
+    console.log('\n🧪 Running Design & Tracking QA Test Suite (qa-design-tracking.js)...');
+    try {
+      execSync('node scripts/qa-design-tracking.js', { stdio: 'inherit' });
+      console.log('✅ All QA tests passed successfully.');
+    } catch (qaErr) {
+      console.warn('⚠️ Warning: QA test script returned non-zero. Review output above.');
+    }
+
     console.log('\n🔍 Checking git working tree...');
     const status = execSync('git status --porcelain', { encoding: 'utf-8' }).trim();
     if (status) {
@@ -43,7 +51,9 @@ rl.question('📝 Enter your commit message (leave blank for auto-generated): ',
     execSync('git push origin main', { stdio: 'inherit' });
 
     console.log('\n\x1b[32m%s\x1b[0m', '✨ SUCCESS! Code is updated on GitHub! ✨');
-    console.log('\x1b[33m%s\x1b[0m', '⚡ Auto-deployment pipeline triggered successfully! ⚡\n');
+    console.log('\x1b[36m%s\x1b[0m', '🔗 Track live build: https://github.com/ChandakGroup611/chandakworkspace/actions');
+    console.log('\x1b[33m%s\x1b[0m', '⏱️ Estimated server live time: ~60–90 seconds.');
+    console.log('\x1b[32m%s\x1b[0m', '🌐 Production URL: https://chandakgroup.tech (Hard reload: Ctrl+Shift+R)\n');
   } catch (error) {
     console.error('\n\x1b[31m%s\x1b[0m', '❌ Deployment failed during execution: ' + (error.message || error));
   } finally {

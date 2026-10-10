@@ -9,6 +9,7 @@ import { useTheme } from "@/components/theme/ThemeProvider";
 import { useEffect, useState } from "react";
 import GlobalShortcuts from "./GlobalShortcuts";
 import MobileBottomNav from "./MobileBottomNav";
+import DeploymentVersionBanner from "./DeploymentVersionBanner";
 
 export default function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const { theme } = useTheme();
@@ -108,6 +109,9 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
 
       {/* Main Orchestration Column */}
       <div className={`flex flex-1 flex-col min-w-0 h-full relative`}>
+        {/* Dynamic Live Update Banner */}
+        <DeploymentVersionBanner />
+
         {/* Global Action Top Navbar */}
         {!isAuthRoute && (
           <Navbar onOpenMobileMenu={() => setIsMobileMenuOpen(true)} />
