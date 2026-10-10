@@ -166,21 +166,23 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
     }
   }, [currentUser]);
 
-  // Hydrate full tracking state, user access list & policies from database in background (with 5-minute TTL cache)
+  // Force re-render when master store notifies of changes
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    return DesignMasterStore.subscribe(() => {
+      setTick(t => t + 1);
+    });
+  }, []);
+
+  // Hydrate full tracking state, user access list & policies from database
   useEffect(() => {
     const hydrateAccess = async () => {
-      const now = Date.now();
-      if (now - lastDesignAccessHydratedTimestamp < DESIGN_ACCESS_CACHE_TTL_MS) {
-        return;
-      }
       try {
         const [usersRes, policiesRes, fullStateRes] = await Promise.all([
           fetchDesignWorkspaceUsersAction(),
           fetchRbacPoliciesAction(),
           fetchFullDesignTrackingState()
         ]);
-        
-        lastDesignAccessHydratedTimestamp = Date.now();
 
         if (fullStateRes.success && fullStateRes.data) {
           DesignMasterStore.hydrateFromDatabase(fullStateRes.data);
