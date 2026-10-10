@@ -145,9 +145,10 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
     if (!newFolderName.trim()) return;
     setIsCreatingFolder(true);
     try {
+      const parentId = selectedFolder?.id;
       const res = await createFolderAction({
         workspaceId,
-        parentId: selectedFolder?.id,
+        parentId,
         name: newFolderName.trim(),
         approvalRequired: newFolderApprovalRequired,
       });
@@ -155,7 +156,11 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
       if (res.success && res.folder) {
         setShowCreateFolderModal(false);
         setNewFolderName("");
+        if (parentId) {
+          setExpandedFolderIds((prev) => new Set([...prev, parentId]));
+        }
         await loadFolderTree();
+        setSelectedFolder(res.folder);
       }
     } catch (err: any) {
       console.error("Create folder error:", err);
@@ -246,6 +251,18 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
                 {node.documentCount}
               </span>
             )}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedFolder(node);
+                setShowCreateFolderModal(true);
+              }}
+              className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-theme-btn-primary/10 text-muted-foreground hover:text-amber-500 transition-opacity"
+              title="Add Subfolder"
+            >
+              <FolderPlus className="h-3.5 w-3.5" />
+            </button>
             <button
               type="button"
               onClick={(e) => {
