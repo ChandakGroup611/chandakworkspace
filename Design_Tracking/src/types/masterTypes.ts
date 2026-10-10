@@ -200,7 +200,7 @@ export interface DesignRbacPolicy {
   roleName: string;
   projectId: string; // "ALL" or specific project id
   projectName: string;
-  module: "DESIGN_MATRIX" | "DRAWINGS" | "CONSULTANTS" | "LOOK_AHEAD" | "LIAISON" | "TRANSMITTALS" | "RFIS" | "MASTERS" | "ALL";
+  module: "BUILDING_MATRIX" | "DESIGN_MATRIX" | "DMS" | "LOOK_AHEAD" | "LIAISON" | "STAGES" | "DRAWINGS" | "TRANSMITTALS" | "RFIS" | "CONSULTANTS" | "MASTERS" | "REPORTS" | "LEARNING" | "ALL";
   canCreate: boolean; // [C]
   canRead: boolean;   // [R]
   canUpdate: boolean; // [U]

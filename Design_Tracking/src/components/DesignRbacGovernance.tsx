@@ -34,7 +34,11 @@ import {
   Shield,
   Plus,
   Play,
-  Target
+  Target,
+  FolderTree,
+  Calendar,
+  LineChart,
+  BookOpen
 } from "lucide-react";
 import { 
   DesignMasterStore, 
@@ -87,13 +91,18 @@ const TICKET_SCOPE_OPTIONS: Array<{ value: DesignTicketAccessScope; label: strin
 type FunctionalModuleCode = Exclude<DesignRbacPolicy["module"], "ALL">;
 
 const MODULE_LIST: Array<{ code: FunctionalModuleCode; label: string; icon: any }> = [
+  { code: "BUILDING_MATRIX", label: "Building Section Matrix", icon: Building2 },
   { code: "DESIGN_MATRIX", label: "Tender Matrix", icon: Layers },
-  { code: "DRAWINGS", label: "Drawing Register", icon: FileText },
-  { code: "LOOK_AHEAD", label: "Look-Ahead (30/60D)", icon: Sparkles },
+  { code: "DMS", label: "Enterprise DMS Folder Vault", icon: FolderTree },
+  { code: "LOOK_AHEAD", label: "Look-Ahead Forecast", icon: Sparkles },
   { code: "LIAISON", label: "Statutory Liaisoning", icon: ShieldCheck },
-  { code: "TRANSMITTALS", label: "Transmittals & GFC", icon: Send },
+  { code: "STAGES", label: "Design Stages Roadmap", icon: Calendar },
+  { code: "DRAWINGS", label: "Drawing Register", icon: FileText },
+  { code: "TRANSMITTALS", label: "Transmittals & GFC Handover", icon: Send },
   { code: "RFIS", label: "RFI & Site Queries (Tickets)", icon: HelpCircle },
   { code: "CONSULTANTS", label: "Consultant Directory", icon: Users },
+  { code: "REPORTS", label: "Design Reports & Analytics", icon: LineChart },
+  { code: "LEARNING", label: "Learning & Lifecycle Guide", icon: BookOpen },
   { code: "MASTERS", label: "Masters Setup", icon: Settings }
 ];
 
@@ -109,14 +118,19 @@ interface ModulePermRow {
 }
 
 const DEFAULT_MODULE_PERMS: Record<FunctionalModuleCode, ModulePermRow> = {
+  BUILDING_MATRIX: { module: "BUILDING_MATRIX", canCreate: true, canRead: true, canUpdate: true, canDelete: false, canApprove: false, canExport: true, ticketAccessScope: "ALL" },
   DESIGN_MATRIX: { module: "DESIGN_MATRIX", canCreate: true, canRead: true, canUpdate: true, canDelete: false, canApprove: false, canExport: true, ticketAccessScope: "ALL" },
-  DRAWINGS: { module: "DRAWINGS", canCreate: true, canRead: true, canUpdate: true, canDelete: false, canApprove: false, canExport: true, ticketAccessScope: "ALL" },
-  LOOK_AHEAD: { module: "LOOK_AHEAD", canCreate: false, canRead: true, canUpdate: true, canDelete: false, canApprove: false, canExport: true, ticketAccessScope: "ALL" },
-  LIAISON: { module: "LIAISON", canCreate: false, canRead: true, canUpdate: false, canDelete: false, canApprove: false, canExport: true, ticketAccessScope: "ALL" },
+  DMS: { module: "DMS", canCreate: true, canRead: true, canUpdate: true, canDelete: true, canApprove: true, canExport: true, ticketAccessScope: "ALL" },
+  LOOK_AHEAD: { module: "LOOK_AHEAD", canCreate: true, canRead: true, canUpdate: true, canDelete: false, canApprove: false, canExport: true, ticketAccessScope: "ALL" },
+  LIAISON: { module: "LIAISON", canCreate: true, canRead: true, canUpdate: true, canDelete: false, canApprove: false, canExport: true, ticketAccessScope: "ALL" },
+  STAGES: { module: "STAGES", canCreate: true, canRead: true, canUpdate: true, canDelete: false, canApprove: false, canExport: true, ticketAccessScope: "ALL" },
+  DRAWINGS: { module: "DRAWINGS", canCreate: true, canRead: true, canUpdate: true, canDelete: false, canApprove: true, canExport: true, ticketAccessScope: "ALL" },
   TRANSMITTALS: { module: "TRANSMITTALS", canCreate: true, canRead: true, canUpdate: true, canDelete: false, canApprove: false, canExport: true, ticketAccessScope: "ALL" },
-  RFIS: { module: "RFIS", canCreate: true, canRead: true, canUpdate: true, canDelete: false, canApprove: false, canExport: true, ticketAccessScope: "ASSIGNED_ONLY" },
-  CONSULTANTS: { module: "CONSULTANTS", canCreate: false, canRead: true, canUpdate: false, canDelete: false, canApprove: false, canExport: false, ticketAccessScope: "ALL" },
-  MASTERS: { module: "MASTERS", canCreate: false, canRead: false, canUpdate: false, canDelete: false, canApprove: false, canExport: false, ticketAccessScope: "NONE" }
+  RFIS: { module: "RFIS", canCreate: true, canRead: true, canUpdate: true, canDelete: false, canApprove: true, canExport: true, ticketAccessScope: "ASSIGNED_ONLY" },
+  CONSULTANTS: { module: "CONSULTANTS", canCreate: true, canRead: true, canUpdate: true, canDelete: false, canApprove: false, canExport: true, ticketAccessScope: "ALL" },
+  REPORTS: { module: "REPORTS", canCreate: false, canRead: true, canUpdate: false, canDelete: false, canApprove: false, canExport: true, ticketAccessScope: "ALL" },
+  LEARNING: { module: "LEARNING", canCreate: false, canRead: true, canUpdate: false, canDelete: false, canApprove: false, canExport: false, ticketAccessScope: "ALL" },
+  MASTERS: { module: "MASTERS", canCreate: true, canRead: true, canUpdate: true, canDelete: true, canApprove: false, canExport: true, ticketAccessScope: "NONE" }
 };
 
 export const DesignRbacGovernance: React.FC = () => {
