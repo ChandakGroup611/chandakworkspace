@@ -48,10 +48,10 @@ export const ApprovalsReviewQueue: React.FC<ApprovalsReviewQueueProps> = ({
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         return (
-          d.code.toLowerCase().includes(q) ||
-          d.title.toLowerCase().includes(q) ||
-          d.project.toLowerCase().includes(q) ||
-          d.consultant.toLowerCase().includes(q)
+          (d.code || "").toLowerCase().includes(q) ||
+          (d.title || "").toLowerCase().includes(q) ||
+          (d.project || "").toLowerCase().includes(q) ||
+          (d.consultant || "").toLowerCase().includes(q)
         );
       }
       return true;

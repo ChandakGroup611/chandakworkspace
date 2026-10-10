@@ -63,12 +63,12 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
       if (selectedProjectFilters.length > 0 && !selectedProjectFilters.includes(item.project)) return false;
       if (selectedStatusFilters.length > 0 && !selectedStatusFilters.includes(item.status)) return false;
       if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
+        const q = searchQuery.toLowerCase().trim();
         const matches = 
-          item.code.toLowerCase().includes(q) || 
-          item.title.toLowerCase().includes(q) || 
-          item.project.toLowerCase().includes(q) || 
-          item.consultant.toLowerCase().includes(q);
+          (item.code || "").toLowerCase().includes(q) || 
+          (item.title || "").toLowerCase().includes(q) || 
+          (item.project || "").toLowerCase().includes(q) || 
+          (item.consultant || "").toLowerCase().includes(q);
         if (!matches) return false;
       }
       return true;
