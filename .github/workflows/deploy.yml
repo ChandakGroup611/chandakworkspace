@@ -156,8 +156,8 @@ jobs:
             
             for target in "${TARGET_DIRS[@]}"; do
               if [ -d "$target" ]; then
-                echo "Extracting payload into: $target"
-                rm -rf "$target/.next/cache"
+                echo "Cleaning stale cache and old chunks in: $target"
+                rm -rf "$target/.next/cache" "$target/.next/server" "$target/_next" "$target/public/_next"
                 if [ -n "$ZIP_PATH" ] && [ -f "$ZIP_PATH" ]; then
                   unzip -o -q "$ZIP_PATH" -d "$target" 2>/dev/null || php -r '$z = new ZipArchive(); if ($z->open("'"$ZIP_PATH"'") === TRUE) { $z->extractTo("'"$target"'"); $z->close(); echo "Extracted via PHP ZipArchive to '"$target"'\n"; } else { echo "Failed to extract via PHP\n"; }'
                 fi
