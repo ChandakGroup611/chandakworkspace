@@ -3146,9 +3146,11 @@ export async function createVehicleDocumentAction(
     if ((normDocType === "PUC" || normDocType === "PUC_CERTIFICATE") && doc.expiry_date) {
       vehSyncUpdates.puc_expiry_date = doc.expiry_date;
       if (doc.document_number) vehSyncUpdates.puc_certificate_number = doc.document_number.trim();
-    } else if ((normDocType === "INSURANCE" || normDocType === "INSURANCE_POLICY") && doc.expiry_date) {
-      vehSyncUpdates.insurance_expiry_date = doc.expiry_date;
+    } else if (normDocType === "INSURANCE" || normDocType === "INSURANCE_POLICY") {
+      if (doc.expiry_date) vehSyncUpdates.insurance_expiry_date = doc.expiry_date;
       if (doc.document_number) vehSyncUpdates.insurance_policy_number = doc.document_number.trim();
+      if ((doc as any).insurance_vendor_id) vehSyncUpdates.insurance_vendor_id = (doc as any).insurance_vendor_id;
+      if ((doc as any).insurance_vendor) vehSyncUpdates.insurance_vendor = (doc as any).insurance_vendor;
     } else if ((normDocType === "FITNESS" || normDocType === "FITNESS_CERTIFICATE") && doc.expiry_date) {
       vehSyncUpdates.fitness_expiry_date = doc.expiry_date;
     }
@@ -3187,6 +3189,8 @@ export async function updateVehicleDocumentAction(
     expiry_date?: string | null;
     status?: string | null;
     vehicle_id?: string;
+    insurance_vendor_id?: string | null;
+    insurance_vendor?: string | null;
   }
 ): Promise<{
   success: boolean;
@@ -3241,9 +3245,11 @@ export async function updateVehicleDocumentAction(
       if ((normDocType === "PUC" || normDocType === "PUC_CERTIFICATE") && data.expiry_date) {
         vehSyncUpdates.puc_expiry_date = data.expiry_date;
         if (data.document_number) vehSyncUpdates.puc_certificate_number = data.document_number.trim();
-      } else if ((normDocType === "INSURANCE" || normDocType === "INSURANCE_POLICY") && data.expiry_date) {
-        vehSyncUpdates.insurance_expiry_date = data.expiry_date;
+      } else if (normDocType === "INSURANCE" || normDocType === "INSURANCE_POLICY") {
+        if (data.expiry_date) vehSyncUpdates.insurance_expiry_date = data.expiry_date;
         if (data.document_number) vehSyncUpdates.insurance_policy_number = data.document_number.trim();
+        if (updates.insurance_vendor_id) vehSyncUpdates.insurance_vendor_id = updates.insurance_vendor_id;
+        if (updates.insurance_vendor) vehSyncUpdates.insurance_vendor = updates.insurance_vendor;
       } else if ((normDocType === "FITNESS" || normDocType === "FITNESS_CERTIFICATE") && data.expiry_date) {
         vehSyncUpdates.fitness_expiry_date = data.expiry_date;
       }

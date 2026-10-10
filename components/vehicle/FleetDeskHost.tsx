@@ -852,6 +852,8 @@ export default function FleetDeskHost({
   const [dossierNewDocTitle, setDossierNewDocTitle] = useState("");
   const [dossierNewDocNumber, setDossierNewDocNumber] = useState("");
   const [dossierNewDocExpiry, setDossierNewDocExpiry] = useState("");
+  const [dossierNewDocVendorId, setDossierNewDocVendorId] = useState("");
+  const [dossierNewDocVendorName, setDossierNewDocVendorName] = useState("");
   const [dossierUploadingDoc, setDossierUploadingDoc] = useState(false);
   const [dossierDocCategoryFilter, setDossierDocCategoryFilter] = useState<string>("ALL");
   const [dossierDocScanStatusFilter, setDossierDocScanStatusFilter] = useState<"ALL" | "ATTACHED" | "PENDING">("ALL");
@@ -880,6 +882,8 @@ export default function FleetDeskHost({
   const [editModalDocTitle, setEditModalDocTitle] = useState<string>("");
   const [editModalDocNumber, setEditModalDocNumber] = useState<string>("");
   const [editModalDocExpiry, setEditModalDocExpiry] = useState<string>("");
+  const [editModalDocVendorId, setEditModalDocVendorId] = useState<string>("");
+  const [editModalDocVendorName, setEditModalDocVendorName] = useState<string>("");
   const [editModalDocStatus, setEditModalDocStatus] = useState<string>("VALID");
   const [editModalDocFile, setEditModalDocFile] = useState<File | null>(null);
   const [editModalDocFileBase64, setEditModalDocFileBase64] = useState<string>("");
@@ -1146,6 +1150,8 @@ export default function FleetDeskHost({
   const [newDocTitle, setNewDocTitle] = useState<string>("");
   const [newDocNumber, setNewDocNumber] = useState<string>("");
   const [newDocExpiry, setNewDocExpiry] = useState<string>("");
+  const [newDocVendorId, setNewDocVendorId] = useState<string>("");
+  const [newDocVendorName, setNewDocVendorName] = useState<string>("");
   const [isDraggingNewVehicleDoc, setIsDraggingNewVehicleDoc] = useState<boolean>(false);
   const newVehicleDocFileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -1214,6 +1220,8 @@ export default function FleetDeskHost({
   const [editDocTitle, setEditDocTitle] = useState<string>("");
   const [editDocNumber, setEditDocNumber] = useState<string>("");
   const [editDocExpiry, setEditDocExpiry] = useState<string>("");
+  const [editDocVendorId, setEditDocVendorId] = useState<string>("");
+  const [editDocVendorName, setEditDocVendorName] = useState<string>("");
   const [isDraggingEditVehicleDoc, setIsDraggingEditVehicleDoc] = useState<boolean>(false);
   const editVehicleDocFileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -1538,7 +1546,9 @@ export default function FleetDeskHost({
     docTypeOverride?: string,
     docTitleOverride?: string,
     docNumberOverride?: string,
-    docExpiryOverride?: string
+    docExpiryOverride?: string,
+    vendorIdOverride?: string,
+    vendorNameOverride?: string
   ) => {
     const files = Array.from(fileList);
     if (!files.length) return;
@@ -1576,7 +1586,11 @@ export default function FleetDeskHost({
         }
 
         const typeOption = VEHICLE_DOC_TYPES.find((t) => t.value === detectedType);
-        const autoTitle = docTitleOverride?.trim() || `${typeOption?.label || "Vehicle Document"} - ${file.name.replace(/\.[^/.]+$/, "")}`;
+        const autoTitle = docTitleOverride?.trim() || (
+          detectedType === "INSURANCE" && vendorNameOverride
+            ? `${vendorNameOverride} — Insurance Policy & Cover Note`
+            : `${typeOption?.label || "Vehicle Document"} - ${file.name.replace(/\.[^/.]+$/, "")}`
+        );
 
         const newDoc: VehicleDocumentRecord = {
           id: `vdoc-temp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -1591,6 +1605,10 @@ export default function FleetDeskHost({
           file_url: base64Url,
           uploaded_at: new Date().toISOString()
         };
+        if (detectedType === "INSURANCE") {
+          if (vendorIdOverride) (newDoc as any).insurance_vendor_id = vendorIdOverride;
+          if (vendorNameOverride) (newDoc as any).insurance_vendor = vendorNameOverride;
+        }
 
         setDocs((prev) => {
           const existing = prev.find(
@@ -3801,6 +3819,8 @@ export default function FleetDeskHost({
     documentNumber?: string | null;
     expiryDate?: string | null;
     replaceDocId?: string;
+    insuranceVendorId?: string | null;
+    insuranceVendor?: string | null;
   }) => {
     if (!viewingVehicle) return;
     setDossierUploadingDoc(true);
@@ -3819,8 +3839,10 @@ export default function FleetDeskHost({
         file_size: formatFileSize(params.file.size),
         file_type: params.file.type || resolveMimeFromName(params.file.name),
         file_url: params.base64Url,
-        status: "VALID"
-      });
+        status: "VALID",
+        insurance_vendor_id: params.insuranceVendorId || undefined,
+        insurance_vendor: params.insuranceVendor || undefined
+      } as any);
 
       if (res.success && res.document) {
         const normDocType = (params.docType || "").toUpperCase();
@@ -3829,10 +3851,14 @@ export default function FleetDeskHost({
           dynUpdates.puc_expiry_date = params.expiryDate;
           dynUpdates.puc_expire_days = calculateDaysRemaining(params.expiryDate);
           if (params.documentNumber) dynUpdates.puc_certificate_number = params.documentNumber;
-        } else if ((normDocType === "INSURANCE" || normDocType === "INSURANCE_POLICY") && params.expiryDate) {
-          dynUpdates.insurance_expiry_date = params.expiryDate;
-          dynUpdates.insurance_expire_days = calculateDaysRemaining(params.expiryDate);
+        } else if (normDocType === "INSURANCE" || normDocType === "INSURANCE_POLICY") {
+          if (params.expiryDate) {
+            dynUpdates.insurance_expiry_date = params.expiryDate;
+            dynUpdates.insurance_expire_days = calculateDaysRemaining(params.expiryDate);
+          }
           if (params.documentNumber) dynUpdates.insurance_policy_number = params.documentNumber;
+          if (params.insuranceVendor) dynUpdates.insurance_vendor = params.insuranceVendor;
+          if (params.insuranceVendorId) dynUpdates.insurance_vendor_id = params.insuranceVendorId;
         } else if ((normDocType === "FITNESS" || normDocType === "FITNESS_CERTIFICATE") && params.expiryDate) {
           dynUpdates.fitness_expiry_date = params.expiryDate;
         }
@@ -3859,6 +3885,8 @@ export default function FleetDeskHost({
         setDossierNewDocTitle("");
         setDossierNewDocNumber("");
         setDossierNewDocExpiry("");
+        setDossierNewDocVendorId("");
+        setDossierNewDocVendorName("");
         setIsDossierAddDocOpen(false);
       } else {
         triggerToast(res.error || `Failed to save ${params.file.name} to vehicle vault.`, true);
@@ -4012,7 +4040,9 @@ export default function FleetDeskHost({
       docType: targetDocType,
       title: resolvedTitle,
       documentNumber: docNumber,
-      expiryDate
+      expiryDate,
+      insuranceVendorId: targetDocType === "INSURANCE" ? dossierNewDocVendorId : undefined,
+      insuranceVendor: targetDocType === "INSURANCE" ? dossierNewDocVendorName : undefined
     });
   };
 
@@ -4028,7 +4058,9 @@ export default function FleetDeskHost({
       docType,
       title: versionedTitle,
       documentNumber,
-      expiryDate
+      expiryDate,
+      insuranceVendorId: docType === "INSURANCE" ? dossierNewDocVendorId : undefined,
+      insuranceVendor: docType === "INSURANCE" ? dossierNewDocVendorName : undefined
     });
     triggerToast(`Document uploaded successfully as Version ${nextVersion}`);
   };
@@ -4047,7 +4079,9 @@ export default function FleetDeskHost({
       title: docTitle,
       documentNumber,
       expiryDate,
-      replaceDocId: replaceId
+      replaceDocId: replaceId,
+      insuranceVendorId: docType === "INSURANCE" ? dossierNewDocVendorId : undefined,
+      insuranceVendor: docType === "INSURANCE" ? dossierNewDocVendorName : undefined
     });
     triggerToast("Existing document replaced successfully with new scan.");
   };
@@ -4252,11 +4286,14 @@ export default function FleetDeskHost({
       setDossierOriginTab(vehicleDossierTab);
     }
     setEditModalDoc(doc);
-    setEditModalDocType(doc.doc_type || "OTHER");
+    const initialDocType = doc.doc_type || "OTHER";
+    setEditModalDocType(initialDocType);
     setEditModalDocTitle(doc.title || doc.file_name || "");
     setEditModalDocNumber(doc.document_number || "");
     setEditModalDocExpiry(doc.expiry_date ? String(doc.expiry_date).split("T")[0] : "");
     setEditModalDocStatus(doc.status || "VALID");
+    setEditModalDocVendorId(doc.insurance_vendor_id || viewingVehicle?.insurance_vendor_id || "");
+    setEditModalDocVendorName(doc.insurance_vendor || viewingVehicle?.insurance_vendor || "");
     setEditModalDocFile(null);
     setEditModalDocFileBase64("");
   };
@@ -4265,6 +4302,8 @@ export default function FleetDeskHost({
     setEditModalDoc(null);
     setEditModalDocFile(null);
     setEditModalDocFileBase64("");
+    setEditModalDocVendorId("");
+    setEditModalDocVendorName("");
     if (dossierOriginVehicle) {
       setViewingVehicle(dossierOriginVehicle);
       setVehicleDossierTab(dossierOriginTab || "DOCS");
@@ -4287,6 +4326,11 @@ export default function FleetDeskHost({
         expiry_date: editModalDocExpiry || null,
         status: editModalDocStatus || "VALID"
       };
+
+      if (editModalDocType === "INSURANCE") {
+        if (editModalDocVendorId) updates.insurance_vendor_id = editModalDocVendorId;
+        if (editModalDocVendorName) updates.insurance_vendor = editModalDocVendorName;
+      }
 
       if (editModalDocFile && editModalDocFileBase64) {
         updates.file_name = editModalDocFile.name;
@@ -4323,8 +4367,10 @@ export default function FleetDeskHost({
             file_size: formatFileSize(editModalDocFile.size),
             file_type: editModalDocFile.type || resolveMimeFromName(editModalDocFile.name),
             file_url: editModalDocFileBase64,
-            status: editModalDocStatus || "VALID"
-          });
+            status: editModalDocStatus || "VALID",
+            insurance_vendor_id: editModalDocType === "INSURANCE" ? editModalDocVendorId : undefined,
+            insurance_vendor: editModalDocType === "INSURANCE" ? editModalDocVendorName : undefined
+          } as any);
         }
 
         // Also update master columns on vehicles table
@@ -4337,6 +4383,8 @@ export default function FleetDeskHost({
           if (editModalDocNumber.trim()) vehUpdates.insurance_policy_number = editModalDocNumber.trim();
           if (editModalDocExpiry) vehUpdates.insurance_expiry_date = editModalDocExpiry;
           if (res?.document?.file_url) vehUpdates.insurance_doc_url = res.document.file_url;
+          if (editModalDocVendorId) vehUpdates.insurance_vendor_id = editModalDocVendorId;
+          if (editModalDocVendorName) vehUpdates.insurance_vendor = editModalDocVendorName;
         } else if (editModalDocType === "PUC" || (docId && docId.startsWith("master-doc-puc"))) {
           if (editModalDocNumber.trim()) vehUpdates.puc_certificate_number = editModalDocNumber.trim();
           if (editModalDocExpiry) vehUpdates.puc_expiry_date = editModalDocExpiry;
@@ -9146,6 +9194,10 @@ export default function FleetDeskHost({
                         if (match && (!newDocTitle || VEHICLE_DOC_TYPES.some(t => t.label === newDocTitle))) {
                           setNewDocTitle(match.label);
                         }
+                        if (val !== "INSURANCE") {
+                          setNewDocVendorId("");
+                          setNewDocVendorName("");
+                        }
                       }}
                       className="w-full h-9 rounded-lg border border-border bg-surface px-2.5 text-xs font-semibold text-foreground focus:outline-none focus:border-theme-btn-primary shadow-2xs"
                     >
@@ -9154,6 +9206,39 @@ export default function FleetDeskHost({
                       ))}
                     </select>
                   </div>
+
+                  {newDocType === "INSURANCE" && (
+                    <div className="sm:col-span-2 lg:col-span-1">
+                      <label className="font-semibold text-foreground block mb-1 flex items-center gap-1">
+                        <Shield className="h-3.5 w-3.5 text-theme-btn-primary" />
+                        <span>Insurance Vendor *</span>
+                      </label>
+                      <select
+                        value={newDocVendorId}
+                        onChange={(e) => {
+                          const vId = e.target.value;
+                          setNewDocVendorId(vId);
+                          const matched = insuranceVendors.find(v => v.id === vId);
+                          const vName = matched ? matched.name : "";
+                          setNewDocVendorName(vName);
+                          if (vId) {
+                            setNewVehicleInsuranceVendorId(vId);
+                            setNewVehicleInsuranceVendor(vName);
+                            setNewDocTitle(`${vName} — Insurance Policy & Cover Note`);
+                          }
+                        }}
+                        className="w-full h-9 rounded-lg border border-theme-btn-primary/50 bg-theme-btn-primary/5 px-2.5 text-xs font-semibold text-foreground focus:outline-none focus:border-theme-btn-primary shadow-2xs cursor-pointer"
+                      >
+                        <option value="">— Select Insurance Vendor —</option>
+                        {insuranceVendors.map((vendor) => (
+                          <option key={vendor.id} value={vendor.id}>
+                            {vendor.name} {vendor.code ? `(${vendor.code})` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
                   <div>
                     <label className="font-semibold text-foreground block mb-1">Document Title / Note</label>
                     <AppInput
@@ -9195,7 +9280,9 @@ export default function FleetDeskHost({
                         newDocType,
                         newDocTitle,
                         newDocNumber,
-                        newDocExpiry
+                        newDocExpiry,
+                        newDocVendorId,
+                        newDocVendorName
                       );
                       setNewDocTitle("");
                       setNewDocNumber("");
@@ -9221,7 +9308,9 @@ export default function FleetDeskHost({
                           newDocType,
                           newDocTitle,
                           newDocNumber,
-                          newDocExpiry
+                          newDocExpiry,
+                          newDocVendorId,
+                          newDocVendorName
                         );
                         setNewDocTitle("");
                         setNewDocNumber("");
@@ -15580,6 +15669,10 @@ export default function FleetDeskHost({
                         if (match && (!editDocTitle || VEHICLE_DOC_TYPES.some(t => t.label === editDocTitle))) {
                           setEditDocTitle(match.label);
                         }
+                        if (val !== "INSURANCE") {
+                          setEditDocVendorId("");
+                          setEditDocVendorName("");
+                        }
                       }}
                       className="w-full h-9 rounded-lg border border-border bg-surface px-2.5 text-xs font-semibold text-foreground focus:outline-none focus:border-theme-btn-primary shadow-2xs"
                     >
@@ -15588,6 +15681,39 @@ export default function FleetDeskHost({
                       ))}
                     </select>
                   </div>
+
+                  {editDocType === "INSURANCE" && (
+                    <div className="sm:col-span-2 lg:col-span-1">
+                      <label className="font-semibold text-foreground block mb-1 flex items-center gap-1">
+                        <Shield className="h-3.5 w-3.5 text-theme-btn-primary" />
+                        <span>Insurance Vendor *</span>
+                      </label>
+                      <select
+                        value={editDocVendorId}
+                        onChange={(e) => {
+                          const vId = e.target.value;
+                          setEditDocVendorId(vId);
+                          const matched = insuranceVendors.find(v => v.id === vId);
+                          const vName = matched ? matched.name : "";
+                          setEditDocVendorName(vName);
+                          if (vId) {
+                            setEditVehicleInsuranceVendorId(vId);
+                            setEditVehicleInsuranceVendor(vName);
+                            setEditDocTitle(`${vName} — Insurance Policy & Cover Note`);
+                          }
+                        }}
+                        className="w-full h-9 rounded-lg border border-theme-btn-primary/50 bg-theme-btn-primary/5 px-2.5 text-xs font-semibold text-foreground focus:outline-none focus:border-theme-btn-primary shadow-2xs cursor-pointer"
+                      >
+                        <option value="">— Select Insurance Vendor —</option>
+                        {insuranceVendors.map((vendor) => (
+                          <option key={vendor.id} value={vendor.id}>
+                            {vendor.name} {vendor.code ? `(${vendor.code})` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
                   <div>
                     <label className="font-semibold text-foreground block mb-1">Document Title / Note</label>
                     <AppInput
@@ -15629,7 +15755,9 @@ export default function FleetDeskHost({
                         editDocType,
                         editDocTitle,
                         editDocNumber,
-                        editDocExpiry
+                        editDocExpiry,
+                        editDocVendorId,
+                        editDocVendorName
                       );
                       setEditDocTitle("");
                       setEditDocNumber("");
@@ -15655,7 +15783,9 @@ export default function FleetDeskHost({
                           editDocType,
                           editDocTitle,
                           editDocNumber,
-                          editDocExpiry
+                          editDocExpiry,
+                          editDocVendorId,
+                          editDocVendorName
                         );
                         setEditDocTitle("");
                         setEditDocNumber("");
@@ -22342,7 +22472,14 @@ export default function FleetDeskHost({
                       <label className="text-xs font-semibold text-foreground block mb-1">Document Category</label>
                       <select
                         value={dossierNewDocType}
-                        onChange={(e) => setDossierNewDocType(e.target.value)}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setDossierNewDocType(val);
+                          if (val !== "INSURANCE") {
+                            setDossierNewDocVendorId("");
+                            setDossierNewDocVendorName("");
+                          }
+                        }}
                         className="w-full text-xs py-1.5 px-2.5 rounded-lg border border-border bg-surface text-foreground focus:outline-none focus:border-theme-btn-primary"
                       >
                         {VEHICLE_DOC_TYPES.map((t) => (
@@ -22350,6 +22487,36 @@ export default function FleetDeskHost({
                         ))}
                       </select>
                     </div>
+
+                    {dossierNewDocType === "INSURANCE" && (
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1 flex items-center gap-1">
+                          <Shield className="h-3.5 w-3.5 text-theme-btn-primary" />
+                          <span>Insurance Vendor *</span>
+                        </label>
+                        <select
+                          value={dossierNewDocVendorId}
+                          onChange={(e) => {
+                            const vId = e.target.value;
+                            setDossierNewDocVendorId(vId);
+                            const matched = insuranceVendors.find(v => v.id === vId);
+                            const vName = matched ? matched.name : "";
+                            setDossierNewDocVendorName(vName);
+                            if (vName && (!dossierNewDocTitle || dossierNewDocTitle.includes("Insurance Policy"))) {
+                              setDossierNewDocTitle(`${vName} — Insurance Policy & Cover Note`);
+                            }
+                          }}
+                          className="w-full text-xs py-1.5 px-2.5 rounded-lg border border-theme-btn-primary/50 bg-theme-btn-primary/5 text-foreground focus:outline-none focus:border-theme-btn-primary cursor-pointer"
+                        >
+                          <option value="">— Select Insurance Vendor —</option>
+                          {insuranceVendors.map((vendor) => (
+                            <option key={vendor.id} value={vendor.id}>
+                              {vendor.name} {vendor.code ? `(${vendor.code})` : ""}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
 
                     <div>
                       <label className="text-xs font-semibold text-foreground block mb-1">Document Title (Optional)</label>
@@ -24497,12 +24664,19 @@ export default function FleetDeskHost({
                   </label>
                   <select
                     value={editModalDocType}
-                    onChange={(e) => setEditModalDocType(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setEditModalDocType(val);
+                      if (val !== "INSURANCE") {
+                        setEditModalDocVendorId("");
+                        setEditModalDocVendorName("");
+                      }
+                    }}
                     className="w-full text-xs p-2.5 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none cursor-pointer"
                     required
                   >
                     <option value="RC">RC (Registration Certificate)</option>
-                    <option value="INSURANCE">Insurance Policy</option>
+                    <option value="INSURANCE">Insurance Policy & Cover Note</option>
                     <option value="PUC">PUC (Pollution Certificate)</option>
                     <option value="FITNESS">Fitness Certificate</option>
                     <option value="TAX_RECEIPT">Tax Receipt / Road Tax</option>
@@ -24514,6 +24688,36 @@ export default function FleetDeskHost({
                     <option value="OTHER">Other Document</option>
                   </select>
                 </div>
+
+                {editModalDocType === "INSURANCE" && (
+                  <div className="sm:col-span-2">
+                    <label className="text-xs font-semibold text-foreground block mb-1.5 flex items-center gap-1">
+                      <Shield className="h-3.5 w-3.5 text-theme-btn-primary" />
+                      <span>Insurance Vendor / Underwriter *</span>
+                    </label>
+                    <select
+                      value={editModalDocVendorId}
+                      onChange={(e) => {
+                        const vId = e.target.value;
+                        setEditModalDocVendorId(vId);
+                        const matched = insuranceVendors.find(v => v.id === vId);
+                        const vName = matched ? matched.name : "";
+                        setEditModalDocVendorName(vName);
+                        if (vName && (!editModalDocTitle || editModalDocTitle.includes("Insurance Policy"))) {
+                          setEditModalDocTitle(`${vName} — Insurance Policy & Cover Note`);
+                        }
+                      }}
+                      className="w-full text-xs p-2.5 rounded-lg border border-theme-btn-primary/50 bg-theme-btn-primary/5 text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none cursor-pointer"
+                    >
+                      <option value="">— Select Insurance Vendor —</option>
+                      {insuranceVendors.map((vendor) => (
+                        <option key={vendor.id} value={vendor.id}>
+                          {vendor.name} {vendor.code ? `(${vendor.code})` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 <div>
                   <label className="text-xs font-semibold text-foreground block mb-1.5">
