@@ -231,6 +231,7 @@ const designNavGroups: NavGroup[] = [
   {
     label: "Directory & Governance",
     items: [
+      { label: "Learning & Lifecycle Guide", href: "/design/learning", icon: BookOpen },
       { label: "Consultant Directory", href: "/design/consultants", icon: Users },
       { label: "Design Analytics", href: "/design/reports", icon: LineChart },
       { label: "RBAC Access Policies", href: "/design/rbac", icon: Key, permission: "USERS_VIEW" },

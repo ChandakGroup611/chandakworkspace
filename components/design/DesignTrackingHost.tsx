@@ -26,7 +26,8 @@ import {
   RotateCcw,
   LineChart,
   Send,
-  HelpCircle
+  HelpCircle,
+  BookOpen
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { AppTableSkeleton } from "@/components/ui/AppSkeleton";
@@ -104,6 +105,10 @@ const DesignRbacGovernance = dynamic(() => import("../../Design_Tracking/src/com
 const DataEntryFormsModal = dynamic(() => import("../../Design_Tracking/src/components/DataEntryFormsModal").then(m => m.DataEntryFormsModal), {
   ssr: false
 });
+const DesignLearningGuide = dynamic(() => import("./DesignLearningGuide"), {
+  ssr: false,
+  loading: () => <AppTableSkeleton rows={8} />
+});
 import { DesignMasterStore } from "../../Design_Tracking/src/services/designMasterStore";
 import { DrawingItem, DrawingStatus, ConsultantPartner, GfcRelease } from "../../Design_Tracking/src/types";
 
@@ -143,7 +148,8 @@ type ActiveTabType =
   | "TEMPLATES"
   | "REPORTS" 
   | "RBAC"
-  | "MASTERS";
+  | "MASTERS"
+  | "LEARNING";
 
 // In-memory cache timestamp to prevent redundant database hydration on tab switching
 let lastDesignAccessHydratedTimestamp = 0;
@@ -212,6 +218,7 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
     const currentPath = (pathname || "/design").toLowerCase();
     const combined = `${currentPath}/${slugStr}`;
 
+    if (combined.includes("/design/learning") || combined.includes("learning") || combined.includes("guide") || combined.includes("lifecycle") || combined.includes("flowchart") || combined.includes("playbook") || combined.includes("sop")) return "LEARNING";
     if (combined.includes("/design/dms") || combined.includes("folder-repo") || combined.includes("doc-repo") || combined.includes("repository")) return "DMS";
     if (combined.includes("building-matrix") || combined.includes("section-matrix") || combined.includes("heat-matrix") || combined.includes("floor-matrix")) return "BUILDING_MATRIX";
     if (combined.includes("sub-package") || combined.includes("subpackage") || combined.includes("/design/sub-packages")) return "SUB_PACKAGES";
@@ -261,7 +268,8 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
       TEMPLATES: "/design/templates",
       REPORTS: "/design/reports",
       RBAC: "/design/rbac",
-      MASTERS: "/design/masters"
+      MASTERS: "/design/masters",
+      LEARNING: "/design/learning"
     };
     router.push(routeMap[tab]);
   };
@@ -438,6 +446,20 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
             <div className="flex items-center gap-2 shrink-0">
               <button
                 type="button"
+                onClick={() => handleTabChange("LEARNING")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-colors cursor-pointer ${
+                  activeTab === "LEARNING"
+                    ? "bg-theme-btn-primary/15 border-theme-btn-primary/30 text-theme-btn-primary font-bold shadow-sm"
+                    : "border-border bg-surface hover:bg-surface/80 text-foreground"
+                }`}
+                title="View End-to-End Workflow & Lifecycle Guide"
+              >
+                <BookOpen className="h-3.5 w-3.5 text-theme-icon" />
+                <span>Learning & Playbook</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => setIsDataEntryOpen(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface hover:bg-surface/80 text-foreground text-xs font-semibold transition-colors cursor-pointer"
                 title="Open quick data entry form"
@@ -596,6 +618,11 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
           {/* Tab 15: Masters Setup View */}
           {activeTab === "MASTERS" && (
             <MastersSetupView initialSubTab="PROJECTS" />
+          )}
+
+          {/* Tab 16: Learning, Architecture & Lifecycle Guide */}
+          {activeTab === "LEARNING" && (
+            <DesignLearningGuide onNavigateTab={(tabRoute) => router.push(tabRoute)} />
           )}
         </>
       )}
