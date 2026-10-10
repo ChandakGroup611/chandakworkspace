@@ -13,6 +13,20 @@ async function getSupabase() {
   }
 }
 
+export interface DmsFolderPermissionItem {
+  id: string;
+  folderId: string;
+  userId?: string | null;
+  userEmail?: string;
+  userName?: string;
+  roleCode?: string | null;
+  canView: boolean;
+  canUpload: boolean;
+  canDownload: boolean;
+  canDelete: boolean;
+  canManage: boolean;
+}
+
 export interface DmsFolderNode {
   id: string;
   workspaceId: string;
@@ -726,3 +740,150 @@ export async function submitQcDecisionAction(params: {
     return { success: false, error: err.message || "Failed to record QC decision" };
   }
 }
+
+// ==============================================================================
+// 10. Folder-Level Granular Permissions (View, Upload, Download, Delete, Manage)
+// ==============================================================================
+
+export async function fetchFolderPermissionsAction(folderId: string): Promise<{
+  success: boolean;
+  inheritPermissions?: boolean;
+  permissions?: DmsFolderPermissionItem[];
+  error?: string;
+}> {
+  try {
+    const supabase = await getSupabase();
+
+    // Check folder inherit_permissions flag
+    const { data: folderData } = await supabase
+      .from("dms_folders")
+      .select("id, inherit_permissions")
+      .eq("id", folderId)
+      .maybeSingle();
+
+    const { data: permsData, error: permsErr } = await supabase
+      .from("dms_folder_permissions")
+      .select("*")
+      .eq("folder_id", folderId)
+      .order("created_at", { ascending: true });
+
+    if (permsErr) {
+      console.warn("dms_folder_permissions table query warning:", permsErr);
+      return {
+        success: true,
+        inheritPermissions: folderData?.inherit_permissions ?? true,
+        permissions: []
+      };
+    }
+
+    const permissions: DmsFolderPermissionItem[] = (permsData || []).map((p: any) => ({
+      id: p.id,
+      folderId: p.folder_id,
+      userId: p.user_id,
+      userEmail: p.user_email,
+      userName: p.user_name,
+      roleCode: p.role_code,
+      canView: !!p.can_view,
+      canUpload: !!p.can_upload,
+      canDownload: !!p.can_download,
+      canDelete: !!p.can_delete,
+      canManage: !!p.can_manage
+    }));
+
+    return {
+      success: true,
+      inheritPermissions: folderData?.inherit_permissions ?? true,
+      permissions
+    };
+  } catch (err: any) {
+    console.error("[fetchFolderPermissionsAction] Error:", err);
+    return { success: false, error: err.message || "Failed to load folder permissions" };
+  }
+}
+
+export async function saveFolderPermissionsAction(params: {
+  folderId: string;
+  inheritPermissions: boolean;
+  permissions: Array<{
+    id?: string;
+    userId?: string | null;
+    userEmail?: string;
+    userName?: string;
+    roleCode?: string | null;
+    canView: boolean;
+    canUpload: boolean;
+    canDownload: boolean;
+    canDelete: boolean;
+    canManage: boolean;
+  }>;
+}): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await getSupabase();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    // 1. Update folder inherit_permissions flag
+    await supabase
+      .from("dms_folders")
+      .update({
+        inherit_permissions: params.inheritPermissions,
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", params.folderId);
+
+    // 2. Clear old permissions for this folder
+    await supabase
+      .from("dms_folder_permissions")
+      .delete()
+      .eq("folder_id", params.folderId);
+
+    // 3. Batch insert new permission records
+    if (params.permissions && params.permissions.length > 0) {
+      const rowsToInsert = params.permissions.map(p => ({
+        folder_id: params.folderId,
+        user_id: p.userId || null,
+        user_email: p.userEmail || null,
+        user_name: p.userName || null,
+        role_code: p.roleCode || null,
+        can_view: p.canView,
+        can_upload: p.canUpload,
+        can_download: p.canDownload,
+        can_delete: p.canDelete,
+        can_manage: p.canManage,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }));
+
+      const { error: insertErr } = await supabase
+        .from("dms_folder_permissions")
+        .insert(rowsToInsert);
+
+      if (insertErr) throw insertErr;
+    }
+
+    // 4. Log Audit Event
+    try {
+      await supabase.from("dms_audit_logs").insert({
+        actor_id: user?.id || null,
+        actor_email: user?.email || "system",
+        action: "UPDATE_FOLDER_PERMISSIONS",
+        entity_type: "FOLDER",
+        entity_id: params.folderId,
+        details: {
+          inheritPermissions: params.inheritPermissions,
+          assignedCount: params.permissions.length,
+          timestamp: new Date().toISOString()
+        }
+      });
+    } catch {
+      // Non-blocking audit log
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    console.error("[saveFolderPermissionsAction] Error:", err);
+    return { success: false, error: err.message || "Failed to save folder permissions" };
+  }
+}
+

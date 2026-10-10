@@ -39,6 +39,7 @@ import {
   submitQcDecisionAction
 } from "@/lib/actions/dms-core";
 import { DmsSplitIndexingWizard } from "./DmsSplitIndexingWizard";
+import { DmsFolderPermissionsModal } from "./DmsFolderPermissionsModal";
 
 interface DmsFolderRepositoryProps {
   workspaceId?: string;
@@ -73,6 +74,10 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
 
   // Split Indexing Wizard Modal State
   const [showIndexingWizard, setShowIndexingWizard] = useState<boolean>(false);
+
+  // Folder Permissions Modal State
+  const [showPermissionsModal, setShowPermissionsModal] = useState<boolean>(false);
+  const [folderForPermissions, setFolderForPermissions] = useState<DmsFolderNode | null>(null);
 
   // Selected document detail drawer
   const [selectedDoc, setSelectedDoc] = useState<DmsDocumentSummary | null>(null);
@@ -202,7 +207,7 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
     const hasChildren = node.children && node.children.length > 0;
 
     return (
-      <div key={node.id} className="select-none">
+      <div key={node.id} className="select-none group">
         <div
           onClick={() => setSelectedFolder(node)}
           className={`flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all ${
@@ -235,11 +240,25 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
             <span className="truncate">{node.name}</span>
           </div>
 
-          {node.documentCount !== undefined && node.documentCount > 0 && (
-            <span className="text-[10px] font-mono text-muted-foreground px-1.5 py-0.5 rounded-full bg-surface border border-border">
-              {node.documentCount}
-            </span>
-          )}
+          <div className="flex items-center gap-1 shrink-0">
+            {node.documentCount !== undefined && node.documentCount > 0 && (
+              <span className="text-[10px] font-mono text-muted-foreground px-1.5 py-0.5 rounded-full bg-surface border border-border">
+                {node.documentCount}
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setFolderForPermissions(node);
+                setShowPermissionsModal(true);
+              }}
+              className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-theme-btn-primary/10 text-muted-foreground hover:text-theme-btn-primary transition-opacity"
+              title="Folder Access & Permissions"
+            >
+              <ShieldCheck className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
 
         {hasChildren && isExpanded && (
@@ -272,8 +291,22 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
 
         <div className="flex items-center gap-2">
           <button
+            onClick={() => {
+              if (selectedFolder) {
+                setFolderForPermissions(selectedFolder);
+                setShowPermissionsModal(true);
+              }
+            }}
+            disabled={!selectedFolder}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-surface hover:bg-surface text-foreground transition-colors disabled:opacity-50 cursor-pointer"
+            title="Configure folder access & user permissions"
+          >
+            <ShieldCheck className="h-3.5 w-3.5 text-theme-btn-primary" />
+            <span>Folder Access</span>
+          </button>
+          <button
             onClick={() => setShowCreateFolderModal(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-surface hover:bg-surface text-foreground transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-surface hover:bg-surface text-foreground transition-colors cursor-pointer"
           >
             <FolderPlus className="h-3.5 w-3.5 text-amber-500" />
             <span>New Folder</span>
@@ -281,7 +314,7 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
           <button
             onClick={() => setShowIndexingWizard(true)}
             disabled={!selectedFolder}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-lg bg-theme-btn-primary text-theme-btn-primary-text hover:brightness-110 shadow-xs transition-all disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-lg bg-theme-btn-primary text-theme-btn-primary-text hover:brightness-110 shadow-xs transition-all disabled:opacity-50 cursor-pointer"
           >
             <Upload className="h-3.5 w-3.5" />
             <span>Upload & Index</span>
@@ -582,6 +615,22 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
           loadFolderTree();
         }}
       />
+
+      {/* FOLDER PERMISSIONS & ACCESS CONTROL MODAL */}
+      {showPermissionsModal && folderForPermissions && (
+        <DmsFolderPermissionsModal
+          folder={folderForPermissions}
+          isOpen={showPermissionsModal}
+          onClose={() => {
+            setShowPermissionsModal(false);
+            setFolderForPermissions(null);
+          }}
+          onPermissionsUpdated={() => {
+            loadFolderTree();
+          }}
+          currentUser={currentUser}
+        />
+      )}
     </div>
   );
 };
