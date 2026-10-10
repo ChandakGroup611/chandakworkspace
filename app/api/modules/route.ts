@@ -49,28 +49,6 @@ const DEFAULT_MODULES = [
     is_active: true,
     is_default: false,
   },
-  {
-    id: "mod-learning",
-    code: "LEARNING_HUB",
-    name: "Enterprise Learning Hub",
-    description: "System Architecture, Module Connections & Playbooks",
-    icon: "BookOpen",
-    route_path: "/learning",
-    display_order: 5,
-    is_active: true,
-    is_default: false,
-  },
-  {
-    id: "mod-amc",
-    code: "AMC_CONTRACTS",
-    name: "AMC & Subscriptions",
-    description: "Maintenance Contracts & Equipment Warranties",
-    icon: "ShieldCheck",
-    route_path: "/amc",
-    display_order: 6,
-    is_active: true,
-    is_default: false,
-  },
 ];
 
 export async function GET(request: NextRequest) {
