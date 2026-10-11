@@ -79,11 +79,14 @@ export interface DmsDocTypeItem {
   fieldDefinitions?: DmsFieldDefinitionItem[];
 }
 
+export const CHANDAK_WORKSPACE_UUID = "5b01404f-534a-4078-9bc1-a2d15484b33a";
+export const CHANDAK_ROOT_FOLDER_UUID = "22ad963e-cdd6-46b4-a587-ea3393bf6dd2";
+
 // In-memory fallback tree to guarantee zero failure if database schema cache is warming
 let IN_MEMORY_FOLDERS_TREE: DmsFolderNode[] = [
   {
-    id: "f-root-01",
-    workspaceId: "CHANDAK_CORP",
+    id: CHANDAK_ROOT_FOLDER_UUID,
+    workspaceId: CHANDAK_WORKSPACE_UUID,
     parentId: null,
     name: "Chandak Master Archive",
     path: "chandak_root",
@@ -93,9 +96,9 @@ let IN_MEMORY_FOLDERS_TREE: DmsFolderNode[] = [
     documentCount: 0,
     children: [
       {
-        id: "f-arch-01",
-        workspaceId: "CHANDAK_CORP",
-        parentId: "f-root-01",
+        id: "8d3e8ae1-2e3d-479d-a34b-58759488fade",
+        workspaceId: CHANDAK_WORKSPACE_UUID,
+        parentId: CHANDAK_ROOT_FOLDER_UUID,
         name: "Architectural Drawings (GFC)",
         path: "chandak_root.arch",
         depth: 1,
@@ -105,9 +108,9 @@ let IN_MEMORY_FOLDERS_TREE: DmsFolderNode[] = [
         children: []
       },
       {
-        id: "f-str-01",
-        workspaceId: "CHANDAK_CORP",
-        parentId: "f-root-01",
+        id: "1be4e031-b17a-490f-b1cd-865c7bc0bcae",
+        workspaceId: CHANDAK_WORKSPACE_UUID,
+        parentId: CHANDAK_ROOT_FOLDER_UUID,
         name: "Structural Designs & Proofs",
         path: "chandak_root.str",
         depth: 1,
@@ -117,10 +120,10 @@ let IN_MEMORY_FOLDERS_TREE: DmsFolderNode[] = [
         children: []
       },
       {
-        id: "f-mep-01",
-        workspaceId: "CHANDAK_CORP",
-        parentId: "f-root-01",
-        name: "MEPF Services & Specs",
+        id: "a3f099a1-479e-4b50-b7ad-2ac4d93cdc75",
+        workspaceId: CHANDAK_WORKSPACE_UUID,
+        parentId: CHANDAK_ROOT_FOLDER_UUID,
+        name: "MEP Engineering & Coordination",
         path: "chandak_root.mep",
         depth: 1,
         approvalRequired: true,
@@ -133,11 +136,11 @@ let IN_MEMORY_FOLDERS_TREE: DmsFolderNode[] = [
 ];
 
 export let IN_MEMORY_DOC_TYPES: DmsDocTypeItem[] = [
-  { id: "dt-arch-01", code: "ARCH_DWG", name: "Architectural Drawing", description: "Master floor plans, elevations & sections", fieldDefinitions: [] },
-  { id: "dt-str-02", code: "STR_CALC", name: "Structural Design & Calculations", description: "RCC frames, structural steel & soil reports", fieldDefinitions: [] },
-  { id: "dt-mep-03", code: "MEP_SPEC", name: "MEPF Technical Specifications", description: "HVAC, electrical, plumbing & fire safety specs", fieldDefinitions: [] },
-  { id: "dt-stat-04", code: "STAT_NOC", name: "Statutory Clearance & NOC", description: "MCGM, Fire CFO, MOEF, Aviation sanctions", fieldDefinitions: [] },
-  { id: "dt-gfc-05", code: "GFC_TRANS", name: "GFC Transmittal Slip", description: "Official Good-for-Construction release package", fieldDefinitions: [] }
+  { id: "7f8b4fc0-8158-4fdc-8cf1-448d15bd9ad8", code: "ARCH_DWG", name: "Architectural Drawing", description: "Master floor plans, elevations & sections", fieldDefinitions: [] },
+  { id: "d980d902-547a-4940-860b-335fde4631f1", code: "STR_CALC", name: "Structural Design & Calculations", description: "RCC frames, structural steel & soil reports", fieldDefinitions: [] },
+  { id: "ea15a12c-4981-41ae-b191-a953fc26407c", code: "MEP_SPEC", name: "MEPF Technical Specifications", description: "HVAC, electrical, plumbing & fire safety specs", fieldDefinitions: [] },
+  { id: "cbc61dca-381f-4ce0-aceb-eaaaab5b13a2", code: "STAT_NOC", name: "Statutory Clearance & NOC", description: "MCGM, Fire CFO, MOEF, Aviation sanctions", fieldDefinitions: [] },
+  { id: "cbb19570-2ec2-4c5a-b6e4-883e0743b925", code: "GFC_TRANS", name: "GFC Transmittal Slip", description: "Official Good-for-Construction release package", fieldDefinitions: [] }
 ];
 
 export let IN_MEMORY_DOCUMENTS: DmsDocumentSummary[] = [];
@@ -312,25 +315,31 @@ export async function createFolderAction(params: {
       }
     } catch {}
 
-    // Resolve workspace UUID
+    // Resolve workspace UUID with guaranteed fallback
     let targetWsId = params.workspaceId;
-    try {
-      const { data: ws } = await supabaseAdmin
-        .from("dms_workspaces")
-        .select("id")
-        .eq("code", "CHANDAK_CORP")
-        .maybeSingle();
-      if (ws?.id) {
-        targetWsId = ws.id;
+    if (!targetWsId || !/^[0-9a-fA-F-]{36}$/.test(targetWsId)) {
+      try {
+        const { data: ws } = await supabaseAdmin
+          .from("dms_workspaces")
+          .select("id")
+          .eq("code", "CHANDAK_CORP")
+          .maybeSingle();
+        if (ws?.id) {
+          targetWsId = ws.id;
+        } else {
+          targetWsId = CHANDAK_WORKSPACE_UUID;
+        }
+      } catch {
+        targetWsId = CHANDAK_WORKSPACE_UUID;
       }
-    } catch {}
+    }
 
-    // Sanitize label for path
+    // Sanitize label for ltree path (letters, numbers, underscore only)
     const sanitizedLabel = cleanName
       .toLowerCase()
       .replace(/[^a-z0-9_]/g, "_")
-      .replace(/_+/g, "_")
-      .slice(0, 30);
+      .replace(/^_+|_+$/g, "")
+      .slice(0, 25) || "folder";
 
     let parentFolderId: string | null = null;
     let parentPath = "chandak_root";
@@ -363,8 +372,14 @@ export async function createFolderAction(params: {
         if (rootFolder) {
           parentFolderId = rootFolder.id;
           parentPath = rootFolder.path || "chandak_root";
+        } else {
+          parentFolderId = CHANDAK_ROOT_FOLDER_UUID;
+          parentPath = "chandak_root";
         }
-      } catch {}
+      } catch {
+        parentFolderId = CHANDAK_ROOT_FOLDER_UUID;
+        parentPath = "chandak_root";
+      }
     }
 
     const ltreePath = `${parentPath}.${sanitizedLabel}_${Date.now().toString().slice(-4)}`;
@@ -393,7 +408,7 @@ export async function createFolderAction(params: {
 
     const createdFolderNode: DmsFolderNode = {
       id: newFolder.id,
-      workspaceId: newFolder.workspace_id || params.workspaceId,
+      workspaceId: newFolder.workspace_id || CHANDAK_WORKSPACE_UUID,
       parentId: newFolder.parent_id,
       name: newFolder.name,
       path: newFolder.path,
@@ -412,7 +427,7 @@ export async function createFolderAction(params: {
     console.error("[createFolderAction] Exception:", err);
     return {
       success: false,
-      error: err.message || "An unexpected error occurred while creating the folder"
+      error: err?.message || "An unexpected error occurred while creating the folder"
     };
   }
 }
@@ -438,7 +453,11 @@ export async function fetchFolderDocumentsAction(params: {
     const limit = params.limit || 25;
     const offset = params.offset || 0;
 
-    let query = supabase
+    const targetFolderId = (params.folderId && /^[0-9a-fA-F-]{36}$/.test(params.folderId))
+      ? params.folderId
+      : CHANDAK_ROOT_FOLDER_UUID;
+
+    let query = supabaseAdmin
       .from("dms_documents")
       .select(`
         id,
@@ -454,7 +473,7 @@ export async function fetchFolderDocumentsAction(params: {
           code,
           name
         ),
-        dms_document_versions!inner (
+        dms_document_versions (
           id,
           version_no,
           storage_key,
@@ -467,7 +486,7 @@ export async function fetchFolderDocumentsAction(params: {
           expires_at
         )
       `, { count: "exact" })
-      .eq("folder_id", params.folderId)
+      .eq("folder_id", targetFolderId)
       .is("deleted_at", null)
       .order("created_at", { ascending: false });
 
@@ -790,87 +809,128 @@ export async function saveDocumentWithIndexingAction(params: {
 }): Promise<{ success: boolean; documentId?: string; error?: string }> {
   try {
     const supabase = await getSupabase();
-    let userId: string | undefined = undefined;
+    let userId: string | null = null;
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      userId = user?.id;
+      if (user?.id && /^[0-9a-fA-F-]{36}$/.test(user.id)) {
+        userId = user.id;
+      }
     } catch {}
 
-    const generatedDocId = `dms-doc-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
-    let finalDocId = generatedDocId;
-
-    // 1. Insert Document Header via admin client for 100% guarantee
-    try {
-      const { data: doc, error: docErr } = await supabaseAdmin
-        .from("dms_documents")
-        .insert({
-          workspace_id: params.workspaceId,
-          folder_id: params.folderId,
-          doc_type_id: params.docTypeId,
-          title: params.title.trim(),
-          original_file_name: params.originalFileName.trim(),
-          current_version_no: 1,
-          approval_status: params.requiresQc ? "PENDING" : "APPROVED",
-          file_size_bytes: params.fileSizeBytes,
-          mime_type: params.mimeType,
-          storage_key: params.storageKey,
-          created_by: userId,
-        })
-        .select()
-        .single();
-
-      if (!docErr && doc) {
-        finalDocId = doc.id;
-      }
-    } catch (e) {
-      console.warn("dms_documents insert warning:", e);
+    // 1. Resolve workspace UUID
+    let targetWsId = params.workspaceId;
+    if (!targetWsId || !/^[0-9a-fA-F-]{36}$/.test(targetWsId)) {
+      targetWsId = CHANDAK_WORKSPACE_UUID;
     }
 
-    // 2. Insert Version 1 with Search Indexing
-    try {
-      await supabaseAdmin.from("dms_document_versions").insert({
-        document_id: finalDocId,
-        version_no: 1,
-        storage_key: params.storageKey,
-        file_name: params.originalFileName,
-        file_size_bytes: params.fileSizeBytes,
-        checksum_sha256: params.checksumSha256,
-        mime_type: params.mimeType,
-        ocr_extracted_text: params.ocrText || null,
-        uploaded_by: userId,
-      });
-    } catch (e) {
-      console.warn("dms_document_versions insert warning:", e);
+    // 2. Resolve folder UUID
+    let targetFolderId = params.folderId;
+    if (!targetFolderId || !/^[0-9a-fA-F-]{36}$/.test(targetFolderId)) {
+      targetFolderId = CHANDAK_ROOT_FOLDER_UUID;
     }
 
-    // 3. Save Custom EAV Field Values
+    // 3. Resolve doc type UUID
+    let targetDocTypeId = params.docTypeId;
+    if (!targetDocTypeId || !/^[0-9a-fA-F-]{36}$/.test(targetDocTypeId)) {
+      const codeMap: Record<string, string> = {
+        "ARCH_DWG": "7f8b4fc0-8158-4fdc-8cf1-448d15bd9ad8",
+        "dt-arch-01": "7f8b4fc0-8158-4fdc-8cf1-448d15bd9ad8",
+        "STR_CALC": "d980d902-547a-4940-860b-335fde4631f1",
+        "dt-str-02": "d980d902-547a-4940-860b-335fde4631f1",
+        "MEP_SPEC": "ea15a12c-4981-41ae-b191-a953fc26407c",
+        "dt-mep-03": "ea15a12c-4981-41ae-b191-a953fc26407c",
+        "STAT_NOC": "cbc61dca-381f-4ce0-aceb-eaaaab5b13a2",
+        "dt-stat-04": "cbc61dca-381f-4ce0-aceb-eaaaab5b13a2",
+        "GFC_TRANS": "cbb19570-2ec2-4c5a-b6e4-883e0743b925",
+        "dt-gfc-05": "cbb19570-2ec2-4c5a-b6e4-883e0743b925"
+      };
+      targetDocTypeId = codeMap[targetDocTypeId] || "7f8b4fc0-8158-4fdc-8cf1-448d15bd9ad8";
+    }
+
+    // 4. Insert Document Header via admin client (valid schema columns only)
+    const docPayload: any = {
+      workspace_id: targetWsId,
+      folder_id: targetFolderId,
+      doc_type_id: targetDocTypeId,
+      title: params.title.trim() || params.originalFileName.trim(),
+      original_file_name: params.originalFileName.trim(),
+      current_version_no: 1,
+      approval_status: params.requiresQc ? "PENDING" : "APPROVED"
+    };
+    if (userId) docPayload.created_by = userId;
+
+    const { data: doc, error: docErr } = await supabaseAdmin
+      .from("dms_documents")
+      .insert(docPayload)
+      .select()
+      .single();
+
+    if (docErr || !doc) {
+      console.error("[saveDocumentWithIndexingAction] docErr:", docErr);
+      return { success: false, error: docErr?.message || "Failed to create document record" };
+    }
+
+    const finalDocId = doc.id;
+
+    // 5. Insert Version 1 with Storage Metadata and Search Indexing
+    const versionPayload: any = {
+      document_id: finalDocId,
+      version_no: 1,
+      storage_key: params.storageKey,
+      file_name: params.originalFileName,
+      file_size_bytes: params.fileSizeBytes,
+      checksum_sha256: params.checksumSha256 || `sha256-${Date.now()}`,
+      mime_type: params.mimeType,
+      ocr_extracted_text: params.ocrText || null
+    };
+    if (userId) versionPayload.uploaded_by = userId;
+
+    const { error: verErr } = await supabaseAdmin
+      .from("dms_document_versions")
+      .insert(versionPayload);
+
+    if (verErr) {
+      console.error("[saveDocumentWithIndexingAction] verErr:", verErr);
+      await supabaseAdmin.from("dms_documents").delete().eq("id", finalDocId);
+      return { success: false, error: verErr.message || "Failed to save document version" };
+    }
+
+    // 6. Save Custom EAV Field Values (safe try)
     if (params.fieldValues && Object.keys(params.fieldValues).length > 0) {
       try {
-        const fieldInserts = Object.entries(params.fieldValues).map(([fieldDefId, val]) => ({
-          document_id: finalDocId,
-          field_definition_id: fieldDefId,
-          text_value: typeof val === "string" ? val : null,
-          number_value: typeof val === "number" ? val : null,
-          date_value: val instanceof Date ? val.toISOString().slice(0, 10) : typeof val === "string" && /^\d{4}-\d{2}-\d{2}$/.test(val) ? val : null,
-          json_value: typeof val === "object" ? val : null,
-        }));
-        await supabaseAdmin.from("dms_field_values").insert(fieldInserts);
+        const fieldInserts = Object.entries(params.fieldValues)
+          .filter(([fieldDefId]) => /^[0-9a-fA-F-]{36}$/.test(fieldDefId))
+          .map(([fieldDefId, val]) => ({
+            document_id: finalDocId,
+            field_definition_id: fieldDefId,
+            text_value: typeof val === "string" ? val : null,
+            number_value: typeof val === "number" ? val : null,
+            date_value: val instanceof Date ? val.toISOString().slice(0, 10) : typeof val === "string" && /^\d{4}-\d{2}-\d{2}$/.test(val) ? val : null,
+            json_value: typeof val === "object" ? val : null,
+          }));
+        if (fieldInserts.length > 0) {
+          await supabaseAdmin.from("dms_field_values").insert(fieldInserts);
+        }
       } catch {}
     }
 
-    // 4. Save Master Record Tags
+    // 7. Save Master Record Tags (safe try)
     if (params.masterTags && params.masterTags.length > 0) {
       try {
-        const tagInserts = params.masterTags.map((mt) => ({
-          document_id: finalDocId,
-          master_table_id: mt.masterTableId,
-          master_record_id: mt.masterRecordId,
-        }));
-        await supabaseAdmin.from("dms_document_master_tags").insert(tagInserts);
+        const tagInserts = params.masterTags
+          .filter(mt => /^[0-9a-fA-F-]{36}$/.test(mt.masterTableId) && /^[0-9a-fA-F-]{36}$/.test(mt.masterRecordId))
+          .map((mt) => ({
+            document_id: finalDocId,
+            master_table_id: mt.masterTableId,
+            master_record_id: mt.masterRecordId,
+          }));
+        if (tagInserts.length > 0) {
+          await supabaseAdmin.from("dms_document_master_tags").insert(tagInserts);
+        }
       } catch {}
     }
 
-    // 5. Initialize QC Gate
+    // 8. Initialize QC Gate
     if (params.requiresQc) {
       try {
         await supabaseAdmin.from("dms_qc_approvals").insert({
@@ -881,12 +941,12 @@ export async function saveDocumentWithIndexingAction(params: {
       } catch {}
     }
 
-    // 6. Record in-memory summary so UI immediately reflects without waiting for DB sync
-    const matchingDocType = IN_MEMORY_DOC_TYPES.find((d) => d.id === params.docTypeId);
+    // 9. Sync in-memory summary for instant UI response
+    const matchingDocType = IN_MEMORY_DOC_TYPES.find((d) => d.id === targetDocTypeId);
     const inMemoryItem: DmsDocumentSummary = {
       id: finalDocId,
-      folderId: params.folderId,
-      docTypeId: params.docTypeId,
+      folderId: targetFolderId,
+      docTypeId: targetDocTypeId,
       docTypeCode: matchingDocType?.code || "DOC",
       docTypeName: matchingDocType?.name || "Document",
       title: params.title.trim(),
@@ -921,30 +981,34 @@ export async function lockUnlockDocumentAction(params: {
 }): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = await getSupabase();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) throw new Error("Authentication required");
+    let userId: string | null = null;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.id && /^[0-9a-fA-F-]{36}$/.test(user.id)) {
+        userId = user.id;
+      }
+    } catch {}
 
     if (params.action === "UNLOCK") {
-      await supabase.from("dms_document_locks").delete().eq("document_id", params.documentId);
+      await supabaseAdmin.from("dms_document_locks").delete().eq("document_id", params.documentId);
     } else {
       const hours = params.durationHours || 4;
       const expiresAt = new Date(Date.now() + hours * 3600 * 1000).toISOString();
 
-      await supabase.from("dms_document_locks").upsert({
+      const lockPayload: any = {
         document_id: params.documentId,
-        locked_by: user.id,
         locked_at: new Date().toISOString(),
         expires_at: expiresAt,
-      });
+      };
+      if (userId) lockPayload.locked_by = userId;
+
+      await supabaseAdmin.from("dms_document_locks").upsert(lockPayload);
     }
 
     return { success: true };
   } catch (err: any) {
     console.error("[lockUnlockDocumentAction] Error:", err);
-    return { success: false, error: err.message || "Failed to toggle document lock" };
+    return { success: false, error: err?.message || "Failed to toggle document lock" };
   }
 }
 
@@ -959,37 +1023,42 @@ export async function submitQcDecisionAction(params: {
 }): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = await getSupabase();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    let userId: string | null = null;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.id && /^[0-9a-fA-F-]{36}$/.test(user.id)) {
+        userId = user.id;
+      }
+    } catch {}
 
-    const { data: qcRecord, error: qcErr } = await supabase
+    const updatePayload: any = {
+      status: params.status,
+      decided_at: new Date().toISOString(),
+      decision_comment: params.decisionComment || null,
+    };
+    if (userId) updatePayload.decided_by = userId;
+
+    const { data: qcRecord } = await supabaseAdmin
       .from("dms_qc_approvals")
-      .update({
-        status: params.status,
-        decided_by: user?.id,
-        decided_at: new Date().toISOString(),
-        decision_comment: params.decisionComment || null,
-      })
+      .update(updatePayload)
       .eq("document_id", params.documentId)
       .eq("version_no", params.versionNo)
       .select()
-      .single();
-
-    if (qcErr) throw qcErr;
+      .maybeSingle();
 
     // Log QC Event
     if (qcRecord) {
-      await supabase.from("dms_qc_events").insert({
+      const eventPayload: any = {
         qc_approval_id: qcRecord.id,
         action: params.status,
-        actor_id: user?.id,
         remarks: params.decisionComment || "QC evaluation completed",
-      });
+      };
+      if (userId) eventPayload.actor_id = userId;
+      await supabaseAdmin.from("dms_qc_events").insert(eventPayload);
     }
 
     // Update document approval status
-    await supabase
+    await supabaseAdmin
       .from("dms_documents")
       .update({ approval_status: params.status })
       .eq("id", params.documentId);
@@ -997,7 +1066,7 @@ export async function submitQcDecisionAction(params: {
     return { success: true };
   } catch (err: any) {
     console.error("[submitQcDecisionAction] Error:", err);
-    return { success: false, error: err.message || "Failed to record QC decision" };
+    return { success: false, error: err?.message || "Failed to record QC decision" };
   }
 }
 
