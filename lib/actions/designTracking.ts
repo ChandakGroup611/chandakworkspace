@@ -28,7 +28,6 @@ import {
   RfiItem,
   ConsultantPartner
 } from "@/Design_Tracking/src/types";
-import { DesignMasterStore } from "@/Design_Tracking/src/services/designMasterStore";
 
 // ==============================================================================
 // Design Tracking Server Actions (Supabase Postgres Database Sync)
@@ -883,9 +882,182 @@ export async function recordMatrixAuditAction(auditLog: MatrixAuditLog): Promise
   }
 }
 
-// ==============================================================================
-// 11. RBAC & Workspace User Access Server Actions
-// ==============================================================================
+function buildDefaultServerRbacPolicies(): DesignRbacPolicy[] {
+  const modules: DesignRbacPolicy["module"][] = [
+    "DESIGN_MATRIX",
+    "DRAWINGS",
+    "LOOK_AHEAD",
+    "LIAISON",
+    "TRANSMITTALS",
+    "RFIS",
+    "CONSULTANTS",
+    "MASTERS"
+  ];
+  const policies: DesignRbacPolicy[] = [];
+  const now = new Date().toISOString();
+
+  // 1. Super Admin
+  modules.forEach(m => {
+    policies.push({
+      id: `rbac-super-admin-${m.toLowerCase()}`,
+      roleCode: "SUPER_ADMIN",
+      roleName: "Super Administrator",
+      projectId: "ALL",
+      projectName: "All Development Projects",
+      module: m,
+      canCreate: true,
+      canRead: true,
+      canUpdate: true,
+      canDelete: true,
+      canApprove: true,
+      canExport: true,
+      ticketAccessScope: "ALL",
+      updatedAt: now
+    });
+  });
+
+  // 2. Design Administrator
+  modules.forEach(m => {
+    policies.push({
+      id: `rbac-admin-${m.toLowerCase()}`,
+      roleCode: "DESIGN_ADMIN",
+      roleName: "Design Administrator",
+      projectId: "ALL",
+      projectName: "All Development Projects",
+      module: m,
+      canCreate: true,
+      canRead: true,
+      canUpdate: true,
+      canDelete: true,
+      canApprove: true,
+      canExport: true,
+      ticketAccessScope: "ALL",
+      updatedAt: now
+    });
+  });
+
+  // 3. Design Lead
+  modules.forEach(m => {
+    policies.push({
+      id: `rbac-lead-${m.toLowerCase()}`,
+      roleCode: "DESIGN_LEAD",
+      roleName: "Design Lead / Principal",
+      projectId: "ALL",
+      projectName: "All Development Projects",
+      module: m,
+      canCreate: true,
+      canRead: true,
+      canUpdate: true,
+      canDelete: m !== "CONSULTANTS" && m !== "MASTERS",
+      canApprove: true,
+      canExport: true,
+      ticketAccessScope: "ALL",
+      updatedAt: now
+    });
+  });
+
+  // 4. Design Coordinator
+  modules.forEach(m => {
+    policies.push({
+      id: `rbac-coordinator-${m.toLowerCase()}`,
+      roleCode: "DESIGN_COORDINATOR",
+      roleName: "Design Coordinator",
+      projectId: "ALL",
+      projectName: "All Development Projects",
+      module: m,
+      canCreate: m !== "MASTERS",
+      canRead: true,
+      canUpdate: m !== "MASTERS",
+      canDelete: false,
+      canApprove: false,
+      canExport: true,
+      ticketAccessScope: "ALL",
+      updatedAt: now
+    });
+  });
+
+  // 5. Site Engineer
+  modules.forEach(m => {
+    policies.push({
+      id: `rbac-site-${m.toLowerCase()}`,
+      roleCode: "SITE_ENGINEER",
+      roleName: "Site Execution Engineer",
+      projectId: "ALL",
+      projectName: "All Development Projects",
+      module: m,
+      canCreate: m === "TRANSMITTALS" || m === "RFIS",
+      canRead: true,
+      canUpdate: m === "TRANSMITTALS" || m === "RFIS",
+      canDelete: false,
+      canApprove: false,
+      canExport: true,
+      ticketAccessScope: "PROJECT_ONLY",
+      updatedAt: now
+    });
+  });
+
+  // 6. Consultant External
+  modules.forEach(m => {
+    policies.push({
+      id: `rbac-consultant-${m.toLowerCase()}`,
+      roleCode: "CONSULTANT",
+      roleName: "Empanelled Consultant Partner",
+      projectId: "ALL",
+      projectName: "All Development Projects",
+      module: m,
+      canCreate: m === "DRAWINGS" || m === "RFIS",
+      canRead: true,
+      canUpdate: m === "DRAWINGS" || m === "RFIS",
+      canDelete: false,
+      canApprove: false,
+      canExport: false,
+      ticketAccessScope: "ASSIGNED_ONLY",
+      updatedAt: now
+    });
+  });
+
+  // 7. TPQA Auditor
+  modules.forEach(m => {
+    policies.push({
+      id: `rbac-tpqa-${m.toLowerCase()}`,
+      roleCode: "TPQA_AUDITOR",
+      roleName: "TPQA / Quality Auditor",
+      projectId: "ALL",
+      projectName: "All Development Projects",
+      module: m,
+      canCreate: false,
+      canRead: true,
+      canUpdate: false,
+      canDelete: false,
+      canApprove: false,
+      canExport: true,
+      ticketAccessScope: "ALL",
+      updatedAt: now
+    });
+  });
+
+  // 8. Viewer
+  modules.forEach(m => {
+    policies.push({
+      id: `rbac-viewer-${m.toLowerCase()}`,
+      roleCode: "VIEWER",
+      roleName: "Executive Viewer",
+      projectId: "ALL",
+      projectName: "All Development Projects",
+      module: m,
+      canCreate: false,
+      canRead: true,
+      canUpdate: false,
+      canDelete: false,
+      canApprove: false,
+      canExport: true,
+      ticketAccessScope: "ALL",
+      updatedAt: now
+    });
+  });
+
+  return policies;
+}
 
 export async function fetchRbacPoliciesAction(): Promise<{
   success: boolean;
@@ -923,8 +1095,8 @@ export async function fetchRbacPoliciesAction(): Promise<{
       return { success: true, policies: mapped };
     }
 
-    const defaultPolicies = DesignMasterStore.buildDefaultRbacPolicies();
-    const defaultRows = defaultPolicies.map(p => ({
+    const defaultPolicies = buildDefaultServerRbacPolicies();
+    const defaultRows = defaultPolicies.map((p: DesignRbacPolicy) => ({
       id: p.id,
       role_code: p.roleCode,
       role_name: p.roleName,

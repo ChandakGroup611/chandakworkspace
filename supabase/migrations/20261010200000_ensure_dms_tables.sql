@@ -15,6 +15,8 @@ CREATE TABLE IF NOT EXISTS dms_workspaces (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+ALTER TABLE dms_workspaces ADD COLUMN IF NOT EXISTS description TEXT;
+
 -- Seed default Chandak Corporate DMS workspace
 INSERT INTO dms_workspaces (code, name, description)
 VALUES ('CHANDAK_CORP', 'Chandak Corporate Workspace', 'Master DMS Repository for Chandak Group')
