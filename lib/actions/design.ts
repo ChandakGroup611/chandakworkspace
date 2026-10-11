@@ -39,8 +39,69 @@ export async function fetchDrawingsListAction(filters?: {
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, drawings: [], error: "Unauthorized" };
 
-    const drawings = await DesignTrackingService.getDrawings(filters);
-    return { success: true, drawings };
+    // Dynamic fetch from Supabase design_drawings table
+    let dbDrawings: any[] | null = null;
+    try {
+      let query = supabaseAdmin
+        .from("design_drawings")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (filters?.discipline && filters.discipline !== "ALL") {
+        query = query.eq("discipline", filters.discipline);
+      }
+      if (filters?.status && filters.status !== "ALL") {
+        query = query.eq("status", filters.status);
+      }
+      if (filters?.project && filters.project !== "ALL") {
+        query = query.eq("project", filters.project);
+      }
+
+      const res = await query;
+      dbDrawings = res.data;
+    } catch (e) {
+      console.warn("Direct query of design_drawings fallback:", e);
+    }
+
+    let list: DrawingItem[] = [];
+    if (dbDrawings && dbDrawings.length > 0) {
+      list = dbDrawings.map((d: any) => ({
+        id: d.id,
+        projectId: d.project_id || undefined,
+        code: d.code,
+        title: d.title,
+        discipline: d.discipline,
+        project: d.project,
+        towerName: d.tower_name || undefined,
+        subPackage: d.sub_package || undefined,
+        revision: d.current_revision || "R0",
+        currentRevision: d.current_revision || "R0",
+        status: d.status || "Under Review",
+        consultant: d.consultant_name || "",
+        consultantName: d.consultant_name || undefined,
+        fileUrl: d.file_url || undefined,
+        fileSize: d.file_size || "2.4 MB",
+        submittedDate: d.submitted_date || new Date().toISOString().split("T")[0],
+        approvedDate: d.approved_date || undefined,
+        tags: d.tags || [],
+        isGfc: !!d.is_gfc,
+        gfcReleasedDate: d.gfc_released_date || undefined,
+        gfcRecipient: d.gfc_recipient || undefined
+      }));
+    } else {
+      list = await DesignTrackingService.getDrawings(filters);
+    }
+
+    if (filters?.query?.trim()) {
+      const q = filters.query.toLowerCase().trim();
+      list = list.filter(d => 
+        (d.title || "").toLowerCase().includes(q) ||
+        (d.code || "").toLowerCase().includes(q) ||
+        (d.consultant || "").toLowerCase().includes(q)
+      );
+    }
+
+    return { success: true, drawings: list };
   } catch (err: any) {
     return { success: false, drawings: [], error: err.message || "Failed to fetch drawings" };
   }
@@ -56,6 +117,35 @@ export async function createDrawingAction(payload: Omit<DrawingItem, "id">): Pro
     if (!user) return { success: false, error: "Unauthorized" };
 
     const drawing = await DesignTrackingService.createDrawing(payload);
+
+    // Dynamic persist to Supabase design_drawings table
+    try {
+      const dAny = drawing as any;
+      await supabaseAdmin.from("design_drawings").upsert({
+        id: drawing.id,
+        project: drawing.project,
+        project_id: dAny.projectId || null,
+        tower_name: dAny.towerName || null,
+        code: drawing.code,
+        title: drawing.title,
+        discipline: drawing.discipline,
+        sub_package: dAny.subPackage || null,
+        current_revision: drawing.revision || "R0",
+        status: drawing.status || "Under Review",
+        consultant_name: drawing.consultant || dAny.consultantName || "",
+        file_url: drawing.fileUrl || null,
+        file_size: drawing.fileSize || "2.4 MB",
+        submitted_date: drawing.submittedDate || new Date().toISOString().split("T")[0],
+        approved_date: drawing.approvedDate || null,
+        tags: dAny.tags || [],
+        is_gfc: !!dAny.isGfc,
+        gfc_released_date: dAny.gfcReleasedDate || null,
+        gfc_recipient: dAny.gfcRecipient || null
+      });
+    } catch (e) {
+      console.warn("Could not upsert to design_drawings:", e);
+    }
+
     return { success: true, drawing };
   } catch (err: any) {
     return { success: false, error: err.message || "Failed to create drawing" };
@@ -75,6 +165,26 @@ export async function updateDrawingStatusAction(
     if (!user) return { success: false, error: "Unauthorized" };
 
     const drawing = await DesignTrackingService.updateDrawingStatus(drawingId, status);
+
+    // Dynamic update in Supabase design_drawings table
+    try {
+      const updates: any = {
+        status,
+        updated_at: new Date().toISOString()
+      };
+      if (status === "Approved (GFC)") {
+        updates.is_gfc = true;
+        updates.approved_date = new Date().toISOString().split("T")[0];
+        updates.gfc_released_date = new Date().toISOString().split("T")[0];
+      }
+      await supabaseAdmin
+        .from("design_drawings")
+        .update(updates)
+        .eq("id", drawingId);
+    } catch (e) {
+      console.warn("Could not update design_drawings in DB:", e);
+    }
+
     return { success: true, drawing };
   } catch (err: any) {
     return { success: false, error: err.message || "Failed to update drawing status" };
@@ -89,6 +199,32 @@ export async function fetchGfcReleasesAction(): Promise<{
   try {
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, releases: [], error: "Unauthorized" };
+
+    // Dynamic fetch from Supabase
+    try {
+      const { data: gfcDrawings } = await supabaseAdmin
+        .from("design_drawings")
+        .select("*")
+        .or("is_gfc.eq.true,status.eq.Approved (GFC),status.eq.Site Handed Over")
+        .order("gfc_released_date", { ascending: false });
+
+      if (gfcDrawings && gfcDrawings.length > 0) {
+        const mapped: GfcRelease[] = gfcDrawings.map((d: any) => ({
+          id: `gfc-${d.id}`,
+          drawingId: d.id,
+          drawingCode: d.code,
+          drawingTitle: d.title,
+          revisionNumber: d.current_revision || "R0",
+          siteEngineerName: d.gfc_recipient || "Site Engineer",
+          contractorFirm: "General Execution Contractor",
+          handoverDate: d.gfc_released_date || d.approved_date || new Date().toISOString().split("T")[0],
+          physicalCopiesIssued: 3
+        }));
+        return { success: true, releases: mapped };
+      }
+    } catch (e) {
+      console.warn("Fallback to local GFC releases:", e);
+    }
 
     const releases = await DesignTrackingService.getGfcReleases();
     return { success: true, releases };
@@ -105,6 +241,39 @@ export async function fetchConsultantsAction(): Promise<{
   try {
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, consultants: [], error: "Unauthorized" };
+
+    // Dynamic fetch from Supabase design_consultants table
+    try {
+      const { data: dbConsultants } = await supabaseAdmin
+        .from("design_consultants")
+        .select("*")
+        .order("firm_name", { ascending: true });
+
+      if (dbConsultants && dbConsultants.length > 0) {
+        const mapped: ConsultantPartner[] = dbConsultants.map((c: any) => ({
+          id: c.id,
+          name: c.firm_name,
+          category: c.discipline,
+          firmName: c.firm_name,
+          discipline: c.discipline,
+          categories: c.categories || [],
+          packages: c.packages || [],
+          expertise: c.expertise || [],
+          leadContact: c.contact_person || c.firm_name || "Lead Partner",
+          email: c.email || "consultant@partner.com",
+          phone: c.phone || "+91 98000 00000",
+          activeProjects: c.active_projects || [],
+          onboardingStatus: (c.onboarding_status === "Onboard" ? "Onboard" : "Not Onboard") as "Onboard" | "Not Onboard",
+          rating: c.rating ? Number(c.rating) : 4.5,
+          totalDrawingsSubmitted: c.total_drawings_submitted || 0,
+          averageTatDays: c.average_tat_days || 5,
+          createdAt: c.created_at || new Date().toISOString()
+        }));
+        return { success: true, consultants: mapped };
+      }
+    } catch (e) {
+      console.warn("Fallback to local consultants list:", e);
+    }
 
     const consultants = await DesignTrackingService.getConsultants();
     return { success: true, consultants };

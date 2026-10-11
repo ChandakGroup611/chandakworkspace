@@ -151,6 +151,44 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     }
 
     if (!attachment) {
+      try {
+        let { data: dmsDoc } = await supabaseAdmin
+          .from('dms_documents')
+          .select('id, title, original_file_name, mime_type, storage_key')
+          .eq('id', id)
+          .maybeSingle();
+
+        if (!dmsDoc) {
+          const { data: dmsVer } = await supabaseAdmin
+            .from('dms_document_versions')
+            .select('id, file_name, mime_type, storage_key, document_id')
+            .eq('id', id)
+            .maybeSingle();
+
+          if (dmsVer) {
+            dmsDoc = {
+              id: dmsVer.id,
+              title: dmsVer.file_name,
+              original_file_name: dmsVer.file_name,
+              mime_type: dmsVer.mime_type,
+              storage_key: dmsVer.storage_key
+            };
+          }
+        }
+
+        if (dmsDoc && dmsDoc.storage_key) {
+          attachment = {
+            file_name: dmsDoc.original_file_name || dmsDoc.title || 'dms_document.pdf',
+            file_url: dmsDoc.storage_key,
+            file_type: dmsDoc.mime_type || null
+          };
+        }
+      } catch (err) {
+        console.warn('Error fetching DMS document in proxy-attachment:', err);
+      }
+    }
+
+    if (!attachment) {
       // Check if ID matches an attachment inside service_records
       const { data: srvRecords } = await supabaseAdmin
         .from('service_records')

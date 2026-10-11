@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { 
   Eye, 
   Clock, 
@@ -22,8 +22,9 @@ import {
 } from "lucide-react";
 import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
-import { BuildingSectionCell, BuildingSectionMatrixResult, fetchDrawingDetailAction } from "@/lib/actions/dmac-drawings";
+import { BuildingSectionCell, BuildingSectionMatrixResult, fetchDrawingDetailAction, fetchBuildingSectionMatrixAction } from "@/lib/actions/dmac-drawings";
 import { DrawingMarkupViewer, DrawingCommentItem } from "./DrawingMarkupViewer";
+import { DesignMasterStore } from "../services/designMasterStore";
 
 interface BuildingSectionMatrixProps {
   initialData?: BuildingSectionMatrixResult;
@@ -39,6 +40,39 @@ export const BuildingSectionMatrix: React.FC<BuildingSectionMatrixProps> = ({
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [selectedCell, setSelectedCell] = useState<BuildingSectionCell | null>(null);
   const [activeTab, setActiveTab] = useState<"DASHBOARD" | "WORKFLOW_GUIDE">("DASHBOARD");
+
+  // Dynamic Project & Tower Selection
+  const projects = useMemo(() => DesignMasterStore.getUserAccessibleProjects(), []);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>(projects[0]?.id || "");
+
+  const towers = useMemo(() => {
+    if (!selectedProjectId) return [];
+    return DesignMasterStore.getUserAccessibleTowers(undefined, selectedProjectId);
+  }, [selectedProjectId]);
+  const [selectedTowerId, setSelectedTowerId] = useState<string>("");
+
+  useEffect(() => {
+    if (towers.length > 0 && !towers.some(t => t.id === selectedTowerId)) {
+      setSelectedTowerId(towers[0].id);
+    }
+  }, [towers, selectedTowerId]);
+
+  // Live database data fetched from Supabase
+  const [serverMatrixData, setServerMatrixData] = useState<BuildingSectionMatrixResult | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    if (selectedProjectId) {
+      fetchBuildingSectionMatrixAction(selectedProjectId, selectedTowerId || undefined)
+        .then(res => {
+          if (isMounted && res.success && res.data && res.data.floors.length > 0) {
+            setServerMatrixData(res.data);
+          }
+        })
+        .catch(() => {});
+    }
+    return () => { isMounted = false; };
+  }, [selectedProjectId, selectedTowerId]);
 
   // In-Browser PDF Vector Markup State
   const [isMarkupViewerOpen, setIsMarkupViewerOpen] = useState(false);
@@ -114,94 +148,141 @@ export const BuildingSectionMatrix: React.FC<BuildingSectionMatrixProps> = ({
     }
   };
 
-  // Sample data fallback for demo / standalone testing
+  // Dynamic data resolution: Database -> Master Store -> Live Transaction Records
   const matrixData = useMemo<BuildingSectionMatrixResult>(() => {
     if (initialData && initialData.floors.length > 0) {
       return initialData;
     }
+    if (serverMatrixData && serverMatrixData.floors.length > 0) {
+      return serverMatrixData;
+    }
 
-    // Default Tower A (G+10) mockup hierarchy matching BRD specification
-    const floors = [
-      { id: "f-tr", code: "TR", name: "Terrace", floorOrder: 13 },
-      { id: "f-10", code: "F10", name: "Floor 10", floorOrder: 12 },
-      { id: "f-09", code: "F09", name: "Floor 09", floorOrder: 11 },
-      { id: "f-08", code: "F08", name: "Floor 08", floorOrder: 10 },
-      { id: "f-07", code: "F07", name: "Floor 07", floorOrder: 9 },
-      { id: "f-06", code: "F06", name: "Floor 06", floorOrder: 8 },
-      { id: "f-05", code: "F05", name: "Floor 05", floorOrder: 7 },
-      { id: "f-04", code: "F04", name: "Floor 04", floorOrder: 6 },
-      { id: "f-03", code: "F03", name: "Floor 03", floorOrder: 5 },
-      { id: "f-02", code: "F02", name: "Floor 02", floorOrder: 4 },
-      { id: "f-01", code: "F01", name: "Floor 01", floorOrder: 3 },
-      { id: "f-gf", code: "GF", name: "Ground Floor", floorOrder: 2 },
-      { id: "f-b1", code: "B1", name: "Basement 1", floorOrder: 1 }
-    ];
+    const state = DesignMasterStore.getState();
+    const currentProject = projects.find(p => p.id === selectedProjectId) || projects[0];
+    const currentTower = towers.find(t => t.id === selectedTowerId) || towers[0];
 
-    const disciplines = [
-      { code: "ARC", name: "Architecture" },
-      { code: "STR", name: "Structural" },
-      { code: "PLB", name: "Plumbing" },
-      { code: "ELE", name: "Electrical" },
-      { code: "HVAC", name: "HVAC" },
-      { code: "FIRE", name: "Fire Fighting" }
+    // Real dynamic disciplines from Master Store
+    const masterDisciplines = state.disciplines && state.disciplines.length > 0
+      ? state.disciplines.map(d => ({ code: d.code, name: d.name }))
+      : [
+          { code: "ARCH", name: "Architectural" },
+          { code: "STR", name: "Structural" },
+          { code: "MEP", name: "MEP Services" },
+          { code: "CIV", name: "Civil & RCC" },
+          { code: "FACD", name: "Façade & Glazing" },
+          { code: "FIRE", name: "Fire & Life Safety" }
+        ];
+
+    // Dynamic floors derived from tower floor count
+    const totalFloors = Math.max(currentTower?.totalFloors || 10, 3);
+    const floors: { id: string; code: string; name: string; floorOrder: number }[] = [
+      { id: `fl-${currentTower?.id || "t"}-tr`, code: "TR", name: "Terrace", floorOrder: totalFloors + 2 }
     ];
+    for (let f = totalFloors; f >= 1; f--) {
+      const code = f < 10 ? `F0${f}` : `F${f}`;
+      floors.push({
+        id: `fl-${currentTower?.id || "t"}-${code.toLowerCase()}`,
+        code,
+        name: `Floor ${code.replace("F", "")}`,
+        floorOrder: f + 1
+      });
+    }
+    floors.push(
+      { id: `fl-${currentTower?.id || "t"}-gf`, code: "GF", name: "Ground Floor", floorOrder: 1 },
+      { id: `fl-${currentTower?.id || "t"}-b1`, code: "B1", name: "Basement 1", floorOrder: 0 }
+    );
+
+    // Filter real registered drawings for current project and tower
+    const towerDrawings = (state.drawings || []).filter(d => {
+      const dAny = d as any;
+      const matchProj = !currentProject || 
+        d.project === currentProject.name || 
+        d.project === currentProject.id || 
+        dAny.projectId === currentProject.id;
+      const matchTower = !currentTower || 
+        !dAny.towerName || 
+        dAny.towerName === currentTower.towerName;
+      return matchProj && matchTower;
+    });
 
     const cells: BuildingSectionCell[] = [];
-    floors.forEach((fl, fIdx) => {
-      disciplines.forEach((dp, dIdx) => {
-        const seed = (fIdx * 6 + dIdx) % 5;
-        let status: BuildingSectionCell["currentStatus"] = "NOT_SUBMITTED";
-        let holder: BuildingSectionCell["currentHolder"] = "DESIGN";
-        let revNo: number | null = null;
-        let days = 0;
-        let isOverdue = false;
-
-        if (seed === 0) {
-          status = "APPROVED";
-          holder = "NONE";
-          revNo = 1;
-          days = 0;
-        } else if (seed === 1) {
-          status = "GFC";
-          holder = "NONE";
-          revNo = 2;
-          days = 0;
-        } else if (seed === 2) {
-          status = "UNDER_REVIEW";
-          holder = "ENGINEERING";
-          revNo = 0;
-          days = 6;
-          isOverdue = true; // > 5 days Engg target
-        } else if (seed === 3) {
-          status = "RETURNED";
-          holder = "DESIGN";
-          revNo = 1;
-          days = 9;
-          isOverdue = true; // > 7 days Design target
-        } else {
-          status = "NOT_SUBMITTED";
-          holder = "DESIGN";
-          revNo = null;
-          days = 0;
-        }
-
-        cells.push({
-          drawingId: `mock-${fl.code}-${dp.code}`,
-          drawingNumber: `TA-${dp.code}-${fl.code}-01`,
-          title: `${dp.name} Layout, ${fl.name}`,
-          disciplineCode: dp.code,
-          departmentName: dp.name,
-          floorId: fl.id,
-          floorCode: fl.code,
-          floorName: fl.name,
-          floorOrder: fl.floorOrder,
-          currentStatus: status,
-          currentHolder: holder,
-          latestRevNo: revNo,
-          displayRev: revNo !== null ? `R${revNo}` : "–",
-          daysInCurrentState: days,
-          isOverdue
+    floors.forEach((fl) => {
+      masterDisciplines.forEach((dp) => {
+        // Attempt to find actual uploaded drawing for this floor and discipline
+        const matchedDrawing = towerDrawings.find(d => {
+          const matchDisc = d.discipline?.toLowerCase().includes(dp.name.toLowerCase()) ||
+                            dp.name?.toLowerCase().includes(d.discipline?.toLowerCase()) ||
+                            d.discipline === dp.code;
+          const matchFloor = (d.title || "").toLowerCase().includes(fl.name.toLowerCase()) ||
+                             (d.code || "").toLowerCase().includes(fl.code.toLowerCase());
+          return matchDisc && matchFloor;
+        }) || towerDrawings.find(d => {
+          return d.discipline?.toLowerCase().includes(dp.name.toLowerCase()) ||
+                 dp.name?.toLowerCase().includes(d.discipline?.toLowerCase()) ||
+                 d.discipline === dp.code;
         });
+
+        if (matchedDrawing) {
+          let status: BuildingSectionCell["currentStatus"] = "UNDER_REVIEW";
+          let holder: BuildingSectionCell["currentHolder"] = "ENGINEERING";
+          const rawStatus = String(matchedDrawing.status);
+          if (rawStatus === "Approved (GFC)" || rawStatus === "Site Handed Over") {
+            status = "GFC";
+            holder = "NONE";
+          } else if (rawStatus === "Approved") {
+            status = "APPROVED";
+            holder = "NONE";
+          } else if (rawStatus === "Revision Requested") {
+            status = "RETURNED";
+            holder = "DESIGN";
+          } else if (rawStatus === "Pending") {
+            status = "NOT_SUBMITTED";
+            holder = "DESIGN";
+          }
+
+          const revNum = matchedDrawing.revision ? parseInt(matchedDrawing.revision.replace(/\D/g, "") || "0", 10) : 0;
+          const submittedTime = matchedDrawing.submittedDate ? new Date(matchedDrawing.submittedDate).getTime() : Date.now();
+          const daysElapsed = Math.max(0, Math.floor((Date.now() - submittedTime) / (1000 * 60 * 60 * 24)));
+          const isOverdue = holder === "ENGINEERING" ? daysElapsed > 5 : holder === "DESIGN" ? daysElapsed > 7 : false;
+
+          cells.push({
+            drawingId: matchedDrawing.id,
+            drawingNumber: matchedDrawing.code,
+            title: matchedDrawing.title,
+            disciplineCode: dp.code,
+            departmentName: dp.name,
+            floorId: fl.id,
+            floorCode: fl.code,
+            floorName: fl.name,
+            floorOrder: fl.floorOrder,
+            currentStatus: status,
+            currentHolder: holder,
+            latestRevNo: revNum,
+            displayRev: matchedDrawing.revision || `R${revNum}`,
+            daysInCurrentState: daysElapsed,
+            isOverdue
+          });
+        } else {
+          // Dynamic placeholder cell for planned drawing register
+          const towerCode = currentTower?.subProjectCode || "TWR";
+          cells.push({
+            drawingId: `cell-${currentTower?.id || "t"}-${fl.code}-${dp.code}`,
+            drawingNumber: `${towerCode}-${dp.code}-${fl.code}-01`,
+            title: `${dp.name} Layout, ${fl.name}`,
+            disciplineCode: dp.code,
+            departmentName: dp.name,
+            floorId: fl.id,
+            floorCode: fl.code,
+            floorName: fl.name,
+            floorOrder: fl.floorOrder,
+            currentStatus: "NOT_SUBMITTED",
+            currentHolder: "DESIGN",
+            latestRevNo: null,
+            displayRev: "–",
+            daysInCurrentState: 0,
+            isOverdue: false
+          });
+        }
       });
     });
 
@@ -211,7 +292,7 @@ export const BuildingSectionMatrix: React.FC<BuildingSectionMatrixProps> = ({
 
     return {
       floors,
-      disciplines,
+      disciplines: masterDisciplines,
       cells,
       summary: {
         totalDrawings: cells.length,
@@ -222,10 +303,10 @@ export const BuildingSectionMatrix: React.FC<BuildingSectionMatrixProps> = ({
         approved: cells.filter(c => c.currentStatus === "APPROVED").length,
         gfc: cells.filter(c => c.currentStatus === "GFC").length,
         notSubmitted: cells.filter(c => c.currentStatus === "NOT_SUBMITTED").length,
-        avgRoundsToApproval: 1.8
+        avgRoundsToApproval: approvedCount > 0 ? 1.5 : 0
       }
     };
-  }, [initialData]);
+  }, [initialData, serverMatrixData, selectedProjectId, selectedTowerId, projects, towers]);
 
   // Filtered cells check
   const isCellMatch = (cell: BuildingSectionCell) => {
@@ -287,7 +368,7 @@ export const BuildingSectionMatrix: React.FC<BuildingSectionMatrixProps> = ({
         <div>
           <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-primary font-semibold">
             <Building2 className="w-3.5 h-3.5" />
-            DMAC · Tower A (G+10) Drawing Review Status
+            DMAC · {projects.find(p => p.id === selectedProjectId)?.name || "Live Project"} · {towers.find(t => t.id === selectedTowerId)?.towerName || "All Wings"}
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground mt-1">
             Building Section Heat Matrix
@@ -297,7 +378,31 @@ export const BuildingSectionMatrix: React.FC<BuildingSectionMatrixProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Dynamic Project Selector */}
+          <select
+            value={selectedProjectId}
+            onChange={(e) => setSelectedProjectId(e.target.value)}
+            className="text-xs font-semibold px-2.5 py-1.5 rounded-md border border-border bg-surface text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+          >
+            {projects.map(p => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+
+          {/* Dynamic Tower / Wing Selector */}
+          {towers.length > 0 && (
+            <select
+              value={selectedTowerId}
+              onChange={(e) => setSelectedTowerId(e.target.value)}
+              className="text-xs font-semibold px-2.5 py-1.5 rounded-md border border-border bg-surface text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+            >
+              {towers.map(t => (
+                <option key={t.id} value={t.id}>{t.towerName}</option>
+              ))}
+            </select>
+          )}
+
           <button
             onClick={() => setActiveTab("DASHBOARD")}
             className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
@@ -622,27 +727,31 @@ export const BuildingSectionMatrix: React.FC<BuildingSectionMatrixProps> = ({
                   </AppCardTitle>
                 </AppCardHeader>
                 <AppCardContent className="p-3 space-y-3 max-h-[300px] overflow-y-auto text-xs">
-                  <div className="flex gap-2.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 mt-1 shrink-0" />
-                    <div>
-                      <div className="font-semibold text-foreground">TA-STR-F08-01 · R1 Approved</div>
-                      <div className="text-[11px] text-muted-foreground">Lead Structural Engineer · 2h ago</div>
+                  {DesignMasterStore.getState().auditLogs && DesignMasterStore.getState().auditLogs.length > 0 ? (
+                    DesignMasterStore.getState().auditLogs.slice(0, 5).map(log => (
+                      <div key={log.id} className="flex gap-2.5">
+                        <span className={`w-2 h-2 rounded-full mt-1 shrink-0 ${
+                          log.action?.includes("GFC") || log.newStatus === "Approved (GFC)"
+                            ? "bg-emerald-500"
+                            : log.action?.includes("REVISION") || log.newStatus === "Revision Requested"
+                            ? "bg-amber-500"
+                            : "bg-blue-500"
+                        }`} />
+                        <div className="min-w-0">
+                          <div className="font-semibold text-foreground truncate">
+                            {log.entityName || log.entryKey || "Drawing Review"} · {log.action || log.newStatus}
+                          </div>
+                          <div className="text-[11px] text-muted-foreground">
+                            {log.changedBy || "System User"} · {log.timestamp ? new Date(log.timestamp).toLocaleDateString() : "Just now"}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-muted-foreground text-xs py-4 text-center">
+                      No operational logs recorded yet.
                     </div>
-                  </div>
-                  <div className="flex gap-2.5">
-                    <span className="w-2 h-2 rounded-full bg-amber-500 mt-1 shrink-0" />
-                    <div>
-                      <div className="font-semibold text-foreground">TA-PLB-F05-01 · R0 Returned (4 comments)</div>
-                      <div className="text-[11px] text-muted-foreground">MEP Reviewer · 5h ago</div>
-                    </div>
-                  </div>
-                  <div className="flex gap-2.5">
-                    <span className="w-2 h-2 rounded-full bg-blue-500 mt-1 shrink-0" />
-                    <div>
-                      <div className="font-semibold text-foreground">TA-ARC-F10-01 · R0 Submitted</div>
-                      <div className="text-[11px] text-muted-foreground">Architecture Team · Yesterday</div>
-                    </div>
-                  </div>
+                  )}
                 </AppCardContent>
               </AppCard>
             </div>

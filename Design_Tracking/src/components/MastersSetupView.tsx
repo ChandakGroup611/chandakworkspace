@@ -46,6 +46,11 @@ import { DeleteDependencyModal } from "./DeleteDependencyModal";
 import { TransactionFormLayout } from "./DesignTransactionLayout";
 import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
+import { 
+  DmsDocTypeItem, 
+  fetchDocTypesAndFieldsAction, 
+  createDocTypeAction 
+} from "@/lib/actions/dms-core";
 
 export type MasterSubTab = 
   | "PROJECTS" 
@@ -56,7 +61,8 @@ export type MasterSubTab =
   | "CATEGORIES" 
   | "AUTHORITIES" 
   | "RBAC" 
-  | "TEMPLATES";
+  | "TEMPLATES"
+  | "DOC_TYPES";
 
 interface MastersSetupViewProps {
   initialSubTab?: MasterSubTab;
@@ -126,6 +132,56 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
   const [isNewAuthorityModalOpen, setIsNewAuthorityModalOpen] = useState(false);
   const [newAuthorityName, setNewAuthorityName] = useState("");
   const [newAuthorityScope, setNewAuthorityScope] = useState("");
+
+  // Document Type Master State (Doc Sets)
+  const [docTypes, setDocTypes] = useState<DmsDocTypeItem[]>([]);
+  const [docTypeSearch, setDocTypeSearch] = useState<string>("");
+  const [isNewDocTypeModalOpen, setIsNewDocTypeModalOpen] = useState<boolean>(false);
+  const [newDocTypeName, setNewDocTypeName] = useState<string>("");
+  const [newDocTypeCode, setNewDocTypeCode] = useState<string>("");
+  const [newDocTypeDesc, setNewDocTypeDesc] = useState<string>("");
+  const [isCreatingDocType, setIsCreatingDocType] = useState<boolean>(false);
+
+  useEffect(() => {
+    fetchDocTypesAndFieldsAction().then((res) => {
+      if (res.success && res.docTypes) {
+        setDocTypes(res.docTypes);
+      }
+    });
+  }, []);
+
+  const handleCreateDocType = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!newDocTypeName.trim()) {
+      toast.error("Document Type name is required.");
+      return;
+    }
+    setIsCreatingDocType(true);
+    try {
+      const res = await createDocTypeAction({
+        name: newDocTypeName.trim(),
+        code: newDocTypeCode.trim() || undefined,
+        description: newDocTypeDesc.trim() || undefined,
+      });
+      if (res.success && res.docType) {
+        setDocTypes((prev) => {
+          const exists = prev.some((d) => d.id === res.docType!.id);
+          return exists ? prev : [...prev, res.docType!];
+        });
+        toast.success(`Document Type "${res.docType.name}" created successfully!`);
+        setIsNewDocTypeModalOpen(false);
+        setNewDocTypeName("");
+        setNewDocTypeCode("");
+        setNewDocTypeDesc("");
+      } else {
+        toast.error(res.error || "Failed to create document type");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to create document type");
+    } finally {
+      setIsCreatingDocType(false);
+    }
+  };
 
   const categories = DesignMasterStore.getPackagesMaster();
   const parentProjects = storeState.projects.filter(p => !p.isSubProject);
@@ -229,6 +285,7 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                 { id: "PACKAGES" as MasterSubTab, label: "Package Master", icon: Tag, count: categories.length, color: "text-theme-icon" },
                 { id: "SUB_PACKAGES" as MasterSubTab, label: "Sub-Packages", icon: Layers, count: storeState.packages.length, color: "text-teal-600" },
                 { id: "AUTHORITIES" as MasterSubTab, label: "Authorities", icon: ShieldCheck, count: storeState.authorities.length, color: "text-amber-600" },
+                { id: "DOC_TYPES" as MasterSubTab, label: "Document Types", icon: Tag, count: docTypes.length, color: "text-purple-600" },
                 { id: "TEMPLATES" as MasterSubTab, label: "Templates & Backup", icon: FileSpreadsheet, color: "text-slate-600" }
               ].map(tab => {
                 const Icon = tab.icon;
@@ -520,6 +577,65 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
                 </button>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Sub-tab: Document Types Master (Doc Sets) */}
+      {activeSubTab === "DOC_TYPES" && (
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h4 className="text-sm font-bold text-foreground">Document Types & Doc Sets Master</h4>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Classifications and folder indexing schemas for drawing sets, specifications, and dossiers.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="relative w-48 sm:w-60">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={docTypeSearch}
+                  onChange={e => setDocTypeSearch(e.target.value)}
+                  placeholder="Filter document types..."
+                  className="w-full text-xs rounded-xl bg-surface border border-border pl-8 pr-3 py-1.5 text-foreground focus:ring-1 focus:ring-theme-btn-primary"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsNewDocTypeModalOpen(true)}
+                className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:brightness-110 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md cursor-pointer transition-all shrink-0 whitespace-nowrap"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>Add Document Type</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3.5 w-full">
+            {docTypes
+              .filter(dt => {
+                if (!docTypeSearch.trim()) return true;
+                const q = docTypeSearch.toLowerCase();
+                return dt.name.toLowerCase().includes(q) || dt.code.toLowerCase().includes(q);
+              })
+              .map(dt => (
+                <div
+                  key={dt.id}
+                  className="p-3.5 rounded-xl border border-border bg-surface hover:border-theme-btn-primary/40 shadow-xs transition-all flex items-start justify-between gap-3"
+                >
+                  <div className="space-y-1 min-w-0">
+                    <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-purple-500/10 text-purple-600 border border-purple-500/20">
+                      {dt.code}
+                    </span>
+                    <h5 className="text-xs font-bold text-foreground truncate">{dt.name}</h5>
+                    <p className="text-[11px] text-muted-foreground line-clamp-2">
+                      {dt.description || "Core DMS classification set"}
+                    </p>
+                  </div>
+                </div>
+              ))}
           </div>
         </div>
       )}
@@ -817,6 +933,101 @@ export const MastersSetupView: React.FC<MastersSetupViewProps> = ({ initialSubTa
         onClose={() => setIsBulkImportOpen(false)}
         initialMasterType={bulkImportTarget}
       />
+
+      {/* QUICK ADD DOCUMENT TYPE MODAL IN MASTERS */}
+      {isNewDocTypeModalOpen && (
+        <div className="fixed inset-0 z-70 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-surface border border-border rounded-xl shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95">
+            <div className="p-4 border-b border-border flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Tag className="h-4 w-4 text-purple-600" />
+                <h3 className="text-sm font-bold text-foreground">Add Document Type Master</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsNewDocTypeModalOpen(false)}
+                className="p-1 hover:bg-surface rounded-md text-muted-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateDocType} className="p-4 space-y-4">
+              <div>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                  Document Type Name *
+                </label>
+                <input
+                  type="text"
+                  value={newDocTypeName}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setNewDocTypeName(val);
+                    if (
+                      !newDocTypeCode ||
+                      newDocTypeCode ===
+                        newDocTypeName.toUpperCase().replace(/[^A-Z0-9_]/g, "_").slice(0, 32)
+                    ) {
+                      setNewDocTypeCode(val.toUpperCase().replace(/[^A-Z0-9_]/g, "_").slice(0, 32));
+                    }
+                  }}
+                  placeholder="e.g. Facade Engineering & Details"
+                  className="w-full mt-1.5 text-xs rounded-lg bg-surface border border-border p-2.5 text-foreground focus:ring-1 focus:ring-purple-600"
+                  autoFocus
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                  Type Code *
+                </label>
+                <input
+                  type="text"
+                  value={newDocTypeCode}
+                  onChange={(e) =>
+                    setNewDocTypeCode(e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, "_"))
+                  }
+                  placeholder="e.g. FACADE_ENG"
+                  className="w-full mt-1.5 text-xs font-mono rounded-lg bg-surface border border-border p-2.5 text-foreground focus:ring-1 focus:ring-purple-600"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                  Description
+                </label>
+                <textarea
+                  value={newDocTypeDesc}
+                  onChange={(e) => setNewDocTypeDesc(e.target.value)}
+                  placeholder="Brief description of documents classified under this type..."
+                  rows={2}
+                  className="w-full mt-1.5 text-xs rounded-lg bg-surface border border-border p-2.5 text-foreground focus:ring-1 focus:ring-purple-600 resize-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => setIsNewDocTypeModalOpen(false)}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-border hover:bg-surface text-muted-foreground"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isCreatingDocType || !newDocTypeName.trim()}
+                  className="px-4 py-1.5 text-xs font-bold rounded-lg bg-purple-600 hover:brightness-110 text-white shadow-xs disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>{isCreatingDocType ? "Saving..." : "Create Master"}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

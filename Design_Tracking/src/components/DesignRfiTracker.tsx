@@ -90,13 +90,16 @@ export function DesignRfiTracker() {
     }));
   }, [projects, rfis]);
 
-  const disciplineFilterOptions = useMemo(() => [
-    { value: "Architectural", label: "Architectural", count: rfis.filter(r => r.discipline === "Architectural").length },
-    { value: "Structural", label: "Structural", count: rfis.filter(r => r.discipline === "Structural").length },
-    { value: "MEP", label: "MEP Services", count: rfis.filter(r => r.discipline === "MEP").length },
-    { value: "Landscape", label: "Landscape", count: rfis.filter(r => r.discipline === "Landscape").length },
-    { value: "Interior", label: "Interior Design", count: rfis.filter(r => r.discipline === "Interior").length }
-  ], [rfis]);
+  const disciplineFilterOptions = useMemo(() => {
+    const fromMasters = (DesignMasterStore.getState().disciplines || []).map(d => d.name);
+    const fromRfis = rfis.map(r => r.discipline);
+    const all = Array.from(new Set([...fromMasters, ...fromRfis])).filter(Boolean);
+    return all.map(d => ({
+      value: d,
+      label: d,
+      count: rfis.filter(r => r.discipline === d).length
+    }));
+  }, [rfis]);
 
   const statusFilterOptions = useMemo(() => [
     { value: "OPEN", label: "Open / Awaiting Response", count: rfis.filter(r => r.status === "OPEN").length },

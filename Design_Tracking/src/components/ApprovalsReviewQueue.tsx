@@ -20,6 +20,7 @@ import {
   X
 } from "lucide-react";
 import { DesignMultiSelectDropdown, DropdownOption } from "./DesignMultiSelectDropdown";
+import { DesignMasterStore } from "../services/designMasterStore";
 
 interface ApprovalsReviewQueueProps {
   drawings: DrawingItem[];
@@ -37,7 +38,11 @@ export const ApprovalsReviewQueue: React.FC<ApprovalsReviewQueueProps> = ({
   const [selectedDisciplineFilters, setSelectedDisciplineFilters] = useState<string[]>([]);
   const [selectedProjectFilters, setSelectedProjectFilters] = useState<string[]>([]);
 
-  const disciplines = ["Architectural", "Structural", "MEP", "Landscape", "Interior"];
+  const disciplines = useMemo(() => {
+    const fromMasters = (DesignMasterStore.getState().disciplines || []).map(d => d.name);
+    const fromDrawings = drawings.map(d => d.discipline);
+    return Array.from(new Set([...fromMasters, ...fromDrawings])).filter(Boolean);
+  }, [drawings]);
   const uniqueProjects = useMemo(() => Array.from(new Set(drawings.map(d => d.project))), [drawings]);
 
   const filteredDrawings = useMemo(() => {

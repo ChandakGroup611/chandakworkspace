@@ -25,7 +25,11 @@ import {
   X,
   Layers,
   Sparkles,
-  Info
+  Info,
+  ExternalLink,
+  ZoomIn,
+  ZoomOut,
+  Maximize2
 } from "lucide-react";
 import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
@@ -79,8 +83,9 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
   const [showPermissionsModal, setShowPermissionsModal] = useState<boolean>(false);
   const [folderForPermissions, setFolderForPermissions] = useState<DmsFolderNode | null>(null);
 
-  // Selected document detail drawer
+  // Selected document detail drawer & in-app viewer modal
   const [selectedDoc, setSelectedDoc] = useState<DmsDocumentSummary | null>(null);
+  const [docViewerZoom, setDocViewerZoom] = useState<number>(1);
 
   // Load Folder Hierarchy on mount
   const loadFolderTree = useCallback(async () => {
@@ -518,20 +523,19 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
 
                       <td className="py-2.5 px-3 text-right">
                         <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                          <a
-                            href={`/api/proxy-attachment/${doc.id}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="p-1 hover:bg-surface rounded-md text-muted-foreground hover:text-foreground"
-                            title="View Document"
+                          <button
+                            type="button"
+                            onClick={() => setSelectedDoc(doc)}
+                            className="p-1 hover:bg-surface rounded-md text-muted-foreground hover:text-foreground cursor-pointer"
+                            title="View Document Preview"
                           >
-                            <Eye className="h-3.5 w-3.5" />
-                          </a>
+                            <Eye className="h-3.5 w-3.5 text-theme-btn-primary" />
+                          </button>
                           <a
-                            href={`/api/proxy-attachment/${doc.id}`}
-                            download
-                            className="p-1 hover:bg-surface rounded-md text-muted-foreground hover:text-foreground"
-                            title="Download"
+                            href={doc.storageKey?.startsWith("data:") ? doc.storageKey : `/api/proxy-attachment/${doc.id}?download=1`}
+                            download={doc.originalFileName}
+                            className="p-1 hover:bg-surface rounded-md text-muted-foreground hover:text-foreground cursor-pointer"
+                            title="Download Document"
                           >
                             <Download className="h-3.5 w-3.5" />
                           </a>
@@ -647,6 +651,240 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
           }}
           currentUser={currentUser}
         />
+      )}
+
+      {/* IN-APP UPLOADED DOCUMENT VIEWER MODAL */}
+      {selectedDoc && (
+        <div className="fixed inset-0 z-60 bg-black/80 backdrop-blur-xs flex flex-col overflow-hidden animate-in fade-in duration-150">
+          {/* Header */}
+          <header className="h-14 border-b border-border bg-surface px-6 flex items-center justify-between gap-4 shrink-0">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="h-8 w-8 rounded-lg bg-theme-btn-primary/10 border border-theme-btn-primary/25 flex items-center justify-center text-theme-btn-primary shrink-0">
+                <FileText className="h-4 w-4" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-foreground truncate">{selectedDoc.title}</h3>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-theme-btn-primary/10 text-theme-btn-primary shrink-0">
+                    {selectedDoc.docTypeCode}
+                  </span>
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-surface border border-border text-muted-foreground shrink-0">
+                    v{selectedDoc.currentVersionNo}
+                  </span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
+                      selectedDoc.approvalStatus === "APPROVED"
+                        ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                        : selectedDoc.approvalStatus === "REJECTED"
+                        ? "bg-rose-500/15 text-rose-600 dark:text-rose-400"
+                        : "bg-blue-500/15 text-blue-600 dark:text-blue-400"
+                    }`}
+                  >
+                    {selectedDoc.approvalStatus}
+                  </span>
+                </div>
+                <p className="text-[11px] font-mono text-muted-foreground truncate">
+                  {selectedDoc.originalFileName} &bull; {(selectedDoc.fileSizeBytes / 1024).toFixed(1)} KB
+                </p>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1 bg-surface border border-border rounded-lg px-2 py-1 mr-2">
+                <button
+                  onClick={() => setDocViewerZoom((z) => Math.max(0.4, Number((z - 0.15).toFixed(2))))}
+                  className="p-1 hover:bg-surface rounded-sm text-muted-foreground cursor-pointer"
+                  title="Zoom Out"
+                >
+                  <ZoomOut className="h-3.5 w-3.5" />
+                </button>
+                <span className="text-[11px] font-mono font-medium px-1 text-foreground min-w-[36px] text-center">
+                  {Math.round(docViewerZoom * 100)}%
+                </span>
+                <button
+                  onClick={() => setDocViewerZoom((z) => Math.min(2.5, Number((z + 0.15).toFixed(2))))}
+                  className="p-1 hover:bg-surface rounded-sm text-muted-foreground cursor-pointer"
+                  title="Zoom In"
+                >
+                  <ZoomIn className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  onClick={() => setDocViewerZoom(1)}
+                  className="p-1 hover:bg-surface rounded-sm text-muted-foreground cursor-pointer"
+                  title="Reset (100%)"
+                >
+                  <Maximize2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+
+              <a
+                href={
+                  selectedDoc.storageKey?.startsWith("data:")
+                    ? selectedDoc.storageKey
+                    : `/api/proxy-attachment/${selectedDoc.id}`
+                }
+                target="_blank"
+                rel="noreferrer"
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-surface border border-border hover:bg-surface/80 text-foreground inline-flex items-center gap-1.5 cursor-pointer"
+                title="Open in new browser tab"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                <span>Open in Tab</span>
+              </a>
+
+              <a
+                href={
+                  selectedDoc.storageKey?.startsWith("data:")
+                    ? selectedDoc.storageKey
+                    : `/api/proxy-attachment/${selectedDoc.id}?download=1`
+                }
+                download={selectedDoc.originalFileName}
+                className="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-theme-btn-primary text-theme-btn-primary-text hover:brightness-110 shadow-xs inline-flex items-center gap-1.5 cursor-pointer"
+                title="Download original file"
+              >
+                <Download className="h-3.5 w-3.5" />
+                <span>Download</span>
+              </a>
+
+              <button
+                onClick={() => setSelectedDoc(null)}
+                className="p-1.5 hover:bg-surface text-muted-foreground hover:text-foreground rounded-lg ml-2 cursor-pointer"
+                title="Close Viewer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          </header>
+
+          {/* Viewer Stage */}
+          <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-muted/10 relative">
+            {(() => {
+              const fileSrc = selectedDoc.storageKey?.startsWith("data:")
+                ? selectedDoc.storageKey
+                : `/api/proxy-attachment/${selectedDoc.id}`;
+              const isImage =
+                (selectedDoc.mimeType && selectedDoc.mimeType.startsWith("image/")) ||
+                /\.(jpe?g|png|webp|gif|svg|bmp)$/i.test(selectedDoc.originalFileName);
+              const isPdf =
+                selectedDoc.mimeType === "application/pdf" ||
+                /\.pdf$/i.test(selectedDoc.originalFileName);
+
+              if (isImage) {
+                return (
+                  <div className="w-full h-full flex items-center justify-center overflow-auto p-4">
+                    <img
+                      src={fileSrc}
+                      alt={selectedDoc.title}
+                      style={{ transform: `scale(${docViewerZoom})` }}
+                      className="max-h-full max-w-full object-contain rounded-lg shadow-2xl border border-border bg-white transition-transform duration-100 origin-center"
+                    />
+                  </div>
+                );
+              }
+
+              if (isPdf) {
+                return (
+                  <div
+                    className="w-full h-full max-w-6xl bg-white rounded-xl shadow-2xl border border-border overflow-hidden transition-transform duration-100 origin-center flex flex-col"
+                    style={{ transform: `scale(${docViewerZoom})` }}
+                  >
+                    <object
+                      data={fileSrc}
+                      type="application/pdf"
+                      className="w-full h-full flex-1"
+                    >
+                      <iframe
+                        src={fileSrc}
+                        className="w-full h-full border-none"
+                        title={selectedDoc.title}
+                      >
+                        <div className="flex flex-col items-center justify-center h-full p-8 text-center space-y-4">
+                          <FileText className="h-16 w-16 text-muted-foreground stroke-1" />
+                          <div>
+                            <p className="text-sm font-bold text-foreground">
+                              Inline PDF preview unavailable in this browser.
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              You can securely open the PDF directly or download it.
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <a
+                              href={fileSrc}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="px-4 py-2 text-xs font-bold rounded-lg bg-theme-btn-primary text-theme-btn-primary-text inline-flex items-center gap-1.5"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                              <span>Open in Browser</span>
+                            </a>
+                            <a
+                              href={`${fileSrc}?download=1`}
+                              download={selectedDoc.originalFileName}
+                              className="px-4 py-2 text-xs font-semibold rounded-lg bg-surface border border-border hover:bg-surface/80 text-foreground inline-flex items-center gap-1.5"
+                            >
+                              <Download className="h-4 w-4" />
+                              <span>Download File</span>
+                            </a>
+                          </div>
+                        </div>
+                      </iframe>
+                    </object>
+                  </div>
+                );
+              }
+
+              // Office and other documents
+              return (
+                <div className="max-w-lg w-full bg-surface border border-border rounded-xl p-8 text-center space-y-5 shadow-2xl animate-in zoom-in-95">
+                  <div className="h-20 w-20 mx-auto rounded-full bg-theme-btn-primary/10 border border-theme-btn-primary/20 flex items-center justify-center text-theme-btn-primary">
+                    <FileText className="h-10 w-10 stroke-[1.5]" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-foreground truncate">{selectedDoc.title}</h3>
+                    <p className="text-xs font-mono text-muted-foreground mt-1">
+                      {selectedDoc.originalFileName} &bull; {(selectedDoc.fileSizeBytes / 1024).toFixed(1)} KB
+                    </p>
+                  </div>
+                  <div className="p-3 bg-surface/50 border border-border rounded-lg text-left text-xs space-y-1.5">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Document Type:</span>
+                      <span className="font-semibold text-foreground">{selectedDoc.docTypeName}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Version:</span>
+                      <span className="font-mono text-foreground">v{selectedDoc.currentVersionNo}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Approval Status:</span>
+                      <span className="font-semibold text-foreground">{selectedDoc.approvalStatus}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-center gap-3 pt-2">
+                    <a
+                      href={fileSrc}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-4 py-2 text-xs font-semibold rounded-lg bg-surface border border-border hover:bg-surface/80 text-foreground inline-flex items-center gap-2"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      <span>Open Document</span>
+                    </a>
+                    <a
+                      href={`${fileSrc}?download=1`}
+                      download={selectedDoc.originalFileName}
+                      className="px-4 py-2 text-xs font-bold rounded-lg bg-theme-btn-primary text-theme-btn-primary-text inline-flex items-center gap-2"
+                    >
+                      <Download className="h-4 w-4" />
+                      <span>Download File</span>
+                    </a>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
       )}
     </div>
   );

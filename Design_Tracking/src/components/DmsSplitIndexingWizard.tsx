@@ -23,14 +23,17 @@ import {
   Maximize2,
   ShieldCheck,
   Calendar,
-  Database
+  Database,
+  ExternalLink
 } from "lucide-react";
 import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from "@/components/ui/AppCard";
 import {
   DmsDocTypeItem,
   DmsFolderNode,
   saveDocumentWithIndexingAction,
-  fetchDocTypesAndFieldsAction
+  fetchDocTypesAndFieldsAction,
+  createDocTypeAction,
+  uploadDmsDocumentFileAction
 } from "@/lib/actions/dms-core";
 
 export type IndexingMode = "SINGLE" | "BATCH" | "SPLIT_PDF";
@@ -67,6 +70,13 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
   const [stagedFiles, setStagedFiles] = useState<StagedFileItem[]>([]);
   const [activeFileIndex, setActiveFileIndex] = useState<number>(0);
 
+  // Quick Add Document Type Master Modal State
+  const [showAddDocTypeModal, setShowAddDocTypeModal] = useState<boolean>(false);
+  const [newDocTypeName, setNewDocTypeName] = useState<string>("");
+  const [newDocTypeCode, setNewDocTypeCode] = useState<string>("");
+  const [newDocTypeDesc, setNewDocTypeDesc] = useState<string>("");
+  const [isCreatingDocType, setIsCreatingDocType] = useState<boolean>(false);
+
   // Dynamic Metadata Form State
   const [docTitle, setDocTitle] = useState<string>("");
   const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>({});
@@ -92,6 +102,52 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
       loadSchema();
     }
   }, [isOpen, workspaceId]);
+
+  // Handle Quick Create Document Type Master
+  const handleCreateDocTypeMaster = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!newDocTypeName.trim()) return;
+
+    setIsCreatingDocType(true);
+    try {
+      const res = await createDocTypeAction({
+        name: newDocTypeName.trim(),
+        code: newDocTypeCode.trim() || undefined,
+        description: newDocTypeDesc.trim() || undefined,
+        workspaceId,
+      });
+
+      if (res.success && res.docType) {
+        const created = res.docType;
+        // 1. Immediately reflect in dropdown list
+        setDocTypes((prev) => {
+          const exists = prev.some((d) => d.id === created.id || d.code === created.code);
+          return exists ? prev : [...prev, created];
+        });
+        // 2. Immediately select the newly created document type
+        setSelectedDocTypeId(created.id);
+        // 3. Update staged file if active
+        setStagedFiles((prev) => {
+          if (!prev[activeFileIndex]) return prev;
+          const copy = [...prev];
+          copy[activeFileIndex] = { ...copy[activeFileIndex], docTypeId: created.id };
+          return copy;
+        });
+
+        // 4. Reset & Close
+        setShowAddDocTypeModal(false);
+        setNewDocTypeName("");
+        setNewDocTypeCode("");
+        setNewDocTypeDesc("");
+      } else {
+        alert(res.error || "Failed to create document type master");
+      }
+    } catch (err: any) {
+      alert(err.message || "Failed to create document type master");
+    } finally {
+      setIsCreatingDocType(false);
+    }
+  };
 
   // Handle local file drop / staging
   const handleFileSelect = (files: FileList | null) => {
@@ -128,6 +184,17 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
   const activeStagedFile = stagedFiles[activeFileIndex] || null;
   const currentDocType = docTypes.find((dt) => dt.id === selectedDocTypeId);
 
+  const handleDownloadActiveFile = () => {
+    if (activeStagedFile?.file) {
+      const a = document.createElement("a");
+      a.href = activeStagedFile.previewUrl;
+      a.download = activeStagedFile.file.name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  };
+
   // Commit Indexing Action
   const handleCommitIndexing = async () => {
     if (!activeStagedFile || !targetFolder) {
@@ -141,10 +208,19 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
 
     setIsSubmitting(true);
     try {
-      // Simulate/perform SHA-256 and storage key generation
-      const checksum = `sha256-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-      const storageKey = `dms/${workspaceId}/${targetFolder.id}/${activeStagedFile.file.name}`;
+      // 1. Upload actual file to storage pipeline
+      const formData = new FormData();
+      formData.append("file", activeStagedFile.file);
+      formData.append("workspaceId", workspaceId);
+      formData.append("folderId", targetFolder.id);
 
+      const uploadRes = await uploadDmsDocumentFileAction(formData);
+      const storageKey =
+        uploadRes.storageUrl ||
+        `storage:ticket-attachments:dms/${workspaceId}/${targetFolder.id}/${activeStagedFile.file.name}`;
+      const checksum = uploadRes.checksumSha256 || `sha256-${Date.now()}`;
+
+      // 2. Save document record and index metadata
       const res = await saveDocumentWithIndexingAction({
         workspaceId,
         folderId: targetFolder.id,
@@ -351,20 +427,41 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
             {/* Core Metadata Fields */}
             <div className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                  Document Type Set
-                </label>
-                <select
-                  value={selectedDocTypeId}
-                  onChange={(e) => setSelectedDocTypeId(e.target.value)}
-                  className="w-full mt-1.5 text-xs font-medium rounded-lg bg-surface border border-border p-2.5 text-foreground focus:ring-1 focus:ring-theme-btn-primary"
-                >
-                  {docTypes.map((dt) => (
-                    <option key={dt.id} value={dt.id}>
-                      {dt.name} ({dt.code})
-                    </option>
-                  ))}
-                </select>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                    Document Type Set *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddDocTypeModal(true)}
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-theme-btn-primary hover:underline hover:brightness-110 cursor-pointer"
+                    title="Add new Document Type Master"
+                  >
+                    <Plus className="h-3 w-3 stroke-[2.5]" />
+                    <span>Add Master</span>
+                  </button>
+                </div>
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  <select
+                    value={selectedDocTypeId}
+                    onChange={(e) => setSelectedDocTypeId(e.target.value)}
+                    className="flex-1 text-xs font-medium rounded-lg bg-surface border border-border p-2.5 text-foreground focus:ring-1 focus:ring-theme-btn-primary"
+                  >
+                    {docTypes.map((dt) => (
+                      <option key={dt.id} value={dt.id}>
+                        {dt.name} ({dt.code})
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddDocTypeModal(true)}
+                    className="p-2.5 rounded-lg border border-border bg-surface hover:bg-surface/80 text-foreground shrink-0 cursor-pointer"
+                    title="Create new Document Type Master"
+                  >
+                    <Plus className="h-4 w-4 text-theme-btn-primary" />
+                  </button>
+                </div>
               </div>
 
               <div>
@@ -510,30 +607,63 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
         <div className="flex-1 bg-surface/50 flex flex-col overflow-hidden">
           {/* Preview Viewport Toolbar */}
           <div className="h-10 border-b border-border bg-surface px-4 flex items-center justify-between shrink-0">
-            <span className="text-xs font-bold text-muted-foreground flex items-center gap-1.5">
-              <Eye className="h-3.5 w-3.5" />
-              <span>Real-Time Document Preview</span>
-            </span>
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-xs font-bold text-muted-foreground flex items-center gap-1.5 shrink-0">
+                <Eye className="h-3.5 w-3.5 text-theme-btn-primary" />
+                <span>Real-Time Document Preview</span>
+              </span>
+              {activeStagedFile && (
+                <span className="text-[11px] font-mono text-foreground truncate max-w-[200px] border-l border-border pl-2">
+                  {activeStagedFile.file.name}
+                </span>
+              )}
+            </div>
 
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 shrink-0">
+              {activeStagedFile && (
+                <>
+                  <a
+                    href={activeStagedFile.previewUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-1 hover:bg-surface rounded-md text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-[11px] px-2 font-medium"
+                    title="Open Document in New Tab"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    <span>Popout</span>
+                  </a>
+                  <button
+                    onClick={handleDownloadActiveFile}
+                    className="p-1 hover:bg-surface rounded-md text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-[11px] px-2 font-medium"
+                    title="Download Staged File"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    <span>Download</span>
+                  </button>
+                  <div className="h-3 w-px bg-border mx-1" />
+                </>
+              )}
               <button
-                onClick={() => setPreviewZoom((z) => Math.max(0.5, z - 0.15))}
+                onClick={() => setPreviewZoom((z) => Math.max(0.4, Number((z - 0.15).toFixed(2))))}
                 className="p-1 hover:bg-surface rounded-sm text-muted-foreground"
+                title="Zoom Out"
               >
                 <ZoomOut className="h-3.5 w-3.5" />
               </button>
-              <span className="text-[11px] font-mono font-medium px-1 text-foreground">
+              <span className="text-[11px] font-mono font-medium px-1 text-foreground min-w-[40px] text-center">
                 {Math.round(previewZoom * 100)}%
               </span>
               <button
-                onClick={() => setPreviewZoom((z) => Math.min(2.5, z + 0.15))}
+                onClick={() => setPreviewZoom((z) => Math.min(2.5, Number((z + 0.15).toFixed(2))))}
                 className="p-1 hover:bg-surface rounded-sm text-muted-foreground"
+                title="Zoom In"
               >
                 <ZoomIn className="h-3.5 w-3.5" />
               </button>
               <button
                 onClick={() => setPreviewZoom(1)}
                 className="p-1 hover:bg-surface rounded-sm text-muted-foreground"
+                title="Reset Zoom (100%)"
               >
                 <Maximize2 className="h-3.5 w-3.5" />
               </button>
@@ -541,22 +671,102 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
           </div>
 
           {/* Preview Container */}
-          <div className="flex-1 overflow-auto p-6 flex items-center justify-center">
+          <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-muted/10 relative">
             {activeStagedFile ? (
-              <div
-                className="bg-white rounded-lg shadow-xl border border-border overflow-hidden transition-transform duration-100 origin-center"
-                style={{
-                  transform: `scale(${previewZoom})`,
-                  width: "750px",
-                  height: "950px",
-                }}
-              >
-                <iframe
-                  src={activeStagedFile.previewUrl}
-                  className="w-full h-full border-none"
-                  title="Staged Document Preview"
-                />
-              </div>
+              (() => {
+                const isImage =
+                  activeStagedFile.file.type.startsWith("image/") ||
+                  /\.(jpe?g|png|webp|gif|svg|bmp)$/i.test(activeStagedFile.file.name);
+                const isPdf =
+                  activeStagedFile.file.type === "application/pdf" ||
+                  /\.pdf$/i.test(activeStagedFile.file.name);
+
+                if (isImage) {
+                  return (
+                    <div className="w-full h-full flex items-center justify-center overflow-auto p-4">
+                      <img
+                        src={activeStagedFile.previewUrl}
+                        alt={activeStagedFile.title}
+                        style={{ transform: `scale(${previewZoom})` }}
+                        className="max-h-full max-w-full object-contain rounded-lg shadow-md border border-border bg-white transition-transform duration-100 origin-center"
+                      />
+                    </div>
+                  );
+                }
+
+                if (isPdf) {
+                  return (
+                    <div
+                      className="w-full h-full max-w-5xl bg-white rounded-lg shadow-xl border border-border overflow-hidden transition-transform duration-100 origin-center flex flex-col"
+                      style={{ transform: `scale(${previewZoom})` }}
+                    >
+                      <object
+                        data={activeStagedFile.previewUrl}
+                        type="application/pdf"
+                        className="w-full h-full flex-1"
+                      >
+                        <iframe
+                          src={activeStagedFile.previewUrl}
+                          className="w-full h-full border-none"
+                          title="PDF Preview"
+                        >
+                          <div className="flex flex-col items-center justify-center h-full p-6 text-center space-y-3">
+                            <FileText className="h-12 w-12 text-muted-foreground stroke-1" />
+                            <p className="text-xs font-semibold text-foreground">
+                              PDF Preview unavailable in embedded viewer.
+                            </p>
+                            <a
+                              href={activeStagedFile.previewUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="px-3.5 py-2 text-xs font-bold rounded-lg bg-theme-btn-primary text-theme-btn-primary-text inline-flex items-center gap-1.5"
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                              <span>Open PDF in New Window</span>
+                            </a>
+                          </div>
+                        </iframe>
+                      </object>
+                    </div>
+                  );
+                }
+
+                // Other formats (Documents, Spreadsheets, Archives)
+                return (
+                  <div className="max-w-md w-full bg-surface border border-border rounded-xl p-6 text-center space-y-4 shadow-lg animate-in fade-in">
+                    <div className="h-16 w-16 mx-auto rounded-full bg-theme-btn-primary/10 flex items-center justify-center text-theme-btn-primary">
+                      <FileText className="h-8 w-8 stroke-[1.5]" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-foreground truncate">{activeStagedFile.file.name}</h4>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {(activeStagedFile.file.size / 1024).toFixed(1)} KB &bull; {activeStagedFile.file.type || "Document"}
+                      </p>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      This file format does not support inline web rendering, but you can inspect or download it directly.
+                    </p>
+                    <div className="flex items-center justify-center gap-2 pt-2">
+                      <a
+                        href={activeStagedFile.previewUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-surface border border-border hover:bg-surface/80 text-foreground inline-flex items-center gap-1.5"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        <span>View Raw</span>
+                      </a>
+                      <button
+                        onClick={handleDownloadActiveFile}
+                        className="px-3 py-1.5 text-xs font-bold rounded-lg bg-theme-btn-primary text-theme-btn-primary-text inline-flex items-center gap-1.5"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        <span>Download</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()
             ) : (
               <div className="text-center py-16 text-muted-foreground space-y-3">
                 <FileText className="h-12 w-12 mx-auto stroke-1 opacity-40" />
@@ -569,6 +779,101 @@ export const DmsSplitIndexingWizard: React.FC<DmsSplitIndexingWizardProps> = ({
           </div>
         </div>
       </div>
+
+      {/* QUICK ADD DOCUMENT TYPE MASTER MODAL */}
+      {showAddDocTypeModal && (
+        <div className="fixed inset-0 z-70 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-surface border border-border rounded-xl shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95">
+            <div className="p-4 border-b border-border flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Tag className="h-4 w-4 text-theme-btn-primary" />
+                <h3 className="text-sm font-bold text-foreground">Add Document Type Master</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddDocTypeModal(false)}
+                className="p-1 hover:bg-surface rounded-md text-muted-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateDocTypeMaster} className="p-4 space-y-4">
+              <div>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                  Document Type Name *
+                </label>
+                <input
+                  type="text"
+                  value={newDocTypeName}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setNewDocTypeName(val);
+                    if (
+                      !newDocTypeCode ||
+                      newDocTypeCode ===
+                        newDocTypeName.toUpperCase().replace(/[^A-Z0-9_]/g, "_").slice(0, 32)
+                    ) {
+                      setNewDocTypeCode(val.toUpperCase().replace(/[^A-Z0-9_]/g, "_").slice(0, 32));
+                    }
+                  }}
+                  placeholder="e.g. Facade Engineering & Details"
+                  className="w-full mt-1.5 text-xs rounded-lg bg-surface border border-border p-2.5 text-foreground focus:ring-1 focus:ring-theme-btn-primary"
+                  autoFocus
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                  Type Code *
+                </label>
+                <input
+                  type="text"
+                  value={newDocTypeCode}
+                  onChange={(e) =>
+                    setNewDocTypeCode(e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, "_"))
+                  }
+                  placeholder="e.g. FACADE_ENG"
+                  className="w-full mt-1.5 text-xs font-mono rounded-lg bg-surface border border-border p-2.5 text-foreground focus:ring-1 focus:ring-theme-btn-primary"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                  Description
+                </label>
+                <textarea
+                  value={newDocTypeDesc}
+                  onChange={(e) => setNewDocTypeDesc(e.target.value)}
+                  placeholder="Brief description of documents classified under this type..."
+                  rows={2}
+                  className="w-full mt-1.5 text-xs rounded-lg bg-surface border border-border p-2.5 text-foreground focus:ring-1 focus:ring-theme-btn-primary resize-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => setShowAddDocTypeModal(false)}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-border hover:bg-surface text-muted-foreground"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isCreatingDocType || !newDocTypeName.trim()}
+                  className="px-4 py-1.5 text-xs font-bold rounded-lg bg-theme-btn-primary text-theme-btn-primary-text hover:brightness-110 shadow-xs disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>{isCreatingDocType ? "Saving..." : "Save & Select Master"}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

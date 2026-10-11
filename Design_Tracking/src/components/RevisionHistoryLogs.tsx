@@ -81,7 +81,11 @@ export const RevisionHistoryLogs: React.FC<RevisionHistoryProps> = ({
     return () => unsubscribe();
   }, []);
 
-  const disciplines = ["Architectural", "Structural", "MEP", "Landscape", "Interior"];
+  const disciplines = useMemo(() => {
+    const fromMasters = (DesignMasterStore.getState().disciplines || []).map(d => d.name);
+    const fromDrawings = drawings.map(d => d.discipline);
+    return Array.from(new Set([...fromMasters, ...fromDrawings])).filter(Boolean);
+  }, [drawings]);
   const projects = useMemo(() => Array.from(new Set(drawings.map(d => d.project))), [drawings]);
 
   // Master projects list for audit filter

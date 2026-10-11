@@ -46,7 +46,11 @@ export const DrawingRegister: React.FC<DrawingRegisterProps> = ({
   const [selectedStatusFilters, setSelectedStatusFilters] = useState<string[]>([]);
   const [previewDrawing, setPreviewDrawing] = useState<DrawingItem | null>(null);
 
-  const disciplines = ["Architectural", "Structural", "MEP", "Landscape", "Interior"];
+  const disciplines = useMemo(() => {
+    const fromMasters = (DesignMasterStore.getState().disciplines || []).map(d => d.name);
+    const fromDrawings = drawings.map(d => d.discipline);
+    return Array.from(new Set([...fromMasters, ...fromDrawings])).filter(Boolean);
+  }, [drawings]);
   const accessibleProjects = useMemo(() => {
     return DesignMasterStore.getUserAccessibleProjects();
   }, []);
