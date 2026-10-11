@@ -74,7 +74,12 @@ jobs:
           curl -sS --ftp-create-dirs -T upload-payload/deploy.zip -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/deploy.zip" || echo "FTP to domain public_html deploy.zip failed"
           curl -sS --ftp-create-dirs -T upload-payload/deploy-hook.php -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/public_html/deploy-hook.php" || echo "FTP to domain public_html deploy-hook.php failed"
           
-          # Upload to Versioned Nodejs and Versioned Public
+          # Upload to Active Versioned Nodejs (01a1292a-eb3c-70ef-942b-d334fbc31a22)
+          curl -sS --ftp-create-dirs -T upload-payload/deploy.zip -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/hbuilds/versions/01a1292a-eb3c-70ef-942b-d334fbc31a22/nodejs/deploy.zip" || echo "FTP to active versioned nodejs deploy.zip failed"
+          curl -sS --ftp-create-dirs -T upload-payload/deploy.zip -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/hbuilds/versions/01a1292a-eb3c-70ef-942b-d334fbc31a22/nodejs/public/deploy.zip" || echo "FTP to active versioned public deploy.zip failed"
+          curl -sS --ftp-create-dirs -T upload-payload/deploy-hook.php -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/hbuilds/versions/01a1292a-eb3c-70ef-942b-d334fbc31a22/nodejs/public/deploy-hook.php" || echo "FTP to active versioned public deploy-hook.php failed"
+
+          # Upload to Legacy Versioned Nodejs (01a0e75f-5f5d-715a-9479-733f79592f9f)
           curl -sS --ftp-create-dirs -T upload-payload/deploy.zip -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/hbuilds/versions/01a0e75f-5f5d-715a-9479-733f79592f9f/nodejs/public/deploy.zip" || echo "FTP to versioned public deploy.zip failed"
           curl -sS --ftp-create-dirs -T upload-payload/deploy-hook.php -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/hbuilds/versions/01a0e75f-5f5d-715a-9479-733f79592f9f/nodejs/public/deploy-hook.php" || echo "FTP to versioned public deploy-hook.php failed"
           curl -sS --ftp-create-dirs -T upload-payload/deploy.zip -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/domains/chandakgroup.tech/hbuilds/versions/01a0e75f-5f5d-715a-9479-733f79592f9f/nodejs/deploy.zip" || echo "FTP to versioned nodejs deploy.zip failed"
@@ -124,7 +129,7 @@ jobs:
             echo "Current Directory: $ROOT_DIR"
             
             ZIP_PATH=""
-            for cand in "$ROOT_DIR/deploy.zip" "$ROOT_DIR/domains/chandakgroup.tech/public_html/deploy.zip" "$ROOT_DIR/public_html/deploy.zip" "/home/u859582759/deploy.zip" "/home/u859582759/public_html/deploy.zip" "/home/u859582759/domains/chandakgroup.tech/deploy.zip" "/home/u859582759/domains/chandakgroup.tech/hbuilds/versions/01a0e75f-5f5d-715a-9479-733f79592f9f/nodejs/public/deploy.zip" "/home/u859582759/domains/chandakgroup.tech/hbuilds/versions/01a0e75f-5f5d-715a-9479-733f79592f9f/nodejs/deploy.zip"; do
+            for cand in "$ROOT_DIR/deploy.zip" "$ROOT_DIR/domains/chandakgroup.tech/public_html/deploy.zip" "$ROOT_DIR/public_html/deploy.zip" "/home/u859582759/deploy.zip" "/home/u859582759/public_html/deploy.zip" "/home/u859582759/domains/chandakgroup.tech/deploy.zip" "/home/u859582759/domains/chandakgroup.tech/hbuilds/versions/01a1292a-eb3c-70ef-942b-d334fbc31a22/nodejs/deploy.zip" "/home/u859582759/domains/chandakgroup.tech/hbuilds/versions/01a1292a-eb3c-70ef-942b-d334fbc31a22/nodejs/public/deploy.zip" "/home/u859582759/domains/chandakgroup.tech/hbuilds/versions/01a0e75f-5f5d-715a-9479-733f79592f9f/nodejs/public/deploy.zip" "/home/u859582759/domains/chandakgroup.tech/hbuilds/versions/01a0e75f-5f5d-715a-9479-733f79592f9f/nodejs/deploy.zip"; do
               if [ -f "$cand" ]; then
                 ZIP_PATH="$cand"
                 break

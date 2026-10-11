@@ -90,15 +90,16 @@ if (!$domainRoot || !is_dir($domainRoot)) {
 }
 
 $versionedDirs = glob($domainRoot . '/hbuilds/versions/*/nodejs');
-$activeVersionDir = ($versionedDirs && count($versionedDirs) > 0) ? $versionedDirs[0] : null;
 
-// Determine Primary Node Application Roots (ONLY the true Node app roots)
+// Determine Primary Node Application Roots (ALL versioned Node roots + current + public_html)
 $primaryAppRoots = [
     $domainRoot . '/hbuilds/current/nodejs',
     $domainRoot . '/public_html',
 ];
-if ($activeVersionDir) {
-    $primaryAppRoots[] = $activeVersionDir;
+if ($versionedDirs) {
+    foreach ($versionedDirs as $vDir) {
+        $primaryAppRoots[] = $vDir;
+    }
 }
 if (dirname(__DIR__) !== $domainRoot && is_dir(dirname(__DIR__))) {
     $primaryAppRoots[] = dirname(__DIR__);
@@ -112,9 +113,6 @@ $publicDocRoots = [
     $domainRoot . '/hbuilds/current/nodejs/public',
     __DIR__,
 ];
-if ($activeVersionDir) {
-    $publicDocRoots[] = $activeVersionDir . '/public';
-}
 if ($versionedDirs) {
     foreach ($versionedDirs as $vDir) {
         $publicDocRoots[] = $vDir . '/public';
@@ -174,9 +172,11 @@ $candidateZipPaths = [
     '/home/u859582759/public_html/deploy.zip',
 ];
 
-if ($activeVersionDir) {
-    $candidateZipPaths[] = $activeVersionDir . '/deploy.zip';
-    $candidateZipPaths[] = $activeVersionDir . '/public/deploy.zip';
+if ($versionedDirs) {
+    foreach ($versionedDirs as $vDir) {
+        $candidateZipPaths[] = $vDir . '/deploy.zip';
+        $candidateZipPaths[] = $vDir . '/public/deploy.zip';
+    }
 }
 
 $zipFile = null;
@@ -272,14 +272,16 @@ $pubHtaccess = $htaccessHeader . "PassengerAppRoot /home/u859582759/domains/chan
 @file_put_contents($domainRoot . '/public_html/.htaccess', $pubHtaccess);
 @touch($domainRoot . '/public_html/.htaccess');
 
-// 2. Write to active versioned dir if present
-if ($activeVersionDir) {
-    $vHtaccess = $htaccessHeader . "PassengerAppRoot " . $activeVersionDir . "\nPassengerRestartDir " . $activeVersionDir . "/tmp\n" . $passengerDirective;
-    @file_put_contents($activeVersionDir . '/.htaccess', $vHtaccess);
-    @touch($activeVersionDir . '/.htaccess');
-    if (is_dir($activeVersionDir . '/public')) {
-        @file_put_contents($activeVersionDir . '/public/.htaccess', $vHtaccess);
-        @touch($activeVersionDir . '/public/.htaccess');
+// 2. Write to all versioned dirs if present
+if ($versionedDirs) {
+    foreach ($versionedDirs as $vDir) {
+        $vHtaccess = $htaccessHeader . "PassengerAppRoot " . $vDir . "\nPassengerRestartDir " . $vDir . "/tmp\n" . $passengerDirective;
+        @file_put_contents($vDir . '/.htaccess', $vHtaccess);
+        @touch($vDir . '/.htaccess');
+        if (is_dir($vDir . '/public')) {
+            @file_put_contents($vDir . '/public/.htaccess', $vHtaccess);
+            @touch($vDir . '/public/.htaccess');
+        }
     }
 }
 
