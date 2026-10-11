@@ -44,6 +44,7 @@ import {
 } from "@/lib/actions/dms-core";
 import { DmsSplitIndexingWizard } from "./DmsSplitIndexingWizard";
 import { DmsFolderPermissionsModal } from "./DmsFolderPermissionsModal";
+import { toast } from "react-toastify";
 
 interface DmsFolderRepositoryProps {
   workspaceId?: string;
@@ -162,13 +163,17 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
         setShowCreateFolderModal(false);
         setNewFolderName("");
         if (parentId) {
-          setExpandedFolderIds((prev) => new Set([...prev, parentId]));
+          setExpandedFolderIds((prev) => new Set([...prev, parentId, res.folder!.id]));
         }
         await loadFolderTree();
         setSelectedFolder(res.folder);
+        toast.success(`Folder "${res.folder.name}" created successfully!`);
+      } else {
+        toast.error(res.error || "Failed to create folder");
       }
     } catch (err: any) {
       console.error("Create folder error:", err);
+      toast.error(err.message || "Failed to create folder");
     } finally {
       setIsCreatingFolder(false);
     }
@@ -327,7 +332,12 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
             <span>Folder Access</span>
           </button>
           <button
-            onClick={() => setShowCreateFolderModal(true)}
+            onClick={() => {
+              if (!selectedFolder && folders.length > 0) {
+                setSelectedFolder(folders[0]);
+              }
+              setShowCreateFolderModal(true);
+            }}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-surface hover:bg-surface text-foreground transition-colors cursor-pointer"
           >
             <FolderPlus className="h-3.5 w-3.5 text-amber-500" />
@@ -570,10 +580,10 @@ export const DmsFolderRepository: React.FC<DmsFolderRepositoryProps> = ({
             <form onSubmit={handleCreateSubfolder} className="p-4 space-y-4">
               <div>
                 <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                  Parent Folder
+                  Target Parent Folder
                 </label>
-                <p className="text-xs font-mono font-medium text-foreground mt-0.5">
-                  {selectedFolder?.path || "chandak.root"}
+                <p className="text-xs font-medium text-foreground mt-0.5">
+                  {selectedFolder ? `${selectedFolder.name} (${selectedFolder.path})` : "Chandak Master Archive (Root)"}
                 </p>
               </div>
 

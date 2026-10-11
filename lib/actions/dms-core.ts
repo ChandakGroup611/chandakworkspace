@@ -233,7 +233,7 @@ export async function fetchFolderTreeAction(workspaceId?: string): Promise<{
     }
 
     if (!foldersData || foldersData.length === 0) {
-      return { success: true, folders: IN_MEMORY_FOLDERS_TREE };
+      return { success: true, folders: [] };
     }
 
     // 3. Count documents per folder
@@ -262,15 +262,8 @@ export async function fetchFolderTreeAction(workspaceId?: string): Promise<{
         approvalRequired: !!f.approval_required,
         inheritPermissions: !!f.inherit_permissions,
         documentCount: countMap.get(f.id) || 0,
+        children: []
       };
-    });
-
-    // Merge any in-memory nodes not yet in database
-    const memoryFlat = flattenTree(IN_MEMORY_FOLDERS_TREE);
-    memoryFlat.forEach((mNode) => {
-      if (!flatNodes.some((f) => f.id === mNode.id)) {
-        flatNodes.push({ ...mNode, children: [] });
-      }
     });
 
     // Build hierarchical tree
@@ -288,11 +281,10 @@ export async function fetchFolderTreeAction(workspaceId?: string): Promise<{
     });
 
     const finalTree = tree.length > 0 ? tree : flatNodes;
-    IN_MEMORY_FOLDERS_TREE = finalTree;
     return { success: true, folders: finalTree };
   } catch (err: any) {
     console.error("[fetchFolderTreeAction] Error:", err);
-    return { success: true, folders: IN_MEMORY_FOLDERS_TREE };
+    return { success: false, error: err.message, folders: [] };
   }
 }
 
@@ -306,6 +298,11 @@ export async function createFolderAction(params: {
   approvalRequired?: boolean;
 }): Promise<{ success: boolean; folder?: DmsFolderNode; error?: string }> {
   try {
+    const cleanName = params.name.trim();
+    if (!cleanName) {
+      return { success: false, error: "Folder name is required" };
+    }
+
     const supabase = await getSupabase();
     let userId: string | null = null;
     try {
@@ -329,112 +326,93 @@ export async function createFolderAction(params: {
     } catch {}
 
     // Sanitize label for path
-    const sanitizedLabel = params.name
+    const sanitizedLabel = cleanName
       .toLowerCase()
-      .trim()
       .replace(/[^a-z0-9_]/g, "_")
       .replace(/_+/g, "_")
       .slice(0, 30);
 
-    let ltreePath = sanitizedLabel;
+    let parentFolderId: string | null = null;
     let parentPath = "chandak_root";
 
-    if (params.parentId) {
+    if (params.parentId && /^[0-9a-fA-F-]{36}$/.test(params.parentId)) {
       try {
         const { data: parentFolder } = await supabaseAdmin
           .from("dms_folders")
-          .select("path")
+          .select("id, path")
           .eq("id", params.parentId)
           .maybeSingle();
 
-        if (parentFolder?.path) {
-          parentPath = parentFolder.path;
-          ltreePath = `${parentFolder.path}.${sanitizedLabel}_${Date.now().toString().slice(-4)}`;
+        if (parentFolder) {
+          parentFolderId = parentFolder.id;
+          parentPath = parentFolder.path || "chandak_root";
         }
       } catch {}
     }
 
-    const isParentUuid = params.parentId && /^[0-9a-fA-F-]{36}$/.test(params.parentId);
-    const isWsUuid = targetWsId && /^[0-9a-fA-F-]{36}$/.test(targetWsId);
+    // If no parent found or specified, anchor to the root folder
+    if (!parentFolderId) {
+      try {
+        const { data: rootFolder } = await supabaseAdmin
+          .from("dms_folders")
+          .select("id, path")
+          .is("parent_id", null)
+          .limit(1)
+          .maybeSingle();
+
+        if (rootFolder) {
+          parentFolderId = rootFolder.id;
+          parentPath = rootFolder.path || "chandak_root";
+        }
+      } catch {}
+    }
+
+    const ltreePath = `${parentPath}.${sanitizedLabel}_${Date.now().toString().slice(-4)}`;
 
     const folderPayload: any = {
-      name: params.name.trim(),
+      name: cleanName,
       path: ltreePath,
       approval_required: params.approvalRequired ?? true,
-      inherit_permissions: true
+      inherit_permissions: true,
+      workspace_id: targetWsId,
+      parent_id: parentFolderId
     };
 
     if (userId) folderPayload.created_by = userId;
-    if (isWsUuid) folderPayload.workspace_id = targetWsId;
-    if (isParentUuid) folderPayload.parent_id = params.parentId;
 
-    let createdFolderNode: DmsFolderNode;
+    const { data: newFolder, error: insertErr } = await supabaseAdmin
+      .from("dms_folders")
+      .insert(folderPayload)
+      .select()
+      .single();
 
-    try {
-      const { data: newFolder, error: insertErr } = await supabaseAdmin
-        .from("dms_folders")
-        .insert(folderPayload)
-        .select()
-        .single();
-
-      if (!insertErr && newFolder) {
-        createdFolderNode = {
-          id: newFolder.id,
-          workspaceId: newFolder.workspace_id || params.workspaceId,
-          parentId: newFolder.parent_id,
-          name: newFolder.name,
-          path: newFolder.path,
-          depth: (newFolder.path as string).split(".").length - 1,
-          approvalRequired: !!newFolder.approval_required,
-          inheritPermissions: !!newFolder.inherit_permissions,
-          documentCount: 0,
-          children: []
-        };
-      } else {
-        throw insertErr || new Error("Insert returned no data");
-      }
-    } catch (dbErr) {
-      console.warn("dms_folders database insert fallback to dynamic in-memory store:", dbErr);
-      const fallbackId = `f-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
-      createdFolderNode = {
-        id: fallbackId,
-        workspaceId: params.workspaceId,
-        parentId: params.parentId || null,
-        name: params.name.trim(),
-        path: ltreePath,
-        depth: ltreePath.split(".").length - 1,
-        approvalRequired: !!params.approvalRequired,
-        inheritPermissions: true,
-        documentCount: 0,
-        children: []
-      };
+    if (insertErr || !newFolder) {
+      console.error("[createFolderAction] Insert Error:", insertErr);
+      return { success: false, error: insertErr?.message || "Failed to create folder in database" };
     }
 
-    // Always append to live in-memory tree so UI updates immediately
-    addFolderToInMemoryTree(IN_MEMORY_FOLDERS_TREE, createdFolderNode);
+    const createdFolderNode: DmsFolderNode = {
+      id: newFolder.id,
+      workspaceId: newFolder.workspace_id || params.workspaceId,
+      parentId: newFolder.parent_id,
+      name: newFolder.name,
+      path: newFolder.path,
+      depth: (newFolder.path as string).split(".").length - 1,
+      approvalRequired: !!newFolder.approval_required,
+      inheritPermissions: !!newFolder.inherit_permissions,
+      documentCount: 0,
+      children: []
+    };
 
     return {
       success: true,
       folder: createdFolderNode
     };
   } catch (err: any) {
-    console.error("[createFolderAction] Error:", err);
-    const fallbackNode: DmsFolderNode = {
-      id: `f-${Date.now().toString(36)}`,
-      workspaceId: params.workspaceId,
-      parentId: params.parentId || null,
-      name: params.name.trim(),
-      path: params.name.toLowerCase().replace(/\s+/g, "_"),
-      depth: 1,
-      approvalRequired: !!params.approvalRequired,
-      inheritPermissions: true,
-      documentCount: 0,
-      children: []
-    };
-    addFolderToInMemoryTree(IN_MEMORY_FOLDERS_TREE, fallbackNode);
+    console.error("[createFolderAction] Exception:", err);
     return {
-      success: true,
-      folder: fallbackNode
+      success: false,
+      error: err.message || "An unexpected error occurred while creating the folder"
     };
   }
 }
