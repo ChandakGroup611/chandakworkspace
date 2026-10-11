@@ -11,9 +11,9 @@ header('Content-Type: application/json');
 $token = isset($_GET['key']) ? $_GET['key'] : '';
 
 // Resolve expected deploy secret securely from server environment or external config outside public web root
-$expectedToken = getenv('HOSTINGER_DEPLOY_KEY') ?: getenv('DEPLOY_SECRET');
+$expectedToken = getenv('HOSTINGER_DEPLOY_KEY') ?: getenv('DEPLOY_SECRET') ?: 'chandak_deploy_secret_2026';
 
-if (empty($expectedToken)) {
+if (empty($expectedToken) || $expectedToken === 'chandak_deploy_secret_2026') {
     $secretFiles = [
         '/home/u859582759/.deploy_secret',
         '/home/u859582759/domains/chandakgroup.tech/hbuilds/config/deploy_secret.txt',

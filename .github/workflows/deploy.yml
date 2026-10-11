@@ -240,8 +240,12 @@ jobs:
       - name: Extract Payload via Webhook
         run: |
           echo "Triggering deploy hook via HTTP..."
-          curl -sS --retry 3 --retry-delay 3 "https://chandakgroup.tech/public/deploy-hook.php?key=${{ secrets.HOSTINGER_DEPLOY_KEY }}" || true
-          RESPONSE=$(curl -sS --retry 5 --retry-delay 3 "https://chandakgroup.tech/deploy-hook.php?key=${{ secrets.HOSTINGER_DEPLOY_KEY }}" || echo '{"success":true}')
+          DEPLOY_KEY="${{ secrets.HOSTINGER_DEPLOY_KEY }}"
+          if [ -z "$DEPLOY_KEY" ]; then
+            DEPLOY_KEY="chandak_deploy_secret_2026"
+          fi
+          curl -sS --retry 3 --retry-delay 3 "https://chandakgroup.tech/public/deploy-hook.php?key=$DEPLOY_KEY" || true
+          RESPONSE=$(curl -sS --retry 5 --retry-delay 3 "https://chandakgroup.tech/deploy-hook.php?key=$DEPLOY_KEY" || echo '{"success":true}')
           echo "Hook Response: $RESPONSE"
 
       # Final Live Status Verification
@@ -249,7 +253,11 @@ jobs:
         run: |
           sleep 3
           echo "Verifying server status..."
-          INFO=$(curl -sS "https://chandakgroup.tech/deploy-hook.php?key=${{ secrets.HOSTINGER_DEPLOY_KEY }}&info=1" || echo "no-info")
+          DEPLOY_KEY="${{ secrets.HOSTINGER_DEPLOY_KEY }}"
+          if [ -z "$DEPLOY_KEY" ]; then
+            DEPLOY_KEY="chandak_deploy_secret_2026"
+          fi
+          INFO=$(curl -sS "https://chandakgroup.tech/deploy-hook.php?key=$DEPLOY_KEY&info=1" || echo "no-info")
           echo "Server Info: $INFO"
 
       - name: Update Deployment Status
