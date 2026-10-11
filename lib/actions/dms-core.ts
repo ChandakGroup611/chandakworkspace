@@ -79,8 +79,8 @@ export interface DmsDocTypeItem {
   fieldDefinitions?: DmsFieldDefinitionItem[];
 }
 
-export const CHANDAK_WORKSPACE_UUID = "5b01404f-534a-4078-9bc1-a2d15484b33a";
-export const CHANDAK_ROOT_FOLDER_UUID = "22ad963e-cdd6-46b4-a587-ea3393bf6dd2";
+const CHANDAK_WORKSPACE_UUID = "5b01404f-534a-4078-9bc1-a2d15484b33a";
+const CHANDAK_ROOT_FOLDER_UUID = "22ad963e-cdd6-46b4-a587-ea3393bf6dd2";
 
 // In-memory fallback tree to guarantee zero failure if database schema cache is warming
 let IN_MEMORY_FOLDERS_TREE: DmsFolderNode[] = [
@@ -135,7 +135,7 @@ let IN_MEMORY_FOLDERS_TREE: DmsFolderNode[] = [
   }
 ];
 
-export let IN_MEMORY_DOC_TYPES: DmsDocTypeItem[] = [
+let IN_MEMORY_DOC_TYPES: DmsDocTypeItem[] = [
   { id: "7f8b4fc0-8158-4fdc-8cf1-448d15bd9ad8", code: "ARCH_DWG", name: "Architectural Drawing", description: "Master floor plans, elevations & sections", fieldDefinitions: [] },
   { id: "d980d902-547a-4940-860b-335fde4631f1", code: "STR_CALC", name: "Structural Design & Calculations", description: "RCC frames, structural steel & soil reports", fieldDefinitions: [] },
   { id: "ea15a12c-4981-41ae-b191-a953fc26407c", code: "MEP_SPEC", name: "MEPF Technical Specifications", description: "HVAC, electrical, plumbing & fire safety specs", fieldDefinitions: [] },
@@ -143,7 +143,7 @@ export let IN_MEMORY_DOC_TYPES: DmsDocTypeItem[] = [
   { id: "cbb19570-2ec2-4c5a-b6e4-883e0743b925", code: "GFC_TRANS", name: "GFC Transmittal Slip", description: "Official Good-for-Construction release package", fieldDefinitions: [] }
 ];
 
-export let IN_MEMORY_DOCUMENTS: DmsDocumentSummary[] = [];
+let IN_MEMORY_DOCUMENTS: DmsDocumentSummary[] = [];
 
 function flattenTree(nodes: DmsFolderNode[]): DmsFolderNode[] {
   const result: DmsFolderNode[] = [];
