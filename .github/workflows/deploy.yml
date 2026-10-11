@@ -58,6 +58,21 @@ jobs:
           cp -r public .next/standalone/public
           cp -r .next/static .next/standalone/.next/static
           cp public/deploy-hook.php .next/standalone/public/deploy-hook.php
+
+          # Inject production runtime environment variables into standalone package
+          cat << EOF > .next/standalone/.env
+          NODE_ENV=production
+          PORT=3000
+          NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DATABASE_URL=${{ secrets.DATABASE_URL }}
+          EOF
+
+          cp .next/standalone/.env .next/standalone/.env.production
+          cp .next/standalone/.env .next/standalone/.env.local
+
           cd .next/standalone
           zip -r -q ../../deploy.zip .
           cd ../..

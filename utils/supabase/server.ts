@@ -1,10 +1,21 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)!;
+try {
+  if (typeof require !== 'undefined') {
+    const dotenv = require('dotenv');
+    dotenv.config();
+    dotenv.config({ path: '.env.production' });
+    dotenv.config({ path: '.env.local' });
+  }
+} catch {}
+
+const DEFAULT_SUPABASE_URL = "https://tkovzymkubxtpcgynkgd.supabase.co";
 
 export const createClient = (cookieStore: Awaited<ReturnType<typeof cookies>>) => {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || DEFAULT_SUPABASE_URL;
+  const supabaseKey = (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "")!;
+
   return createServerClient(
     supabaseUrl,
     supabaseKey,
