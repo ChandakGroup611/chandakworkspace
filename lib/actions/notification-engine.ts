@@ -1,15 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
-
-// Use a Service Role client to bypass RLS when resolving recipients and queueing emails internally
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
-});
+import { supabaseAdmin } from "@/lib/supabase/service_role";
 
 type NotificationPayload = {
   entity_id: string;

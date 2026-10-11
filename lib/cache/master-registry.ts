@@ -1,14 +1,11 @@
 import { unstable_cache, revalidateTag } from "next/cache";
-import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/lib/supabase/service_role";
 import { cache } from "react";
 
 // The master registry utilizes a dedicated Server-Side Supabase Client (Service Role)
 // to fetch masters globally, ensuring no RLS policies artificially segment global dictionaries.
 function getAdminSupabase() {
-  return createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  return supabaseAdmin;
 }
 
 // ------------------------------------------------------------------
