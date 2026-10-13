@@ -97,12 +97,12 @@ async function handle(req: NextRequest, ctx: Ctx) {
   const api = isApiPath(path);
   if (!def) return deny(api, 404, "This dashboard does not exist.");
 
-  // Static files (CSS, JS, chart library) carry no data; everything else needs a session.
-  const isStatic = path[0] === "static";
+  // Static files and health check routes carry no data; everything else needs a session.
+  const isPublic = path[0] === "static" || path[0] === "healthz";
 
-  // Static files need no sign-in check at all (the engine serves them to anyone).
-  const { who: user, transient } = isStatic ? { who: null, transient: false } : await currentIdentity();
-  if (!user && !isStatic) {
+  // Public files need no sign-in check at all (the engine serves them directly).
+  const { who: user, transient } = isPublic ? { who: null, transient: false } : await currentIdentity();
+  if (!user && !isPublic) {
     if (transient) return deny(api, 503, "Could not check your sign-in just now. Please try again in a moment.");
     if (api) return deny(true, 401, "Your session ended. Sign in again.");
     // Loop guard: if we already sent this browser to the login page a moment ago and it came straight
@@ -191,7 +191,7 @@ async function handle(req: NextRequest, ctx: Ctx) {
     const rest = loc.slice(base.length) || "/";
     out.set("location", rest.startsWith(`/dashboards/${def.key}`) ? rest : `/dashboards/${def.key}${rest}`);
   }
-  if (!isStatic) out.set("cache-control", "no-store");
+  if (!isPublic) out.set("cache-control", "no-store");
   out.set("x-content-type-options", "nosniff");
   out.set("referrer-policy", "same-origin");
 
