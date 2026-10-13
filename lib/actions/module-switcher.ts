@@ -31,7 +31,7 @@ export interface UserModulesResult {
   userEmail?: string;
 }
 
-export const ALLOWED_CORE_MODULE_CODES = new Set(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING", "DASHBOARDS"]);
+const ALLOWED_CORE_MODULE_CODES = new Set(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING", "DASHBOARDS"]);
 
 const DEFAULT_FALLBACK_MODULES: ModuleInfo[] = [
   {
