@@ -51,13 +51,19 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
     }
   }, [activeModuleCode]);
 
+  const CORE_MAIN_MODULE_CODES = React.useMemo(() => new Set(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING", "DASHBOARDS"]), []);
+
   useEffect(() => {
     let isMounted = true;
     fetch("/api/modules")
       .then((res) => res.json())
       .then((res: UserModulesResult) => {
         if (isMounted) {
-          setData(res);
+          const filteredModules = (res.modules || []).filter(m => CORE_MAIN_MODULE_CODES.has(m.code));
+          setData({
+            ...res,
+            modules: filteredModules
+          });
         }
       })
       .catch((err) => {
@@ -67,7 +73,7 @@ export default function ModuleSwitcher({ isCompact = false, onCloseMobile, class
     return () => {
       isMounted = false;
     };
-  }, [pathname]);
+  }, [pathname, CORE_MAIN_MODULE_CODES]);
 
   // Click outside listener
   useEffect(() => {

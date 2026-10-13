@@ -31,6 +31,8 @@ export interface UserModulesResult {
   userEmail?: string;
 }
 
+export const ALLOWED_CORE_MODULE_CODES = new Set(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING", "DASHBOARDS"]);
+
 const DEFAULT_FALLBACK_MODULES: ModuleInfo[] = [
   {
     id: "mod-task",
@@ -157,6 +159,7 @@ export async function getUserAllowedModules(targetUserId?: string): Promise<User
     // Filter modules based on user assignments and RBAC permissions (Super Admins see all active modules)
     let allowedModules: ModuleInfo[] = (allActiveModules || DEFAULT_FALLBACK_MODULES)
       .filter(m => {
+        if (!ALLOWED_CORE_MODULE_CODES.has(m.code)) return false;
         if (isAdmin) return true;
         if (m.code === "DASHBOARDS" && hasDashboardPerms) return true;
         if (assignedModuleIds.size === 0) return true;

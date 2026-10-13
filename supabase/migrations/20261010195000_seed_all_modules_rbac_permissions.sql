@@ -27,9 +27,7 @@ INSERT INTO modules_master (code, name, description, icon, route_path, display_o
     ('TASK_WORKFLOW', 'Task & Workspace Management', 'Core Operations, Workspace Trees, Tasks & Ticketing', 'FolderKanban', '/', 1, true),
     ('VEHICLE_DESK', 'Vehicle Management Desk', 'Fleet, Drivers, Trips & Maintenance Logistics', 'Car', '/vehicle', 2, true),
     ('DESIGN_TRACKING', 'Design & Drawing Tracking', 'Architecture, Matrix, Drawing Registers & Approvals', 'Compass', '/design/matrix', 3, true),
-    ('DASHBOARDS', 'Executive Dashboards', 'Department budget, live metrics & analytics', 'LineChart', '/dashboards', 4, true),
-    ('LEARNING_HUB', 'Enterprise Learning Hub', 'System Architecture, Module Connections & Playbooks', 'BookOpen', '/learning', 5, true),
-    ('AMC_CONTRACTS', 'AMC & Vendor Subscriptions', 'Annual Maintenance Contracts & Equipment Warranties', 'ShieldCheck', '/amc', 6, true)
+    ('DASHBOARDS', 'Executive Dashboards', 'Department budget, live metrics & analytics', 'LineChart', '/dashboards', 4, true)
 ON CONFLICT (code) DO UPDATE SET 
     name = EXCLUDED.name,
     description = EXCLUDED.description,

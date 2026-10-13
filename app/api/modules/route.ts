@@ -131,8 +131,11 @@ export async function GET(request: NextRequest) {
     const defaultAssignment = userAssignments.find(a => a.is_default);
     const hasExplicitDefault = !!defaultAssignment;
 
+    const ALLOWED_CORE_MODULE_CODES = new Set(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING", "DASHBOARDS"]);
+
     let allowedModules = allActive
       .filter(m => {
+        if (!ALLOWED_CORE_MODULE_CODES.has(m.code)) return false;
         if (isAdmin) return true;
         if (m.code === "DASHBOARDS" && hasDashboardPerms) return true;
         if (assignedModuleIds.size === 0) return true;
