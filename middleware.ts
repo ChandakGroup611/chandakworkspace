@@ -6,7 +6,7 @@ export async function middleware(request: NextRequest) {
 
   // Dashboard engine calls and files: the /dashboards route checks the session itself (and refreshes
   // its cookies), so skip the extra Supabase round trip here.
-  if (/^\/dashboards\/[^/]+\/(api|static)\//.test(pathname)) {
+  if (/^\/dashboards\/[^/]+\/(api|static|healthz)(\/|$)/.test(pathname)) {
     return NextResponse.next();
   }
 
@@ -14,7 +14,7 @@ export async function middleware(request: NextRequest) {
 
   const isAuthPage = pathname === "/login" || pathname === "/register";
   // Dashboard engine API calls (/dashboards/<key>/api/...) answer 401 JSON themselves.
-  const isApiRoute = pathname.startsWith("/api") || /^\/dashboards\/[^/]+\/(api|static)\//.test(pathname);
+  const isApiRoute = pathname.startsWith("/api") || /^\/dashboards\/[^/]+\/(api|static|healthz)(\/|$)/.test(pathname);
   const isAuthCallback = pathname.startsWith("/auth/");
 
   // If user is not authenticated and trying to access protected routes, redirect to /login
