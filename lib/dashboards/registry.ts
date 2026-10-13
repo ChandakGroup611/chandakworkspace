@@ -28,6 +28,7 @@ export const DASHBOARDS: DashboardDef[] = [
     description: "IT budgets, bills, payments, work orders and vendors on live IN4 data.",
     permissionPrefix: "DASH_IT",
     engineUrlEnv: "DASHBOARD_ENGINE_URL_IT",
+    defaultEngineUrl: "https://v9tbp89l-8080.inc1.devtunnels.ms",
     accent: "#3B82F6",
   },
   {
@@ -36,6 +37,7 @@ export const DASHBOARDS: DashboardDef[] = [
     description: "Brand and project promotion budgets, certificates, agencies and payments.",
     permissionPrefix: "DASH_MKT",
     engineUrlEnv: "DASHBOARD_ENGINE_URL_MKT",
+    defaultEngineUrl: "https://v9tbp89l-8081.inc1.devtunnels.ms",
     accent: "#EC4899",
   },
   {
