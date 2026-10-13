@@ -162,8 +162,10 @@ async function handle(req: NextRequest, ctx: Ctx) {
       // Stay under the web server's 60 s gateway limit so users get our message, not nginx's 504.
       signal: AbortSignal.timeout(50_000),
     });
-  } catch {
-    return deny(api, 502, "The dashboard server is not reachable right now. Try again in a few minutes; if it continues, contact IT.");
+  } catch (err: any) {
+    console.error(`[Dashboard Proxy] Failed fetching upstream target "${target}":`, err);
+    const detail = err?.cause ? `${err.message} (${err.cause})` : (err?.message || "connection failed");
+    return deny(api, 502, `The dashboard server is not reachable right now [${detail}]. Target: ${target}. Try again in a few minutes; if it continues, contact IT.`);
   }
 
   // The engine refused the portal's pass and wants the user to sign in, but the user IS signed in to the
