@@ -55,7 +55,7 @@ export function EnterpriseModalShell({
 
       {/* Modal Container */}
       <div 
-        className={`relative w-full ${SIZE_MAP[size]} flex flex-col rounded-2xl  overflow-hidden ${ "theme-card-structural " } ${className}`}
+        className={`relative w-full ${SIZE_MAP[size]} flex flex-col rounded-2xl overflow-hidden bg-surface border border-border shadow-2xl ${className}`}
         style={{
           maxHeight: "calc(100vh - 48px)" // Safe spacing
         }}
@@ -82,13 +82,13 @@ export function EnterpriseModalShell({
         )}
 
         {/* Body (Scrollable) */}
-        <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-purple-500/30 scrollbar-track-transparent">
+        <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
           {children}
         </div>
 
         {/* Footer */}
         {footer && (
-          <div className={`shrink-0 p-5 border-t flex items-center justify-end gap-3 ${ " theme-card-structural " }`}>
+          <div className="shrink-0 p-5 border-t border-border flex items-center justify-end gap-3 bg-elevated/50">
             {footer}
           </div>
         )}

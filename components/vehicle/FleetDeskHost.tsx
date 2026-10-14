@@ -12,6 +12,7 @@ import {
   Search,
   Plus,
   CheckCircle2,
+  Copy,
   AlertTriangle,
   AlertCircle,
   MapPin,
@@ -29,6 +30,8 @@ import {
   RotateCcw,
   PlusCircle,
   Zap,
+  BatteryCharging,
+  Store,
   Sparkles,
   Shield,
   ShieldCheck,
@@ -126,6 +129,8 @@ import {
   createInsuranceVendorAction,
   updateInsuranceVendorAction,
   deleteInsuranceVendorAction,
+  PurchaseVendorRecord,
+  fetchPurchaseVendorsListAction,
   createVehicleAction,
   updateVehicleAction,
   deleteVehicleAction,
@@ -156,6 +161,7 @@ import {
   PartAccessoryRecord,
   fetchVehiclePartsList,
   createVehiclePartAction,
+  createVehiclePartsBatchAction,
   updateVehiclePartAction,
   deleteVehiclePartAction,
   renewPartPolicyAction,
@@ -807,6 +813,7 @@ export default function FleetDeskHost({
   const [trips, setTrips] = useState<TripRecord[]>([]);
   const [maintenance, setMaintenance] = useState<MaintenanceRecord[]>([]);
   const [insuranceVendors, setInsuranceVendors] = useState<InsuranceVendorRecord[]>([]);
+  const [purchaseVendors, setPurchaseVendors] = useState<PurchaseVendorRecord[]>([]);
 
   // Filtering and search
   const [searchQuery, setSearchQuery] = useState("");
@@ -967,6 +974,7 @@ export default function FleetDeskHost({
   const [renewPolicyHasEngineProtect, setRenewPolicyHasEngineProtect] = useState(false);
   const [renewPolicyReceiptNo, setRenewPolicyReceiptNo] = useState("");
   const [renewPolicyDocUrl, setRenewPolicyDocUrl] = useState("");
+  const [renewPolicyStagedFile, setRenewPolicyStagedFile] = useState<{ file: File; name: string; size: string; previewUrl: string; base64Url?: string } | null>(null);
   const [renewPolicyNotes, setRenewPolicyNotes] = useState("");
 
   // Vehicle PUC Renewal & History Modal States
@@ -996,6 +1004,7 @@ export default function FleetDeskHost({
   const [renewPucHc, setRenewPucHc] = useState<number>(45.0);
   const [renewPucSmokeDensity, setRenewPucSmokeDensity] = useState<number>(0.45);
   const [renewPucDocUrl, setRenewPucDocUrl] = useState("");
+  const [renewPucStagedFile, setRenewPucStagedFile] = useState<{ file: File; name: string; size: string; previewUrl: string; base64Url?: string } | null>(null);
   const [renewPucNotes, setRenewPucNotes] = useState("");
 
   // Unified Vehicle Renewals & Free Service Entitlements Modal States
@@ -1032,7 +1041,102 @@ export default function FleetDeskHost({
   const [redeemFormDocUrl, setRedeemFormDocUrl] = useState("");
   const [redeemFormNotes, setRedeemFormNotes] = useState("");
 
-  // Parts Form States
+  // Parts Multi-Line Item Types & States
+  interface PartLineItem {
+    id: string;
+    name: string;
+    item_type: string;
+    part_number: string;
+    category: string;
+    brand: string;
+    unit_price: number;
+    quantity: number;
+    discount: number;
+    tax_rate: number;
+    tax_amount: number;
+    tds_rate: number;
+    tds_deduction: number;
+    other_deductions: number;
+    purchase_amount: number;
+    manufacturing_date: string;
+    expiry_date: string;
+    warranty_type: string;
+    warranty_months: number;
+    warranty_expiry_date: string;
+    warranty_terms: string;
+    has_renewal_policy: boolean;
+    renewal_policy_type: string;
+    renewal_date: string;
+    renewal_cost: number;
+    renewal_vendor: string;
+    renewal_policy_number: string;
+    renewal_reminder_days: number;
+    status: string;
+    vehicle_id: string;
+    assigned_vehicle_reg: string;
+    installation_date: string;
+    installed_odometer_km: number | "";
+    installed_by: string;
+    condition: string;
+    serial_number: string;
+    notes: string;
+  }
+
+  const createDefaultPartLineItem = (idx = 1, defaultVehId = "UNASSIGNED_STOCK", defaultVehReg = ""): PartLineItem => {
+    const nextYr = new Date();
+    nextYr.setFullYear(nextYr.getFullYear() + 1);
+    return {
+      id: `item-${Date.now()}-${Math.random().toString(36).substring(2, 6)}-${idx}`,
+      name: "",
+      item_type: "SPARE_PART",
+      part_number: "",
+      category: "Spare Parts",
+      brand: "",
+      unit_price: 0,
+      quantity: 1,
+      discount: 0,
+      tax_rate: 18,
+      tax_amount: 0,
+      tds_rate: 0,
+      tds_deduction: 0,
+      other_deductions: 0,
+      purchase_amount: 0,
+      manufacturing_date: "",
+      expiry_date: "",
+      warranty_type: "WARRANTY",
+      warranty_months: 12,
+      warranty_expiry_date: nextYr.toISOString().split("T")[0],
+      warranty_terms: "Standard Manufacturer OEM Warranty",
+      has_renewal_policy: false,
+      renewal_policy_type: "GPS_SIM_RECHARGE",
+      renewal_date: "",
+      renewal_cost: 0,
+      renewal_vendor: "",
+      renewal_policy_number: "",
+      renewal_reminder_days: 30,
+      status: defaultVehId && defaultVehId !== "UNASSIGNED_STOCK" ? "INSTALLED" : "IN_STOCK",
+      vehicle_id: defaultVehId || "UNASSIGNED_STOCK",
+      assigned_vehicle_reg: defaultVehReg || "",
+      installation_date: "",
+      installed_odometer_km: "",
+      installed_by: "",
+      condition: "NEW",
+      serial_number: "",
+      notes: ""
+    };
+  };
+
+  const [partLineItems, setPartLineItems] = useState<PartLineItem[]>(() => [createDefaultPartLineItem(1)]);
+  const [activePartLineIndex, setActivePartLineIndex] = useState<number>(0);
+
+  const billGrossTotal = partLineItems.reduce((acc, item) => acc + (Number(item.unit_price) || 0) * (Number(item.quantity) || 1), 0);
+  const billDiscountTotal = partLineItems.reduce((acc, item) => acc + (Number(item.discount) || 0), 0);
+  const billTaxableTotal = Math.max(0, billGrossTotal - billDiscountTotal);
+  const billGstTotal = partLineItems.reduce((acc, item) => acc + (Number(item.tax_amount) || 0), 0);
+  const billTdsTotal = partLineItems.reduce((acc, item) => acc + (Number(item.tds_deduction) || 0) + (Number(item.other_deductions) || 0), 0);
+  const billNetTotal = partLineItems.reduce((acc, item) => acc + (Number(item.purchase_amount) || 0), 0);
+
+  // Parts Form States (Single part edit & bill header)
   const [partFormName, setPartFormName] = useState("");
   const [partFormItemType, setPartFormItemType] = useState("SPARE_PART");
   const [partFormPartNumber, setPartFormPartNumber] = useState("");
@@ -1111,6 +1215,13 @@ export default function FleetDeskHost({
   const [newVehicleEngine, setNewVehicleEngine] = useState("");
   const [newVehicleFuel, setNewVehicleFuel] = useState("Petrol");
   const [newVehicleRegDate, setNewVehicleRegDate] = useState("");
+  const [newVehiclePurchaseDate, setNewVehiclePurchaseDate] = useState("");
+  const [newVehiclePurchaseVendor, setNewVehiclePurchaseVendor] = useState("");
+  const [newVehiclePurchaseVendorId, setNewVehiclePurchaseVendorId] = useState("");
+  const [newVehicleBatteryWarrantyKm, setNewVehicleBatteryWarrantyKm] = useState<number | string>(160000);
+  const [newVehicleBatteryWarrantyYears, setNewVehicleBatteryWarrantyYears] = useState<number | string>(8);
+  const [newVehicleBatteryWarrantyExpiry, setNewVehicleBatteryWarrantyExpiry] = useState("");
+  const [newVehicleBatteryCapacityKwh, setNewVehicleBatteryCapacityKwh] = useState<number | string>("");
   const [newVehicleRtoOffice, setNewVehicleRtoOffice] = useState("");
   const [newVehicleOwner, setNewVehicleOwner] = useState("");
   const [newVehicleRtoRmn, setNewVehicleRtoRmn] = useState("");
@@ -1181,6 +1292,13 @@ export default function FleetDeskHost({
   const [editVehicleEngine, setEditVehicleEngine] = useState("");
   const [editVehicleFuel, setEditVehicleFuel] = useState("Petrol");
   const [editVehicleRegDate, setEditVehicleRegDate] = useState("");
+  const [editVehiclePurchaseDate, setEditVehiclePurchaseDate] = useState("");
+  const [editVehiclePurchaseVendor, setEditVehiclePurchaseVendor] = useState("");
+  const [editVehiclePurchaseVendorId, setEditVehiclePurchaseVendorId] = useState("");
+  const [editVehicleBatteryWarrantyKm, setEditVehicleBatteryWarrantyKm] = useState<number | string>(160000);
+  const [editVehicleBatteryWarrantyYears, setEditVehicleBatteryWarrantyYears] = useState<number | string>(8);
+  const [editVehicleBatteryWarrantyExpiry, setEditVehicleBatteryWarrantyExpiry] = useState("");
+  const [editVehicleBatteryCapacityKwh, setEditVehicleBatteryCapacityKwh] = useState<number | string>("");
   const [editVehicleRtoOffice, setEditVehicleRtoOffice] = useState("");
   const [editVehicleOwner, setEditVehicleOwner] = useState("");
   const [editVehicleRtoRmn, setEditVehicleRtoRmn] = useState("");
@@ -1949,6 +2067,13 @@ export default function FleetDeskHost({
         newVehicleEngine,
         newVehicleFuel,
         newVehicleRegDate,
+        newVehiclePurchaseDate,
+        newVehiclePurchaseVendor,
+        newVehiclePurchaseVendorId,
+        newVehicleBatteryWarrantyKm,
+        newVehicleBatteryWarrantyYears,
+        newVehicleBatteryWarrantyExpiry,
+        newVehicleBatteryCapacityKwh,
         newVehicleRtoOffice,
         newVehicleOwner,
         newVehicleRtoRmn,
@@ -1983,6 +2108,13 @@ export default function FleetDeskHost({
     newVehicleEngine,
     newVehicleFuel,
     newVehicleRegDate,
+    newVehiclePurchaseDate,
+    newVehiclePurchaseVendor,
+    newVehiclePurchaseVendorId,
+    newVehicleBatteryWarrantyKm,
+    newVehicleBatteryWarrantyYears,
+    newVehicleBatteryWarrantyExpiry,
+    newVehicleBatteryCapacityKwh,
     newVehicleRtoOffice,
     newVehicleOwner,
     newVehicleRtoRmn,
@@ -2017,6 +2149,13 @@ export default function FleetDeskHost({
       if (draft.newVehicleEngine) setNewVehicleEngine(draft.newVehicleEngine);
       if (draft.newVehicleFuel) setNewVehicleFuel(draft.newVehicleFuel);
       if (draft.newVehicleRegDate) setNewVehicleRegDate(draft.newVehicleRegDate);
+      if (draft.newVehiclePurchaseDate) setNewVehiclePurchaseDate(draft.newVehiclePurchaseDate);
+      if (draft.newVehiclePurchaseVendor) setNewVehiclePurchaseVendor(draft.newVehiclePurchaseVendor);
+      if (draft.newVehiclePurchaseVendorId) setNewVehiclePurchaseVendorId(draft.newVehiclePurchaseVendorId);
+      if (draft.newVehicleBatteryWarrantyKm !== undefined) setNewVehicleBatteryWarrantyKm(draft.newVehicleBatteryWarrantyKm);
+      if (draft.newVehicleBatteryWarrantyYears !== undefined) setNewVehicleBatteryWarrantyYears(draft.newVehicleBatteryWarrantyYears);
+      if (draft.newVehicleBatteryWarrantyExpiry) setNewVehicleBatteryWarrantyExpiry(draft.newVehicleBatteryWarrantyExpiry);
+      if (draft.newVehicleBatteryCapacityKwh !== undefined) setNewVehicleBatteryCapacityKwh(draft.newVehicleBatteryCapacityKwh);
       if (draft.newVehicleRtoOffice) setNewVehicleRtoOffice(draft.newVehicleRtoOffice);
       if (draft.newVehicleOwner) setNewVehicleOwner(draft.newVehicleOwner);
       if (draft.newVehicleRtoRmn) setNewVehicleRtoRmn(draft.newVehicleRtoRmn);
@@ -2653,14 +2792,15 @@ export default function FleetDeskHost({
       if (!isSilent && !hasExistingData) setLoading(true);
       else setRefreshing(true);
 
-      const [statsRes, vehiclesRes, driversRes, tripsRes, maintRes, vendorsRes, partsRes] = await Promise.all([
+      const [statsRes, vehiclesRes, driversRes, tripsRes, maintRes, vendorsRes, partsRes, purchaseVendorsRes] = await Promise.all([
         fetchVehicleDashboardStats(),
         fetchVehiclesList({ pageSize: 100 }),
         fetchDriversList(),
         fetchTripsList(),
         fetchMaintenanceList(),
         fetchInsuranceVendorsListAction(),
-        fetchVehiclePartsList()
+        fetchVehiclePartsList(),
+        fetchPurchaseVendorsListAction()
       ]);
 
       const newCache: {
@@ -2670,6 +2810,7 @@ export default function FleetDeskHost({
         trips?: TripRecord[];
         maintenance?: MaintenanceRecord[];
         vendors?: InsuranceVendorRecord[];
+        purchaseVendors?: PurchaseVendorRecord[];
         parts?: PartAccessoryRecord[];
         timestamp: number;
       } = { timestamp: Date.now() };
@@ -2682,6 +2823,7 @@ export default function FleetDeskHost({
       if (tripsRes.success) { setTrips(tripsRes.trips); newCache.trips = tripsRes.trips; }
       if (maintRes.success) { setMaintenance(maintRes.records); newCache.maintenance = maintRes.records; }
       if (vendorsRes.success) { setInsuranceVendors(vendorsRes.vendors); newCache.vendors = vendorsRes.vendors; }
+      if (purchaseVendorsRes.success) { setPurchaseVendors(purchaseVendorsRes.vendors); newCache.purchaseVendors = purchaseVendorsRes.vendors; }
       if (partsRes.success && partsRes.parts) { setParts(partsRes.parts); newCache.parts = partsRes.parts; }
 
       fleetDataCache = newCache;
@@ -3024,6 +3166,34 @@ export default function FleetDeskHost({
     setEditVehiclePurchasePrice(onRoad > 0 ? Math.round(onRoad) : (exShowroom > 0 ? Math.round(exShowroom) : ""));
   };
 
+  const updateNewVehicleBatteryExpiry = (baseDate?: string, years?: number | string) => {
+    const dStr = baseDate !== undefined ? baseDate : (newVehiclePurchaseDate || newVehicleRegDate);
+    const yVal = Number(years !== undefined ? years : newVehicleBatteryWarrantyYears) || 8;
+    if (dStr) {
+      const d = new Date(dStr);
+      if (!isNaN(d.getTime())) {
+        d.setFullYear(d.getFullYear() + Math.floor(yVal));
+        const remMonths = Math.round((yVal % 1) * 12);
+        if (remMonths > 0) d.setMonth(d.getMonth() + remMonths);
+        setNewVehicleBatteryWarrantyExpiry(d.toISOString().split("T")[0]);
+      }
+    }
+  };
+
+  const updateEditVehicleBatteryExpiry = (baseDate?: string, years?: number | string) => {
+    const dStr = baseDate !== undefined ? baseDate : (editVehiclePurchaseDate || editVehicleRegDate);
+    const yVal = Number(years !== undefined ? years : editVehicleBatteryWarrantyYears) || 8;
+    if (dStr) {
+      const d = new Date(dStr);
+      if (!isNaN(d.getTime())) {
+        d.setFullYear(d.getFullYear() + Math.floor(yVal));
+        const remMonths = Math.round((yVal % 1) * 12);
+        if (remMonths > 0) d.setMonth(d.getMonth() + remMonths);
+        setEditVehicleBatteryWarrantyExpiry(d.toISOString().split("T")[0]);
+      }
+    }
+  };
+
   const handleResetVehicleForm = () => {
     setNewVehiclePlate("");
     setNewVehicleMake("");
@@ -3039,6 +3209,13 @@ export default function FleetDeskHost({
     setNewVehicleEngine("");
     setNewVehicleFuel("Petrol");
     setNewVehicleRegDate("");
+    setNewVehiclePurchaseDate("");
+    setNewVehiclePurchaseVendor("");
+    setNewVehiclePurchaseVendorId("");
+    setNewVehicleBatteryWarrantyKm(160000);
+    setNewVehicleBatteryWarrantyYears(8);
+    setNewVehicleBatteryWarrantyExpiry("");
+    setNewVehicleBatteryCapacityKwh("");
     setNewVehicleRtoOffice("");
     setNewVehicleOwner("");
     setNewVehicleRtoRmn("");
@@ -4654,6 +4831,13 @@ export default function FleetDeskHost({
         insurance_expiry_date: insExp,
         puc_expiry_date: isElectric ? undefined : pucExp,
         fitness_expiry_date: fitExp || undefined,
+        purchase_vendor: newVehiclePurchaseVendor.trim() || undefined,
+        purchase_vendor_id: newVehiclePurchaseVendorId.trim() || undefined,
+        purchase_date: newVehiclePurchaseDate.trim() || regDate || undefined,
+        battery_warranty_km: isElectric ? (Number(newVehicleBatteryWarrantyKm) || 160000) : undefined,
+        battery_warranty_years: isElectric ? (Number(newVehicleBatteryWarrantyYears) || 8) : undefined,
+        battery_warranty_expiry_date: isElectric ? (newVehicleBatteryWarrantyExpiry.trim() || undefined) : undefined,
+        battery_capacity_kwh: isElectric && newVehicleBatteryCapacityKwh ? Number(newVehicleBatteryCapacityKwh) : undefined,
         has_roadside_assistance: newVehicleRsa,
         has_hsrp_plate: newVehicleHsrp,
         basic_price: Number(newVehicleBasicPrice) || 0,
@@ -4710,6 +4894,13 @@ export default function FleetDeskHost({
     setEditVehicleEngine(veh.engine_number || "");
     setEditVehicleFuel(veh.fuel_type || "Petrol");
     setEditVehicleRegDate(normalizeDateToInputFormat(veh.registration_date));
+    setEditVehiclePurchaseDate(normalizeDateToInputFormat(veh.purchase_date || veh.registration_date));
+    setEditVehiclePurchaseVendor(veh.purchase_vendor || "");
+    setEditVehiclePurchaseVendorId(veh.purchase_vendor_id || "");
+    setEditVehicleBatteryWarrantyKm(veh.battery_warranty_km ?? 160000);
+    setEditVehicleBatteryWarrantyYears(veh.battery_warranty_years ?? 8);
+    setEditVehicleBatteryWarrantyExpiry(normalizeDateToInputFormat(veh.battery_warranty_expiry_date));
+    setEditVehicleBatteryCapacityKwh(veh.battery_capacity_kwh ?? "");
     setEditVehicleRtoOffice(veh.rto_office || "");
     setEditVehicleOwner(veh.registered_owner || "");
     setEditVehicleRtoRmn(veh.rto_rmn || "");
@@ -4856,6 +5047,13 @@ export default function FleetDeskHost({
         insurance_expiry_date: editVehicleInsuranceExpiry || undefined,
         puc_expiry_date: editVehiclePucExpiry || undefined,
         fitness_expiry_date: editVehicleFitnessExpiry || undefined,
+        purchase_vendor: editVehiclePurchaseVendor.trim() || null,
+        purchase_vendor_id: editVehiclePurchaseVendorId.trim() || null,
+        purchase_date: editVehiclePurchaseDate.trim() || null,
+        battery_warranty_km: isElectricFuel(editVehicleFuel) ? (Number(editVehicleBatteryWarrantyKm) || 160000) : null,
+        battery_warranty_years: isElectricFuel(editVehicleFuel) ? (Number(editVehicleBatteryWarrantyYears) || 8) : null,
+        battery_warranty_expiry_date: isElectricFuel(editVehicleFuel) ? (editVehicleBatteryWarrantyExpiry.trim() || null) : null,
+        battery_capacity_kwh: isElectricFuel(editVehicleFuel) && editVehicleBatteryCapacityKwh ? Number(editVehicleBatteryCapacityKwh) : null,
         has_roadside_assistance: editVehicleRsa,
         has_hsrp_plate: editVehicleHsrp,
         basic_price: Number(editVehicleBasicPrice) || 0,
@@ -4923,6 +5121,13 @@ export default function FleetDeskHost({
               engine_number: editVehicleEngine.trim() || v.engine_number,
               fuel_type: editVehicleFuel,
               registration_date: editVehicleRegDate || v.registration_date,
+              purchase_date: editVehiclePurchaseDate.trim() || v.purchase_date,
+              purchase_vendor: editVehiclePurchaseVendor.trim() || v.purchase_vendor,
+              purchase_vendor_id: editVehiclePurchaseVendorId.trim() || v.purchase_vendor_id,
+              battery_warranty_km: isElectricFuel(editVehicleFuel) ? (Number(editVehicleBatteryWarrantyKm) || 160000) : null,
+              battery_warranty_years: isElectricFuel(editVehicleFuel) ? (Number(editVehicleBatteryWarrantyYears) || 8) : null,
+              battery_warranty_expiry_date: isElectricFuel(editVehicleFuel) ? (editVehicleBatteryWarrantyExpiry.trim() || null) : null,
+              battery_capacity_kwh: isElectricFuel(editVehicleFuel) && editVehicleBatteryCapacityKwh ? Number(editVehicleBatteryCapacityKwh) : null,
               rto_office: editVehicleRtoOffice.trim() || v.rto_office,
               registered_owner: editVehicleOwner.trim() || v.registered_owner,
               rto_rmn: editVehicleRtoRmn.trim() || v.rto_rmn,
@@ -4958,6 +5163,13 @@ export default function FleetDeskHost({
             engine_number: editVehicleEngine.trim() || prev.engine_number,
             fuel_type: editVehicleFuel,
             registration_date: editVehicleRegDate || prev.registration_date,
+            purchase_date: editVehiclePurchaseDate.trim() || prev.purchase_date,
+            purchase_vendor: editVehiclePurchaseVendor.trim() || prev.purchase_vendor,
+            purchase_vendor_id: editVehiclePurchaseVendorId.trim() || prev.purchase_vendor_id,
+            battery_warranty_km: isElectricFuel(editVehicleFuel) ? (Number(editVehicleBatteryWarrantyKm) || 160000) : null,
+            battery_warranty_years: isElectricFuel(editVehicleFuel) ? (Number(editVehicleBatteryWarrantyYears) || 8) : null,
+            battery_warranty_expiry_date: isElectricFuel(editVehicleFuel) ? (editVehicleBatteryWarrantyExpiry.trim() || null) : null,
+            battery_capacity_kwh: isElectricFuel(editVehicleFuel) && editVehicleBatteryCapacityKwh ? Number(editVehicleBatteryCapacityKwh) : null,
             rto_office: editVehicleRtoOffice.trim() || prev.rto_office,
             registered_owner: editVehicleOwner.trim() || prev.registered_owner,
             rto_rmn: editVehicleRtoRmn.trim() || prev.rto_rmn,
@@ -5026,6 +5238,13 @@ export default function FleetDeskHost({
             engine_number: editVehicleEngine.trim() || dossierOriginVehicle.engine_number,
             fuel_type: editVehicleFuel,
             registration_date: editVehicleRegDate || dossierOriginVehicle.registration_date,
+            purchase_date: editVehiclePurchaseDate.trim() || dossierOriginVehicle.purchase_date,
+            purchase_vendor: editVehiclePurchaseVendor.trim() || dossierOriginVehicle.purchase_vendor,
+            purchase_vendor_id: editVehiclePurchaseVendorId.trim() || dossierOriginVehicle.purchase_vendor_id,
+            battery_warranty_km: isElectricFuel(editVehicleFuel) ? (Number(editVehicleBatteryWarrantyKm) || 160000) : null,
+            battery_warranty_years: isElectricFuel(editVehicleFuel) ? (Number(editVehicleBatteryWarrantyYears) || 8) : null,
+            battery_warranty_expiry_date: isElectricFuel(editVehicleFuel) ? (editVehicleBatteryWarrantyExpiry.trim() || null) : null,
+            battery_capacity_kwh: isElectricFuel(editVehicleFuel) && editVehicleBatteryCapacityKwh ? Number(editVehicleBatteryCapacityKwh) : null,
             rto_office: editVehicleRtoOffice.trim() || dossierOriginVehicle.rto_office,
             registered_owner: editVehicleOwner.trim() || dossierOriginVehicle.registered_owner,
             rto_rmn: editVehicleRtoRmn.trim() || dossierOriginVehicle.rto_rmn,
@@ -5512,8 +5731,29 @@ export default function FleetDeskHost({
   // CRUD Handlers: PARTS & ACCESSORIES (Dates, Expiries & Renewal Policies)
   // ----------------------------------------------------------------------------
 
-  const openCreatePartModal = () => {
+  const openCreatePartModal = (preselectedVehId?: string | React.MouseEvent, preselectedVehReg?: string) => {
     setSelectedPartForEdit(null);
+    const validVehId = typeof preselectedVehId === "string" ? preselectedVehId : undefined;
+    const targetVehId = validVehId || (viewingVehicle ? viewingVehicle.id : "UNASSIGNED_STOCK");
+    const targetVehReg = preselectedVehReg || (viewingVehicle ? viewingVehicle.registration_number : "");
+
+    setPartFormVendorName("");
+    setPartFormInvoiceNumber("");
+    setPartFormPurchaseDate(new Date().toISOString().split("T")[0]);
+    setPartFormVehicleId(targetVehId);
+    setPartFormAssignedVehicleReg(targetVehReg);
+    setPartFormInstallationDate("");
+    setPartFormInstalledOdometer("");
+    setPartFormInstalledBy("");
+    setPartFormAttachments([]);
+    setPartFormNotes("");
+
+    // Initialize with 1 clean line item defaulting to target vehicle
+    const initialItem = createDefaultPartLineItem(1, targetVehId, targetVehReg);
+    setPartLineItems([initialItem]);
+    setActivePartLineIndex(0);
+
+    // Keep single form state in sync for fallback
     setPartFormName("");
     setPartFormItemType("SPARE_PART");
     setPartFormPartNumber("");
@@ -5528,17 +5768,11 @@ export default function FleetDeskHost({
     setPartFormTdsRate(0);
     setPartFormTdsDeduction(0);
     setPartFormOtherDeductions(0);
-    setPartFormAttachments([]);
-    setPartFormPurchaseDate(new Date().toISOString().split("T")[0]);
-    setPartFormVendorName("");
-    setPartFormInvoiceNumber("");
     setPartFormManufacturingDate("");
     setPartFormExpiryDate("");
     setPartFormWarrantyType("WARRANTY");
     setPartFormWarrantyMonths(12);
-    const nextYr = new Date();
-    nextYr.setFullYear(nextYr.getFullYear() + 1);
-    setPartFormWarrantyExpiryDate(nextYr.toISOString().split("T")[0]);
+    setPartFormWarrantyExpiryDate(initialItem.warranty_expiry_date);
     setPartFormWarrantyTerms("Standard Manufacturer OEM Warranty");
     setPartFormHasRenewal(false);
     setPartFormRenewalType("GPS_SIM_RECHARGE");
@@ -5547,16 +5781,85 @@ export default function FleetDeskHost({
     setPartFormRenewalVendor("");
     setPartFormRenewalPolicyNumber("");
     setPartFormRenewalReminderDays(30);
-    setPartFormStatus("IN_STOCK");
-    setPartFormVehicleId("UNASSIGNED_STOCK");
-    setPartFormAssignedVehicleReg("");
-    setPartFormInstallationDate("");
-    setPartFormInstalledOdometer("");
-    setPartFormInstalledBy("");
+    setPartFormStatus(targetVehId && targetVehId !== "UNASSIGNED_STOCK" ? "INSTALLED" : "IN_STOCK");
     setPartFormCondition("NEW");
     setPartFormSerialNumber("");
-    setPartFormNotes("");
+
     setIsAddPartOpen(true);
+  };
+
+  const updateActivePartLineItem = (updates: Partial<PartLineItem>) => {
+    setPartLineItems((prev) => {
+      const copy = [...prev];
+      const idx = activePartLineIndex >= 0 && activePartLineIndex < copy.length ? activePartLineIndex : 0;
+      if (idx >= 0 && idx < copy.length) {
+        const current = copy[idx];
+        const merged = { ...current, ...updates };
+
+        const unit = Number(merged.unit_price) || 0;
+        const qty = Number(merged.quantity) || 1;
+        const gross = unit * qty;
+        const disc = Number(merged.discount) || 0;
+        const taxable = Math.max(0, gross - disc);
+
+        if (updates.tax_rate !== undefined || updates.unit_price !== undefined || updates.quantity !== undefined || updates.discount !== undefined) {
+          merged.tax_amount = merged.tax_rate > 0 ? Math.round(taxable * (merged.tax_rate / 100)) : 0;
+        }
+
+        if (updates.tds_rate !== undefined || updates.unit_price !== undefined || updates.quantity !== undefined || updates.discount !== undefined) {
+          merged.tds_deduction = merged.tds_rate > 0 ? Math.round(taxable * (merged.tds_rate / 100)) : 0;
+        }
+
+        if (updates.purchase_amount === undefined) {
+          merged.purchase_amount = Math.max(0, taxable + (Number(merged.tax_amount) || 0) - (Number(merged.tds_deduction) || 0) - (Number(merged.other_deductions) || 0));
+        }
+
+        // Auto-calculate warranty expiry if months changed and purchase date is available
+        if (updates.warranty_months !== undefined && Number(merged.warranty_months) > 0 && partFormPurchaseDate) {
+          try {
+            const d = new Date(partFormPurchaseDate);
+            if (!isNaN(d.getTime())) {
+              d.setMonth(d.getMonth() + Number(merged.warranty_months));
+              merged.warranty_expiry_date = d.toISOString().split("T")[0];
+            }
+          } catch {}
+        }
+
+        copy[idx] = merged;
+      }
+      return copy;
+    });
+  };
+
+  const handleAddPartLineItem = () => {
+    const defaultVeh = partFormVehicleId || (dossierOriginVehicle ? dossierOriginVehicle.id : "UNASSIGNED_STOCK");
+    const defaultReg = partFormAssignedVehicleReg || (dossierOriginVehicle ? dossierOriginVehicle.registration_number : "");
+    const newItem = createDefaultPartLineItem(partLineItems.length + 1, defaultVeh, defaultReg);
+    setPartLineItems((prev) => [...prev, newItem]);
+    setActivePartLineIndex(partLineItems.length);
+  };
+
+  const handleDuplicatePartLineItem = (index: number) => {
+    if (index < 0 || index >= partLineItems.length) return;
+    const source = partLineItems[index];
+    const duplicated: PartLineItem = {
+      ...source,
+      id: `item-${Date.now()}-${Math.random().toString(36).substring(2, 6)}-${partLineItems.length + 1}`,
+      name: source.name ? `${source.name} (Copy)` : "",
+      serial_number: ""
+    };
+    setPartLineItems((prev) => [...prev, duplicated]);
+    setActivePartLineIndex(partLineItems.length);
+    triggerToast("Line item duplicated. Adjust serial number & specifics as needed.");
+  };
+
+  const handleRemovePartLineItem = (index: number) => {
+    if (partLineItems.length <= 1) {
+      triggerToast("At least one line item is required on the bill.", true);
+      return;
+    }
+    setPartLineItems((prev) => prev.filter((_, i) => i !== index));
+    setActivePartLineIndex((prev) => Math.max(0, Math.min(prev, partLineItems.length - 2)));
   };
 
   const openEditPartModal = (part: PartAccessoryRecord) => {
@@ -5637,111 +5940,226 @@ export default function FleetDeskHost({
 
   const handleSavePart = async (e?: React.FormEvent | React.MouseEvent) => {
     e?.preventDefault?.();
-    if (!partFormName.trim()) {
-      triggerToast("Part / Accessory name is required.", true);
+
+    if (selectedPartForEdit) {
+      if (!partFormName.trim()) {
+        triggerToast("Part / Accessory name is required.", true);
+        return;
+      }
+      if (!partFormBrand.trim()) {
+        triggerToast("Brand / Manufacturer is required.", true);
+        return;
+      }
+      if (partFormHasRenewal && !partFormRenewalDate) {
+        triggerToast("Please specify the renewal due date for the active renewal policy.", true);
+        return;
+      }
+
+      setModalSubmitting(true);
+      try {
+        let assignedReg = partFormAssignedVehicleReg;
+        if (partFormVehicleId && partFormVehicleId !== "UNASSIGNED_STOCK") {
+          const matchedVeh = vehicles.find((v) => v.id === partFormVehicleId);
+          if (matchedVeh) assignedReg = matchedVeh.registration_number;
+        } else {
+          assignedReg = "";
+        }
+
+        const unitPrice = Number(partFormUnitPrice) || 0;
+        const qty = Number(partFormQuantity) || 1;
+        const grossBase = unitPrice * qty;
+        const discount = Number(partFormDiscount) || 0;
+        const taxableBase = Math.max(0, grossBase - discount);
+        const taxAmt = Number(partFormTaxAmount) || 0;
+        const tdsDed = Number(partFormTdsDeduction) || 0;
+        const otherDed = Number(partFormOtherDeductions) || 0;
+        const calculatedNet = Math.max(0, taxableBase + taxAmt - tdsDed - otherDed);
+        const finalPurchaseAmount = Number(partFormPurchaseAmount) || calculatedNet || grossBase;
+
+        // Pack structured metadata into notes
+        const notesPayload = {
+          text: partFormNotes.trim(),
+          attachments: partFormAttachments,
+          tax_breakdown: {
+            unit_price: unitPrice,
+            quantity: qty,
+            gross_base: grossBase,
+            discount: discount,
+            taxable_base: taxableBase,
+            tax_rate: Number(partFormTaxRate) || 0,
+            tax_amount: taxAmt,
+            tds_rate: Number(partFormTdsRate) || 0,
+            tds_deduction: tdsDed,
+            other_deductions: otherDed,
+            net_invoiced: finalPurchaseAmount
+          }
+        };
+
+        const payload = {
+          name: partFormName.trim(),
+          item_type: partFormItemType,
+          part_number: partFormPartNumber.trim() || undefined,
+          category: partFormCategory.trim() || "Spare Parts",
+          brand: partFormBrand.trim(),
+          purchase_amount: finalPurchaseAmount,
+          unit_price: unitPrice || undefined,
+          quantity: qty,
+          purchase_date: partFormPurchaseDate || new Date().toISOString().split("T")[0],
+          vendor_name: partFormVendorName.trim() || "OEM / Direct Store",
+          invoice_number: partFormInvoiceNumber.trim() || undefined,
+          manufacturing_date: partFormManufacturingDate || undefined,
+          expiry_date: partFormExpiryDate || undefined,
+          warranty_type: partFormWarrantyType,
+          warranty_months: Number(partFormWarrantyMonths) || 0,
+          warranty_expiry_date: partFormWarrantyExpiryDate || undefined,
+          warranty_terms: partFormWarrantyTerms.trim() || undefined,
+          has_renewal_policy: partFormHasRenewal,
+          renewal_policy_type: partFormHasRenewal ? partFormRenewalType : undefined,
+          renewal_date: partFormHasRenewal ? partFormRenewalDate || undefined : undefined,
+          renewal_cost: partFormHasRenewal ? Number(partFormRenewalCost) || 0 : undefined,
+          renewal_vendor: partFormHasRenewal ? partFormRenewalVendor.trim() || undefined : undefined,
+          renewal_policy_number: partFormHasRenewal ? partFormRenewalPolicyNumber.trim() || undefined : undefined,
+          renewal_reminder_days: partFormHasRenewal ? Number(partFormRenewalReminderDays) || 30 : undefined,
+          status: partFormVehicleId && partFormVehicleId !== "UNASSIGNED_STOCK" ? "INSTALLED" : partFormStatus,
+          vehicle_id: partFormVehicleId || "UNASSIGNED_STOCK",
+          assigned_vehicle_reg: assignedReg || undefined,
+          installation_date: partFormInstallationDate || undefined,
+          installed_odometer_km: partFormInstalledOdometer !== "" ? Number(partFormInstalledOdometer) : undefined,
+          installed_by: partFormInstalledBy.trim() || undefined,
+          condition: partFormCondition,
+          serial_number: partFormSerialNumber.trim() || undefined,
+          notes: JSON.stringify(notesPayload)
+        };
+
+        const res = await updateVehiclePartAction(selectedPartForEdit.id, payload);
+
+        if (res.success && res.part) {
+          triggerToast(`Part '${payload.name}' updated successfully!`);
+          setParts((prev) => prev.map((p) => p.id === res.part!.id ? res.part! : p));
+          setIsAddPartOpen(false);
+          setIsEditPartOpen(false);
+          setSelectedPartForEdit(null);
+          fleetDataCache = null;
+          loadAllData(true, true);
+          if (dossierOriginVehicle) {
+            setViewingVehicle(dossierOriginVehicle);
+            if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+            setDossierOriginVehicle(null);
+          }
+        } else {
+          triggerToast(res.error || "Failed to update part record.", true);
+        }
+      } catch (err: any) {
+        triggerToast(err.message || "Failed to update part record.", true);
+      } finally {
+        setModalSubmitting(false);
+      }
       return;
     }
-    if (!partFormBrand.trim()) {
-      triggerToast("Brand / Manufacturer is required.", true);
+
+    // Bill / Invoice with Multiple Line Items Registration
+    if (!partFormVendorName.trim()) {
+      triggerToast("Vendor / Supplier name is required for the bill.", true);
       return;
     }
-    if (partFormHasRenewal && !partFormRenewalDate) {
-      triggerToast("Please specify the renewal due date for the active renewal policy.", true);
+    if (!partLineItems || partLineItems.length === 0) {
+      triggerToast("Please add at least one line item to the bill.", true);
       return;
+    }
+
+    for (let i = 0; i < partLineItems.length; i++) {
+      const item = partLineItems[i];
+      if (!item.name.trim()) {
+        setActivePartLineIndex(i);
+        triggerToast(`Line item #${i + 1}: Part Name is required.`, true);
+        return;
+      }
+      if (!item.brand.trim()) {
+        setActivePartLineIndex(i);
+        triggerToast(`Line item #${i + 1} (${item.name}): Brand / Manufacturer is required.`, true);
+        return;
+      }
+      if (item.has_renewal_policy && !item.renewal_date) {
+        setActivePartLineIndex(i);
+        triggerToast(`Line item #${i + 1} (${item.name}): Please specify renewal due date.`, true);
+        return;
+      }
     }
 
     setModalSubmitting(true);
     try {
-      let assignedReg = partFormAssignedVehicleReg;
+      let defaultAssignedReg = partFormAssignedVehicleReg;
       if (partFormVehicleId && partFormVehicleId !== "UNASSIGNED_STOCK") {
         const matchedVeh = vehicles.find((v) => v.id === partFormVehicleId);
-        if (matchedVeh) assignedReg = matchedVeh.registration_number;
+        if (matchedVeh) defaultAssignedReg = matchedVeh.registration_number;
       } else {
-        assignedReg = "";
+        defaultAssignedReg = "";
       }
 
-      const unitPrice = Number(partFormUnitPrice) || 0;
-      const qty = Number(partFormQuantity) || 1;
-      const grossBase = unitPrice * qty;
-      const discount = Number(partFormDiscount) || 0;
-      const taxableBase = Math.max(0, grossBase - discount);
-      const taxAmt = Number(partFormTaxAmount) || 0;
-      const tdsDed = Number(partFormTdsDeduction) || 0;
-      const otherDed = Number(partFormOtherDeductions) || 0;
-      const calculatedNet = Math.max(0, taxableBase + taxAmt - tdsDed - otherDed);
-      const finalPurchaseAmount = Number(partFormPurchaseAmount) || calculatedNet || grossBase;
-
-      // Pack structured metadata into notes
-      const notesPayload = {
-        text: partFormNotes.trim(),
-        attachments: partFormAttachments,
-        tax_breakdown: {
-          unit_price: unitPrice,
-          quantity: qty,
-          gross_base: grossBase,
-          discount: discount,
-          taxable_base: taxableBase,
-          tax_rate: Number(partFormTaxRate) || 0,
-          tax_amount: taxAmt,
-          tds_rate: Number(partFormTdsRate) || 0,
-          tds_deduction: tdsDed,
-          other_deductions: otherDed,
-          net_invoiced: finalPurchaseAmount
-        }
-      };
-
-      const payload = {
-        name: partFormName.trim(),
-        item_type: partFormItemType,
-        part_number: partFormPartNumber.trim() || undefined,
-        category: partFormCategory.trim() || "Spare Parts",
-        brand: partFormBrand.trim(),
-        purchase_amount: finalPurchaseAmount,
-        unit_price: unitPrice || undefined,
-        quantity: qty,
-        purchase_date: partFormPurchaseDate || new Date().toISOString().split("T")[0],
-        vendor_name: partFormVendorName.trim() || "OEM / Direct Store",
+      const res = await createVehiclePartsBatchAction({
+        vendor_name: partFormVendorName.trim(),
         invoice_number: partFormInvoiceNumber.trim() || undefined,
-        manufacturing_date: partFormManufacturingDate || undefined,
-        expiry_date: partFormExpiryDate || undefined,
-        warranty_type: partFormWarrantyType,
-        warranty_months: Number(partFormWarrantyMonths) || 0,
-        warranty_expiry_date: partFormWarrantyExpiryDate || undefined,
-        warranty_terms: partFormWarrantyTerms.trim() || undefined,
-        has_renewal_policy: partFormHasRenewal,
-        renewal_policy_type: partFormHasRenewal ? partFormRenewalType : undefined,
-        renewal_date: partFormHasRenewal ? partFormRenewalDate || undefined : undefined,
-        renewal_cost: partFormHasRenewal ? Number(partFormRenewalCost) || 0 : undefined,
-        renewal_vendor: partFormHasRenewal ? partFormRenewalVendor.trim() || undefined : undefined,
-        renewal_policy_number: partFormHasRenewal ? partFormRenewalPolicyNumber.trim() || undefined : undefined,
-        renewal_reminder_days: partFormHasRenewal ? Number(partFormRenewalReminderDays) || 30 : undefined,
-        status: partFormVehicleId && partFormVehicleId !== "UNASSIGNED_STOCK" ? "INSTALLED" : partFormStatus,
-        vehicle_id: partFormVehicleId || "UNASSIGNED_STOCK",
-        assigned_vehicle_reg: assignedReg || undefined,
-        installation_date: partFormInstallationDate || undefined,
-        installed_odometer_km: partFormInstalledOdometer !== "" ? Number(partFormInstalledOdometer) : undefined,
-        installed_by: partFormInstalledBy.trim() || undefined,
-        condition: partFormCondition,
-        serial_number: partFormSerialNumber.trim() || undefined,
-        notes: JSON.stringify(notesPayload)
-      };
-
-      let res;
-      if (selectedPartForEdit) {
-        res = await updateVehiclePartAction(selectedPartForEdit.id, payload);
-      } else {
-        res = await createVehiclePartAction(payload);
-      }
-
-      if (res.success) {
-        triggerToast(`Part '${payload.name}' saved successfully!`);
-        if (res.part) {
-          if (selectedPartForEdit) {
-            setParts((prev) => prev.map((p) => p.id === res.part!.id ? res.part! : p));
-          } else {
-            setParts((prev) => [res.part!, ...prev]);
+        purchase_date: partFormPurchaseDate || new Date().toISOString().split("T")[0],
+        default_vehicle_id: partFormVehicleId || "UNASSIGNED_STOCK",
+        default_assigned_vehicle_reg: defaultAssignedReg || undefined,
+        default_installation_date: partFormInstallationDate || undefined,
+        default_installed_odometer_km: partFormInstalledOdometer !== "" ? Number(partFormInstalledOdometer) : undefined,
+        default_installed_by: partFormInstalledBy.trim() || undefined,
+        bill_notes: partFormNotes.trim() || undefined,
+        attachments: partFormAttachments,
+        items: partLineItems.map((item) => {
+          let itemReg = item.assigned_vehicle_reg;
+          if (item.vehicle_id && item.vehicle_id !== "UNASSIGNED_STOCK") {
+            const mv = vehicles.find((v) => v.id === item.vehicle_id);
+            if (mv) itemReg = mv.registration_number;
+          } else if (item.vehicle_id === "UNASSIGNED_STOCK") {
+            itemReg = "";
           }
-        }
+
+          return {
+            name: item.name.trim(),
+            item_type: item.item_type,
+            part_number: item.part_number.trim() || undefined,
+            category: item.category.trim() || "Spare Parts",
+            brand: item.brand.trim(),
+            unit_price: Number(item.unit_price) || 0,
+            quantity: Number(item.quantity) || 1,
+            discount: Number(item.discount) || 0,
+            tax_rate: Number(item.tax_rate) || 0,
+            tax_amount: Number(item.tax_amount) || 0,
+            tds_rate: Number(item.tds_rate) || 0,
+            tds_deduction: Number(item.tds_deduction) || 0,
+            other_deductions: Number(item.other_deductions) || 0,
+            purchase_amount: Number(item.purchase_amount) || 0,
+            manufacturing_date: item.manufacturing_date || undefined,
+            expiry_date: item.expiry_date || undefined,
+            warranty_type: item.warranty_type,
+            warranty_months: Number(item.warranty_months) || 0,
+            warranty_expiry_date: item.warranty_expiry_date || undefined,
+            warranty_terms: item.warranty_terms.trim() || undefined,
+            has_renewal_policy: item.has_renewal_policy,
+            renewal_policy_type: item.has_renewal_policy ? item.renewal_policy_type : undefined,
+            renewal_date: item.has_renewal_policy ? item.renewal_date || undefined : undefined,
+            renewal_cost: item.has_renewal_policy ? Number(item.renewal_cost) || 0 : undefined,
+            renewal_vendor: item.has_renewal_policy ? item.renewal_vendor.trim() || undefined : undefined,
+            renewal_policy_number: item.has_renewal_policy ? item.renewal_policy_number.trim() || undefined : undefined,
+            renewal_reminder_days: item.has_renewal_policy ? Number(item.renewal_reminder_days) || 30 : undefined,
+            status: item.vehicle_id && item.vehicle_id !== "UNASSIGNED_STOCK" ? "INSTALLED" : (partFormVehicleId && partFormVehicleId !== "UNASSIGNED_STOCK" ? "INSTALLED" : item.status),
+            vehicle_id: item.vehicle_id || partFormVehicleId || "UNASSIGNED_STOCK",
+            assigned_vehicle_reg: itemReg || defaultAssignedReg || undefined,
+            installation_date: item.installation_date || partFormInstallationDate || undefined,
+            installed_odometer_km: item.installed_odometer_km !== "" ? Number(item.installed_odometer_km) : (partFormInstalledOdometer !== "" ? Number(partFormInstalledOdometer) : undefined),
+            installed_by: item.installed_by.trim() || partFormInstalledBy.trim() || undefined,
+            condition: item.condition,
+            serial_number: item.serial_number.trim() || undefined,
+            notes: item.notes.trim() || undefined
+          };
+        })
+      });
+
+      if (res.success && res.parts) {
+        triggerToast(`Successfully registered ${res.count} items under Bill ${partFormInvoiceNumber ? '#' + partFormInvoiceNumber : ''}!`);
+        setParts((prev) => [...res.parts, ...prev]);
         setIsAddPartOpen(false);
         setIsEditPartOpen(false);
         setSelectedPartForEdit(null);
@@ -5753,10 +6171,10 @@ export default function FleetDeskHost({
           setDossierOriginVehicle(null);
         }
       } else {
-        triggerToast(res.error || "Failed to save part record.", true);
+        triggerToast(res.error || "Failed to save bill line items.", true);
       }
     } catch (err: any) {
-      triggerToast(err.message || "Failed to save part record.", true);
+      triggerToast(err.message || "Failed to save bill line items.", true);
     } finally {
       setModalSubmitting(false);
     }
@@ -5875,6 +6293,7 @@ export default function FleetDeskHost({
     setRenewPolicyHasEngineProtect(false);
     setRenewPolicyReceiptNo("");
     setRenewPolicyDocUrl("");
+    setRenewPolicyStagedFile(null);
     setRenewPolicyNotes(`Annual policy renewal for ${veh.registration_number}.`);
     setIsRenewPolicyModalOpen(true);
   };
@@ -5922,6 +6341,32 @@ export default function FleetDeskHost({
 
     setModalSubmitting(true);
     try {
+      let finalPolicyDocUrl = renewPolicyDocUrl.trim();
+      if (renewPolicyStagedFile && selectedVehicleForPolicyRenew) {
+        try {
+          const uploadRes = await uploadVehicleDocumentViaRestOrAction(selectedVehicleForPolicyRenew.id, {
+            doc_type: "INSURANCE",
+            title: `Insurance Policy #${renewPolicyNumber.trim()}`,
+            document_number: renewPolicyNumber.trim(),
+            expiry_date: renewPolicyEndDate,
+            file_name: renewPolicyStagedFile.name,
+            file_size: renewPolicyStagedFile.size,
+            file_type: renewPolicyStagedFile.file.type || resolveMimeFromName(renewPolicyStagedFile.name),
+            file_url: renewPolicyStagedFile.base64Url || renewPolicyStagedFile.previewUrl,
+            status: "VALID",
+            insurance_vendor_id: renewPolicyVendorId || undefined,
+            insurance_vendor: renewPolicyVendorName.trim() || undefined
+          } as any);
+          if (uploadRes.success && uploadRes.document?.file_url) {
+            finalPolicyDocUrl = uploadRes.document.file_url;
+          } else if (renewPolicyStagedFile.base64Url) {
+            finalPolicyDocUrl = renewPolicyStagedFile.base64Url;
+          }
+        } catch (uploadErr) {
+          console.warn("Failed to upload renewal document, using base64/url fallback:", uploadErr);
+        }
+      }
+
       const res = await renewVehicleInsurancePolicyAction(selectedVehicleForPolicyRenew.id, {
         policy_number: renewPolicyNumber.trim(),
         insurer_name: renewPolicyVendorName.trim(),
@@ -5936,7 +6381,7 @@ export default function FleetDeskHost({
         has_engine_protect: renewPolicyHasEngineProtect,
         ncb_discount_percentage: Number(renewPolicyNcb) || 0,
         receipt_number: renewPolicyReceiptNo.trim() || undefined,
-        policy_document_url: renewPolicyDocUrl.trim() || undefined,
+        policy_document_url: finalPolicyDocUrl || undefined,
         notes: renewPolicyNotes.trim() || undefined
       });
 
@@ -5944,6 +6389,7 @@ export default function FleetDeskHost({
         triggerToast(`Policy #${renewPolicyNumber} successfully renewed until ${renewPolicyEndDate}!`);
         setIsRenewPolicyModalOpen(false);
         setSelectedVehicleForPolicyRenew(null);
+        setRenewPolicyStagedFile(null);
         fleetDataCache = null;
         loadAllData(true, true);
         if (dossierOriginVehicle) {
@@ -6029,6 +6475,7 @@ export default function FleetDeskHost({
     setRenewPucSmokeDensity(isDiesel ? 0.45 : 0.10);
     setRenewPucReceiptNo("");
     setRenewPucDocUrl("");
+    setRenewPucStagedFile(null);
     setRenewPucNotes(`Statutory emission inspection & PUC certificate renewed for ${veh.registration_number}.`);
     setIsRenewPucModalOpen(true);
   };
@@ -6072,6 +6519,30 @@ export default function FleetDeskHost({
 
     setModalSubmitting(true);
     try {
+      let finalPucDocUrl = renewPucDocUrl.trim();
+      if (renewPucStagedFile && selectedVehicleForPucRenew) {
+        try {
+          const uploadRes = await uploadVehicleDocumentViaRestOrAction(selectedVehicleForPucRenew.id, {
+            doc_type: "PUC",
+            title: `PUC Certificate #${renewPucNumber.trim()}`,
+            document_number: renewPucNumber.trim(),
+            expiry_date: renewPucValidUpto,
+            file_name: renewPucStagedFile.name,
+            file_size: renewPucStagedFile.size,
+            file_type: renewPucStagedFile.file.type || resolveMimeFromName(renewPucStagedFile.name),
+            file_url: renewPucStagedFile.base64Url || renewPucStagedFile.previewUrl,
+            status: "VALID"
+          } as any);
+          if (uploadRes.success && uploadRes.document?.file_url) {
+            finalPucDocUrl = uploadRes.document.file_url;
+          } else if (renewPucStagedFile.base64Url) {
+            finalPucDocUrl = renewPucStagedFile.base64Url;
+          }
+        } catch (uploadErr) {
+          console.warn("Failed to upload PUC renewal document, using base64/url fallback:", uploadErr);
+        }
+      }
+
       const res = await renewVehiclePucCertificateAction(selectedVehicleForPucRenew.id, {
         certificate_number: renewPucNumber.trim(),
         valid_from: renewPucValidFrom,
@@ -6083,7 +6554,7 @@ export default function FleetDeskHost({
         hydrocarbon_hc: Number(renewPucHc) || 45.0,
         smoke_density_k: Number(renewPucSmokeDensity) || undefined,
         receipt_number: renewPucReceiptNo.trim() || undefined,
-        document_url: renewPucDocUrl.trim() || undefined,
+        document_url: finalPucDocUrl || undefined,
         notes: renewPucNotes.trim() || undefined
       });
 
@@ -6091,6 +6562,7 @@ export default function FleetDeskHost({
         triggerToast(`PUC Certificate #${renewPucNumber} successfully issued until ${renewPucValidUpto}!`);
         setIsRenewPucModalOpen(false);
         setSelectedVehicleForPucRenew(null);
+        setRenewPucStagedFile(null);
         fleetDataCache = null;
         loadAllData(true, true);
         if (dossierOriginVehicle) {
@@ -7100,7 +7572,7 @@ export default function FleetDeskHost({
             <AppButton
               variant="primary"
               size="sm"
-              onClick={openCreatePartModal}
+              onClick={() => openCreatePartModal()}
               className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs h-9 font-semibold gap-1.5 shadow-xs"
             >
               <Plus className="h-4 w-4" />
@@ -8554,6 +9026,196 @@ export default function FleetDeskHost({
                   </div>
                 </div>
               </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
+                <div>
+                  <label className="text-xs font-semibold text-foreground block mb-1.5 flex items-center justify-between">
+                    <span className="flex items-center gap-1">
+                      <Building2 className="h-3.5 w-3.5 text-indigo-500" />
+                      <span>Showroom / Purchase Dealership</span>
+                    </span>
+                    <span className="text-[10px] text-muted-foreground font-normal">Select or type custom</span>
+                  </label>
+                  <div className="relative">
+                    <AppInput
+                      list="purchase-vendors-list"
+                      placeholder="e.g. Landmark Tata, Borivali Hub, etc."
+                      value={newVehiclePurchaseVendor}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setNewVehiclePurchaseVendor(val);
+                        const matched = purchaseVendors.find(v => v.name.toLowerCase() === val.trim().toLowerCase());
+                        if (matched) {
+                          setNewVehiclePurchaseVendorId(matched.id);
+                        } else {
+                          setNewVehiclePurchaseVendorId("");
+                        }
+                      }}
+                      className="text-xs"
+                    />
+                    <datalist id="purchase-vendors-list">
+                      {purchaseVendors.map(pv => (
+                        <option key={pv.id} value={pv.name}>
+                          {pv.source === "DEALER" ? "[Showroom/Dealer] " : ""}{pv.city ? `(${pv.city})` : ""}
+                        </option>
+                      ))}
+                    </datalist>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-foreground block mb-1.5 flex items-center justify-between">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3.5 w-3.5 text-indigo-500" />
+                      <span>Purchase Invoice Date</span>
+                    </span>
+                    <span className="text-[10px] text-muted-foreground font-normal">Defaults to Reg. Date</span>
+                  </label>
+                  <AppInput
+                    type="date"
+                    value={newVehiclePurchaseDate || newVehicleRegDate}
+                    onChange={(e) => {
+                      const dVal = e.target.value;
+                      setNewVehiclePurchaseDate(dVal);
+                      if (isElectricFuel(newVehicleFuel)) {
+                        updateNewVehicleBatteryExpiry(dVal);
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* EV INBUILT BATTERY WARRANTY CONFIGURATION (Dual Basis: KM & Purchase Date Period) */}
+              {isElectricFuel(newVehicleFuel) && (
+                <div className="pt-2">
+                  <div className="rounded-xl border border-cyan-500/30 bg-cyan-50/30 dark:bg-cyan-950/15 p-4 space-y-4">
+                    <div className="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-cyan-500/20">
+                      <div className="flex items-center gap-2">
+                        <div className="h-7 w-7 rounded-lg bg-cyan-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                          <BatteryCharging className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
+                              EV Inbuilt Battery Warranty (Dual Basis)
+                            </h4>
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-cyan-100 dark:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-700">
+                              Whichever occurs earlier
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Electric vehicle OEM traction battery warranty evaluated on KM quota or time period from purchase.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1 flex items-center justify-between">
+                          <span>Battery KM Limit *</span>
+                          <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono">Standard: 1,60,000 km</span>
+                        </label>
+                        <AppInput
+                          type="number"
+                          value={newVehicleBatteryWarrantyKm}
+                          onChange={(e) => setNewVehicleBatteryWarrantyKm(e.target.value)}
+                          placeholder="160000"
+                          className="font-mono text-xs"
+                        />
+                        <div className="flex gap-1.5 mt-1.5">
+                          {[160000, 200000, 250000].map(km => (
+                            <button
+                              key={km}
+                              type="button"
+                              onClick={() => setNewVehicleBatteryWarrantyKm(km)}
+                              className={`px-2 py-0.5 rounded text-[10px] border transition-colors ${
+                                Number(newVehicleBatteryWarrantyKm) === km
+                                  ? "bg-cyan-600 text-white border-cyan-600"
+                                  : "bg-surface border-border text-muted-foreground hover:text-foreground"
+                              }`}
+                            >
+                              {(km / 1000).toLocaleString()}k km
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1 flex items-center justify-between">
+                          <span>Warranty Period (Years) *</span>
+                          <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono">Standard: 8.0 Years</span>
+                        </label>
+                        <AppInput
+                          type="number"
+                          step="0.5"
+                          value={newVehicleBatteryWarrantyYears}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setNewVehicleBatteryWarrantyYears(val);
+                            updateNewVehicleBatteryExpiry(undefined, val);
+                          }}
+                          placeholder="8"
+                          className="font-mono text-xs"
+                        />
+                        <div className="flex gap-1.5 mt-1.5">
+                          {[5, 8, 10].map(yrs => (
+                            <button
+                              key={yrs}
+                              type="button"
+                              onClick={() => {
+                                setNewVehicleBatteryWarrantyYears(yrs);
+                                updateNewVehicleBatteryExpiry(undefined, yrs);
+                              }}
+                              className={`px-2 py-0.5 rounded text-[10px] border transition-colors ${
+                                Number(newVehicleBatteryWarrantyYears) === yrs
+                                  ? "bg-cyan-600 text-white border-cyan-600"
+                                  : "bg-surface border-border text-muted-foreground hover:text-foreground"
+                              }`}
+                            >
+                              {yrs} Years
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1 flex items-center justify-between">
+                          <span>Battery Expiry Date</span>
+                          <span className="text-[10px] text-muted-foreground">Auto-calculated</span>
+                        </label>
+                        <AppInput
+                          type="date"
+                          value={newVehicleBatteryWarrantyExpiry}
+                          onChange={(e) => setNewVehicleBatteryWarrantyExpiry(e.target.value)}
+                          className="text-xs font-mono"
+                        />
+                        <div className="mt-1.5 text-[10px] text-muted-foreground truncate">
+                          Calculated from purchase date: {newVehiclePurchaseDate || newVehicleRegDate || "Select purchase date"}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-1 flex items-center gap-3">
+                      <div className="w-full sm:w-1/3">
+                        <label className="text-xs font-semibold text-foreground block mb-1">
+                          Battery Pack Capacity (kWh, Optional)
+                        </label>
+                        <AppInput
+                          type="number"
+                          step="0.1"
+                          placeholder="e.g. 40.5 or 60.0"
+                          value={newVehicleBatteryCapacityKwh}
+                          onChange={(e) => setNewVehicleBatteryCapacityKwh(e.target.value)}
+                          className="text-xs font-mono"
+                        />
+                      </div>
+                      <div className="text-xs text-muted-foreground pt-4">
+                        Traction battery health and remaining quota will automatically compute against vehicle odometer readings and elapsed date.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* VEHICLE PRICING & ON-ROAD BREAKDOWN */}
               <div className="pt-2">
@@ -11549,10 +12211,33 @@ export default function FleetDeskHost({
                           {/* 5. PUC End Date & PUC Expire in Days */}
                           <AppTableCell className="p-3.5">
                             {isElectricFuel(veh.fuel_type) ? (
-                              <span className="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 inline-flex items-center gap-1 shadow-2xs">
-                                <Zap className="h-3 w-3 text-emerald-500 fill-emerald-500" />
-                                <span>EV Exempt (N/A)</span>
-                              </span>
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-1 flex-wrap">
+                                  <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 inline-flex items-center gap-1">
+                                    <Zap className="h-2.5 w-2.5 text-emerald-500 fill-emerald-500" />
+                                    <span>EV Exempt</span>
+                                  </span>
+                                  {veh.battery_warranty_status && (
+                                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border ${
+                                      veh.battery_warranty_status === "ACTIVE"
+                                        ? "bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300 border-cyan-300 dark:border-cyan-800"
+                                        : veh.battery_warranty_status === "EXPIRING_SOON"
+                                        ? "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-800"
+                                        : "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800"
+                                    }`}>
+                                      {veh.battery_warranty_status === "ACTIVE" ? "Battery Active" : veh.battery_warranty_status === "EXPIRING_SOON" ? "Battery Expiring" : "Battery Expired"}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[11px] font-mono text-muted-foreground flex items-center gap-1">
+                                  <BatteryCharging className="h-3 w-3 text-cyan-500" />
+                                  <span>
+                                    {veh.battery_warranty_km_remaining !== undefined && veh.battery_warranty_km_remaining !== null
+                                      ? `${veh.battery_warranty_km_remaining.toLocaleString()} km left`
+                                      : `${(veh.battery_warranty_km || 160000).toLocaleString()} km`}
+                                  </span>
+                                </div>
+                              </div>
                             ) : (
                               <>
                                 <div className="font-mono text-xs font-semibold text-foreground">
@@ -13469,7 +14154,7 @@ export default function FleetDeskHost({
                           <AppButton
                             variant="primary"
                             size="sm"
-                            onClick={openCreatePartModal}
+                            onClick={() => openCreatePartModal()}
                             className="mt-3 bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs font-semibold gap-1.5"
                           >
                             <Plus className="h-3.5 w-3.5" />
@@ -13672,6 +14357,17 @@ export default function FleetDeskHost({
                                     </span>
                                   )}
                                 </div>
+                                {part.invoice_number && (
+                                  <div className="flex items-center gap-1 text-[11px] font-mono text-muted-foreground">
+                                    <Receipt className="h-3 w-3 text-muted-foreground/70" />
+                                    <span>Inv #{part.invoice_number}</span>
+                                    {part.bill_id && (
+                                      <span className="text-[10px] px-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 font-sans border border-slate-200 dark:border-slate-700">
+                                        Multi-item
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
                                 {part.vendor_name && (
                                   <div className="text-xs text-muted-foreground truncate max-w-[160px]">
                                     {part.vendor_name}
@@ -15019,6 +15715,192 @@ export default function FleetDeskHost({
                   </div>
                 </div>
 
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <div>
+                    <label className="font-semibold block mb-1 flex items-center justify-between">
+                      <span className="flex items-center gap-1">
+                        <Building2 className="h-3.5 w-3.5 text-indigo-500" />
+                        <span>Showroom / Purchase Dealership</span>
+                      </span>
+                      <span className="text-[10px] text-muted-foreground font-normal">Select or type custom</span>
+                    </label>
+                    <div className="relative">
+                      <AppInput
+                        list="edit-purchase-vendors-list"
+                        placeholder="e.g. Landmark Tata, Borivali Hub, etc."
+                        value={editVehiclePurchaseVendor}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setEditVehiclePurchaseVendor(val);
+                          const matched = purchaseVendors.find(v => v.name.toLowerCase() === val.trim().toLowerCase());
+                          if (matched) {
+                            setEditVehiclePurchaseVendorId(matched.id);
+                          } else {
+                            setEditVehiclePurchaseVendorId("");
+                          }
+                        }}
+                        className="text-xs"
+                      />
+                      <datalist id="edit-purchase-vendors-list">
+                        {purchaseVendors.map(pv => (
+                          <option key={pv.id} value={pv.name}>
+                            {pv.source === "DEALER" ? "[Showroom/Dealer] " : ""}{pv.city ? `(${pv.city})` : ""}
+                          </option>
+                        ))}
+                      </datalist>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="font-semibold block mb-1 flex items-center justify-between">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="h-3.5 w-3.5 text-indigo-500" />
+                        <span>Purchase Invoice Date</span>
+                      </span>
+                      <span className="text-[10px] text-muted-foreground font-normal">Defaults to Reg. Date</span>
+                    </label>
+                    <AppInput
+                      type="date"
+                      value={editVehiclePurchaseDate || editVehicleRegDate}
+                      onChange={(e) => {
+                        const dVal = e.target.value;
+                        setEditVehiclePurchaseDate(dVal);
+                        if (isElectricFuel(editVehicleFuel)) {
+                          updateEditVehicleBatteryExpiry(dVal);
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* EV INBUILT BATTERY WARRANTY CONFIGURATION (Dual Basis) */}
+                {isElectricFuel(editVehicleFuel) && (
+                  <div className="pt-2">
+                    <div className="rounded-xl border border-cyan-500/30 bg-cyan-50/30 dark:bg-cyan-950/15 p-3.5 space-y-3.5">
+                      <div className="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-cyan-500/20">
+                        <div className="flex items-center gap-2">
+                          <div className="h-6 w-6 rounded-lg bg-cyan-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                            <BatteryCharging className="h-3.5 w-3.5" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
+                                EV Inbuilt Battery Warranty (Dual Basis)
+                              </h4>
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-cyan-100 dark:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-700">
+                                Whichever occurs earlier
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              Electric vehicle OEM traction battery warranty evaluated on KM quota or time period.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <label className="text-xs font-semibold text-foreground block mb-1 flex items-center justify-between">
+                            <span>Battery KM Limit *</span>
+                            <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono">Standard: 1,60,000 km</span>
+                          </label>
+                          <AppInput
+                            type="number"
+                            value={editVehicleBatteryWarrantyKm}
+                            onChange={(e) => setEditVehicleBatteryWarrantyKm(e.target.value)}
+                            placeholder="160000"
+                            className="font-mono text-xs"
+                          />
+                          <div className="flex gap-1 mt-1.5">
+                            {[160000, 200000, 250000].map(km => (
+                              <button
+                                key={km}
+                                type="button"
+                                onClick={() => setEditVehicleBatteryWarrantyKm(km)}
+                                className={`px-2 py-0.5 rounded text-[10px] border transition-colors ${
+                                  Number(editVehicleBatteryWarrantyKm) === km
+                                    ? "bg-cyan-600 text-white border-cyan-600"
+                                    : "bg-surface border-border text-muted-foreground hover:text-foreground"
+                                }`}
+                              >
+                                {(km / 1000).toLocaleString()}k km
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-semibold text-foreground block mb-1 flex items-center justify-between">
+                            <span>Warranty Period (Years) *</span>
+                            <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono">Standard: 8.0 Years</span>
+                          </label>
+                          <AppInput
+                            type="number"
+                            step="0.5"
+                            value={editVehicleBatteryWarrantyYears}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setEditVehicleBatteryWarrantyYears(val);
+                              updateEditVehicleBatteryExpiry(undefined, val);
+                            }}
+                            placeholder="8"
+                            className="font-mono text-xs"
+                          />
+                          <div className="flex gap-1 mt-1.5">
+                            {[5, 8, 10].map(yrs => (
+                              <button
+                                key={yrs}
+                                type="button"
+                                onClick={() => {
+                                  setEditVehicleBatteryWarrantyYears(yrs);
+                                  updateEditVehicleBatteryExpiry(undefined, yrs);
+                                }}
+                                className={`px-2 py-0.5 rounded text-[10px] border transition-colors ${
+                                  Number(editVehicleBatteryWarrantyYears) === yrs
+                                    ? "bg-cyan-600 text-white border-cyan-600"
+                                    : "bg-surface border-border text-muted-foreground hover:text-foreground"
+                                }`}
+                              >
+                                {yrs} Years
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-semibold text-foreground block mb-1 flex items-center justify-between">
+                            <span>Battery Expiry Date</span>
+                            <span className="text-[10px] text-muted-foreground">Auto-calculated</span>
+                          </label>
+                          <AppInput
+                            type="date"
+                            value={editVehicleBatteryWarrantyExpiry}
+                            onChange={(e) => setEditVehicleBatteryWarrantyExpiry(e.target.value)}
+                            className="text-xs font-mono"
+                          />
+                          <div className="mt-1.5 text-[10px] text-muted-foreground truncate">
+                            Calculated from purchase date: {editVehiclePurchaseDate || editVehicleRegDate || "Select purchase date"}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-1 flex items-center gap-3">
+                        <div className="w-full sm:w-1/3">
+                          <label className="text-xs font-semibold text-foreground block mb-1">
+                            Battery Pack Capacity (kWh)
+                          </label>
+                          <AppInput
+                            type="number"
+                            step="0.1"
+                            placeholder="e.g. 40.5"
+                            value={editVehicleBatteryCapacityKwh}
+                            onChange={(e) => setEditVehicleBatteryCapacityKwh(e.target.value)}
+                            className="text-xs font-mono"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
               </div>
             )}
@@ -18431,12 +19313,12 @@ export default function FleetDeskHost({
       {/* ---------------------------------------------------------------------- */}
       {(isAddPartOpen || isEditPartOpen) && (
         <TransactionFormLayout
-          title={isEditPartOpen ? "Edit Fleet Part / Accessory" : "Register Spare Part / Accessory"}
-          badge="Part Master Form"
+          title={isEditPartOpen ? "Edit Fleet Part / Accessory" : "Register Spare Parts & Accessories (Invoice Bill)"}
+          badge={isEditPartOpen ? "Part Master Form" : "Multi-Item Bill Form"}
           category="Supply Chain & Inventory"
           icon={Package}
           iconBg="bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/25"
-          description="Register spare parts, batteries, tires, telematics GPS units & warranty schedules."
+          description={isEditPartOpen ? "Update part identity, pricing breakdown and warranty schedules." : "Record single or multi-item vendor invoices with individual item specifications & warranty schedules."}
           breadcrumbs={[
             {
               label: dossierOriginVehicle ? "Vehicle Dossier" : "Parts & Accessories",
@@ -18451,7 +19333,7 @@ export default function FleetDeskHost({
                 }
               }
             },
-            { label: isEditPartOpen ? "Edit Part" : "New Part" }
+            { label: isEditPartOpen ? "Edit Part" : (partLineItems.length > 1 ? `New Bill (${partLineItems.length} items)` : "New Part / Bill") }
           ]}
           onBack={() => {
             setIsAddPartOpen(false);
@@ -18469,11 +19351,13 @@ export default function FleetDeskHost({
             else openCreatePartModal();
           }}
           onSave={handleSavePart}
-          saveLabel={isEditPartOpen ? "Save & Update Part" : "Register Part"}
+          saveLabel={isEditPartOpen ? "Save & Update Part" : (partLineItems.length > 1 ? `Register Bill (${partLineItems.length} Items)` : "Register Part / Bill")}
           saveIcon={Save}
           isSubmitting={modalSubmitting}
         >
           <div className="space-y-4">
+            {isEditPartOpen ? (
+              <>
               {/* Section 1: Item Identity & Type */}
               <div className="space-y-3">
                 <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border">
@@ -19233,7 +20117,1007 @@ export default function FleetDeskHost({
                 )}
               </div>
 
-              {/* Modal Footer */}
+              </>
+            ) : (() => {
+              const activeItem = partLineItems[activePartLineIndex] || partLineItems[0] || createDefaultPartLineItem(1);
+
+              return (
+                <div className="space-y-5">
+                  {/* Bill / Invoice Header */}
+                  <div className="p-4 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/40 space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-border">
+                      <div className="flex items-center gap-2">
+                        <Receipt className="h-4 w-4 text-emerald-500" />
+                        <span className="text-xs font-bold uppercase tracking-wider text-foreground">Bill / Invoice Header</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground font-medium">
+                        Common vendor & bill details shared by all line items
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                      <div className="sm:col-span-2">
+                        <label className="text-xs font-semibold block mb-1">
+                          <span>Vendor / Supplier Name *</span>
+                        </label>
+                        <AppInput
+                          value={partFormVendorName}
+                          onChange={(e) => setPartFormVendorName(e.target.value)}
+                          placeholder="e.g. Bosch Car Care, Exide Power Hub, Landmark Spares"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold block mb-1">Invoice / Bill Number</label>
+                        <AppInput
+                          value={partFormInvoiceNumber}
+                          onChange={(e) => setPartFormInvoiceNumber(e.target.value)}
+                          placeholder="e.g. INV-2026-9042"
+                          className="font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold block mb-1 flex items-center gap-1">
+                          <Calendar className="h-3 w-3 text-blue-500" />
+                          <span>Bill / Purchase Date *</span>
+                        </label>
+                        <AppInput
+                          type="date"
+                          value={partFormPurchaseDate}
+                          onChange={(e) => {
+                            const newDate = e.target.value;
+                            setPartFormPurchaseDate(newDate);
+                            setPartLineItems(prev => prev.map(item => {
+                              if (newDate && item.warranty_months > 0) {
+                                try {
+                                  const d = new Date(newDate);
+                                  d.setMonth(d.getMonth() + Number(item.warranty_months));
+                                  return { ...item, warranty_expiry_date: d.toISOString().split("T")[0] };
+                                } catch {}
+                              }
+                              return item;
+                            }));
+                          }}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    {/* Default Target Vehicle & Installation Defaults */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2 border-t border-border/60">
+                      <div>
+                        <label className="text-xs font-semibold block mb-1">Default Target Allocation</label>
+                        <select
+                          value={partFormVehicleId}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setPartFormVehicleId(val);
+                            let matchedReg = "";
+                            if (val && val !== "UNASSIGNED_STOCK") {
+                              const matched = vehicles.find((v) => v.id === val);
+                              if (matched) {
+                                matchedReg = matched.registration_number;
+                                setPartFormAssignedVehicleReg(matchedReg);
+                                if (!partFormInstalledOdometer && matched.odometer_km) {
+                                  setPartFormInstalledOdometer(matched.odometer_km);
+                                }
+                                if (!partFormInstallationDate) {
+                                  setPartFormInstallationDate(new Date().toISOString().split("T")[0]);
+                                }
+                              }
+                            } else {
+                              setPartFormAssignedVehicleReg("");
+                            }
+
+                            // Propagate default to items that haven't explicitly set a custom vehicle
+                            setPartLineItems(prev => prev.map(item => {
+                              if (!item.vehicle_id || item.vehicle_id === "UNASSIGNED_STOCK") {
+                                return {
+                                  ...item,
+                                  vehicle_id: val,
+                                  assigned_vehicle_reg: matchedReg,
+                                  status: val && val !== "UNASSIGNED_STOCK" ? "INSTALLED" : "IN_STOCK"
+                                };
+                              }
+                              return item;
+                            }));
+                          }}
+                          className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                        >
+                          <option value="UNASSIGNED_STOCK">Warehouse Stock (Unassigned)</option>
+                          {vehicles.map((v) => (
+                            <option key={v.id} value={v.id}>
+                              {v.registration_number} — {v.make} {v.model}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold block mb-1">Default Install Date</label>
+                        <AppInput
+                          type="date"
+                          value={partFormInstallationDate}
+                          onChange={(e) => setPartFormInstallationDate(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold block mb-1">Default Install Odo (km)</label>
+                        <AppInput
+                          type="number"
+                          min="0"
+                          value={partFormInstalledOdometer}
+                          onChange={(e) => setPartFormInstalledOdometer(e.target.value === "" ? "" : Number(e.target.value))}
+                          className="font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold block mb-1">Default Installed By</label>
+                        <AppInput
+                          value={partFormInstalledBy}
+                          onChange={(e) => setPartFormInstalledBy(e.target.value)}
+                          placeholder="Workshop / Technician"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Invoice Bill Documents / Upload */}
+                    <div className="pt-2 border-t border-border/60">
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-xs font-semibold flex items-center gap-1.5 text-foreground">
+                          <Paperclip className="h-3.5 w-3.5 text-amber-500" />
+                          <span>Vendor Bill & Invoice Documents (View & Download)</span>
+                        </label>
+                        <span className="text-xs font-medium text-muted-foreground">
+                          {partFormAttachments.length} {partFormAttachments.length === 1 ? "file" : "files"} attached
+                        </span>
+                      </div>
+
+                      <div
+                        onDragOver={(e) => { e.preventDefault(); setIsDraggingPartFile(true); }}
+                        onDragLeave={() => setIsDraggingPartFile(false)}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          setIsDraggingPartFile(false);
+                          if (e.dataTransfer.files?.length) {
+                            handleAttachmentFilesSelected(e.dataTransfer.files, setPartFormAttachments);
+                          }
+                        }}
+                        onClick={() => partFileInputRef.current?.click()}
+                        className={`border-2 border-dashed rounded-xl p-3 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-1 group ${
+                          isDraggingPartFile 
+                            ? "border-theme-btn-primary bg-theme-btn-primary/5" 
+                            : "border-border hover:border-theme-btn-primary/60 bg-surface/50 hover:bg-surface"
+                        }`}
+                      >
+                        <input
+                          type="file"
+                          multiple
+                          ref={partFileInputRef}
+                          onChange={(e) => {
+                            if (e.target.files?.length) {
+                              handleAttachmentFilesSelected(e.target.files, setPartFormAttachments);
+                              e.target.value = "";
+                            }
+                          }}
+                          className="hidden"
+                          accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.csv"
+                        />
+                        <div className="flex items-center gap-2">
+                          <UploadCloud className="h-4 w-4 text-theme-btn-primary" />
+                          <span className="text-xs font-semibold text-foreground">Click to upload vendor bill PDF or invoice photos</span>
+                        </div>
+                      </div>
+
+                      {/* Render uploaded attachments list */}
+                      {partFormAttachments.length > 0 && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
+                          {partFormAttachments.map((att, idx) => (
+                            <div
+                              key={att.id || idx}
+                              className="flex items-center justify-between p-2 rounded-lg border border-border bg-surface"
+                            >
+                              <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
+                                <div className="h-7 w-7 rounded bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-border/80 shrink-0">
+                                  {renderAttachmentIcon(att.file_type, att.file_name)}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="font-semibold text-foreground truncate text-xs" title={att.file_name}>
+                                    {att.file_name}
+                                  </div>
+                                  <div className="text-[11px] text-muted-foreground">
+                                    {formatFileSize(att.file_size)}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <AppButton
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  onClick={(e) => { e.stopPropagation(); handleViewAttachment(att); }}
+                                  className="h-7 w-7 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
+                                  title="View / Preview Document"
+                                >
+                                  <Eye className="h-3.5 w-3.5" />
+                                </AppButton>
+                                <AppButton
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  onClick={(e) => { e.stopPropagation(); downloadAttachment(att); }}
+                                  className="h-7 w-7 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+                                  title="Download File"
+                                >
+                                  <Download className="h-3.5 w-3.5" />
+                                </AppButton>
+                                <AppButton
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setPartFormAttachments((prev) => prev.filter((_, i) => i !== idx));
+                                  }}
+                                  className="h-7 w-7 text-rose-600 hover:bg-rose-500/10"
+                                  title="Remove"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </AppButton>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Bill Line Items Section */}
+                  <div className="space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1 border-b border-border">
+                      <div className="flex items-center gap-2">
+                        <Layers className="h-4 w-4 text-theme-btn-primary" />
+                        <span className="text-xs font-bold uppercase tracking-wider text-foreground">
+                          Bill Line Items ({partLineItems.length})
+                        </span>
+                        <span className="text-xs text-muted-foreground font-normal">
+                          — Multi-item invoice breakdown
+                        </span>
+                      </div>
+                      <AppButton
+                        type="button"
+                        variant="primary"
+                        size="sm"
+                        onClick={handleAddPartLineItem}
+                        className="h-8 px-3 text-xs bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text font-semibold flex items-center gap-1.5 shadow-2xs"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        <span>Add Line Item</span>
+                      </AppButton>
+                    </div>
+
+                    {/* Line Items Table */}
+                    <div className="border border-border rounded-xl overflow-hidden bg-surface shadow-2xs">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs">
+                          <thead className="bg-slate-50 dark:bg-slate-900/60 border-b border-border text-muted-foreground font-semibold uppercase tracking-wider text-[11px]">
+                            <tr>
+                              <th className="p-2.5 w-10 text-center">#</th>
+                              <th className="p-2.5">Part / Item Name</th>
+                              <th className="p-2.5">Category</th>
+                              <th className="p-2.5">Brand</th>
+                              <th className="p-2.5 text-right">Qty</th>
+                              <th className="p-2.5 text-right">Unit Price (₹)</th>
+                              <th className="p-2.5 text-right">GST</th>
+                              <th className="p-2.5 text-right">Net Total (₹)</th>
+                              <th className="p-2.5">Allocation</th>
+                              <th className="p-2.5 text-center">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border/60">
+                            {partLineItems.map((item, idx) => {
+                              const isActive = activePartLineIndex === idx;
+                              const unit = Number(item.unit_price) || 0;
+                              const qty = Number(item.quantity) || 1;
+                              const netAmt = Number(item.purchase_amount) || Math.max(0, (unit * qty) - (Number(item.discount) || 0) + (Number(item.tax_amount) || 0) - (Number(item.tds_deduction) || 0));
+                              const vehLabel = item.vehicle_id && item.vehicle_id !== "UNASSIGNED_STOCK" 
+                                ? (vehicles.find(v => v.id === item.vehicle_id)?.registration_number || item.assigned_vehicle_reg || "Assigned") 
+                                : (partFormVehicleId && partFormVehicleId !== "UNASSIGNED_STOCK" ? (vehicles.find(v => v.id === partFormVehicleId)?.registration_number || "Bill Vehicle") : "Warehouse Stock");
+
+                              return (
+                                <tr 
+                                  key={item.id} 
+                                  onClick={() => setActivePartLineIndex(idx)}
+                                  className={`cursor-pointer transition-colors ${
+                                    isActive 
+                                      ? "bg-theme-btn-primary/10 border-l-4 border-l-theme-btn-primary font-medium" 
+                                      : "hover:bg-slate-50 dark:hover:bg-slate-900/40"
+                                  }`}
+                                >
+                                  <td className="p-2.5 text-center font-mono font-semibold text-muted-foreground">
+                                    {idx + 1}
+                                  </td>
+                                  <td className="p-2.5">
+                                    <span className="font-bold text-foreground">
+                                      {item.name || <span className="italic text-muted-foreground">Untitled Line Item</span>}
+                                    </span>
+                                    {item.part_number && (
+                                      <span className="block text-[11px] font-mono text-muted-foreground">
+                                        SKU: {item.part_number}
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="p-2.5">
+                                    <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
+                                      {item.item_type || "SPARE_PART"}
+                                    </span>
+                                  </td>
+                                  <td className="p-2.5 font-medium text-foreground">
+                                    {item.brand || "—"}
+                                  </td>
+                                  <td className="p-2.5 text-right font-mono font-semibold">
+                                    {qty}
+                                  </td>
+                                  <td className="p-2.5 text-right font-mono">
+                                    ₹{unit.toLocaleString("en-IN")}
+                                  </td>
+                                  <td className="p-2.5 text-right font-mono text-muted-foreground">
+                                    {item.tax_rate}% (+₹{(Number(item.tax_amount) || 0).toLocaleString("en-IN")})
+                                  </td>
+                                  <td className="p-2.5 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                                    ₹{netAmt.toLocaleString("en-IN")}
+                                  </td>
+                                  <td className="p-2.5">
+                                    <span className="text-[11px] font-mono text-foreground font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-border">
+                                      {vehLabel}
+                                    </span>
+                                  </td>
+                                  <td className="p-2.5 text-center">
+                                    <div className="flex items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                      <button
+                                        type="button"
+                                        onClick={() => setActivePartLineIndex(idx)}
+                                        className={`px-2 py-1 rounded text-[11px] font-bold transition-colors ${
+                                          isActive 
+                                            ? "bg-theme-btn-primary text-theme-btn-primary-text" 
+                                            : "bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground border border-border"
+                                        }`}
+                                        title="Configure Item Details"
+                                      >
+                                        {isActive ? "Editing" : "Edit"}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleDuplicatePartLineItem(idx)}
+                                        className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-surface border border-transparent hover:border-border"
+                                        title="Duplicate Line Item"
+                                      >
+                                        <Copy className="h-3.5 w-3.5" />
+                                      </button>
+                                      {partLineItems.length > 1 && (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleRemovePartLineItem(idx)}
+                                          className="p-1 rounded text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                                          title="Remove Line Item"
+                                        >
+                                          <Trash2 className="h-3.5 w-3.5" />
+                                        </button>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Active Line Item Detail Configuration */}
+                  <div className="p-4 rounded-xl border-2 border-theme-btn-primary/30 bg-surface space-y-4 shadow-sm">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-border">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-theme-btn-primary text-theme-btn-primary-text">
+                          Item #{activePartLineIndex + 1} of {partLineItems.length}
+                        </span>
+                        <h4 className="font-bold text-xs text-foreground">
+                          Item Details: {activeItem.name || "Untitled Line Item"}
+                        </h4>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          disabled={activePartLineIndex <= 0}
+                          onClick={() => setActivePartLineIndex(prev => Math.max(0, prev - 1))}
+                          className="px-2 py-1 text-[11px] font-semibold rounded border border-border bg-surface disabled:opacity-40"
+                        >
+                          ← Previous Item
+                        </button>
+                        <button
+                          type="button"
+                          disabled={activePartLineIndex >= partLineItems.length - 1}
+                          onClick={() => setActivePartLineIndex(prev => Math.min(partLineItems.length - 1, prev + 1))}
+                          className="px-2 py-1 text-[11px] font-semibold rounded border border-border bg-surface disabled:opacity-40"
+                        >
+                          Next Item →
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Sub-Section 1: Item Identity */}
+                    <div className="space-y-3">
+                      <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border/60">
+                        <Package className="h-3.5 w-3.5 text-theme-btn-primary" />
+                        <span>Item Identification</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <div className="sm:col-span-2">
+                          <label className="text-xs font-semibold block mb-1">
+                            <span>Part / Accessory Name *</span>
+                          </label>
+                          <AppInput
+                            value={activeItem.name}
+                            onChange={(e) => updateActivePartLineItem({ name: e.target.value })}
+                            placeholder="e.g. Front Brake Pads, Wiper Blade Set, GPS AIS-140 Tracker"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold block mb-1">Category / Type</label>
+                          <select
+                            value={activeItem.item_type}
+                            onChange={(e) => updateActivePartLineItem({ item_type: e.target.value })}
+                            className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                          >
+                            <option value="SPARE_PART">Spare Part</option>
+                            <option value="ACCESSORY">Accessory / Gadget</option>
+                            <option value="CONSUMABLE">Consumable / Fluid / Lubricant</option>
+                            <option value="TYRE">Tyre / Wheel</option>
+                            <option value="BATTERY">Battery / Electrical</option>
+                            <option value="GPS_DEVICE">GPS & AIS-140 Tracker</option>
+                            <option value="DASHCAM">Dashcam & Camera</option>
+                            <option value="TOOL">Workshop Tool / Jack</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold block mb-1">Brand / OEM *</label>
+                          <AppInput
+                            value={activeItem.brand}
+                            onChange={(e) => updateActivePartLineItem({ brand: e.target.value })}
+                            placeholder="e.g. Bosch, Brembo, Exide, Castrol, Apollo"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold block mb-1">Part Number / SKU</label>
+                          <AppInput
+                            value={activeItem.part_number}
+                            onChange={(e) => updateActivePartLineItem({ part_number: e.target.value })}
+                            placeholder="e.g. BP-2024-FR"
+                            className="font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold block mb-1">Serial Number</label>
+                          <AppInput
+                            value={activeItem.serial_number}
+                            onChange={(e) => updateActivePartLineItem({ serial_number: e.target.value })}
+                            placeholder="e.g. SN-9988214"
+                            className="font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold block mb-1">Condition</label>
+                          <select
+                            value={activeItem.condition}
+                            onChange={(e) => updateActivePartLineItem({ condition: e.target.value })}
+                            className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                          >
+                            <option value="NEW">Brand New (OEM)</option>
+                            <option value="REFURBISHED">Refurbished / Serviced</option>
+                            <option value="USED">Used / Operational</option>
+                            <option value="REBUILT">Rebuilt / Overhauled</option>
+                          </select>
+                        </div>
+                        <div className="sm:col-span-2">
+                          <label className="text-xs font-semibold block mb-1">Sub-Group / Classification</label>
+                          <AppInput
+                            value={activeItem.category}
+                            onChange={(e) => updateActivePartLineItem({ category: e.target.value })}
+                            placeholder="e.g. Brake System, Electrical, Engine Spares"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Sub-Section 2: Pricing, Quantity & Taxes */}
+                    <div className="space-y-3 p-3.5 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/40">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1.5 border-b border-border">
+                        <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                          <Receipt className="h-3.5 w-3.5 text-emerald-500" />
+                          <span>Pricing, Quantity & Taxes</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[11px] text-muted-foreground font-semibold">Presets:</span>
+                          <AppButton
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const gross = (Number(activeItem.unit_price) || 0) * (Number(activeItem.quantity) || 1);
+                              const taxable = Math.max(0, gross - (Number(activeItem.discount) || 0));
+                              const gst = Math.round(taxable * 0.18);
+                              updateActivePartLineItem({
+                                tax_rate: 18,
+                                tax_amount: gst,
+                                purchase_amount: Math.max(0, taxable + gst - (Number(activeItem.tds_deduction) || 0) - (Number(activeItem.other_deductions) || 0))
+                              });
+                            }}
+                            className="text-[11px] h-6 px-2 py-0 border-blue-500/30 text-blue-600 dark:text-blue-400 font-medium"
+                          >
+                            18% GST (Std)
+                          </AppButton>
+                          <AppButton
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const gross = (Number(activeItem.unit_price) || 0) * (Number(activeItem.quantity) || 1);
+                              const taxable = Math.max(0, gross - (Number(activeItem.discount) || 0));
+                              const gst = Math.round(taxable * 0.28);
+                              updateActivePartLineItem({
+                                tax_rate: 28,
+                                tax_amount: gst,
+                                purchase_amount: Math.max(0, taxable + gst - (Number(activeItem.tds_deduction) || 0) - (Number(activeItem.other_deductions) || 0))
+                              });
+                            }}
+                            className="text-[11px] h-6 px-2 py-0 border-amber-500/30 text-amber-600 dark:text-amber-400 font-medium"
+                          >
+                            28% GST (Spares)
+                          </AppButton>
+                          <AppButton
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const gross = (Number(activeItem.unit_price) || 0) * (Number(activeItem.quantity) || 1);
+                              const taxable = Math.max(0, gross - (Number(activeItem.discount) || 0));
+                              const tds = Math.round(taxable * 0.02);
+                              updateActivePartLineItem({
+                                tds_rate: 2,
+                                tds_deduction: tds,
+                                purchase_amount: Math.max(0, taxable + (Number(activeItem.tax_amount) || 0) - tds - (Number(activeItem.other_deductions) || 0))
+                              });
+                            }}
+                            className="text-[11px] h-6 px-2 py-0 border-border text-theme-icon dark:text-muted-foreground font-medium"
+                          >
+                            2% TDS
+                          </AppButton>
+                          <AppButton
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const gross = (Number(activeItem.unit_price) || 0) * (Number(activeItem.quantity) || 1);
+                              const taxable = Math.max(0, gross - (Number(activeItem.discount) || 0));
+                              updateActivePartLineItem({
+                                tax_rate: 0,
+                                tax_amount: 0,
+                                tds_rate: 0,
+                                tds_deduction: 0,
+                                other_deductions: 0,
+                                purchase_amount: taxable
+                              });
+                            }}
+                            className="text-[11px] h-6 px-1.5 py-0 text-muted-foreground hover:text-foreground font-medium"
+                          >
+                            Clear
+                          </AppButton>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                        <div>
+                          <label className="text-xs font-semibold block mb-1">Unit Price (₹)</label>
+                          <AppInput
+                            type="number"
+                            min="0"
+                            step="any"
+                            value={activeItem.unit_price || ""}
+                            onChange={(e) => updateActivePartLineItem({ unit_price: Number(e.target.value) || 0 })}
+                            className="font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold block mb-1">Quantity</label>
+                          <AppInput
+                            type="number"
+                            min="1"
+                            value={activeItem.quantity}
+                            onChange={(e) => updateActivePartLineItem({ quantity: Number(e.target.value) || 1 })}
+                            className="font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold block mb-1">Discount (₹)</label>
+                          <AppInput
+                            type="number"
+                            min="0"
+                            value={activeItem.discount || ""}
+                            onChange={(e) => updateActivePartLineItem({ discount: Number(e.target.value) || 0 })}
+                            className="font-mono text-rose-600 dark:text-rose-400"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold block mb-1">GST Rate (%)</label>
+                          <select
+                            value={activeItem.tax_rate}
+                            onChange={(e) => updateActivePartLineItem({ tax_rate: Number(e.target.value) || 0 })}
+                            className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                          >
+                            <option value={0}>0% (Tax Exempt)</option>
+                            <option value={5}>5% GST</option>
+                            <option value={12}>12% GST</option>
+                            <option value={18}>18% GST (Standard)</option>
+                            <option value={28}>28% GST (Spares/Tyres)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-1">
+                        <div>
+                          <label className="text-xs font-semibold block mb-1">GST Amount (₹)</label>
+                          <AppInput
+                            type="number"
+                            min="0"
+                            value={activeItem.tax_amount || ""}
+                            onChange={(e) => updateActivePartLineItem({ tax_amount: Number(e.target.value) || 0 })}
+                            className="font-mono text-emerald-600 dark:text-emerald-400"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold block mb-1">TDS Amount (₹)</label>
+                          <AppInput
+                            type="number"
+                            min="0"
+                            value={activeItem.tds_deduction || ""}
+                            onChange={(e) => updateActivePartLineItem({ tds_deduction: Number(e.target.value) || 0 })}
+                            className="font-mono text-theme-icon"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold block mb-1">Other Deductions (₹)</label>
+                          <AppInput
+                            type="number"
+                            min="0"
+                            value={activeItem.other_deductions || ""}
+                            onChange={(e) => updateActivePartLineItem({ other_deductions: Number(e.target.value) || 0 })}
+                            className="font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold block mb-1 font-bold text-foreground">Item Net Amount (₹)</label>
+                          <AppInput
+                            type="number"
+                            min="0"
+                            step="any"
+                            value={activeItem.purchase_amount || ""}
+                            onChange={(e) => updateActivePartLineItem({ purchase_amount: Number(e.target.value) || 0 })}
+                            className="font-mono font-bold text-base text-primary"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Sub-Section 3: Manufacturing DOM & Shelf-Life */}
+                    <div className="space-y-3">
+                      <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border/60">
+                        <Clock className="h-3.5 w-3.5 text-amber-500" />
+                        <span>Manufacturing & Expiry</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs font-semibold block mb-1">Date of Manufacturing (DOM)</label>
+                          <AppInput
+                            type="date"
+                            value={activeItem.manufacturing_date}
+                            onChange={(e) => updateActivePartLineItem({ manufacturing_date: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold block mb-1">Shelf-Life / Expiry Date</label>
+                          <AppInput
+                            type="date"
+                            value={activeItem.expiry_date}
+                            onChange={(e) => updateActivePartLineItem({ expiry_date: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Sub-Section 4: OEM Warranty Coverage */}
+                    <div className="space-y-3">
+                      <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border/60">
+                        <ShieldCheck className="h-3.5 w-3.5 text-theme-icon" />
+                        <span>Warranty Coverage</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <label className="text-xs font-semibold block mb-1">Warranty Type</label>
+                          <select
+                            value={activeItem.warranty_type}
+                            onChange={(e) => updateActivePartLineItem({ warranty_type: e.target.value })}
+                            className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                          >
+                            <option value="WARRANTY">Standard OEM Warranty</option>
+                            <option value="EXTENDED_WARRANTY">Extended Warranty</option>
+                            <option value="GUARANTEE">Replacement Guarantee</option>
+                            <option value="LIFETIME">Lifetime Limited Warranty</option>
+                            <option value="NONE">No Warranty</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold block mb-1 flex items-center justify-between">
+                            <span>Warranty Period (Months)</span>
+                            {partFormPurchaseDate && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (partFormPurchaseDate && activeItem.warranty_months > 0) {
+                                    const d = new Date(partFormPurchaseDate);
+                                    d.setMonth(d.getMonth() + Number(activeItem.warranty_months));
+                                    updateActivePartLineItem({ warranty_expiry_date: d.toISOString().split("T")[0] });
+                                  }
+                                }}
+                                className="text-xs text-theme-btn-primary hover:underline font-semibold"
+                              >
+                                Auto-Calculate
+                              </button>
+                            )}
+                          </label>
+                          <AppInput
+                            type="number"
+                            min="0"
+                            value={activeItem.warranty_months}
+                            onChange={(e) => updateActivePartLineItem({ warranty_months: Number(e.target.value) || 0 })}
+                            className="font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold block mb-1 flex items-center gap-1">
+                            <Calendar className="h-3 w-3 text-theme-icon" />
+                            <span>Warranty Expiry Date</span>
+                          </label>
+                          <AppInput
+                            type="date"
+                            value={activeItem.warranty_expiry_date}
+                            onChange={(e) => updateActivePartLineItem({ warranty_expiry_date: e.target.value })}
+                          />
+                        </div>
+                        <div className="sm:col-span-3">
+                          <label className="text-xs font-semibold block mb-1">Warranty Terms</label>
+                          <AppInput
+                            value={activeItem.warranty_terms}
+                            onChange={(e) => updateActivePartLineItem({ warranty_terms: e.target.value })}
+                            placeholder="e.g. 24 Months or 40,000 km replacement guarantee"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Sub-Section 5: Recurring Renewal Policy */}
+                    <div className="space-y-3 p-3.5 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/40">
+                      <div className="flex items-center justify-between">
+                        <div className="text-[11px] font-bold uppercase tracking-wider text-cyan-800 dark:text-muted-foreground flex items-center gap-1.5">
+                          <Zap className="h-3.5 w-3.5 text-theme-icon" />
+                          <span>Renewal Policy</span>
+                        </div>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={activeItem.has_renewal_policy}
+                            onChange={(e) => updateActivePartLineItem({ has_renewal_policy: e.target.checked })}
+                            className="rounded border-border text-theme-btn-primary focus:ring-theme-btn-primary h-4 w-4"
+                          />
+                          <span className="text-xs font-semibold text-foreground">Has Renewal Policy</span>
+                        </label>
+                      </div>
+
+                      {activeItem.has_renewal_policy && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-2">
+                          <div>
+                            <label className="text-xs font-semibold block mb-1">Renewal Policy Type</label>
+                            <select
+                              value={activeItem.renewal_policy_type}
+                              onChange={(e) => updateActivePartLineItem({ renewal_policy_type: e.target.value })}
+                              className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                            >
+                              <option value="GPS_SIM_RECHARGE">GPS M2M SIM Cellular Recharge</option>
+                              <option value="EXTENDED_AMC">Extended AMC Maintenance Contract</option>
+                              <option value="ANNUAL_CALIBRATION">Annual Statutory Calibration</option>
+                              <option value="SOFTWARE_LICENSE">Software / Cloud Telematics License</option>
+                              <option value="FASTAG_RECHARGE">FASTag Fleet Commercial Balance</option>
+                              <option value="OTHER_POLICY">Other Recurring Policy</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-xs font-semibold block mb-1 flex items-center gap-1 text-amber-700 dark:text-amber-400">
+                              <Calendar className="h-3 w-3 text-amber-500" />
+                              <span>Next Renewal Due Date *</span>
+                            </label>
+                            <AppInput
+                              type="date"
+                              value={activeItem.renewal_date}
+                              onChange={(e) => updateActivePartLineItem({ renewal_date: e.target.value })}
+                              required={activeItem.has_renewal_policy}
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-semibold block mb-1">Renewal Cost (₹ / cycle)</label>
+                            <AppInput
+                              type="number"
+                              min="0"
+                              value={activeItem.renewal_cost || ""}
+                              onChange={(e) => updateActivePartLineItem({ renewal_cost: Number(e.target.value) || 0 })}
+                              className="font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-semibold block mb-1">Renewal Provider</label>
+                            <AppInput
+                              value={activeItem.renewal_vendor}
+                              onChange={(e) => updateActivePartLineItem({ renewal_vendor: e.target.value })}
+                              placeholder="e.g. Airtel IoT M2M, FleetTrack Cloud"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-semibold block mb-1">Policy / Account Number</label>
+                            <AppInput
+                              value={activeItem.renewal_policy_number}
+                              onChange={(e) => updateActivePartLineItem({ renewal_policy_number: e.target.value })}
+                              className="font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-semibold block mb-1">Reminder (Days)</label>
+                            <AppInput
+                              type="number"
+                              min="1"
+                              value={activeItem.renewal_reminder_days}
+                              onChange={(e) => updateActivePartLineItem({ renewal_reminder_days: Number(e.target.value) || 30 })}
+                              className="font-mono"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Sub-Section 6: Vehicle Assignment for this Item */}
+                    <div className="space-y-3">
+                      <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border/60">
+                        <Car className="h-3.5 w-3.5 text-blue-500" />
+                        <span>Vehicle Allocation for this Item</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <label className="text-xs font-semibold block mb-1">Assigned Target</label>
+                          <select
+                            value={activeItem.vehicle_id}
+                            onChange={(e) => {
+                              const vId = e.target.value;
+                              let vReg = "";
+                              let vStatus = "IN_STOCK";
+                              if (vId && vId !== "UNASSIGNED_STOCK") {
+                                const mv = vehicles.find((v) => v.id === vId);
+                                if (mv) {
+                                  vReg = mv.registration_number;
+                                  vStatus = "INSTALLED";
+                                }
+                              }
+                              updateActivePartLineItem({
+                                vehicle_id: vId,
+                                assigned_vehicle_reg: vReg,
+                                status: vStatus
+                              });
+                            }}
+                            className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                          >
+                            <option value="UNASSIGNED_STOCK">Warehouse Stock (Unassigned)</option>
+                            {vehicles.map((v) => (
+                              <option key={v.id} value={v.id}>
+                                {v.registration_number} — {v.make} {v.model}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold block mb-1">Installation Date</label>
+                          <AppInput
+                            type="date"
+                            value={activeItem.installation_date}
+                            onChange={(e) => updateActivePartLineItem({ installation_date: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold block mb-1">Installed Odometer (km)</label>
+                          <AppInput
+                            type="number"
+                            min="0"
+                            value={activeItem.installed_odometer_km}
+                            onChange={(e) => updateActivePartLineItem({ installed_odometer_km: e.target.value === "" ? "" : Number(e.target.value) })}
+                            className="font-mono"
+                          />
+                        </div>
+                        <div className="sm:col-span-2">
+                          <label className="text-xs font-semibold block mb-1">Installed By</label>
+                          <AppInput
+                            value={activeItem.installed_by}
+                            onChange={(e) => updateActivePartLineItem({ installed_by: e.target.value })}
+                            placeholder="Technician or Workshop Name"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold block mb-1">Status</label>
+                          <select
+                            value={activeItem.status}
+                            onChange={(e) => updateActivePartLineItem({ status: e.target.value })}
+                            className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                          >
+                            <option value="IN_STOCK">In Stock (Warehouse)</option>
+                            <option value="INSTALLED">Installed on Vehicle</option>
+                            <option value="RESERVED">Reserved for Job</option>
+                            <option value="DEFECTIVE">Defective / Return</option>
+                            <option value="SCRAPPED">Scrapped / Disposed</option>
+                          </select>
+                        </div>
+                        <div className="sm:col-span-3">
+                          <label className="text-xs font-semibold block mb-1">Item Notes / Remarks</label>
+                          <textarea
+                            rows={2}
+                            value={activeItem.notes}
+                            onChange={(e) => updateActivePartLineItem({ notes: e.target.value })}
+                            placeholder="Specific notes or remarks for this item"
+                            className="w-full text-xs p-2.5 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bill Financial Totals HUD */}
+                  <div className="p-4 rounded-xl bg-theme-btn-primary/10 border border-theme-btn-primary/20 space-y-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div>
+                        <div className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                          <Calculator className="h-3.5 w-3.5 text-theme-btn-primary" />
+                          <span>Bill Invoice Summary ({partLineItems.length} Line Items)</span>
+                        </div>
+                        <div className="text-xs font-mono text-muted-foreground mt-1 flex items-center gap-2 flex-wrap">
+                          <span>Gross: ₹{billGrossTotal.toLocaleString("en-IN")}</span>
+                          <span>•</span>
+                          <span>Taxable: ₹{billTaxableTotal.toLocaleString("en-IN")}</span>
+                          <span>•</span>
+                          <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Total GST: +₹{billGstTotal.toLocaleString("en-IN")}</span>
+                          {billTdsTotal > 0 && (
+                            <>
+                              <span>•</span>
+                              <span className="text-rose-600 dark:text-rose-400">Total Deductions: -₹{billTdsTotal.toLocaleString("en-IN")}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[11px] font-semibold uppercase text-muted-foreground block">Grand Total Net Invoiced</span>
+                        <span className="text-xl font-mono font-bold text-foreground">
+                          ₹{billNetTotal.toLocaleString("en-IN")}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </TransactionFormLayout>
       )}
@@ -19570,24 +21454,119 @@ export default function FleetDeskHost({
                 </div>
               </div>
 
-              {/* Reference, Receipt & Notes */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="font-semibold block mb-1">Receipt / Payment Reference #</label>
-                  <AppInput
-                    value={renewPolicyReceiptNo}
-                    onChange={(e) => setRenewPolicyReceiptNo(e.target.value)}
-                    className="font-mono text-xs"
-                  />
+              {/* Document Upload & Pre-submission Verification */}
+              <div className="p-3.5 rounded-xl border border-border bg-surface space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                    <FileText className="h-3.5 w-3.5 text-theme-icon" />
+                    <span>Policy Document Scan & Attachment</span>
+                  </label>
+                  <label className="cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-theme-btn-primary/10 text-theme-btn-primary hover:bg-theme-btn-primary/20 border border-theme-btn-primary/30 transition-all">
+                    <Upload className="h-3.5 w-3.5" />
+                    <span>Upload Document File</span>
+                    <input
+                      type="file"
+                      accept=".pdf,.png,.jpg,.jpeg,.docx"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (re) => {
+                            const b64 = re.target?.result as string;
+                            const previewUrl = URL.createObjectURL(file);
+                            setRenewPolicyStagedFile({
+                              file,
+                              name: file.name,
+                              size: formatFileSize(file.size),
+                              previewUrl,
+                              base64Url: b64
+                            });
+                            setRenewPolicyDocUrl(file.name);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                  </label>
                 </div>
-                <div>
-                  <label className="font-semibold block mb-1">Policy Document Link / Storage URL</label>
-                  <AppInput
-                    value={renewPolicyDocUrl}
-                    onChange={(e) => setRenewPolicyDocUrl(e.target.value)}
-                    className="text-xs"
-                  />
-                </div>
+
+                {renewPolicyStagedFile ? (
+                  <div className="p-2.5 rounded-lg border border-emerald-500/30 bg-emerald-500/5 flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileText className="h-4 w-4 text-emerald-600 shrink-0" />
+                      <div className="min-w-0">
+                        <div className="text-xs font-bold text-foreground truncate" title={renewPolicyStagedFile.name}>
+                          {renewPolicyStagedFile.name}
+                        </div>
+                        <div className="text-[10px] text-muted-foreground">{renewPolicyStagedFile.size} • Ready for upload</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <AppButton
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(renewPolicyStagedFile.previewUrl, "_blank")}
+                        className="h-6 text-xs px-2 text-theme-icon border-border gap-1 font-semibold"
+                        title="View staged document"
+                      >
+                        <Eye className="h-3 w-3" />
+                        <span>View</span>
+                      </AppButton>
+                      <AppButton
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const a = document.createElement("a");
+                          a.href = renewPolicyStagedFile.previewUrl;
+                          a.download = renewPolicyStagedFile.name;
+                          a.click();
+                        }}
+                        className="h-6 text-xs px-2 text-muted-foreground hover:text-foreground border-border gap-1 font-semibold"
+                        title="Download staged document"
+                      >
+                        <Download className="h-3 w-3" />
+                        <span>Download</span>
+                      </AppButton>
+                      <AppButton
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setRenewPolicyStagedFile(null);
+                          setRenewPolicyDocUrl("");
+                        }}
+                        className="h-6 text-xs px-1.5 text-rose-600 hover:bg-rose-50"
+                        title="Remove file"
+                      >
+                        <X className="h-3 w-3" />
+                      </AppButton>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground block mb-1">Direct Storage Link / External URL</label>
+                      <AppInput
+                        placeholder="Paste document URL or upload file above"
+                        value={renewPolicyDocUrl}
+                        onChange={(e) => setRenewPolicyDocUrl(e.target.value)}
+                        className="text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground block mb-1">Receipt / Transaction Ref #</label>
+                      <AppInput
+                        placeholder="e.g. REC-2026-9921"
+                        value={renewPolicyReceiptNo}
+                        onChange={(e) => setRenewPolicyReceiptNo(e.target.value)}
+                        className="font-mono text-xs"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -19745,7 +21724,44 @@ export default function FleetDeskHost({
                             </span>
                           </div>
 
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {policy.policy_document_url && (
+                              <div className="flex items-center gap-1">
+                                <AppButton
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleViewAttachment({
+                                    id: policy.id,
+                                    file_name: `Insurance_Policy_${policy.policy_number}.pdf`,
+                                    file_url: policy.policy_document_url,
+                                    title: `Insurance Policy #${policy.policy_number}`,
+                                    doc_type: "INSURANCE"
+                                  })}
+                                  className="h-6 text-xs px-2 text-theme-icon border-border gap-1 font-semibold"
+                                  title="View Policy Document"
+                                >
+                                  <FileText className="h-3 w-3" />
+                                  <span>View</span>
+                                </AppButton>
+                                <AppButton
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => downloadAttachment({
+                                    id: policy.id,
+                                    file_name: `Insurance_Policy_${policy.policy_number}.pdf`,
+                                    file_url: policy.policy_document_url,
+                                    title: `Insurance Policy #${policy.policy_number}`
+                                  })}
+                                  className="h-6 text-xs px-2 text-muted-foreground hover:text-foreground border-border gap-1 font-semibold"
+                                  title="Download Policy Document"
+                                >
+                                  <Download className="h-3 w-3" />
+                                  <span>Download</span>
+                                </AppButton>
+                              </div>
+                            )}
                             <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-md border border-emerald-500/20">
                               ₹{Number(policy.premium_amount || 0).toLocaleString("en-IN")} Premium
                             </span>
@@ -20064,15 +22080,110 @@ export default function FleetDeskHost({
                     className="font-mono text-xs"
                   />
                 </div>
+              </div>
 
-                <div>
-                  <label className="font-semibold block mb-1">Certificate PDF / Image URL</label>
-                  <AppInput
-                    value={renewPucDocUrl}
-                    onChange={(e) => setRenewPucDocUrl(e.target.value)}
-                    className="text-xs"
-                  />
+              {/* PUC Document Scan & Pre-submission Verification */}
+              <div className="p-3.5 rounded-xl border border-border bg-surface space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                    <FileText className="h-3.5 w-3.5 text-emerald-600" />
+                    <span>PUC Certificate Scan & Attachment</span>
+                  </label>
+                  <label className="cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border border-emerald-500/30 transition-all">
+                    <Upload className="h-3.5 w-3.5" />
+                    <span>Upload Certificate File</span>
+                    <input
+                      type="file"
+                      accept=".pdf,.png,.jpg,.jpeg"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (re) => {
+                            const b64 = re.target?.result as string;
+                            const previewUrl = URL.createObjectURL(file);
+                            setRenewPucStagedFile({
+                              file,
+                              name: file.name,
+                              size: formatFileSize(file.size),
+                              previewUrl,
+                              base64Url: b64
+                            });
+                            setRenewPucDocUrl(file.name);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                  </label>
                 </div>
+
+                {renewPucStagedFile ? (
+                  <div className="p-2.5 rounded-lg border border-emerald-500/30 bg-emerald-500/5 flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileText className="h-4 w-4 text-emerald-600 shrink-0" />
+                      <div className="min-w-0">
+                        <div className="text-xs font-bold text-foreground truncate" title={renewPucStagedFile.name}>
+                          {renewPucStagedFile.name}
+                        </div>
+                        <div className="text-[10px] text-muted-foreground">{renewPucStagedFile.size} • Ready for upload</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <AppButton
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(renewPucStagedFile.previewUrl, "_blank")}
+                        className="h-6 text-xs px-2 text-theme-icon border-border gap-1 font-semibold"
+                        title="View staged certificate"
+                      >
+                        <Eye className="h-3 w-3" />
+                        <span>View</span>
+                      </AppButton>
+                      <AppButton
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const a = document.createElement("a");
+                          a.href = renewPucStagedFile.previewUrl;
+                          a.download = renewPucStagedFile.name;
+                          a.click();
+                        }}
+                        className="h-6 text-xs px-2 text-muted-foreground hover:text-foreground border-border gap-1 font-semibold"
+                        title="Download staged certificate"
+                      >
+                        <Download className="h-3 w-3" />
+                        <span>Download</span>
+                      </AppButton>
+                      <AppButton
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setRenewPucStagedFile(null);
+                          setRenewPucDocUrl("");
+                        }}
+                        className="h-6 text-xs px-1.5 text-rose-600 hover:bg-rose-50"
+                        title="Remove file"
+                      >
+                        <X className="h-3 w-3" />
+                      </AppButton>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground block mb-1">Direct Storage Link / PDF URL</label>
+                    <AppInput
+                      placeholder="Paste certificate URL or upload file above"
+                      value={renewPucDocUrl}
+                      onChange={(e) => setRenewPucDocUrl(e.target.value)}
+                      className="text-xs"
+                    />
+                  </div>
+                )}
               </div>
 
               <div>
@@ -20230,7 +22341,44 @@ export default function FleetDeskHost({
                             </span>
                           </div>
 
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {cert.document_url && (
+                              <div className="flex items-center gap-1">
+                                <AppButton
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleViewAttachment({
+                                    id: cert.id,
+                                    file_name: `PUC_${cert.certificate_number}.pdf`,
+                                    file_url: cert.document_url,
+                                    title: `PUC Certificate #${cert.certificate_number}`,
+                                    doc_type: "PUC"
+                                  })}
+                                  className="h-6 text-xs px-2 text-theme-icon border-border gap-1 font-semibold"
+                                  title="View PUC Certificate"
+                                >
+                                  <FileText className="h-3 w-3" />
+                                  <span>View</span>
+                                </AppButton>
+                                <AppButton
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => downloadAttachment({
+                                    id: cert.id,
+                                    file_name: `PUC_${cert.certificate_number}.pdf`,
+                                    file_url: cert.document_url,
+                                    title: `PUC Certificate #${cert.certificate_number}`
+                                  })}
+                                  className="h-6 text-xs px-2 text-muted-foreground hover:text-foreground border-border gap-1 font-semibold"
+                                  title="Download PUC Certificate"
+                                >
+                                  <Download className="h-3 w-3" />
+                                  <span>Download</span>
+                                </AppButton>
+                              </div>
+                            )}
                             <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-md border border-emerald-500/20">
                               ₹{Number(cert.test_fee || 0).toLocaleString("en-IN")} Fee Paid
                             </span>
@@ -20653,15 +22801,41 @@ export default function FleetDeskHost({
                                   </div>
 
                                   {event.document_url && (
-                                    <a
-                                      href={event.document_url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 dark:bg-blue-950/40 px-2.5 py-1 rounded-lg border border-blue-500/20"
-                                    >
-                                      <FileText className="h-3.5 w-3.5" />
-                                      <span>View Attachment</span>
-                                    </a>
+                                    <div className="flex items-center gap-1.5">
+                                      <AppButton
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleViewAttachment({
+                                          id: event.record_id,
+                                          file_name: `${event.renewal_type}_${event.certificate_or_policy_number}.pdf`,
+                                          file_url: event.document_url,
+                                          title: `${event.renewal_type} - ${event.certificate_or_policy_number}`,
+                                          doc_type: event.renewal_type
+                                        })}
+                                        className="h-6 text-xs px-2 text-theme-icon border-border gap-1 font-semibold"
+                                        title="View Renewal Attachment"
+                                      >
+                                        <FileText className="h-3 w-3" />
+                                        <span>View</span>
+                                      </AppButton>
+                                      <AppButton
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => downloadAttachment({
+                                          id: event.record_id,
+                                          file_name: `${event.renewal_type}_${event.certificate_or_policy_number}.pdf`,
+                                          file_url: event.document_url,
+                                          title: `${event.renewal_type} - ${event.certificate_or_policy_number}`
+                                        })}
+                                        className="h-6 text-xs px-2 text-muted-foreground hover:text-foreground border-border gap-1 font-semibold"
+                                        title="Download Renewal Attachment"
+                                      >
+                                        <Download className="h-3 w-3" />
+                                        <span>Download</span>
+                                      </AppButton>
+                                    </div>
                                   )}
                                 </div>
 
@@ -21457,8 +23631,217 @@ export default function FleetDeskHost({
                       {viewingVehicle.custom_extended_expiry_date ? String(viewingVehicle.custom_extended_expiry_date).split("T")[0] : "—"}
                     </div>
                   </div>
+                  <div className="p-3.5 rounded-xl border border-border bg-surface space-y-1">
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                      <Building2 className="h-3 w-3 text-indigo-500" />
+                      <span>Showroom / Vendor</span>
+                    </span>
+                    <div className="font-semibold text-foreground text-xs truncate" title={viewingVehicle.purchase_vendor || "Not Specified"}>
+                      {viewingVehicle.purchase_vendor || "—"}
+                    </div>
+                    {viewingVehicle.purchase_date && (
+                      <div className="text-[10px] text-muted-foreground font-mono">
+                        Invoice: {String(viewingVehicle.purchase_date).split("T")[0]}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
+
+              {/* SPECIAL SECTION: EV INBUILT BATTERY WARRANTY CARD (Dual Basis: KM & Purchase Date Period) */}
+              {isElectricFuel(viewingVehicle.fuel_type) && (
+                <div className="p-4 rounded-xl border border-cyan-500/30 bg-cyan-50/20 dark:bg-cyan-950/15 space-y-3.5">
+                  <div className="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-cyan-500/20">
+                    <div className="flex items-center gap-2">
+                      <div className="h-7 w-7 rounded-lg bg-cyan-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                        <BatteryCharging className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
+                            EV Inbuilt Battery Warranty (Dual Basis)
+                          </h4>
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-cyan-100 dark:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-700">
+                            Whichever occurs earlier
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">
+                          OEM traction battery warranty evaluated against odometer distance quota and calendar duration from purchase date.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div>
+                      {(() => {
+                        const status = viewingVehicle.battery_warranty_status || "ACTIVE";
+                        const isExpired = status === "EXPIRED";
+                        const isSoon = status === "EXPIRING_SOON";
+                        return (
+                          <span className={`px-2.5 py-1 rounded-full text-xs font-bold border inline-flex items-center gap-1.5 ${
+                            isExpired 
+                              ? "bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800"
+                              : isSoon
+                              ? "bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-800"
+                              : "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800"
+                          }`}>
+                            <span className={`h-2 w-2 rounded-full ${isExpired ? "bg-rose-500" : isSoon ? "bg-amber-500 animate-pulse" : "bg-emerald-500"}`} />
+                            <span>{isExpired ? "Warranty Expired" : isSoon ? "Expiring Soon" : "Warranty Active"}</span>
+                          </span>
+                        );
+                      })()}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Basis 1: Distance Quota (KM) */}
+                    <div className="p-3.5 rounded-lg border border-border bg-surface space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                          <Gauge className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400" />
+                          <span>Basis 1: Distance Quota</span>
+                        </span>
+                        <span className="text-xs font-mono font-bold text-foreground">
+                          Limit: {(viewingVehicle.battery_warranty_km || 160000).toLocaleString()} km
+                        </span>
+                      </div>
+
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">Current Odometer:</span>
+                          <span className="font-mono font-semibold text-foreground">
+                            {(viewingVehicle.odometer_km || 0).toLocaleString()} km
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">Remaining KM Quota:</span>
+                          <span className={`font-mono font-bold ${
+                            (viewingVehicle.battery_warranty_km_remaining ?? 160000) <= 0 
+                              ? "text-rose-600 dark:text-rose-400" 
+                              : (viewingVehicle.battery_warranty_km_remaining ?? 160000) <= 5000 
+                              ? "text-amber-600 dark:text-amber-400" 
+                              : "text-emerald-600 dark:text-emerald-400"
+                          }`}>
+                            {Math.max(0, viewingVehicle.battery_warranty_km_remaining ?? (160000 - (viewingVehicle.odometer_km || 0))).toLocaleString()} km left
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Progress bar */}
+                      {(() => {
+                        const maxKm = viewingVehicle.battery_warranty_km || 160000;
+                        const curKm = viewingVehicle.odometer_km || 0;
+                        const pct = Math.min(100, Math.max(0, Math.round((curKm / maxKm) * 100)));
+                        return (
+                          <div className="space-y-1 pt-1">
+                            <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                              <div 
+                                className={`h-full transition-all ${pct >= 100 ? "bg-rose-500" : pct >= 85 ? "bg-amber-500" : "bg-cyan-500"}`} 
+                                style={{ width: `${pct}%` }} 
+                              />
+                            </div>
+                            <div className="flex justify-between text-[10px] text-muted-foreground font-mono">
+                              <span>0 km</span>
+                              <span>{pct}% Consumed</span>
+                              <span>{maxKm.toLocaleString()} km</span>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    {/* Basis 2: Period from Purchase Date */}
+                    <div className="p-3.5 rounded-lg border border-border bg-surface space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                          <Calendar className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400" />
+                          <span>Basis 2: Period from Purchase</span>
+                        </span>
+                        <span className="text-xs font-mono font-bold text-foreground">
+                          Limit: {viewingVehicle.battery_warranty_years || 8.0} Years
+                        </span>
+                      </div>
+
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">Purchase / Start Date:</span>
+                          <span className="font-mono font-semibold text-foreground">
+                            {viewingVehicle.purchase_date ? String(viewingVehicle.purchase_date).split("T")[0] : (viewingVehicle.registration_date ? String(viewingVehicle.registration_date).split("T")[0] : "—")}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">Warranty Expiry Date:</span>
+                          <span className="font-mono font-semibold text-foreground">
+                            {viewingVehicle.battery_warranty_expiry_date ? String(viewingVehicle.battery_warranty_expiry_date).split("T")[0] : "—"}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">Days Remaining:</span>
+                          <span className={`font-mono font-bold ${
+                            (viewingVehicle.battery_warranty_days_remaining ?? 0) <= 0 
+                              ? "text-rose-600 dark:text-rose-400" 
+                              : (viewingVehicle.battery_warranty_days_remaining ?? 0) <= 90 
+                              ? "text-amber-600 dark:text-amber-400" 
+                              : "text-emerald-600 dark:text-emerald-400"
+                          }`}>
+                            {viewingVehicle.battery_warranty_days_remaining !== undefined && viewingVehicle.battery_warranty_days_remaining !== null
+                              ? (viewingVehicle.battery_warranty_days_remaining <= 0 ? "Expired" : `${viewingVehicle.battery_warranty_days_remaining} days`)
+                              : "—"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Period Progress bar */}
+                      {(() => {
+                        const pDateStr = viewingVehicle.purchase_date || viewingVehicle.registration_date;
+                        const expDateStr = viewingVehicle.battery_warranty_expiry_date;
+                        if (pDateStr && expDateStr) {
+                          const start = new Date(pDateStr).getTime();
+                          const end = new Date(expDateStr).getTime();
+                          const now = Date.now();
+                          const total = end - start;
+                          const elapsed = now - start;
+                          const pct = total > 0 ? Math.min(100, Math.max(0, Math.round((elapsed / total) * 100))) : 0;
+                          return (
+                            <div className="space-y-1 pt-1">
+                              <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                                <div 
+                                  className={`h-full transition-all ${pct >= 100 ? "bg-rose-500" : pct >= 85 ? "bg-amber-500" : "bg-cyan-500"}`} 
+                                  style={{ width: `${pct}%` }} 
+                                />
+                              </div>
+                              <div className="flex justify-between text-[10px] text-muted-foreground font-mono">
+                                <span>Start</span>
+                                <span>{pct}% Elapsed</span>
+                                <span>End</span>
+                              </div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between flex-wrap gap-2 text-xs text-muted-foreground pt-1 border-t border-cyan-500/20">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-semibold text-foreground">Governing Limit:</span>
+                      <span className="text-cyan-700 dark:text-cyan-300 font-medium">
+                        {viewingVehicle.battery_warranty_limiting_factor === "KM" 
+                          ? "Odometer Distance is the limiting factor (higher consumption rate)" 
+                          : viewingVehicle.battery_warranty_limiting_factor === "PERIOD"
+                          ? "Calendar Period is the limiting factor (lower KM usage)"
+                          : "Calculated dynamically based on active usage"}
+                      </span>
+                    </div>
+                    {viewingVehicle.battery_capacity_kwh && (
+                      <div className="flex items-center gap-1 font-mono">
+                        <span className="text-muted-foreground">Traction Battery Pack:</span>
+                        <span className="font-bold text-foreground">{viewingVehicle.battery_capacity_kwh} kWh</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Section 2: Registration & RTO Details and Section 3: Duty Assignment */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -23940,10 +26323,25 @@ export default function FleetDeskHost({
                   <div className="space-y-4">
                     {/* Tax Breakdown Card */}
                     <div className="p-4 rounded-xl border border-border bg-surface space-y-3">
-                      <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border">
-                        <Receipt className="h-4 w-4 text-emerald-500" />
-                        <span>Procurement Invoice & Statutory Tax Breakdown</span>
+                      <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between pb-2 border-b border-border">
+                        <div className="flex items-center gap-1.5">
+                          <Receipt className="h-4 w-4 text-emerald-500" />
+                          <span>Procurement Invoice & Statutory Tax Breakdown</span>
+                        </div>
+                        {viewingPart.bill_id && (
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                            Multi-Item Bill
+                          </span>
+                        )}
                       </div>
+                      {(viewingPart.vendor_name || viewingPart.invoice_number) && (
+                        <div className="flex items-center justify-between text-xs text-muted-foreground pb-2 border-b border-border/60">
+                          <span>Vendor: <strong className="text-foreground">{viewingPart.vendor_name || "—"}</strong></span>
+                          {viewingPart.invoice_number && (
+                            <span className="font-mono">Invoice: <strong className="text-foreground">#{viewingPart.invoice_number}</strong></span>
+                          )}
+                        </div>
+                      )}
                       <div className="space-y-1.5">
                         <div className="flex items-center justify-between text-xs text-muted-foreground">
                           <span>Gross Base Price ({viewingPart.quantity} units @ ₹{Number(viewingPart.unit_price || 0).toLocaleString("en-IN")}):</span>

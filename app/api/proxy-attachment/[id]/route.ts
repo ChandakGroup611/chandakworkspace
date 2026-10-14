@@ -237,6 +237,80 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
         }
       }
     }
+
+    if (!attachment) {
+      // Check if ID matches an insurance policy
+      const { data: policyDoc } = await supabaseAdmin
+        .from('insurance_policies')
+        .select('id, policy_number, policy_document_url, insurer_name')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (policyDoc && policyDoc.policy_document_url) {
+        attachment = {
+          file_name: `Insurance_Policy_${policyDoc.policy_number || 'document'}.pdf`,
+          file_url: policyDoc.policy_document_url,
+          file_type: 'application/pdf'
+        };
+      }
+    }
+
+    if (!attachment) {
+      // Check if ID matches a PUC certificate
+      const { data: pucDoc } = await supabaseAdmin
+        .from('puc_certificates')
+        .select('id, certificate_number, document_url')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (pucDoc && pucDoc.document_url) {
+        attachment = {
+          file_name: `PUC_${pucDoc.certificate_number || 'certificate'}.pdf`,
+          file_url: pucDoc.document_url,
+          file_type: 'application/pdf'
+        };
+      }
+    }
+
+    if (!attachment) {
+      // Check if ID matches a service entitlement voucher
+      const { data: vseDoc } = await supabaseAdmin
+        .from('vehicle_service_entitlements')
+        .select('id, voucher_number, document_url')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (vseDoc && vseDoc.document_url) {
+        attachment = {
+          file_name: `Service_Voucher_${vseDoc.voucher_number || 'voucher'}.pdf`,
+          file_url: vseDoc.document_url,
+          file_type: 'application/pdf'
+        };
+      }
+    }
+
+    if (!attachment) {
+      // Check if ID matches an attachment inside requirements
+      const { data: reqWithAtts } = await supabaseAdmin
+        .from('requirements')
+        .select('id, attachments, custom_fields')
+        .not('attachments', 'is', null);
+
+      if (reqWithAtts) {
+        for (const req of reqWithAtts) {
+          const atts = Array.isArray(req.attachments) ? req.attachments : (Array.isArray(req.custom_fields?.attachments) ? req.custom_fields.attachments : []);
+          const match = atts.find((a: any) => a.id === id || a.file_name === id || a.storage_path === id);
+          if (match && (match.file_url || match.url || match.storage_path)) {
+            attachment = {
+              file_name: match.file_name || match.name || 'requirement_document.pdf',
+              file_url: match.file_url || match.url || (match.storage_path ? `storage:requirement-files:${match.storage_path}` : ''),
+              file_type: match.mime_type || match.file_type || null
+            };
+            break;
+          }
+        }
+      }
+    }
     
     if (!attachment) {
       return new NextResponse('Attachment Not Found', { status: 404 });

@@ -1959,7 +1959,7 @@ export default function TaskExecutionController({ taskId, onUpdate, initialTask,
                           : (item.file_url ? `${item.file_url}${item.file_url.includes('?') ? '&' : '?'}download=1` : item.file_url);
 
                         return (
-                          <div key={item.id} className="p-3 rounded-lg /30 theme-card-structural /30 flex items-center justify-between">
+                          <div key={item.id} className="p-3 rounded-lg bg-surface border border-border flex items-center justify-between">
                             <span className="text-xs font-semibold truncate pr-2" title={item.file_name}>{item.file_name}</span>
                             {viewUrl && (
                               <div className="flex items-center gap-3 shrink-0">

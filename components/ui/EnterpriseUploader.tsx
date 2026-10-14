@@ -201,7 +201,7 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
       {files.length > 0 && (
         <div className="space-y-2">
           {files.map((fileObj) => (
-            <div key={fileObj.id} className="flex items-center gap-3 p-3 rounded-xl theme-card-structural border border-border/50">
+            <div key={fileObj.id} className="flex items-center gap-3 p-3 rounded-xl bg-surface border border-border">
               <div className="flex-shrink-0">
                 {getFileIcon(fileObj.file.type, fileObj.file.name)}
               </div>
@@ -237,7 +237,43 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
                 )}
               </div>
               
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 shrink-0">
+                {fileObj.file && (
+                  <>
+                    <AppButton
+                      variant="ghost"
+                      size="sm"
+                      type="button"
+                      onClick={() => {
+                        const url = URL.createObjectURL(fileObj.file);
+                        window.open(url, '_blank');
+                      }}
+                      className="p-1.5 h-7 w-7 text-accent hover:bg-theme-btn-primary/10 rounded flex items-center justify-center"
+                      title="View Staged File"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                    </AppButton>
+                    <AppButton
+                      variant="ghost"
+                      size="sm"
+                      type="button"
+                      onClick={() => {
+                        const url = URL.createObjectURL(fileObj.file);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = fileObj.file.name;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                      }}
+                      className="p-1.5 h-7 w-7 text-theme-icon hover:bg-theme-btn-primary/10 rounded flex items-center justify-center"
+                      title="Download Staged File"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                    </AppButton>
+                  </>
+                )}
                 {fileObj.status === 'error' && (
                   <AppButton 
                     variant="ghost"
@@ -282,7 +318,7 @@ export function EnterpriseUploader({ moduleType, recordId, onUploadComplete, isL
               const viewUrl = `/api/proxy-attachment/${att.id}`;
               const downloadUrl = `/api/proxy-attachment/${att.id}?download=1`;
               return (
-                <div key={att.id} className="flex items-center justify-between p-2.5 rounded-xl theme-card-structural border border-border/50 text-xs hover:border-theme-btn-primary/40 transition-all">
+                <div key={att.id} className="flex items-center justify-between p-2.5 rounded-xl bg-surface border border-border text-xs hover:border-theme-btn-primary/40 transition-all">
                   <div className="flex items-center gap-2 min-w-0 pr-2">
                     {getFileIcon(att.mime_type || '', fileName)}
                     <span className="truncate font-medium text-foreground text-xs" title={fileName}>{fileName}</span>

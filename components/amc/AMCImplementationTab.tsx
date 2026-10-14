@@ -16,6 +16,7 @@ import {
   Plus, 
   Trash2, 
   Download, 
+  Eye,
   Upload, 
   Calendar, 
   User, 
@@ -646,10 +647,29 @@ export function AMCImplementationTab({
                             size="sm"
                             onClick={() => {
                               const url = supabase.storage.from('amc-attachments').getPublicUrl(stage.attachment_file_path!).data.publicUrl;
-                              window.open(url, '_blank');
+                              window.open(url, '_blank', 'noopener,noreferrer');
                             }}
-                            className="h-6 w-6 p-0 text-theme-icon"
-                            title="Download Sign-Off"
+                            className="h-6 w-6 p-0 text-accent hover:text-accent hover:bg-theme-btn-primary/10"
+                            title="View Sign-Off Document"
+                          >
+                            <Eye className="h-3 w-3" />
+                          </AppButton>
+                          <AppButton
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const url = supabase.storage.from('amc-attachments').getPublicUrl(stage.attachment_file_path!).data.publicUrl;
+                              const a = document.createElement('a');
+                              a.href = `${url}${url.includes('?') ? '&' : '?'}download=1`;
+                              a.download = stage.attachment_file_path?.split('/').pop() || 'signoff-document';
+                              a.target = '_blank';
+                              document.body.appendChild(a);
+                              a.click();
+                              document.body.removeChild(a);
+                            }}
+                            className="h-6 w-6 p-0 text-theme-icon hover:text-theme-icon hover:bg-theme-btn-primary/10"
+                            title="Download Sign-Off Document"
                           >
                             <Download className="h-3 w-3" />
                           </AppButton>

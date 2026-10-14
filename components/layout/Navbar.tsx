@@ -321,14 +321,14 @@ export default function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => 
 
           <div className="hidden lg:flex items-center mx-2 px-3 py-1 rounded-full bg-surface-hover/50 border border-border/40 shadow-sm">
             <span className="text-[13px] font-medium text-foreground tracking-tight">
-              Welcome - {userData?.full_name || 'System Operator'} <span className="text-accent font-bold">({roleCode || 'USER'})</span>
+              {userData?.full_name || 'System Operator'} <span className="text-accent font-bold">({roleCode || 'USER'})</span>
             </span>
           </div>
 
           <div className="relative ml-2" ref={dropdownRef}>
             <div 
               onClick={() => setProfileOpen(!profileOpen)}
-              className="flex h-8 w-8 items-center justify-center rounded-full theme-card-structural -hover text-xs font-medium text-foreground cursor-pointer hover: transition-all overflow-hidden shadow-sm"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-surface hover:bg-surface-hover border border-border text-xs font-medium text-foreground cursor-pointer transition-all overflow-hidden shadow-sm"
             >
               {userData?.profile_photo ? (
                 <img src={userData.profile_photo} alt="Profile" className="h-full w-full object-cover" />

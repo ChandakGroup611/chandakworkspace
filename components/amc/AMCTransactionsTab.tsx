@@ -19,6 +19,7 @@ import {
   Sparkles, 
   Paperclip, 
   Download, 
+  Eye,
   Edit3, 
   CheckCircle2, 
   Layers,
@@ -420,16 +421,114 @@ export function AMCTransactionsTab({
             {/* Attachment File Input */}
             <div className="space-y-2 md:col-span-2">
               <label className="theme-label">Attachment (PO / Invoice / Approval)</label>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-2">
                 <input 
                   type="file" 
                   onChange={(e) => setAttachedFile(e.target.files?.[0] || null)}
-                  className="flex-1 w-full text-xs text-muted file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-theme-btn-primary/10 file:text-theme-icon hover:file:bg-theme-btn-primary/20 cursor-pointer border border-border rounded-xl h-11 bg-elevated pt-1"
+                  className="w-full text-xs text-muted file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-theme-btn-primary/10 file:text-theme-icon hover:file:bg-theme-btn-primary/20 cursor-pointer border border-border rounded-xl h-11 bg-elevated pt-1"
                 />
+                {attachedFile && (
+                  <div className="flex items-center justify-between p-2 rounded-lg border border-border bg-surface text-xs">
+                    <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
+                      <Paperclip className="h-3.5 w-3.5 text-theme-icon shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold truncate text-foreground" title={attachedFile.name}>
+                          {attachedFile.name}
+                        </p>
+                        <p className="text-[10px] text-muted">
+                          {(attachedFile.size / 1024).toFixed(1)} KB • Staged for upload
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <AppButton
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          const url = URL.createObjectURL(attachedFile);
+                          window.open(url, '_blank');
+                        }}
+                        className="h-7 px-2 text-xs text-accent hover:bg-theme-btn-primary/10 gap-1 font-semibold"
+                        title="View Staged File"
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                        <span>View</span>
+                      </AppButton>
+                      <AppButton
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          const url = URL.createObjectURL(attachedFile);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = attachedFile.name;
+                          document.body.appendChild(a);
+                          a.click();
+                          document.body.removeChild(a);
+                          URL.revokeObjectURL(url);
+                        }}
+                        className="h-7 px-2 text-xs text-theme-icon hover:bg-theme-btn-primary/10 gap-1 font-semibold"
+                        title="Download Staged File"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        <span>Download</span>
+                      </AppButton>
+                      <AppButton
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setAttachedFile(null)}
+                        className="h-7 w-7 p-0 text-muted hover:text-danger"
+                        title="Remove file"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </AppButton>
+                    </div>
+                  </div>
+                )}
                 {existingAttachmentPath && !attachedFile && (
-                  <span className="text-xs text-muted truncate max-w-[150px]" title={existingAttachmentPath}>
-                    Current file attached
-                  </span>
+                  <div className="flex items-center justify-between p-2 rounded-lg border border-border bg-surface/50 text-xs">
+                    <span className="text-xs text-muted truncate max-w-[200px]" title={existingAttachmentPath}>
+                      Current file: {existingAttachmentPath.split('/').pop()}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <AppButton
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          const url = supabase.storage.from('amc-attachments').getPublicUrl(existingAttachmentPath).data.publicUrl;
+                          window.open(url, '_blank');
+                        }}
+                        className="h-6 px-2 text-xs text-accent gap-1 font-semibold"
+                        title="View Existing Document"
+                      >
+                        <Eye className="h-3 w-3" />
+                        <span>View</span>
+                      </AppButton>
+                      <AppButton
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          const url = supabase.storage.from('amc-attachments').getPublicUrl(existingAttachmentPath).data.publicUrl;
+                          const a = document.createElement('a');
+                          a.href = `${url}${url.includes('?') ? '&' : '?'}download=1`;
+                          a.download = existingAttachmentPath.split('/').pop() || 'document';
+                          document.body.appendChild(a);
+                          a.click();
+                          document.body.removeChild(a);
+                        }}
+                        className="h-6 px-2 text-xs text-theme-icon gap-1 font-semibold"
+                        title="Download Existing Document"
+                      >
+                        <Download className="h-3 w-3" />
+                        <span>Download</span>
+                      </AppButton>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
@@ -532,18 +631,37 @@ export function AMCTransactionsTab({
 
                   <div className="flex items-center gap-1.5">
                     {tx.attachment_file_path && (
-                      <AppButton 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => {
-                          const url = supabase.storage.from('amc-attachments').getPublicUrl(tx.attachment_file_path).data.publicUrl;
-                          window.open(url, '_blank');
-                        }}
-                        title="Download Document"
-                        className="h-8 w-8 p-0 text-theme-icon hover:bg-theme-btn-primary/10"
-                      >
-                        <Download className="h-4 w-4" />
-                      </AppButton>
+                      <div className="flex items-center gap-1">
+                        <AppButton 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => {
+                            const url = supabase.storage.from('amc-attachments').getPublicUrl(tx.attachment_file_path).data.publicUrl;
+                            window.open(url, '_blank');
+                          }}
+                          title="View Document"
+                          className="h-8 w-8 p-0 text-accent hover:bg-theme-btn-primary/10"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </AppButton>
+                        <AppButton 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => {
+                            const url = supabase.storage.from('amc-attachments').getPublicUrl(tx.attachment_file_path).data.publicUrl;
+                            const a = document.createElement('a');
+                            a.href = `${url}${url.includes('?') ? '&' : '?'}download=1`;
+                            a.download = tx.attachment_file_path.split('/').pop() || 'attachment';
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                          }}
+                          title="Download Document"
+                          className="h-8 w-8 p-0 text-theme-icon hover:bg-theme-btn-primary/10"
+                        >
+                          <Download className="h-4 w-4" />
+                        </AppButton>
+                      </div>
                     )}
                     <AppButton 
                       variant="ghost" 

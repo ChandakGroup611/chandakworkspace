@@ -5,7 +5,7 @@ import React, { useState, useTransition } from 'react';
 import { RealtimeChat } from '../collaboration/RealtimeChat';
 import { handleRequirementUAT } from '@/lib/actions/requirements';
 import { EnterpriseDrawerShell } from "@/components/ui/enterprise/EnterpriseDrawerShell";
-import { ListTodo, MessageSquare, Paperclip } from 'lucide-react';
+import { ListTodo, MessageSquare, Paperclip, Eye, Download, FileText } from 'lucide-react';
 import { AppButton } from "@/components/ui/AppButton";
 import { AppBadge } from "@/components/ui/AppBadge";
 import SafeHtml from "@/components/ui/SafeHtml";
@@ -203,8 +203,8 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
           </div>
 
           {/* Attachments */}
-          <div className="theme-card-structural /40 rounded-2xl p-5 border-white/5">
-            <h3 className="theme-label text-muted flex justify-between items-center mb-3">
+          <div className="bg-surface/60 rounded-xl p-4 border border-border">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex justify-between items-center mb-3">
               <span className="flex items-center gap-1.5">
                 <Paperclip className="h-3.5 w-3.5" />
                 Attachments ({attachments.length})
@@ -212,19 +212,67 @@ export function RequirementDetailDrawer({ requirement, onClose }: { requirement:
             </h3>
             <div className="space-y-2">
               {attachments.length > 0 ? (
-                attachments.map((att: any, idx: number) => (
-                  <a
-                    key={att.id || idx}
-                    href={att.file_url || att.url || "#"}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="theme-data-value text-xs text-muted hover:text-foreground flex items-center gap-2 theme-card-structural /40 p-2 rounded-lg border-white/5 transition-colors"
-                  >
-                    📄 <span className="truncate">{att.file_name || att.name || `Attachment ${idx + 1}`}</span>
-                  </a>
-                ))
+                attachments.map((att: any, idx: number) => {
+                  const fileName = att.file_name || att.name || `Attachment_${idx + 1}`;
+                  const fileId = att.id || att.file_name || att.storage_path;
+                  const viewUrl = fileId ? `/api/proxy-attachment/${encodeURIComponent(fileId)}` : (att.file_url || att.url || '#');
+                  const downloadUrl = fileId ? `/api/proxy-attachment/${encodeURIComponent(fileId)}?download=1` : (att.file_url || att.url || '#');
+
+                  return (
+                    <div
+                      key={att.id || idx}
+                      className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-surface/50 hover:bg-surface transition-colors gap-2"
+                    >
+                      <div className="flex items-center gap-2 min-w-0 pr-2">
+                        <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <div className="truncate">
+                          <p className="text-xs font-semibold text-foreground truncate" title={fileName}>
+                            {fileName}
+                          </p>
+                          {att.file_size ? (
+                            <p className="text-[10px] text-muted-foreground">
+                              {(att.file_size / 1024).toFixed(1)} KB
+                            </p>
+                          ) : null}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <AppButton
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open(viewUrl, '_blank', 'noopener,noreferrer')}
+                          className="h-6 text-xs px-2 text-theme-icon border-border gap-1 font-semibold"
+                          title="View document"
+                        >
+                          <Eye className="h-3 w-3" />
+                          <span>View</span>
+                        </AppButton>
+                        <AppButton
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const a = document.createElement('a');
+                            a.href = downloadUrl;
+                            a.download = fileName;
+                            a.target = '_blank';
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                          }}
+                          className="h-6 text-xs px-2 text-muted-foreground hover:text-foreground border-border gap-1 font-semibold"
+                          title="Download document"
+                        >
+                          <Download className="h-3 w-3" />
+                          <span>Download</span>
+                        </AppButton>
+                      </div>
+                    </div>
+                  );
+                })
               ) : (
-                <div className="text-xs text-muted italic p-1">No attachments uploaded</div>
+                <div className="text-xs text-muted-foreground italic p-1">No attachments uploaded</div>
               )}
             </div>
           </div>

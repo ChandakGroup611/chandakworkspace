@@ -57,10 +57,10 @@ export function EnterpriseDrawerShell({
 
       {/* Drawer Container */}
       <div 
-        className={`relative w-full ${SIZE_MAP[size]} h-full flex flex-col border-l border-border shadow-2xl shadow-black/40 animate-in slide-in-from-right duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] theme-card-structural ${className}`}
+        className={`relative w-full ${SIZE_MAP[size]} h-full flex flex-col border-l border-border shadow-2xl shadow-black/40 animate-in slide-in-from-right duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] bg-surface text-foreground ${className}`}
       >
         {/* Header */}
-        <div className="shrink-0 p-6 border-b border-border/50 flex items-start justify-between gap-4 theme-card-structural">
+        <div className="shrink-0 p-6 border-b border-border/50 flex items-start justify-between gap-4 bg-elevated/50">
           <div>
             {title && <h2 className="text-xl font-extrabold tracking-tight text-foreground">{title}</h2>}
             {subtitle && <div className="text-sm text-muted mt-1">{subtitle}</div>}
@@ -81,7 +81,7 @@ export function EnterpriseDrawerShell({
 
         {/* Footer */}
         {footer && (
-          <div className="shrink-0 p-6 border-t border-border/50 flex items-center justify-end gap-3 theme-card-structural">
+          <div className="shrink-0 p-6 border-t border-border/50 flex items-center justify-end gap-3 bg-elevated/50">
             {footer}
           </div>
         )}

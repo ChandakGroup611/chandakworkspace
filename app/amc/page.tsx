@@ -2932,11 +2932,36 @@ export default function AMCPage() {
                                         <span className="truncate">{formatFileName(file.name)}</span>
                                       </div>
                                       <div className="flex items-center gap-1">
-                                        <AppButton type="button" variant="ghost" size="sm" onClick={() => {
-                                          const url = supabase.storage.from('amc-attachments').getPublicUrl(`${editRecordId}/${file.name}`).data.publicUrl;
-                                          window.open(url, '_blank');
-                                        }} className="h-7 w-7 p-0">
-                                          <Download className="h-3.5 w-3.5 text-theme-icon" />
+                                        <AppButton 
+                                          type="button" 
+                                          variant="ghost" 
+                                          size="sm" 
+                                          onClick={() => {
+                                            const url = supabase.storage.from('amc-attachments').getPublicUrl(`${editRecordId}/${file.name}`).data.publicUrl;
+                                            window.open(url, '_blank', 'noopener,noreferrer');
+                                          }} 
+                                          className="h-7 w-7 p-0 text-accent hover:bg-theme-btn-primary/10"
+                                          title="View Document"
+                                        >
+                                          <Eye className="h-3.5 w-3.5" />
+                                        </AppButton>
+                                        <AppButton 
+                                          type="button" 
+                                          variant="ghost" 
+                                          size="sm" 
+                                          onClick={() => {
+                                            const url = supabase.storage.from('amc-attachments').getPublicUrl(`${editRecordId}/${file.name}`).data.publicUrl;
+                                            const a = document.createElement('a');
+                                            a.href = `${url}${url.includes('?') ? '&' : '?'}download=1`;
+                                            a.download = file.name;
+                                            document.body.appendChild(a);
+                                            a.click();
+                                            document.body.removeChild(a);
+                                          }} 
+                                          className="h-7 w-7 p-0 text-theme-icon hover:bg-theme-btn-primary/10"
+                                          title="Download Document"
+                                        >
+                                          <Download className="h-3.5 w-3.5" />
                                         </AppButton>
                                         {hasPermission("AMC_DELETE") && (
                                           <AppButton type="button" variant="ghost" size="sm" onClick={() => deleteAttachment(file.name)} className="h-7 w-7 p-0 text-danger hover:bg-danger/10">
@@ -3070,11 +3095,36 @@ export default function AMCPage() {
                               <span className="truncate" title={file.name}>{formatFileName(file.name)}</span>
                             </div>
                             <div className="flex items-center gap-1">
-                              <AppButton type="button" variant="ghost" size="sm" onClick={() => {
-                                const url = supabase.storage.from('amc-attachments').getPublicUrl(`${editRecordId}/${file.name}`).data.publicUrl;
-                                window.open(url, '_blank');
-                              }}>
-                                <Download className="h-4 w-4 text-theme-icon" />
+                              <AppButton 
+                                type="button" 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => {
+                                  const url = supabase.storage.from('amc-attachments').getPublicUrl(`${editRecordId}/${file.name}`).data.publicUrl;
+                                  window.open(url, '_blank', 'noopener,noreferrer');
+                                }}
+                                className="h-8 w-8 p-0 text-accent hover:bg-theme-btn-primary/10"
+                                title="View Document"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </AppButton>
+                              <AppButton 
+                                type="button" 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => {
+                                  const url = supabase.storage.from('amc-attachments').getPublicUrl(`${editRecordId}/${file.name}`).data.publicUrl;
+                                  const a = document.createElement('a');
+                                  a.href = `${url}${url.includes('?') ? '&' : '?'}download=1`;
+                                  a.download = file.name;
+                                  document.body.appendChild(a);
+                                  a.click();
+                                  document.body.removeChild(a);
+                                }}
+                                className="h-8 w-8 p-0 text-theme-icon hover:bg-theme-btn-primary/10"
+                                title="Download Document"
+                              >
+                                <Download className="h-4 w-4" />
                               </AppButton>
                               {hasPermission("AMC_DELETE") && (
                                 <AppButton type="button" variant="ghost" size="sm" onClick={() => deleteAttachment(file.name)}>

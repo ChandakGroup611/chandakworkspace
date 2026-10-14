@@ -432,7 +432,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
                     </div>
                   )}
                   
-                  <div className={`p-3 rounded-2xl text-xs leading-relaxed shadow-sm ${ isSender ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-tr-sm border-theme-btn-primary/30" : isMention ? ("bg-theme-btn-primary/10 border-indigo-100 text-theme-icon-secondary rounded-tl-sm") : ("theme-card-structural text-foreground rounded-tl-sm") }`}>
+                  <div className={`p-3 rounded-2xl text-xs leading-relaxed shadow-sm ${ isSender ? "bg-theme-btn-primary text-theme-btn-primary-text rounded-tr-sm border border-theme-btn-primary/30" : isMention ? ("bg-theme-btn-primary/10 border border-theme-btn-primary/20 text-foreground rounded-tl-sm") : ("bg-surface text-foreground border border-border rounded-tl-sm") }`}>
                     {(() => {
                       const parts = m.message.split("|||ATTACHMENTS|||");
                       let text = parts[0];
@@ -465,7 +465,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
                                     </div>
                                   </div>
                                 ) : (
-                                <div key={i} className={`flex items-center justify-between p-2 rounded ${isSender ? 'bg-surface/10 border-black/10' : 'bg-surface/5 dark:theme-card-structural /5 border-black/5 dark:border-border'}`}>
+                                <div key={i} className={`flex items-center justify-between p-2 rounded ${isSender ? 'bg-surface/10 border-black/10' : 'bg-surface/5 dark:bg-surface/10 border-black/5 dark:border-border'}`}>
                                   <div className="flex items-center gap-2 overflow-hidden mr-3">
                                     <Paperclip className="h-4 w-4 shrink-0 opacity-70" />
                                     <span className="truncate text-[11px] font-medium" title={att.name}>{att.name}</span>
