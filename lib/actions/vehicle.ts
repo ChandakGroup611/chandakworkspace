@@ -5070,15 +5070,21 @@ export async function createVehiclePartsBatchAction(
 
       const unitPrice = item.unit_price !== undefined ? Number(item.unit_price) : Number(item.purchase_amount) || 0;
       const qty = Number(item.quantity) || 1;
-      const grossBase = unitPrice * qty;
+      const grossBase = Math.round(((unitPrice * qty) + Number.EPSILON) * 100) / 100;
       const discount = Number(item.discount) || 0;
-      const taxableBase = Math.max(0, grossBase - discount);
+      const taxableBase = Math.round((Math.max(0, grossBase - discount) + Number.EPSILON) * 100) / 100;
       const taxRate = Number(item.tax_rate) || 0;
-      const taxAmount = item.tax_amount !== undefined ? Number(item.tax_amount) : (taxRate > 0 ? Math.round(taxableBase * (taxRate / 100)) : 0);
+      const taxAmount = item.tax_amount !== undefined && item.tax_amount !== null
+        ? Number(item.tax_amount)
+        : (taxRate > 0 ? Math.round(((taxableBase * (taxRate / 100)) + Number.EPSILON) * 100) / 100 : 0);
       const tdsRate = Number(item.tds_rate) || 0;
-      const tdsDeduction = item.tds_deduction !== undefined ? Number(item.tds_deduction) : (tdsRate > 0 ? Math.round(taxableBase * (tdsRate / 100)) : 0);
+      const tdsDeduction = item.tds_deduction !== undefined && item.tds_deduction !== null
+        ? Number(item.tds_deduction)
+        : (tdsRate > 0 ? Math.round(((taxableBase * (tdsRate / 100)) + Number.EPSILON) * 100) / 100 : 0);
       const otherDeductions = Number(item.other_deductions) || 0;
-      const finalPurchaseAmount = item.purchase_amount !== undefined ? Number(item.purchase_amount) : Math.max(0, taxableBase + taxAmount - tdsDeduction - otherDeductions);
+      const finalPurchaseAmount = item.purchase_amount !== undefined && item.purchase_amount !== null
+        ? Number(item.purchase_amount)
+        : Math.round((Math.max(0, taxableBase + taxAmount - tdsDeduction - otherDeductions) + Number.EPSILON) * 100) / 100;
 
       // Structure notes payload with line item breakdown and bill attachments
       const structuredNotes: any = {

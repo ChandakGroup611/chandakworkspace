@@ -1126,15 +1126,23 @@ export default function FleetDeskHost({
     };
   };
 
+  const roundTo2 = (num: number) => Math.round((Number(num || 0) + Number.EPSILON) * 100) / 100;
+
   const [partLineItems, setPartLineItems] = useState<PartLineItem[]>(() => [createDefaultPartLineItem(1)]);
   const [activePartLineIndex, setActivePartLineIndex] = useState<number>(0);
+  const [partItemActiveSection, setPartItemActiveSection] = useState<"IDENTIFICATION" | "PRICING_TAX" | "WARRANTY_RENEWAL" | "VEHICLE_ALLOCATION">("IDENTIFICATION");
+  const [deletedPartLineItemIds, setDeletedPartLineItemIds] = useState<string[]>([]);
+  const [isBillHeaderCollapsed, setIsBillHeaderCollapsed] = useState<boolean>(false);
 
-  const billGrossTotal = partLineItems.reduce((acc, item) => acc + (Number(item.unit_price) || 0) * (Number(item.quantity) || 1), 0);
-  const billDiscountTotal = partLineItems.reduce((acc, item) => acc + (Number(item.discount) || 0), 0);
-  const billTaxableTotal = Math.max(0, billGrossTotal - billDiscountTotal);
-  const billGstTotal = partLineItems.reduce((acc, item) => acc + (Number(item.tax_amount) || 0), 0);
-  const billTdsTotal = partLineItems.reduce((acc, item) => acc + (Number(item.tds_deduction) || 0) + (Number(item.other_deductions) || 0), 0);
-  const billNetTotal = partLineItems.reduce((acc, item) => acc + (Number(item.purchase_amount) || 0), 0);
+  const billGrossTotal = roundTo2(partLineItems.reduce((acc, item) => acc + (Number(item.unit_price) || 0) * (Number(item.quantity) || 1), 0));
+  const billDiscountTotal = roundTo2(partLineItems.reduce((acc, item) => acc + (Number(item.discount) || 0), 0));
+  const billTaxableTotal = roundTo2(Math.max(0, billGrossTotal - billDiscountTotal));
+  const billGstTotal = roundTo2(partLineItems.reduce((acc, item) => acc + (Number(item.tax_amount) || 0), 0));
+  const billTdsTotal = roundTo2(partLineItems.reduce((acc, item) => acc + (Number(item.tds_deduction) || 0) + (Number(item.other_deductions) || 0), 0));
+  const billNetTotal = roundTo2(partLineItems.reduce((acc, item) => acc + (Number(item.purchase_amount) || 0), 0));
+  const billCalculatedNet = roundTo2(Math.max(0, billTaxableTotal + billGstTotal - billTdsTotal));
+  const billRoundedNet = Math.round(billCalculatedNet);
+  const billRoundOff = roundTo2(billRoundedNet - billCalculatedNet);
 
   // Parts Form States (Single part edit & bill header)
   const [partFormName, setPartFormName] = useState("");
@@ -5752,6 +5760,9 @@ export default function FleetDeskHost({
     const initialItem = createDefaultPartLineItem(1, targetVehId, targetVehReg);
     setPartLineItems([initialItem]);
     setActivePartLineIndex(0);
+    setDeletedPartLineItemIds([]);
+    setPartItemActiveSection("IDENTIFICATION");
+    setIsBillHeaderCollapsed(false);
 
     // Keep single form state in sync for fallback
     setPartFormName("");
@@ -5798,20 +5809,20 @@ export default function FleetDeskHost({
 
         const unit = Number(merged.unit_price) || 0;
         const qty = Number(merged.quantity) || 1;
-        const gross = unit * qty;
+        const gross = roundTo2(unit * qty);
         const disc = Number(merged.discount) || 0;
-        const taxable = Math.max(0, gross - disc);
+        const taxable = roundTo2(Math.max(0, gross - disc));
 
         if (updates.tax_rate !== undefined || updates.unit_price !== undefined || updates.quantity !== undefined || updates.discount !== undefined) {
-          merged.tax_amount = merged.tax_rate > 0 ? Math.round(taxable * (merged.tax_rate / 100)) : 0;
+          merged.tax_amount = merged.tax_rate > 0 ? roundTo2(taxable * (merged.tax_rate / 100)) : 0;
         }
 
         if (updates.tds_rate !== undefined || updates.unit_price !== undefined || updates.quantity !== undefined || updates.discount !== undefined) {
-          merged.tds_deduction = merged.tds_rate > 0 ? Math.round(taxable * (merged.tds_rate / 100)) : 0;
+          merged.tds_deduction = merged.tds_rate > 0 ? roundTo2(taxable * (merged.tds_rate / 100)) : 0;
         }
 
         if (updates.purchase_amount === undefined) {
-          merged.purchase_amount = Math.max(0, taxable + (Number(merged.tax_amount) || 0) - (Number(merged.tds_deduction) || 0) - (Number(merged.other_deductions) || 0));
+          merged.purchase_amount = roundTo2(Math.max(0, taxable + (Number(merged.tax_amount) || 0) - (Number(merged.tds_deduction) || 0) - (Number(merged.other_deductions) || 0)));
         }
 
         // Auto-calculate warranty expiry if months changed and purchase date is available
@@ -5837,6 +5848,8 @@ export default function FleetDeskHost({
     const newItem = createDefaultPartLineItem(partLineItems.length + 1, defaultVeh, defaultReg);
     setPartLineItems((prev) => [...prev, newItem]);
     setActivePartLineIndex(partLineItems.length);
+    setPartItemActiveSection("IDENTIFICATION");
+    triggerToast("New line item added to bill.");
   };
 
   const handleDuplicatePartLineItem = (index: number) => {
@@ -5850,7 +5863,8 @@ export default function FleetDeskHost({
     };
     setPartLineItems((prev) => [...prev, duplicated]);
     setActivePartLineIndex(partLineItems.length);
-    triggerToast("Line item duplicated. Adjust serial number & specifics as needed.");
+    setPartItemActiveSection("IDENTIFICATION");
+    triggerToast("Line item duplicated. Adjust specifics as needed.");
   };
 
   const handleRemovePartLineItem = (index: number) => {
@@ -5858,54 +5872,32 @@ export default function FleetDeskHost({
       triggerToast("At least one line item is required on the bill.", true);
       return;
     }
+    const itemToRemove = partLineItems[index];
+    if (itemToRemove && itemToRemove.id && !itemToRemove.id.startsWith("item-")) {
+      setDeletedPartLineItemIds((prev) => [...prev, itemToRemove.id]);
+    }
     setPartLineItems((prev) => prev.filter((_, i) => i !== index));
     setActivePartLineIndex((prev) => Math.max(0, Math.min(prev, partLineItems.length - 2)));
+    triggerToast("Line item removed.");
   };
 
   const openEditPartModal = (part: PartAccessoryRecord) => {
     setSelectedPartForEdit(part);
-    setPartFormName(part.name || "");
-    setPartFormItemType(part.item_type || "SPARE_PART");
-    setPartFormPartNumber(part.part_number || "");
-    setPartFormCategory(part.category || "Spare Parts");
-    setPartFormBrand(part.brand || "");
-    setPartFormPurchaseAmount(part.purchase_amount || 0);
-    setPartFormUnitPrice(part.unit_price || 0);
-    setPartFormQuantity(part.quantity || 1);
-    setPartFormPurchaseDate(normalizeDateToInputFormat(part.purchase_date));
+
+    // Bill / Invoice common header values
     setPartFormVendorName(part.vendor_name || "");
     setPartFormInvoiceNumber(part.invoice_number || "");
-    setPartFormManufacturingDate(normalizeDateToInputFormat(part.manufacturing_date));
-    setPartFormExpiryDate(normalizeDateToInputFormat(part.expiry_date));
-    setPartFormWarrantyType(part.warranty_type || "WARRANTY");
-    setPartFormWarrantyMonths(part.warranty_months || 0);
-    setPartFormWarrantyExpiryDate(normalizeDateToInputFormat(part.warranty_expiry_date));
-    setPartFormWarrantyTerms(part.warranty_terms || "");
-    setPartFormHasRenewal(Boolean(part.has_renewal_policy));
-    setPartFormRenewalType(part.renewal_policy_type || "GPS_SIM_RECHARGE");
-    setPartFormRenewalDate(normalizeDateToInputFormat(part.renewal_date));
-    setPartFormRenewalCost(part.renewal_cost || 0);
-    setPartFormRenewalVendor(part.renewal_vendor || "");
-    setPartFormRenewalPolicyNumber(part.renewal_policy_number || "");
-    setPartFormRenewalReminderDays(part.renewal_reminder_days || 30);
-    setPartFormStatus(part.status || "IN_STOCK");
+    setPartFormPurchaseDate(normalizeDateToInputFormat(part.purchase_date));
     setPartFormVehicleId(part.vehicle_id || "UNASSIGNED_STOCK");
     setPartFormAssignedVehicleReg(part.assigned_vehicle_reg || "");
     setPartFormInstallationDate(normalizeDateToInputFormat(part.installation_date));
     setPartFormInstalledOdometer(part.installed_odometer_km ?? "");
     setPartFormInstalledBy(part.installed_by || "");
-    setPartFormCondition(part.condition || "NEW");
-    setPartFormSerialNumber(part.serial_number || "");
 
-    // Parse structured notes for attachments & tax breakdown
+    // Parse structured notes from the part for attachments & bill notes
     let rawNotes = part.notes || "";
     let extractedAtts: MaintenanceAttachment[] = [];
-    let disc = 0;
-    let taxR = 18;
-    let taxAmt = 0;
-    let tdsR = 0;
-    let tdsDed = 0;
-    let otherDed = 0;
+    let billId = (part as any).bill_id || null;
 
     if (rawNotes) {
       try {
@@ -5913,14 +5905,7 @@ export default function FleetDeskHost({
         if (parsed && typeof parsed === "object") {
           rawNotes = parsed.text || "";
           if (Array.isArray(parsed.attachments)) extractedAtts = parsed.attachments;
-          if (parsed.tax_breakdown) {
-            disc = Number(parsed.tax_breakdown.discount) || 0;
-            taxR = parsed.tax_breakdown.tax_rate !== undefined ? Number(parsed.tax_breakdown.tax_rate) : 18;
-            taxAmt = Number(parsed.tax_breakdown.tax_amount) || 0;
-            tdsR = Number(parsed.tax_breakdown.tds_rate) || 0;
-            tdsDed = Number(parsed.tax_breakdown.tds_deduction) || 0;
-            otherDed = Number(parsed.tax_breakdown.other_deductions) || 0;
-          }
+          if (parsed.bill_id) billId = parsed.bill_id;
         }
       } catch {
         // Plain text notes
@@ -5929,131 +5914,122 @@ export default function FleetDeskHost({
 
     setPartFormNotes(rawNotes);
     setPartFormAttachments(extractedAtts);
-    setPartFormDiscount(disc);
-    setPartFormTaxRate(taxR);
-    setPartFormTaxAmount(taxAmt);
-    setPartFormTdsRate(tdsR);
-    setPartFormTdsDeduction(tdsDed);
-    setPartFormOtherDeductions(otherDed);
+
+    // Find all sibling parts belonging to the same bill or invoice
+    let siblingParts: PartAccessoryRecord[] = [];
+    if (billId) {
+      siblingParts = parts.filter((p) => {
+        if ((p as any).bill_id && (p as any).bill_id === billId) return true;
+        if (p.notes) {
+          try {
+            const pn = JSON.parse(p.notes);
+            if (pn?.bill_id === billId) return true;
+          } catch {}
+        }
+        return false;
+      });
+    } else if (part.invoice_number && part.invoice_number.trim()) {
+      siblingParts = parts.filter(
+        (p) =>
+          p.invoice_number === part.invoice_number &&
+          p.vendor_name === part.vendor_name &&
+          p.purchase_date === part.purchase_date
+      );
+    }
+
+    if (!siblingParts || siblingParts.length === 0) {
+      siblingParts = [part];
+    } else if (!siblingParts.some((p) => p.id === part.id)) {
+      siblingParts.unshift(part);
+    }
+
+    const loadedLineItems: PartLineItem[] = siblingParts.map((p) => {
+      let pItemNotes = p.notes || "";
+      let pDisc = 0;
+      let pTaxR = 18;
+      let pTaxAmt = 0;
+      let pTdsR = 0;
+      let pTdsDed = 0;
+      let pOtherDed = 0;
+
+      if (p.notes) {
+        try {
+          const parsed = JSON.parse(p.notes);
+          if (parsed && typeof parsed === "object") {
+            pItemNotes = parsed.text || "";
+            if (parsed.tax_breakdown) {
+              pDisc = Number(parsed.tax_breakdown.discount) || 0;
+              pTaxR = parsed.tax_breakdown.tax_rate !== undefined ? Number(parsed.tax_breakdown.tax_rate) : 18;
+              pTaxAmt = Number(parsed.tax_breakdown.tax_amount) || 0;
+              pTdsR = Number(parsed.tax_breakdown.tds_rate) || 0;
+              pTdsDed = Number(parsed.tax_breakdown.tds_deduction) || 0;
+              pOtherDed = Number(parsed.tax_breakdown.other_deductions) || 0;
+            }
+          }
+        } catch {}
+      }
+
+      const unit = Number(p.unit_price) || 0;
+      const qty = Number(p.quantity) || 1;
+      const gross = roundTo2(unit * qty);
+      const taxable = roundTo2(Math.max(0, gross - pDisc));
+      if (pTaxAmt === 0 && pTaxR > 0) {
+        pTaxAmt = roundTo2(taxable * (pTaxR / 100));
+      }
+
+      return {
+        id: p.id,
+        name: p.name || "",
+        item_type: p.item_type || "SPARE_PART",
+        part_number: p.part_number || "",
+        category: p.category || "Spare Parts",
+        brand: p.brand || "",
+        unit_price: unit,
+        quantity: qty,
+        discount: pDisc,
+        tax_rate: pTaxR,
+        tax_amount: pTaxAmt,
+        tds_rate: pTdsR,
+        tds_deduction: pTdsDed,
+        other_deductions: pOtherDed,
+        purchase_amount: Number(p.purchase_amount) || roundTo2(Math.max(0, taxable + pTaxAmt - pTdsDed - pOtherDed)),
+        manufacturing_date: normalizeDateToInputFormat(p.manufacturing_date),
+        expiry_date: normalizeDateToInputFormat(p.expiry_date),
+        warranty_type: p.warranty_type || "WARRANTY",
+        warranty_months: p.warranty_months || 0,
+        warranty_expiry_date: normalizeDateToInputFormat(p.warranty_expiry_date),
+        warranty_terms: p.warranty_terms || "",
+        has_renewal_policy: Boolean(p.has_renewal_policy),
+        renewal_policy_type: p.renewal_policy_type || "GPS_SIM_RECHARGE",
+        renewal_date: normalizeDateToInputFormat(p.renewal_date),
+        renewal_cost: p.renewal_cost || 0,
+        renewal_vendor: p.renewal_vendor || "",
+        renewal_policy_number: p.renewal_policy_number || "",
+        renewal_reminder_days: p.renewal_reminder_days || 30,
+        status: p.status || "IN_STOCK",
+        vehicle_id: p.vehicle_id || "UNASSIGNED_STOCK",
+        assigned_vehicle_reg: p.assigned_vehicle_reg || "",
+        installation_date: normalizeDateToInputFormat(p.installation_date),
+        installed_odometer_km: p.installed_odometer_km ?? "",
+        installed_by: p.installed_by || "",
+        condition: p.condition || "NEW",
+        serial_number: p.serial_number || "",
+        notes: pItemNotes
+      };
+    });
+
+    setPartLineItems(loadedLineItems);
+    const clickedIdx = siblingParts.findIndex((p) => p.id === part.id);
+    setActivePartLineIndex(clickedIdx >= 0 ? clickedIdx : 0);
+    setDeletedPartLineItemIds([]);
+    setPartItemActiveSection("IDENTIFICATION");
+    setIsBillHeaderCollapsed(false);
     setIsEditPartOpen(true);
   };
 
   const handleSavePart = async (e?: React.FormEvent | React.MouseEvent) => {
     e?.preventDefault?.();
 
-    if (selectedPartForEdit) {
-      if (!partFormName.trim()) {
-        triggerToast("Part / Accessory name is required.", true);
-        return;
-      }
-      if (partFormHasRenewal && !partFormRenewalDate) {
-        triggerToast("Please specify the renewal due date for the active renewal policy.", true);
-        return;
-      }
-
-      setModalSubmitting(true);
-      try {
-        let assignedReg = partFormAssignedVehicleReg;
-        if (partFormVehicleId && partFormVehicleId !== "UNASSIGNED_STOCK") {
-          const matchedVeh = vehicles.find((v) => v.id === partFormVehicleId);
-          if (matchedVeh) assignedReg = matchedVeh.registration_number;
-        } else {
-          assignedReg = "";
-        }
-
-        const unitPrice = Number(partFormUnitPrice) || 0;
-        const qty = Number(partFormQuantity) || 1;
-        const grossBase = unitPrice * qty;
-        const discount = Number(partFormDiscount) || 0;
-        const taxableBase = Math.max(0, grossBase - discount);
-        const taxAmt = Number(partFormTaxAmount) || 0;
-        const tdsDed = Number(partFormTdsDeduction) || 0;
-        const otherDed = Number(partFormOtherDeductions) || 0;
-        const calculatedNet = Math.max(0, taxableBase + taxAmt - tdsDed - otherDed);
-        const finalPurchaseAmount = Number(partFormPurchaseAmount) || calculatedNet || grossBase;
-
-        // Pack structured metadata into notes
-        const notesPayload = {
-          text: partFormNotes.trim(),
-          attachments: partFormAttachments,
-          tax_breakdown: {
-            unit_price: unitPrice,
-            quantity: qty,
-            gross_base: grossBase,
-            discount: discount,
-            taxable_base: taxableBase,
-            tax_rate: Number(partFormTaxRate) || 0,
-            tax_amount: taxAmt,
-            tds_rate: Number(partFormTdsRate) || 0,
-            tds_deduction: tdsDed,
-            other_deductions: otherDed,
-            net_invoiced: finalPurchaseAmount
-          }
-        };
-
-        const payload = {
-          name: partFormName.trim(),
-          item_type: partFormItemType,
-          part_number: partFormPartNumber.trim() || undefined,
-          category: partFormCategory.trim() || "Spare Parts",
-          brand: partFormBrand.trim() || "Generic",
-          purchase_amount: finalPurchaseAmount,
-          unit_price: unitPrice || undefined,
-          quantity: qty,
-          purchase_date: partFormPurchaseDate || new Date().toISOString().split("T")[0],
-          vendor_name: partFormVendorName.trim() || "OEM / Direct Store",
-          invoice_number: partFormInvoiceNumber.trim() || undefined,
-          manufacturing_date: partFormManufacturingDate || undefined,
-          expiry_date: partFormExpiryDate || undefined,
-          warranty_type: partFormWarrantyType,
-          warranty_months: Number(partFormWarrantyMonths) || 0,
-          warranty_expiry_date: partFormWarrantyExpiryDate || undefined,
-          warranty_terms: partFormWarrantyTerms.trim() || undefined,
-          has_renewal_policy: partFormHasRenewal,
-          renewal_policy_type: partFormHasRenewal ? partFormRenewalType : undefined,
-          renewal_date: partFormHasRenewal ? partFormRenewalDate || undefined : undefined,
-          renewal_cost: partFormHasRenewal ? Number(partFormRenewalCost) || 0 : undefined,
-          renewal_vendor: partFormHasRenewal ? partFormRenewalVendor.trim() || undefined : undefined,
-          renewal_policy_number: partFormHasRenewal ? partFormRenewalPolicyNumber.trim() || undefined : undefined,
-          renewal_reminder_days: partFormHasRenewal ? Number(partFormRenewalReminderDays) || 30 : undefined,
-          status: partFormVehicleId && partFormVehicleId !== "UNASSIGNED_STOCK" ? "INSTALLED" : partFormStatus,
-          vehicle_id: partFormVehicleId || "UNASSIGNED_STOCK",
-          assigned_vehicle_reg: assignedReg || undefined,
-          installation_date: partFormInstallationDate || undefined,
-          installed_odometer_km: partFormInstalledOdometer !== "" ? Number(partFormInstalledOdometer) : undefined,
-          installed_by: partFormInstalledBy.trim() || undefined,
-          condition: partFormCondition,
-          serial_number: partFormSerialNumber.trim() || undefined,
-          notes: JSON.stringify(notesPayload)
-        };
-
-        const res = await updateVehiclePartAction(selectedPartForEdit.id, payload);
-
-        if (res.success && res.part) {
-          triggerToast(`Part '${payload.name}' updated successfully!`);
-          setParts((prev) => prev.map((p) => p.id === res.part!.id ? res.part! : p));
-          setIsAddPartOpen(false);
-          setIsEditPartOpen(false);
-          setSelectedPartForEdit(null);
-          fleetDataCache = null;
-          loadAllData(true, true);
-          if (dossierOriginVehicle) {
-            setViewingVehicle(dossierOriginVehicle);
-            if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
-            setDossierOriginVehicle(null);
-          }
-        } else {
-          triggerToast(res.error || "Failed to update part record.", true);
-        }
-      } catch (err: any) {
-        triggerToast(err.message || "Failed to update part record.", true);
-      } finally {
-        setModalSubmitting(false);
-      }
-      return;
-    }
-
-    // Bill / Invoice with Multiple Line Items Registration
     if (!partFormVendorName.trim()) {
       triggerToast("Vendor / Supplier name is required for the bill.", true);
       return;
@@ -6067,11 +6043,13 @@ export default function FleetDeskHost({
       const item = partLineItems[i];
       if (!item.name.trim()) {
         setActivePartLineIndex(i);
+        setPartItemActiveSection("IDENTIFICATION");
         triggerToast(`Line item #${i + 1}: Part Name is required.`, true);
         return;
       }
       if (item.has_renewal_policy && !item.renewal_date) {
         setActivePartLineIndex(i);
+        setPartItemActiveSection("WARRANTY_RENEWAL");
         triggerToast(`Line item #${i + 1} (${item.name}): Please specify renewal due date.`, true);
         return;
       }
@@ -6087,18 +6065,23 @@ export default function FleetDeskHost({
         defaultAssignedReg = "";
       }
 
-      const res = await createVehiclePartsBatchAction({
-        vendor_name: partFormVendorName.trim(),
-        invoice_number: partFormInvoiceNumber.trim() || undefined,
-        purchase_date: partFormPurchaseDate || new Date().toISOString().split("T")[0],
-        default_vehicle_id: partFormVehicleId || "UNASSIGNED_STOCK",
-        default_assigned_vehicle_reg: defaultAssignedReg || undefined,
-        default_installation_date: partFormInstallationDate || undefined,
-        default_installed_odometer_km: partFormInstalledOdometer !== "" ? Number(partFormInstalledOdometer) : undefined,
-        default_installed_by: partFormInstalledBy.trim() || undefined,
-        bill_notes: partFormNotes.trim() || undefined,
-        attachments: partFormAttachments,
-        items: partLineItems.map((item) => {
+      if (selectedPartForEdit) {
+        // Resolve existing bill_id
+        let resolvedBillId = (selectedPartForEdit as any).bill_id || null;
+        if (!resolvedBillId && selectedPartForEdit.notes) {
+          try {
+            const parsed = JSON.parse(selectedPartForEdit.notes);
+            if (parsed?.bill_id) resolvedBillId = parsed.bill_id;
+          } catch {}
+        }
+        if (!resolvedBillId) {
+          resolvedBillId = `BILL-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+        }
+
+        const existingDbPartIds = new Set(parts.map((p) => p.id));
+        const newItemsToCreate: any[] = [];
+
+        for (const item of partLineItems) {
           let itemReg = item.assigned_vehicle_reg;
           if (item.vehicle_id && item.vehicle_id !== "UNASSIGNED_STOCK") {
             const mv = vehicles.find((v) => v.id === item.vehicle_id);
@@ -6107,27 +6090,61 @@ export default function FleetDeskHost({
             itemReg = "";
           }
 
-          return {
+          const unitPrice = Number(item.unit_price) || 0;
+          const qty = Number(item.quantity) || 1;
+          const grossBase = roundTo2(unitPrice * qty);
+          const discount = Number(item.discount) || 0;
+          const taxableBase = roundTo2(Math.max(0, grossBase - discount));
+          const taxRate = Number(item.tax_rate) || 0;
+          const taxAmount = item.tax_amount !== undefined && item.tax_amount !== null
+            ? Number(item.tax_amount)
+            : (taxRate > 0 ? roundTo2(taxableBase * (taxRate / 100)) : 0);
+          const tdsRate = Number(item.tds_rate) || 0;
+          const tdsDeduction = item.tds_deduction !== undefined && item.tds_deduction !== null
+            ? Number(item.tds_deduction)
+            : (tdsRate > 0 ? roundTo2(taxableBase * (tdsRate / 100)) : 0);
+          const otherDeductions = Number(item.other_deductions) || 0;
+          const finalPurchaseAmount = item.purchase_amount !== undefined && item.purchase_amount !== null
+            ? Number(item.purchase_amount)
+            : roundTo2(Math.max(0, taxableBase + taxAmount - tdsDeduction - otherDeductions));
+
+          const structuredNotes = {
+            text: item.notes?.trim() || partFormNotes.trim() || "",
+            bill_id: resolvedBillId,
+            attachments: partFormAttachments,
+            tax_breakdown: {
+              unit_price: unitPrice,
+              quantity: qty,
+              gross_base: grossBase,
+              discount: discount,
+              taxable_base: taxableBase,
+              tax_rate: taxRate,
+              tax_amount: taxAmount,
+              tds_rate: tdsRate,
+              tds_deduction: tdsDeduction,
+              other_deductions: otherDeductions,
+              net_invoiced: finalPurchaseAmount
+            }
+          };
+
+          const payload: any = {
             name: item.name.trim(),
             item_type: item.item_type,
-            part_number: item.part_number.trim() || undefined,
+            part_number: item.part_number?.trim() || undefined,
             category: item.category.trim() || "Spare Parts",
-            brand: item.brand.trim() || "Generic",
-            unit_price: Number(item.unit_price) || 0,
-            quantity: Number(item.quantity) || 1,
-            discount: Number(item.discount) || 0,
-            tax_rate: Number(item.tax_rate) || 0,
-            tax_amount: Number(item.tax_amount) || 0,
-            tds_rate: Number(item.tds_rate) || 0,
-            tds_deduction: Number(item.tds_deduction) || 0,
-            other_deductions: Number(item.other_deductions) || 0,
-            purchase_amount: Number(item.purchase_amount) || 0,
+            brand: item.brand?.trim() || "Generic",
+            purchase_amount: finalPurchaseAmount,
+            unit_price: unitPrice || undefined,
+            quantity: qty,
+            purchase_date: partFormPurchaseDate || new Date().toISOString().split("T")[0],
+            vendor_name: partFormVendorName.trim() || "OEM / Direct Store",
+            invoice_number: partFormInvoiceNumber.trim() || undefined,
             manufacturing_date: item.manufacturing_date || undefined,
             expiry_date: item.expiry_date || undefined,
             warranty_type: item.warranty_type,
             warranty_months: Number(item.warranty_months) || 0,
             warranty_expiry_date: item.warranty_expiry_date || undefined,
-            warranty_terms: item.warranty_terms.trim() || undefined,
+            warranty_terms: item.warranty_terms?.trim() || undefined,
             has_renewal_policy: item.has_renewal_policy,
             renewal_policy_type: item.has_renewal_policy ? item.renewal_policy_type : undefined,
             renewal_date: item.has_renewal_policy ? item.renewal_date || undefined : undefined,
@@ -6142,27 +6159,165 @@ export default function FleetDeskHost({
             installed_odometer_km: item.installed_odometer_km !== "" ? Number(item.installed_odometer_km) : (partFormInstalledOdometer !== "" ? Number(partFormInstalledOdometer) : undefined),
             installed_by: item.installed_by.trim() || partFormInstalledBy.trim() || undefined,
             condition: item.condition,
-            serial_number: item.serial_number.trim() || undefined,
-            notes: item.notes.trim() || undefined
+            serial_number: item.serial_number?.trim() || undefined,
+            notes: JSON.stringify(structuredNotes)
           };
-        })
-      });
 
-      if (res.success && res.parts) {
-        triggerToast(`Successfully registered ${res.count} items under Bill ${partFormInvoiceNumber ? '#' + partFormInvoiceNumber : ''}!`);
-        setParts((prev) => [...res.parts, ...prev]);
+          if (existingDbPartIds.has(item.id)) {
+            const updateRes = await updateVehiclePartAction(item.id, payload);
+            if (!updateRes.success) {
+              triggerToast(updateRes.error || `Failed to update line item '${item.name}'`, true);
+              return;
+            }
+          } else {
+            newItemsToCreate.push({
+              ...payload,
+              tax_rate: taxRate,
+              tax_amount: taxAmount,
+              tds_rate: tdsRate,
+              tds_deduction: tdsDeduction,
+              other_deductions: otherDeductions,
+              discount: discount
+            });
+          }
+        }
+
+        if (newItemsToCreate.length > 0) {
+          const createRes = await createVehiclePartsBatchAction({
+            bill_id: resolvedBillId,
+            vendor_name: partFormVendorName.trim(),
+            invoice_number: partFormInvoiceNumber.trim() || undefined,
+            purchase_date: partFormPurchaseDate || new Date().toISOString().split("T")[0],
+            default_vehicle_id: partFormVehicleId || "UNASSIGNED_STOCK",
+            default_assigned_vehicle_reg: defaultAssignedReg || undefined,
+            default_installation_date: partFormInstallationDate || undefined,
+            default_installed_odometer_km: partFormInstalledOdometer !== "" ? Number(partFormInstalledOdometer) : undefined,
+            default_installed_by: partFormInstalledBy.trim() || undefined,
+            bill_notes: partFormNotes.trim() || undefined,
+            attachments: partFormAttachments,
+            items: newItemsToCreate
+          });
+          if (!createRes.success) {
+            triggerToast(createRes.error || "Failed to add new line items to bill", true);
+            return;
+          }
+        }
+
+        if (deletedPartLineItemIds.length > 0) {
+          for (const delId of deletedPartLineItemIds) {
+            await deleteVehiclePartAction(delId);
+          }
+        }
+
+        triggerToast(`Transaction / Bill updated successfully with ${partLineItems.length} line items!`);
         setIsAddPartOpen(false);
         setIsEditPartOpen(false);
         setSelectedPartForEdit(null);
+        setDeletedPartLineItemIds([]);
         fleetDataCache = null;
-        loadAllData(true, true);
+        await loadAllData(true, true);
         if (dossierOriginVehicle) {
           setViewingVehicle(dossierOriginVehicle);
           if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
           setDossierOriginVehicle(null);
         }
       } else {
-        triggerToast(res.error || "Failed to save bill line items.", true);
+        const res = await createVehiclePartsBatchAction({
+          vendor_name: partFormVendorName.trim(),
+          invoice_number: partFormInvoiceNumber.trim() || undefined,
+          purchase_date: partFormPurchaseDate || new Date().toISOString().split("T")[0],
+          default_vehicle_id: partFormVehicleId || "UNASSIGNED_STOCK",
+          default_assigned_vehicle_reg: defaultAssignedReg || undefined,
+          default_installation_date: partFormInstallationDate || undefined,
+          default_installed_odometer_km: partFormInstalledOdometer !== "" ? Number(partFormInstalledOdometer) : undefined,
+          default_installed_by: partFormInstalledBy.trim() || undefined,
+          bill_notes: partFormNotes.trim() || undefined,
+          attachments: partFormAttachments,
+          items: partLineItems.map((item) => {
+            let itemReg = item.assigned_vehicle_reg;
+            if (item.vehicle_id && item.vehicle_id !== "UNASSIGNED_STOCK") {
+              const mv = vehicles.find((v) => v.id === item.vehicle_id);
+              if (mv) itemReg = mv.registration_number;
+            } else if (item.vehicle_id === "UNASSIGNED_STOCK") {
+              itemReg = "";
+            }
+
+            const unitPrice = Number(item.unit_price) || 0;
+            const qty = Number(item.quantity) || 1;
+            const grossBase = roundTo2(unitPrice * qty);
+            const discount = Number(item.discount) || 0;
+            const taxableBase = roundTo2(Math.max(0, grossBase - discount));
+            const taxRate = Number(item.tax_rate) || 0;
+            const taxAmount = item.tax_amount !== undefined && item.tax_amount !== null
+              ? Number(item.tax_amount)
+              : (taxRate > 0 ? roundTo2(taxableBase * (taxRate / 100)) : 0);
+            const tdsRate = Number(item.tds_rate) || 0;
+            const tdsDeduction = item.tds_deduction !== undefined && item.tds_deduction !== null
+              ? Number(item.tds_deduction)
+              : (tdsRate > 0 ? roundTo2(taxableBase * (tdsRate / 100)) : 0);
+            const otherDeductions = Number(item.other_deductions) || 0;
+            const finalPurchaseAmount = item.purchase_amount !== undefined && item.purchase_amount !== null
+              ? Number(item.purchase_amount)
+              : roundTo2(Math.max(0, taxableBase + taxAmount - tdsDeduction - otherDeductions));
+
+            return {
+              name: item.name.trim(),
+              item_type: item.item_type,
+              part_number: item.part_number.trim() || undefined,
+              category: item.category.trim() || "Spare Parts",
+              brand: item.brand.trim() || "Generic",
+              unit_price: unitPrice,
+              quantity: qty,
+              discount: discount,
+              tax_rate: taxRate,
+              tax_amount: taxAmount,
+              tds_rate: tdsRate,
+              tds_deduction: tdsDeduction,
+              other_deductions: otherDeductions,
+              purchase_amount: finalPurchaseAmount,
+              manufacturing_date: item.manufacturing_date || undefined,
+              expiry_date: item.expiry_date || undefined,
+              warranty_type: item.warranty_type,
+              warranty_months: Number(item.warranty_months) || 0,
+              warranty_expiry_date: item.warranty_expiry_date || undefined,
+              warranty_terms: item.warranty_terms.trim() || undefined,
+              has_renewal_policy: item.has_renewal_policy,
+              renewal_policy_type: item.has_renewal_policy ? item.renewal_policy_type : undefined,
+              renewal_date: item.has_renewal_policy ? item.renewal_date || undefined : undefined,
+              renewal_cost: item.has_renewal_policy ? Number(item.renewal_cost) || 0 : undefined,
+              renewal_vendor: item.has_renewal_policy ? item.renewal_vendor.trim() || undefined : undefined,
+              renewal_policy_number: item.has_renewal_policy ? item.renewal_policy_number.trim() || undefined : undefined,
+              renewal_reminder_days: item.has_renewal_policy ? Number(item.renewal_reminder_days) || 30 : undefined,
+              status: item.vehicle_id && item.vehicle_id !== "UNASSIGNED_STOCK" ? "INSTALLED" : (partFormVehicleId && partFormVehicleId !== "UNASSIGNED_STOCK" ? "INSTALLED" : item.status),
+              vehicle_id: item.vehicle_id || partFormVehicleId || "UNASSIGNED_STOCK",
+              assigned_vehicle_reg: itemReg || defaultAssignedReg || undefined,
+              installation_date: item.installation_date || partFormInstallationDate || undefined,
+              installed_odometer_km: item.installed_odometer_km !== "" ? Number(item.installed_odometer_km) : (partFormInstalledOdometer !== "" ? Number(partFormInstalledOdometer) : undefined),
+              installed_by: item.installed_by.trim() || partFormInstalledBy.trim() || undefined,
+              condition: item.condition,
+              serial_number: item.serial_number.trim() || undefined,
+              notes: item.notes.trim() || undefined
+            };
+          })
+        });
+
+        if (res.success && res.parts) {
+          triggerToast(`Successfully registered ${res.count} items under Bill ${partFormInvoiceNumber ? '#' + partFormInvoiceNumber : ''}!`);
+          setParts((prev) => [...res.parts, ...prev]);
+          setIsAddPartOpen(false);
+          setIsEditPartOpen(false);
+          setSelectedPartForEdit(null);
+          setDeletedPartLineItemIds([]);
+          fleetDataCache = null;
+          loadAllData(true, true);
+          if (dossierOriginVehicle) {
+            setViewingVehicle(dossierOriginVehicle);
+            if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
+            setDossierOriginVehicle(null);
+          }
+        } else {
+          triggerToast(res.error || "Failed to save bill line items.", true);
+        }
       }
     } catch (err: any) {
       triggerToast(err.message || "Failed to save bill line items.", true);
@@ -19304,12 +19459,12 @@ export default function FleetDeskHost({
       {/* ---------------------------------------------------------------------- */}
       {(isAddPartOpen || isEditPartOpen) && (
         <TransactionFormLayout
-          title={isEditPartOpen ? "Edit Fleet Part / Accessory" : "Register Spare Parts & Accessories (Invoice Bill)"}
-          badge={isEditPartOpen ? "Part Master Form" : "Multi-Item Bill Form"}
+          title={isEditPartOpen ? "Edit Spare Parts & Accessories (Invoice Bill)" : "Register Spare Parts & Accessories (Invoice Bill)"}
+          badge={partLineItems.length > 1 ? `Multi-Item Bill (${partLineItems.length} items)` : (isEditPartOpen ? "Edit Part Bill" : "Multi-Item Bill Form")}
           category="Supply Chain & Inventory"
           icon={Package}
           iconBg="bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/25"
-          description={isEditPartOpen ? "Update part identity, pricing breakdown and warranty schedules." : "Record single or multi-item vendor invoices with individual item specifications & warranty schedules."}
+          description={isEditPartOpen ? "Update vendor bill, edit or add line items, modify pricing breakdown & warranty schedules." : "Record single or multi-item vendor invoices with individual item specifications & warranty schedules."}
           breadcrumbs={[
             {
               label: dossierOriginVehicle ? "Vehicle Dossier" : "Parts & Accessories",
@@ -19317,6 +19472,7 @@ export default function FleetDeskHost({
                 setIsAddPartOpen(false);
                 setIsEditPartOpen(false);
                 setSelectedPartForEdit(null);
+                setDeletedPartLineItemIds([]);
                 if (dossierOriginVehicle) {
                   setViewingVehicle(dossierOriginVehicle);
                   if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
@@ -19324,12 +19480,13 @@ export default function FleetDeskHost({
                 }
               }
             },
-            { label: isEditPartOpen ? "Edit Part" : (partLineItems.length > 1 ? `New Bill (${partLineItems.length} items)` : "New Part / Bill") }
+            { label: isEditPartOpen ? `Edit Bill (${partLineItems.length} ${partLineItems.length === 1 ? 'item' : 'items'})` : (partLineItems.length > 1 ? `New Bill (${partLineItems.length} items)` : "New Part / Bill") }
           ]}
           onBack={() => {
             setIsAddPartOpen(false);
             setIsEditPartOpen(false);
             setSelectedPartForEdit(null);
+            setDeletedPartLineItemIds([]);
             if (dossierOriginVehicle) {
               setViewingVehicle(dossierOriginVehicle);
               if (dossierOriginTab) setVehicleDossierTab(dossierOriginTab);
@@ -19342,1029 +19499,304 @@ export default function FleetDeskHost({
             else openCreatePartModal();
           }}
           onSave={handleSavePart}
-          saveLabel={isEditPartOpen ? "Save & Update Part" : (partLineItems.length > 1 ? `Register Bill (${partLineItems.length} Items)` : "Register Part / Bill")}
+          saveLabel={isEditPartOpen ? (partLineItems.length > 1 ? `Save & Update Bill (${partLineItems.length} Items)` : "Save & Update Part") : (partLineItems.length > 1 ? `Register Bill (${partLineItems.length} Items)` : "Register Part / Bill")}
           saveIcon={Save}
           isSubmitting={modalSubmitting}
         >
-          <div className="space-y-4">
-            {isEditPartOpen ? (
-              <>
-              {/* Section 1: Item Identity & Type */}
-              <div className="space-y-3">
-                <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border">
-                  <Package className="h-3.5 w-3.5 text-theme-btn-primary" />
-                  <span>Item Identification</span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  <div className="sm:col-span-2">
-                    <label className="font-semibold block mb-1">
-                      <span>Part Name *</span>
-                    </label>
-                    <AppInput
-                      value={partFormName}
-                      onChange={(e) => setPartFormName(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="font-semibold block mb-1">Category</label>
-                    <select
-                      value={partFormItemType}
-                      onChange={(e) => setPartFormItemType(e.target.value)}
-                      className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
-                    >
-                      <option value="SPARE_PART">Spare Part</option>
-                      <option value="ACCESSORY">Accessory / Gadget</option>
-                      <option value="CONSUMABLE">Consumable / Fluid / Lubricant</option>
-                      <option value="TYRE">Tyre / Wheel</option>
-                      <option value="BATTERY">Battery / Electrical</option>
-                      <option value="GPS_DEVICE">GPS & AIS-140 Tracker</option>
-                      <option value="DASHCAM">Dashcam & Camera</option>
-                      <option value="TOOL">Workshop Tool / Jack</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="font-semibold block mb-1">
-                      <span>Brand / Manufacturer</span> <span className="text-muted-foreground text-xs font-normal">(Optional)</span>
-                    </label>
-                    <AppInput
-                      value={partFormBrand}
-                      onChange={(e) => setPartFormBrand(e.target.value)}
-                      placeholder="e.g. Bosch, 3M, or leave empty for Generic"
-                    />
-                  </div>
-                  <div>
-                    <label className="font-semibold block mb-1">Part Number</label>
-                    <AppInput
-                      value={partFormPartNumber}
-                      onChange={(e) => setPartFormPartNumber(e.target.value)}
-                      className="font-mono"
-                    />
-                  </div>
-                  <div>
-                    <label className="font-semibold block mb-1">Serial Number</label>
-                    <AppInput
-                      value={partFormSerialNumber}
-                      onChange={(e) => setPartFormSerialNumber(e.target.value)}
-                      className="font-mono"
-                    />
-                  </div>
-                  <div>
-                    <label className="font-semibold block mb-1">Condition</label>
-                    <select
-                      value={partFormCondition}
-                      onChange={(e) => setPartFormCondition(e.target.value)}
-                      className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
-                    >
-                      <option value="NEW">Brand New (OEM)</option>
-                      <option value="REFURBISHED">Refurbished / Serviced</option>
-                      <option value="USED">Used / Operational</option>
-                      <option value="REBUILT">Rebuilt / Overhauled</option>
-                    </select>
-                  </div>
-                  <div className="sm:col-span-2">
-                    <label className="font-semibold block mb-1">Sub-Group</label>
-                    <AppInput
-                      value={partFormCategory}
-                      onChange={(e) => setPartFormCategory(e.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Section 2: Procurement, Invoicing, Taxes & Costs */}
-              <div className="space-y-3 p-4 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/40">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-border">
-                  <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                    <Receipt className="h-3.5 w-3.5 text-emerald-500" />
-                    <span>Procurement & Invoicing</span>
-                  </div>
-
-                  {/* Quick Presets */}
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-xs text-muted-foreground font-semibold">Presets:</span>
-                    <AppButton
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const gross = (Number(partFormUnitPrice) || 0) * (Number(partFormQuantity) || 1);
-                        const taxable = Math.max(0, gross - (Number(partFormDiscount) || 0));
-                        const gst = Math.round(taxable * 0.18);
-                        setPartFormTaxRate(18);
-                        setPartFormTaxAmount(gst);
-                        setPartFormPurchaseAmount(Math.max(0, taxable + gst - (Number(partFormTdsDeduction) || 0) - (Number(partFormOtherDeductions) || 0)));
-                      }}
-                      className="text-xs h-7 px-2.5 py-0 border-blue-500/30 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 font-medium"
-                    >
-                      18% GST (Std)
-                    </AppButton>
-                    <AppButton
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const gross = (Number(partFormUnitPrice) || 0) * (Number(partFormQuantity) || 1);
-                        const taxable = Math.max(0, gross - (Number(partFormDiscount) || 0));
-                        const gst = Math.round(taxable * 0.28);
-                        setPartFormTaxRate(28);
-                        setPartFormTaxAmount(gst);
-                        setPartFormPurchaseAmount(Math.max(0, taxable + gst - (Number(partFormTdsDeduction) || 0) - (Number(partFormOtherDeductions) || 0)));
-                      }}
-                      className="text-xs h-7 px-2.5 py-0 border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 font-medium"
-                    >
-                      28% GST (Spares)
-                    </AppButton>
-                    <AppButton
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const gross = (Number(partFormUnitPrice) || 0) * (Number(partFormQuantity) || 1);
-                        const taxable = Math.max(0, gross - (Number(partFormDiscount) || 0));
-                        const tds = Math.round(taxable * 0.02);
-                        setPartFormTdsRate(2);
-                        setPartFormTdsDeduction(tds);
-                        setPartFormPurchaseAmount(Math.max(0, taxable + (Number(partFormTaxAmount) || 0) - tds - (Number(partFormOtherDeductions) || 0)));
-                      }}
-                      className="text-xs h-7 px-2.5 py-0 border-border text-theme-icon dark:text-muted-foreground hover:bg-surface dark:hover:bg-purple-950/40 font-medium"
-                    >
-                      2% TDS
-                    </AppButton>
-                    <AppButton
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        const gross = (Number(partFormUnitPrice) || 0) * (Number(partFormQuantity) || 1);
-                        const taxable = Math.max(0, gross - (Number(partFormDiscount) || 0));
-                        setPartFormTaxRate(0);
-                        setPartFormTaxAmount(0);
-                        setPartFormTdsRate(0);
-                        setPartFormTdsDeduction(0);
-                        setPartFormOtherDeductions(0);
-                        setPartFormPurchaseAmount(taxable);
-                      }}
-                      className="text-xs h-7 px-2 py-0 text-muted-foreground hover:text-foreground font-medium"
-                    >
-                      Clear
-                    </AppButton>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <label className="font-semibold block mb-1 flex items-center gap-1">
-                      <Calendar className="h-3 w-3 text-blue-500" />
-                      <span>Purchase Date *</span>
-                    </label>
-                    <AppInput
-                      type="date"
-                      value={partFormPurchaseDate}
-                      onChange={(e) => setPartFormPurchaseDate(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="font-semibold block mb-1">Vendor / Supplier</label>
-                    <AppInput
-                      value={partFormVendorName}
-                      onChange={(e) => setPartFormVendorName(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="font-semibold block mb-1">Invoice Number</label>
-                    <AppInput
-                      value={partFormInvoiceNumber}
-                      onChange={(e) => setPartFormInvoiceNumber(e.target.value)}
-                      className="font-mono"
-                    />
-                  </div>
-                </div>
-
-                {/* Pricing, Quantity & Discount */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                  <div>
-                    <label className="font-semibold block mb-1 text-xs">Unit Price (₹)</label>
-                    <AppInput
-                      type="number"
-                      min="0"
-                      step="any"
-                      value={partFormUnitPrice || ""}
-                      onChange={(e) => {
-                        const unit = Number(e.target.value) || 0;
-                        setPartFormUnitPrice(unit);
-                        const gross = unit * (Number(partFormQuantity) || 1);
-                        const taxable = Math.max(0, gross - (Number(partFormDiscount) || 0));
-                        const taxAmt = partFormTaxRate > 0 ? Math.round(taxable * (partFormTaxRate / 100)) : (Number(partFormTaxAmount) || 0);
-                        const tdsAmt = partFormTdsRate > 0 ? Math.round(taxable * (partFormTdsRate / 100)) : (Number(partFormTdsDeduction) || 0);
-                        setPartFormPurchaseAmount(Math.max(0, taxable + taxAmt - tdsAmt - (Number(partFormOtherDeductions) || 0)));
-                      }}
-                      className="font-mono"
-                    />
-                  </div>
-                  <div>
-                    <label className="font-semibold block mb-1 text-xs">Quantity</label>
-                    <AppInput
-                      type="number"
-                      min="1"
-                      value={partFormQuantity}
-                      onChange={(e) => {
-                        const qty = Number(e.target.value) || 1;
-                        setPartFormQuantity(qty);
-                        const gross = (Number(partFormUnitPrice) || 0) * qty;
-                        const taxable = Math.max(0, gross - (Number(partFormDiscount) || 0));
-                        const taxAmt = partFormTaxRate > 0 ? Math.round(taxable * (partFormTaxRate / 100)) : (Number(partFormTaxAmount) || 0);
-                        const tdsAmt = partFormTdsRate > 0 ? Math.round(taxable * (partFormTdsRate / 100)) : (Number(partFormTdsDeduction) || 0);
-                        setPartFormPurchaseAmount(Math.max(0, taxable + taxAmt - tdsAmt - (Number(partFormOtherDeductions) || 0)));
-                      }}
-                      className="font-mono"
-                    />
-                  </div>
-                  <div>
-                    <label className="font-semibold block mb-1 text-xs">Discount (₹)</label>
-                    <AppInput
-                      type="number"
-                      min="0"
-                      value={partFormDiscount || ""}
-                      onChange={(e) => {
-                        const disc = Number(e.target.value) || 0;
-                        setPartFormDiscount(disc);
-                        const gross = (Number(partFormUnitPrice) || 0) * (Number(partFormQuantity) || 1);
-                        const taxable = Math.max(0, gross - disc);
-                        const taxAmt = partFormTaxRate > 0 ? Math.round(taxable * (partFormTaxRate / 100)) : (Number(partFormTaxAmount) || 0);
-                        const tdsAmt = partFormTdsRate > 0 ? Math.round(taxable * (partFormTdsRate / 100)) : (Number(partFormTdsDeduction) || 0);
-                        setPartFormPurchaseAmount(Math.max(0, taxable + taxAmt - tdsAmt - (Number(partFormOtherDeductions) || 0)));
-                      }}
-                      className="font-mono text-rose-600 dark:text-rose-400"
-                    />
-                  </div>
-                </div>
-
-                {/* Tax Addition & Deduction Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-2">
-                  <div>
-                    <label className="font-semibold block mb-1 text-xs">GST Rate (%)</label>
-                    <select
-                      value={partFormTaxRate}
-                      onChange={(e) => {
-                        const rate = Number(e.target.value) || 0;
-                        setPartFormTaxRate(rate);
-                        const gross = (Number(partFormUnitPrice) || 0) * (Number(partFormQuantity) || 1);
-                        const taxable = Math.max(0, gross - (Number(partFormDiscount) || 0));
-                        const taxAmt = Math.round(taxable * (rate / 100));
-                        setPartFormTaxAmount(taxAmt);
-                        setPartFormPurchaseAmount(Math.max(0, taxable + taxAmt - (Number(partFormTdsDeduction) || 0) - (Number(partFormOtherDeductions) || 0)));
-                      }}
-                      className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
-                    >
-                      <option value={0}>0% (Tax Exempt)</option>
-                      <option value={5}>5% GST</option>
-                      <option value={12}>12% GST</option>
-                      <option value={18}>18% GST (Standard)</option>
-                      <option value={28}>28% GST (Spares/Tyres)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="font-semibold block mb-1 text-xs">GST Amount (₹)</label>
-                    <AppInput
-                      type="number"
-                      min="0"
-                      value={partFormTaxAmount || ""}
-                      onChange={(e) => {
-                        const val = Number(e.target.value) || 0;
-                        setPartFormTaxAmount(val);
-                        const gross = (Number(partFormUnitPrice) || 0) * (Number(partFormQuantity) || 1);
-                        const taxable = Math.max(0, gross - (Number(partFormDiscount) || 0));
-                        setPartFormPurchaseAmount(Math.max(0, taxable + val - (Number(partFormTdsDeduction) || 0) - (Number(partFormOtherDeductions) || 0)));
-                      }}
-                      className="font-mono text-emerald-600 dark:text-emerald-400"
-                    />
-                  </div>
-                  <div>
-                    <label className="font-semibold block mb-1 text-xs">TDS Amount (₹)</label>
-                    <AppInput
-                      type="number"
-                      min="0"
-                      value={partFormTdsDeduction || ""}
-                      onChange={(e) => {
-                        const val = Number(e.target.value) || 0;
-                        setPartFormTdsDeduction(val);
-                        const gross = (Number(partFormUnitPrice) || 0) * (Number(partFormQuantity) || 1);
-                        const taxable = Math.max(0, gross - (Number(partFormDiscount) || 0));
-                        setPartFormPurchaseAmount(Math.max(0, taxable + (Number(partFormTaxAmount) || 0) - val - (Number(partFormOtherDeductions) || 0)));
-                      }}
-                      className="font-mono text-theme-icon dark:text-muted-foreground"
-                    />
-                  </div>
-                  <div>
-                    <label className="font-semibold block mb-1 text-xs">Other Deductions (₹)</label>
-                    <AppInput
-                      type="number"
-                      min="0"
-                      value={partFormOtherDeductions || ""}
-                      onChange={(e) => {
-                        const val = Number(e.target.value) || 0;
-                        setPartFormOtherDeductions(val);
-                        const gross = (Number(partFormUnitPrice) || 0) * (Number(partFormQuantity) || 1);
-                        const taxable = Math.max(0, gross - (Number(partFormDiscount) || 0));
-                        setPartFormPurchaseAmount(Math.max(0, taxable + (Number(partFormTaxAmount) || 0) - (Number(partFormTdsDeduction) || 0) - val));
-                      }}
-                      className="font-mono"
-                    />
-                  </div>
-                </div>
-
-                {/* Grand Total Net Invoiced Card */}
-                <div className="p-3 rounded-xl bg-theme-btn-primary/10 border border-theme-btn-primary/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-2">
-                  <div>
-                    <span className="text-xs font-bold text-foreground block">
-                      Total Net Amount (₹)
-                    </span>
-                    <span className="text-xs text-muted-foreground/90 font-mono font-medium block mt-1">
-                      Gross: ₹{((Number(partFormUnitPrice) || 0) * (Number(partFormQuantity) || 1)).toLocaleString("en-IN")} • Taxable: ₹{Math.max(0, ((Number(partFormUnitPrice) || 0) * (Number(partFormQuantity) || 1)) - (Number(partFormDiscount) || 0)).toLocaleString("en-IN")} • GST: +₹{Number(partFormTaxAmount).toLocaleString("en-IN")} • TDS: -₹{Number(partFormTdsDeduction).toLocaleString("en-IN")}
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <AppInput
-                      type="number"
-                      min="0"
-                      step="any"
-                      value={partFormPurchaseAmount || ""}
-                      onChange={(e) => setPartFormPurchaseAmount(Number(e.target.value) || 0)}
-                      className="font-mono font-bold text-base text-primary h-9 w-44 text-right"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Section 3: Manufacturing DOM & Shelf-Life Expiry */}
-              <div className="space-y-3">
-                <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border">
-                  <Clock className="h-3.5 w-3.5 text-amber-500" />
-                  <span>Manufacturing & Expiry</span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="font-semibold block mb-1">Date of Manufacturing (DOM)</label>
-                    <AppInput
-                      type="date"
-                      value={partFormManufacturingDate}
-                      onChange={(e) => setPartFormManufacturingDate(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="font-semibold block mb-1">Shelf-Life / Expiry Date</label>
-                    <AppInput
-                      type="date"
-                      value={partFormExpiryDate}
-                      onChange={(e) => setPartFormExpiryDate(e.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Section 4: OEM Warranty Coverage & Period */}
-              <div className="space-y-3">
-                <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border">
-                  <ShieldCheck className="h-3.5 w-3.5 text-theme-icon" />
-                  <span>Warranty Coverage</span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <label className="font-semibold block mb-1">Warranty Type</label>
-                    <select
-                      value={partFormWarrantyType}
-                      onChange={(e) => setPartFormWarrantyType(e.target.value)}
-                      className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
-                    >
-                      <option value="WARRANTY">Standard OEM Warranty</option>
-                      <option value="EXTENDED_WARRANTY">Extended Warranty</option>
-                      <option value="GUARANTEE">Replacement Guarantee</option>
-                      <option value="LIFETIME">Lifetime Limited Warranty</option>
-                      <option value="NONE">No Warranty</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="font-semibold block mb-1 flex items-center justify-between">
-                      <span>Warranty Period (Months)</span>
-                      {partFormPurchaseDate && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (partFormPurchaseDate && partFormWarrantyMonths > 0) {
-                              const d = new Date(partFormPurchaseDate);
-                              d.setMonth(d.getMonth() + Number(partFormWarrantyMonths));
-                              setPartFormWarrantyExpiryDate(d.toISOString().split("T")[0]);
-                            }
-                          }}
-                          className="text-xs text-theme-btn-primary hover:underline font-semibold"
-                        >
-                          Auto-Calculate
-                        </button>
-                      )}
-                    </label>
-                    <AppInput
-                      type="number"
-                      min="0"
-                      value={partFormWarrantyMonths}
-                      onChange={(e) => {
-                        const m = Number(e.target.value) || 0;
-                        setPartFormWarrantyMonths(m);
-                        if (partFormPurchaseDate && m > 0) {
-                          const d = new Date(partFormPurchaseDate);
-                          d.setMonth(d.getMonth() + m);
-                          setPartFormWarrantyExpiryDate(d.toISOString().split("T")[0]);
-                        }
-                      }}
-                      className="font-mono"
-                    />
-                  </div>
-                  <div>
-                    <label className="font-semibold block mb-1 flex items-center gap-1">
-                      <Calendar className="h-3 w-3 text-theme-icon" />
-                      <span>Warranty Expiry Date</span>
-                    </label>
-                    <AppInput
-                      type="date"
-                      value={partFormWarrantyExpiryDate}
-                      onChange={(e) => setPartFormWarrantyExpiryDate(e.target.value)}
-                    />
-                  </div>
-                  <div className="sm:col-span-3">
-                    <label className="font-semibold block mb-1">Warranty Terms</label>
-                    <AppInput
-                      value={partFormWarrantyTerms}
-                      onChange={(e) => setPartFormWarrantyTerms(e.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Section 5: Recurring Renewal Policy */}
-              <div className="space-y-3 p-3.5 rounded-xl border border-border bg-surface">
-                <div className="flex items-center justify-between">
-                  <div className="text-xs font-bold uppercase tracking-wider text-cyan-800 dark:text-muted-foreground flex items-center gap-1.5">
-                    <Zap className="h-3.5 w-3.5 text-theme-icon" />
-                    <span>Renewal Policy</span>
-                  </div>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={partFormHasRenewal}
-                      onChange={(e) => setPartFormHasRenewal(e.target.checked)}
-                      className="rounded border-border text-theme-btn-primary focus:ring-theme-btn-primary h-4 w-4"
-                    >
-                    </input>
-                    <span className="text-xs font-semibold text-foreground">Has Renewal Policy</span>
-                  </label>
-                </div>
-
-                {partFormHasRenewal && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-2">
-                    <div>
-                      <label className="font-semibold block mb-1">Renewal Policy Type</label>
-                      <select
-                        value={partFormRenewalType}
-                        onChange={(e) => setPartFormRenewalType(e.target.value)}
-                        className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
-                      >
-                        <option value="GPS_SIM_RECHARGE">GPS M2M SIM Cellular Recharge</option>
-                        <option value="EXTENDED_AMC">Extended AMC Maintenance Contract</option>
-                        <option value="ANNUAL_CALIBRATION">Annual Statutory Calibration</option>
-                        <option value="SOFTWARE_LICENSE">Software / Cloud Telematics License</option>
-                        <option value="FASTAG_RECHARGE">FASTag Fleet Commercial Balance</option>
-                        <option value="OTHER_POLICY">Other Recurring Policy</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="font-semibold block mb-1 flex items-center gap-1 text-amber-700 dark:text-amber-400">
-                        <Calendar className="h-3 w-3 text-amber-500" />
-                        <span>Next Renewal Due Date *</span>
-                      </label>
-                      <AppInput
-                        type="date"
-                        value={partFormRenewalDate}
-                        onChange={(e) => setPartFormRenewalDate(e.target.value)}
-                        required={partFormHasRenewal}
-                      />
-                    </div>
-                    <div>
-                      <label className="font-semibold block mb-1">Renewal Cost (₹ / cycle)</label>
-                      <AppInput
-                        type="number"
-                        min="0"
-                        value={partFormRenewalCost || ""}
-                        onChange={(e) => setPartFormRenewalCost(Number(e.target.value) || 0)}
-                        className="font-mono"
-                      />
-                    </div>
-                    <div>
-                      <label className="font-semibold block mb-1">Renewal Provider</label>
-                      <AppInput
-                        value={partFormRenewalVendor}
-                        onChange={(e) => setPartFormRenewalVendor(e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <label className="font-semibold block mb-1">Policy / Account Number</label>
-                      <AppInput
-                        value={partFormRenewalPolicyNumber}
-                        onChange={(e) => setPartFormRenewalPolicyNumber(e.target.value)}
-                        className="font-mono"
-                      />
-                    </div>
-                    <div>
-                      <label className="font-semibold block mb-1">Reminder (Days)</label>
-                      <AppInput
-                        type="number"
-                        min="1"
-                        value={partFormRenewalReminderDays}
-                        onChange={(e) => setPartFormRenewalReminderDays(Number(e.target.value) || 30)}
-                        className="font-mono"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Section 6: Vehicle Assignment & Installation */}
-              <div className="space-y-3">
-                <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border">
-                  <Car className="h-3.5 w-3.5 text-blue-500" />
-                  <span>Vehicle Assignment</span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <label className="font-semibold block mb-1">Assigned Vehicle</label>
-                    <select
-                      value={partFormVehicleId}
-                      onChange={(e) => {
-                        const vehId = e.target.value;
-                        setPartFormVehicleId(vehId);
-                        if (vehId && vehId !== "UNASSIGNED_STOCK") {
-                          const matched = vehicles.find((v) => v.id === vehId);
-                          if (matched) {
-                            setPartFormAssignedVehicleReg(matched.registration_number);
-                            setPartFormStatus("INSTALLED");
-                            if (!partFormInstalledOdometer && matched.odometer_km) {
-                              setPartFormInstalledOdometer(matched.odometer_km);
-                            }
-                            if (!partFormInstallationDate) {
-                              setPartFormInstallationDate(new Date().toISOString().split("T")[0]);
-                            }
-                          }
-                        } else {
-                          setPartFormAssignedVehicleReg("");
-                          setPartFormStatus("IN_STOCK");
-                        }
-                      }}
-                      className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
-                    >
-                      <option value="UNASSIGNED_STOCK">Warehouse Stock (Unassigned)</option>
-                      {vehicles.map((v) => (
-                        <option key={v.id} value={v.id}>
-                          {v.registration_number} — {v.make} {v.model}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="font-semibold block mb-1">Installation Date</label>
-                    <AppInput
-                      type="date"
-                      value={partFormInstallationDate}
-                      onChange={(e) => setPartFormInstallationDate(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="font-semibold block mb-1">Installed Odometer (km)</label>
-                    <AppInput
-                      type="number"
-                      min="0"
-                      value={partFormInstalledOdometer}
-                      onChange={(e) => setPartFormInstalledOdometer(e.target.value === "" ? "" : Number(e.target.value))}
-                      className="font-mono"
-                    />
-                  </div>
-                  <div className="sm:col-span-2">
-                    <label className="font-semibold block mb-1">Installed By</label>
-                    <AppInput
-                      value={partFormInstalledBy}
-                      onChange={(e) => setPartFormInstalledBy(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="font-semibold block mb-1">Status</label>
-                    <select
-                      value={partFormStatus}
-                      onChange={(e) => setPartFormStatus(e.target.value)}
-                      className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
-                    >
-                      <option value="IN_STOCK">In Stock (Warehouse)</option>
-                      <option value="INSTALLED">Installed on Vehicle</option>
-                      <option value="RESERVED">Reserved for Job</option>
-                      <option value="DEFECTIVE">Defective / RMA Return</option>
-                      <option value="SCRAPPED">Scrapped / Disposed</option>
-                    </select>
-                  </div>
-                  <div className="sm:col-span-3">
-                    <label className="font-semibold block mb-1">Technical Notes / Location Details</label>
-                    <textarea
-                      rows={2}
-                      value={partFormNotes}
-                      onChange={(e) => setPartFormNotes(e.target.value)}
-                      className="w-full text-xs p-2.5 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Section 7: Invoices, Warranty Cards, Spec Sheets & Part Photos */}
-              <div className="space-y-3 p-4 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/40">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="h-7 w-7 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/20">
-                      <Paperclip className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <div className="text-xs font-bold text-foreground">Part Invoices, Warranty Cards & Spec Sheet Attachments</div>
-                      <div className="text-xs text-muted-foreground">Upload purchase invoices, OEM spec sheets, warranty certificates, or part condition photos</div>
-                    </div>
-                  </div>
-                  <span className="text-xs font-semibold text-muted-foreground bg-surface px-2.5 py-1 rounded-md border border-border">
-                    {partFormAttachments.length} {partFormAttachments.length === 1 ? "file attached" : "files attached"}
-                  </span>
-                </div>
-
-                {/* Upload Dropzone */}
-                <div
-                  onDragOver={(e) => { e.preventDefault(); setIsDraggingPartFile(true); }}
-                  onDragLeave={() => setIsDraggingPartFile(false)}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    setIsDraggingPartFile(false);
-                    if (e.dataTransfer.files?.length) {
-                      handleAttachmentFilesSelected(e.dataTransfer.files, setPartFormAttachments);
-                    }
-                  }}
-                  onClick={() => partFileInputRef.current?.click()}
-                  className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-1.5 group ${
-                    isDraggingPartFile 
-                      ? "border-theme-btn-primary bg-theme-btn-primary/5" 
-                      : "border-border hover:border-theme-btn-primary/60 bg-surface/50 hover:bg-surface"
-                  }`}
-                >
-                  <input
-                    type="file"
-                    multiple
-                    ref={partFileInputRef}
-                    onChange={(e) => {
-                      if (e.target.files?.length) {
-                        handleAttachmentFilesSelected(e.target.files, setPartFormAttachments);
-                        e.target.value = "";
-                      }
-                    }}
-                    className="hidden"
-                    accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.csv"
-                  />
-                  <div className="h-9 w-9 rounded-full bg-theme-btn-primary/10 text-theme-btn-primary flex items-center justify-center group-hover:scale-105 transition-transform">
-                    <UploadCloud className="h-5 w-5" />
-                  </div>
-                  <div className="text-xs font-semibold text-foreground">
-                    Click to browse or drag & drop files here
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    PDF Invoices, Spec Sheets, Warranty Cards, Photos (up to 25MB each)
-                  </div>
-                </div>
-
-                {/* Uploaded File List */}
-                {partFormAttachments.length > 0 && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-                    {partFormAttachments.map((att, idx) => (
-                      <div
-                        key={att.id || idx}
-                        className="flex items-center justify-between p-2.5 rounded-xl border border-border bg-surface hover:border-theme-btn-primary/40 transition-colors"
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
-                          <div className="h-8 w-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-border/80 shrink-0">
-                            {renderAttachmentIcon(att.file_type, att.file_name)}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="font-semibold text-foreground truncate text-xs" title={att.file_name}>
-                              {att.file_name}
-                            </div>
-                            <div className="text-xs text-muted-foreground flex items-center gap-1.5">
-                              <span>{formatFileSize(att.file_size)}</span>
-                              <span>•</span>
-                              <span>{att.uploaded_at ? new Date(att.uploaded_at).toLocaleDateString("en-IN") : "Attached"}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-1 shrink-0">
-                          <AppButton
-                            type="button"
-                            variant="ghost"
-                            size="icon-sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleViewAttachment(att);
-                            }}
-                            className="h-7 w-7 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
-                            title="View / Preview Document"
-                          >
-                            <Eye className="h-3.5 w-3.5" />
-                          </AppButton>
-                          <AppButton
-                            type="button"
-                            variant="ghost"
-                            size="icon-sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              downloadAttachment(att);
-                            }}
-                            className="h-7 w-7 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
-                            title="Download File"
-                          >
-                            <Download className="h-3.5 w-3.5" />
-                          </AppButton>
-                          <AppButton
-                            type="button"
-                            variant="ghost"
-                            size="icon-sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setPartFormAttachments((prev) => prev.filter((_, i) => i !== idx));
-                            }}
-                            className="h-7 w-7 text-rose-600 hover:bg-rose-500/10"
-                            title="Remove Attachment"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </AppButton>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              </>
-            ) : (() => {
+          <div className="space-y-5">
+            {(() => {
               const activeItem = partLineItems[activePartLineIndex] || partLineItems[0] || createDefaultPartLineItem(1);
+              const activeUnit = Number(activeItem.unit_price) || 0;
+              const activeQty = Number(activeItem.quantity) || 1;
+              const activeGross = roundTo2(activeUnit * activeQty);
+              const activeDisc = Number(activeItem.discount) || 0;
+              const activeTaxable = roundTo2(Math.max(0, activeGross - activeDisc));
+              const activeTaxAmt = Number(activeItem.tax_amount) || 0;
+              const activeTdsDed = Number(activeItem.tds_deduction) || 0;
+              const activeOtherDed = Number(activeItem.other_deductions) || 0;
+              const activeExactNet = roundTo2(Math.max(0, activeTaxable + activeTaxAmt - activeTdsDed - activeOtherDed));
+              const activeRoundedNet = Math.round(activeExactNet);
+              const activeRoundOff = roundTo2(activeRoundedNet - activeExactNet);
 
               return (
                 <div className="space-y-5">
-                  {/* Bill / Invoice Header */}
+                  {/* Bill / Invoice Header (Collapsible) */}
                   <div className="p-4 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/40 space-y-4">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-border">
                       <div className="flex items-center gap-2">
                         <Receipt className="h-4 w-4 text-emerald-500" />
                         <span className="text-xs font-bold uppercase tracking-wider text-foreground">Bill / Invoice Header</span>
+                        {isBillHeaderCollapsed && (
+                          <span className="text-xs text-muted-foreground font-mono">
+                            {partFormVendorName ? `${partFormVendorName}` : "Vendor Not Set"} • {partFormInvoiceNumber ? `Inv #${partFormInvoiceNumber}` : "No Inv #"} • {partFormPurchaseDate}
+                          </span>
+                        )}
                       </div>
-                      <span className="text-xs text-muted-foreground font-medium">
-                        Common vendor & bill details shared by all line items
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                      <div className="sm:col-span-2">
-                        <label className="text-xs font-semibold block mb-1">
-                          <span>Vendor / Supplier Name *</span>
-                        </label>
-                        <AppInput
-                          value={partFormVendorName}
-                          onChange={(e) => setPartFormVendorName(e.target.value)}
-                          placeholder="e.g. Bosch Car Care, Exide Power Hub, Landmark Spares"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs font-semibold block mb-1">Invoice / Bill Number</label>
-                        <AppInput
-                          value={partFormInvoiceNumber}
-                          onChange={(e) => setPartFormInvoiceNumber(e.target.value)}
-                          placeholder="e.g. INV-2026-9042"
-                          className="font-mono"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs font-semibold block mb-1 flex items-center gap-1">
-                          <Calendar className="h-3 w-3 text-blue-500" />
-                          <span>Bill / Purchase Date *</span>
-                        </label>
-                        <AppInput
-                          type="date"
-                          value={partFormPurchaseDate}
-                          onChange={(e) => {
-                            const newDate = e.target.value;
-                            setPartFormPurchaseDate(newDate);
-                            setPartLineItems(prev => prev.map(item => {
-                              if (newDate && item.warranty_months > 0) {
-                                try {
-                                  const d = new Date(newDate);
-                                  d.setMonth(d.getMonth() + Number(item.warranty_months));
-                                  return { ...item, warranty_expiry_date: d.toISOString().split("T")[0] };
-                                } catch {}
-                              }
-                              return item;
-                            }));
-                          }}
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    {/* Default Target Vehicle & Installation Defaults */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2 border-t border-border/60">
-                      <div>
-                        <label className="text-xs font-semibold block mb-1">Default Target Allocation</label>
-                        <select
-                          value={partFormVehicleId}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setPartFormVehicleId(val);
-                            let matchedReg = "";
-                            if (val && val !== "UNASSIGNED_STOCK") {
-                              const matched = vehicles.find((v) => v.id === val);
-                              if (matched) {
-                                matchedReg = matched.registration_number;
-                                setPartFormAssignedVehicleReg(matchedReg);
-                                if (!partFormInstalledOdometer && matched.odometer_km) {
-                                  setPartFormInstalledOdometer(matched.odometer_km);
-                                }
-                                if (!partFormInstallationDate) {
-                                  setPartFormInstallationDate(new Date().toISOString().split("T")[0]);
-                                }
-                              }
-                            } else {
-                              setPartFormAssignedVehicleReg("");
-                            }
-
-                            // Propagate default to items that haven't explicitly set a custom vehicle
-                            setPartLineItems(prev => prev.map(item => {
-                              if (!item.vehicle_id || item.vehicle_id === "UNASSIGNED_STOCK") {
-                                return {
-                                  ...item,
-                                  vehicle_id: val,
-                                  assigned_vehicle_reg: matchedReg,
-                                  status: val && val !== "UNASSIGNED_STOCK" ? "INSTALLED" : "IN_STOCK"
-                                };
-                              }
-                              return item;
-                            }));
-                          }}
-                          className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setIsBillHeaderCollapsed(!isBillHeaderCollapsed)}
+                          className="text-xs font-semibold px-2.5 py-1 rounded-md border border-border bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground transition-colors flex items-center gap-1"
                         >
-                          <option value="UNASSIGNED_STOCK">Warehouse Stock (Unassigned)</option>
-                          {vehicles.map((v) => (
-                            <option key={v.id} value={v.id}>
-                              {v.registration_number} — {v.make} {v.model}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="text-xs font-semibold block mb-1">Default Install Date</label>
-                        <AppInput
-                          type="date"
-                          value={partFormInstallationDate}
-                          onChange={(e) => setPartFormInstallationDate(e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs font-semibold block mb-1">Default Install Odo (km)</label>
-                        <AppInput
-                          type="number"
-                          min="0"
-                          value={partFormInstalledOdometer}
-                          onChange={(e) => setPartFormInstalledOdometer(e.target.value === "" ? "" : Number(e.target.value))}
-                          className="font-mono"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs font-semibold block mb-1">Default Installed By</label>
-                        <AppInput
-                          value={partFormInstalledBy}
-                          onChange={(e) => setPartFormInstalledBy(e.target.value)}
-                          placeholder="Workshop / Technician"
-                        />
+                          {isBillHeaderCollapsed ? "Expand Bill Header Details ▼" : "Collapse Bill Header Details ▲"}
+                        </button>
                       </div>
                     </div>
 
-                    {/* Invoice Bill Documents / Upload */}
-                    <div className="pt-2 border-t border-border/60">
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="text-xs font-semibold flex items-center gap-1.5 text-foreground">
-                          <Paperclip className="h-3.5 w-3.5 text-amber-500" />
-                          <span>Vendor Bill & Invoice Documents (View & Download)</span>
-                        </label>
-                        <span className="text-xs font-medium text-muted-foreground">
-                          {partFormAttachments.length} {partFormAttachments.length === 1 ? "file" : "files"} attached
-                        </span>
-                      </div>
-
-                      <div
-                        onDragOver={(e) => { e.preventDefault(); setIsDraggingPartFile(true); }}
-                        onDragLeave={() => setIsDraggingPartFile(false)}
-                        onDrop={(e) => {
-                          e.preventDefault();
-                          setIsDraggingPartFile(false);
-                          if (e.dataTransfer.files?.length) {
-                            handleAttachmentFilesSelected(e.dataTransfer.files, setPartFormAttachments);
-                          }
-                        }}
-                        onClick={() => partFileInputRef.current?.click()}
-                        className={`border-2 border-dashed rounded-xl p-3 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-1 group ${
-                          isDraggingPartFile 
-                            ? "border-theme-btn-primary bg-theme-btn-primary/5" 
-                            : "border-border hover:border-theme-btn-primary/60 bg-surface/50 hover:bg-surface"
-                        }`}
-                      >
-                        <input
-                          type="file"
-                          multiple
-                          ref={partFileInputRef}
-                          onChange={(e) => {
-                            if (e.target.files?.length) {
-                              handleAttachmentFilesSelected(e.target.files, setPartFormAttachments);
-                              e.target.value = "";
-                            }
-                          }}
-                          className="hidden"
-                          accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.csv"
-                        />
-                        <div className="flex items-center gap-2">
-                          <UploadCloud className="h-4 w-4 text-theme-btn-primary" />
-                          <span className="text-xs font-semibold text-foreground">Click to upload vendor bill PDF or invoice photos</span>
+                    {!isBillHeaderCollapsed && (
+                      <div className="space-y-4 animate-in fade-in duration-150">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                          <div className="sm:col-span-2">
+                            <label className="text-xs font-semibold block mb-1">
+                              <span>Vendor / Supplier Name *</span>
+                            </label>
+                            <AppInput
+                              value={partFormVendorName}
+                              onChange={(e) => setPartFormVendorName(e.target.value)}
+                              placeholder="e.g. Bosch Car Care, Exide Power Hub, Landmark Spares"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-semibold block mb-1">Invoice / Bill Number</label>
+                            <AppInput
+                              value={partFormInvoiceNumber}
+                              onChange={(e) => setPartFormInvoiceNumber(e.target.value)}
+                              placeholder="e.g. INV-2026-9042"
+                              className="font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-semibold block mb-1 flex items-center gap-1">
+                              <Calendar className="h-3 w-3 text-blue-500" />
+                              <span>Bill / Purchase Date *</span>
+                            </label>
+                            <AppInput
+                              type="date"
+                              value={partFormPurchaseDate}
+                              onChange={(e) => {
+                                const newDate = e.target.value;
+                                setPartFormPurchaseDate(newDate);
+                                setPartLineItems((prev) =>
+                                  prev.map((item) => {
+                                    if (newDate && item.warranty_months > 0) {
+                                      try {
+                                        const d = new Date(newDate);
+                                        d.setMonth(d.getMonth() + Number(item.warranty_months));
+                                        return { ...item, warranty_expiry_date: d.toISOString().split("T")[0] };
+                                      } catch {}
+                                    }
+                                    return item;
+                                  })
+                                );
+                              }}
+                              required
+                            />
+                          </div>
                         </div>
-                      </div>
 
-                      {/* Render uploaded attachments list */}
-                      {partFormAttachments.length > 0 && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
-                          {partFormAttachments.map((att, idx) => (
-                            <div
-                              key={att.id || idx}
-                              className="flex items-center justify-between p-2 rounded-lg border border-border bg-surface"
+                        {/* Default Target Vehicle & Installation Defaults */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2 border-t border-border/60">
+                          <div>
+                            <label className="text-xs font-semibold block mb-1">Default Target Allocation</label>
+                            <select
+                              value={partFormVehicleId}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setPartFormVehicleId(val);
+                                let matchedReg = "";
+                                if (val && val !== "UNASSIGNED_STOCK") {
+                                  const matched = vehicles.find((v) => v.id === val);
+                                  if (matched) {
+                                    matchedReg = matched.registration_number;
+                                    setPartFormAssignedVehicleReg(matchedReg);
+                                    if (!partFormInstalledOdometer && matched.odometer_km) {
+                                      setPartFormInstalledOdometer(matched.odometer_km);
+                                    }
+                                    if (!partFormInstallationDate) {
+                                      setPartFormInstallationDate(new Date().toISOString().split("T")[0]);
+                                    }
+                                  }
+                                } else {
+                                  setPartFormAssignedVehicleReg("");
+                                }
+
+                                // Propagate default to items that haven't explicitly set a custom vehicle
+                                setPartLineItems((prev) =>
+                                  prev.map((item) => {
+                                    if (!item.vehicle_id || item.vehicle_id === "UNASSIGNED_STOCK") {
+                                      return {
+                                        ...item,
+                                        vehicle_id: val,
+                                        assigned_vehicle_reg: matchedReg,
+                                        status: val && val !== "UNASSIGNED_STOCK" ? "INSTALLED" : "IN_STOCK"
+                                      };
+                                    }
+                                    return item;
+                                  })
+                                );
+                              }}
+                              className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
                             >
-                              <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
-                                <div className="h-7 w-7 rounded bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-border/80 shrink-0">
-                                  {renderAttachmentIcon(att.file_type, att.file_name)}
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <div className="font-semibold text-foreground truncate text-xs" title={att.file_name}>
-                                    {att.file_name}
-                                  </div>
-                                  <div className="text-[11px] text-muted-foreground">
-                                    {formatFileSize(att.file_size)}
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-1 shrink-0">
-                                <AppButton
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  onClick={(e) => { e.stopPropagation(); handleViewAttachment(att); }}
-                                  className="h-7 w-7 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
-                                  title="View / Preview Document"
-                                >
-                                  <Eye className="h-3.5 w-3.5" />
-                                </AppButton>
-                                <AppButton
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  onClick={(e) => { e.stopPropagation(); downloadAttachment(att); }}
-                                  className="h-7 w-7 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
-                                  title="Download File"
-                                >
-                                  <Download className="h-3.5 w-3.5" />
-                                </AppButton>
-                                <AppButton
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setPartFormAttachments((prev) => prev.filter((_, i) => i !== idx));
-                                  }}
-                                  className="h-7 w-7 text-rose-600 hover:bg-rose-500/10"
-                                  title="Remove"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </AppButton>
-                              </div>
-                            </div>
-                          ))}
+                              <option value="UNASSIGNED_STOCK">Warehouse Stock (Unassigned)</option>
+                              {vehicles.map((v) => (
+                                <option key={v.id} value={v.id}>
+                                  {v.registration_number} — {v.make} {v.model}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-xs font-semibold block mb-1">Default Install Date</label>
+                            <AppInput
+                              type="date"
+                              value={partFormInstallationDate}
+                              onChange={(e) => setPartFormInstallationDate(e.target.value)}
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-semibold block mb-1">Default Install Odo (km)</label>
+                            <AppInput
+                              type="number"
+                              min="0"
+                              value={partFormInstalledOdometer}
+                              onChange={(e) => setPartFormInstalledOdometer(e.target.value === "" ? "" : Number(e.target.value))}
+                              className="font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-semibold block mb-1">Default Installed By</label>
+                            <AppInput
+                              value={partFormInstalledBy}
+                              onChange={(e) => setPartFormInstalledBy(e.target.value)}
+                              placeholder="Workshop / Technician"
+                            />
+                          </div>
                         </div>
-                      )}
-                    </div>
+
+                        {/* Invoice Bill Documents / Upload */}
+                        <div className="pt-2 border-t border-border/60">
+                          <div className="flex items-center justify-between mb-2">
+                            <label className="text-xs font-semibold flex items-center gap-1.5 text-foreground">
+                              <Paperclip className="h-3.5 w-3.5 text-amber-500" />
+                              <span>Vendor Bill & Invoice Documents (View & Download)</span>
+                            </label>
+                            <span className="text-xs font-medium text-muted-foreground">
+                              {partFormAttachments.length} {partFormAttachments.length === 1 ? "file" : "files"} attached
+                            </span>
+                          </div>
+
+                          <div
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              setIsDraggingPartFile(true);
+                            }}
+                            onDragLeave={() => setIsDraggingPartFile(false)}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              setIsDraggingPartFile(false);
+                              if (e.dataTransfer.files?.length) {
+                                handleAttachmentFilesSelected(e.dataTransfer.files, setPartFormAttachments);
+                              }
+                            }}
+                            onClick={() => partFileInputRef.current?.click()}
+                            className={`border-2 border-dashed rounded-xl p-3 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-1 group ${
+                              isDraggingPartFile
+                                ? "border-theme-btn-primary bg-theme-btn-primary/5"
+                                : "border-border hover:border-theme-btn-primary/60 bg-surface/50 hover:bg-surface"
+                            }`}
+                          >
+                            <input
+                              type="file"
+                              multiple
+                              ref={partFileInputRef}
+                              onChange={(e) => {
+                                if (e.target.files?.length) {
+                                  handleAttachmentFilesSelected(e.target.files, setPartFormAttachments);
+                                  e.target.value = "";
+                                }
+                              }}
+                              className="hidden"
+                              accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.csv"
+                            />
+                            <div className="flex items-center gap-2">
+                              <UploadCloud className="h-4 w-4 text-theme-btn-primary" />
+                              <span className="text-xs font-semibold text-foreground">Click to upload vendor bill PDF or invoice photos</span>
+                            </div>
+                          </div>
+
+                          {/* Render uploaded attachments list */}
+                          {partFormAttachments.length > 0 && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
+                              {partFormAttachments.map((att, idx) => (
+                                <div
+                                  key={att.id || idx}
+                                  className="flex items-center justify-between p-2 rounded-lg border border-border bg-surface"
+                                >
+                                  <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
+                                    <div className="h-7 w-7 rounded bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-border/80 shrink-0">
+                                      {renderAttachmentIcon(att.file_type, att.file_name)}
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                      <div className="font-semibold text-foreground truncate text-xs" title={att.file_name}>
+                                        {att.file_name}
+                                      </div>
+                                      <div className="text-[11px] text-muted-foreground">
+                                        {formatFileSize(att.file_size)}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    <AppButton
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon-sm"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleViewAttachment(att);
+                                      }}
+                                      className="h-7 w-7 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
+                                      title="View / Preview Document"
+                                    >
+                                      <Eye className="h-3.5 w-3.5" />
+                                    </AppButton>
+                                    <AppButton
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon-sm"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        downloadAttachment(att);
+                                      }}
+                                      className="h-7 w-7 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+                                      title="Download File"
+                                    >
+                                      <Download className="h-3.5 w-3.5" />
+                                    </AppButton>
+                                    <AppButton
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon-sm"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setPartFormAttachments((prev) => prev.filter((_, i) => i !== idx));
+                                      }}
+                                      className="h-7 w-7 text-rose-600 hover:bg-rose-500/10"
+                                      title="Remove"
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </AppButton>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Bill Line Items Section */}
+                  {/* Bill Line Items Table Section */}
                   <div className="space-y-3">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1 border-b border-border">
                       <div className="flex items-center gap-2">
@@ -20411,18 +19843,25 @@ export default function FleetDeskHost({
                               const isActive = activePartLineIndex === idx;
                               const unit = Number(item.unit_price) || 0;
                               const qty = Number(item.quantity) || 1;
-                              const netAmt = Number(item.purchase_amount) || Math.max(0, (unit * qty) - (Number(item.discount) || 0) + (Number(item.tax_amount) || 0) - (Number(item.tds_deduction) || 0));
-                              const vehLabel = item.vehicle_id && item.vehicle_id !== "UNASSIGNED_STOCK" 
-                                ? (vehicles.find(v => v.id === item.vehicle_id)?.registration_number || item.assigned_vehicle_reg || "Assigned") 
-                                : (partFormVehicleId && partFormVehicleId !== "UNASSIGNED_STOCK" ? (vehicles.find(v => v.id === partFormVehicleId)?.registration_number || "Bill Vehicle") : "Warehouse Stock");
+                              const gross = roundTo2(unit * qty);
+                              const disc = Number(item.discount) || 0;
+                              const taxable = roundTo2(Math.max(0, gross - disc));
+                              const taxAmt = Number(item.tax_amount) || 0;
+                              const netAmt = Number(item.purchase_amount) || roundTo2(Math.max(0, taxable + taxAmt - (Number(item.tds_deduction) || 0) - (Number(item.other_deductions) || 0)));
+                              const vehLabel =
+                                item.vehicle_id && item.vehicle_id !== "UNASSIGNED_STOCK"
+                                  ? vehicles.find((v) => v.id === item.vehicle_id)?.registration_number || item.assigned_vehicle_reg || "Assigned"
+                                  : partFormVehicleId && partFormVehicleId !== "UNASSIGNED_STOCK"
+                                  ? vehicles.find((v) => v.id === partFormVehicleId)?.registration_number || "Bill Vehicle"
+                                  : "Warehouse Stock";
 
                               return (
-                                <tr 
-                                  key={item.id} 
+                                <tr
+                                  key={item.id}
                                   onClick={() => setActivePartLineIndex(idx)}
                                   className={`cursor-pointer transition-colors ${
-                                    isActive 
-                                      ? "bg-theme-btn-primary/10 border-l-4 border-l-theme-btn-primary font-medium" 
+                                    isActive
+                                      ? "bg-theme-btn-primary/10 border-l-4 border-l-theme-btn-primary font-medium"
                                       : "hover:bg-slate-50 dark:hover:bg-slate-900/40"
                                   }`}
                                 >
@@ -20451,13 +19890,13 @@ export default function FleetDeskHost({
                                     {qty}
                                   </td>
                                   <td className="p-2.5 text-right font-mono">
-                                    ₹{unit.toLocaleString("en-IN")}
+                                    ₹{unit.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                   </td>
                                   <td className="p-2.5 text-right font-mono text-muted-foreground">
-                                    {item.tax_rate}% (+₹{(Number(item.tax_amount) || 0).toLocaleString("en-IN")})
+                                    {item.tax_rate}% (+₹{taxAmt.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
                                   </td>
                                   <td className="p-2.5 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                                    ₹{netAmt.toLocaleString("en-IN")}
+                                    ₹{netAmt.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                   </td>
                                   <td className="p-2.5">
                                     <span className="text-[11px] font-mono text-foreground font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-border">
@@ -20470,8 +19909,8 @@ export default function FleetDeskHost({
                                         type="button"
                                         onClick={() => setActivePartLineIndex(idx)}
                                         className={`px-2 py-1 rounded text-[11px] font-bold transition-colors ${
-                                          isActive 
-                                            ? "bg-theme-btn-primary text-theme-btn-primary-text" 
+                                          isActive
+                                            ? "bg-theme-btn-primary text-theme-btn-primary-text"
                                             : "bg-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-foreground border border-border"
                                         }`}
                                         title="Configure Item Details"
@@ -20507,8 +19946,9 @@ export default function FleetDeskHost({
                     </div>
                   </div>
 
-                  {/* Active Line Item Detail Configuration */}
+                  {/* Active Line Item Detail Configuration with SECTIONS */}
                   <div className="p-4 rounded-xl border-2 border-theme-btn-primary/30 bg-surface space-y-4 shadow-sm">
+                    {/* Item Heading & Prev/Next Line Item Controls */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-border">
                       <div className="flex items-center gap-2">
                         <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-theme-btn-primary text-theme-btn-primary-text">
@@ -20522,590 +19962,865 @@ export default function FleetDeskHost({
                         <button
                           type="button"
                           disabled={activePartLineIndex <= 0}
-                          onClick={() => setActivePartLineIndex(prev => Math.max(0, prev - 1))}
-                          className="px-2 py-1 text-[11px] font-semibold rounded border border-border bg-surface disabled:opacity-40"
+                          onClick={() => setActivePartLineIndex((prev) => Math.max(0, prev - 1))}
+                          className="px-2.5 py-1 text-xs font-semibold rounded border border-border bg-surface hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 transition-colors"
                         >
                           ← Previous Item
                         </button>
                         <button
                           type="button"
                           disabled={activePartLineIndex >= partLineItems.length - 1}
-                          onClick={() => setActivePartLineIndex(prev => Math.min(partLineItems.length - 1, prev + 1))}
-                          className="px-2 py-1 text-[11px] font-semibold rounded border border-border bg-surface disabled:opacity-40"
+                          onClick={() => setActivePartLineIndex((prev) => Math.min(partLineItems.length - 1, prev + 1))}
+                          className="px-2.5 py-1 text-xs font-semibold rounded border border-border bg-surface hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 transition-colors"
                         >
                           Next Item →
                         </button>
                       </div>
                     </div>
 
-                    {/* Sub-Section 1: Item Identity */}
-                    <div className="space-y-3">
-                      <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border/60">
+                    {/* Section Navigation Tabs for Item Details */}
+                    <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-border overflow-x-auto">
+                      <button
+                        type="button"
+                        onClick={() => setPartItemActiveSection("IDENTIFICATION")}
+                        className={`flex-1 min-w-[130px] flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
+                          partItemActiveSection === "IDENTIFICATION"
+                            ? "bg-surface text-foreground shadow-xs border border-border"
+                            : "text-muted-foreground hover:text-foreground hover:bg-surface/50"
+                        }`}
+                      >
                         <Package className="h-3.5 w-3.5 text-theme-btn-primary" />
-                        <span>Item Identification</span>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        <div className="sm:col-span-2">
-                          <label className="text-xs font-semibold block mb-1">
-                            <span>Part / Accessory Name *</span>
-                          </label>
-                          <AppInput
-                            value={activeItem.name}
-                            onChange={(e) => updateActivePartLineItem({ name: e.target.value })}
-                            placeholder="e.g. Front Brake Pads, Wiper Blade Set, GPS AIS-140 Tracker"
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs font-semibold block mb-1">Category / Type</label>
-                          <select
-                            value={activeItem.item_type}
-                            onChange={(e) => updateActivePartLineItem({ item_type: e.target.value })}
-                            className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
-                          >
-                            <option value="SPARE_PART">Spare Part</option>
-                            <option value="ACCESSORY">Accessory / Gadget</option>
-                            <option value="CONSUMABLE">Consumable / Fluid / Lubricant</option>
-                            <option value="TYRE">Tyre / Wheel</option>
-                            <option value="BATTERY">Battery / Electrical</option>
-                            <option value="GPS_DEVICE">GPS & AIS-140 Tracker</option>
-                            <option value="DASHCAM">Dashcam & Camera</option>
-                            <option value="TOOL">Workshop Tool / Jack</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="text-xs font-semibold block mb-1">
-                            <span>Brand / Manufacturer</span> <span className="text-muted-foreground text-xs font-normal">(Optional)</span>
-                          </label>
-                          <AppInput
-                            value={activeItem.brand}
-                            onChange={(e) => updateActivePartLineItem({ brand: e.target.value })}
-                            placeholder="e.g. Bosch, 3M, or leave empty for Generic"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs font-semibold block mb-1">Part Number / SKU</label>
-                          <AppInput
-                            value={activeItem.part_number}
-                            onChange={(e) => updateActivePartLineItem({ part_number: e.target.value })}
-                            placeholder="e.g. BP-2024-FR"
-                            className="font-mono"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs font-semibold block mb-1">Serial Number</label>
-                          <AppInput
-                            value={activeItem.serial_number}
-                            onChange={(e) => updateActivePartLineItem({ serial_number: e.target.value })}
-                            placeholder="e.g. SN-9988214"
-                            className="font-mono"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs font-semibold block mb-1">Condition</label>
-                          <select
-                            value={activeItem.condition}
-                            onChange={(e) => updateActivePartLineItem({ condition: e.target.value })}
-                            className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
-                          >
-                            <option value="NEW">Brand New (OEM)</option>
-                            <option value="REFURBISHED">Refurbished / Serviced</option>
-                            <option value="USED">Used / Operational</option>
-                            <option value="REBUILT">Rebuilt / Overhauled</option>
-                          </select>
-                        </div>
-                        <div className="sm:col-span-2">
-                          <label className="text-xs font-semibold block mb-1">Sub-Group / Classification</label>
-                          <AppInput
-                            value={activeItem.category}
-                            onChange={(e) => updateActivePartLineItem({ category: e.target.value })}
-                            placeholder="e.g. Brake System, Electrical, Engine Spares"
-                          />
-                        </div>
-                      </div>
+                        <span>1. Identification</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setPartItemActiveSection("PRICING_TAX")}
+                        className={`flex-1 min-w-[130px] flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
+                          partItemActiveSection === "PRICING_TAX"
+                            ? "bg-surface text-foreground shadow-xs border border-border"
+                            : "text-muted-foreground hover:text-foreground hover:bg-surface/50"
+                        }`}
+                      >
+                        <Receipt className="h-3.5 w-3.5 text-emerald-500" />
+                        <span>2. Pricing & GST</span>
+                        {activeUnit > 0 && (
+                          <span className="text-[10px] font-mono font-semibold px-1 py-0.2 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                            ₹{Number(activeItem.purchase_amount || activeExactNet).toLocaleString("en-IN")}
+                          </span>
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setPartItemActiveSection("WARRANTY_RENEWAL")}
+                        className={`flex-1 min-w-[130px] flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
+                          partItemActiveSection === "WARRANTY_RENEWAL"
+                            ? "bg-surface text-foreground shadow-xs border border-border"
+                            : "text-muted-foreground hover:text-foreground hover:bg-surface/50"
+                        }`}
+                      >
+                        <ShieldCheck className="h-3.5 w-3.5 text-amber-500" />
+                        <span>3. Warranty & Lifecycle</span>
+                        {activeItem.has_renewal_policy && (
+                          <span className="h-2 w-2 rounded-full bg-cyan-500" title="Has Renewal Policy" />
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setPartItemActiveSection("VEHICLE_ALLOCATION")}
+                        className={`flex-1 min-w-[130px] flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
+                          partItemActiveSection === "VEHICLE_ALLOCATION"
+                            ? "bg-surface text-foreground shadow-xs border border-border"
+                            : "text-muted-foreground hover:text-foreground hover:bg-surface/50"
+                        }`}
+                      >
+                        <Car className="h-3.5 w-3.5 text-blue-500" />
+                        <span>4. Vehicle & Status</span>
+                        {activeItem.vehicle_id && activeItem.vehicle_id !== "UNASSIGNED_STOCK" && (
+                          <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-blue-500/15 text-blue-600 dark:text-blue-400">
+                            Assigned
+                          </span>
+                        )}
+                      </button>
                     </div>
 
-                    {/* Sub-Section 2: Pricing, Quantity & Taxes */}
-                    <div className="space-y-3 p-3.5 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/40">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1.5 border-b border-border">
-                        <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                          <Receipt className="h-3.5 w-3.5 text-emerald-500" />
-                          <span>Pricing, Quantity & Taxes</span>
+                    {/* ---------------- SECTION 1: IDENTIFICATION ---------------- */}
+                    {partItemActiveSection === "IDENTIFICATION" && (
+                      <div className="space-y-4 animate-in fade-in duration-150">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                          <div className="sm:col-span-2">
+                            <label className="text-xs font-semibold block mb-1">
+                              <span>Part / Accessory Name *</span>
+                            </label>
+                            <AppInput
+                              value={activeItem.name}
+                              onChange={(e) => updateActivePartLineItem({ name: e.target.value })}
+                              placeholder="e.g. Front Brake Pads, Wiper Blade Set, GPS AIS-140 Tracker"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-semibold block mb-1">Category / Type</label>
+                            <select
+                              value={activeItem.item_type}
+                              onChange={(e) => updateActivePartLineItem({ item_type: e.target.value })}
+                              className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                            >
+                              <option value="SPARE_PART">Spare Part</option>
+                              <option value="ACCESSORY">Accessory / Gadget</option>
+                              <option value="CONSUMABLE">Consumable / Fluid / Lubricant</option>
+                              <option value="TYRE">Tyre / Wheel</option>
+                              <option value="BATTERY">Battery / Electrical</option>
+                              <option value="GPS_DEVICE">GPS & AIS-140 Tracker</option>
+                              <option value="DASHCAM">Dashcam & Camera</option>
+                              <option value="TOOL">Workshop Tool / Jack</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-xs font-semibold block mb-1">
+                              <span>Brand / Manufacturer</span> <span className="text-muted-foreground text-xs font-normal">(Optional)</span>
+                            </label>
+                            <AppInput
+                              value={activeItem.brand}
+                              onChange={(e) => updateActivePartLineItem({ brand: e.target.value })}
+                              placeholder="e.g. Bosch, 3M, or leave empty for Generic"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-semibold block mb-1">Part Number / SKU</label>
+                            <AppInput
+                              value={activeItem.part_number}
+                              onChange={(e) => updateActivePartLineItem({ part_number: e.target.value })}
+                              placeholder="e.g. BP-2024-FR"
+                              className="font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-semibold block mb-1">Serial Number</label>
+                            <AppInput
+                              value={activeItem.serial_number}
+                              onChange={(e) => updateActivePartLineItem({ serial_number: e.target.value })}
+                              placeholder="e.g. SN-9988214"
+                              className="font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-semibold block mb-1">Condition</label>
+                            <select
+                              value={activeItem.condition}
+                              onChange={(e) => updateActivePartLineItem({ condition: e.target.value })}
+                              className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                            >
+                              <option value="NEW">Brand New (OEM)</option>
+                              <option value="REFURBISHED">Refurbished / Serviced</option>
+                              <option value="USED">Used / Operational</option>
+                              <option value="REBUILT">Rebuilt / Overhauled</option>
+                            </select>
+                          </div>
+                          <div className="sm:col-span-2">
+                            <label className="text-xs font-semibold block mb-1">Sub-Group / Classification</label>
+                            <AppInput
+                              value={activeItem.category}
+                              onChange={(e) => updateActivePartLineItem({ category: e.target.value })}
+                              placeholder="e.g. Brake System, Electrical, Engine Spares"
+                            />
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-[11px] text-muted-foreground font-semibold">Presets:</span>
+
+                        <div className="flex items-center justify-end pt-2 border-t border-border">
                           <AppButton
                             type="button"
-                            variant="outline"
+                            variant="primary"
                             size="sm"
-                            onClick={() => {
-                              const gross = (Number(activeItem.unit_price) || 0) * (Number(activeItem.quantity) || 1);
-                              const taxable = Math.max(0, gross - (Number(activeItem.discount) || 0));
-                              const gst = Math.round(taxable * 0.18);
-                              updateActivePartLineItem({
-                                tax_rate: 18,
-                                tax_amount: gst,
-                                purchase_amount: Math.max(0, taxable + gst - (Number(activeItem.tds_deduction) || 0) - (Number(activeItem.other_deductions) || 0))
-                              });
-                            }}
-                            className="text-[11px] h-6 px-2 py-0 border-blue-500/30 text-blue-600 dark:text-blue-400 font-medium"
+                            onClick={() => setPartItemActiveSection("PRICING_TAX")}
+                            className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs font-semibold px-3 py-1.5"
                           >
-                            18% GST (Std)
+                            <span>Next: Pricing & GST →</span>
                           </AppButton>
-                          <AppButton
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              const gross = (Number(activeItem.unit_price) || 0) * (Number(activeItem.quantity) || 1);
-                              const taxable = Math.max(0, gross - (Number(activeItem.discount) || 0));
-                              const gst = Math.round(taxable * 0.28);
-                              updateActivePartLineItem({
-                                tax_rate: 28,
-                                tax_amount: gst,
-                                purchase_amount: Math.max(0, taxable + gst - (Number(activeItem.tds_deduction) || 0) - (Number(activeItem.other_deductions) || 0))
-                              });
-                            }}
-                            className="text-[11px] h-6 px-2 py-0 border-amber-500/30 text-amber-600 dark:text-amber-400 font-medium"
-                          >
-                            28% GST (Spares)
-                          </AppButton>
-                          <AppButton
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              const gross = (Number(activeItem.unit_price) || 0) * (Number(activeItem.quantity) || 1);
-                              const taxable = Math.max(0, gross - (Number(activeItem.discount) || 0));
-                              const tds = Math.round(taxable * 0.02);
-                              updateActivePartLineItem({
-                                tds_rate: 2,
-                                tds_deduction: tds,
-                                purchase_amount: Math.max(0, taxable + (Number(activeItem.tax_amount) || 0) - tds - (Number(activeItem.other_deductions) || 0))
-                              });
-                            }}
-                            className="text-[11px] h-6 px-2 py-0 border-border text-theme-icon dark:text-muted-foreground font-medium"
-                          >
-                            2% TDS
-                          </AppButton>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ---------------- SECTION 2: PRICING & GST ---------------- */}
+                    {partItemActiveSection === "PRICING_TAX" && (
+                      <div className="space-y-4 animate-in fade-in duration-150">
+                        {/* Presets Bar */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-border">
+                          <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                            <Receipt className="h-3.5 w-3.5 text-emerald-500" />
+                            <span>GST & Tax Calculation Presets</span>
+                          </span>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <AppButton
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const gross = roundTo2((Number(activeItem.unit_price) || 0) * (Number(activeItem.quantity) || 1));
+                                const taxable = roundTo2(Math.max(0, gross - (Number(activeItem.discount) || 0)));
+                                const gst = roundTo2(taxable * 0.18);
+                                updateActivePartLineItem({
+                                  tax_rate: 18,
+                                  tax_amount: gst,
+                                  purchase_amount: roundTo2(Math.max(0, taxable + gst - (Number(activeItem.tds_deduction) || 0) - (Number(activeItem.other_deductions) || 0)))
+                                });
+                              }}
+                              className="text-xs h-7 px-2.5 py-0 border-blue-500/30 text-blue-600 dark:text-blue-400 font-medium"
+                            >
+                              18% GST (Std)
+                            </AppButton>
+                            <AppButton
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const gross = roundTo2((Number(activeItem.unit_price) || 0) * (Number(activeItem.quantity) || 1));
+                                const taxable = roundTo2(Math.max(0, gross - (Number(activeItem.discount) || 0)));
+                                const gst = roundTo2(taxable * 0.28);
+                                updateActivePartLineItem({
+                                  tax_rate: 28,
+                                  tax_amount: gst,
+                                  purchase_amount: roundTo2(Math.max(0, taxable + gst - (Number(activeItem.tds_deduction) || 0) - (Number(activeItem.other_deductions) || 0)))
+                                });
+                              }}
+                              className="text-xs h-7 px-2.5 py-0 border-amber-500/30 text-amber-600 dark:text-amber-400 font-medium"
+                            >
+                              28% GST (Spares)
+                            </AppButton>
+                            <AppButton
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const gross = roundTo2((Number(activeItem.unit_price) || 0) * (Number(activeItem.quantity) || 1));
+                                const taxable = roundTo2(Math.max(0, gross - (Number(activeItem.discount) || 0)));
+                                const tds = roundTo2(taxable * 0.02);
+                                updateActivePartLineItem({
+                                  tds_rate: 2,
+                                  tds_deduction: tds,
+                                  purchase_amount: roundTo2(Math.max(0, taxable + (Number(activeItem.tax_amount) || 0) - tds - (Number(activeItem.other_deductions) || 0)))
+                                });
+                              }}
+                              className="text-xs h-7 px-2.5 py-0 border-border text-theme-icon dark:text-muted-foreground font-medium"
+                            >
+                              2% TDS
+                            </AppButton>
+                            <AppButton
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                const gross = roundTo2((Number(activeItem.unit_price) || 0) * (Number(activeItem.quantity) || 1));
+                                const taxable = roundTo2(Math.max(0, gross - (Number(activeItem.discount) || 0)));
+                                updateActivePartLineItem({
+                                  tax_rate: 0,
+                                  tax_amount: 0,
+                                  tds_rate: 0,
+                                  tds_deduction: 0,
+                                  other_deductions: 0,
+                                  purchase_amount: taxable
+                                });
+                              }}
+                              className="text-xs h-7 px-2 py-0 text-muted-foreground hover:text-foreground font-medium"
+                            >
+                              Clear
+                            </AppButton>
+                          </div>
+                        </div>
+
+                        {/* Pricing Inputs Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                          <div>
+                            <label className="text-xs font-semibold block mb-1">Unit Price (₹)</label>
+                            <AppInput
+                              type="number"
+                              min="0"
+                              step="any"
+                              value={activeItem.unit_price || ""}
+                              onChange={(e) => updateActivePartLineItem({ unit_price: Number(e.target.value) || 0 })}
+                              className="font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-semibold block mb-1">Quantity</label>
+                            <AppInput
+                              type="number"
+                              min="1"
+                              step="any"
+                              value={activeItem.quantity}
+                              onChange={(e) => updateActivePartLineItem({ quantity: Number(e.target.value) || 1 })}
+                              className="font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-semibold block mb-1">Discount (₹)</label>
+                            <AppInput
+                              type="number"
+                              min="0"
+                              step="any"
+                              value={activeItem.discount || ""}
+                              onChange={(e) => updateActivePartLineItem({ discount: Number(e.target.value) || 0 })}
+                              className="font-mono text-rose-600 dark:text-rose-400"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-semibold block mb-1">GST Rate (%)</label>
+                            <select
+                              value={activeItem.tax_rate}
+                              onChange={(e) => {
+                                const rate = Number(e.target.value) || 0;
+                                const gross = roundTo2((Number(activeItem.unit_price) || 0) * (Number(activeItem.quantity) || 1));
+                                const taxable = roundTo2(Math.max(0, gross - (Number(activeItem.discount) || 0)));
+                                const taxAmt = rate > 0 ? roundTo2(taxable * (rate / 100)) : 0;
+                                updateActivePartLineItem({
+                                  tax_rate: rate,
+                                  tax_amount: taxAmt,
+                                  purchase_amount: roundTo2(Math.max(0, taxable + taxAmt - (Number(activeItem.tds_deduction) || 0) - (Number(activeItem.other_deductions) || 0)))
+                                });
+                              }}
+                              className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                            >
+                              <option value={0}>0% (Tax Exempt)</option>
+                              <option value={5}>5% GST</option>
+                              <option value={12}>12% GST</option>
+                              <option value={18}>18% GST (Standard)</option>
+                              <option value={28}>28% GST (Spares/Tyres)</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Tax, TDS, Deductions & Net Amount Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-1">
+                          <div>
+                            <label className="text-xs font-semibold block mb-1 flex items-center justify-between">
+                              <span>GST Amount (₹)</span>
+                              <span className="text-[11px] text-muted-foreground font-normal">Exact paise</span>
+                            </label>
+                            <AppInput
+                              type="number"
+                              min="0"
+                              step="any"
+                              value={activeItem.tax_amount !== undefined && activeItem.tax_amount !== null ? activeItem.tax_amount : ""}
+                              onChange={(e) => {
+                                const val = Number(e.target.value) || 0;
+                                const gross = roundTo2((Number(activeItem.unit_price) || 0) * (Number(activeItem.quantity) || 1));
+                                const taxable = roundTo2(Math.max(0, gross - (Number(activeItem.discount) || 0)));
+                                updateActivePartLineItem({
+                                  tax_amount: val,
+                                  purchase_amount: roundTo2(Math.max(0, taxable + val - (Number(activeItem.tds_deduction) || 0) - (Number(activeItem.other_deductions) || 0)))
+                                });
+                              }}
+                              className="font-mono text-emerald-600 dark:text-emerald-400 font-semibold"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-semibold block mb-1">TDS Amount (₹)</label>
+                            <AppInput
+                              type="number"
+                              min="0"
+                              step="any"
+                              value={activeItem.tds_deduction || ""}
+                              onChange={(e) => {
+                                const val = Number(e.target.value) || 0;
+                                const gross = roundTo2((Number(activeItem.unit_price) || 0) * (Number(activeItem.quantity) || 1));
+                                const taxable = roundTo2(Math.max(0, gross - (Number(activeItem.discount) || 0)));
+                                updateActivePartLineItem({
+                                  tds_deduction: val,
+                                  purchase_amount: roundTo2(Math.max(0, taxable + (Number(activeItem.tax_amount) || 0) - val - (Number(activeItem.other_deductions) || 0)))
+                                });
+                              }}
+                              className="font-mono text-theme-icon"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-semibold block mb-1">Other Deductions (₹)</label>
+                            <AppInput
+                              type="number"
+                              min="0"
+                              step="any"
+                              value={activeItem.other_deductions || ""}
+                              onChange={(e) => {
+                                const val = Number(e.target.value) || 0;
+                                const gross = roundTo2((Number(activeItem.unit_price) || 0) * (Number(activeItem.quantity) || 1));
+                                const taxable = roundTo2(Math.max(0, gross - (Number(activeItem.discount) || 0)));
+                                updateActivePartLineItem({
+                                  other_deductions: val,
+                                  purchase_amount: roundTo2(Math.max(0, taxable + (Number(activeItem.tax_amount) || 0) - (Number(activeItem.tds_deduction) || 0) - val))
+                                });
+                              }}
+                              className="font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-semibold block mb-1 font-bold text-foreground">Item Net Amount (₹)</label>
+                            <AppInput
+                              type="number"
+                              min="0"
+                              step="any"
+                              value={activeItem.purchase_amount !== undefined && activeItem.purchase_amount !== null ? activeItem.purchase_amount : ""}
+                              onChange={(e) => updateActivePartLineItem({ purchase_amount: Number(e.target.value) || 0 })}
+                              className="font-mono font-bold text-base text-primary"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Financial Calculation & Round-off Card */}
+                        <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div className="space-y-0.5">
+                            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                              Taxable Breakdown & Round-Off
+                            </span>
+                            <div className="text-xs font-mono text-muted-foreground flex items-center gap-1.5 flex-wrap">
+                              <span>Gross: ₹{activeGross.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                              <span>•</span>
+                              <span>Taxable: ₹{activeTaxable.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                              <span>•</span>
+                              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                                GST: +₹{activeTaxAmt.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </span>
+                              <span>•</span>
+                              <span>
+                                Exact Net: ₹{activeExactNet.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </span>
+                              {activeRoundOff !== 0 && (
+                                <>
+                                  <span>•</span>
+                                  <span className="text-amber-600 dark:text-amber-400 font-semibold">
+                                    Round Off: {activeRoundOff >= 0 ? `+₹${activeRoundOff.toFixed(2)}` : `-₹${Math.abs(activeRoundOff).toFixed(2)}`}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          {activeRoundOff !== 0 && (
+                            <button
+                              type="button"
+                              onClick={() => updateActivePartLineItem({ purchase_amount: activeRoundedNet })}
+                              className="text-xs px-2.5 py-1 rounded-md border border-amber-500/30 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 hover:bg-amber-100 font-semibold transition-colors shrink-0"
+                            >
+                              Round Off to ₹{activeRoundedNet.toLocaleString("en-IN")}
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between pt-2 border-t border-border">
                           <AppButton
                             type="button"
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              const gross = (Number(activeItem.unit_price) || 0) * (Number(activeItem.quantity) || 1);
-                              const taxable = Math.max(0, gross - (Number(activeItem.discount) || 0));
-                              updateActivePartLineItem({
-                                tax_rate: 0,
-                                tax_amount: 0,
-                                tds_rate: 0,
-                                tds_deduction: 0,
-                                other_deductions: 0,
-                                purchase_amount: taxable
-                              });
-                            }}
-                            className="text-[11px] h-6 px-1.5 py-0 text-muted-foreground hover:text-foreground font-medium"
+                            onClick={() => setPartItemActiveSection("IDENTIFICATION")}
+                            className="text-xs"
                           >
-                            Clear
+                            <span>← Back to Identification</span>
+                          </AppButton>
+                          <AppButton
+                            type="button"
+                            variant="primary"
+                            size="sm"
+                            onClick={() => setPartItemActiveSection("WARRANTY_RENEWAL")}
+                            className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs font-semibold px-3 py-1.5"
+                          >
+                            <span>Next: Warranty & Lifecycle →</span>
                           </AppButton>
                         </div>
                       </div>
+                    )}
 
-                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                        <div>
-                          <label className="text-xs font-semibold block mb-1">Unit Price (₹)</label>
-                          <AppInput
-                            type="number"
-                            min="0"
-                            step="any"
-                            value={activeItem.unit_price || ""}
-                            onChange={(e) => updateActivePartLineItem({ unit_price: Number(e.target.value) || 0 })}
-                            className="font-mono"
-                          />
+                    {/* ---------------- SECTION 3: WARRANTY & LIFECYCLE ---------------- */}
+                    {partItemActiveSection === "WARRANTY_RENEWAL" && (
+                      <div className="space-y-4 animate-in fade-in duration-150">
+                        {/* DOM & Expiry */}
+                        <div className="space-y-2">
+                          <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border/60">
+                            <Clock className="h-3.5 w-3.5 text-amber-500" />
+                            <span>Manufacturing & Expiry</span>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                              <label className="text-xs font-semibold block mb-1">Date of Manufacturing (DOM)</label>
+                              <AppInput
+                                type="date"
+                                value={activeItem.manufacturing_date}
+                                onChange={(e) => updateActivePartLineItem({ manufacturing_date: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <label className="text-xs font-semibold block mb-1">Shelf-Life / Expiry Date</label>
+                              <AppInput
+                                type="date"
+                                value={activeItem.expiry_date}
+                                onChange={(e) => updateActivePartLineItem({ expiry_date: e.target.value })}
+                              />
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <label className="text-xs font-semibold block mb-1">Quantity</label>
-                          <AppInput
-                            type="number"
-                            min="1"
-                            value={activeItem.quantity}
-                            onChange={(e) => updateActivePartLineItem({ quantity: Number(e.target.value) || 1 })}
-                            className="font-mono"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs font-semibold block mb-1">Discount (₹)</label>
-                          <AppInput
-                            type="number"
-                            min="0"
-                            value={activeItem.discount || ""}
-                            onChange={(e) => updateActivePartLineItem({ discount: Number(e.target.value) || 0 })}
-                            className="font-mono text-rose-600 dark:text-rose-400"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs font-semibold block mb-1">GST Rate (%)</label>
-                          <select
-                            value={activeItem.tax_rate}
-                            onChange={(e) => updateActivePartLineItem({ tax_rate: Number(e.target.value) || 0 })}
-                            className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
-                          >
-                            <option value={0}>0% (Tax Exempt)</option>
-                            <option value={5}>5% GST</option>
-                            <option value={12}>12% GST</option>
-                            <option value={18}>18% GST (Standard)</option>
-                            <option value={28}>28% GST (Spares/Tyres)</option>
-                          </select>
-                        </div>
-                      </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-1">
-                        <div>
-                          <label className="text-xs font-semibold block mb-1">GST Amount (₹)</label>
-                          <AppInput
-                            type="number"
-                            min="0"
-                            value={activeItem.tax_amount || ""}
-                            onChange={(e) => updateActivePartLineItem({ tax_amount: Number(e.target.value) || 0 })}
-                            className="font-mono text-emerald-600 dark:text-emerald-400"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs font-semibold block mb-1">TDS Amount (₹)</label>
-                          <AppInput
-                            type="number"
-                            min="0"
-                            value={activeItem.tds_deduction || ""}
-                            onChange={(e) => updateActivePartLineItem({ tds_deduction: Number(e.target.value) || 0 })}
-                            className="font-mono text-theme-icon"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs font-semibold block mb-1">Other Deductions (₹)</label>
-                          <AppInput
-                            type="number"
-                            min="0"
-                            value={activeItem.other_deductions || ""}
-                            onChange={(e) => updateActivePartLineItem({ other_deductions: Number(e.target.value) || 0 })}
-                            className="font-mono"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs font-semibold block mb-1 font-bold text-foreground">Item Net Amount (₹)</label>
-                          <AppInput
-                            type="number"
-                            min="0"
-                            step="any"
-                            value={activeItem.purchase_amount || ""}
-                            onChange={(e) => updateActivePartLineItem({ purchase_amount: Number(e.target.value) || 0 })}
-                            className="font-mono font-bold text-base text-primary"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Sub-Section 3: Manufacturing DOM & Shelf-Life */}
-                    <div className="space-y-3">
-                      <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border/60">
-                        <Clock className="h-3.5 w-3.5 text-amber-500" />
-                        <span>Manufacturing & Expiry</span>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                          <label className="text-xs font-semibold block mb-1">Date of Manufacturing (DOM)</label>
-                          <AppInput
-                            type="date"
-                            value={activeItem.manufacturing_date}
-                            onChange={(e) => updateActivePartLineItem({ manufacturing_date: e.target.value })}
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs font-semibold block mb-1">Shelf-Life / Expiry Date</label>
-                          <AppInput
-                            type="date"
-                            value={activeItem.expiry_date}
-                            onChange={(e) => updateActivePartLineItem({ expiry_date: e.target.value })}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Sub-Section 4: OEM Warranty Coverage */}
-                    <div className="space-y-3">
-                      <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border/60">
-                        <ShieldCheck className="h-3.5 w-3.5 text-theme-icon" />
-                        <span>Warranty Coverage</span>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div>
-                          <label className="text-xs font-semibold block mb-1">Warranty Type</label>
-                          <select
-                            value={activeItem.warranty_type}
-                            onChange={(e) => updateActivePartLineItem({ warranty_type: e.target.value })}
-                            className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
-                          >
-                            <option value="WARRANTY">Standard OEM Warranty</option>
-                            <option value="EXTENDED_WARRANTY">Extended Warranty</option>
-                            <option value="GUARANTEE">Replacement Guarantee</option>
-                            <option value="LIFETIME">Lifetime Limited Warranty</option>
-                            <option value="NONE">No Warranty</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="text-xs font-semibold block mb-1 flex items-center justify-between">
-                            <span>Warranty Period (Months)</span>
-                            {partFormPurchaseDate && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  if (partFormPurchaseDate && activeItem.warranty_months > 0) {
-                                    const d = new Date(partFormPurchaseDate);
-                                    d.setMonth(d.getMonth() + Number(activeItem.warranty_months));
-                                    updateActivePartLineItem({ warranty_expiry_date: d.toISOString().split("T")[0] });
-                                  }
-                                }}
-                                className="text-xs text-theme-btn-primary hover:underline font-semibold"
+                        {/* OEM Warranty */}
+                        <div className="space-y-2 pt-2">
+                          <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border/60">
+                            <ShieldCheck className="h-3.5 w-3.5 text-theme-icon" />
+                            <span>OEM Warranty Coverage</span>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                              <label className="text-xs font-semibold block mb-1">Warranty Type</label>
+                              <select
+                                value={activeItem.warranty_type}
+                                onChange={(e) => updateActivePartLineItem({ warranty_type: e.target.value })}
+                                className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
                               >
-                                Auto-Calculate
-                              </button>
-                            )}
-                          </label>
-                          <AppInput
-                            type="number"
-                            min="0"
-                            value={activeItem.warranty_months}
-                            onChange={(e) => updateActivePartLineItem({ warranty_months: Number(e.target.value) || 0 })}
-                            className="font-mono"
-                          />
+                                <option value="WARRANTY">Standard OEM Warranty</option>
+                                <option value="EXTENDED_WARRANTY">Extended Warranty</option>
+                                <option value="GUARANTEE">Replacement Guarantee</option>
+                                <option value="LIFETIME">Lifetime Limited Warranty</option>
+                                <option value="NONE">No Warranty</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="text-xs font-semibold block mb-1 flex items-center justify-between">
+                                <span>Warranty Period (Months)</span>
+                                {partFormPurchaseDate && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (partFormPurchaseDate && activeItem.warranty_months > 0) {
+                                        const d = new Date(partFormPurchaseDate);
+                                        d.setMonth(d.getMonth() + Number(activeItem.warranty_months));
+                                        updateActivePartLineItem({ warranty_expiry_date: d.toISOString().split("T")[0] });
+                                      }
+                                    }}
+                                    className="text-xs text-theme-btn-primary hover:underline font-semibold"
+                                  >
+                                    Auto-Calculate
+                                  </button>
+                                )}
+                              </label>
+                              <AppInput
+                                type="number"
+                                min="0"
+                                value={activeItem.warranty_months}
+                                onChange={(e) => updateActivePartLineItem({ warranty_months: Number(e.target.value) || 0 })}
+                                className="font-mono"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-xs font-semibold block mb-1 flex items-center gap-1">
+                                <Calendar className="h-3 w-3 text-theme-icon" />
+                                <span>Warranty Expiry Date</span>
+                              </label>
+                              <AppInput
+                                type="date"
+                                value={activeItem.warranty_expiry_date}
+                                onChange={(e) => updateActivePartLineItem({ warranty_expiry_date: e.target.value })}
+                              />
+                            </div>
+                            <div className="sm:col-span-3">
+                              <label className="text-xs font-semibold block mb-1">Warranty Terms</label>
+                              <AppInput
+                                value={activeItem.warranty_terms}
+                                onChange={(e) => updateActivePartLineItem({ warranty_terms: e.target.value })}
+                                placeholder="e.g. 24 Months or 40,000 km replacement guarantee"
+                              />
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <label className="text-xs font-semibold block mb-1 flex items-center gap-1">
-                            <Calendar className="h-3 w-3 text-theme-icon" />
-                            <span>Warranty Expiry Date</span>
-                          </label>
-                          <AppInput
-                            type="date"
-                            value={activeItem.warranty_expiry_date}
-                            onChange={(e) => updateActivePartLineItem({ warranty_expiry_date: e.target.value })}
-                          />
+
+                        {/* Renewal Policy */}
+                        <div className="space-y-3 p-3 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/40">
+                          <div className="flex items-center justify-between">
+                            <div className="text-[11px] font-bold uppercase tracking-wider text-cyan-800 dark:text-muted-foreground flex items-center gap-1.5">
+                              <Zap className="h-3.5 w-3.5 text-theme-icon" />
+                              <span>Recurring Renewal Policy</span>
+                            </div>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={activeItem.has_renewal_policy}
+                                onChange={(e) => updateActivePartLineItem({ has_renewal_policy: e.target.checked })}
+                                className="rounded border-border text-theme-btn-primary focus:ring-theme-btn-primary h-4 w-4"
+                              />
+                              <span className="text-xs font-semibold text-foreground">Has Renewal Policy</span>
+                            </label>
+                          </div>
+
+                          {activeItem.has_renewal_policy && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-2">
+                              <div>
+                                <label className="text-xs font-semibold block mb-1">Renewal Policy Type</label>
+                                <select
+                                  value={activeItem.renewal_policy_type}
+                                  onChange={(e) => updateActivePartLineItem({ renewal_policy_type: e.target.value })}
+                                  className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                                >
+                                  <option value="GPS_SIM_RECHARGE">GPS M2M SIM Cellular Recharge</option>
+                                  <option value="EXTENDED_AMC">Extended AMC Maintenance Contract</option>
+                                  <option value="ANNUAL_CALIBRATION">Annual Statutory Calibration</option>
+                                  <option value="SOFTWARE_LICENSE">Software / Cloud Telematics License</option>
+                                  <option value="FASTAG_RECHARGE">FASTag Fleet Commercial Balance</option>
+                                  <option value="OTHER_POLICY">Other Recurring Policy</option>
+                                </select>
+                              </div>
+                              <div>
+                                <label className="text-xs font-semibold block mb-1 flex items-center gap-1 text-amber-700 dark:text-amber-400">
+                                  <Calendar className="h-3 w-3 text-amber-500" />
+                                  <span>Next Renewal Due Date *</span>
+                                </label>
+                                <AppInput
+                                  type="date"
+                                  value={activeItem.renewal_date}
+                                  onChange={(e) => updateActivePartLineItem({ renewal_date: e.target.value })}
+                                  required={activeItem.has_renewal_policy}
+                                />
+                              </div>
+                              <div>
+                                <label className="text-xs font-semibold block mb-1">Renewal Cost (₹ / cycle)</label>
+                                <AppInput
+                                  type="number"
+                                  min="0"
+                                  step="any"
+                                  value={activeItem.renewal_cost || ""}
+                                  onChange={(e) => updateActivePartLineItem({ renewal_cost: Number(e.target.value) || 0 })}
+                                  className="font-mono"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-xs font-semibold block mb-1">Renewal Provider</label>
+                                <AppInput
+                                  value={activeItem.renewal_vendor}
+                                  onChange={(e) => updateActivePartLineItem({ renewal_vendor: e.target.value })}
+                                  placeholder="e.g. Airtel IoT M2M, FleetTrack Cloud"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-xs font-semibold block mb-1">Policy / Account Number</label>
+                                <AppInput
+                                  value={activeItem.renewal_policy_number}
+                                  onChange={(e) => updateActivePartLineItem({ renewal_policy_number: e.target.value })}
+                                  className="font-mono"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-xs font-semibold block mb-1">Reminder (Days)</label>
+                                <AppInput
+                                  type="number"
+                                  min="1"
+                                  value={activeItem.renewal_reminder_days}
+                                  onChange={(e) => updateActivePartLineItem({ renewal_reminder_days: Number(e.target.value) || 30 })}
+                                  className="font-mono"
+                                />
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <div className="sm:col-span-3">
-                          <label className="text-xs font-semibold block mb-1">Warranty Terms</label>
-                          <AppInput
-                            value={activeItem.warranty_terms}
-                            onChange={(e) => updateActivePartLineItem({ warranty_terms: e.target.value })}
-                            placeholder="e.g. 24 Months or 40,000 km replacement guarantee"
-                          />
+
+                        <div className="flex items-center justify-between pt-2 border-t border-border">
+                          <AppButton
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setPartItemActiveSection("PRICING_TAX")}
+                            className="text-xs"
+                          >
+                            <span>← Back to Pricing</span>
+                          </AppButton>
+                          <AppButton
+                            type="button"
+                            variant="primary"
+                            size="sm"
+                            onClick={() => setPartItemActiveSection("VEHICLE_ALLOCATION")}
+                            className="bg-theme-btn-primary hover:bg-theme-btn-primary-secondary text-theme-btn-primary-text text-xs font-semibold px-3 py-1.5"
+                          >
+                            <span>Next: Vehicle Allocation →</span>
+                          </AppButton>
                         </div>
                       </div>
-                    </div>
+                    )}
 
-                    {/* Sub-Section 5: Recurring Renewal Policy */}
-                    <div className="space-y-3 p-3.5 rounded-xl border border-border bg-slate-50/50 dark:bg-slate-900/40">
-                      <div className="flex items-center justify-between">
-                        <div className="text-[11px] font-bold uppercase tracking-wider text-cyan-800 dark:text-muted-foreground flex items-center gap-1.5">
-                          <Zap className="h-3.5 w-3.5 text-theme-icon" />
-                          <span>Renewal Policy</span>
-                        </div>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={activeItem.has_renewal_policy}
-                            onChange={(e) => updateActivePartLineItem({ has_renewal_policy: e.target.checked })}
-                            className="rounded border-border text-theme-btn-primary focus:ring-theme-btn-primary h-4 w-4"
-                          />
-                          <span className="text-xs font-semibold text-foreground">Has Renewal Policy</span>
-                        </label>
-                      </div>
-
-                      {activeItem.has_renewal_policy && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-2">
+                    {/* ---------------- SECTION 4: VEHICLE ALLOCATION & STATUS ---------------- */}
+                    {partItemActiveSection === "VEHICLE_ALLOCATION" && (
+                      <div className="space-y-4 animate-in fade-in duration-150">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                           <div>
-                            <label className="text-xs font-semibold block mb-1">Renewal Policy Type</label>
+                            <label className="text-xs font-semibold block mb-1">Assigned Target</label>
                             <select
-                              value={activeItem.renewal_policy_type}
-                              onChange={(e) => updateActivePartLineItem({ renewal_policy_type: e.target.value })}
+                              value={activeItem.vehicle_id}
+                              onChange={(e) => {
+                                const vId = e.target.value;
+                                let vReg = "";
+                                let vStatus = "IN_STOCK";
+                                if (vId && vId !== "UNASSIGNED_STOCK") {
+                                  const mv = vehicles.find((v) => v.id === vId);
+                                  if (mv) {
+                                    vReg = mv.registration_number;
+                                    vStatus = "INSTALLED";
+                                  }
+                                }
+                                updateActivePartLineItem({
+                                  vehicle_id: vId,
+                                  assigned_vehicle_reg: vReg,
+                                  status: vStatus
+                                });
+                              }}
                               className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
                             >
-                              <option value="GPS_SIM_RECHARGE">GPS M2M SIM Cellular Recharge</option>
-                              <option value="EXTENDED_AMC">Extended AMC Maintenance Contract</option>
-                              <option value="ANNUAL_CALIBRATION">Annual Statutory Calibration</option>
-                              <option value="SOFTWARE_LICENSE">Software / Cloud Telematics License</option>
-                              <option value="FASTAG_RECHARGE">FASTag Fleet Commercial Balance</option>
-                              <option value="OTHER_POLICY">Other Recurring Policy</option>
+                              <option value="UNASSIGNED_STOCK">Warehouse Stock (Unassigned)</option>
+                              {vehicles.map((v) => (
+                                <option key={v.id} value={v.id}>
+                                  {v.registration_number} — {v.make} {v.model}
+                                </option>
+                              ))}
                             </select>
                           </div>
                           <div>
-                            <label className="text-xs font-semibold block mb-1 flex items-center gap-1 text-amber-700 dark:text-amber-400">
-                              <Calendar className="h-3 w-3 text-amber-500" />
-                              <span>Next Renewal Due Date *</span>
-                            </label>
+                            <label className="text-xs font-semibold block mb-1">Installation Date</label>
                             <AppInput
                               type="date"
-                              value={activeItem.renewal_date}
-                              onChange={(e) => updateActivePartLineItem({ renewal_date: e.target.value })}
-                              required={activeItem.has_renewal_policy}
+                              value={activeItem.installation_date}
+                              onChange={(e) => updateActivePartLineItem({ installation_date: e.target.value })}
                             />
                           </div>
                           <div>
-                            <label className="text-xs font-semibold block mb-1">Renewal Cost (₹ / cycle)</label>
+                            <label className="text-xs font-semibold block mb-1">Installed Odometer (km)</label>
                             <AppInput
                               type="number"
                               min="0"
-                              value={activeItem.renewal_cost || ""}
-                              onChange={(e) => updateActivePartLineItem({ renewal_cost: Number(e.target.value) || 0 })}
+                              value={activeItem.installed_odometer_km}
+                              onChange={(e) => updateActivePartLineItem({ installed_odometer_km: e.target.value === "" ? "" : Number(e.target.value) })}
                               className="font-mono"
                             />
                           </div>
-                          <div>
-                            <label className="text-xs font-semibold block mb-1">Renewal Provider</label>
+                          <div className="sm:col-span-2">
+                            <label className="text-xs font-semibold block mb-1">Installed By</label>
                             <AppInput
-                              value={activeItem.renewal_vendor}
-                              onChange={(e) => updateActivePartLineItem({ renewal_vendor: e.target.value })}
-                              placeholder="e.g. Airtel IoT M2M, FleetTrack Cloud"
+                              value={activeItem.installed_by}
+                              onChange={(e) => updateActivePartLineItem({ installed_by: e.target.value })}
+                              placeholder="Technician or Workshop Name"
                             />
                           </div>
                           <div>
-                            <label className="text-xs font-semibold block mb-1">Policy / Account Number</label>
-                            <AppInput
-                              value={activeItem.renewal_policy_number}
-                              onChange={(e) => updateActivePartLineItem({ renewal_policy_number: e.target.value })}
-                              className="font-mono"
-                            />
+                            <label className="text-xs font-semibold block mb-1">Status</label>
+                            <select
+                              value={activeItem.status}
+                              onChange={(e) => updateActivePartLineItem({ status: e.target.value })}
+                              className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                            >
+                              <option value="IN_STOCK">In Stock (Warehouse)</option>
+                              <option value="INSTALLED">Installed on Vehicle</option>
+                              <option value="RESERVED">Reserved for Job</option>
+                              <option value="DEFECTIVE">Defective / Return</option>
+                              <option value="SCRAPPED">Scrapped / Disposed</option>
+                            </select>
                           </div>
-                          <div>
-                            <label className="text-xs font-semibold block mb-1">Reminder (Days)</label>
-                            <AppInput
-                              type="number"
-                              min="1"
-                              value={activeItem.renewal_reminder_days}
-                              onChange={(e) => updateActivePartLineItem({ renewal_reminder_days: Number(e.target.value) || 30 })}
-                              className="font-mono"
+                          <div className="sm:col-span-3">
+                            <label className="text-xs font-semibold block mb-1">Item Notes / Remarks</label>
+                            <textarea
+                              rows={2}
+                              value={activeItem.notes}
+                              onChange={(e) => updateActivePartLineItem({ notes: e.target.value })}
+                              placeholder="Specific notes or remarks for this item"
+                              className="w-full text-xs p-2.5 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
                             />
                           </div>
                         </div>
-                      )}
-                    </div>
 
-                    {/* Sub-Section 6: Vehicle Assignment for this Item */}
-                    <div className="space-y-3">
-                      <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1 border-b border-border/60">
-                        <Car className="h-3.5 w-3.5 text-blue-500" />
-                        <span>Vehicle Allocation for this Item</span>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div>
-                          <label className="text-xs font-semibold block mb-1">Assigned Target</label>
-                          <select
-                            value={activeItem.vehicle_id}
-                            onChange={(e) => {
-                              const vId = e.target.value;
-                              let vReg = "";
-                              let vStatus = "IN_STOCK";
-                              if (vId && vId !== "UNASSIGNED_STOCK") {
-                                const mv = vehicles.find((v) => v.id === vId);
-                                if (mv) {
-                                  vReg = mv.registration_number;
-                                  vStatus = "INSTALLED";
-                                }
-                              }
-                              updateActivePartLineItem({
-                                vehicle_id: vId,
-                                assigned_vehicle_reg: vReg,
-                                status: vStatus
-                              });
-                            }}
-                            className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                        <div className="flex items-center justify-between pt-2 border-t border-border">
+                          <AppButton
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setPartItemActiveSection("WARRANTY_RENEWAL")}
+                            className="text-xs"
                           >
-                            <option value="UNASSIGNED_STOCK">Warehouse Stock (Unassigned)</option>
-                            {vehicles.map((v) => (
-                              <option key={v.id} value={v.id}>
-                                {v.registration_number} — {v.make} {v.model}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div>
-                          <label className="text-xs font-semibold block mb-1">Installation Date</label>
-                          <AppInput
-                            type="date"
-                            value={activeItem.installation_date}
-                            onChange={(e) => updateActivePartLineItem({ installation_date: e.target.value })}
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs font-semibold block mb-1">Installed Odometer (km)</label>
-                          <AppInput
-                            type="number"
-                            min="0"
-                            value={activeItem.installed_odometer_km}
-                            onChange={(e) => updateActivePartLineItem({ installed_odometer_km: e.target.value === "" ? "" : Number(e.target.value) })}
-                            className="font-mono"
-                          />
-                        </div>
-                        <div className="sm:col-span-2">
-                          <label className="text-xs font-semibold block mb-1">Installed By</label>
-                          <AppInput
-                            value={activeItem.installed_by}
-                            onChange={(e) => updateActivePartLineItem({ installed_by: e.target.value })}
-                            placeholder="Technician or Workshop Name"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs font-semibold block mb-1">Status</label>
-                          <select
-                            value={activeItem.status}
-                            onChange={(e) => updateActivePartLineItem({ status: e.target.value })}
-                            className="w-full text-xs h-9 px-3 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
-                          >
-                            <option value="IN_STOCK">In Stock (Warehouse)</option>
-                            <option value="INSTALLED">Installed on Vehicle</option>
-                            <option value="RESERVED">Reserved for Job</option>
-                            <option value="DEFECTIVE">Defective / Return</option>
-                            <option value="SCRAPPED">Scrapped / Disposed</option>
-                          </select>
-                        </div>
-                        <div className="sm:col-span-3">
-                          <label className="text-xs font-semibold block mb-1">Item Notes / Remarks</label>
-                          <textarea
-                            rows={2}
-                            value={activeItem.notes}
-                            onChange={(e) => updateActivePartLineItem({ notes: e.target.value })}
-                            placeholder="Specific notes or remarks for this item"
-                            className="w-full text-xs p-2.5 rounded-lg border border-border bg-surface text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
-                          />
+                            <span>← Back to Warranty</span>
+                          </AppButton>
+                          <div className="flex items-center gap-2">
+                            {activePartLineIndex < partLineItems.length - 1 ? (
+                              <AppButton
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setActivePartLineIndex(activePartLineIndex + 1);
+                                  setPartItemActiveSection("IDENTIFICATION");
+                                }}
+                                className="text-xs font-semibold"
+                              >
+                                <span>Next Line Item →</span>
+                              </AppButton>
+                            ) : (
+                              <AppButton
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={handleAddPartLineItem}
+                                className="text-xs font-semibold flex items-center gap-1 border-theme-btn-primary text-theme-btn-primary hover:bg-theme-btn-primary/10"
+                              >
+                                <Plus className="h-3.5 w-3.5" />
+                                <span>Add Another Line Item</span>
+                              </AppButton>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    )}
                   </div>
 
-                  {/* Bill Financial Totals HUD */}
+                  {/* Bill Financial Totals HUD with Decimal & Round Off */}
                   <div className="p-4 rounded-xl bg-theme-btn-primary/10 border border-theme-btn-primary/20 space-y-2">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <div>
                         <div className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
                           <Calculator className="h-3.5 w-3.5 text-theme-btn-primary" />
-                          <span>Bill Invoice Summary ({partLineItems.length} Line Items)</span>
+                          <span>Bill Invoice Summary ({partLineItems.length} {partLineItems.length === 1 ? "Line Item" : "Line Items"})</span>
                         </div>
                         <div className="text-xs font-mono text-muted-foreground mt-1 flex items-center gap-2 flex-wrap">
-                          <span>Gross: ₹{billGrossTotal.toLocaleString("en-IN")}</span>
+                          <span>Gross: ₹{billGrossTotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           <span>•</span>
-                          <span>Taxable: ₹{billTaxableTotal.toLocaleString("en-IN")}</span>
+                          <span>Taxable: ₹{billTaxableTotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           <span>•</span>
-                          <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Total GST: +₹{billGstTotal.toLocaleString("en-IN")}</span>
+                          <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                            Total GST: +₹{billGstTotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </span>
                           {billTdsTotal > 0 && (
                             <>
                               <span>•</span>
-                              <span className="text-rose-600 dark:text-rose-400">Total Deductions: -₹{billTdsTotal.toLocaleString("en-IN")}</span>
+                              <span className="text-rose-600 dark:text-rose-400">
+                                Total Deductions: -₹{billTdsTotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </span>
+                            </>
+                          )}
+                          {billRoundOff !== 0 && (
+                            <>
+                              <span>•</span>
+                              <span className="text-amber-600 dark:text-amber-400 font-semibold">
+                                Round Off: {billRoundOff >= 0 ? `+₹${billRoundOff.toFixed(2)}` : `-₹${Math.abs(billRoundOff).toFixed(2)}`}
+                              </span>
                             </>
                           )}
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right flex flex-col items-end gap-1">
                         <span className="text-[11px] font-semibold uppercase text-muted-foreground block">Grand Total Net Invoiced</span>
-                        <span className="text-xl font-mono font-bold text-foreground">
-                          ₹{billNetTotal.toLocaleString("en-IN")}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          {billRoundOff !== 0 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const currentItemAmt = Number(activeItem.purchase_amount) || activeExactNet;
+                                updateActivePartLineItem({ purchase_amount: roundTo2(currentItemAmt + billRoundOff) });
+                              }}
+                              className="text-[11px] px-2 py-0.5 rounded border border-amber-500/30 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 hover:bg-amber-100 font-semibold transition-colors"
+                              title="Auto Round Off Invoice to Nearest Rupee"
+                            >
+                              Auto Round Off (₹{billRoundedNet.toLocaleString("en-IN")})
+                            </button>
+                          )}
+                          <span className="text-xl font-mono font-bold text-foreground">
+                            ₹{billNetTotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
