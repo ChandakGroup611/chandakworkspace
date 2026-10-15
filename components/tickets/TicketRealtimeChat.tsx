@@ -63,16 +63,20 @@ export default function TicketRealtimeChat({ ticketId }: { ticketId: string }) {
         setCurrentUserId(userData.user.id);
       }
 
-      // Fetch workspace stakeholders for mentions
-      const { data: ticketData } = await supabase.from('tickets').select('workspace_id, department_id').eq('id', ticketId).single();
-      if (ticketData?.workspace_id && isMounted) {
-        const { data: members } = await supabase.from('workspace_members').select('user_id').eq('workspace_id', ticketData.workspace_id);
+      // Fetch department stakeholders for mentions
+      const { data: ticketData } = await supabase.from('tickets').select('id, department_id, creator_id, assignee_id').eq('id', ticketId).single();
+      if (ticketData && isMounted) {
+        let memberUids: string[] = [ticketData.creator_id, ticketData.assignee_id].filter(Boolean) as string[];
+
+        if (ticketData.department_id) {
+          const { data: deptUsers } = await supabase.from('user_master').select('id').eq('department_id', ticketData.department_id).eq('is_active', true);
+          if (deptUsers) memberUids.push(...deptUsers.map(u => u.id));
+        }
         
         // Also fetch SUPER_ADMIN users so they can be mentioned globally
-        const { data: superAdminRole } = await supabase.from('role_master').select('id').eq('role_code', 'SUPER_ADMIN').single();
+        const { data: superAdminRole } = await supabase.from('roles').select('id').eq('code', 'SUPER_ADMIN').maybeSingle();
         const { data: superAdmins } = superAdminRole ? await supabase.from('user_master').select('id').eq('role_id', superAdminRole.id) : { data: [] };
 
-        const memberUids = members ? members.map(m => m.user_id) : [];
         const adminUids = superAdmins ? superAdmins.map(a => a.id) : [];
         const uids = Array.from(new Set([...memberUids, ...adminUids]));
 

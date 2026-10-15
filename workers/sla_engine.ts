@@ -56,16 +56,8 @@ async function processModuleSLA(moduleName: 'tasks' | 'tickets' | 'requirements'
     ? (record.assignee_id || record.queue_owner_id) 
     : (moduleName === 'requirements' ? record.assigned_analyst_id : record.created_by);
 
-  // Try fetching assignees for tasks if needed
     if (moduleName === 'tasks') {
-      const { data: assignees } = await supabaseAdmin
-        .from('task_assignees')
-        .select('user_id')
-        .eq('task_id', record.id)
-        .eq('is_deleted', false);
-      if (assignees && assignees.length > 0) {
-        ownerId = assignees[0].user_id; // Notify primary assignee
-      }
+      ownerId = record.assigned_to || record.created_by;
     }
 
     if (!ownerId) continue;
@@ -80,7 +72,7 @@ async function processModuleSLA(moduleName: 'tasks' | 'tickets' | 'requirements'
           message: `${moduleName.toUpperCase()} ${title} has breached its SLA!`,
           record_id: record.id
         },
-        status: 'pending'
+        is_read: false
       });
     } else if (hoursElapsed >= warningHours && hoursElapsed < slaHours) {
       notifications.push({
@@ -90,7 +82,7 @@ async function processModuleSLA(moduleName: 'tasks' | 'tickets' | 'requirements'
           message: `${moduleName.toUpperCase()} ${title} is approaching SLA breach.`,
           record_id: record.id
         },
-        status: 'pending'
+        is_read: false
       });
     }
   }

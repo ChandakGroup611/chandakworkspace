@@ -64,7 +64,7 @@ export async function addTicketRemark(ticketId: string, content: string) {
           ticket_id: ticketId,
           remark_id: remark.id
         },
-        status: 'pending'
+        is_read: false
       }));
 
       // Push to Realtime Notification Queue
@@ -99,12 +99,8 @@ export async function addTicketRemark(ticketId: string, content: string) {
 
         return {
           recipient_email: u.email,
-          recipient_user_id: u.id,
-          module: 'Ticket',
-          event: 'Mentioned',
           subject: `Mentioned in Ticket: ${ticketInfo?.code || ticketId}`,
           body_template: htmlCard,
-          html_body: htmlCard,
           is_sent: false
         };
       });
@@ -126,7 +122,7 @@ export async function addTicketRemark(ticketId: string, content: string) {
           message: `New remark added to your ticket`,
           ticket_id: ticketId
         },
-        status: 'pending'
+        is_read: false
       }));
       await supabaseAdmin.from('notification_queue').insert(updates);
     }

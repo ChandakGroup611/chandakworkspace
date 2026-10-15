@@ -87,8 +87,9 @@ export async function clearAllQueueNotifications() {
   
   // Try to clear GLOBAL_OPS if they are admin, fail silently if not
   try {
-     const { data: roleData } = await supabaseAdmin.from("user_master").select("role_master(role_code)").eq("id", user.id).single();
-     if ((roleData as any)?.role_master?.role_code === 'SUPER_ADMIN') {
+     const { data: roleData } = await supabaseAdmin.from("user_master").select("role:roles(code)").eq("id", user.id).single();
+     const rCode = (roleData as any)?.role?.code || (Array.isArray((roleData as any)?.role) ? (roleData as any)?.role[0]?.code : null);
+     if (rCode === 'SUPER_ADMIN') {
         await supabaseAdmin.from("notification_queue").delete().eq("target_user_id", 'GLOBAL_OPS');
      }
   } catch (e) {}
@@ -241,12 +242,8 @@ export async function dispatchNotification(
 
       await supabaseAdmin.from('email_queue').insert([{
         recipient_email: user.email,
-        recipient_user_id: userId,
-        module: moduleCode || null,
-        event: eventCode || null,
         subject: finalSubject,
         body_template: finalBody,
-        html_body: finalBody,
         is_sent: false
       }]);
       
@@ -274,16 +271,19 @@ export async function handleMentions(
   let entityLabel = entityType === 'ticket' ? 'Ticket' : 'Task';
 
   if (entityType === 'ticket') {
-    const { data: ticket } = await supabaseAdmin.from("tickets").select("workspace_id, title, ticket_number").eq("id", entityId).single();
+    const { data: ticket } = await supabaseAdmin.from("tickets").select("id, code, title, department_id").eq("id", entityId).single();
     if (ticket) {
-      workspaceId = ticket.workspace_id;
-      entityLabel = ticket.ticket_number ? `Ticket #${ticket.ticket_number}` : (ticket.title || 'Ticket');
+      entityLabel = ticket.code ? `Ticket #${ticket.code}` : (ticket.title || 'Ticket');
+      if (isAll && ticket.department_id) {
+        const { data: deptUsers } = await supabaseAdmin.from("user_master").select("id").eq("department_id", ticket.department_id).eq("is_active", true);
+        deptUsers?.forEach(u => targetUserIds.add(u.id));
+      }
     }
   } else {
-    const { data: task } = await supabaseAdmin.from("tasks").select("workspace_id, subject, title").eq("id", entityId).single();
+    const { data: task } = await supabaseAdmin.from("tasks").select("workspace_id, subject").eq("id", entityId).single();
     if (task) {
       workspaceId = task.workspace_id;
-      entityLabel = task.subject || task.title || 'Task';
+      entityLabel = task.subject || 'Task';
     }
   }
 

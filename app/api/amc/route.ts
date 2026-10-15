@@ -117,7 +117,6 @@ export async function DELETE(request: Request) {
         .from("amc_invoices")
         .select("id")
         .eq("amc_id", id)
-        .eq("is_deleted", false)
         .limit(1);
 
       if (activeInv && activeInv.length > 0) {

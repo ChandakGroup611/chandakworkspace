@@ -124,7 +124,7 @@ export async function createTask(payload: {
       if (!isParentOwner) {
         const { data: isPart } = await supabaseAdmin
           .from('task_participants')
-          .select('id')
+          .select('user_id')
           .eq('task_id', parentTaskId)
           .eq('user_id', creatorId)
           .maybeSingle();
@@ -342,17 +342,25 @@ export async function createTask(payload: {
 
     // ENTERPRISE NOTIFICATION ROUTING
     // Fire-and-forget: Push to async background queue
-    queueBusinessEvent("Task", "Assigned", {
+    const taskPayload = {
       entity_id: task.id,
       triggering_user_id: creatorId,
       status: "NEW", // The default status logic applied it
       task_name: task.subject,
       created_by: creatorId,
+      creator_name: creatorName,
       assigned_to: task.assigned_to,
       priority: task.priority_id,
       due_date: task.end_date,
+      workspace_id: task.workspace_id,
+      is_subtask: !!task.parent_task_id,
+      parent_task_id: task.parent_task_id || null,
+      task_type: task.parent_task_id ? 'Subtask' : 'Task',
       link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/tasks/${task.id}`
-    }).catch(e => console.error("[NotificationEngine] Background push failed", e));
+    };
+
+    queueBusinessEvent("Task", "Assigned", taskPayload)
+      .catch(e => console.error("[createTask] Task Assigned push failed", e));
 
     return task;
   } catch (err: any) {
@@ -395,7 +403,7 @@ export async function transitionTaskStatus(taskId: string, newStatusIdOrCode: st
   if (!isTaskAssignee && !isSuperAdmin) {
     const { data: participant } = await supabaseAdmin
       .from('task_participants')
-      .select('id, participation_role')
+      .select('user_id, participation_role')
       .eq('task_id', taskId)
       .eq('user_id', userId)
       .maybeSingle();
@@ -843,7 +851,7 @@ export async function updateTask(taskId: string, payload: any) {
   if (!isTaskAssignee) {
     const { data: participant } = await supabaseAdmin
       .from('task_participants')
-      .select('id, participation_role')
+      .select('user_id, participation_role')
       .eq('task_id', taskId)
       .eq('user_id', userId)
       .maybeSingle();
@@ -1287,7 +1295,7 @@ export async function updateTaskStatusInline(taskId: string, newStatusId: string
       if (!isSuperAdmin) {
         const { data: participant } = await supabaseAdmin
           .from('task_participants')
-          .select('id, participation_role')
+          .select('user_id, participation_role')
           .eq('task_id', taskId)
           .eq('user_id', userId)
           .maybeSingle();
@@ -1650,14 +1658,14 @@ export async function executeTaskBatchOperation(payload: {
   revalidatePath(`/workspaces/tasks`);
   
   // Fire-and-forget: Push to async background queue
-  supabaseAdmin.from('tasks').select('subject, status_id, assigned_to, creator_id, created_by, workspace_id, department_id').eq('id', taskId).single().then(({ data: taskData }) => {
+  supabaseAdmin.from('tasks').select('subject, status_id, assigned_to, created_by, workspace_id, department_id').eq('id', taskId).single().then(({ data: taskData }) => {
       queueBusinessEvent("Task", "Updated", {
           entity_id: taskId,
           triggering_user_id: userId,
           status: statusChanges || taskData?.status_id || "UPDATED",
           task_name: taskData?.subject || "Task Updated",
           assigned_to: taskData?.assigned_to,
-          created_by: taskData?.created_by || taskData?.creator_id,
+          created_by: taskData?.created_by,
           workspace_id: taskData?.workspace_id,
           department_id: taskData?.department_id,
           creator_name: user?.user_metadata?.full_name || "System",
@@ -1739,14 +1747,14 @@ export async function updateTaskAssignees(taskId: string, workspaceId: string, a
   revalidatePath(`/workspaces/tasks`);
 
   // Fire-and-forget: Push to async background queue
-  supabaseAdmin.from('tasks').select('subject, status_id, assigned_to, creator_id, created_by, workspace_id, department_id').eq('id', taskId).single().then(({ data: taskData }) => {
+  supabaseAdmin.from('tasks').select('subject, status_id, assigned_to, created_by, workspace_id, department_id').eq('id', taskId).single().then(({ data: taskData }) => {
       queueBusinessEvent("Task", "Executors Changed", {
           entity_id: taskId,
           triggering_user_id: userId || "",
           status: taskData?.status_id || "UPDATED",
           task_name: taskData?.subject || "Task Assignment Changed",
           assigned_to: finalPrimaryId || taskData?.assigned_to,
-          created_by: taskData?.created_by || taskData?.creator_id,
+          created_by: taskData?.created_by,
           workspace_id: taskData?.workspace_id,
           department_id: taskData?.department_id,
           creator_name: user?.user_metadata?.full_name || "System",
@@ -2045,7 +2053,7 @@ export async function transferTask(payload: {
     // Check if user is an executor
     const { data: participant } = await supabaseAdmin
       .from('task_participants')
-      .select('id')
+      .select('user_id')
       .eq('task_id', taskId)
       .eq('user_id', user.id)
       .eq('participation_role', 'EXECUTOR')
@@ -2257,7 +2265,7 @@ export async function fetchWorkspaceTasksList(workspaceId: string) {
   try {
     const { data: tasks, error } = await supabaseAdmin
       .from('tasks')
-      .select('id, title, assigned_to, parent_task_id')
+      .select('id, subject, assigned_to, parent_task_id')
       .eq('workspace_id', workspaceId)
       .eq('is_deleted', false)
       .order('created_at', { ascending: false });

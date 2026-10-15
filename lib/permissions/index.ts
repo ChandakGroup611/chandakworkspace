@@ -169,15 +169,15 @@ export async function canAccessTask(userId: string, taskId: string): Promise<boo
 
   const { data } = await supabaseAdmin
     .from("tasks")
-    .select("created_by, assigned_to, department_id, workspace_id, assignees:task_assignees(user_id)")
+    .select("created_by, assigned_to, department_id, workspace_id, participants:task_participants(user_id)")
     .eq("id", taskId)
     .single();
 
   if (!data) return false;
   if (data.created_by === userId || data.assigned_to === userId) return true;
   
-  const assignees = data.assignees as any[];
-  if (assignees?.some(a => a.user_id === userId)) return true;
+  const participants = data.participants as any[];
+  if (participants?.some(a => a.user_id === userId)) return true;
 
   try {
     const { getUserAccessScope } = await import('@/lib/auth/scope');
@@ -201,12 +201,12 @@ export async function canAccessWorkspace(userId: string, workspaceId: string): P
 
   const { data } = await supabaseAdmin
     .from("workspaces")
-    .select("owner_id, visibility_settings")
+    .select("workspace_owner_id, visibility_settings")
     .eq("id", workspaceId)
     .single();
 
   if (!data) return false;
-  if (data.owner_id === userId) return true;
+  if (data.workspace_owner_id === userId) return true;
   if (data.visibility_settings?.public) return true;
 
   const { count } = await supabaseAdmin
@@ -227,11 +227,11 @@ export async function canManageWorkspace(userId: string, workspaceId: string): P
 
   const { data } = await supabaseAdmin
     .from("workspaces")
-    .select("owner_id")
+    .select("workspace_owner_id")
     .eq("id", workspaceId)
     .single();
 
-  if (data && data.owner_id === userId) return true;
+  if (data && data.workspace_owner_id === userId) return true;
 
   const { data: member } = await supabaseAdmin
     .from("workspace_members")

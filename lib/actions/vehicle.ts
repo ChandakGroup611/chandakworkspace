@@ -45,12 +45,12 @@ async function canUserManageVehicles(userId: string): Promise<boolean> {
 
     const { data: fua } = await supabaseAdmin
       .from("fleet_user_access")
-      .select("can_manage_vehicles, fleet_role, is_module_enabled")
+      .select("can_manage_vehicles, fleet_role")
       .eq("user_id", userId)
       .maybeSingle();
 
     if (fua) {
-      if (fua.is_module_enabled === false || fua.fleet_role === "NONE") {
+      if (fua.fleet_role === "NONE") {
         return false;
       }
       if (fua.can_manage_vehicles || fua.fleet_role === "FLEET_ADMIN" || fua.fleet_role === "FLEET_MANAGER" || fua.fleet_role === "FLEET_OFFICER" || fua.fleet_role === "FLEET_DISPATCHER") {
@@ -82,12 +82,12 @@ async function canUserManageMaintenance(userId: string): Promise<boolean> {
 
     const { data: fua } = await supabaseAdmin
       .from("fleet_user_access")
-      .select("can_manage_maintenance, fleet_role, is_module_enabled")
+      .select("can_manage_maintenance, fleet_role")
       .eq("user_id", userId)
       .maybeSingle();
 
     if (fua) {
-      if (fua.is_module_enabled === false || fua.fleet_role === "NONE") {
+      if (fua.fleet_role === "NONE") {
         return false;
       }
       if (fua.can_manage_maintenance || fua.fleet_role === "FLEET_ADMIN" || fua.fleet_role === "FLEET_WORKSHOP" || fua.fleet_role === "FLEET_MANAGER" || fua.fleet_role === "FLEET_OFFICER") {
@@ -117,12 +117,12 @@ async function canUserManageDrivers(userId: string): Promise<boolean> {
 
     const { data: fua } = await supabaseAdmin
       .from("fleet_user_access")
-      .select("can_manage_drivers, fleet_role, is_module_enabled")
+      .select("can_manage_drivers, fleet_role")
       .eq("user_id", userId)
       .maybeSingle();
 
     if (fua) {
-      if (fua.is_module_enabled === false || fua.fleet_role === "NONE") {
+      if (fua.fleet_role === "NONE") {
         return false;
       }
       if (fua.can_manage_drivers || fua.fleet_role === "FLEET_ADMIN" || fua.fleet_role === "FLEET_DISPATCHER" || fua.fleet_role === "FLEET_MANAGER" || fua.fleet_role === "FLEET_OFFICER") {
@@ -151,12 +151,12 @@ async function canUserManageTrips(userId: string): Promise<boolean> {
 
     const { data: fua } = await supabaseAdmin
       .from("fleet_user_access")
-      .select("can_dispatch_trips, fleet_role, is_module_enabled")
+      .select("can_dispatch_trips, fleet_role")
       .eq("user_id", userId)
       .maybeSingle();
 
     if (fua) {
-      if (fua.is_module_enabled === false || fua.fleet_role === "NONE") {
+      if (fua.fleet_role === "NONE") {
         return false;
       }
       if (fua.can_dispatch_trips || fua.fleet_role === "FLEET_ADMIN" || fua.fleet_role === "FLEET_DISPATCHER" || fua.fleet_role === "FLEET_MANAGER" || fua.fleet_role === "FLEET_OFFICER") {
@@ -2851,8 +2851,8 @@ export async function updateVehicleAction(
             .insert({
               vehicle_id: id,
               driver_id: targetDriverId,
-              start_date: new Date().toISOString(),
-              assigned_by: (user.user_metadata?.full_name as string) || user.email || "Fleet Manager"
+              assigned_from: new Date().toISOString(),
+              assignment_type: "MANUAL"
             });
         }
       }
@@ -6309,7 +6309,7 @@ export async function runFleetComplianceExpiryAuditAction(): Promise<{
   try {
     const { data: vehicles, error: vErr } = await supabaseAdmin
       .from("vehicles")
-      .select("id, registration_number, make, model, fuel_type, rto_office, insurance_vendor, insurance_policy_number, insurance_expiry_date, puc_expiry_date, fitness_expiry_date, assigned_driver_id, odometer_km, owner_id");
+      .select("id, registration_number, make, model, fuel_type, rto_office, insurance_vendor, insurance_policy_number, insurance_expiry_date, puc_expiry_date, fitness_expiry_date, odometer_km, owner_id");
 
     if (vErr) throw vErr;
 

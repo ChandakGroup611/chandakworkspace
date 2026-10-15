@@ -152,27 +152,48 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
 
     if (!attachment) {
       try {
-        let { data: dmsDoc } = await supabaseAdmin
-          .from('dms_documents')
-          .select('id, title, original_file_name, mime_type, storage_key')
+        let dmsDoc: any = null;
+        // First check if id is a version id
+        const { data: dmsVer } = await supabaseAdmin
+          .from('dms_document_versions')
+          .select('id, file_name, mime_type, storage_key, document_id')
           .eq('id', id)
           .maybeSingle();
 
-        if (!dmsDoc) {
-          const { data: dmsVer } = await supabaseAdmin
-            .from('dms_document_versions')
-            .select('id, file_name, mime_type, storage_key, document_id')
+        if (dmsVer) {
+          dmsDoc = {
+            id: dmsVer.id,
+            title: dmsVer.file_name,
+            original_file_name: dmsVer.file_name,
+            mime_type: dmsVer.mime_type,
+            storage_key: dmsVer.storage_key
+          };
+        } else {
+          // Check if id is a root document id
+          const { data: rootDoc } = await supabaseAdmin
+            .from('dms_documents')
+            .select('id, title, original_file_name, current_version_no')
             .eq('id', id)
             .maybeSingle();
 
-          if (dmsVer) {
-            dmsDoc = {
-              id: dmsVer.id,
-              title: dmsVer.file_name,
-              original_file_name: dmsVer.file_name,
-              mime_type: dmsVer.mime_type,
-              storage_key: dmsVer.storage_key
-            };
+          if (rootDoc) {
+            const { data: latestVer } = await supabaseAdmin
+              .from('dms_document_versions')
+              .select('id, file_name, mime_type, storage_key')
+              .eq('document_id', rootDoc.id)
+              .order('version_no', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            if (latestVer) {
+              dmsDoc = {
+                id: rootDoc.id,
+                title: rootDoc.title,
+                original_file_name: rootDoc.original_file_name || latestVer.file_name,
+                mime_type: latestVer.mime_type,
+                storage_key: latestVer.storage_key
+              };
+            }
           }
         }
 

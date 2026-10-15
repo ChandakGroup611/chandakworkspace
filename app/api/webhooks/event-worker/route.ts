@@ -97,11 +97,15 @@ export async function POST(req: Request) {
       }
 
       // 3. Mark as COMPLETED
+      const updatedPayload = typeof event.payload === 'object' && event.payload !== null 
+        ? { ...event.payload, processed_at: new Date().toISOString() } 
+        : { raw: event.payload, processed_at: new Date().toISOString() };
+
       await supabase
         .from('event_queue')
         .update({ 
-          status: 'COMPLETED', 
-          processed_at: new Date().toISOString() 
+          status: 'COMPLETED',
+          payload: updatedPayload
         })
         .eq('id', event.id);
 
@@ -109,15 +113,17 @@ export async function POST(req: Request) {
 
     } catch (workerError: any) {
       // 4. Handle Retries / Dead Letter / Backoff
-      const newRetryCount = event.retry_count + 1;
-      const newStatus = newRetryCount >= 5 ? 'FAILED' : 'PENDING'; // 5 max retries
+      const currentRetry = (event.payload?.retry_count || 0) + 1;
+      const newStatus = currentRetry >= 5 ? 'FAILED' : 'PENDING'; // 5 max retries
+      const failPayload = typeof event.payload === 'object' && event.payload !== null
+        ? { ...event.payload, retry_count: currentRetry, failed_reason: workerError.message || 'Unknown error' }
+        : { raw: event.payload, retry_count: currentRetry, failed_reason: workerError.message || 'Unknown error' };
       
       await supabase
         .from('event_queue')
         .update({ 
           status: newStatus,
-          retry_count: newRetryCount,
-          failed_reason: workerError.message || 'Unknown error'
+          payload: failPayload
         })
         .eq('id', event.id);
 

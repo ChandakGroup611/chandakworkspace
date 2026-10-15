@@ -177,8 +177,13 @@ export class LifecycleManager {
 
     await supabaseAdmin.from('tasks').update(payload).eq('id', taskId);
     await supabaseAdmin.from('tasks').update(payload).eq('parent_task_id', taskId).eq('is_deleted', false);
-    await supabaseAdmin.from('task_participants').update(payload).eq('task_id', taskId).eq('is_deleted', false);
-    await supabaseAdmin.from('requirements').update(payload).eq('task_id', taskId).eq('is_deleted', false);
+
+    // Find any requirement linked to this task via requirement_tasks
+    const { data: reqLinks } = await supabaseAdmin.from('requirement_tasks').select('requirement_id').eq('task_id', taskId);
+    if (reqLinks && reqLinks.length > 0) {
+      const reqIds = reqLinks.map(r => r.requirement_id);
+      await supabaseAdmin.from('requirements').update(payload).in('id', reqIds).eq('is_deleted', false);
+    }
   }
 
   private static async restoreWorkspaceBatch(batchId: string) {
@@ -191,7 +196,6 @@ export class LifecycleManager {
     await supabaseAdmin.from('workspaces').update(payload).eq('delete_batch_id', batchId);
     await supabaseAdmin.from('workspace_members').update(payload).eq('delete_batch_id', batchId);
     await supabaseAdmin.from('tasks').update(payload).eq('delete_batch_id', batchId);
-    await supabaseAdmin.from('task_participants').update(payload).eq('delete_batch_id', batchId);
     await supabaseAdmin.from('requirements').update(payload).eq('delete_batch_id', batchId);
   }
 
@@ -203,7 +207,6 @@ export class LifecycleManager {
       deleted_at: null
     };
     await supabaseAdmin.from('tasks').update(payload).eq('delete_batch_id', batchId);
-    await supabaseAdmin.from('task_participants').update(payload).eq('delete_batch_id', batchId);
     await supabaseAdmin.from('requirements').update(payload).eq('delete_batch_id', batchId);
   }
 }

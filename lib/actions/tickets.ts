@@ -221,7 +221,7 @@ export async function updateTicketDetails(ticketId: string, payload: {
           message: `Ticket ${data.code} has been assigned to you.`,
           ticket_id: data.id
         },
-        status: 'pending'
+        is_read: false
       });
     }
 
@@ -237,7 +237,7 @@ export async function updateTicketDetails(ticketId: string, payload: {
               message: `Your ticket ${data.code} has been marked as ${statusData.status_name}.`,
               ticket_id: data.id
             },
-            status: 'pending'
+            is_read: false
           });
         }
       }
@@ -673,7 +673,7 @@ export async function createEnterpriseTicket(payload: any) {
               message: `New Requirement auto-generated from Ticket ${ticket.code}`,
               requirement_id: req.id
             },
-            status: 'pending'
+            is_read: false
           });
         }
       } catch (e) {

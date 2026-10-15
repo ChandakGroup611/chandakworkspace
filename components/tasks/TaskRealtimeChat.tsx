@@ -64,7 +64,7 @@ export default function TaskRealtimeChat({ taskId }: { taskId: string }) {
         const { data: members } = await supabase.from('workspace_members').select('user_id').eq('workspace_id', taskData.workspace_id);
         
         // Also fetch SUPER_ADMIN users so they can be mentioned globally
-        const { data: superAdminRole } = await supabase.from('role_master').select('id').eq('role_code', 'SUPER_ADMIN').single();
+        const { data: superAdminRole } = await supabase.from('roles').select('id').eq('code', 'SUPER_ADMIN').maybeSingle();
         const { data: superAdmins } = superAdminRole ? await supabase.from('user_master').select('id').eq('role_id', superAdminRole.id) : { data: [] };
 
         const memberUids = members ? members.map(m => m.user_id) : [];

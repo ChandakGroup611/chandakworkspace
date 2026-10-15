@@ -7,7 +7,7 @@ export async function fetchDashboardAnalytics(userId: string) {
   // 1. Fetch scoped raw data strictly using Authorization Repository layer
   const [tickets, tasks, requirements] = await Promise.all([
     getVisibleTickets(userId, 'id, created_at, assignee_id, status:status_master!inner(is_closed), priority:priority_master(sla_target_minutes)'),
-    getVisibleTasks(userId, 'id, status:status_master!inner(is_closed), assignees:task_assignees(user_id)'),
+    getVisibleTasks(userId, 'id, assigned_to, status:status_master!inner(is_closed), participants:task_participants(user_id)'),
     getVisibleRequirements(userId, 'id, assigned_analyst_id, completion_percentage, status:status_master!inner(is_closed, status_name)')
   ]);
 
@@ -44,7 +44,7 @@ export async function fetchDashboardAnalytics(userId: string) {
   const myWorkload = {
     active_tickets: tickets.filter((t: any) => t.assignee_id === userId && !t.status?.is_closed).length,
     active_tasks: tasks.filter((t: any) => 
-      t.assignees?.some((a: any) => a.user_id === userId) && !t.status?.is_closed
+      (t.assigned_to === userId || t.participants?.some((a: any) => a.user_id === userId)) && !t.status?.is_closed
     ).length,
     active_requirements: requirements.filter((r: any) => r.assigned_analyst_id === userId && !r.status?.is_closed).length,
   };

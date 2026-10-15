@@ -38,7 +38,7 @@ export function useStatuses() {
       // Direct DB call, relying on PostgREST cache if we don't have a Server Action for it yet
       const { data } = await supabase
         .from("status_master")
-        .select("id, status_name, status_code, category")
+        .select("id, status_name, status_code, module")
         .eq("is_active", true)
         .eq("is_deleted", false);
       return data || [];
@@ -56,7 +56,7 @@ export function useWorkspaceMembers(userId: string | null) {
       if (!userId) return [];
       const { data } = await supabase
         .from("workspace_members")
-        .select("workspace_id, workspaces(name, status_id)")
+        .select("workspace_id, workspaces(workspace_name, status_id)")
         .eq("user_id", userId);
       return data || [];
     },

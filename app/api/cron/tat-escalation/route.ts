@@ -13,17 +13,23 @@ export async function GET(request: Request) {
     // }
 
     // 1. Fetch pending requirements that might be overdue
-    // We assume SLA is 7 days for requirements from creation if current_stage != 'Closed'
-    // This is a simple logic engine, in production SLA could be dynamic per req type.
-    const { data: requirements, error: fetchErr } = await supabaseAdmin
+    // SLA is 7 days for requirements from creation if not closed or approved
+    const { data: rawReqs, error: fetchErr } = await supabaseAdmin
       .from('requirements')
-      .select('id, created_at, current_stage, tat_status, approval_status, current_assignee_id')
-      .neq('current_stage', 'Closed')
+      .select('id, created_at, tat_status, approval_status, current_assignee_id, status:status_master!status_id(status_name, is_closed)')
       .neq('approval_status', 'Approved')
-      .neq('tat_status', 'Overdue'); // Only check those not already flagged
+      .neq('tat_status', 'Overdue')
+      .eq('is_deleted', false);
 
     if (fetchErr) throw fetchErr;
-    if (!requirements || requirements.length === 0) {
+
+    const requirements = (rawReqs || []).filter(r => {
+      const s = r.status as any;
+      const isClosed = s?.is_closed === true || s?.status_name?.toLowerCase().includes('close');
+      return !isClosed;
+    });
+
+    if (requirements.length === 0) {
       return NextResponse.json({ success: true, message: 'No requirements to escalate', processed: 0 });
     }
 

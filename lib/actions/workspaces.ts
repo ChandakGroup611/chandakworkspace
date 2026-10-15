@@ -46,19 +46,20 @@ export async function fetchEnrolledWorkspaces() {
     workspaces = ws || [];
   }
 
-  // Fetch sub-workspaces the user is explicitly a member of
-  const { data: swMembers } = await supabaseAdmin.from("sub_workspace_members").select("sub_workspace_id").eq("user_id", user.id);
-  const swIds = swMembers?.map(m => m.sub_workspace_id) || [];
-  
+  // Fetch sub-workspaces where parent_workspace_id is not null that the user has access to
   let subWorkspaces: any[] = [];
-  if (swIds.length > 0) {
+  if (wsIds.length > 0) {
     const { data: sw } = await supabaseAdmin
-      .from('sub_workspaces')
-      .select('*, status:status_master!sub_workspaces_status_id_fkey(status_name, status_color)')
-      .in('id', swIds)
+      .from('workspaces')
+      .select('*, status:status_master!workspaces_status_id_fkey(status_name, status_color), company:company_master(company_name)')
+      .in('id', wsIds)
+      .not('parent_workspace_id', 'is', null)
       .eq('is_deleted', false);
     subWorkspaces = sw || [];
   }
+
+  // Filter root workspaces to those where parent_workspace_id is null
+  workspaces = workspaces.filter(w => !w.parent_workspace_id);
 
   return { workspaces, subWorkspaces };
 }
@@ -300,6 +301,7 @@ export async function createWorkspace(formData: any) {
           entity_id: data.id,
           triggering_user_id: userId,
           assigned_to: assigneeId,
+          workspace_owner_id: userId,
           workspace_name: data.workspace_name,
           workspace_code: data.workspace_code,
           type: isSub ? 'Sub-Workspace' : 'Workspace',
@@ -309,6 +311,17 @@ export async function createWorkspace(formData: any) {
         console.error("Failed to dispatch notification to", assigneeId, e);
       }
     });
+
+    // Also queue Workspace Created event (for Workspace Owner or Creator)
+    queueBusinessEvent("Workspace", "Created", {
+      entity_id: data.id,
+      triggering_user_id: userId,
+      workspace_owner_id: userId,
+      workspace_name: data.workspace_name,
+      workspace_code: data.workspace_code,
+      type: !!formData.parent_workspace_id ? 'Sub-Workspace' : 'Workspace',
+      link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/workspaces`
+    }).catch(e => console.error("[createWorkspace] Workspace Created queue push failed", e));
 
     // Fire and forget so we don't block the UI response
     Promise.all(notifications).catch(console.error);
@@ -1212,10 +1225,33 @@ export async function updateWorkspace(id: string, formData: any) {
         {
           workspace_name: data.workspace_name,
           workspace_code: data.workspace_code,
-          type: isSub ? 'Sub-Workspace' : 'Workspace'
+          type: isSub ? 'Sub-Workspace' : 'Workspace',
+          _disableEmail: true
         }
       );
+
+      queueBusinessEvent("Workspace", "Assigned", {
+        entity_id: data.id,
+        triggering_user_id: userId,
+        assigned_to: assigneeId,
+        workspace_owner_id: data.workspace_owner_id || userId,
+        workspace_name: data.workspace_name,
+        workspace_code: data.workspace_code,
+        type: isSub ? 'Sub-Workspace' : 'Workspace',
+        link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/workspaces`
+      }).catch(e => console.error("[updateWorkspace] Workspace Assigned queue push failed", e));
     }
+
+    // Queue Workspace Updated event
+    queueBusinessEvent("Workspace", "Updated", {
+      entity_id: data.id,
+      triggering_user_id: userId,
+      workspace_owner_id: data.workspace_owner_id || userId,
+      workspace_name: data.workspace_name,
+      workspace_code: data.workspace_code,
+      type: !!formData.parent_workspace_id ? 'Sub-Workspace' : 'Workspace',
+      link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/workspaces`
+    }).catch(e => console.error("[updateWorkspace] Workspace Updated queue push failed", e));
   }
 
   revalidatePath("/workspaces");
@@ -1646,12 +1682,11 @@ export async function toggleChecklistItem(itemId: string, completed: boolean) {
 }
 
 export async function updateTaskProgress(taskId: string, progress: number) {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  
-  const { error } = await supabase
-    .from("workspace_tasks")
-    .update({ progress_percentage: progress })
+  const { data: task } = await supabaseAdmin.from("tasks").select("custom_fields").eq("id", taskId).single();
+  const customFields = task?.custom_fields && typeof task.custom_fields === 'object' ? task.custom_fields : {};
+  const { error } = await supabaseAdmin
+    .from("tasks")
+    .update({ custom_fields: { ...customFields, progress_percentage: progress } })
     .eq("id", taskId);
   
   if (error) throw new Error("Failed to update task progress");

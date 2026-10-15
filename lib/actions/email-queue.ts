@@ -8,34 +8,15 @@ export async function processEmailQueueAsync() {
     }
     
     // 1. Fetch pending queue items (Limit to 10 for batch processing)
-    // We try to exclude FAILED items. If 'status' column doesn't exist, we'll fall back to just is_sent = false
-    let queueItems: any = null;
-    let fetchErr: any = null;
-    
-    const { data: dataWithStatus, error: errWithStatus } = await supabaseAdmin
+    const { data: queueItems, error: fetchErr } = await supabaseAdmin
       .from("email_queue")
       .select("*")
       .eq("is_sent", false)
-      .neq("status", "FAILED")
       .order("created_at", { ascending: true })
       .limit(10);
 
-    if (errWithStatus && errWithStatus.code === '42703') { // undefined_column
-       const { data: dataFallback, error: errFallback } = await supabaseAdmin
-        .from("email_queue")
-        .select("*")
-        .eq("is_sent", false)
-        .order("created_at", { ascending: true })
-        .limit(10);
-       queueItems = dataFallback;
-       fetchErr = errFallback;
-    } else {
-       queueItems = dataWithStatus;
-       fetchErr = errWithStatus;
-    }
-
     if (fetchErr) {
-       console.error("Fetch Error:", fetchErr);
+       console.error("[Queue Processor] Fetch Error:", fetchErr);
        return;
     }
 
@@ -124,29 +105,20 @@ export async function processEmailQueueAsync() {
     }
 
     // If there are more pending, trigger itself recursively
-    let pendingCount = 0;
-    
-    const { count: countWithStatus, error: countErrWithStatus } = await supabaseAdmin
+    const { count: rawPendingCount } = await supabaseAdmin
       .from("email_queue")
       .select("*", { count: 'exact', head: true })
-      .eq("is_sent", false)
-      .neq("status", "FAILED");
-
-    if (countErrWithStatus && countErrWithStatus.code === '42703') {
-       const { count: fallbackCount } = await supabaseAdmin
-         .from("email_queue")
-         .select("*", { count: 'exact', head: true })
-         .eq("is_sent", false);
-       pendingCount = fallbackCount || 0;
-    } else {
-       pendingCount = countWithStatus || 0;
-    }
+      .eq("is_sent", false);
+    const pendingCount = rawPendingCount || 0;
       
     if (pendingCount > 0) {
       // Background recursive call
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         processEmailQueueAsync().catch(console.error);
       }, 2000);
+      if (timer && typeof timer.unref === 'function') {
+        timer.unref();
+      }
     }
   } catch (error: any) {
     console.error("[Queue Processor] Fatal Error:", error);

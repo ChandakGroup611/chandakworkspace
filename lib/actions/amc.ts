@@ -79,7 +79,7 @@ export async function deleteAMCEntity(tableName: string, id: string, hardDelete 
     const { data: activeTx } = await supabaseAdmin.from('amc_transactions').select('id').eq('amc_id', id).eq('is_deleted', false).limit(1);
     if (activeTx && activeTx.length > 0) return { success: false, error: "Cannot delete AMC because it has active transactions." };
     
-    const { data: activeInv } = await supabaseAdmin.from('amc_invoices').select('id').eq('amc_id', id).eq('is_deleted', false).limit(1);
+    const { data: activeInv } = await supabaseAdmin.from('amc_invoices').select('id').eq('amc_id', id).limit(1);
     if (activeInv && activeInv.length > 0) return { success: false, error: "Cannot delete AMC because it has active invoices." };
   }
 

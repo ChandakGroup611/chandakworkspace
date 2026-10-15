@@ -24,10 +24,7 @@ export async function saveSystemEmailConfig(payload: any) {
   if (existing?.id) {
     const { error } = await supabaseAdmin
       .from("system_email_config")
-      .update({
-        ...payload,
-        updated_at: new Date().toISOString()
-      })
+      .update(payload)
       .eq("id", existing.id);
     if (error) throw new Error("Failed to update configuration.");
   } else {
@@ -127,29 +124,33 @@ export async function previewEmailTemplate(moduleName: string, htmlBody: string)
 
   try {
     if (moduleName === "Task") {
-      const { data } = await supabaseAdmin.from("tasks").select("id, title, status_master(name), priority_master(name), end_date, creator:user_master!tasks_created_by_fkey(full_name)").limit(1).single();
+      const { data } = await supabaseAdmin.from("tasks").select("id, subject, status_master(status_name), priority_master(priority_name), end_date, creator:user_master!tasks_created_by_fkey(full_name)").limit(1).single();
       if (data) {
         const d = data as any;
+        const statusName = d.status_master?.status_name || (Array.isArray(d.status_master) && d.status_master[0]?.status_name) || "In Progress";
+        const priorityName = d.priority_master?.priority_name || (Array.isArray(d.priority_master) && d.priority_master[0]?.priority_name) || "High";
         sampleData = {
           ...sampleData,
-          task_name: d.title || sampleData.task_name,
-          status: d.status_master?.name || (Array.isArray(d.status_master) && d.status_master[0]?.name) || "In Progress",
-          priority: d.priority_master?.name || (Array.isArray(d.priority_master) && d.priority_master[0]?.name) || "High",
+          task_name: d.subject || sampleData.task_name,
+          status: statusName,
+          priority: priorityName,
           creator_name: d.creator?.full_name || (Array.isArray(d.creator) && d.creator[0]?.full_name) || "Adil Kazi",
           due_date: d.end_date || sampleData.due_date,
           link: `/tasks/${d.id}`
         };
       }
     } else if (moduleName === "Ticket") {
-      const { data } = await supabaseAdmin.from("tickets").select("id, ticket_number, title, status_master(name), priority_master(name), creator:user_master!tickets_created_by_fkey(full_name)").limit(1).single();
+      const { data } = await supabaseAdmin.from("tickets").select("id, code, title, status_master(status_name), priority_master(priority_name), creator:user_master!tickets_creator_id_fkey(full_name)").limit(1).single();
       if (data) {
         const d = data as any;
+        const statusName = d.status_master?.status_name || (Array.isArray(d.status_master) && d.status_master[0]?.status_name) || "Open";
+        const priorityName = d.priority_master?.priority_name || (Array.isArray(d.priority_master) && d.priority_master[0]?.priority_name) || "Normal";
         sampleData = {
           ...sampleData,
-          ticket_no: d.ticket_number || sampleData.ticket_no,
+          ticket_no: d.code || sampleData.ticket_no,
           ticket_title: d.title || sampleData.ticket_title,
-          status: d.status_master?.name || (Array.isArray(d.status_master) && d.status_master[0]?.name) || "Open",
-          priority: d.priority_master?.name || (Array.isArray(d.priority_master) && d.priority_master[0]?.name) || "Normal",
+          status: statusName,
+          priority: priorityName,
           creator_name: d.creator?.full_name || (Array.isArray(d.creator) && d.creator[0]?.full_name) || "Adil Kazi",
           link: `/tickets/${d.id}`
         };

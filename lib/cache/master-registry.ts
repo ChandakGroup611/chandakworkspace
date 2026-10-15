@@ -54,7 +54,7 @@ export const getStatuses = unstable_cache(
     const supabase = getAdminSupabase();
     const { data, error } = await supabase
       .from("status_master")
-      .select("id, name:status_name, code:status_code, category")
+      .select("id, name:status_name, code:status_code, category:module, module")
       .eq("is_active", true)
       .eq("is_deleted", false)
       .order("status_name", { ascending: true });

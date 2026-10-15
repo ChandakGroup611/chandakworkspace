@@ -78,7 +78,6 @@ export default function AMCReportsPage() {
       const { data: invData } = await supabase
         .from('amc_invoices')
         .select('*, software_amc:amc_id(software_name)')
-        .eq('is_deleted', false)
         .order('due_date', { ascending: true });
 
       setAmcList(amcs || []);

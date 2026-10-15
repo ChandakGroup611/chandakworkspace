@@ -254,13 +254,6 @@ export async function reassignAndRemoveWorkspaceUser(
         .delete()
         .in("task_id", allWsTaskIds)
         .eq("user_id", oldUserId);
-
-      // Reassign Checklist items
-      await supabaseAdmin
-        .from("task_checklists")
-        .update({ assignee_id: newUserId })
-        .in("task_id", allWsTaskIds)
-        .eq("assignee_id", oldUserId);
     }
 
     // 4. Reassign Sub-workspace ownership
@@ -324,7 +317,7 @@ export async function checkTaskUserDependencies(taskId: string, userIds: string[
   // 2. Check Checklists
   const { data: checklists } = await supabaseAdmin
     .from("task_checklists")
-    .select("id, label, assignee_id")
+    .select("id, label, completed_by")
     .eq("task_id", taskId);
 
   for (const userId of userIds) {
@@ -345,13 +338,6 @@ export async function checkTaskUserDependencies(taskId: string, userIds: string[
             watcherItems.push(`Sub-Task: "${subTaskName}" (Watcher)`);
           }
         }
-      }
-    });
-
-    // Evaluate Checklists
-    checklists?.forEach(cl => {
-      if (cl.assignee_id === userId) {
-        blockingItems.push(`Checklist Item: "${cl.label}"`);
       }
     });
 

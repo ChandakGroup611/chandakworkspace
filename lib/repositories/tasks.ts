@@ -9,8 +9,8 @@ export async function getVisibleTasks(userId: string, customSelect?: string) {
       status:status_master(status_name, status_color, status_order, is_closed),
       priority:priority_master(priority_name, priority_color, min_sla_hours, max_sla_hours, warning_sla_hours, sla_start_from),
       creator:user_master!created_by(full_name, profile_photo),
-      assignees:task_assignees(user:user_master!user_id(full_name)),
-      teams:task_teams(team:teams!team_id(team_name)),
+      assigned_user:user_master!assigned_to(full_name, profile_photo),
+      participants:task_participants(user:user_master(full_name), participation_role),
       workspace:workspaces(workspace_name)
   `;
 
@@ -21,35 +21,17 @@ export async function getVisibleTasks(userId: string, customSelect?: string) {
     .order('created_at', { ascending: false });
 
   if (!canViewAll) {
-    let orFilters = [`created_by.eq.${userId}`];
+    let orFilters = [`created_by.eq.${userId}`, `assigned_to.eq.${userId}`];
     let taskIds: string[] = [];
 
-    // 1. Direct assignments
-    const { data: assignments } = await supabaseAdmin
-      .from('task_assignees')
+    // 1. Direct assignments & participant roles
+    const { data: participants } = await supabaseAdmin
+      .from('task_participants')
       .select('task_id')
-      .eq('user_id', userId)
-      .eq('is_deleted', false);
-    if (assignments) taskIds.push(...assignments.map(a => a.task_id));
+      .eq('user_id', userId);
+    if (participants) taskIds.push(...participants.map(a => a.task_id));
 
-    // 2. Team assignments
-    const { data: userTeams } = await supabaseAdmin
-      .from('team_members')
-      .select('team_id')
-      .eq('user_id', userId)
-      .eq('is_deleted', false);
-
-    if (userTeams && userTeams.length > 0) {
-      const teamIds = userTeams.map(t => t.team_id);
-      const { data: teamAssignments } = await supabaseAdmin
-        .from('task_teams')
-        .select('task_id')
-        .in('team_id', teamIds)
-        .eq('is_deleted', false);
-      if (teamAssignments) taskIds.push(...teamAssignments.map(t => t.task_id));
-    }
-
-    // 3. Watchers
+    // 2. Watchers
     const { data: watchers } = await supabaseAdmin
       .from('task_watchers')
       .select('task_id')
@@ -57,7 +39,7 @@ export async function getVisibleTasks(userId: string, customSelect?: string) {
       .eq('is_deleted', false);
     if (watchers) taskIds.push(...watchers.map(w => w.task_id));
 
-    // 4. Workspace membership implies visibility of tasks within workspace
+    // 3. Workspace membership implies visibility of tasks within workspace
     const { data: workspaceMemberships } = await supabaseAdmin
       .from('workspace_members')
       .select('workspace_id')
@@ -65,17 +47,6 @@ export async function getVisibleTasks(userId: string, customSelect?: string) {
       .eq('is_deleted', false);
 
     let workspaceIds: string[] = workspaceMemberships?.map(w => w.workspace_id) || [];
-
-    // Check workspace teams as well
-    if (userTeams && userTeams.length > 0) {
-      const teamIds = userTeams.map(t => t.team_id);
-      const { data: workspaceTeams } = await supabaseAdmin
-        .from('workspace_teams')
-        .select('workspace_id')
-        .in('team_id', teamIds)
-        .eq('is_deleted', false);
-      if (workspaceTeams) workspaceIds.push(...workspaceTeams.map(w => w.workspace_id));
-    }
 
     // Add manager logic: managers can see tasks created by or assigned to subordinates
     const { data: subordinates } = await supabaseAdmin
@@ -88,14 +59,14 @@ export async function getVisibleTasks(userId: string, customSelect?: string) {
       const subIds = subordinates.map(s => s.id);
       const subIdsStr = subIds.join(',');
       orFilters.push(`created_by.in.(${subIdsStr})`);
+      orFilters.push(`assigned_to.in.(${subIdsStr})`);
 
-      // Subordinate assignments
-      const { data: subAssigns } = await supabaseAdmin
-        .from('task_assignees')
+      // Subordinate participant tasks
+      const { data: subParts } = await supabaseAdmin
+        .from('task_participants')
         .select('task_id')
-        .in('user_id', subIds)
-        .eq('is_deleted', false);
-      if (subAssigns) taskIds.push(...subAssigns.map(a => a.task_id));
+        .in('user_id', subIds);
+      if (subParts) taskIds.push(...subParts.map(a => a.task_id));
     }
 
     if (taskIds.length > 0) {

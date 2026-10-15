@@ -1,5 +1,11 @@
 # Agent Rules
 
+## Permanent AI Development Governance, Functionality Preservation & Release Control
+
+The 21-point Governance Protocol in [.agents/rules/release_governance.md](file:///d:/adios/.agents/rules/release_governance.md) is MANDATORY and BINDING on all actions.
+Every task lifecycle strictly requires:
+`INSPECT → BASELINE → ANALYZE IMPACT → PLAN → IMPLEMENT → SYNCHRONIZE DEPENDENCIES → TEST → REGRESSION TEST → REVIEW SOURCE → BUILD → VERIFY RELEASE → DEPLOY IF APPROVED → VERIFY DEPLOYMENT → REPORT EVIDENCE`.
+
 ## Strict Logic and Schema Verification
 
 You will ALWAYS double-check the logic of the fields, database columns, and code paths you are modifying. Before pushing code or making definitive statements, you must verify against the live schema or active codebase to ensure what you are doing is absolutely correct and not based on assumptions.

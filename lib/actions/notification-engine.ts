@@ -9,13 +9,32 @@ type NotificationPayload = {
 
 export async function queueBusinessEvent(moduleName: string, eventName: string, payload: NotificationPayload) {
   try {
-    // 1. Fetch active rules for this event
-    const { data: rules } = await supabaseAdmin
+    // 1. Fetch active rules for this event (with fallback between Created and Assigned)
+    let { data: rules } = await supabaseAdmin
       .from("notification_rules")
       .select("*")
-      .eq("module", moduleName)
-      .eq("event", eventName)
+      .ilike("module", moduleName)
+      .ilike("event", eventName)
       .eq("is_active", true);
+
+    if (!rules || rules.length === 0) {
+      let fallbackEvent: string | null = null;
+      if (eventName === "Created") fallbackEvent = "Assigned";
+      else if (eventName === "Assigned") fallbackEvent = "Created";
+      else if (eventName === "Assigned (Primary)") fallbackEvent = "Assigned";
+
+      if (fallbackEvent) {
+        const { data: fbRules } = await supabaseAdmin
+          .from("notification_rules")
+          .select("*")
+          .ilike("module", moduleName)
+          .ilike("event", fallbackEvent)
+          .eq("is_active", true);
+        if (fbRules && fbRules.length > 0) {
+          rules = fbRules;
+        }
+      }
+    }
 
     if (!rules || rules.length === 0) return;
 
@@ -26,8 +45,8 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
 
     if (matchedRules.length === 0) return;
 
-    // 2. Fetch the active template for this event (or fallback to dynamic engine)
-    const { data: templates } = await supabaseAdmin
+    // 2. Fetch the active template for this event (with fallback between Created and Assigned)
+    let { data: templates } = await supabaseAdmin
       .from("email_templates")
       .select("*")
       .ilike("module", moduleName)
@@ -36,7 +55,28 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
       .order("created_at", { ascending: false })
       .limit(1);
 
-    const template = templates && templates.length > 0 ? templates[0] : null;
+    let template = templates && templates.length > 0 ? templates[0] : null;
+
+    if (!template) {
+      let fallbackEvent: string | null = null;
+      if (eventName === "Created") fallbackEvent = "Assigned";
+      else if (eventName === "Assigned") fallbackEvent = "Created";
+      else if (eventName === "Assigned (Primary)") fallbackEvent = "Assigned";
+
+      if (fallbackEvent) {
+        const { data: fbTemplates } = await supabaseAdmin
+          .from("email_templates")
+          .select("*")
+          .ilike("module", moduleName)
+          .ilike("event", fallbackEvent)
+          .eq("is_active", true)
+          .order("created_at", { ascending: false })
+          .limit(1);
+        if (fbTemplates && fbTemplates.length > 0) {
+          template = fbTemplates[0];
+        }
+      }
+    }
 
     // 3. Resolve all recipients across all matched rules
     const recipientUserIds = new Set<string>();
@@ -49,8 +89,20 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
       }
     }
 
-    // Don't send to the person who triggered the event (unless explicitly debugging)
-    recipientUserIds.delete(payload.triggering_user_id);
+    // Suppress triggering user only for collaborative actions (e.g., Comment Added, Status Changed, Updated)
+    // where the actor is already aware of their action, UNLESS the rule explicitly targets them (e.g. Creator on Created event)
+    const isCreationOrAssignmentEvent = eventName.toLowerCase().includes('create') || 
+                                        eventName.toLowerCase().includes('assign') || 
+                                        eventName.toLowerCase().includes('enrolled');
+    
+    const rulesTargetCreator = matchedRules.some(r => {
+      const types = (r.recipient_type || []) as string[];
+      return types.includes("Creator") || types.includes("Workspace Owner") || types.includes("Requester");
+    });
+
+    if (!isCreationOrAssignmentEvent && !rulesTargetCreator && payload.triggering_user_id) {
+      recipientUserIds.delete(payload.triggering_user_id);
+    }
 
     if (recipientUserIds.size === 0) return;
 
@@ -133,12 +185,11 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
         recipient_email: user.email,
         subject: subject,
         body_template: finalHtmlBody,
-        html_body: finalHtmlBody,
         is_sent: false
       };
     });
 
-    // 6. Async Batch Insert into Queue
+    // 6. Async Batch Insert into Queue (valid columns only)
     const { error } = await supabaseAdmin.from("email_queue").insert(queueInserts);
     
     if (error) {
@@ -176,7 +227,7 @@ async function autoHydratePayload(payload: any, moduleName?: string) {
     try {
       const { data: task } = await supabaseAdmin
         .from('tasks')
-        .select('subject, priority_id, status_id, end_date, assigned_to, creator_id, workspace_id')
+        .select('subject, priority_id, status_id, end_date, assigned_to, created_by, workspace_id, parent_task_id')
         .eq('id', payload.entity_id)
         .maybeSingle();
 
@@ -186,22 +237,44 @@ async function autoHydratePayload(payload: any, moduleName?: string) {
         if (!hydrated.status && task.status_id) hydrated.status = task.status_id;
         if (!hydrated.due_date && task.end_date) hydrated.due_date = task.end_date;
         if (!hydrated.assigned_to && task.assigned_to) hydrated.assigned_to = task.assigned_to;
+        if (!hydrated.created_by && task.created_by) hydrated.created_by = task.created_by;
         if (!hydrated.workspace_id && task.workspace_id) hydrated.workspace_id = task.workspace_id;
+
+        // Subtask enrichment
+        if (task.parent_task_id) {
+          hydrated.is_subtask = true;
+          hydrated.task_type = 'Subtask';
+          try {
+            const { data: parentTask } = await supabaseAdmin
+              .from('tasks')
+              .select('subject')
+              .eq('id', task.parent_task_id)
+              .maybeSingle();
+            if (parentTask?.subject) {
+              hydrated.parent_task_name = parentTask.subject;
+            }
+          } catch (e) {
+            // Ignore parent task lookup error
+          }
+        } else {
+          hydrated.is_subtask = false;
+          hydrated.task_type = 'Task';
+        }
 
         // Try to find if this task is linked to a requirement or ticket
         const { data: reqTask } = await supabaseAdmin
           .from('requirement_tasks')
-          .select('requirement_id, requirements(id, code, title, ticket_id)')
+          .select('requirement_id, requirements(id, code, title, source_ticket_id)')
           .eq('task_id', payload.entity_id)
           .maybeSingle();
 
         if (reqTask?.requirements) {
           const req = reqTask.requirements as any;
-          if (req.ticket_id) {
+          if (req.source_ticket_id) {
             const { data: ticket } = await supabaseAdmin
               .from('tickets')
               .select('code')
-              .eq('id', req.ticket_id)
+              .eq('id', req.source_ticket_id)
               .maybeSingle();
             if (ticket?.code) hydrated.ticket_no = ticket.code;
           } else if (req.code) {
@@ -219,13 +292,14 @@ async function autoHydratePayload(payload: any, moduleName?: string) {
     try {
       const { data: ws } = await supabaseAdmin
         .from('workspaces')
-        .select('workspace_name, workspace_code, owner_id')
+        .select('workspace_name, workspace_code, workspace_owner_id')
         .eq('id', payload.entity_id)
         .maybeSingle();
       if (ws) {
         if (!hydrated.workspace_name) hydrated.workspace_name = ws.workspace_name;
         if (!hydrated.workspace_code) hydrated.workspace_code = ws.workspace_code;
-        if (!hydrated.owner_id) hydrated.owner_id = ws.owner_id;
+        if (!hydrated.workspace_owner_id) hydrated.workspace_owner_id = ws.workspace_owner_id;
+        if (!hydrated.owner_id) hydrated.owner_id = ws.workspace_owner_id;
       }
     } catch (e) {
       console.error('[NotificationEngine] Workspace auto-enrichment failed', e);
@@ -237,7 +311,7 @@ async function autoHydratePayload(payload: any, moduleName?: string) {
     try {
       const { data: ticket } = await supabaseAdmin
         .from('tickets')
-        .select('code, title, priority_id, status_id, category_id, assignee_id, requester_id')
+        .select('code, title, priority_id, status_id, category_id, assignee_id, creator_id')
         .eq('id', payload.entity_id)
         .maybeSingle();
       if (ticket) {
@@ -247,7 +321,7 @@ async function autoHydratePayload(payload: any, moduleName?: string) {
         if (!hydrated.status) hydrated.status = ticket.status_id;
         if (!hydrated.category) hydrated.category = ticket.category_id;
         if (!hydrated.assigned_to && ticket.assignee_id) hydrated.assigned_to = ticket.assignee_id;
-        if (!hydrated.requester_id && ticket.requester_id) hydrated.requester_id = ticket.requester_id;
+        if (!hydrated.created_by && ticket.creator_id) hydrated.created_by = ticket.creator_id;
       }
     } catch (e) {
       console.error('[NotificationEngine] Ticket auto-enrichment failed', e);
@@ -259,7 +333,7 @@ async function autoHydratePayload(payload: any, moduleName?: string) {
     try {
       const { data: req } = await supabaseAdmin
         .from('requirements')
-        .select('code, title, approval_status, owner_id, requester_id, target_release_date')
+        .select('code, title, approval_status, owner_id, requester_id, due_date')
         .eq('id', payload.entity_id)
         .maybeSingle();
       if (req) {
@@ -268,7 +342,7 @@ async function autoHydratePayload(payload: any, moduleName?: string) {
         if (!hydrated.approval_status) hydrated.approval_status = req.approval_status;
         if (!hydrated.assigned_to && req.owner_id) hydrated.assigned_to = req.owner_id;
         if (!hydrated.requester_id && req.requester_id) hydrated.requester_id = req.requester_id;
-        if (!hydrated.due_date && req.target_release_date) hydrated.due_date = req.target_release_date;
+        if (!hydrated.due_date && req.due_date) hydrated.due_date = req.due_date;
       }
     } catch (e) {
       console.error('[NotificationEngine] Requirement auto-enrichment failed', e);
@@ -280,7 +354,7 @@ async function autoHydratePayload(payload: any, moduleName?: string) {
     try {
       const { data: veh } = await supabaseAdmin
         .from('vehicles')
-        .select('id, registration_number, make, model, fuel_type, rto_office, insurance_vendor, insurance_policy_number, insurance_expiry_date, puc_expiry_date, fitness_expiry_date, assigned_driver_id, odometer_km, owner_id')
+        .select('id, registration_number, make, model, fuel_type, rto_office, insurance_vendor, insurance_policy_number, insurance_expiry_date, puc_expiry_date, fitness_expiry_date, odometer_km, owner_id')
         .eq('id', payload.entity_id)
         .maybeSingle();
       if (veh) {
@@ -294,13 +368,13 @@ async function autoHydratePayload(payload: any, moduleName?: string) {
         if (!hydrated.fitness_expiry_date) hydrated.fitness_expiry_date = veh.fitness_expiry_date;
         if (!hydrated.odometer_km) hydrated.odometer_km = veh.odometer_km;
         if (!hydrated.owner_id && veh.owner_id) hydrated.owner_id = veh.owner_id;
-        if (veh.assigned_driver_id && !hydrated.assigned_driver_id) {
-          hydrated.assigned_driver_id = veh.assigned_driver_id;
-          const { data: drv } = await supabaseAdmin.from('drivers').select('full_name, phone').eq('id', veh.assigned_driver_id).maybeSingle();
-          if (drv) {
-            hydrated.driver_name = drv.full_name;
-            hydrated.driver_phone = drv.phone;
-          }
+        
+        // Fetch driver assigned to this vehicle
+        const { data: drv } = await supabaseAdmin.from('drivers').select('id, full_name, phone').eq('assigned_vehicle_id', veh.id).maybeSingle();
+        if (drv) {
+          if (!hydrated.assigned_driver_id) hydrated.assigned_driver_id = drv.id;
+          if (!hydrated.driver_name) hydrated.driver_name = drv.full_name;
+          if (!hydrated.driver_phone) hydrated.driver_phone = drv.phone;
         }
       }
     } catch (e) {
@@ -321,7 +395,7 @@ async function autoHydratePayload(payload: any, moduleName?: string) {
     'category_id': { table: 'ticket_categories', column: 'name' },
     'subcategory': { table: 'ticket_subcategories', column: 'name' },
     'subcategory_id': { table: 'ticket_subcategories', column: 'name' },
-    'workspace_id': { table: 'workspaces', column: 'name' },
+    'workspace_id': { table: 'workspaces', column: 'workspace_name' },
     'status': { table: 'status_master', column: 'status_name' },
     'status_id': { table: 'status_master', column: 'status_name' }
   };
@@ -382,20 +456,18 @@ async function resolveRecipientType(type: string, moduleName: string, payload: a
         ids.push(payload.creator_id);
       } else if (payload.entity_id) {
         if (moduleName === "Task") {
-          const { data } = await supabaseAdmin.from("tasks").select("created_by, creator_id").eq("id", payload.entity_id).maybeSingle();
+          const { data } = await supabaseAdmin.from("tasks").select("created_by").eq("id", payload.entity_id).maybeSingle();
           if (data?.created_by) ids.push(data.created_by);
-          else if (data?.creator_id) ids.push(data.creator_id);
         } else if (moduleName === "Ticket") {
-          const { data } = await supabaseAdmin.from("tickets").select("created_by, creator_id").eq("id", payload.entity_id).maybeSingle();
-          if (data?.created_by) ids.push(data.created_by);
-          else if (data?.creator_id) ids.push(data.creator_id);
+          const { data } = await supabaseAdmin.from("tickets").select("creator_id").eq("id", payload.entity_id).maybeSingle();
+          if (data?.creator_id) ids.push(data.creator_id);
         } else if (moduleName === "Requirement") {
-          const { data } = await supabaseAdmin.from("requirements").select("created_by, creator_id").eq("id", payload.entity_id).maybeSingle();
-          if (data?.created_by) ids.push(data.created_by);
-          else if (data?.creator_id) ids.push(data.creator_id);
+          const { data } = await supabaseAdmin.from("requirements").select("creator_id").eq("id", payload.entity_id).maybeSingle();
+          if (data?.creator_id) ids.push(data.creator_id);
         } else if (moduleName === "Workspace") {
-          const { data } = await supabaseAdmin.from("workspaces").select("created_by, owner_id").eq("id", payload.entity_id).maybeSingle();
+          const { data } = await supabaseAdmin.from("workspaces").select("created_by, workspace_owner_id").eq("id", payload.entity_id).maybeSingle();
           if (data?.created_by) ids.push(data.created_by);
+          else if (data?.workspace_owner_id) ids.push(data.workspace_owner_id);
         }
       }
       break;
@@ -408,8 +480,8 @@ async function resolveRecipientType(type: string, moduleName: string, payload: a
           const { data } = await supabaseAdmin.from("tasks").select("assigned_to").eq("id", payload.entity_id).maybeSingle();
           if (data?.assigned_to) ids.push(data.assigned_to);
         } else if (moduleName === "Ticket") {
-          const { data } = await supabaseAdmin.from("tickets").select("assigned_to").eq("id", payload.entity_id).maybeSingle();
-          if (data?.assigned_to) ids.push(data.assigned_to);
+          const { data } = await supabaseAdmin.from("tickets").select("assignee_id").eq("id", payload.entity_id).maybeSingle();
+          if (data?.assignee_id) ids.push(data.assignee_id);
         } else if (moduleName === "Requirement") {
           const { data: tasks } = await supabaseAdmin.from("requirement_tasks").select("task_id").eq("requirement_id", payload.entity_id);
           if (tasks && tasks.length > 0) {
@@ -417,8 +489,10 @@ async function resolveRecipientType(type: string, moduleName: string, payload: a
              if (assigned) assigned.forEach(a => { if(a.assigned_to) ids.push(a.assigned_to); });
           }
         } else if (moduleName === "Workspace") {
-          const { data } = await supabaseAdmin.from("workspaces").select("owner_id").eq("id", payload.entity_id).maybeSingle();
-          if (data?.owner_id) ids.push(data.owner_id);
+          const { data: ws } = await supabaseAdmin.from("workspaces").select("workspace_owner_id").eq("id", payload.entity_id).maybeSingle();
+          if (ws?.workspace_owner_id) ids.push(ws.workspace_owner_id);
+          const { data: members } = await supabaseAdmin.from("workspace_members").select("user_id").eq("workspace_id", payload.entity_id).eq("is_deleted", false);
+          if (members) members.forEach(m => { if (m.user_id) ids.push(m.user_id); });
         } else if (moduleName === "Vehicle" || moduleName === "Vehicle (FleetDesk)") {
           if (payload.assigned_driver_id) ids.push(payload.assigned_driver_id);
         }
@@ -431,16 +505,16 @@ async function resolveRecipientType(type: string, moduleName: string, payload: a
       } else if (payload.driver_id) {
         ids.push(payload.driver_id);
       } else if (payload.entity_id && (moduleName === "Vehicle" || moduleName === "Vehicle (FleetDesk)")) {
-        const { data: veh } = await supabaseAdmin.from("vehicles").select("assigned_driver_id").eq("id", payload.entity_id).maybeSingle();
-        if (veh?.assigned_driver_id) ids.push(veh.assigned_driver_id);
+        const { data: drv } = await supabaseAdmin.from("drivers").select("id").eq("assigned_vehicle_id", payload.entity_id).maybeSingle();
+        if (drv?.id) ids.push(drv.id);
       }
       break;
 
     case "Fleet Manager / Admin":
       const { data: fleetAdmins } = await supabaseAdmin
         .from("user_roles")
-        .select("user_id, roles!inner(role_code)")
-        .or("role_code.eq.ROLE_SUPER_ADMIN,role_code.eq.ROLE_ADMIN", { foreignTable: "roles" });
+        .select("user_id, roles!inner(code)")
+        .or("code.eq.SUPER_ADMIN,code.eq.ROLE_ADMIN,code.eq.ADMIN,code.eq.FLEET_ADMIN", { foreignTable: "roles" });
       if (fleetAdmins) fleetAdmins.forEach(fa => { if (fa.user_id) ids.push(fa.user_id); });
       break;
 
@@ -504,18 +578,22 @@ async function resolveRecipientType(type: string, moduleName: string, payload: a
       break;
 
     case "Workspace Owner":
-      if (payload.workspace_id) {
-        const { data } = await supabaseAdmin.from("workspaces").select("owner_id").eq("id", payload.workspace_id).maybeSingle();
-        if (data?.owner_id) ids.push(data.owner_id);
+      if (payload.workspace_owner_id) {
+        ids.push(payload.workspace_owner_id);
+      } else if (payload.owner_id) {
+        ids.push(payload.owner_id);
+      } else if (payload.workspace_id) {
+        const { data } = await supabaseAdmin.from("workspaces").select("workspace_owner_id").eq("id", payload.workspace_id).maybeSingle();
+        if (data?.workspace_owner_id) ids.push(data.workspace_owner_id);
       } else if (payload.entity_id) {
         if (moduleName === "Workspace") {
-          const { data } = await supabaseAdmin.from("workspaces").select("owner_id").eq("id", payload.entity_id).maybeSingle();
-          if (data?.owner_id) ids.push(data.owner_id);
+          const { data } = await supabaseAdmin.from("workspaces").select("workspace_owner_id").eq("id", payload.entity_id).maybeSingle();
+          if (data?.workspace_owner_id) ids.push(data.workspace_owner_id);
         } else if (moduleName === "Task") {
           const { data: task } = await supabaseAdmin.from("tasks").select("workspace_id").eq("id", payload.entity_id).maybeSingle();
           if (task?.workspace_id) {
-            const { data: ws } = await supabaseAdmin.from("workspaces").select("owner_id").eq("id", task.workspace_id).maybeSingle();
-            if (ws?.owner_id) ids.push(ws.owner_id);
+            const { data: ws } = await supabaseAdmin.from("workspaces").select("workspace_owner_id").eq("id", task.workspace_id).maybeSingle();
+            if (ws?.workspace_owner_id) ids.push(ws.workspace_owner_id);
           }
         }
       }
@@ -546,8 +624,8 @@ async function resolveRecipientType(type: string, moduleName: string, payload: a
       } else if (payload.approver_id) {
         ids.push(payload.approver_id);
       } else if (payload.entity_id && moduleName === "Requirement") {
-        const { data: req } = await supabaseAdmin.from("requirements").select("assigned_to, owner_id").eq("id", payload.entity_id).maybeSingle();
-        if (req?.assigned_to) ids.push(req.assigned_to);
+        const { data: req } = await supabaseAdmin.from("requirements").select("current_assignee_id, owner_id").eq("id", payload.entity_id).maybeSingle();
+        if (req?.current_assignee_id) ids.push(req.current_assignee_id);
         else if (req?.owner_id) ids.push(req.owner_id);
       }
       break;
@@ -555,10 +633,14 @@ async function resolveRecipientType(type: string, moduleName: string, payload: a
     case "Requester":
       if (payload.requester_id) ids.push(payload.requester_id);
       else if (payload.created_by) ids.push(payload.created_by);
+      else if (payload.creator_id) ids.push(payload.creator_id);
       else if (payload.entity_id && moduleName === "Ticket") {
-        const { data: t } = await supabaseAdmin.from("tickets").select("requester_id, created_by").eq("id", payload.entity_id).maybeSingle();
-        if (t?.requester_id) ids.push(t.requester_id);
-        else if (t?.created_by) ids.push(t.created_by);
+        const { data: t } = await supabaseAdmin.from("tickets").select("creator_id").eq("id", payload.entity_id).maybeSingle();
+        if (t?.creator_id) ids.push(t.creator_id);
+      } else if (payload.entity_id && moduleName === "Requirement") {
+        const { data: r } = await supabaseAdmin.from("requirements").select("requester_id, creator_id").eq("id", payload.entity_id).maybeSingle();
+        if (r?.requester_id) ids.push(r.requester_id);
+        else if (r?.creator_id) ids.push(r.creator_id);
       }
       break;
   }

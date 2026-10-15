@@ -21,7 +21,7 @@ export function RequirementAuditTrail({ requirementId }: { requirementId: string
         .select('*, user_master!performed_by(full_name, designation_id)')
         .eq('module_type', 'REQUIREMENT')
         .eq('record_id', requirementId)
-        .order('created_at', { ascending: false });
+        .order('performed_at', { ascending: false });
       
       setEvents(data || []);
       setLoading(false);
@@ -70,7 +70,7 @@ export function RequirementAuditTrail({ requirementId }: { requirementId: string
                         {ev.event_type.replace(/_/g, ' ')}
                       </h4>
                       <span className={`text-[10px] font-medium text-muted`}>
-                        {new Date(ev.created_at).toLocaleString()}
+                        {new Date(ev.performed_at || ev.created_at).toLocaleString()}
                       </span>
                     </div>
 
