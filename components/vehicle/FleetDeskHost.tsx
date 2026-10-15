@@ -5946,10 +5946,6 @@ export default function FleetDeskHost({
         triggerToast("Part / Accessory name is required.", true);
         return;
       }
-      if (!partFormBrand.trim()) {
-        triggerToast("Brand / Manufacturer is required.", true);
-        return;
-      }
       if (partFormHasRenewal && !partFormRenewalDate) {
         triggerToast("Please specify the renewal due date for the active renewal policy.", true);
         return;
@@ -6000,7 +5996,7 @@ export default function FleetDeskHost({
           item_type: partFormItemType,
           part_number: partFormPartNumber.trim() || undefined,
           category: partFormCategory.trim() || "Spare Parts",
-          brand: partFormBrand.trim(),
+          brand: partFormBrand.trim() || "Generic",
           purchase_amount: finalPurchaseAmount,
           unit_price: unitPrice || undefined,
           quantity: qty,
@@ -6074,11 +6070,6 @@ export default function FleetDeskHost({
         triggerToast(`Line item #${i + 1}: Part Name is required.`, true);
         return;
       }
-      if (!item.brand.trim()) {
-        setActivePartLineIndex(i);
-        triggerToast(`Line item #${i + 1} (${item.name}): Brand / Manufacturer is required.`, true);
-        return;
-      }
       if (item.has_renewal_policy && !item.renewal_date) {
         setActivePartLineIndex(i);
         triggerToast(`Line item #${i + 1} (${item.name}): Please specify renewal due date.`, true);
@@ -6121,7 +6112,7 @@ export default function FleetDeskHost({
             item_type: item.item_type,
             part_number: item.part_number.trim() || undefined,
             category: item.category.trim() || "Spare Parts",
-            brand: item.brand.trim(),
+            brand: item.brand.trim() || "Generic",
             unit_price: Number(item.unit_price) || 0,
             quantity: Number(item.quantity) || 1,
             discount: Number(item.discount) || 0,
@@ -19393,11 +19384,13 @@ export default function FleetDeskHost({
                     </select>
                   </div>
                   <div>
-                    <label className="font-semibold block mb-1">Brand *</label>
+                    <label className="font-semibold block mb-1">
+                      <span>Brand / Manufacturer</span> <span className="text-muted-foreground text-xs font-normal">(Optional)</span>
+                    </label>
                     <AppInput
                       value={partFormBrand}
                       onChange={(e) => setPartFormBrand(e.target.value)}
-                      required
+                      placeholder="e.g. Bosch, 3M, or leave empty for Generic"
                     />
                   </div>
                   <div>
@@ -20581,12 +20574,13 @@ export default function FleetDeskHost({
                           </select>
                         </div>
                         <div>
-                          <label className="text-xs font-semibold block mb-1">Brand / OEM *</label>
+                          <label className="text-xs font-semibold block mb-1">
+                            <span>Brand / Manufacturer</span> <span className="text-muted-foreground text-xs font-normal">(Optional)</span>
+                          </label>
                           <AppInput
                             value={activeItem.brand}
                             onChange={(e) => updateActivePartLineItem({ brand: e.target.value })}
-                            placeholder="e.g. Bosch, Brembo, Exide, Castrol, Apollo"
-                            required
+                            placeholder="e.g. Bosch, 3M, or leave empty for Generic"
                           />
                         </div>
                         <div>

@@ -4890,9 +4890,6 @@ export async function createVehiclePartAction(formData: {
     if (!formData.category || !formData.category.trim()) {
       return { success: false, error: "Category is mandatory." };
     }
-    if (!formData.brand || !formData.brand.trim()) {
-      return { success: false, error: "Brand is mandatory." };
-    }
     if (!formData.vendor_name || !formData.vendor_name.trim()) {
       return { success: false, error: "Vendor / Supplier name is mandatory." };
     }
@@ -4913,7 +4910,7 @@ export async function createVehiclePartAction(formData: {
       item_type: formData.item_type || "SPARE_PART",
       part_number: formData.part_number?.trim() || null,
       category: formData.category.trim(),
-      brand: formData.brand.trim(),
+      brand: formData.brand?.trim() || "Generic",
       purchase_amount: Number(formData.purchase_amount) || 0,
       unit_price: Number(formData.unit_price) || Number(formData.purchase_amount) || 0,
       quantity: Number(formData.quantity) || 1,
@@ -5051,9 +5048,6 @@ export async function createVehiclePartsBatchAction(
       if (!item.category || !item.category.trim()) {
         return { success: false, count: 0, parts: [], error: `Line item #${i + 1} (${item.name}): Category is mandatory.` };
       }
-      if (!item.brand || !item.brand.trim()) {
-        return { success: false, count: 0, parts: [], error: `Line item #${i + 1} (${item.name}): Brand is mandatory.` };
-      }
     }
 
     const payloads = billData.items.map((item) => {
@@ -5112,7 +5106,7 @@ export async function createVehiclePartsBatchAction(
         item_type: item.item_type || "SPARE_PART",
         part_number: item.part_number?.trim() || null,
         category: item.category.trim(),
-        brand: item.brand.trim(),
+        brand: item.brand?.trim() || "Generic",
         purchase_amount: finalPurchaseAmount,
         unit_price: unitPrice,
         quantity: qty,
@@ -5189,7 +5183,7 @@ export async function updateVehiclePartAction(
     if (formData.item_type !== undefined) updates.item_type = formData.item_type;
     if (formData.part_number !== undefined) updates.part_number = formData.part_number ? formData.part_number.trim() : null;
     if (formData.category !== undefined) updates.category = formData.category.trim();
-    if (formData.brand !== undefined) updates.brand = formData.brand.trim();
+    if (formData.brand !== undefined) updates.brand = formData.brand.trim() || "Generic";
     if (formData.purchase_amount !== undefined) updates.purchase_amount = Number(formData.purchase_amount) || 0;
     if (formData.unit_price !== undefined) updates.unit_price = Number(formData.unit_price) || 0;
     if (formData.quantity !== undefined) updates.quantity = Number(formData.quantity) || 1;
