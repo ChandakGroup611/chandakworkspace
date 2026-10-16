@@ -27,8 +27,29 @@ async function WorkspacesDataFetcher({ searchParams }: { searchParams: { task?: 
     } catch (e) {}
   }
 
-  // Fetch all initial data on the server!
-  const dashboardData = await fetchWorkspaceDashboardData(targetWorkspaceId);
-
-  return <WorkspacesClient initialData={dashboardData} initialTaskId={searchParams?.task} />;
+  // Fetch all initial data on the server with fallback resilience
+  try {
+    const dashboardData = await fetchWorkspaceDashboardData(targetWorkspaceId);
+    return <WorkspacesClient initialData={dashboardData} initialTaskId={searchParams?.task} />;
+  } catch (err: any) {
+    console.error("[WorkspacesDataFetcher] Failed to load dashboard data:", err);
+    return (
+      <WorkspacesClient 
+        initialData={{
+          userProfile: null,
+          userScope: null,
+          workspaces: [],
+          companies: [],
+          priorities: [],
+          prefetchWorkspaceId: null,
+          prefetchTasks: [],
+          prefetchStakeholders: [],
+          masterHierarchy: [],
+          taskStatuses: [],
+          allUsers: []
+        }} 
+        initialTaskId={searchParams?.task} 
+      />
+    );
+  }
 }

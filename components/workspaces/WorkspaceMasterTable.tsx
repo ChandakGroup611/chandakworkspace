@@ -217,21 +217,22 @@ export function WorkspaceMasterTable({
     else if (node.type === 'TASK') TypeIcon = CheckSquare;
     else if (node.type === 'SUB_TASK') TypeIcon = CheckCircle2;
 
-    let totalTaskCount = node.total_hierarchy_task_count || 0;
-    let directTaskCount = node.direct_task_count || 0;
-    let subWsCount = node.subworkspace_count || 0;
-    let childTaskCount = node.child_task_count ?? ((Array.isArray(node.subtasks) ? node.subtasks[0]?.count : node.subtasks?.count) ?? 0);
+    const childrenList = Array.isArray(node.children) ? node.children : [];
+    const hasLoadedChildren = childrenList.some((c: any) => c && !c.is_deleted);
 
-    if (node.children && node.children.length > 0) {
-      const activeTaskCount = node.children.filter((c: any) => !c.is_deleted && (c.type === 'TASK' || c.type === 'SUB_TASK')).length;
+    let totalTaskCount = Number(node.total_hierarchy_task_count) || 0;
+    let directTaskCount = Number(node.direct_task_count) || 0;
+    let subWsCount = Number(node.subworkspace_count) || 0;
+    let childTaskCount = Number(node.child_task_count) || ((Array.isArray(node.subtasks) ? Number(node.subtasks[0]?.count) : Number(node.subtasks?.count)) || 0);
+
+    if (childrenList.length > 0) {
+      const activeTaskCount = childrenList.filter((c: any) => c && !c.is_deleted && (c.type === 'TASK' || c.type === 'SUB_TASK')).length;
       childTaskCount = Math.max(childTaskCount, activeTaskCount);
       if (isWorkspaceType && node.childrenFetched) {
-        subWsCount = Math.max(subWsCount, node.children.filter((c: any) => !c.is_deleted && (c.type === 'SUB_WORKSPACE' || c.type === 'WORKSPACE')).length);
+        subWsCount = Math.max(subWsCount, childrenList.filter((c: any) => c && !c.is_deleted && (c.type === 'SUB_WORKSPACE' || c.type === 'WORKSPACE')).length);
         directTaskCount = Math.max(directTaskCount, activeTaskCount);
       }
     }
-
-    const hasLoadedChildren = Boolean(node.children && node.children.some((c: any) => !c.is_deleted));
 
     const canExpand = isWorkspaceType 
       ? (subWsCount > 0 || directTaskCount > 0 || totalTaskCount > 0 || hasLoadedChildren)
@@ -603,21 +604,22 @@ export function WorkspaceMasterTable({
     else if (node.type === 'TASK') TypeIcon = CheckSquare;
     else if (node.type === 'SUB_TASK') TypeIcon = CheckCircle2;
 
-    let totalTaskCount = node.total_hierarchy_task_count || 0;
-    let directTaskCount = node.direct_task_count || 0;
-    let subWsCount = node.subworkspace_count || 0;
-    let childTaskCount = node.child_task_count ?? ((Array.isArray(node.subtasks) ? node.subtasks[0]?.count : node.subtasks?.count) ?? 0);
+    const childrenList = Array.isArray(node.children) ? node.children : [];
+    const hasLoadedChildren = childrenList.some((c: any) => c && !c.is_deleted);
 
-    if (node.children && node.children.length > 0) {
-      const activeTaskCount = node.children.filter((c: any) => !c.is_deleted && (c.type === 'TASK' || c.type === 'SUB_TASK')).length;
+    let totalTaskCount = Number(node.total_hierarchy_task_count) || 0;
+    let directTaskCount = Number(node.direct_task_count) || 0;
+    let subWsCount = Number(node.subworkspace_count) || 0;
+    let childTaskCount = Number(node.child_task_count) || ((Array.isArray(node.subtasks) ? Number(node.subtasks[0]?.count) : Number(node.subtasks?.count)) || 0);
+
+    if (childrenList.length > 0) {
+      const activeTaskCount = childrenList.filter((c: any) => c && !c.is_deleted && (c.type === 'TASK' || c.type === 'SUB_TASK')).length;
       childTaskCount = Math.max(childTaskCount, activeTaskCount);
       if (isWorkspaceType && node.childrenFetched) {
-        subWsCount = Math.max(subWsCount, node.children.filter((c: any) => !c.is_deleted && (c.type === 'SUB_WORKSPACE' || c.type === 'WORKSPACE')).length);
+        subWsCount = Math.max(subWsCount, childrenList.filter((c: any) => c && !c.is_deleted && (c.type === 'SUB_WORKSPACE' || c.type === 'WORKSPACE')).length);
         directTaskCount = Math.max(directTaskCount, activeTaskCount);
       }
     }
-
-    const hasLoadedChildren = Boolean(node.children && node.children.some((c: any) => !c.is_deleted));
 
     const canExpand = isWorkspaceType 
       ? (subWsCount > 0 || directTaskCount > 0 || totalTaskCount > 0 || hasLoadedChildren)
@@ -842,7 +844,7 @@ export function WorkspaceMasterTable({
       return (
         <React.Fragment key={node.id}>
           {renderHierarchyRow(node, parentNode, depth, isActuallyExpanded)}
-          {isActuallyExpanded && node.children && (
+          {isActuallyExpanded && Array.isArray(node.children) && node.children.length > 0 && (
             <div className="flex flex-col animate-accordion-down">
               {renderTree(node.children, depth + 1, node)}
             </div>
@@ -858,7 +860,7 @@ export function WorkspaceMasterTable({
       return (
         <React.Fragment key={node.id}>
           {renderMobileRow(node, parentNode, depth, isActuallyExpanded)}
-          {isActuallyExpanded && node.children && (
+          {isActuallyExpanded && Array.isArray(node.children) && node.children.length > 0 && (
             <div className="flex flex-col animate-accordion-down">
               {renderMobileTree(node.children, depth + 1, node)}
             </div>

@@ -407,12 +407,16 @@ export async function fetchWorkspaceDashboardData(preferredWorkspaceId?: string 
       supabaseAdmin.from("user_master").select("id, full_name, user_code, email").eq("is_active", true).eq("is_deleted", false).order("full_name", { ascending: true })
     ]);
 
-    if (profileRes.error) {
-      console.error("[fetchWorkspaceDashboardData] Profile fetch error:", profileRes.error.message);
-      throw new Error("Failed to load user profile");
+    let profile: any = profileRes.data;
+    if (profileRes.error || !profile) {
+      console.warn("[fetchWorkspaceDashboardData] Profile fetch notice:", profileRes.error?.message);
+      const { data: adminProfile } = await supabaseAdmin
+        .from("user_master")
+        .select("id, full_name, email, role_id, department_id, designation_id, manager_id, is_active, created_at, updated_at")
+        .eq("id", user.id)
+        .maybeSingle();
+      profile = adminProfile || { id: user.id, email: user.email, full_name: user.email?.split('@')[0] || 'User' };
     }
-
-    const profile = profileRes.data;
     const managedDepts = managedDeptsRes.data || [];
     const managedDeptIds = managedDepts.map((d: any) => d.id);
     const userProfile = profile ? { ...profile, id: user.id, managedDeptIds } : null;

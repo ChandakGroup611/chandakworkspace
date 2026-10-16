@@ -143,7 +143,7 @@ export async function previewEmailTemplate(moduleName: string, htmlBody: string)
     if (moduleName === "Task") {
       const { data } = await supabaseAdmin
         .from("tasks")
-        .select("id, subject, task_code, description, start_date, end_date, parent_task_id, status_master(status_name), priority_master(priority_name), creator:user_master!tasks_created_by_fkey(full_name), assignee:user_master!tasks_assigned_to_fkey(full_name), workspace:workspaces(workspace_name, workspace_code), parent:tasks!parent_task_id(subject)")
+        .select("id, subject, task_code, description, start_date, end_date, created_by, assigned_to, parent_task_id, status_master(status_name), priority_master(priority_name), workspace:workspaces(workspace_name, workspace_code), parent:tasks!parent_task_id(subject)")
         .limit(1)
         .maybeSingle();
 
@@ -151,8 +151,17 @@ export async function previewEmailTemplate(moduleName: string, htmlBody: string)
         const d = data as any;
         const statusName = d.status_master?.status_name || (Array.isArray(d.status_master) && d.status_master[0]?.status_name) || "In Progress";
         const priorityName = d.priority_master?.priority_name || (Array.isArray(d.priority_master) && d.priority_master[0]?.priority_name) || "High";
-        const creatorName = d.creator?.full_name || (Array.isArray(d.creator) && d.creator[0]?.full_name) || "Adil Kazi";
-        const assigneeName = d.assignee?.full_name || (Array.isArray(d.assignee) && d.assignee[0]?.full_name) || "Anand Mohta";
+        
+        let creatorName = "Adil Kazi";
+        let assigneeName = "Anand Mohta";
+        const userIds = [d.created_by, d.assigned_to].filter(Boolean);
+        if (userIds.length > 0) {
+          const { data: uList } = await supabaseAdmin.from("user_master").select("id, full_name").in("id", userIds);
+          const uMap = new Map((uList || []).map((u: any) => [u.id, u.full_name]));
+          if (d.created_by && uMap.has(d.created_by)) creatorName = uMap.get(d.created_by);
+          if (d.assigned_to && uMap.has(d.assigned_to)) assigneeName = uMap.get(d.assigned_to);
+        }
+
         const wsName = d.workspace?.workspace_name || (Array.isArray(d.workspace) && d.workspace[0]?.workspace_name) || sampleData.workspace_name;
         const wsCode = d.workspace?.workspace_code || (Array.isArray(d.workspace) && d.workspace[0]?.workspace_code) || sampleData.workspace_code;
         const parentTaskName = d.parent?.subject || (Array.isArray(d.parent) && d.parent[0]?.subject) || "Primary Architecture Setup";
@@ -180,7 +189,7 @@ export async function previewEmailTemplate(moduleName: string, htmlBody: string)
     } else if (moduleName === "Ticket") {
       const { data } = await supabaseAdmin
         .from("tickets")
-        .select("id, code, title, description, status_master(status_name), priority_master(priority_name), creator:user_master!tickets_creator_id_fkey(full_name)")
+        .select("id, code, title, description, creator_id, status_master(status_name), priority_master(priority_name)")
         .limit(1)
         .maybeSingle();
 
@@ -188,6 +197,12 @@ export async function previewEmailTemplate(moduleName: string, htmlBody: string)
         const d = data as any;
         const statusName = d.status_master?.status_name || (Array.isArray(d.status_master) && d.status_master[0]?.status_name) || "Open";
         const priorityName = d.priority_master?.priority_name || (Array.isArray(d.priority_master) && d.priority_master[0]?.priority_name) || "Normal";
+        let creatorName = "Adil Kazi";
+        if (d.creator_id) {
+          const { data: u } = await supabaseAdmin.from("user_master").select("full_name").eq("id", d.creator_id).maybeSingle();
+          if (u?.full_name) creatorName = u.full_name;
+        }
+
         sampleData = {
           ...sampleData,
           ticket_no: d.code || sampleData.ticket_no,
@@ -195,28 +210,34 @@ export async function previewEmailTemplate(moduleName: string, htmlBody: string)
           description: d.description || sampleData.description,
           status: statusName,
           priority: priorityName,
-          creator_name: d.creator?.full_name || (Array.isArray(d.creator) && d.creator[0]?.full_name) || "Adil Kazi",
+          creator_name: creatorName,
           link: `/tickets/${d.id}`
         };
       }
     } else if (moduleName === "Requirement") {
       const { data } = await supabaseAdmin
         .from("requirements")
-        .select("id, title, code, description, approval_status, due_date, creator:user_master!requirements_creator_id_fkey(full_name)")
+        .select("id, title, code, requirement_details, approval_status, due_date, creator_id")
         .limit(1)
         .maybeSingle();
 
       if (data) {
         const d = data as any;
+        let creatorName = "Adil Kazi";
+        if (d.creator_id) {
+          const { data: u } = await supabaseAdmin.from("user_master").select("full_name").eq("id", d.creator_id).maybeSingle();
+          if (u?.full_name) creatorName = u.full_name;
+        }
+
         sampleData = {
           ...sampleData,
           req_code: d.code || sampleData.req_code,
           req_name: d.title || sampleData.req_name,
-          description: d.description || sampleData.description,
+          description: d.requirement_details || sampleData.description,
           status: d.approval_status || "Pending Approval",
           approval_status: d.approval_status || "Pending Approval",
           due_date: d.due_date ? new Date(d.due_date).toLocaleDateString() : sampleData.due_date,
-          creator_name: d.creator?.full_name || (Array.isArray(d.creator) && d.creator[0]?.full_name) || "Adil Kazi",
+          creator_name: creatorName,
           link: `/requirements/${d.id}`
         };
       }
@@ -230,11 +251,11 @@ export async function previewEmailTemplate(moduleName: string, htmlBody: string)
           description, 
           start_date, 
           end_date, 
+          workspace_owner_id,
           parent_workspace_id,
-          status:status_master(status_name), 
-          company:company_master(company_name), 
-          owner:user_master!workspaces_workspace_owner_id_fkey(full_name),
-          parent:workspaces!workspaces_parent_workspace_id_fkey(workspace_name)
+          status:status_master!workspaces_status_id_fkey(status_name), 
+          company:company_master(company_name),
+          parent:workspaces!parent_workspace_id(workspace_name)
         `)
         .eq("is_deleted", false)
         .order("created_at", { ascending: false })
@@ -245,8 +266,12 @@ export async function previewEmailTemplate(moduleName: string, htmlBody: string)
         const d = data as any;
         const statusName = d.status?.status_name || (Array.isArray(d.status) && d.status[0]?.status_name) || "Active";
         const companyName = d.company?.company_name || (Array.isArray(d.company) && d.company[0]?.company_name) || "Chandak Group";
-        const ownerName = d.owner?.full_name || (Array.isArray(d.owner) && d.owner[0]?.full_name) || "Adil Kazi";
         const parentName = d.parent?.workspace_name || (Array.isArray(d.parent) && d.parent[0]?.workspace_name) || "Corporate Operations";
+        let ownerName = "Adil Kazi";
+        if (d.workspace_owner_id) {
+          const { data: u } = await supabaseAdmin.from("user_master").select("full_name").eq("id", d.workspace_owner_id).maybeSingle();
+          if (u?.full_name) ownerName = u.full_name;
+        }
 
         sampleData = {
           ...sampleData,

@@ -303,10 +303,9 @@ async function autoHydratePayload(payload: any, moduleName?: string) {
           company_id,
           workspace_owner_id,
           parent_workspace_id,
-          status:status_master(status_name),
+          status:status_master!workspaces_status_id_fkey(status_name),
           company:company_master(company_name),
-          owner:user_master!workspaces_workspace_owner_id_fkey(full_name),
-          parent:workspaces!workspaces_parent_workspace_id_fkey(workspace_name)
+          parent:workspaces!parent_workspace_id(workspace_name)
         `)
         .eq('id', payload.entity_id)
         .maybeSingle();
@@ -315,8 +314,13 @@ async function autoHydratePayload(payload: any, moduleName?: string) {
         const d = ws as any;
         const statusName = d.status?.status_name || (Array.isArray(d.status) && d.status[0]?.status_name);
         const companyName = d.company?.company_name || (Array.isArray(d.company) && d.company[0]?.company_name);
-        const ownerName = d.owner?.full_name || (Array.isArray(d.owner) && d.owner[0]?.full_name);
         const parentName = d.parent?.workspace_name || (Array.isArray(d.parent) && d.parent[0]?.workspace_name);
+
+        let ownerName = null;
+        if (d.workspace_owner_id) {
+          const { data: u } = await supabaseAdmin.from('user_master').select('full_name').eq('id', d.workspace_owner_id).maybeSingle();
+          if (u?.full_name) ownerName = u.full_name;
+        }
 
         if (!hydrated.workspace_name) hydrated.workspace_name = d.workspace_name;
         if (!hydrated.workspace_code) hydrated.workspace_code = d.workspace_code;
