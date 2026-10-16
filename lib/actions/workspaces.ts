@@ -565,9 +565,17 @@ export async function fetchHierarchyChildren(parentId: string, parentType: strin
 
 export interface HierarchyFilterOptions {
   entityType?: 'ALL' | 'WORKSPACES' | 'SUB_WORKSPACES' | 'TASKS';
+  entityTypes?: ('WORKSPACES' | 'SUB_WORKSPACES' | 'TASKS')[];
+  workspaceId?: string;
+  workspaceIds?: string[];
+  companyId?: string;
+  companyIds?: string[];
   statusId?: string;
+  statusIds?: string[];
   priorityId?: string;
+  priorityIds?: string[];
   assigneeId?: string;
+  assigneeIds?: string[];
   myTasksOnly?: boolean;
   dateFrom?: string;
   dateTo?: string;
@@ -599,13 +607,81 @@ export async function searchHierarchyDeep(query?: string, filters?: HierarchyFil
     .neq("participation_role", "WATCHER");
   const myParticipantTaskIds = new Set<string>((userPartData || []).map((p: any) => p.task_id));
 
-  // If a specific assignee filter is passed, fetch task IDs for that assignee
+  // Resolve multi-select array filters with single-value fallback
+  const selectedWorkspaceIds = Array.isArray(filters?.workspaceIds) && filters.workspaceIds.length > 0
+    ? filters.workspaceIds
+    : (filters?.workspaceId ? [filters.workspaceId] : []);
+
+  const selectedCompanyIds = Array.isArray(filters?.companyIds) && filters.companyIds.length > 0
+    ? filters.companyIds
+    : (filters?.companyId ? [filters.companyId] : []);
+
+  const selectedAssigneeIds = Array.isArray(filters?.assigneeIds) && filters.assigneeIds.length > 0
+    ? filters.assigneeIds
+    : (filters?.assigneeId ? [filters.assigneeId] : []);
+
+  const selectedStatusIds = Array.isArray(filters?.statusIds) && filters.statusIds.length > 0
+    ? filters.statusIds
+    : (filters?.statusId ? [filters.statusId] : []);
+
+  const selectedPriorityIds = Array.isArray(filters?.priorityIds) && filters.priorityIds.length > 0
+    ? filters.priorityIds
+    : (filters?.priorityId ? [filters.priorityId] : []);
+
+  // Compute filtered workspace IDs based on workspaceIds and companyIds filters
+  let targetWsIds = new Set<string>();
+  if (selectedWorkspaceIds.length > 0) {
+    selectedWorkspaceIds.forEach(id => targetWsIds.add(id));
+    let added = true;
+    while (added) {
+      added = false;
+      for (const w of visibleWorkspaces) {
+        if (w.parent_workspace_id && targetWsIds.has(w.parent_workspace_id) && !targetWsIds.has(w.id)) {
+          targetWsIds.add(w.id);
+          added = true;
+        }
+      }
+    }
+  }
+
+  let companyWsIds = new Set<string>();
+  if (selectedCompanyIds.length > 0) {
+    visibleWorkspaces.forEach((w: any) => {
+      if (selectedCompanyIds.includes(w.company_id)) {
+        companyWsIds.add(w.id);
+      }
+    });
+    let added = true;
+    while (added) {
+      added = false;
+      for (const w of visibleWorkspaces) {
+        if (w.parent_workspace_id && companyWsIds.has(w.parent_workspace_id) && !companyWsIds.has(w.id)) {
+          companyWsIds.add(w.id);
+          added = true;
+        }
+      }
+    }
+  }
+
+  let filteredWsIds = visibleWsIds;
+  if (selectedWorkspaceIds.length > 0 || selectedCompanyIds.length > 0) {
+    filteredWsIds = visibleWsIds.filter(id => {
+      if (selectedWorkspaceIds.length > 0 && !targetWsIds.has(id)) return false;
+      if (selectedCompanyIds.length > 0 && !companyWsIds.has(id)) return false;
+      return true;
+    });
+    if (filteredWsIds.length === 0) {
+      return { hierarchy: [], matchedNodeIds: [], expandedNodeIds: [] };
+    }
+  }
+
+  // If specific assignee filters are passed, fetch task IDs for those assignees
   let targetAssigneeTaskIds = new Set<string>();
-  if (filters?.assigneeId) {
+  if (selectedAssigneeIds.length > 0) {
     const { data: targetPartData } = await supabaseAdmin
       .from("task_participants")
       .select("task_id, participation_role")
-      .eq("user_id", filters.assigneeId)
+      .in("user_id", selectedAssigneeIds)
       .neq("participation_role", "WATCHER");
     targetAssigneeTaskIds = new Set<string>((targetPartData || []).map((p: any) => p.task_id));
   }
@@ -615,7 +691,20 @@ export async function searchHierarchyDeep(query?: string, filters?: HierarchyFil
   const expandedNodeIds = new Set<string>();
 
   // If no search query and no filters provided, return roots
-  const hasFilters = !!(filters?.statusId || filters?.priorityId || filters?.assigneeId || filters?.myTasksOnly || (filters?.entityType && filters.entityType !== 'ALL') || filters?.dateFrom || filters?.dateTo);
+  const hasEntityFilter = (filters?.entityTypes && filters.entityTypes.length > 0 && !(filters.entityTypes.length === 3 || filters.entityTypes.includes('ALL' as any))) ||
+                          (filters?.entityType && filters.entityType !== 'ALL');
+
+  const hasFilters = !!(
+    selectedWorkspaceIds.length > 0 ||
+    selectedCompanyIds.length > 0 ||
+    selectedStatusIds.length > 0 || 
+    selectedPriorityIds.length > 0 || 
+    selectedAssigneeIds.length > 0 || 
+    filters?.myTasksOnly || 
+    hasEntityFilter || 
+    filters?.dateFrom || 
+    filters?.dateTo
+  );
   if (!cleanQuery && !hasFilters) {
     const masterHierarchy = await fetchHierarchyRoots(user.id, visibleWorkspaces);
     return { hierarchy: masterHierarchy, matchedNodeIds: [], expandedNodeIds: [] };
@@ -623,7 +712,11 @@ export async function searchHierarchyDeep(query?: string, filters?: HierarchyFil
 
   // 2. Query Tasks across all visible workspaces
   let tasks: any[] = [];
-  if (filters?.entityType !== 'WORKSPACES' && filters?.entityType !== 'SUB_WORKSPACES') {
+  const includeTasks = filters?.entityTypes && filters.entityTypes.length > 0
+    ? filters.entityTypes.includes('TASKS')
+    : (filters?.entityType !== 'WORKSPACES' && filters?.entityType !== 'SUB_WORKSPACES');
+
+  if (includeTasks) {
     let taskQuery = supabaseAdmin
       .from('tasks')
       .select(`
@@ -647,18 +740,18 @@ export async function searchHierarchyDeep(query?: string, filters?: HierarchyFil
         parent:tasks!parent_task_id(id, name:subject, code:task_code),
         assignees:task_participants(user_id, participation_role)
       `)
-      .in('workspace_id', visibleWsIds)
+      .in('workspace_id', filteredWsIds)
       .eq('is_deleted', false);
 
     if (cleanQuery) {
       taskQuery = taskQuery.or(`subject.ilike.%${cleanQuery}%,task_code.ilike.%${cleanQuery}%,description.ilike.%${cleanQuery}%`);
     }
 
-    if (filters?.statusId) {
-      taskQuery = taskQuery.eq('status_id', filters.statusId);
+    if (selectedStatusIds.length > 0) {
+      taskQuery = taskQuery.in('status_id', selectedStatusIds);
     }
-    if (filters?.priorityId) {
-      taskQuery = taskQuery.eq('priority_id', filters.priorityId);
+    if (selectedPriorityIds.length > 0) {
+      taskQuery = taskQuery.in('priority_id', selectedPriorityIds);
     }
     if (filters?.dateFrom) {
       taskQuery = taskQuery.gte('created_at', filters.dateFrom);
@@ -675,11 +768,11 @@ export async function searchHierarchyDeep(query?: string, filters?: HierarchyFil
 
   // Strictly enforce user assignment filtering (ONLY when explicitly filtered by user/assignee)
   tasks = tasks.filter((t: any) => {
-    if (filters?.assigneeId) {
-      const isAssigned = t.assigned_to === filters.assigneeId || 
-                         t.owner_id === filters.assigneeId ||
+    if (selectedAssigneeIds.length > 0) {
+      const isAssigned = selectedAssigneeIds.includes(t.assigned_to) || 
+                         selectedAssigneeIds.includes(t.owner_id) ||
                          targetAssigneeTaskIds.has(t.id) ||
-                         t.assignees?.some((a: any) => a.user_id === filters.assigneeId && a.participation_role !== 'WATCHER');
+                         t.assignees?.some((a: any) => selectedAssigneeIds.includes(a.user_id) && a.participation_role !== 'WATCHER');
       if (!isAssigned) return false;
     }
     if (filters?.myTasksOnly) {
@@ -694,7 +787,11 @@ export async function searchHierarchyDeep(query?: string, filters?: HierarchyFil
 
   // 3. Query Workspaces & Sub-Workspaces
   let workspaces: any[] = [];
-  if (filters?.entityType !== 'TASKS') {
+  const includeWorkspaces = filters?.entityTypes && filters.entityTypes.length > 0
+    ? (filters.entityTypes.includes('WORKSPACES') || filters.entityTypes.includes('SUB_WORKSPACES'))
+    : (filters?.entityType !== 'TASKS');
+
+  if (includeWorkspaces) {
     let wsQuery = supabaseAdmin
       .from('workspaces')
       .select(`
@@ -716,14 +813,14 @@ export async function searchHierarchyDeep(query?: string, filters?: HierarchyFil
         members:workspace_members(user_id, role),
         stats:workspace_statistics(task_count, subtask_count)
       `)
-      .in('id', visibleWsIds)
+      .in('id', filteredWsIds)
       .eq('is_deleted', false);
 
     if (cleanQuery) {
       wsQuery = wsQuery.or(`workspace_name.ilike.%${cleanQuery}%,workspace_code.ilike.%${cleanQuery}%,description.ilike.%${cleanQuery}%`);
     }
-    if (filters?.statusId) {
-      wsQuery = wsQuery.eq('status_id', filters.statusId);
+    if (selectedStatusIds.length > 0) {
+      wsQuery = wsQuery.in('status_id', selectedStatusIds);
     }
     if (filters?.dateFrom) {
       wsQuery = wsQuery.gte('created_at', filters.dateFrom);
@@ -737,13 +834,14 @@ export async function searchHierarchyDeep(query?: string, filters?: HierarchyFil
       workspaces = fetchedWs;
     }
 
-    if (filters?.assigneeId) {
+    if (selectedAssigneeIds.length > 0) {
       workspaces = workspaces.filter(w => 
-        w.owner_id === filters.assigneeId || 
-        w.created_by === filters.assigneeId || 
-        w.members?.some((m: any) => m.user_id === filters.assigneeId)
+        selectedAssigneeIds.includes(w.owner_id) || 
+        selectedAssigneeIds.includes(w.created_by) || 
+        w.members?.some((m: any) => selectedAssigneeIds.includes(m.user_id))
       );
-    } else if (filters?.myTasksOnly) {
+    }
+    if (filters?.myTasksOnly) {
       workspaces = workspaces.filter(w => 
         w.owner_id === user.id || 
         w.created_by === user.id || 
@@ -752,7 +850,15 @@ export async function searchHierarchyDeep(query?: string, filters?: HierarchyFil
     }
   }
 
-  if (filters?.entityType === 'WORKSPACES') {
+  if (filters?.entityTypes && filters.entityTypes.length > 0) {
+    const hasWs = filters.entityTypes.includes('WORKSPACES');
+    const hasSubWs = filters.entityTypes.includes('SUB_WORKSPACES');
+    if (hasWs && !hasSubWs) {
+      workspaces = workspaces.filter(w => !w.parent_workspace_id);
+    } else if (hasSubWs && !hasWs) {
+      workspaces = workspaces.filter(w => !!w.parent_workspace_id);
+    }
+  } else if (filters?.entityType === 'WORKSPACES') {
     workspaces = workspaces.filter(w => !w.parent_workspace_id);
   } else if (filters?.entityType === 'SUB_WORKSPACES') {
     workspaces = workspaces.filter(w => !!w.parent_workspace_id);

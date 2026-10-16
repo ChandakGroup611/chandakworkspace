@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable no-restricted-syntax */
 import { toast } from 'react-toastify';
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
@@ -29,6 +30,7 @@ import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
 import { useSavedFilters, SavedFilter } from "@/hooks/useSavedFilters";
 import { SavedFiltersDropdown } from "@/components/ui/SavedFiltersDropdown";
+import { WorkspaceFilterMultiSelect } from "@/components/workspaces/WorkspaceFilterMultiSelect";
 import dynamic from "next/dynamic";
 
 const TaskCreationWizard = dynamic(() => import("@/components/tasks/TaskCreationWizard"), {
@@ -132,8 +134,18 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const [hierarchyScope, setHierarchyScope] = useState<"all" | "my_dept" | "my_reports" | "assigned_me">("all");
   const [selectedDepartmentName, setSelectedDepartmentName] = useState<string>("ALL");
 
+  const [openDropdown, setOpenDropdown] = useState<'scope' | 'workspace' | 'company' | 'status' | 'priority' | 'assignee' | null>(null);
+
   const [filters, setFilters] = useState<HierarchyFilterOptions>({
     entityType: 'ALL',
+    entityTypes: [],
+    workspaceIds: [],
+    companyIds: [],
+    statusIds: [],
+    priorityIds: [],
+    assigneeIds: [],
+    workspaceId: '',
+    companyId: '',
     statusId: '',
     priorityId: '',
     assigneeId: '',
@@ -153,10 +165,18 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     let isCancelled = false;
     const hasActiveFilters = !!(
       debouncedSearchQuery.trim() || 
+      (filters.workspaceIds && filters.workspaceIds.length > 0) ||
+      filters.workspaceId ||
+      (filters.companyIds && filters.companyIds.length > 0) ||
+      filters.companyId ||
+      (filters.statusIds && filters.statusIds.length > 0) ||
       filters.statusId || 
+      (filters.priorityIds && filters.priorityIds.length > 0) ||
       filters.priorityId || 
+      (filters.assigneeIds && filters.assigneeIds.length > 0) ||
       filters.assigneeId || 
       filters.myTasksOnly || 
+      (filters.entityTypes && filters.entityTypes.length > 0) ||
       (filters.entityType && filters.entityType !== 'ALL')
     );
 
@@ -207,14 +227,28 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     deleteSavedFilter
   } = useSavedFilters<{ searchQuery: string, filters: HierarchyFilterOptions }>("chandak_workspaces", currentUser?.id || null, (payload) => {
     setSearchQuery(payload.searchQuery || "");
-    setFilters(payload.filters || {
-      entityType: 'ALL',
-      statusId: '',
-      priorityId: '',
-      assigneeId: '',
-      myTasksOnly: false
+    const pf = payload.filters || {};
+    const loadedWsIds = pf.workspaceIds || (pf.workspaceId ? [pf.workspaceId] : []);
+    const loadedCompIds = pf.companyIds || (pf.companyId ? [pf.companyId] : []);
+    const loadedStatusIds = pf.statusIds || (pf.statusId ? [pf.statusId] : []);
+    const loadedPriorityIds = pf.priorityIds || (pf.priorityId ? [pf.priorityId] : []);
+    const loadedAssigneeIds = pf.assigneeIds || (pf.assigneeId ? [pf.assigneeId] : []);
+    setFilters({
+      entityType: pf.entityType || 'ALL',
+      entityTypes: pf.entityTypes || [],
+      workspaceIds: loadedWsIds,
+      workspaceId: pf.workspaceId || '',
+      companyIds: loadedCompIds,
+      companyId: pf.companyId || '',
+      statusIds: loadedStatusIds,
+      priorityIds: loadedPriorityIds,
+      assigneeIds: loadedAssigneeIds,
+      statusId: pf.statusId || '',
+      priorityId: pf.priorityId || '',
+      assigneeId: pf.assigneeId || '',
+      myTasksOnly: !!pf.myTasksOnly
     });
-    if (payload.searchQuery || Object.values(payload.filters || {}).some(v => v !== '' && v !== false && v !== 'ALL')) {
+    if (payload.searchQuery || Object.values(pf).some(v => v !== '' && v !== false && v !== 'ALL' && (!Array.isArray(v) || v.length > 0))) {
         setShowFilters(true);
     }
   });
@@ -231,14 +265,28 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       f,
       (payload) => {
         setSearchQuery(payload.searchQuery || "");
-        setFilters(payload.filters || {
-          entityType: 'ALL',
-          statusId: '',
-          priorityId: '',
-          assigneeId: '',
-          myTasksOnly: false
+        const pf = payload.filters || {};
+        const loadedWsIds = pf.workspaceIds || (pf.workspaceId ? [pf.workspaceId] : []);
+        const loadedCompIds = pf.companyIds || (pf.companyId ? [pf.companyId] : []);
+        const loadedStatusIds = pf.statusIds || (pf.statusId ? [pf.statusId] : []);
+        const loadedPriorityIds = pf.priorityIds || (pf.priorityId ? [pf.priorityId] : []);
+        const loadedAssigneeIds = pf.assigneeIds || (pf.assigneeId ? [pf.assigneeId] : []);
+        setFilters({
+          entityType: pf.entityType || 'ALL',
+          entityTypes: pf.entityTypes || [],
+          workspaceIds: loadedWsIds,
+          workspaceId: pf.workspaceId || '',
+          companyIds: loadedCompIds,
+          companyId: pf.companyId || '',
+          statusIds: loadedStatusIds,
+          priorityIds: loadedPriorityIds,
+          assigneeIds: loadedAssigneeIds,
+          statusId: pf.statusId || '',
+          priorityId: pf.priorityId || '',
+          assigneeId: pf.assigneeId || '',
+          myTasksOnly: !!pf.myTasksOnly
         });
-        if (payload.searchQuery || Object.values(payload.filters || {}).some(v => v !== '' && v !== false && v !== 'ALL')) {
+        if (payload.searchQuery || Object.values(pf).some(v => v !== '' && v !== false && v !== 'ALL' && (!Array.isArray(v) || v.length > 0))) {
            setShowFilters(true);
         }
       },
@@ -250,10 +298,42 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
-    if (filters.entityType && filters.entityType !== 'ALL') count++;
-    if (filters.statusId) count++;
-    if (filters.priorityId) count++;
-    if (filters.assigneeId) count++;
+    if (filters.entityTypes && filters.entityTypes.length > 0) {
+      count += filters.entityTypes.length;
+    } else if (filters.entityType && filters.entityType !== 'ALL') {
+      count++;
+    }
+
+    if (filters.workspaceIds && filters.workspaceIds.length > 0) {
+      count += filters.workspaceIds.length;
+    } else if (filters.workspaceId) {
+      count++;
+    }
+
+    if (filters.companyIds && filters.companyIds.length > 0) {
+      count += filters.companyIds.length;
+    } else if (filters.companyId) {
+      count++;
+    }
+
+    if (filters.statusIds && filters.statusIds.length > 0) {
+      count += filters.statusIds.length;
+    } else if (filters.statusId) {
+      count++;
+    }
+
+    if (filters.priorityIds && filters.priorityIds.length > 0) {
+      count += filters.priorityIds.length;
+    } else if (filters.priorityId) {
+      count++;
+    }
+
+    if (filters.assigneeIds && filters.assigneeIds.length > 0) {
+      count += filters.assigneeIds.length;
+    } else if (filters.assigneeId) {
+      count++;
+    }
+
     if (filters.myTasksOnly) count++;
     return count;
   }, [filters]);
@@ -262,12 +342,89 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     setSearchQuery("");
     setFilters({
       entityType: 'ALL',
+      entityTypes: [],
+      workspaceIds: [],
+      companyIds: [],
+      statusIds: [],
+      priorityIds: [],
+      assigneeIds: [],
+      workspaceId: '',
+      companyId: '',
       statusId: '',
       priorityId: '',
       assigneeId: '',
       myTasksOnly: false
     });
+    setOpenDropdown(null);
   };
+
+  const toggleScope = (scopeId: 'WORKSPACES' | 'SUB_WORKSPACES' | 'TASKS') => {
+    setFilters(prev => {
+      const current = prev.entityTypes && prev.entityTypes.length > 0
+        ? [...prev.entityTypes]
+        : (prev.entityType && prev.entityType !== 'ALL' ? [prev.entityType] : []);
+      const exists = current.includes(scopeId);
+      let next: ('WORKSPACES' | 'SUB_WORKSPACES' | 'TASKS')[];
+      if (exists) {
+        next = current.filter(s => s !== scopeId);
+      } else {
+        next = [...current, scopeId];
+      }
+      if (next.length === 0 || next.length === 3) {
+        return { ...prev, entityType: 'ALL', entityTypes: [] };
+      }
+      return {
+        ...prev,
+        entityType: next.length === 1 ? next[0] : undefined,
+        entityTypes: next
+      };
+    });
+  };
+
+  const scopeOptions = useMemo(() => [
+    { id: 'WORKSPACES', label: 'Workspaces' },
+    { id: 'SUB_WORKSPACES', label: 'Sub-Workspaces' },
+    { id: 'TASKS', label: 'Tasks' },
+  ], []);
+
+  const workspaceOptions = useMemo(() => {
+    return (workspaces || []).map((w: any) => ({
+      id: w.id,
+      label: w.name || w.workspace_name || 'Workspace',
+      sublabel: w.code || w.workspace_code ? `(${w.code || w.workspace_code})` : undefined
+    }));
+  }, [workspaces]);
+
+  const companyOptions = useMemo(() => {
+    return (companies || []).map((c: any) => ({
+      id: c.id,
+      label: c.name || c.company_name || 'Company'
+    }));
+  }, [companies]);
+
+  const statusOptions = useMemo(() => {
+    return (taskStatuses || []).map((s: any) => ({
+      id: s.id,
+      label: s.name || s.status_name || 'Status',
+      color: s.status_color
+    }));
+  }, [taskStatuses]);
+
+  const priorityOptions = useMemo(() => {
+    return (priorities || []).map((p: any) => ({
+      id: p.id,
+      label: p.name || p.priority_name || 'Priority',
+      color: p.priority_color
+    }));
+  }, [priorities]);
+
+  const assigneeOptions = useMemo(() => {
+    return (allUsers || []).map((u: any) => ({
+      id: u.id,
+      label: u.full_name || 'User',
+      sublabel: u.user_code ? `(${u.user_code})` : undefined
+    }));
+  }, [allUsers]);
 
   const handleExpandAllBranches = async () => {
     setIsExpandingAll(true);
@@ -1026,11 +1183,14 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
               {/* Floating Filter Popover (Does NOT take page height) */}
               {showFilters && (
-                <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-xl border border-border bg-surface shadow-2xl p-4 z-50 animate-in fade-in zoom-in-95 duration-150 space-y-3.5">
+                <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-xl border border-border bg-surface shadow-2xl p-4 z-50 animate-in fade-in zoom-in-95 duration-150 space-y-3.5 max-h-[85vh] overflow-y-auto custom-scrollbar">
                   <div className="flex items-center justify-between border-b border-border/50 pb-2.5">
                     <span className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
                       <Filter className="h-3.5 w-3.5 text-theme-icon" />
                       Filter Engine
+                      <span className="text-[10px] font-normal lowercase tracking-normal text-muted">
+                        (Multi-Select)
+                      </span>
                     </span>
                     <div className="flex items-center gap-2">
                       {activeFilterCount > 0 && (
@@ -1050,33 +1210,9 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                     </div>
                   </div>
 
-                  {/* Scope Segmented Control */}
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Scope</label>
-                    <div className="grid grid-cols-4 gap-1 p-1 rounded-lg bg-surface/60 border border-border/60">
-                      {[
-                        { id: 'ALL', label: 'All' },
-                        { id: 'WORKSPACES', label: 'Workspaces' },
-                        { id: 'SUB_WORKSPACES', label: 'Sub-WS' },
-                        { id: 'TASKS', label: 'Tasks' },
-                      ].map(tab => (
-                        <button
-                          key={tab.id}
-                          onClick={() => setFilters(prev => ({ ...prev, entityType: tab.id as any }))}
-                          className={`py-1 text-xs font-semibold rounded-md transition-all ${
-                            filters.entityType === tab.id 
-                              ? 'bg-theme-btn-primary text-white shadow-sm' 
-                              : 'text-muted hover:text-foreground hover:bg-surface/50'
-                          }`}
-                        >
-                          {tab.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
                   {/* Quick Toggle: My Assigned Tasks Only */}
                   <button
+                    type="button"
                     onClick={() => setFilters(prev => ({ ...prev, myTasksOnly: !prev.myTasksOnly }))}
                     className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg border transition-all ${
                       filters.myTasksOnly 
@@ -1091,49 +1227,93 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                     {filters.myTasksOnly && <Check className="h-3.5 w-3.5" />}
                   </button>
 
-                  {/* Dropdown Filters */}
-                  <div className="space-y-2.5">
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Status</label>
-                      <select
-                        value={filters.statusId || ""}
-                        onChange={(e) => setFilters(prev => ({ ...prev, statusId: e.target.value }))}
-                        className="w-full text-xs p-2 rounded-lg border border-border bg-surface text-foreground focus:ring-1 focus:ring-theme-icon outline-none"
-                      >
-                        <option value="">All Statuses</option>
-                        {(taskStatuses || []).map((s: any) => (
-                          <option key={s.id} value={s.id}>{s.name || s.status_name}</option>
-                        ))}
-                      </select>
-                    </div>
+                  {/* Multi-Selection Filters */}
+                  <div className="space-y-3">
+                    {/* Scope Multi-Select */}
+                    <WorkspaceFilterMultiSelect
+                      label="Scope"
+                      placeholder="All Scopes"
+                      options={scopeOptions}
+                      selectedIds={filters.entityTypes && filters.entityTypes.length > 0 ? filters.entityTypes : (filters.entityType && filters.entityType !== 'ALL' ? [filters.entityType] : [])}
+                      onChange={(ids) => {
+                        if (ids.length === 0 || ids.length === scopeOptions.length) {
+                          setFilters(prev => ({ ...prev, entityType: 'ALL', entityTypes: [] }));
+                        } else {
+                          setFilters(prev => ({
+                            ...prev,
+                            entityType: ids.length === 1 ? ids[0] as any : undefined,
+                            entityTypes: ids as any[]
+                          }));
+                        }
+                      }}
+                      isOpen={openDropdown === 'scope'}
+                      onToggle={() => setOpenDropdown(prev => prev === 'scope' ? null : 'scope')}
+                      onClose={() => setOpenDropdown(null)}
+                    />
 
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Priority</label>
-                      <select
-                        value={filters.priorityId || ""}
-                        onChange={(e) => setFilters(prev => ({ ...prev, priorityId: e.target.value }))}
-                        className="w-full text-xs p-2 rounded-lg border border-border bg-surface text-foreground focus:ring-1 focus:ring-theme-icon outline-none"
-                      >
-                        <option value="">All Priorities</option>
-                        {(priorities || []).map((p: any) => (
-                          <option key={p.id} value={p.id}>{p.name || p.priority_name}</option>
-                        ))}
-                      </select>
-                    </div>
+                    {/* Workspace Multi-Select */}
+                    {workspaceOptions.length > 0 && (
+                      <WorkspaceFilterMultiSelect
+                        label="Workspace"
+                        placeholder="All Workspaces"
+                        options={workspaceOptions}
+                        selectedIds={filters.workspaceIds || (filters.workspaceId ? [filters.workspaceId] : [])}
+                        onChange={(ids) => setFilters(prev => ({ ...prev, workspaceIds: ids, workspaceId: ids.length === 1 ? ids[0] : '' }))}
+                        isOpen={openDropdown === 'workspace'}
+                        onToggle={() => setOpenDropdown(prev => prev === 'workspace' ? null : 'workspace')}
+                        onClose={() => setOpenDropdown(null)}
+                      />
+                    )}
 
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-bold text-muted uppercase tracking-wider">Assignee</label>
-                      <select
-                        value={filters.assigneeId || ""}
-                        onChange={(e) => setFilters(prev => ({ ...prev, assigneeId: e.target.value }))}
-                        className="w-full text-xs p-2 rounded-lg border border-border bg-surface text-foreground focus:ring-1 focus:ring-theme-icon outline-none"
-                      >
-                        <option value="">All Assignees</option>
-                        {allUsers.map((u: any) => (
-                          <option key={u.id} value={u.id}>{u.full_name} ({u.user_code || 'User'})</option>
-                        ))}
-                      </select>
-                    </div>
+                    {/* Company Multi-Select */}
+                    {companyOptions.length > 1 && (
+                      <WorkspaceFilterMultiSelect
+                        label="Company"
+                        placeholder="All Companies"
+                        options={companyOptions}
+                        selectedIds={filters.companyIds || (filters.companyId ? [filters.companyId] : [])}
+                        onChange={(ids) => setFilters(prev => ({ ...prev, companyIds: ids, companyId: ids.length === 1 ? ids[0] : '' }))}
+                        isOpen={openDropdown === 'company'}
+                        onToggle={() => setOpenDropdown(prev => prev === 'company' ? null : 'company')}
+                        onClose={() => setOpenDropdown(null)}
+                      />
+                    )}
+
+                    {/* Status Multi-Select */}
+                    <WorkspaceFilterMultiSelect
+                      label="Status"
+                      placeholder="All Statuses"
+                      options={statusOptions}
+                      selectedIds={filters.statusIds || (filters.statusId ? [filters.statusId] : [])}
+                      onChange={(ids) => setFilters(prev => ({ ...prev, statusIds: ids, statusId: ids.length === 1 ? ids[0] : '' }))}
+                      isOpen={openDropdown === 'status'}
+                      onToggle={() => setOpenDropdown(prev => prev === 'status' ? null : 'status')}
+                      onClose={() => setOpenDropdown(null)}
+                    />
+
+                    {/* Priority Multi-Select */}
+                    <WorkspaceFilterMultiSelect
+                      label="Priority"
+                      placeholder="All Priorities"
+                      options={priorityOptions}
+                      selectedIds={filters.priorityIds || (filters.priorityId ? [filters.priorityId] : [])}
+                      onChange={(ids) => setFilters(prev => ({ ...prev, priorityIds: ids, priorityId: ids.length === 1 ? ids[0] : '' }))}
+                      isOpen={openDropdown === 'priority'}
+                      onToggle={() => setOpenDropdown(prev => prev === 'priority' ? null : 'priority')}
+                      onClose={() => setOpenDropdown(null)}
+                    />
+
+                    {/* Assignee Multi-Select */}
+                    <WorkspaceFilterMultiSelect
+                      label="Assignee"
+                      placeholder="All Assignees"
+                      options={assigneeOptions}
+                      selectedIds={filters.assigneeIds || (filters.assigneeId ? [filters.assigneeId] : [])}
+                      onChange={(ids) => setFilters(prev => ({ ...prev, assigneeIds: ids, assigneeId: ids.length === 1 ? ids[0] : '' }))}
+                      isOpen={openDropdown === 'assignee'}
+                      onToggle={() => setOpenDropdown(prev => prev === 'assignee' ? null : 'assignee')}
+                      onClose={() => setOpenDropdown(null)}
+                    />
                   </div>
 
                   <div className="pt-2 border-t border-border flex items-center justify-end">
@@ -1228,7 +1408,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               onClick={() => {
                 setHierarchyScope("all");
                 setSelectedDepartmentName("ALL");
-                setFilters(prev => ({ ...prev, myTasksOnly: false, assigneeId: '' }));
+                setFilters(prev => ({ ...prev, myTasksOnly: false, assigneeId: '', assigneeIds: [] }));
               }}
               className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap shrink-0 ${
                 hierarchyScope === "all" && selectedDepartmentName === "ALL" && !filters.myTasksOnly
@@ -1328,37 +1508,192 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       {activeFilterCount > 0 && (
         <div className="flex flex-wrap items-center gap-1.5 mb-3 px-1 animate-in fade-in duration-150">
           <span className="text-[10px] font-bold text-muted uppercase tracking-wider mr-1">Active:</span>
-          {filters.entityType && filters.entityType !== 'ALL' && (
+
+          {/* Scope Chips */}
+          {filters.entityTypes && filters.entityTypes.length > 0 ? (
+            filters.entityTypes.map(scopeType => (
+              <span key={scopeType} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-theme-btn-primary/10 text-theme-btn-primary border border-theme-btn-primary/20">
+                Scope: {scopeType.replace('_', ' ')}
+                <button
+                  type="button"
+                  onClick={() => toggleScope(scopeType)}
+                  className="hover:text-danger ml-0.5 font-bold"
+                  title="Remove scope"
+                >
+                  ✕
+                </button>
+              </span>
+            ))
+          ) : (filters.entityType && filters.entityType !== 'ALL' && (
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-theme-btn-primary/10 text-theme-btn-primary border border-theme-btn-primary/20">
               Scope: {filters.entityType.replace('_', ' ')}
-              <button onClick={() => setFilters(p => ({ ...p, entityType: 'ALL' }))} className="hover:text-danger ml-0.5 font-bold">✕</button>
+              <button
+                type="button"
+                onClick={() => setFilters(p => ({ ...p, entityType: 'ALL', entityTypes: [] }))}
+                className="hover:text-danger ml-0.5 font-bold"
+                title="Remove scope"
+              >
+                ✕
+              </button>
             </span>
-          )}
+          ))}
+
+          {/* Workspace Chips */}
+          {(filters.workspaceIds && filters.workspaceIds.length > 0
+            ? filters.workspaceIds
+            : (filters.workspaceId ? [filters.workspaceId] : [])
+          ).map(wId => {
+            const wsObj = workspaces.find((w: any) => w.id === wId);
+            const wsName = wsObj?.name || wsObj?.workspace_name || 'Workspace';
+            return (
+              <span key={wId} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-theme-btn-primary/10 text-theme-btn-primary border border-theme-btn-primary/20">
+                Workspace: {wsName}
+                <button
+                  type="button"
+                  onClick={() => setFilters(p => {
+                    const currentIds = p.workspaceIds && p.workspaceIds.length > 0 ? p.workspaceIds : (p.workspaceId ? [p.workspaceId] : []);
+                    const next = currentIds.filter(id => id !== wId);
+                    return { ...p, workspaceIds: next, workspaceId: next.length === 1 ? next[0] : '' };
+                  })}
+                  className="hover:text-danger ml-0.5 font-bold"
+                  title="Remove workspace filter"
+                >
+                  ✕
+                </button>
+              </span>
+            );
+          })}
+
+          {/* Company Chips */}
+          {(filters.companyIds && filters.companyIds.length > 0
+            ? filters.companyIds
+            : (filters.companyId ? [filters.companyId] : [])
+          ).map(cId => {
+            const compObj = companies.find((c: any) => c.id === cId);
+            const compName = compObj?.name || compObj?.company_name || 'Company';
+            return (
+              <span key={cId} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-theme-btn-primary/10 text-theme-btn-primary border border-theme-btn-primary/20">
+                Company: {compName}
+                <button
+                  type="button"
+                  onClick={() => setFilters(p => {
+                    const currentIds = p.companyIds && p.companyIds.length > 0 ? p.companyIds : (p.companyId ? [p.companyId] : []);
+                    const next = currentIds.filter(id => id !== cId);
+                    return { ...p, companyIds: next, companyId: next.length === 1 ? next[0] : '' };
+                  })}
+                  className="hover:text-danger ml-0.5 font-bold"
+                  title="Remove company filter"
+                >
+                  ✕
+                </button>
+              </span>
+            );
+          })}
+
+          {/* My Assigned Tasks Only */}
           {filters.myTasksOnly && (
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-success/15 text-success border border-success/30">
               My Assigned Tasks Only
-              <button onClick={() => setFilters(p => ({ ...p, myTasksOnly: false }))} className="hover:text-danger ml-0.5 font-bold">✕</button>
+              <button
+                type="button"
+                onClick={() => setFilters(p => ({ ...p, myTasksOnly: false }))}
+                className="hover:text-danger ml-0.5 font-bold"
+                title="Remove filter"
+              >
+                ✕
+              </button>
             </span>
           )}
-          {filters.statusId && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-theme-btn-primary/10 text-theme-btn-primary border border-theme-btn-primary/20">
-              Status: {taskStatuses.find(s => s.id === filters.statusId)?.name || 'Selected'}
-              <button onClick={() => setFilters(p => ({ ...p, statusId: '' }))} className="hover:text-danger ml-0.5 font-bold">✕</button>
-            </span>
-          )}
-          {filters.priorityId && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-theme-btn-primary/10 text-theme-btn-primary border border-theme-btn-primary/20">
-              Priority: {priorities.find(p => p.id === filters.priorityId)?.name || 'Selected'}
-              <button onClick={() => setFilters(p => ({ ...p, priorityId: '' }))} className="hover:text-danger ml-0.5 font-bold">✕</button>
-            </span>
-          )}
-          {filters.assigneeId && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-theme-btn-primary/10 text-theme-btn-primary border border-theme-btn-primary/20">
-              Assignee: {allUsers.find(u => u.id === filters.assigneeId)?.full_name || 'Selected'}
-              <button onClick={() => setFilters(p => ({ ...p, assigneeId: '' }))} className="hover:text-danger ml-0.5 font-bold">✕</button>
-            </span>
-          )}
-          <button onClick={clearFilters} className="text-[11px] text-muted hover:text-danger underline ml-2 font-semibold">
+
+          {/* Status Chips */}
+          {(filters.statusIds && filters.statusIds.length > 0
+            ? filters.statusIds
+            : (filters.statusId ? [filters.statusId] : [])
+          ).map(sId => {
+            const statusObj = taskStatuses.find((s: any) => s.id === sId);
+            const statusName = statusObj?.name || statusObj?.status_name || 'Status';
+            return (
+              <span key={sId} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-theme-btn-primary/10 text-theme-btn-primary border border-theme-btn-primary/20">
+                {statusObj?.status_color && (
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: statusObj.status_color }} />
+                )}
+                Status: {statusName}
+                <button
+                  type="button"
+                  onClick={() => setFilters(p => {
+                    const currentIds = p.statusIds && p.statusIds.length > 0 ? p.statusIds : (p.statusId ? [p.statusId] : []);
+                    const next = currentIds.filter(id => id !== sId);
+                    return { ...p, statusIds: next, statusId: next.length === 1 ? next[0] : '' };
+                  })}
+                  className="hover:text-danger ml-0.5 font-bold"
+                  title="Remove status filter"
+                >
+                  ✕
+                </button>
+              </span>
+            );
+          })}
+
+          {/* Priority Chips */}
+          {(filters.priorityIds && filters.priorityIds.length > 0
+            ? filters.priorityIds
+            : (filters.priorityId ? [filters.priorityId] : [])
+          ).map(pId => {
+            const prioObj = priorities.find((p: any) => p.id === pId);
+            const prioName = prioObj?.name || prioObj?.priority_name || 'Priority';
+            return (
+              <span key={pId} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-theme-btn-primary/10 text-theme-btn-primary border border-theme-btn-primary/20">
+                {prioObj?.priority_color && (
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: prioObj.priority_color }} />
+                )}
+                Priority: {prioName}
+                <button
+                  type="button"
+                  onClick={() => setFilters(p => {
+                    const currentIds = p.priorityIds && p.priorityIds.length > 0 ? p.priorityIds : (p.priorityId ? [p.priorityId] : []);
+                    const next = currentIds.filter(id => id !== pId);
+                    return { ...p, priorityIds: next, priorityId: next.length === 1 ? next[0] : '' };
+                  })}
+                  className="hover:text-danger ml-0.5 font-bold"
+                  title="Remove priority filter"
+                >
+                  ✕
+                </button>
+              </span>
+            );
+          })}
+
+          {/* Assignee Chips */}
+          {(filters.assigneeIds && filters.assigneeIds.length > 0
+            ? filters.assigneeIds
+            : (filters.assigneeId ? [filters.assigneeId] : [])
+          ).map(aId => {
+            const userObj = allUsers.find((u: any) => u.id === aId);
+            const userName = userObj?.full_name || 'User';
+            return (
+              <span key={aId} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-theme-btn-primary/10 text-theme-btn-primary border border-theme-btn-primary/20">
+                Assignee: {userName}
+                <button
+                  type="button"
+                  onClick={() => setFilters(p => {
+                    const currentIds = p.assigneeIds && p.assigneeIds.length > 0 ? p.assigneeIds : (p.assigneeId ? [p.assigneeId] : []);
+                    const next = currentIds.filter(id => id !== aId);
+                    return { ...p, assigneeIds: next, assigneeId: next.length === 1 ? next[0] : '' };
+                  })}
+                  className="hover:text-danger ml-0.5 font-bold"
+                  title="Remove assignee filter"
+                >
+                  ✕
+                </button>
+              </span>
+            );
+          })}
+
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="text-[11px] text-muted hover:text-danger underline ml-2 font-semibold"
+          >
             Clear all
           </button>
         </div>
