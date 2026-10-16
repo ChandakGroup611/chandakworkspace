@@ -231,9 +231,11 @@ export function WorkspaceMasterTable({
       }
     }
 
-    const canExpand = hasChildren || 
-      (isWorkspaceType && (subWsCount > 0 || directTaskCount > 0 || totalTaskCount > 0 || !node.childrenFetched)) ||
-      (isTask && (childTaskCount > 0 || !node.childrenFetched));
+    const hasLoadedChildren = Boolean(node.children && node.children.some((c: any) => !c.is_deleted));
+
+    const canExpand = isWorkspaceType 
+      ? (subWsCount > 0 || directTaskCount > 0 || totalTaskCount > 0 || hasLoadedChildren)
+      : (childTaskCount > 0 || hasLoadedChildren);
 
     const creatorId = node.created_by || node.owner_id || node.workspace_owner_id;
     const fullDate = node.created_at ? new Date(node.created_at).toLocaleString() : '---';
@@ -615,9 +617,11 @@ export function WorkspaceMasterTable({
       }
     }
 
-    const canExpand = hasChildren || 
-      (isWorkspaceType && (subWsCount > 0 || directTaskCount > 0 || totalTaskCount > 0 || !node.childrenFetched)) ||
-      (isTask && (childTaskCount > 0 || !node.childrenFetched));
+    const hasLoadedChildren = Boolean(node.children && node.children.some((c: any) => !c.is_deleted));
+
+    const canExpand = isWorkspaceType 
+      ? (subWsCount > 0 || directTaskCount > 0 || totalTaskCount > 0 || hasLoadedChildren)
+      : (childTaskCount > 0 || hasLoadedChildren);
 
     const shortDate = node.created_at ? new Date(node.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : '---';
     const statusName = getStatusName(node);
