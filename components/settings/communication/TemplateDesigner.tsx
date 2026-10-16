@@ -146,23 +146,119 @@ export const VEHICLE_MERGE_TAGS = [
   "{{link}}"
 ];
 
+export const WORKSPACE_MERGE_TAGS = [
+  "{{workspace_name}}",
+  "{{workspace_code}}",
+  "{{description}}",
+  "{{status}}",
+  "{{company_name}}",
+  "{{start_date}}",
+  "{{end_date}}",
+  "{{due_date}}",
+  "{{workspace_owner}}",
+  "{{owner_name}}",
+  "{{assigned_user}}",
+  "{{creator_name}}",
+  "{{parent_workspace}}",
+  "{{parent_workspace_name}}",
+  "{{type}}",
+  "{{role}}",
+  "{{priority}}",
+  "{{remarks}}",
+  "{{recipient_name}}",
+  "{{link}}"
+];
+
+export const TASK_MERGE_TAGS = [
+  "{{task_name}}",
+  "{{task_code}}",
+  "{{ticket_no}}",
+  "{{description}}",
+  "{{status}}",
+  "{{priority}}",
+  "{{start_date}}",
+  "{{due_date}}",
+  "{{end_date}}",
+  "{{assigned_user}}",
+  "{{creator_name}}",
+  "{{workspace_name}}",
+  "{{workspace_code}}",
+  "{{task_type}}",
+  "{{parent_task_name}}",
+  "{{remarks}}",
+  "{{recipient_name}}",
+  "{{link}}"
+];
+
+export const TICKET_MERGE_TAGS = [
+  "{{ticket_no}}",
+  "{{ticket_title}}",
+  "{{description}}",
+  "{{status}}",
+  "{{priority}}",
+  "{{category}}",
+  "{{subcategory}}",
+  "{{assigned_user}}",
+  "{{creator_name}}",
+  "{{remarks}}",
+  "{{recipient_name}}",
+  "{{link}}"
+];
+
+export const REQUIREMENT_MERGE_TAGS = [
+  "{{req_code}}",
+  "{{req_name}}",
+  "{{description}}",
+  "{{status}}",
+  "{{approval_status}}",
+  "{{assigned_user}}",
+  "{{creator_name}}",
+  "{{due_date}}",
+  "{{remarks}}",
+  "{{recipient_name}}",
+  "{{link}}"
+];
+
 const MERGE_TAGS = [
   "{{ticket_no}}",
   "{{ticket_title}}",
   "{{task_name}}",
   "{{workspace_name}}",
   "{{workspace_code}}",
+  "{{description}}",
+  "{{company_name}}",
   "{{req_code}}",
   "{{req_name}}",
   "{{assigned_user}}",
   "{{creator_name}}",
+  "{{workspace_owner}}",
   "{{status}}",
   "{{priority}}",
   "{{due_date}}",
   "{{role}}",
   "{{remarks}}",
+  "{{link}}",
   ...VEHICLE_MERGE_TAGS
 ];
+
+export function getAvailableMergeTags(moduleName?: string): string[] {
+  if (moduleName === "Vehicle" || moduleName === "Vehicle (FleetDesk)") {
+    return VEHICLE_MERGE_TAGS;
+  }
+  if (moduleName === "Workspace") {
+    return WORKSPACE_MERGE_TAGS;
+  }
+  if (moduleName === "Task") {
+    return TASK_MERGE_TAGS;
+  }
+  if (moduleName === "Ticket") {
+    return TICKET_MERGE_TAGS;
+  }
+  if (moduleName === "Requirement" || moduleName === "Approval") {
+    return REQUIREMENT_MERGE_TAGS;
+  }
+  return MERGE_TAGS;
+}
 
 interface TemplateDesignerProps {
   initialModule?: string;
@@ -207,6 +303,22 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
   const handleAddTemplate = () => {
     const newId = "temp_" + Date.now();
     const isVeh = moduleFilter === "Vehicle (FleetDesk)" || initialModule === "Vehicle (FleetDesk)";
+    const isWs = moduleFilter === "Workspace";
+
+    const workspaceStarter = `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background-color: #ffffff;">
+  <h2 style="color: #1e293b; margin-top: 0; margin-bottom: 16px; font-size: 20px; font-weight: 700;">Workspace Notification</h2>
+  <div style="background-color: #f8fafc; border-left: 4px solid #2563eb; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
+    <p style="margin: 6px 0; font-size: 14px; color: #334155;"><strong style="color: #0f172a;">Workspace:</strong> {{workspace_name}} ({{workspace_code}})</p>
+    <p style="margin: 6px 0; font-size: 14px; color: #334155;"><strong style="color: #0f172a;">Status:</strong> {{status}}</p>
+    <p style="margin: 6px 0; font-size: 14px; color: #334155;"><strong style="color: #0f172a;">Company:</strong> {{company_name}}</p>
+    <p style="margin: 6px 0; font-size: 14px; color: #334155;"><strong style="color: #0f172a;">Owner:</strong> {{workspace_owner}}</p>
+    <p style="margin: 6px 0; font-size: 14px; color: #334155;"><strong style="color: #0f172a;">Description:</strong> {{description}}</p>
+    <p style="margin: 6px 0; font-size: 14px; color: #334155;"><strong style="color: #0f172a;">Target Date:</strong> {{due_date}}</p>
+  </div>
+  <div style="margin-top: 24px;">
+    <a href="{{link}}" style="display: inline-block; background-color: #2563eb; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 14px;">Open Workspace</a>
+  </div>
+</div>`;
 
     const vehicleStarter = `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background-color: #ffffff;">
   <div style="border-bottom: 2px solid #ef4444; padding-bottom: 12px; margin-bottom: 16px;">
@@ -240,17 +352,34 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
   </div>
 </div>`;
 
+    let initialHtml = standardStarter;
+    let initialSubject = "Task Updated: {{task_name}}";
+    let initialName = "Task Updated";
+    let initialRecipients = ["Assigned User", "Creator"];
+
+    if (isVeh) {
+      initialHtml = vehicleStarter;
+      initialSubject = "⚠️ Expiry Warning: {{doc_type}} for {{registration_number}} ({{days_remaining}})";
+      initialName = "Vehicle Expiry Notice";
+      initialRecipients = ["Assigned Driver", "Fleet Manager / Admin"];
+    } else if (isWs) {
+      initialHtml = workspaceStarter;
+      initialSubject = "Workspace Alert: {{workspace_name}}";
+      initialName = "Workspace Updated";
+      initialRecipients = ["Workspace Owner", "Creator", "Assigned User"];
+    }
+
     setTemplates(prev => [
       {
         id: newId,
         module: isVeh ? "Vehicle (FleetDesk)" : (moduleFilter !== "ALL" ? moduleFilter : "Task"),
-        event: isVeh ? "Insurance Expiring Soon (30 Days)" : "Updated",
-        template_name: isVeh ? "Vehicle Expiry Notice" : "Task Updated",
-        subject: isVeh ? "⚠️ Expiry Warning: {{doc_type}} for {{registration_number}} ({{days_remaining}})" : "Task Updated: {{task_name}}",
-        html_body: isVeh ? vehicleStarter : standardStarter,
+        event: isVeh ? "Insurance Expiring Soon (30 Days)" : (isWs ? "Updated" : "Updated"),
+        template_name: initialName,
+        subject: initialSubject,
+        html_body: initialHtml,
         is_active: true,
         is_new: true,
-        recipient_types: isVeh ? ["Assigned Driver", "Fleet Manager / Admin"] : ["Assigned User", "Creator"]
+        recipient_types: initialRecipients
       },
       ...prev
     ]);
@@ -558,7 +687,7 @@ export default function TemplateDesigner({ initialModule }: TemplateDesignerProp
             {/* Merge Tags Helper */}
             <div className="px-6 py-3 border-b border-border bg-background flex flex-wrap gap-2 items-center">
               <span className="text-xs font-bold text-muted mr-2">AVAILABLE TAGS:</span>
-              {(isVeh ? VEHICLE_MERGE_TAGS : MERGE_TAGS).map(tag => (
+              {getAvailableMergeTags(tpl.module).map(tag => (
                 <AppButton 
                   key={tag} 
                   type="button"

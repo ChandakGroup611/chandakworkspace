@@ -304,6 +304,13 @@ export async function createWorkspace(formData: any) {
           workspace_owner_id: userId,
           workspace_name: data.workspace_name,
           workspace_code: data.workspace_code,
+          description: data.description,
+          start_date: data.start_date,
+          end_date: data.end_date,
+          due_date: data.end_date,
+          status_id: data.status_id,
+          company_id: data.company_id,
+          parent_workspace_id: data.parent_workspace_id,
           type: isSub ? 'Sub-Workspace' : 'Workspace',
           link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/workspaces`
         });
@@ -319,6 +326,13 @@ export async function createWorkspace(formData: any) {
       workspace_owner_id: userId,
       workspace_name: data.workspace_name,
       workspace_code: data.workspace_code,
+      description: data.description,
+      start_date: data.start_date,
+      end_date: data.end_date,
+      due_date: data.end_date,
+      status_id: data.status_id,
+      company_id: data.company_id,
+      parent_workspace_id: data.parent_workspace_id,
       type: !!formData.parent_workspace_id ? 'Sub-Workspace' : 'Workspace',
       link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/workspaces`
     }).catch(e => console.error("[createWorkspace] Workspace Created queue push failed", e));
@@ -1343,6 +1357,13 @@ export async function updateWorkspace(id: string, formData: any) {
         workspace_owner_id: data.workspace_owner_id || userId,
         workspace_name: data.workspace_name,
         workspace_code: data.workspace_code,
+        description: data.description,
+        start_date: data.start_date,
+        end_date: data.end_date,
+        due_date: data.end_date,
+        status_id: data.status_id,
+        company_id: data.company_id,
+        parent_workspace_id: data.parent_workspace_id,
         type: isSub ? 'Sub-Workspace' : 'Workspace',
         link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/workspaces`
       }).catch(e => console.error("[updateWorkspace] Workspace Assigned queue push failed", e));
@@ -1355,6 +1376,13 @@ export async function updateWorkspace(id: string, formData: any) {
       workspace_owner_id: data.workspace_owner_id || userId,
       workspace_name: data.workspace_name,
       workspace_code: data.workspace_code,
+      description: data.description,
+      start_date: data.start_date,
+      end_date: data.end_date,
+      due_date: data.end_date,
+      status_id: data.status_id,
+      company_id: data.company_id,
+      parent_workspace_id: data.parent_workspace_id,
       type: !!formData.parent_workspace_id ? 'Sub-Workspace' : 'Workspace',
       link: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech'}/workspaces`
     }).catch(e => console.error("[updateWorkspace] Workspace Updated queue push failed", e));

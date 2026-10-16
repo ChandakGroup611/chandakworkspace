@@ -288,18 +288,53 @@ async function autoHydratePayload(payload: any, moduleName?: string) {
   }
 
   // Workspace-specific auto-enrichment
-  if (moduleName === 'Workspace' && payload.entity_id && (!hydrated.workspace_name || !hydrated.workspace_code)) {
+  if (moduleName === 'Workspace' && payload.entity_id) {
     try {
       const { data: ws } = await supabaseAdmin
         .from('workspaces')
-        .select('workspace_name, workspace_code, workspace_owner_id')
+        .select(`
+          id,
+          workspace_name,
+          workspace_code,
+          description,
+          start_date,
+          end_date,
+          status_id,
+          company_id,
+          workspace_owner_id,
+          parent_workspace_id,
+          status:status_master(status_name),
+          company:company_master(company_name),
+          owner:user_master!workspaces_workspace_owner_id_fkey(full_name),
+          parent:workspaces!workspaces_parent_workspace_id_fkey(workspace_name)
+        `)
         .eq('id', payload.entity_id)
         .maybeSingle();
+
       if (ws) {
-        if (!hydrated.workspace_name) hydrated.workspace_name = ws.workspace_name;
-        if (!hydrated.workspace_code) hydrated.workspace_code = ws.workspace_code;
-        if (!hydrated.workspace_owner_id) hydrated.workspace_owner_id = ws.workspace_owner_id;
-        if (!hydrated.owner_id) hydrated.owner_id = ws.workspace_owner_id;
+        const d = ws as any;
+        const statusName = d.status?.status_name || (Array.isArray(d.status) && d.status[0]?.status_name);
+        const companyName = d.company?.company_name || (Array.isArray(d.company) && d.company[0]?.company_name);
+        const ownerName = d.owner?.full_name || (Array.isArray(d.owner) && d.owner[0]?.full_name);
+        const parentName = d.parent?.workspace_name || (Array.isArray(d.parent) && d.parent[0]?.workspace_name);
+
+        if (!hydrated.workspace_name) hydrated.workspace_name = d.workspace_name;
+        if (!hydrated.workspace_code) hydrated.workspace_code = d.workspace_code;
+        if (!hydrated.description && d.description) hydrated.description = d.description;
+        if (!hydrated.status && statusName) hydrated.status = statusName;
+        if (!hydrated.status_id && d.status_id) hydrated.status_id = d.status_id;
+        if (!hydrated.company_name && companyName) hydrated.company_name = companyName;
+        if (!hydrated.start_date && d.start_date) hydrated.start_date = d.start_date;
+        if (!hydrated.end_date && d.end_date) hydrated.end_date = d.end_date;
+        if (!hydrated.due_date && d.end_date) hydrated.due_date = d.end_date;
+        if (!hydrated.workspace_owner && ownerName) hydrated.workspace_owner = ownerName;
+        if (!hydrated.owner_name && ownerName) hydrated.owner_name = ownerName;
+        if (!hydrated.workspace_owner_id && d.workspace_owner_id) hydrated.workspace_owner_id = d.workspace_owner_id;
+        if (!hydrated.owner_id && d.workspace_owner_id) hydrated.owner_id = d.workspace_owner_id;
+        if (!hydrated.parent_workspace && parentName) hydrated.parent_workspace = parentName;
+        if (!hydrated.parent_workspace_name && parentName) hydrated.parent_workspace_name = parentName;
+        if (!hydrated.type) hydrated.type = d.parent_workspace_id ? 'Sub-Workspace' : 'Workspace';
+        if (!hydrated.role) hydrated.role = 'Workspace Lead';
       }
     } catch (e) {
       console.error('[NotificationEngine] Workspace auto-enrichment failed', e);
@@ -416,12 +451,33 @@ async function autoHydratePayload(payload: any, moduleName?: string) {
     }
   }
 
-  // Set aliases for common merge tags
+  // Set aliases for common merge tags across all modules
   if (hydrated.assigned_to && !hydrated.assigned_user) {
     hydrated.assigned_user = hydrated.assigned_to;
   }
+  if (hydrated.assigned_user && !hydrated.assigned_to) {
+    hydrated.assigned_to = hydrated.assigned_user;
+  }
   if (hydrated.workspace_id && !hydrated.workspace_name) {
     hydrated.workspace_name = hydrated.workspace_id;
+  }
+  if (hydrated.end_date && !hydrated.due_date) {
+    hydrated.due_date = hydrated.end_date;
+  }
+  if (hydrated.due_date && !hydrated.end_date) {
+    hydrated.end_date = hydrated.due_date;
+  }
+  if (hydrated.workspace_owner && !hydrated.owner_name) {
+    hydrated.owner_name = hydrated.workspace_owner;
+  }
+  if (hydrated.owner_name && !hydrated.workspace_owner) {
+    hydrated.workspace_owner = hydrated.owner_name;
+  }
+  if (hydrated.parent_workspace && !hydrated.parent_workspace_name) {
+    hydrated.parent_workspace_name = hydrated.parent_workspace;
+  }
+  if (hydrated.parent_workspace_name && !hydrated.parent_workspace) {
+    hydrated.parent_workspace = hydrated.parent_workspace_name;
   }
 
   return hydrated;
@@ -435,8 +491,20 @@ function hydrateTemplate(text: string, data: any): string {
   if (matches) {
     matches.forEach(match => {
       const key = match.replace(/[{}]/g, "").trim();
-      const value = data[key] !== undefined && data[key] !== null ? data[key] : "";
-      hydrated = hydrated.replace(match, String(value));
+      let value = data[key];
+      // Fallback aliases if key has alternative representation
+      if (value === undefined || value === null || value === "") {
+        if (key === 'workspace_owner') value = data['owner_name'] || data['creator_name'];
+        else if (key === 'owner_name') value = data['workspace_owner'] || data['creator_name'];
+        else if (key === 'assigned_user') value = data['assigned_to'] || data['recipient_name'];
+        else if (key === 'due_date') value = data['end_date'];
+        else if (key === 'end_date') value = data['due_date'];
+        else if (key === 'parent_workspace') value = data['parent_workspace_name'];
+        else if (key === 'parent_workspace_name') value = data['parent_workspace'];
+        else if (key === 'task_name') value = data['subject'] || data['ticket_title'];
+        else if (key === 'ticket_title') value = data['title'] || data['task_name'];
+      }
+      hydrated = hydrated.replace(match, value !== undefined && value !== null ? String(value) : "");
     });
   }
   return hydrated;

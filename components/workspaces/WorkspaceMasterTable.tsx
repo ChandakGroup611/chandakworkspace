@@ -219,16 +219,21 @@ export function WorkspaceMasterTable({
 
     let totalTaskCount = node.total_hierarchy_task_count || 0;
     let directTaskCount = node.direct_task_count || 0;
-    let childTaskCount = 0;
-    let subWsCount = 0;
+    let subWsCount = node.subworkspace_count || 0;
+    let childTaskCount = node.child_task_count ?? ((Array.isArray(node.subtasks) ? node.subtasks[0]?.count : node.subtasks?.count) ?? 0);
 
     if (node.children && node.children.length > 0) {
-      childTaskCount = node.children.filter((c: any) => c.type === 'TASK' || c.type === 'SUB_TASK').length;
+      const activeTaskCount = node.children.filter((c: any) => !c.is_deleted && (c.type === 'TASK' || c.type === 'SUB_TASK')).length;
+      childTaskCount = Math.max(childTaskCount, activeTaskCount);
+      if (isWorkspaceType && node.childrenFetched) {
+        subWsCount = Math.max(subWsCount, node.children.filter((c: any) => !c.is_deleted && (c.type === 'SUB_WORKSPACE' || c.type === 'WORKSPACE')).length);
+        directTaskCount = Math.max(directTaskCount, activeTaskCount);
+      }
     }
 
-    if (isWorkspaceType && hasChildren && node.childrenFetched) {
-      subWsCount = node.children.filter((c: any) => c.type === 'SUB_WORKSPACE' || c.type === 'WORKSPACE').length;
-    }
+    const canExpand = hasChildren || 
+      (isWorkspaceType && (subWsCount > 0 || directTaskCount > 0 || totalTaskCount > 0 || !node.childrenFetched)) ||
+      (isTask && (childTaskCount > 0 || !node.childrenFetched));
 
     const creatorId = node.created_by || node.owner_id || node.workspace_owner_id;
     const fullDate = node.created_at ? new Date(node.created_at).toLocaleString() : '---';
@@ -301,9 +306,9 @@ export function WorkspaceMasterTable({
             <div className="flex items-start gap-2 min-w-0 flex-1">
               {/* Expand Toggle */}
               <div 
-                onClick={(e) => toggleNode(node, e)}
+                onClick={(e) => canExpand ? toggleNode(node, e) : undefined}
                 className={`h-5 w-5 rounded flex items-center justify-center shrink-0 transition-all duration-200 cursor-pointer mt-0.5 hover:scale-110 active:scale-90 ${
-                  hasChildren || (isWorkspaceType && subWsCount > 0)
+                  canExpand
                     ? 'hover:bg-surface-hover text-muted hover:text-foreground' 
                     : 'opacity-0 pointer-events-none'
                 }`}
@@ -598,6 +603,22 @@ export function WorkspaceMasterTable({
 
     let totalTaskCount = node.total_hierarchy_task_count || 0;
     let directTaskCount = node.direct_task_count || 0;
+    let subWsCount = node.subworkspace_count || 0;
+    let childTaskCount = node.child_task_count ?? ((Array.isArray(node.subtasks) ? node.subtasks[0]?.count : node.subtasks?.count) ?? 0);
+
+    if (node.children && node.children.length > 0) {
+      const activeTaskCount = node.children.filter((c: any) => !c.is_deleted && (c.type === 'TASK' || c.type === 'SUB_TASK')).length;
+      childTaskCount = Math.max(childTaskCount, activeTaskCount);
+      if (isWorkspaceType && node.childrenFetched) {
+        subWsCount = Math.max(subWsCount, node.children.filter((c: any) => !c.is_deleted && (c.type === 'SUB_WORKSPACE' || c.type === 'WORKSPACE')).length);
+        directTaskCount = Math.max(directTaskCount, activeTaskCount);
+      }
+    }
+
+    const canExpand = hasChildren || 
+      (isWorkspaceType && (subWsCount > 0 || directTaskCount > 0 || totalTaskCount > 0 || !node.childrenFetched)) ||
+      (isTask && (childTaskCount > 0 || !node.childrenFetched));
+
     const shortDate = node.created_at ? new Date(node.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : '---';
     const statusName = getStatusName(node);
     const statusColor = getStatusColor(node);
@@ -624,7 +645,7 @@ export function WorkspaceMasterTable({
       >
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-start gap-2.5 min-w-0 flex-1">
-            {hasChildren ? (
+            {canExpand ? (
               <button 
                 type="button"
                 onClick={(e) => toggleNode(node, e)}

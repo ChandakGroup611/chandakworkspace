@@ -862,21 +862,30 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
         });
       }
 
-      import("@/lib/actions/workspaces").then(m => {
-        if (newWS.parent_workspace_id) {
-          setExpandedNodes(prev => ({ ...prev, [newWS.parent_workspace_id]: true }));
-          m.fetchHierarchyChildren(newWS.parent_workspace_id, 'WORKSPACE').then(children => {
-            setMasterHierarchy(curr => {
-              const insertChildren = (tree: any[]): any[] => tree.map(node => {
-                if (node.id === newWS.parent_workspace_id) return { ...node, children, childrenFetched: true };
-                if (node.children) return { ...node, children: insertChildren(node.children) };
-                return node;
-              });
-              return insertChildren(curr);
+      const parentWsId = newWS.parent_workspace_id;
+      if (parentWsId) {
+        setExpandedNodes(prev => ({ ...prev, [parentWsId]: true }));
+        try {
+          const children = await fetchHierarchyChildren(parentWsId, 'WORKSPACE');
+          setMasterHierarchy(curr => {
+            const insertChildren = (tree: any[]): any[] => tree.map(node => {
+              if (node.id === parentWsId) {
+                return { 
+                  ...node, 
+                  children: HierarchyStateManager.mergePrefetchedChildren(node.children, children), 
+                  childrenFetched: true,
+                  subworkspace_count: Math.max(node.subworkspace_count || 0, children.filter((c: any) => c.type === 'SUB_WORKSPACE').length)
+                };
+              }
+              if (node.children) return { ...node, children: insertChildren(node.children) };
+              return node;
             });
+            return insertChildren(curr);
           });
+        } catch (e) {
+          console.error("Failed to refresh hierarchy children for parent workspace", e);
         }
-      });
+      }
       
       setNewWS({ 
         name: "", 
@@ -1072,35 +1081,39 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       }
 
       // Refresh the execution hierarchy tree to show the newly created task
-      import("@/lib/actions/workspaces").then(m => {
-        const parentId = creatingTaskParentId || creatingTaskWorkspaceId;
-        const parentType = creatingTaskParentId ? 'TASK' : 'WORKSPACE';
-        if (parentId) {
-          setExpandedNodes(prev => ({ ...prev, [parentId]: true }));
-          m.fetchHierarchyChildren(parentId, parentType).then(children => {
-            setMasterHierarchy(curr => {
-              // W5.1: Bubble the count recursively via HierarchyStateManager
-              const { nodes: bubbledNodes } = HierarchyStateManager.bubbleTaskCount(curr, parentId, 1);
-              
-              // W5.2: Inject fetched children using intelligent merge
-              const insertChildren = (tree: any[]): any[] => tree.map(node => {
-                if (node.id === parentId) {
-                  return { 
-                    ...node, 
-                    children: HierarchyStateManager.mergePrefetchedChildren(node.children, children), 
-                    childrenFetched: true
-                  };
-                }
-                if (node.children) {
-                  return { ...node, children: insertChildren(node.children) };
-                }
-                return node;
-              });
-              return insertChildren(bubbledNodes);
+      const targetParentId = taskData.parent_task_id || data?.parent_task_id || creatingTaskParentId || creatingTaskWorkspaceId;
+      const targetParentType = (taskData.parent_task_id || data?.parent_task_id || creatingTaskParentId) ? 'TASK' : 'WORKSPACE';
+
+      if (targetParentId) {
+        setExpandedNodes(prev => ({ ...prev, [targetParentId]: true }));
+        try {
+          const children = await fetchHierarchyChildren(targetParentId, targetParentType);
+          setMasterHierarchy(curr => {
+            // W5.1: Bubble the count recursively via HierarchyStateManager
+            const { nodes: bubbledNodes } = HierarchyStateManager.bubbleTaskCount(curr, targetParentId, 1);
+            
+            // W5.2: Inject fetched children using intelligent merge
+            const insertChildren = (tree: any[]): any[] => tree.map(node => {
+              if (node.id === targetParentId) {
+                const merged = HierarchyStateManager.mergePrefetchedChildren(node.children, children);
+                return { 
+                  ...node, 
+                  children: merged, 
+                  childrenFetched: true,
+                  child_task_count: Math.max(node.child_task_count || 0, merged.length)
+                };
+              }
+              if (node.children) {
+                return { ...node, children: insertChildren(node.children) };
+              }
+              return node;
             });
+            return insertChildren(bubbledNodes);
           });
+        } catch (e) {
+          console.error("Failed to refresh hierarchy children for parent task", e);
         }
-      });
+      }
       } catch (err: any) {
         console.warn("[Task Creation] Intercepted:", err.message || err);
         if (err.message && err.message.includes("was not found on the server")) {
@@ -2095,7 +2108,12 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
           }}
           onSuccess={async (newTask: any) => {
             const wsId = creatingTaskWorkspaceId || activeWorkspace?.id || workspaces[0]?.id;
-            await handleTaskWizardSuccess({ ...newTask, workspace_id: wsId });
+            const parentId = creatingTaskParentId;
+            await handleTaskWizardSuccess({ 
+              ...newTask, 
+              workspace_id: wsId, 
+              parent_task_id: newTask.parent_task_id || parentId || null 
+            });
             setCreatingTaskWorkspaceId(null);
             setCreatingTaskParentId(null);
           }}

@@ -110,37 +110,80 @@ export async function previewEmailTemplate(moduleName: string, htmlBody: string)
     ticket_no: "TKT-2026-09/0042",
     ticket_title: "Network Connectivity in Operations Wing",
     task_name: "Implement Biometric Vendor Integration",
+    task_code: "TSK-2026-0042",
     workspace_name: "AI Adoption & Development",
     workspace_code: "SWS-2026-27/09/0004",
+    sub_workspace_name: "AI Adoption & Development",
+    parent_workspace: "Corporate IT & Technology",
+    parent_workspace_name: "Corporate IT & Technology",
     req_code: "REQ-2026-0012",
     req_name: "Automated Vendor Invoicing Pipeline",
     assigned_user: "Anand Mohta",
+    assigned_to: "Anand Mohta",
     creator_name: "Adil Kazi",
+    workspace_owner: "Adil Kazi",
+    owner_name: "Adil Kazi",
+    description: "Enterprise digital transformation initiative streamlining cross-departmental operations and automation.",
+    company_name: "Chandak Group",
+    start_date: "2026-04-01",
+    end_date: "2027-03-31",
+    due_date: new Date().toLocaleDateString(),
     status: "In Progress",
     priority: "High",
-    due_date: new Date().toLocaleDateString(),
+    role: "Project Lead",
+    remarks: "Milestone achieved according to standard compliance specifications.",
+    task_type: "Task",
+    parent_task_name: "Primary Architecture Setup",
+    type: "Workspace",
+    recipient_name: "Team Member",
     link: "https://chandakgroup.tech/workspaces"
   };
 
   try {
     if (moduleName === "Task") {
-      const { data } = await supabaseAdmin.from("tasks").select("id, subject, status_master(status_name), priority_master(priority_name), end_date, creator:user_master!tasks_created_by_fkey(full_name)").limit(1).single();
+      const { data } = await supabaseAdmin
+        .from("tasks")
+        .select("id, subject, task_code, description, start_date, end_date, parent_task_id, status_master(status_name), priority_master(priority_name), creator:user_master!tasks_created_by_fkey(full_name), assignee:user_master!tasks_assigned_to_fkey(full_name), workspace:workspaces(workspace_name, workspace_code), parent:tasks!parent_task_id(subject)")
+        .limit(1)
+        .maybeSingle();
+
       if (data) {
         const d = data as any;
         const statusName = d.status_master?.status_name || (Array.isArray(d.status_master) && d.status_master[0]?.status_name) || "In Progress";
         const priorityName = d.priority_master?.priority_name || (Array.isArray(d.priority_master) && d.priority_master[0]?.priority_name) || "High";
+        const creatorName = d.creator?.full_name || (Array.isArray(d.creator) && d.creator[0]?.full_name) || "Adil Kazi";
+        const assigneeName = d.assignee?.full_name || (Array.isArray(d.assignee) && d.assignee[0]?.full_name) || "Anand Mohta";
+        const wsName = d.workspace?.workspace_name || (Array.isArray(d.workspace) && d.workspace[0]?.workspace_name) || sampleData.workspace_name;
+        const wsCode = d.workspace?.workspace_code || (Array.isArray(d.workspace) && d.workspace[0]?.workspace_code) || sampleData.workspace_code;
+        const parentTaskName = d.parent?.subject || (Array.isArray(d.parent) && d.parent[0]?.subject) || "Primary Architecture Setup";
+
         sampleData = {
           ...sampleData,
           task_name: d.subject || sampleData.task_name,
+          task_code: d.task_code || sampleData.task_code,
+          description: d.description || sampleData.description,
           status: statusName,
           priority: priorityName,
-          creator_name: d.creator?.full_name || (Array.isArray(d.creator) && d.creator[0]?.full_name) || "Adil Kazi",
-          due_date: d.end_date || sampleData.due_date,
+          creator_name: creatorName,
+          assigned_user: assigneeName,
+          assigned_to: assigneeName,
+          workspace_name: wsName,
+          workspace_code: wsCode,
+          start_date: d.start_date ? new Date(d.start_date).toLocaleDateString() : sampleData.start_date,
+          end_date: d.end_date ? new Date(d.end_date).toLocaleDateString() : sampleData.end_date,
+          due_date: d.end_date ? new Date(d.end_date).toLocaleDateString() : sampleData.due_date,
+          task_type: d.parent_task_id ? "Subtask" : "Task",
+          parent_task_name: parentTaskName,
           link: `/tasks/${d.id}`
         };
       }
     } else if (moduleName === "Ticket") {
-      const { data } = await supabaseAdmin.from("tickets").select("id, code, title, status_master(status_name), priority_master(priority_name), creator:user_master!tickets_creator_id_fkey(full_name)").limit(1).single();
+      const { data } = await supabaseAdmin
+        .from("tickets")
+        .select("id, code, title, description, status_master(status_name), priority_master(priority_name), creator:user_master!tickets_creator_id_fkey(full_name)")
+        .limit(1)
+        .maybeSingle();
+
       if (data) {
         const d = data as any;
         const statusName = d.status_master?.status_name || (Array.isArray(d.status_master) && d.status_master[0]?.status_name) || "Open";
@@ -149,6 +192,7 @@ export async function previewEmailTemplate(moduleName: string, htmlBody: string)
           ...sampleData,
           ticket_no: d.code || sampleData.ticket_no,
           ticket_title: d.title || sampleData.ticket_title,
+          description: d.description || sampleData.description,
           status: statusName,
           priority: priorityName,
           creator_name: d.creator?.full_name || (Array.isArray(d.creator) && d.creator[0]?.full_name) || "Adil Kazi",
@@ -156,25 +200,71 @@ export async function previewEmailTemplate(moduleName: string, htmlBody: string)
         };
       }
     } else if (moduleName === "Requirement") {
-      const { data } = await supabaseAdmin.from("requirements").select("id, title, code, approval_status, creator:user_master!requirements_creator_id_fkey(full_name)").limit(1).single();
+      const { data } = await supabaseAdmin
+        .from("requirements")
+        .select("id, title, code, description, approval_status, due_date, creator:user_master!requirements_creator_id_fkey(full_name)")
+        .limit(1)
+        .maybeSingle();
+
       if (data) {
         const d = data as any;
         sampleData = {
           ...sampleData,
           req_code: d.code || sampleData.req_code,
           req_name: d.title || sampleData.req_name,
+          description: d.description || sampleData.description,
           status: d.approval_status || "Pending Approval",
+          approval_status: d.approval_status || "Pending Approval",
+          due_date: d.due_date ? new Date(d.due_date).toLocaleDateString() : sampleData.due_date,
           creator_name: d.creator?.full_name || (Array.isArray(d.creator) && d.creator[0]?.full_name) || "Adil Kazi",
           link: `/requirements/${d.id}`
         };
       }
     } else if (moduleName === "Workspace") {
-      const { data } = await supabaseAdmin.from("workspaces").select("id, workspace_name, workspace_code").limit(1).single();
+      const { data } = await supabaseAdmin
+        .from("workspaces")
+        .select(`
+          id, 
+          workspace_name, 
+          workspace_code, 
+          description, 
+          start_date, 
+          end_date, 
+          parent_workspace_id,
+          status:status_master(status_name), 
+          company:company_master(company_name), 
+          owner:user_master!workspaces_workspace_owner_id_fkey(full_name),
+          parent:workspaces!workspaces_parent_workspace_id_fkey(workspace_name)
+        `)
+        .eq("is_deleted", false)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
       if (data) {
+        const d = data as any;
+        const statusName = d.status?.status_name || (Array.isArray(d.status) && d.status[0]?.status_name) || "Active";
+        const companyName = d.company?.company_name || (Array.isArray(d.company) && d.company[0]?.company_name) || "Chandak Group";
+        const ownerName = d.owner?.full_name || (Array.isArray(d.owner) && d.owner[0]?.full_name) || "Adil Kazi";
+        const parentName = d.parent?.workspace_name || (Array.isArray(d.parent) && d.parent[0]?.workspace_name) || "Corporate Operations";
+
         sampleData = {
           ...sampleData,
-          workspace_name: data.workspace_name || sampleData.workspace_name,
-          workspace_code: data.workspace_code || sampleData.workspace_code,
+          workspace_name: d.workspace_name || sampleData.workspace_name,
+          workspace_code: d.workspace_code || sampleData.workspace_code,
+          description: d.description || sampleData.description,
+          status: statusName,
+          company_name: companyName,
+          start_date: d.start_date ? new Date(d.start_date).toLocaleDateString() : sampleData.start_date,
+          end_date: d.end_date ? new Date(d.end_date).toLocaleDateString() : sampleData.end_date,
+          due_date: d.end_date ? new Date(d.end_date).toLocaleDateString() : sampleData.due_date,
+          workspace_owner: ownerName,
+          owner_name: ownerName,
+          assigned_user: ownerName,
+          creator_name: ownerName,
+          parent_workspace: parentName,
+          parent_workspace_name: parentName,
+          type: d.parent_workspace_id ? "Sub-Workspace" : "Workspace",
           link: `/workspaces`
         };
       }
@@ -214,7 +304,22 @@ export async function previewEmailTemplate(moduleName: string, htmlBody: string)
   if (matches) {
     matches.forEach(match => {
       const key = match.replace(/[{}]/g, "").trim();
-      const value = sampleData[key] || "";
+      let value = sampleData[key];
+      // Friendly alias resolution
+      if (value === undefined || value === null) {
+        if (key === 'workspace_owner') value = sampleData.owner_name || sampleData.creator_name;
+        else if (key === 'owner_name') value = sampleData.workspace_owner || sampleData.creator_name;
+        else if (key === 'assigned_user') value = sampleData.assigned_to;
+        else if (key === 'due_date') value = sampleData.end_date;
+        else if (key === 'end_date') value = sampleData.due_date;
+        else if (key === 'parent_workspace') value = sampleData.parent_workspace_name;
+        else if (key === 'parent_workspace_name') value = sampleData.parent_workspace;
+        else {
+          // If not in sampleData, display clean sample representation instead of blank
+          const words = key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+          value = `[${words}]`;
+        }
+      }
       hydrated = hydrated.replace(match, String(value));
     });
   }
