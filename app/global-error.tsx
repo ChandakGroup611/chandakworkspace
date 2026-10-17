@@ -11,6 +11,19 @@ export default function GlobalError({
 }) {
   useEffect(() => {
     console.error('[Root GlobalError caught in app/global-error.tsx]:', error);
+
+    // Auto-recover if a new production deployment superseded the cached client chunks
+    if (typeof window !== 'undefined' && error?.message) {
+      const isChunkError = /loading chunk|chunkloaderror|missing:.*\.js/i.test(error.message);
+      if (isChunkError) {
+        const lastChunkReload = sessionStorage.getItem('last_chunk_reload');
+        const now = Date.now();
+        if (!lastChunkReload || now - Number(lastChunkReload) > 15000) {
+          sessionStorage.setItem('last_chunk_reload', String(now));
+          window.location.reload();
+        }
+      }
+    }
   }, [error]);
 
   return (
