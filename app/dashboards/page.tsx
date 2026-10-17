@@ -1,6 +1,7 @@
 import React from "react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { LineChart, Lock, ArrowRight } from "lucide-react";
+import { LineChart, Lock, ArrowRight, ArrowLeft } from "lucide-react";
 import { getCachedUser } from "@/lib/auth/cached-user";
 import { listAccessibleDashboards } from "@/lib/dashboards/access";
 
@@ -34,6 +35,14 @@ export default async function DashboardsPage() {
   return (
     <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-col gap-6">
       <div>
+        <div className="mb-2">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> Back to Navigation
+          </Link>
+        </div>
         <h1 className="text-2xl font-bold text-foreground">Dashboards</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Budget and expense dashboards on live IN4 data. You see the dashboards and actions your role allows.
