@@ -5298,6 +5298,7 @@ export async function updateVehiclePartAction(
     if (formData.condition !== undefined) updates.condition = formData.condition;
     if (formData.serial_number !== undefined) updates.serial_number = formData.serial_number ? formData.serial_number.trim() : null;
     if (formData.notes !== undefined) updates.notes = formData.notes ? formData.notes.trim() : null;
+    if (formData.bill_id !== undefined) updates.bill_id = formData.bill_id ? formData.bill_id.trim() : null;
 
     const { data, error } = await supabaseAdmin
       .from("vehicle_parts")

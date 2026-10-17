@@ -6204,11 +6204,6 @@ export default function FleetDeskHost({
     setPartFormVendorName(part.vendor_name || "");
     setPartFormInvoiceNumber(part.invoice_number || "");
     setPartFormPurchaseDate(normalizeDateToInputFormat(part.purchase_date));
-    setPartFormVehicleId(part.vehicle_id || "UNASSIGNED_STOCK");
-    setPartFormAssignedVehicleReg(part.assigned_vehicle_reg || "");
-    setPartFormInstallationDate(normalizeDateToInputFormat(part.installation_date));
-    setPartFormInstalledOdometer(part.installed_odometer_km ?? "");
-    setPartFormInstalledBy(part.installed_by || "");
 
     // Parse structured notes from the part for attachments & bill notes
     let rawNotes = part.notes || "";
@@ -6233,24 +6228,33 @@ export default function FleetDeskHost({
 
     // Find all sibling parts belonging to the same bill or invoice
     let siblingParts: PartAccessoryRecord[] = [];
-    if (billId) {
+    const invTrim = (part.invoice_number || "").trim().toLowerCase();
+    const vendorTrim = (part.vendor_name || "").trim().toLowerCase();
+
+    if (invTrim || billId) {
       siblingParts = parts.filter((p) => {
-        if ((p as any).bill_id && (p as any).bill_id === billId) return true;
-        if (p.notes) {
-          try {
-            const pn = JSON.parse(p.notes);
-            if (pn?.bill_id === billId) return true;
-          } catch {}
+        if (p.id === part.id) return true;
+
+        if (invTrim) {
+          const pInv = (p.invoice_number || "").trim().toLowerCase();
+          const pVen = (p.vendor_name || "").trim().toLowerCase();
+          if (pInv && pInv === invTrim) {
+            if (!vendorTrim || !pVen || pVen === vendorTrim) return true;
+          }
         }
+
+        if (billId) {
+          if ((p as any).bill_id && (p as any).bill_id === billId) return true;
+          if (p.notes) {
+            try {
+              const pn = JSON.parse(p.notes);
+              if (pn?.bill_id === billId) return true;
+            } catch {}
+          }
+        }
+
         return false;
       });
-    } else if (part.invoice_number && part.invoice_number.trim()) {
-      siblingParts = parts.filter(
-        (p) =>
-          p.invoice_number === part.invoice_number &&
-          p.vendor_name === part.vendor_name &&
-          p.purchase_date === part.purchase_date
-      );
     }
 
     if (!siblingParts || siblingParts.length === 0) {
@@ -6258,6 +6262,40 @@ export default function FleetDeskHost({
     } else if (!siblingParts.some((p) => p.id === part.id)) {
       siblingParts.unshift(part);
     }
+
+    // Determine effective bill vehicle & defaults from part or any assigned sibling
+    let effectiveVehicleId = (part.vehicle_id && part.vehicle_id !== "UNASSIGNED_STOCK") ? part.vehicle_id : "";
+    let effectiveAssignedReg = part.assigned_vehicle_reg || "";
+
+    if (!effectiveVehicleId && siblingParts.length > 0) {
+      const siblingWithVeh = siblingParts.find((s) => s.vehicle_id && s.vehicle_id !== "UNASSIGNED_STOCK");
+      if (siblingWithVeh) {
+        effectiveVehicleId = siblingWithVeh.vehicle_id;
+        effectiveAssignedReg = siblingWithVeh.assigned_vehicle_reg || "";
+      }
+    }
+
+    if (!effectiveVehicleId) {
+      effectiveVehicleId = "UNASSIGNED_STOCK";
+    } else if (!effectiveAssignedReg) {
+      const matchedVeh = vehicles.find((v) => v.id === effectiveVehicleId);
+      if (matchedVeh) effectiveAssignedReg = matchedVeh.registration_number;
+    }
+
+    setPartFormVehicleId(effectiveVehicleId);
+    setPartFormAssignedVehicleReg(effectiveAssignedReg);
+
+    const siblingWithDate = siblingParts.find((s) => s.installation_date);
+    const effectiveInstDate = part.installation_date || siblingWithDate?.installation_date || "";
+    setPartFormInstallationDate(normalizeDateToInputFormat(effectiveInstDate));
+
+    const siblingWithOdo = siblingParts.find((s) => s.installed_odometer_km !== null && s.installed_odometer_km !== undefined);
+    const effectiveOdo = part.installed_odometer_km ?? siblingWithOdo?.installed_odometer_km ?? "";
+    setPartFormInstalledOdometer(effectiveOdo);
+
+    const siblingWithBy = siblingParts.find((s) => s.installed_by);
+    const effectiveBy = part.installed_by || siblingWithBy?.installed_by || "";
+    setPartFormInstalledBy(effectiveBy);
 
     const loadedLineItems: PartLineItem[] = siblingParts.map((p) => {
       let pItemNotes = p.notes || "";
@@ -6293,6 +6331,12 @@ export default function FleetDeskHost({
         pTaxAmt = roundTo2(taxable * (pTaxR / 100));
       }
 
+      const itemVehId = (p.vehicle_id && p.vehicle_id !== "UNASSIGNED_STOCK")
+        ? p.vehicle_id
+        : (effectiveVehicleId !== "UNASSIGNED_STOCK" ? effectiveVehicleId : "UNASSIGNED_STOCK");
+      const itemReg = p.assigned_vehicle_reg ||
+        (itemVehId !== "UNASSIGNED_STOCK" ? (vehicles.find((v) => v.id === itemVehId)?.registration_number || effectiveAssignedReg) : "");
+
       return {
         id: p.id,
         name: p.name || "",
@@ -6322,12 +6366,12 @@ export default function FleetDeskHost({
         renewal_vendor: p.renewal_vendor || "",
         renewal_policy_number: p.renewal_policy_number || "",
         renewal_reminder_days: p.renewal_reminder_days || 30,
-        status: p.status || "IN_STOCK",
-        vehicle_id: p.vehicle_id || "UNASSIGNED_STOCK",
-        assigned_vehicle_reg: p.assigned_vehicle_reg || "",
-        installation_date: normalizeDateToInputFormat(p.installation_date),
-        installed_odometer_km: p.installed_odometer_km ?? "",
-        installed_by: p.installed_by || "",
+        status: p.status || (itemVehId !== "UNASSIGNED_STOCK" ? "INSTALLED" : "IN_STOCK"),
+        vehicle_id: itemVehId,
+        assigned_vehicle_reg: itemReg,
+        installation_date: normalizeDateToInputFormat(p.installation_date || effectiveInstDate),
+        installed_odometer_km: p.installed_odometer_km ?? effectiveOdo,
+        installed_by: p.installed_by || effectiveBy,
         condition: p.condition || "NEW",
         serial_number: p.serial_number || "",
         notes: pItemNotes
@@ -6398,13 +6442,20 @@ export default function FleetDeskHost({
         const newItemsToCreate: any[] = [];
 
         for (const item of partLineItems) {
+          const finalVehicleId = (item.vehicle_id && item.vehicle_id !== "UNASSIGNED_STOCK")
+            ? item.vehicle_id
+            : (partFormVehicleId && partFormVehicleId !== "UNASSIGNED_STOCK" ? partFormVehicleId : "UNASSIGNED_STOCK");
+
           let itemReg = item.assigned_vehicle_reg;
-          if (item.vehicle_id && item.vehicle_id !== "UNASSIGNED_STOCK") {
-            const mv = vehicles.find((v) => v.id === item.vehicle_id);
+          if (finalVehicleId && finalVehicleId !== "UNASSIGNED_STOCK") {
+            const mv = vehicles.find((v) => v.id === finalVehicleId);
             if (mv) itemReg = mv.registration_number;
-          } else if (item.vehicle_id === "UNASSIGNED_STOCK") {
+            else if (!itemReg && defaultAssignedReg) itemReg = defaultAssignedReg;
+          } else {
             itemReg = "";
           }
+
+          const finalStatus = (finalVehicleId && finalVehicleId !== "UNASSIGNED_STOCK") ? "INSTALLED" : (item.status || "IN_STOCK");
 
           const unitPrice = Number(item.unit_price) || 0;
           const qty = Number(item.quantity) || 1;
@@ -6444,6 +6495,7 @@ export default function FleetDeskHost({
           };
 
           const payload: any = {
+            bill_id: resolvedBillId,
             name: item.name.trim(),
             item_type: item.item_type,
             part_number: item.part_number?.trim() || undefined,
@@ -6468,8 +6520,8 @@ export default function FleetDeskHost({
             renewal_vendor: item.has_renewal_policy ? item.renewal_vendor.trim() || undefined : undefined,
             renewal_policy_number: item.has_renewal_policy ? item.renewal_policy_number.trim() || undefined : undefined,
             renewal_reminder_days: item.has_renewal_policy ? Number(item.renewal_reminder_days) || 30 : undefined,
-            status: item.vehicle_id && item.vehicle_id !== "UNASSIGNED_STOCK" ? "INSTALLED" : (partFormVehicleId && partFormVehicleId !== "UNASSIGNED_STOCK" ? "INSTALLED" : item.status),
-            vehicle_id: item.vehicle_id || partFormVehicleId || "UNASSIGNED_STOCK",
+            status: finalStatus,
+            vehicle_id: finalVehicleId,
             assigned_vehicle_reg: itemReg || defaultAssignedReg || undefined,
             installation_date: item.installation_date || partFormInstallationDate || undefined,
             installed_odometer_km: item.installed_odometer_km !== "" ? Number(item.installed_odometer_km) : (partFormInstalledOdometer !== "" ? Number(partFormInstalledOdometer) : undefined),
@@ -6550,13 +6602,20 @@ export default function FleetDeskHost({
           bill_notes: partFormNotes.trim() || undefined,
           attachments: partFormAttachments,
           items: partLineItems.map((item) => {
+            const finalVehicleId = (item.vehicle_id && item.vehicle_id !== "UNASSIGNED_STOCK")
+              ? item.vehicle_id
+              : (partFormVehicleId && partFormVehicleId !== "UNASSIGNED_STOCK" ? partFormVehicleId : "UNASSIGNED_STOCK");
+
             let itemReg = item.assigned_vehicle_reg;
-            if (item.vehicle_id && item.vehicle_id !== "UNASSIGNED_STOCK") {
-              const mv = vehicles.find((v) => v.id === item.vehicle_id);
+            if (finalVehicleId && finalVehicleId !== "UNASSIGNED_STOCK") {
+              const mv = vehicles.find((v) => v.id === finalVehicleId);
               if (mv) itemReg = mv.registration_number;
-            } else if (item.vehicle_id === "UNASSIGNED_STOCK") {
+              else if (!itemReg && defaultAssignedReg) itemReg = defaultAssignedReg;
+            } else {
               itemReg = "";
             }
+
+            const finalStatus = (finalVehicleId && finalVehicleId !== "UNASSIGNED_STOCK") ? "INSTALLED" : (item.status || "IN_STOCK");
 
             const unitPrice = Number(item.unit_price) || 0;
             const qty = Number(item.quantity) || 1;
@@ -6604,8 +6663,8 @@ export default function FleetDeskHost({
               renewal_vendor: item.has_renewal_policy ? item.renewal_vendor.trim() || undefined : undefined,
               renewal_policy_number: item.has_renewal_policy ? item.renewal_policy_number.trim() || undefined : undefined,
               renewal_reminder_days: item.has_renewal_policy ? Number(item.renewal_reminder_days) || 30 : undefined,
-              status: item.vehicle_id && item.vehicle_id !== "UNASSIGNED_STOCK" ? "INSTALLED" : (partFormVehicleId && partFormVehicleId !== "UNASSIGNED_STOCK" ? "INSTALLED" : item.status),
-              vehicle_id: item.vehicle_id || partFormVehicleId || "UNASSIGNED_STOCK",
+              status: finalStatus,
+              vehicle_id: finalVehicleId,
               assigned_vehicle_reg: itemReg || defaultAssignedReg || undefined,
               installation_date: item.installation_date || partFormInstallationDate || undefined,
               installed_odometer_km: item.installed_odometer_km !== "" ? Number(item.installed_odometer_km) : (partFormInstalledOdometer !== "" ? Number(partFormInstalledOdometer) : undefined),
@@ -15182,32 +15241,49 @@ export default function FleetDeskHost({
 
                             {/* Assigned Vehicle / Stock */}
                             <AppTableCell className="p-3.5">
-                              {part.assigned_vehicle_reg || (part.vehicle_id && part.vehicle_id !== "UNASSIGNED_STOCK") ? (
-                                <div className="space-y-1.5">
-                                  <div>
-                                    {renderHsrpPlate(
-                                      part.assigned_vehicle_reg ||
-                                      vehicleMap.get(part.vehicle_id)?.registration_number ||
-                                      "ASSIGNED"
-                                    )}
-                                  </div>
-                                  {part.installation_date && (
-                                    <div className="text-xs text-muted-foreground">
-                                      Mounted: <span className="font-mono font-semibold text-foreground">{part.installation_date}</span>
+                              {(() => {
+                                const directReg = part.assigned_vehicle_reg ||
+                                  (part.vehicle_id && part.vehicle_id !== "UNASSIGNED_STOCK" ? vehicleMap.get(part.vehicle_id)?.registration_number : null);
+
+                                const siblingReg = !directReg ? (
+                                  (part.bill_id ? parts.find((p) => p.bill_id === part.bill_id && (p.assigned_vehicle_reg || (p.vehicle_id && p.vehicle_id !== "UNASSIGNED_STOCK"))) : null)?.assigned_vehicle_reg ||
+                                  (part.invoice_number ? parts.find((p) => p.invoice_number === part.invoice_number && (p.assigned_vehicle_reg || (p.vehicle_id && p.vehicle_id !== "UNASSIGNED_STOCK"))) : null)?.assigned_vehicle_reg
+                                ) : null;
+
+                                const effectiveReg = directReg || siblingReg;
+                                const isAssigned = Boolean(effectiveReg || (part.vehicle_id && part.vehicle_id !== "UNASSIGNED_STOCK"));
+
+                                if (isAssigned) {
+                                  return (
+                                    <div className="space-y-1.5">
+                                      <div>
+                                        {renderHsrpPlate(
+                                          effectiveReg ||
+                                          (part.vehicle_id && vehicleMap.get(part.vehicle_id)?.registration_number) ||
+                                          "ASSIGNED"
+                                        )}
+                                      </div>
+                                      {part.installation_date && (
+                                        <div className="text-xs text-muted-foreground">
+                                          Mounted: <span className="font-mono font-semibold text-foreground">{part.installation_date}</span>
+                                        </div>
+                                      )}
+                                      {part.installed_odometer_km ? (
+                                        <div className="text-xs font-mono text-muted-foreground">
+                                          @ {part.installed_odometer_km.toLocaleString()} km
+                                        </div>
+                                      ) : null}
                                     </div>
-                                  )}
-                                  {part.installed_odometer_km ? (
-                                    <div className="text-xs font-mono text-muted-foreground">
-                                      @ {part.installed_odometer_km.toLocaleString()} km
-                                    </div>
-                                  ) : null}
-                                </div>
-                              ) : (
-                                <span className="px-2.5 py-1 rounded text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 inline-flex items-center gap-1.5">
-                                  <Package className="h-3.5 w-3.5 text-slate-500" />
-                                  <span>Warehouse Stock</span>
-                                </span>
-                              )}
+                                  );
+                                }
+
+                                return (
+                                  <span className="px-2.5 py-1 rounded text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 inline-flex items-center gap-1.5">
+                                    <Package className="h-3.5 w-3.5 text-slate-500" />
+                                    <span>Warehouse Stock</span>
+                                  </span>
+                                );
+                              })()}
                             </AppTableCell>
 
                             {/* Actions */}
