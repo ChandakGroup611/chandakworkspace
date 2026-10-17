@@ -4046,6 +4046,8 @@ export default function FleetDeskHost({
         totalServiceSpend: 0,
         lastService: null as MaintenanceRecord | null,
         totalPartsValue: 0,
+        purchasePrice: 0,
+        totalExpenseAndPurchase: 0,
         activeWarrantiesCount: 0,
         expiredDocsCount: 0,
         completedTripsCount: 0,
@@ -4127,6 +4129,11 @@ export default function FleetDeskHost({
     const hasFitness = Boolean(allAggregatedDocs.some((d) => d.doc_type === "FITNESS") || viewingVehicle.fitness_expiry_date);
     const hasPermit = Boolean(allAggregatedDocs.some((d) => d.doc_type === "PERMIT"));
 
+    const purchasePrice = Number(
+      viewingVehicle.on_road_price || viewingVehicle.purchase_price || viewingVehicle.purchase_cost || 0
+    );
+    const totalExpenseAndPurchase = purchasePrice + totalServiceSpend + totalPartsValue;
+
     return {
       services: vServices,
       parts: vParts,
@@ -4140,6 +4147,8 @@ export default function FleetDeskHost({
       totalServiceSpend,
       lastService,
       totalPartsValue,
+      purchasePrice,
+      totalExpenseAndPurchase,
       activeWarrantiesCount,
       expiredDocsCount,
       completedTripsCount,
@@ -23979,9 +23988,33 @@ export default function FleetDeskHost({
             </div>
           </div>
 
-          {/* 2. TELEMETRY & SPEND SUMMARY HUD */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
-            {/* Workshop Services */}
+          {/* 2. TELEMETRY & SPEND SUMMARY HUD (6-CARD FINANCIAL & OPERATIONAL HUD) */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
+            {/* 1. Vehicle Purchase Price */}
+            <button
+              type="button"
+              onClick={() => setVehicleDossierTab("OVERVIEW")}
+              className={`p-3 rounded-xl border text-left transition-all cursor-pointer shadow-2xs group ${
+                vehicleDossierTab === "OVERVIEW"
+                  ? "border-theme-btn-primary bg-theme-btn-primary/5 ring-1 ring-theme-btn-primary/30"
+                  : "border-border bg-surface hover:border-border hover:bg-surface-elevated"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <IndianRupee className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span>Purchase Price</span>
+                </span>
+                <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-muted/20 text-foreground">
+                  CapEx
+                </span>
+              </div>
+              <div className="text-sm sm:text-base font-bold text-foreground mt-1 font-mono truncate" title={`Vehicle Purchase / On-Road Price: ₹${dossierData.purchasePrice.toLocaleString("en-IN")}`}>
+                ₹{dossierData.purchasePrice.toLocaleString("en-IN")} <span className="text-xs font-normal text-muted-foreground font-sans">Price</span>
+              </div>
+            </button>
+
+            {/* 2. Workshop Services */}
             <button
               type="button"
               onClick={() => setVehicleDossierTab("SERVICES")}
@@ -24005,7 +24038,7 @@ export default function FleetDeskHost({
               </div>
             </button>
 
-            {/* Spare Parts */}
+            {/* 3. Mounted Parts */}
             <button
               type="button"
               onClick={() => setVehicleDossierTab("PARTS")}
@@ -24029,7 +24062,32 @@ export default function FleetDeskHost({
               </div>
             </button>
 
-            {/* Document Vault */}
+            {/* 4. Total Vehicle Expense + Purchase */}
+            <button
+              type="button"
+              onClick={() => setVehicleDossierTab("OVERVIEW")}
+              className={`p-3 rounded-xl border text-left transition-all cursor-pointer shadow-2xs group ${
+                vehicleDossierTab === "OVERVIEW"
+                  ? "border-theme-btn-primary bg-theme-btn-primary/5 ring-1 ring-theme-btn-primary/30"
+                  : "border-border bg-surface hover:border-border hover:bg-surface-elevated"
+              }`}
+              title={`Total Cost: Purchase (₹${dossierData.purchasePrice.toLocaleString("en-IN")}) + Services (₹${dossierData.totalServiceSpend.toLocaleString("en-IN")}) + Parts (₹${dossierData.totalPartsValue.toLocaleString("en-IN")})`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <Calculator className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span>Purchase + Expense</span>
+                </span>
+                <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-muted/20 text-foreground">
+                  Total
+                </span>
+              </div>
+              <div className="text-sm sm:text-base font-bold text-foreground mt-1 font-mono truncate">
+                ₹{dossierData.totalExpenseAndPurchase.toLocaleString("en-IN")} <span className="text-xs font-normal text-muted-foreground font-sans">Total</span>
+              </div>
+            </button>
+
+            {/* 5. Document Vault */}
             <button
               type="button"
               onClick={() => setVehicleDossierTab("DOCS")}
@@ -24057,7 +24115,7 @@ export default function FleetDeskHost({
               </div>
             </button>
 
-            {/* Trips & Dispatches */}
+            {/* 6. Trips & Dispatches */}
             <button
               type="button"
               onClick={() => setVehicleDossierTab("TRIPS")}
@@ -24708,6 +24766,20 @@ export default function FleetDeskHost({
                         {viewingVehicle.discount_amount ? `-₹${Number(viewingVehicle.discount_amount).toLocaleString("en-IN")}` : "₹0"}
                       </span>
                     </div>
+                  </div>
+                </div>
+
+                {/* Total Lifetime Vehicle Investment (Purchase + Services + Parts) */}
+                <div className="mt-3 p-3 rounded-lg border border-border bg-surface-elevated flex items-center justify-between flex-wrap gap-2 text-xs">
+                  <div className="flex items-center gap-2">
+                    <Calculator className="h-4 w-4 text-theme-btn-primary" />
+                    <span className="font-bold text-foreground uppercase tracking-wider">Total Investment &amp; Expenses:</span>
+                    <span className="text-muted-foreground font-mono">
+                      Purchase (₹{dossierData.purchasePrice.toLocaleString("en-IN")}) + Services (₹{dossierData.totalServiceSpend.toLocaleString("en-IN")}) + Parts (₹{dossierData.totalPartsValue.toLocaleString("en-IN")})
+                    </span>
+                  </div>
+                  <div className="font-mono font-bold text-foreground text-sm bg-theme-btn-primary/10 text-theme-btn-primary px-2.5 py-1 rounded-md border border-theme-btn-primary/20">
+                    ₹{dossierData.totalExpenseAndPurchase.toLocaleString("en-IN")}
                   </div>
                 </div>
               </div>
