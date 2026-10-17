@@ -195,6 +195,24 @@ async function handle(req: NextRequest, ctx: Ctx) {
   out.set("x-content-type-options", "nosniff");
   out.set("referrer-policy", "same-origin");
 
+  const contentType = upstream.headers.get("content-type") || "";
+  if (contentType.includes("text/html")) {
+    let html = await upstream.text();
+    // Guarantee that any "Portal home" or "Dashboard Home" button navigates Back to Navigation (/dashboards)
+    html = html.replace(
+      /<a([^>]*?)href="[^"]*?"([^>]*?)>(?:<svg[^>]*?>[\s\S]*?<\/svg>\s*)?(?:Portal home|Portal Home|Dashboard Home|Back to Navigation|Back to Dashboards)<\/a>/gi,
+      '<a$1href="/dashboards"$2><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;vertical-align:middle;margin-right:6px"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Back to Navigation</a>'
+    );
+    html = html.replace(
+      />\s*(?:Portal home|Portal Home|Dashboard Home)\s*<\/a>/gi,
+      '><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;vertical-align:middle;margin-right:6px"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Back to Navigation</a>'
+    );
+    out.delete("content-length");
+    const res = new NextResponse(html, { status: upstream.status, headers: out });
+    if (req.cookies.get(BOUNCE_COOKIE)) res.cookies.delete(BOUNCE_COOKIE);
+    return res;
+  }
+
   const res = new NextResponse(upstream.body, { status: upstream.status, headers: out });
   if (req.cookies.get(BOUNCE_COOKIE)) res.cookies.delete(BOUNCE_COOKIE);
   return res;
