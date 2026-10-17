@@ -192,7 +192,7 @@ const vehicleNavGroups: NavGroup[] = [
 ];
 
 // Department dashboards: each link opens the dashboard engine through /dashboards/<key>
-// (full-page reload, so plain links; the engine page has its own "Portal home" button).
+// (full-page reload, so plain links; the engine page has its own "Dashboard Home" button).
 const dashboardsNavGroups: NavGroup[] = [
   {
     label: "Dashboards",
