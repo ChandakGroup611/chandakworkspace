@@ -273,6 +273,13 @@ export interface VehicleRecord {
   other_charges?: number | null;
   discount_amount?: number | null;
   on_road_price?: number | null;
+  pre_gst_vat_percentage?: number | null;
+  pre_gst_vat_amount?: number | null;
+  pre_gst_excise_percentage?: number | null;
+  pre_gst_excise_amount?: number | null;
+  pre_gst_bharat_cess_percentage?: number | null;
+  pre_gst_bharat_cess_amount?: number | null;
+  pre_gst_entry_tax_amount?: number | null;
   custom_extended_expiry_date?: string | null;
   paint_color?: string | null;
   image_url?: string | null;
@@ -2222,6 +2229,13 @@ export async function createVehicleAction(formData: {
   other_charges?: number;
   discount_amount?: number;
   on_road_price?: number;
+  pre_gst_vat_percentage?: number;
+  pre_gst_vat_amount?: number;
+  pre_gst_excise_percentage?: number;
+  pre_gst_excise_amount?: number;
+  pre_gst_bharat_cess_percentage?: number;
+  pre_gst_bharat_cess_amount?: number;
+  pre_gst_entry_tax_amount?: number;
   custom_extended_expiry_date?: string;
   documents?: (VehicleDocumentRecord | any)[];
 }): Promise<{
@@ -2351,37 +2365,52 @@ export async function createVehicleAction(formData: {
       return { success: false, error: `Vehicle with plate ${regNum} already exists` };
     }
 
-    // Comprehensive Pricing Breakdown Processing
-    const basicPrice = formData.basic_price !== undefined ? (Number(formData.basic_price) || 0) : 0;
-    const gstPercent = formData.gst_percentage !== undefined ? (Number(formData.gst_percentage) || (basicPrice > 0 ? 28 : 0)) : (basicPrice > 0 ? 28 : 0);
-    const gstAmount = formData.gst_amount !== undefined ? (Number(formData.gst_amount) || 0) : (basicPrice > 0 ? (basicPrice * gstPercent / 100) : 0);
-    const cessPercent = formData.cess_percentage !== undefined ? (Number(formData.cess_percentage) || 0) : 0;
-    const cessAmount = formData.cess_amount !== undefined ? (Number(formData.cess_amount) || 0) : (basicPrice > 0 ? (basicPrice * cessPercent / 100) : 0);
+    // Comprehensive Pricing Breakdown Processing (Indian Statutory & RTO Standards)
+    const basicPrice = formData.basic_price !== undefined ? Math.round(Number(formData.basic_price) || 0) : 0;
+    const isBasicZero = formData.basic_price !== undefined && (Number(formData.basic_price) === 0 || formData.basic_price === 0);
+    const hasExplicitExShowroom = formData.ex_showroom_price !== undefined && Number(formData.ex_showroom_price) > 0;
+
+    // Pre-GST Legacy Indirect Taxes (State VAT, Central Excise, Swachh Bharat Cess, Entry Tax/Octroi)
+    const preGstVatPercentage = !isBasicZero && formData.pre_gst_vat_percentage !== undefined ? (Number(formData.pre_gst_vat_percentage) || 0) : 0;
+    const preGstVatAmount = !isBasicZero && formData.pre_gst_vat_amount !== undefined ? Math.round(Number(formData.pre_gst_vat_amount) || 0) : 0;
+    const preGstExcisePercentage = !isBasicZero && formData.pre_gst_excise_percentage !== undefined ? (Number(formData.pre_gst_excise_percentage) || 0) : 0;
+    const preGstExciseAmount = !isBasicZero && formData.pre_gst_excise_amount !== undefined ? Math.round(Number(formData.pre_gst_excise_amount) || 0) : 0;
+    const preGstBharatCessPercentage = !isBasicZero && formData.pre_gst_bharat_cess_percentage !== undefined ? (Number(formData.pre_gst_bharat_cess_percentage) || 0) : 0;
+    const preGstBharatCessAmount = !isBasicZero && formData.pre_gst_bharat_cess_amount !== undefined ? Math.round(Number(formData.pre_gst_bharat_cess_amount) || 0) : 0;
+    const preGstEntryTaxAmount = !isBasicZero && formData.pre_gst_entry_tax_amount !== undefined ? Math.round(Number(formData.pre_gst_entry_tax_amount) || 0) : 0;
+    const totalPreGstTaxes = preGstVatAmount + preGstExciseAmount + preGstBharatCessAmount + preGstEntryTaxAmount;
+
+    const gstPercent = !isBasicZero && formData.gst_percentage !== undefined ? (Number(formData.gst_percentage) || (basicPrice > 0 ? 28 : 0)) : (basicPrice > 0 ? 28 : 0);
+    const gstAmount = !isBasicZero && formData.gst_amount !== undefined ? Math.round(Number(formData.gst_amount) || 0) : (basicPrice > 0 ? Math.round(basicPrice * gstPercent / 100) : 0);
+    const cessPercent = !isBasicZero && formData.cess_percentage !== undefined ? (Number(formData.cess_percentage) || 0) : 0;
+    const cessAmount = !isBasicZero && formData.cess_amount !== undefined ? Math.round(Number(formData.cess_amount) || 0) : (basicPrice > 0 ? Math.round(basicPrice * cessPercent / 100) : 0);
     
-    let exShowroomPrice = formData.ex_showroom_price !== undefined && Number(formData.ex_showroom_price) > 0
-      ? Number(formData.ex_showroom_price)
-      : (basicPrice > 0 ? (basicPrice + gstAmount + cessAmount) : 0);
+    let exShowroomPrice = hasExplicitExShowroom
+      ? Math.round(Number(formData.ex_showroom_price))
+      : (basicPrice > 0 ? (basicPrice + gstAmount + cessAmount + totalPreGstTaxes) : 0);
     
-    if (exShowroomPrice <= 0 && formData.purchase_price) {
-      exShowroomPrice = Number(formData.purchase_price) || 0;
+    if (exShowroomPrice <= 0 && !isBasicZero && formData.purchase_price) {
+      exShowroomPrice = Math.round(Number(formData.purchase_price)) || 0;
     }
 
-    const rtoRoadTax = formData.rto_road_tax !== undefined ? (Number(formData.rto_road_tax) || 0) : 0;
-    const tcsAmount = formData.tcs_amount !== undefined ? (Number(formData.tcs_amount) || 0) : (exShowroomPrice > 1000000 ? exShowroomPrice * 0.01 : 0);
-    const insuranceCost = formData.insurance_cost !== undefined ? (Number(formData.insurance_cost) || 0) : 0;
-    const hsrpSmartCardFee = formData.hsrp_smart_card_fee !== undefined ? (Number(formData.hsrp_smart_card_fee) || 0) : 0;
-    const fastagCharges = formData.fastag_charges !== undefined ? (Number(formData.fastag_charges) || 0) : 0;
-    const accessoriesCost = formData.accessories_cost !== undefined ? (Number(formData.accessories_cost) || 0) : 0;
-    const extendedWarrantyCost = formData.extended_warranty_cost !== undefined ? (Number(formData.extended_warranty_cost) || 0) : 0;
-    const otherCharges = formData.other_charges !== undefined ? (Number(formData.other_charges) || 0) : 0;
-    const discountAmount = formData.discount_amount !== undefined ? (Number(formData.discount_amount) || 0) : 0;
+    const rtoRoadTax = !isBasicZero && formData.rto_road_tax !== undefined ? Math.round(Number(formData.rto_road_tax) || 0) : 0;
+    const tcsAmount = !isBasicZero && formData.tcs_amount !== undefined && Number(formData.tcs_amount) > 0
+      ? Math.round(Number(formData.tcs_amount))
+      : (!isBasicZero && exShowroomPrice > 1000000 ? Math.round(exShowroomPrice * 0.01) : 0);
+    const insuranceCost = !isBasicZero && formData.insurance_cost !== undefined ? Math.round(Number(formData.insurance_cost) || 0) : 0;
+    const hsrpSmartCardFee = !isBasicZero && formData.hsrp_smart_card_fee !== undefined ? Math.round(Number(formData.hsrp_smart_card_fee) || 0) : 0;
+    const fastagCharges = !isBasicZero && formData.fastag_charges !== undefined ? Math.round(Number(formData.fastag_charges) || 0) : 0;
+    const accessoriesCost = !isBasicZero && formData.accessories_cost !== undefined ? Math.round(Number(formData.accessories_cost) || 0) : 0;
+    const extendedWarrantyCost = !isBasicZero && formData.extended_warranty_cost !== undefined ? Math.round(Number(formData.extended_warranty_cost) || 0) : 0;
+    const otherCharges = !isBasicZero && formData.other_charges !== undefined ? Math.round(Number(formData.other_charges) || 0) : 0;
+    const discountAmount = !isBasicZero && formData.discount_amount !== undefined ? Math.round(Number(formData.discount_amount) || 0) : 0;
 
-    let onRoadPrice = formData.on_road_price !== undefined && Number(formData.on_road_price) > 0
-      ? Number(formData.on_road_price)
-      : (exShowroomPrice + rtoRoadTax + tcsAmount + insuranceCost + hsrpSmartCardFee + fastagCharges + accessoriesCost + extendedWarrantyCost + otherCharges - discountAmount);
+    let onRoadPrice = !isBasicZero && formData.on_road_price !== undefined && Number(formData.on_road_price) > 0
+      ? Math.round(Number(formData.on_road_price))
+      : (isBasicZero && !hasExplicitExShowroom ? 0 : (exShowroomPrice + rtoRoadTax + tcsAmount + insuranceCost + hsrpSmartCardFee + fastagCharges + accessoriesCost + extendedWarrantyCost + otherCharges - discountAmount));
 
-    if (onRoadPrice <= 0 && (formData.purchase_price || formData.purchase_cost)) {
-      onRoadPrice = Number(formData.purchase_price || formData.purchase_cost) || 0;
+    if (onRoadPrice <= 0 && !isBasicZero && (formData.purchase_price || formData.purchase_cost)) {
+      onRoadPrice = Math.round(Number(formData.purchase_price || formData.purchase_cost)) || 0;
     }
 
     let batteryExp = formData.battery_warranty_expiry_date?.trim() || null;
@@ -2434,6 +2463,13 @@ export async function createVehicleAction(formData: {
       gst_amount: gstAmount,
       cess_percentage: cessPercent,
       cess_amount: cessAmount,
+      pre_gst_vat_percentage: preGstVatPercentage,
+      pre_gst_vat_amount: preGstVatAmount,
+      pre_gst_excise_percentage: preGstExcisePercentage,
+      pre_gst_excise_amount: preGstExciseAmount,
+      pre_gst_bharat_cess_percentage: preGstBharatCessPercentage,
+      pre_gst_bharat_cess_amount: preGstBharatCessAmount,
+      pre_gst_entry_tax_amount: preGstEntryTaxAmount,
       ex_showroom_price: exShowroomPrice,
       rto_road_tax: rtoRoadTax,
       tcs_amount: tcsAmount,
@@ -2589,6 +2625,13 @@ export async function updateVehicleAction(
     other_charges?: number;
     discount_amount?: number;
     on_road_price?: number;
+    pre_gst_vat_percentage?: number;
+    pre_gst_vat_amount?: number;
+    pre_gst_excise_percentage?: number;
+    pre_gst_excise_amount?: number;
+    pre_gst_bharat_cess_percentage?: number;
+    pre_gst_bharat_cess_amount?: number;
+    pre_gst_entry_tax_amount?: number;
     custom_extended_expiry_date?: string | null;
     documents?: (VehicleDocumentRecord | any)[];
   }
@@ -2771,38 +2814,71 @@ export async function updateVehicleAction(
       updates.has_hsrp_plate = Boolean(formData.has_hsrp_plate);
     }
 
-    // Pricing Breakdown Updates
-    if (formData.basic_price !== undefined) updates.basic_price = Number(formData.basic_price) || 0;
-    if (formData.gst_percentage !== undefined) updates.gst_percentage = Number(formData.gst_percentage) || 0;
-    if (formData.gst_amount !== undefined) updates.gst_amount = Number(formData.gst_amount) || 0;
-    if (formData.cess_percentage !== undefined) updates.cess_percentage = Number(formData.cess_percentage) || 0;
-    if (formData.cess_amount !== undefined) updates.cess_amount = Number(formData.cess_amount) || 0;
-    if (formData.ex_showroom_price !== undefined) updates.ex_showroom_price = Number(formData.ex_showroom_price) || 0;
-    if (formData.rto_road_tax !== undefined) updates.rto_road_tax = Number(formData.rto_road_tax) || 0;
-    if (formData.tcs_amount !== undefined) updates.tcs_amount = Number(formData.tcs_amount) || 0;
-    if (formData.insurance_cost !== undefined) updates.insurance_cost = Number(formData.insurance_cost) || 0;
-    if (formData.hsrp_smart_card_fee !== undefined) updates.hsrp_smart_card_fee = Number(formData.hsrp_smart_card_fee) || 0;
-    if (formData.fastag_charges !== undefined) updates.fastag_charges = Number(formData.fastag_charges) || 0;
-    if (formData.accessories_cost !== undefined) updates.accessories_cost = Number(formData.accessories_cost) || 0;
-    if (formData.extended_warranty_cost !== undefined) updates.extended_warranty_cost = Number(formData.extended_warranty_cost) || 0;
-    if (formData.other_charges !== undefined) updates.other_charges = Number(formData.other_charges) || 0;
-    if (formData.discount_amount !== undefined) updates.discount_amount = Number(formData.discount_amount) || 0;
+    // Pricing Breakdown Updates (Indian Statutory Standards & Zeroing on Base 0)
+    const isBasicZeroUpdate = formData.basic_price !== undefined && (Number(formData.basic_price) === 0 || formData.basic_price === 0);
+    const hasExplicitExShowroomUpdate = formData.ex_showroom_price !== undefined && Number(formData.ex_showroom_price) > 0;
 
-    if (formData.on_road_price !== undefined) {
-      const onRoadVal = Number(formData.on_road_price) || 0;
-      updates.on_road_price = onRoadVal;
-      updates.purchase_price = onRoadVal;
-      updates.purchase_cost = onRoadVal;
-    } else if (formData.purchase_price !== undefined) {
-      const pVal = Number(formData.purchase_price) || 0;
-      updates.purchase_price = pVal;
-      updates.purchase_cost = pVal;
-      if (updates.on_road_price === undefined) updates.on_road_price = pVal;
-    } else if (formData.purchase_cost !== undefined) {
-      const pVal = Number(formData.purchase_cost) || 0;
-      updates.purchase_price = pVal;
-      updates.purchase_cost = pVal;
-      if (updates.on_road_price === undefined) updates.on_road_price = pVal;
+    if (isBasicZeroUpdate && !hasExplicitExShowroomUpdate) {
+      updates.basic_price = 0;
+      updates.gst_amount = 0;
+      updates.cess_amount = 0;
+      updates.pre_gst_vat_amount = 0;
+      updates.pre_gst_excise_amount = 0;
+      updates.pre_gst_bharat_cess_amount = 0;
+      updates.pre_gst_entry_tax_amount = 0;
+      updates.ex_showroom_price = 0;
+      updates.rto_road_tax = 0;
+      updates.tcs_amount = 0;
+      updates.insurance_cost = 0;
+      updates.hsrp_smart_card_fee = 0;
+      updates.fastag_charges = 0;
+      updates.accessories_cost = 0;
+      updates.extended_warranty_cost = 0;
+      updates.other_charges = 0;
+      updates.discount_amount = 0;
+      updates.on_road_price = 0;
+      updates.purchase_price = 0;
+      updates.purchase_cost = 0;
+    } else {
+      if (formData.basic_price !== undefined) updates.basic_price = Math.round(Number(formData.basic_price) || 0);
+      if (formData.gst_percentage !== undefined) updates.gst_percentage = Number(formData.gst_percentage) || 0;
+      if (formData.gst_amount !== undefined) updates.gst_amount = Math.round(Number(formData.gst_amount) || 0);
+      if (formData.cess_percentage !== undefined) updates.cess_percentage = Number(formData.cess_percentage) || 0;
+      if (formData.cess_amount !== undefined) updates.cess_amount = Math.round(Number(formData.cess_amount) || 0);
+      if (formData.pre_gst_vat_percentage !== undefined) updates.pre_gst_vat_percentage = Number(formData.pre_gst_vat_percentage) || 0;
+      if (formData.pre_gst_vat_amount !== undefined) updates.pre_gst_vat_amount = Math.round(Number(formData.pre_gst_vat_amount) || 0);
+      if (formData.pre_gst_excise_percentage !== undefined) updates.pre_gst_excise_percentage = Number(formData.pre_gst_excise_percentage) || 0;
+      if (formData.pre_gst_excise_amount !== undefined) updates.pre_gst_excise_amount = Math.round(Number(formData.pre_gst_excise_amount) || 0);
+      if (formData.pre_gst_bharat_cess_percentage !== undefined) updates.pre_gst_bharat_cess_percentage = Number(formData.pre_gst_bharat_cess_percentage) || 0;
+      if (formData.pre_gst_bharat_cess_amount !== undefined) updates.pre_gst_bharat_cess_amount = Math.round(Number(formData.pre_gst_bharat_cess_amount) || 0);
+      if (formData.pre_gst_entry_tax_amount !== undefined) updates.pre_gst_entry_tax_amount = Math.round(Number(formData.pre_gst_entry_tax_amount) || 0);
+      if (formData.ex_showroom_price !== undefined) updates.ex_showroom_price = Math.round(Number(formData.ex_showroom_price) || 0);
+      if (formData.rto_road_tax !== undefined) updates.rto_road_tax = Math.round(Number(formData.rto_road_tax) || 0);
+      if (formData.tcs_amount !== undefined) updates.tcs_amount = Math.round(Number(formData.tcs_amount) || 0);
+      if (formData.insurance_cost !== undefined) updates.insurance_cost = Math.round(Number(formData.insurance_cost) || 0);
+      if (formData.hsrp_smart_card_fee !== undefined) updates.hsrp_smart_card_fee = Math.round(Number(formData.hsrp_smart_card_fee) || 0);
+      if (formData.fastag_charges !== undefined) updates.fastag_charges = Math.round(Number(formData.fastag_charges) || 0);
+      if (formData.accessories_cost !== undefined) updates.accessories_cost = Math.round(Number(formData.accessories_cost) || 0);
+      if (formData.extended_warranty_cost !== undefined) updates.extended_warranty_cost = Math.round(Number(formData.extended_warranty_cost) || 0);
+      if (formData.other_charges !== undefined) updates.other_charges = Math.round(Number(formData.other_charges) || 0);
+      if (formData.discount_amount !== undefined) updates.discount_amount = Math.round(Number(formData.discount_amount) || 0);
+
+      if (formData.on_road_price !== undefined) {
+        const onRoadVal = Math.round(Number(formData.on_road_price) || 0);
+        updates.on_road_price = onRoadVal;
+        updates.purchase_price = onRoadVal;
+        updates.purchase_cost = onRoadVal;
+      } else if (formData.purchase_price !== undefined) {
+        const pVal = Math.round(Number(formData.purchase_price) || 0);
+        updates.purchase_price = pVal;
+        updates.purchase_cost = pVal;
+        if (updates.on_road_price === undefined) updates.on_road_price = pVal;
+      } else if (formData.purchase_cost !== undefined) {
+        const pVal = Math.round(Number(formData.purchase_cost) || 0);
+        updates.purchase_price = pVal;
+        updates.purchase_cost = pVal;
+        if (updates.on_road_price === undefined) updates.on_road_price = pVal;
+      }
     }
     if (formData.custom_extended_expiry_date !== undefined) {
       const extTrim = typeof formData.custom_extended_expiry_date === 'string' ? formData.custom_extended_expiry_date.trim() : null;
