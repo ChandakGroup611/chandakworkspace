@@ -214,67 +214,67 @@ export default function AMCAnalyticsPage() {
       <div className="space-y-6">
         {/* 5 KPI Stat Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          <AppCard className="p-5 border border-border bg-surface flex flex-col justify-between space-y-2 rounded-2xl shadow-sm">
+          <AppCard className="p-5 border border-border bg-surface flex flex-col justify-between space-y-2 rounded-2xl shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-muted uppercase tracking-wider">Active Contract Value</span>
-              <div className="p-2 rounded-xl bg-blue-500/10 text-blue-500">
+              <span className="theme-label text-muted">Active Contract Value</span>
+              <div className="p-2 rounded-xl bg-info-soft text-info-text">
                 <DollarSign className="h-4 w-4" />
               </div>
             </div>
-            <div className="text-2xl font-black text-foreground font-mono">
+            <div className="text-2xl font-bold text-foreground font-mono">
               {formatCurrency(analyticsData.totalSpend)}
             </div>
             <span className="text-[10px] text-muted">{analyticsData.activeContracts} Active Contracts</span>
           </AppCard>
 
-          <AppCard className="p-5 border border-emerald-500/30 bg-emerald-500/5 flex flex-col justify-between space-y-2 rounded-2xl shadow-sm">
+          <AppCard className="p-5 border border-success/30 bg-success-soft/30 flex flex-col justify-between space-y-2 rounded-2xl shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-emerald-500 uppercase tracking-wider">Monthly Run-Rate</span>
-              <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500">
+              <span className="theme-label text-success-text">Monthly Run-Rate</span>
+              <div className="p-2 rounded-xl bg-success-soft text-success-text">
                 <Activity className="h-4 w-4" />
               </div>
             </div>
-            <div className="text-2xl font-black text-emerald-500 font-mono">
+            <div className="text-2xl font-bold text-success-text font-mono">
               {formatCurrency(analyticsData.monthlyBurn)}<span className="text-xs text-muted font-normal">/mo</span>
             </div>
             <span className="text-[10px] text-muted">Amortized Accruals</span>
           </AppCard>
 
-          <AppCard className="p-5 border border-border bg-surface flex flex-col justify-between space-y-2 rounded-2xl shadow-sm">
+          <AppCard className="p-5 border border-border bg-surface flex flex-col justify-between space-y-2 rounded-2xl shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-muted uppercase tracking-wider">License Utilization</span>
+              <span className="theme-label text-muted">License Utilization</span>
               <div className="p-2 rounded-xl bg-surface text-theme-icon">
                 <Users className="h-4 w-4" />
               </div>
             </div>
-            <div className="text-2xl font-black text-foreground font-mono">
+            <div className="text-2xl font-bold text-foreground font-mono">
               {analyticsData.totalLicenses > 0 ? Math.round((analyticsData.usedLicenses / analyticsData.totalLicenses) * 100) : 0}%
             </div>
             <span className="text-[10px] text-muted">{analyticsData.usedLicenses} / {analyticsData.totalLicenses} Allocated</span>
           </AppCard>
 
-          <AppCard className="p-5 border border-border bg-surface flex flex-col justify-between space-y-2 rounded-2xl shadow-sm">
+          <AppCard className="p-5 border border-border bg-surface flex flex-col justify-between space-y-2 rounded-2xl shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-muted uppercase tracking-wider">Vendor Quality</span>
-              <div className="p-2 rounded-xl bg-amber-400/10 text-amber-400">
-                <Star className="h-4 w-4 fill-amber-400" />
+              <span className="theme-label text-muted">Vendor Quality</span>
+              <div className="p-2 rounded-xl bg-warning-soft text-warning-text">
+                <Star className="h-4 w-4 fill-warning" />
               </div>
             </div>
-            <div className="text-2xl font-black text-foreground font-mono flex items-center gap-1">
+            <div className="text-2xl font-bold text-foreground font-mono flex items-center gap-1">
               <span>{analyticsData.avgRating}</span>
               <span className="text-xs text-muted font-normal">/ 5.0</span>
             </div>
             <span className="text-[10px] text-muted">Average Partner Rating</span>
           </AppCard>
 
-          <AppCard className="p-5 border border-rose-500/30 bg-rose-500/5 flex flex-col justify-between space-y-2 rounded-2xl shadow-sm">
+          <AppCard className="p-5 border border-danger/30 bg-danger-soft/30 flex flex-col justify-between space-y-2 rounded-2xl shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-rose-500 uppercase tracking-wider">Critical / High Risk</span>
-              <div className="p-2 rounded-xl bg-rose-500/10 text-rose-500">
+              <span className="theme-label text-danger-text">Critical / High Risk</span>
+              <div className="p-2 rounded-xl bg-danger-soft text-danger-text">
                 <AlertTriangle className="h-4 w-4" />
               </div>
             </div>
-            <div className="text-2xl font-black text-rose-500 font-mono">
+            <div className="text-2xl font-bold text-danger-text font-mono">
               {analyticsData.criticalCount + analyticsData.highCount}
             </div>
             <span className="text-[10px] text-muted">Expiring &lt;30d or Overdue</span>
@@ -284,10 +284,10 @@ export default function AMCAnalyticsPage() {
         {/* 2-Column Visual Charts & Tables */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Renewals in 60 Days */}
-          <AppCard className="p-6 flex flex-col bg-surface border border-border rounded-2xl space-y-4 shadow-sm">
+          <AppCard className="p-6 flex flex-col bg-surface border border-border rounded-2xl space-y-4 shadow-xs">
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-rose-500/10 text-rose-400">
+                <div className="p-2 rounded-xl bg-danger-soft text-danger-text">
                   <Clock className="h-4 w-4" />
                 </div>
                 <div>
@@ -309,10 +309,10 @@ export default function AMCAnalyticsPage() {
                       <div className="text-[11px] text-muted">{rec.vendor_master?.name || 'Direct Provider'}</div>
                     </div>
                     <div className="text-right">
-                      <div className={`text-xs font-black font-mono ${rec.daysLeft <= 15 ? 'text-rose-500' : 'text-amber-500'}`}>
+                      <div className={`text-xs font-semibold font-mono ${rec.daysLeft <= 15 ? 'text-danger-text' : 'text-warning-text'}`}>
                         {rec.daysLeft} days left
                       </div>
-                      <div className="text-[10px] text-muted">{new Date(rec.expiry_date).toLocaleDateString()}</div>
+                      <div className="text-[10px] text-muted">{String(rec.expiry_date).slice(0, 10)}</div>
                     </div>
                   </div>
                 ))

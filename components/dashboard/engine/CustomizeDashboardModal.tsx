@@ -89,15 +89,15 @@ export function CustomizeDashboardModal({ isOpen, onClose, layout, onSave, onRes
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/80 animate-in fade-in duration-200">
-      <div className="w-full max-w-2xl theme-card-structural  rounded-2xl overflow-hidden flex flex-col max-h-[85vh]">
+    <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4 bg-[var(--overlay)] animate-in fade-in duration-200">
+      <div className="w-full max-w-2xl theme-card-structural rounded-2xl overflow-hidden flex flex-col max-h-[85vh] border border-border">
         
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-border bg-background/50">
+        <div className="flex items-center justify-between p-5 border-b border-border bg-surface">
           <div>
             <h2 className="text-lg font-bold text-foreground tracking-tight">Customize Dashboard</h2>
-            </div>
-          <AppButton variant="ghost" onClick={onClose} className="p-2 text-muted-foreground hover:opacity-90/10 hover:text-theme-icon rounded-full transition-colors">
+          </div>
+          <AppButton variant="ghost" type="button" aria-label="Close dialog" onClick={onClose} className="p-2 text-muted-foreground hover:bg-surface hover:text-foreground rounded-full transition-colors">
             <X className="w-5 h-5" />
           </AppButton>
         </div>
@@ -178,10 +178,10 @@ function SortableWidgetItem({ item, onToggle, onSpanChange, onMoveUp, onMoveDown
         <GripVertical className="w-5 h-5" />
       </div>
       <div className="flex flex-col items-center justify-center gap-1 sm:hidden mr-2">
-        <button type="button" onClick={onMoveUp} className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground">
+        <button type="button" aria-label="Move widget up" onClick={onMoveUp} className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground">
           <ChevronUp className="w-4 h-4" />
         </button>
-        <button type="button" onClick={onMoveDown} className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground">
+        <button type="button" aria-label="Move widget down" onClick={onMoveDown} className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground">
           <ChevronDown className="w-4 h-4" />
         </button>
       </div>
@@ -195,16 +195,17 @@ function SortableWidgetItem({ item, onToggle, onSpanChange, onMoveUp, onMoveDown
         {/* Width Selector */}
         {isActive && (
           <div className="flex items-center gap-1">
-            <span className="text-[10px] uppercase font-bold text-muted-foreground mr-2 tracking-wider">Width</span>
+            <span className="theme-label text-muted-foreground mr-2">Width</span>
             {[1, 2, 3, 4].map(w => (
               <AppButton variant="secondary"
                 key={w}
+                type="button"
                 onClick={() => onSpanChange(w as any)}
                 className={cn(
                   "w-6 h-6 rounded flex items-center justify-center text-xs font-bold transition-all",
                   item.colSpan === w 
                     ? "bg-primary text-primary-foreground shadow-sm" 
-                    : "bg-theme-btn-primary/10 text-muted-foreground hover:opacity-90/20 hover:text-foreground"
+                    : "bg-theme-btn-primary/10 text-muted-foreground hover:bg-theme-btn-primary/20 hover:text-foreground"
                 )}
               >
                 {w}/4

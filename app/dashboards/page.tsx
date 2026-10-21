@@ -64,7 +64,7 @@ export default async function DashboardsPage() {
             <a
               key={def.key}
               href={`/dashboards/${def.key}`}
-              className="theme-card-structural rounded-2xl p-5 flex flex-col gap-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl group"
+              className="theme-card-structural rounded-2xl p-5 flex flex-col gap-4 transition-all duration-300 hover:border-theme-btn-primary/40 hover:shadow-md group"
             >
               <div className="flex items-center gap-3">
                 <span
@@ -89,7 +89,7 @@ export default async function DashboardsPage() {
                 ))}
               </div>
               <span className="mt-auto inline-flex items-center gap-1.5 text-sm font-semibold" style={{ color: def.accent }}>
-                Open dashboard <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                Open dashboard <ArrowRight className="h-4 w-4" />
               </span>
             </a>
           ))}
