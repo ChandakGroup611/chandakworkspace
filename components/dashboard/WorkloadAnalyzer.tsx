@@ -9,8 +9,7 @@ import { Activity, X, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 import { getWorkloadSnapshot } from "@/lib/actions/tasks";
 
 export default function WorkloadAnalyzer({ userId, onClose }: { userId: string, onClose: () => void }) {
-  const { theme } = useTheme();
-  const isLightMode = ["executive-light", "material-ocean", "aurora-breeze", "pure-elegance", "pristine-white"].includes(theme);
+  const { isLight: isLightMode } = useTheme();
   
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState<any>(null);

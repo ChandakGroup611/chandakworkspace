@@ -28,8 +28,7 @@ export default function TicketsPage() {
 function TicketsPageContent() {
   const router = useRouter();
   const supabase = createClient();
-  const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
+  const { isLight: isLightMode } = useTheme();
   const { hasPermission, roleCode, userId, loading: permissionsLoading } = usePermissions();
   
   // Master Data

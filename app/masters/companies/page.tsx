@@ -31,9 +31,8 @@ const COMPANY_MASTER_CONFIG: MasterTableConfig[] = [
 
 export default function CompanyMasterPage() {
   const supabase = createClient();
-  const { theme } = useTheme();
+  const { isLight: isLightMode } = useTheme();
   const { hasPermission, roleCode, loading: permsLoading } = usePermissions();
-  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
 
   const [companies, setCompanies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

@@ -109,9 +109,8 @@ const PRESET_AVATARS = [
 export default function UserMasterPage() {
   const router = useRouter();
   const supabase = createClient();
-  const { theme } = useTheme();
+  const { isLight: isLightMode } = useTheme();
   const { hasPermission, loading: permsLoading } = usePermissions();
-  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {

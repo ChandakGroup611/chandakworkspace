@@ -32,8 +32,8 @@ import ChandakLoader from "@/components/ui/ChandakLoader";
 export default function AMCAnalyticsPage() {
   let isLightMode = false;
   try {
-    const { theme } = useTheme() as any;
-    isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
+    const themeCtx = useTheme();
+    isLightMode = themeCtx.isLight;
   } catch (e) {}
   const supabase = createClient();
   const { hasPermission, roleCode, loading: permsLoading } = usePermissions();

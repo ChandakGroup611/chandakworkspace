@@ -55,58 +55,57 @@ export default function NotificationProviderForm({ initialData }: { initialData:
   };
 
   return (
-    <div className="theme-card-structural /5 border-border p-6 rounded-xl animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <h2 className="text-xl font-bold text-foreground mb-2">Email Provider Setup</h2>
-      <div className="flex gap-4 mb-8">
+    <div className="bg-surface border border-border p-6 rounded-xl shadow-sm">
+      <h2 className="text-xl font-bold text-heading mb-2">Email Provider Setup</h2>
+      <div className="flex gap-2 mb-6">
         {["GMAIL", "OFFICE365", "RESEND"].map((p) => (
           <AppButton 
             key={p} 
+            variant={provider === p ? "primary" : "secondary"}
             onClick={() => setProvider(p)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              provider === p ? 'bg-theme-btn-primary text-theme-btn-primary-text shadow-[0_0_15px_rgba(37,99,235,0.5)]' : 'bg-surface/5 text-muted hover:bg-surface/10'
-            }`}
+            className="px-4 py-2 text-xs font-medium"
           >
-            {p === 'OFFICE365' ? 'Office 365' : p === 'GMAIL' ? 'Gmail' : 'Resend API'}
+            {p === "OFFICE365" ? "Office 365" : p === "GMAIL" ? "Gmail" : "Resend API"}
           </AppButton>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div>
-          <label className="block text-sm text-muted mb-1 uppercase tracking-wider">SMTP Host</label>
-          <input type="text" name="smtp_host" value={formData.smtp_host} onChange={handleChange} className="w-full theme-card-structural /40 rounded-lg p-2.5 text-sm text-white focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all theme-input-structural text-foreground" />
+          <label className="block text-xs font-semibold text-subtle mb-1">SMTP Host</label>
+          <input type="text" name="smtp_host" value={formData.smtp_host} onChange={handleChange} className="w-full bg-surface border border-input rounded-md p-2 text-sm text-foreground focus:outline-none focus:border-border-active" />
         </div>
         <div>
-          <label className="block text-sm text-muted mb-1 uppercase tracking-wider">SMTP Port</label>
-          <input type="number" name="smtp_port" value={formData.smtp_port} onChange={handleChange} className="w-full theme-card-structural /40 rounded-lg p-2.5 text-sm text-white focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all theme-input-structural text-foreground" />
+          <label className="block text-xs font-semibold text-subtle mb-1">SMTP Port</label>
+          <input type="number" name="smtp_port" value={formData.smtp_port} onChange={handleChange} className="w-full bg-surface border border-input rounded-md p-2 text-sm text-foreground focus:outline-none focus:border-border-active" />
         </div>
         <div>
-          <label className="block text-sm text-muted mb-1 uppercase tracking-wider">Username / Email</label>
-          <input type="text" name="smtp_username" value={formData.smtp_username} onChange={handleChange} className="w-full theme-card-structural /40 rounded-lg p-2.5 text-sm text-white focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all theme-input-structural text-foreground" />
+          <label className="block text-xs font-semibold text-subtle mb-1">Username / Email</label>
+          <input type="text" name="smtp_username" value={formData.smtp_username} onChange={handleChange} className="w-full bg-surface border border-input rounded-md p-2 text-sm text-foreground focus:outline-none focus:border-border-active" />
         </div>
         <div>
-          <label className="block text-sm text-muted mb-1 uppercase tracking-wider">{provider === 'RESEND' ? 'API Key' : 'App Password'}</label>
-          <input type="password" name="smtp_password_encrypted" value={formData.smtp_password_encrypted} onChange={handleChange} className="w-full theme-card-structural /40 rounded-lg p-2.5 text-sm text-white focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all theme-input-structural text-foreground" />
+          <label className="block text-xs font-semibold text-subtle mb-1">{provider === 'RESEND' ? 'API Key' : 'App Password'}</label>
+          <input type="password" name="smtp_password_encrypted" value={formData.smtp_password_encrypted} onChange={handleChange} className="w-full bg-surface border border-input rounded-md p-2 text-sm text-foreground focus:outline-none focus:border-border-active" />
         </div>
         <div>
-          <label className="block text-sm text-muted mb-1 uppercase tracking-wider">Sender Name</label>
-          <input type="text" name="sender_name" value={formData.sender_name} onChange={handleChange} className="w-full theme-card-structural /40 rounded-lg p-2.5 text-sm text-white focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all theme-input-structural text-foreground" />
+          <label className="block text-xs font-semibold text-subtle mb-1">Sender Name</label>
+          <input type="text" name="sender_name" value={formData.sender_name} onChange={handleChange} className="w-full bg-surface border border-input rounded-md p-2 text-sm text-foreground focus:outline-none focus:border-border-active" />
         </div>
         <div>
-          <label className="block text-sm text-muted mb-1 uppercase tracking-wider">Sender Email (From)</label>
-          <input type="email" name="sender_email" value={formData.sender_email} onChange={handleChange} className="w-full theme-card-structural /40 rounded-lg p-2.5 text-sm text-white focus:border-theme-btn-primary focus:ring-1 focus:ring-theme-btn-primary outline-none transition-all theme-input-structural text-foreground" />
+          <label className="block text-xs font-semibold text-subtle mb-1">Sender Email (From)</label>
+          <input type="email" name="sender_email" value={formData.sender_email} onChange={handleChange} className="w-full bg-surface border border-input rounded-md p-2 text-sm text-foreground focus:outline-none focus:border-border-active" />
         </div>
       </div>
 
       <div className="mt-8 flex items-center justify-between border-t border-border pt-6">
-        <span className={`text-sm ${message.includes('Error') || message.includes('Failed') ? 'text-danger' : 'text-success'}`}>
+        <span className={`text-sm ${message.includes('Error') || message.includes('Failed') ? 'text-danger-text' : 'text-success-text'}`}>
           {message}
         </span>
         <div className="flex gap-3">
-          <AppButton onClick={handleTest} disabled={testing} className="px-5 py-2.5 theme-card-structural /5 hover:/10 border-border text-white text-sm font-medium rounded-lg transition-all disabled:opacity-50">
+          <AppButton variant="secondary" onClick={handleTest} disabled={testing} className="px-4 py-2 text-xs font-medium">
             {testing ? 'Testing...' : 'Test Connection'}
           </AppButton>
-          <AppButton onClick={handleSave} disabled={loading} className="px-5 py-2.5 bg-theme-btn-primary hover:opacity-90 text-theme-btn-primary-text text-sm font-medium rounded-lg transition-all shadow-[0_0_15px_rgba(37,99,235,0.4)] hover:shadow-[0_0_25px_rgba(37,99,235,0.6)] disabled:opacity-50">
+          <AppButton variant="primary" onClick={handleSave} disabled={loading} className="px-4 py-2 text-xs font-semibold">
             {loading ? 'Saving...' : 'Save Configuration'}
           </AppButton>
         </div>

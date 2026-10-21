@@ -102,72 +102,76 @@ export default function IdentityProviderForm() {
     <div className="space-y-6 animate-in fade-in duration-500">
       
       {/* Overview Card */}
-      <div className="theme-card-structural dark:bg-[#0A0D14] dark: rounded-xl p-6 ">
+      <div className="bg-surface border border-border rounded-xl p-6 shadow-sm">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-theme-btn-primary/10 rounded-lg">
-              <Shield className="w-6 h-6 text-theme-icon" />
+            <div className="p-2 bg-accent-soft text-accent-soft-text rounded-lg">
+              <Shield className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-foreground">Microsoft Entra ID (Azure AD)</h2>
-              </div>
+              <h2 className="text-xl font-semibold text-heading">Microsoft Entra ID (Azure AD)</h2>
+            </div>
           </div>
           <div className="flex items-center space-x-2">
             <span className="text-sm font-medium text-muted">Status</span>
-            <AppButton 
+            <button 
+              type="button"
+              role="switch"
+              aria-checked={config.is_active}
+              aria-label="Toggle Entra ID Status"
               onClick={() => setConfig({ ...config, is_active: !config.is_active })}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${config.is_active ? 'bg-theme-btn-primary' : 'bg-surface'}`}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${config.is_active ? 'bg-primary' : 'bg-sunken border border-border'}`}
             >
-              <span className={`inline-block h-4 w-4 transform rounded-full bg-surface transition-transform ${config.is_active ? 'translate-x-6' : 'translate-x-1'}`} />
-            </AppButton>
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${config.is_active ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-muted">Tenant ID</label>
+            <label className="text-sm font-medium text-subtle">Tenant ID</label>
             <input 
               type="text" 
               value={config.tenant_id || ""}
               onChange={(e) => setConfig({ ...config, tenant_id: e.target.value })}
-              className="w-full bg-background dark:bg-[#121620] border border-border dark:border-border rounded-lg px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50"
+              className="w-full bg-surface border border-input rounded-lg px-4 py-2.5 text-foreground focus:outline-none focus:border-border-active"
               placeholder="e.g. 8eaef023-..."
             />
           </div>
           
           <div className="space-y-2">
-            <label className="text-sm font-medium text-muted">Client ID (Application ID)</label>
+            <label className="text-sm font-medium text-subtle">Client ID (Application ID)</label>
             <input 
               type="text" 
               value={config.client_id || ""}
               onChange={(e) => setConfig({ ...config, client_id: e.target.value })}
-              className="w-full bg-background dark:bg-[#121620] border border-border dark:border-border rounded-lg px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50"
+              className="w-full bg-surface border border-input rounded-lg px-4 py-2.5 text-foreground focus:outline-none focus:border-border-active"
               placeholder="e.g. d2a2b023-..."
             />
           </div>
 
           <div className="space-y-2 md:col-span-2">
-            <label className="text-sm font-medium text-muted">Client Secret (Encrypted)</label>
+            <label className="text-sm font-medium text-subtle">Client Secret (Encrypted)</label>
             <div className="relative">
               <input 
                 type="password" 
                 value={config.client_secret_encrypted || ""}
                 onChange={(e) => setConfig({ ...config, client_secret_encrypted: e.target.value })}
-                className="w-full bg-background dark:bg-[#121620] border border-border dark:border-border rounded-lg px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 pl-10"
+                className="w-full bg-surface border border-input rounded-lg px-4 py-2.5 text-foreground focus:outline-none focus:border-border-active pl-10"
                 placeholder="Enter client secret value"
               />
               <Key className="w-4 h-4 text-muted absolute left-3 top-3.5" />
             </div>
-            </div>
+          </div>
 
           <div className="space-y-2 md:col-span-2">
-            <label className="text-sm font-medium text-muted">Authority URL</label>
+            <label className="text-sm font-medium text-subtle">Authority URL</label>
             <div className="relative">
               <input 
                 type="text" 
                 value={config.authority_url || ""}
                 onChange={(e) => setConfig({ ...config, authority_url: e.target.value })}
-                className="w-full bg-background dark:bg-[#121620] border border-border dark:border-border rounded-lg px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-theme-btn-primary/50 pl-10"
+                className="w-full bg-surface border border-input rounded-lg px-4 py-2.5 text-foreground focus:outline-none focus:border-border-active pl-10"
                 placeholder="https://login.microsoftonline.com/common"
               />
               <Link2 className="w-4 h-4 text-muted absolute left-3 top-3.5" />
@@ -177,48 +181,56 @@ export default function IdentityProviderForm() {
       </div>
 
       {/* Auto Provisioning Settings */}
-      <div className="theme-card-structural dark:bg-[#0A0D14] dark: rounded-xl p-6 ">
+      <div className="bg-surface border border-border rounded-xl p-6 shadow-sm">
         <div className="flex items-center space-x-3 mb-6">
-          <div className="p-2 bg-theme-btn-primary/10 rounded-lg">
-            <Users className="w-6 h-6 text-theme-icon" />
+          <div className="p-2 bg-accent-soft text-accent-soft-text rounded-lg">
+            <Users className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-foreground">Auto-Provisioning Settings</h2>
-            </div>
+            <h2 className="text-xl font-semibold text-heading">Auto-Provisioning Settings</h2>
+          </div>
         </div>
 
         <div className="space-y-4">
           <label className="flex items-center space-x-3 cursor-pointer group">
-            <AppButton 
+            <button 
+              type="button"
+              role="switch"
+              aria-checked={config.auto_provision_users}
+              aria-label="Enable JIT Provisioning"
               onClick={() => setConfig({ ...config, auto_provision_users: !config.auto_provision_users })}
-              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${config.auto_provision_users ? 'bg-theme-btn-primary' : 'bg-surface'}`}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${config.auto_provision_users ? 'bg-primary' : 'bg-sunken border border-border'}`}
             >
-              <span className={`inline-block h-3 w-3 transform rounded-full bg-surface transition-transform ${config.auto_provision_users ? 'translate-x-5' : 'translate-x-1'}`} />
-            </AppButton>
+              <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${config.auto_provision_users ? 'translate-x-5' : 'translate-x-1'}`} />
+            </button>
             <div className="flex flex-col">
-              <span className="text-sm font-medium text-muted group-hover:text-white transition-colors">Enable JIT (Just-In-Time) Provisioning</span>
+              <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">Enable JIT (Just-In-Time) Provisioning</span>
               <span className="text-xs text-muted">Automatically create user accounts in the system if they authenticate successfully via Azure AD.</span>
             </div>
           </label>
 
           <label className="flex items-center space-x-3 cursor-pointer group">
-            <AppButton 
+            <button 
+              type="button"
+              role="switch"
+              aria-checked={config.force_sso}
+              aria-label="Force SSO"
               onClick={() => setConfig({ ...config, force_sso: !config.force_sso })}
-              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${config.force_sso ? 'bg-danger' : 'bg-surface'}`}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${config.force_sso ? 'bg-danger-solid' : 'bg-sunken border border-border'}`}
             >
-              <span className={`inline-block h-3 w-3 transform rounded-full bg-surface transition-transform ${config.force_sso ? 'translate-x-5' : 'translate-x-1'}`} />
-            </AppButton>
+              <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${config.force_sso ? 'translate-x-5' : 'translate-x-1'}`} />
+            </button>
             <div className="flex flex-col">
-              <span className="text-sm font-medium text-muted group-hover:text-white transition-colors">Force SSO (Disable Password Login)</span>
+              <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">Force SSO (Disable Password Login)</span>
               <span className="text-xs text-muted">If enabled, standard password login will be hidden and all users MUST use Microsoft SSO.</span>
             </div>
           </label>
         </div>
 
         {config.auto_provision_users && (
-          <div className="mt-6 p-4 rounded-lg bg-theme-btn-primary/5 border border-theme-btn-primary/20 flex items-start space-x-3">
-            <AlertCircle className="w-5 h-5 text-theme-icon shrink-0 mt-0.5" />
-            <p className="text-sm text-blue-200/80 leading-relaxed">
+          <div className="mt-6 p-4 rounded-lg bg-info-soft border border-info-border text-info-text flex items-start space-x-3">
+            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+            <p className="text-sm leading-relaxed">
               When JIT provisioning is enabled, Supabase Auth will instantly map the incoming Azure AD profile to the `user_master` table. Ensure your default organizational policies in the Azure Portal restrict access to the correct Security Groups.
             </p>
           </div>
@@ -227,18 +239,19 @@ export default function IdentityProviderForm() {
 
       <div className="flex justify-end pt-4">
         <AppButton
+          variant="primary"
           onClick={handleSave}
           disabled={loading || !hasPermission("SETTINGS_IDENTITY_MANAGE")}
-          className="flex items-center space-x-2 bg-theme-btn-primary hover:opacity-90 text-theme-btn-primary-text px-6 py-2.5 rounded-lg text-sm font-medium transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50"
+          className="flex items-center space-x-2"
+          leftIcon={loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
         >
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           <span>{loading ? "Saving..." : "Save Configuration"}</span>
         </AppButton>
       </div>
 
       {/* Local Toast Notification */}
       {toastMsg && (
-        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl px-4 py-3  animate-in slide-in-from-bottom-5 duration-300 ${toastMsg.type === 'error' ? 'bg-danger text-white' : 'bg-success text-white'}`}>
+        <div className={`fixed bottom-6 right-6 z-[var(--z-toast)] flex items-center gap-2 rounded-xl px-4 py-3 shadow-lg animate-in slide-in-from-bottom-5 duration-300 ${toastMsg.type === 'error' ? 'bg-danger-solid text-white' : 'bg-success text-white'}`}>
           {toastMsg.type === 'success' ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
           <span className="text-xs font-semibold">{toastMsg.text}</span>
         </div>

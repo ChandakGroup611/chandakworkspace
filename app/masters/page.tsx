@@ -122,8 +122,8 @@ function MastersPageContent() {
   const { hasPermission, loading: permsLoading } = usePermissions();
   let isLightMode = false;
   try {
-    const { theme } = useTheme();
-    isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
+    const themeCtx = useTheme();
+    isLightMode = themeCtx.isLight;
   } catch (e) {}
   const [activeTab, setActiveTab] = useState("infra_issue_types");
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>("ALL");

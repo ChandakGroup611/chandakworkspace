@@ -30,8 +30,8 @@ import { Lock } from "lucide-react";
 export default function AMCReportsPage() {
   let isLightMode = false;
   try {
-    const { theme } = useTheme();
-    isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
+    const themeCtx = useTheme();
+    isLightMode = themeCtx.isLight;
   } catch (e) {}
   const supabase = createClient();
   const { hasPermission, roleCode, loading: permsLoading } = usePermissions();

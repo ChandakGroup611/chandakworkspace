@@ -139,15 +139,17 @@ export default function NotificationRuleBuilder() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex justify-between items-center theme-card-structural dark:bg-[#0A0D14] dark: p-4 rounded-xl shadow-lg">
+      <div className="flex justify-between items-center bg-surface border border-border p-4 rounded-xl shadow-sm">
         <div>
-          <h2 className="text-lg font-bold text-foreground">Rule Engine</h2>
-          </div>
+          <h2 className="text-lg font-bold text-heading">Rule Engine</h2>
+        </div>
         <AppButton
+          variant="primary"
           onClick={handleAddRule}
-          className="flex items-center gap-2 bg-success hover:bg-success text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg shadow-emerald-500/20 transition-all"
+          className="flex items-center gap-2"
+          leftIcon={<Plus className="w-4 h-4" />}
         >
-          <Plus className="w-4 h-4" /> Add Rule
+          <span>Add Rule</span>
         </AppButton>
       </div>
 
@@ -156,43 +158,43 @@ export default function NotificationRuleBuilder() {
           const config = MODULE_CONFIG[rule.module] || MODULE_CONFIG["Task"];
           
           return (
-            <div key={rule.id} className="bg-background dark:bg-[#121620] border border-border dark:border-border rounded-xl overflow-hidden ">
+            <div key={rule.id} className="bg-surface border border-border rounded-xl overflow-hidden shadow-sm">
               {/* Header IF block */}
-              <div className="theme-card-structural /5 px-6 py-4 border-b border-border flex flex-wrap items-center gap-4">
-                <span className="font-mono text-success font-bold text-lg">IF</span>
+              <div className="bg-sunken px-6 py-4 border-b border-border flex flex-wrap items-center gap-4">
+                <span className="font-mono text-success-text font-bold text-lg">IF</span>
                 
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-muted uppercase">Module =</span>
+                  <span className="text-xs font-semibold text-muted uppercase">Module =</span>
                   <select 
                     value={rule.module}
                     onChange={(e) => updateLocalRule(rule.id, "module", e.target.value)}
-                    className="theme-card-structural dark:bg-[#0A0D14] dark: rounded-md px-3 py-1.5 text-sm font-semibold text-foreground focus:outline-none"
+                    className="bg-surface border border-input rounded-md px-3 py-1.5 text-sm font-semibold text-foreground focus:outline-none focus:border-border-active"
                   >
                     {Object.keys(MODULE_CONFIG).map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </div>
 
-                <span className="font-mono text-success/70 font-bold text-sm">AND</span>
+                <span className="font-mono text-muted font-bold text-sm">AND</span>
 
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-muted uppercase">Event =</span>
+                  <span className="text-xs font-semibold text-muted uppercase">Event =</span>
                   <select 
                     value={rule.event}
                     onChange={(e) => updateLocalRule(rule.id, "event", e.target.value)}
-                    className="theme-card-structural dark:bg-[#0A0D14] dark: rounded-md px-3 py-1.5 text-sm font-semibold text-foreground focus:outline-none"
+                    className="bg-surface border border-input rounded-md px-3 py-1.5 text-sm font-semibold text-foreground focus:outline-none focus:border-border-active"
                   >
                     {config.events.map(e => <option key={e} value={e}>{e}</option>)}
                   </select>
                 </div>
 
-                <span className="font-mono text-success/70 font-bold text-sm">AND</span>
+                <span className="font-mono text-muted font-bold text-sm">AND</span>
 
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-muted uppercase">Status =</span>
+                  <span className="text-xs font-semibold text-muted uppercase">Status =</span>
                   <select 
                     value={rule.status_trigger || "ANY"}
                     onChange={(e) => updateLocalRule(rule.id, "status_trigger", e.target.value)}
-                    className="theme-card-structural dark:bg-[#0A0D14] dark: rounded-md px-3 py-1.5 text-sm font-semibold text-foreground focus:outline-none"
+                    className="bg-surface border border-input rounded-md px-3 py-1.5 text-sm font-semibold text-foreground focus:outline-none focus:border-border-active"
                   >
                     {config.statuses.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
@@ -203,21 +205,26 @@ export default function NotificationRuleBuilder() {
               <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-theme-icon font-bold text-lg">THEN</span>
-                    <span className="text-sm font-bold text-muted">Resolve Recipients:</span>
+                    <span className="font-mono text-primary font-bold text-lg">THEN</span>
+                    <span className="text-sm font-semibold text-subtle">Resolve Recipients:</span>
                   </div>
                   
                   <div className="flex flex-wrap gap-2">
                     {RECIPIENT_TYPES.map(type => {
                       const isSelected = rule.recipient_type.includes(type);
                       return (
-                        <AppButton
+                        <button
                           key={type}
+                          type="button"
                           onClick={() => toggleArrayItem(rule.id, "recipient_type", type)}
-                          className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${ isSelected ? 'bg-theme-btn-primary/20 border-theme-btn-primary/50 text-blue-300' : 'theme-card-structural /5 border-transparent text-muted hover:/10' }`}
+                          className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors border ${
+                            isSelected 
+                              ? 'bg-accent-soft border-primary text-accent-soft-text' 
+                              : 'bg-sunken border-border text-subtle hover:bg-surface-hover'
+                          }`}
                         >
                           {type}
-                        </AppButton>
+                        </button>
                       );
                     })}
                   </div>
@@ -225,8 +232,8 @@ export default function NotificationRuleBuilder() {
 
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-theme-icon font-bold text-lg">VIA</span>
-                    <span className="text-sm font-bold text-muted">Delivery Method:</span>
+                    <span className="font-mono text-primary font-bold text-lg">VIA</span>
+                    <span className="text-sm font-semibold text-subtle">Delivery Method:</span>
                   </div>
                   
                   <div className="flex gap-4">
@@ -235,28 +242,28 @@ export default function NotificationRuleBuilder() {
                         type="checkbox" 
                         checked={rule.delivery_method.includes("EMAIL")}
                         onChange={() => toggleArrayItem(rule.id, "delivery_method", "EMAIL")}
-                        className="rounded theme-card-structural text-theme-icon focus:ring-theme-btn-primary"
+                        className="rounded border-input text-primary focus:ring-ring"
                       />
-                      <span className="text-sm text-muted font-medium">Email Dispatch</span>
+                      <span className="text-sm text-subtle font-medium">Email Dispatch</span>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input 
                         type="checkbox" 
                         checked={rule.delivery_method.includes("IN_APP")}
                         onChange={() => toggleArrayItem(rule.id, "delivery_method", "IN_APP")}
-                        className="rounded theme-card-structural text-theme-icon focus:ring-theme-btn-primary"
+                        className="rounded border-input text-primary focus:ring-ring"
                       />
-                      <span className="text-sm text-muted font-medium">In-App Notification</span>
+                      <span className="text-sm text-subtle font-medium">In-App Notification</span>
                     </label>
                   </div>
                 </div>
               </div>
 
               {/* Actions Footer */}
-              <div className="theme-card-structural dark:bg-[#0A0D14] px-6 py-3 border-t dark: flex justify-between items-center">
+              <div className="bg-sunken px-6 py-3 border-t border-border flex justify-between items-center">
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${rule.is_active ? 'bg-success' : 'bg-gray-600'}`}>
-                    <span className={`inline-block h-3 w-3 transform rounded-full bg-surface transition-transform ${rule.is_active ? 'translate-x-5' : 'translate-x-1'}`} />
+                  <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${rule.is_active ? 'bg-success' : 'bg-surface border border-border'}`}>
+                    <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${rule.is_active ? 'translate-x-5' : 'translate-x-1'}`} />
                   </div>
                   <input 
                     type="checkbox" 
@@ -264,18 +271,25 @@ export default function NotificationRuleBuilder() {
                     checked={rule.is_active} 
                     onChange={(e) => updateLocalRule(rule.id, "is_active", e.target.checked)}
                   />
-                  <span className="text-xs font-bold text-muted uppercase">Rule Active</span>
+                  <span className="text-xs font-semibold text-muted uppercase">Rule Active</span>
                 </label>
 
                 <div className="flex items-center gap-3">
-                  <AppButton onClick={() => handleDeleteRule(rule.id)} className="text-muted hover:text-danger transition-colors">
-                    <Trash2 className="w-4 h-4" />
-                  </AppButton>
-                  <AppButton 
-                    onClick={() => handleSaveRule(rule)}
-                    className="flex items-center gap-2 theme-card-structural /5 hover:/10 text-white px-4 py-1.5 rounded text-sm font-bold transition-colors border-border"
+                  <button 
+                    type="button"
+                    aria-label="Delete rule"
+                    onClick={() => handleDeleteRule(rule.id)} 
+                    className="text-muted hover:text-danger-text p-1.5 rounded transition-colors"
                   >
-                    <Save className="w-4 h-4" /> Save
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                  <AppButton 
+                    variant="secondary"
+                    onClick={() => handleSaveRule(rule)}
+                    className="flex items-center gap-2 text-sm font-semibold"
+                    leftIcon={<Save className="w-4 h-4" />}
+                  >
+                    <span>Save</span>
                   </AppButton>
                 </div>
               </div>

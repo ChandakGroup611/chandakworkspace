@@ -52,9 +52,8 @@ import ChandakLoader from "@/components/ui/ChandakLoader";
 import { PageHeader } from "@/components/layout/PageHeader";
 export default function WorkspacesClient({ initialData, initialTaskId }: { initialData: any; initialTaskId?: string | null }) {
   const router = useRouter();
-  const { theme } = useTheme();
+  const { isLight: isLightMode } = useTheme();
   const { hasPermission, loading: permsLoading, roleCode } = usePermissions();
-  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
 
   const [workspaces, setWorkspaces] = useState<any[]>(initialData?.workspaces || []);
   const [companies, setCompanies] = useState<any[]>(initialData?.companies || []);

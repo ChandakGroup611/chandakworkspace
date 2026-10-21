@@ -17,8 +17,7 @@ export default function RequirementAnalyzePage({ params }: { params: Promise<{ i
   const reqId = resolvedParams.id;
   const router = useRouter();
   const supabase = createClient();
-  const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "industrial-control"].includes(theme);
+  const { isLight: isLightMode } = useTheme();
 
   const [requirement, setRequirement] = useState<any>(null);
   const [masters, setMasters] = useState<any>({});

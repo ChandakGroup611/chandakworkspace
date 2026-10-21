@@ -93,8 +93,7 @@ export default function UserFormPage() {
   const isEditingMode = id !== "new";
   
   const supabase = createClient();
-  const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "industrial-control"].includes(theme);
+  const { isLight: isLightMode } = useTheme();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

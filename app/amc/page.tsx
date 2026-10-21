@@ -107,8 +107,8 @@ export default function AMCPage() {
   const { hasPermission, loading: permsLoading, roleCode } = usePermissions();
   let isLightMode = false;
   try {
-    const { theme } = useTheme();
-    isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
+    const themeCtx = useTheme();
+    isLightMode = themeCtx.isLight;
   } catch (e) {}
 
   const [records, setRecords] = useState<any[]>([]);
