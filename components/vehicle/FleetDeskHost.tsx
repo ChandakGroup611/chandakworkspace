@@ -5401,7 +5401,7 @@ export default function FleetDeskHost({
         insurance_vendor: editVehicleInsuranceVendor || null,
         insurance_policy_number: editVehicleInsurancePolicy.trim() || undefined,
         insurance_expiry_date: editVehicleInsuranceExpiry || undefined,
-        puc_expiry_date: editVehiclePucExpiry || undefined,
+        puc_expiry_date: isElectricFuel(editVehicleFuel) ? undefined : (editVehiclePucExpiry || undefined),
         fitness_expiry_date: editVehicleFitnessExpiry || undefined,
         purchase_vendor: editVehiclePurchaseVendor.trim() || null,
         purchase_vendor_id: editVehiclePurchaseVendorId.trim() || null,
@@ -7021,6 +7021,10 @@ export default function FleetDeskHost({
   // ----------------------------------------------------------------------------
 
   const handleOpenVehiclePucRenewModal = (veh: VehicleRecord) => {
+    if (isElectricFuel(veh.fuel_type)) {
+      triggerToast(`${veh.registration_number} is an Electric Vehicle (EV) and is legally exempt from PUC under CMVR Rule 115.`, true);
+      return;
+    }
     setSelectedVehicleForPucRenew(veh);
 
     // Auto-calculate cycle dates:
@@ -12367,18 +12371,20 @@ export default function FleetDeskHost({
                               >
                                 <RotateCcw className="h-3.5 w-3.5" />
                               </AppButton>
-                              <AppButton
-                                variant="outline"
-                                size="icon-sm"
-                                title="Renew PUC Certificate"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleOpenVehiclePucRenewModal(veh);
-                                }}
-                                className="h-7 w-7 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40"
-                              >
-                                <Wind className="h-3.5 w-3.5" />
-                              </AppButton>
+                              {!isElectricFuel(veh.fuel_type) && (
+                                <AppButton
+                                  variant="outline"
+                                  size="icon-sm"
+                                  title="Renew PUC Certificate"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenVehiclePucRenewModal(veh);
+                                  }}
+                                  className="h-7 w-7 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40"
+                                >
+                                  <Wind className="h-3.5 w-3.5" />
+                                </AppButton>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -13011,8 +13017,17 @@ export default function FleetDeskHost({
                                 <span>{veh.category || "Vehicle"}</span>
                               )}
                               {veh.fuel_type && (
-                                <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
+                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border ${
+                                  isElectricFuel(veh.fuel_type)
+                                    ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
+                                    : "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20"
+                                }`}>
                                   {veh.fuel_type}
+                                </span>
+                              )}
+                              {isElectricFuel(veh.fuel_type) && veh.battery_warranty_status && (
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-800" title={`Battery Warranty: ${(veh.battery_warranty_km_remaining ?? veh.battery_warranty_km ?? 160000).toLocaleString()} km`}>
+                                  Battery: {veh.battery_warranty_status === "ACTIVE" ? "Active" : veh.battery_warranty_status}
                                 </span>
                               )}
                             </div>
@@ -13099,32 +13114,12 @@ export default function FleetDeskHost({
                           {/* 5. PUC End Date & PUC Expire in Days */}
                           <AppTableCell className="p-3.5">
                             {isElectricFuel(veh.fuel_type) ? (
-                              <div className="space-y-1">
-                                <div className="flex items-center gap-1 flex-wrap">
-                                  <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 inline-flex items-center gap-1">
-                                    <Zap className="h-2.5 w-2.5 text-emerald-500 fill-emerald-500" />
-                                    <span>EV Exempt</span>
-                                  </span>
-                                  {veh.battery_warranty_status && (
-                                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border ${
-                                      veh.battery_warranty_status === "ACTIVE"
-                                        ? "bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300 border-cyan-300 dark:border-cyan-800"
-                                        : veh.battery_warranty_status === "EXPIRING_SOON"
-                                        ? "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-800"
-                                        : "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800"
-                                    }`}>
-                                      {veh.battery_warranty_status === "ACTIVE" ? "Battery Active" : veh.battery_warranty_status === "EXPIRING_SOON" ? "Battery Expiring" : "Battery Expired"}
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="text-[11px] font-mono text-muted-foreground flex items-center gap-1">
-                                  <BatteryCharging className="h-3 w-3 text-cyan-500" />
-                                  <span>
-                                    {veh.battery_warranty_km_remaining !== undefined && veh.battery_warranty_km_remaining !== null
-                                      ? `${veh.battery_warranty_km_remaining.toLocaleString()} km left`
-                                      : `${(veh.battery_warranty_km || 160000).toLocaleString()} km`}
-                                  </span>
-                                </div>
+                              <div className="space-y-0.5">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25">
+                                  <Zap className="h-3 w-3 text-emerald-500 fill-emerald-500 shrink-0" />
+                                  <span>Exempt</span>
+                                </span>
+                                <div className="text-[10px] text-muted-foreground font-medium pl-0.5">PUC Not Required</div>
                               </div>
                             ) : (
                               <>
@@ -14682,7 +14677,7 @@ export default function FleetDeskHost({
                                       </AppButton>
                                     </>
                                   )}
-                                  {(item.docType === "Pollution (PUC)" || item.docType === "PUC Certificate" || item.docType.includes("PUC")) && (
+                                  {(item.docType === "Pollution (PUC)" || item.docType === "PUC Certificate" || item.docType.includes("PUC")) && (!item.vehicle || !isElectricFuel(item.vehicle.fuel_type)) && (
                                     <>
                                       <AppButton
                                         variant="primary"

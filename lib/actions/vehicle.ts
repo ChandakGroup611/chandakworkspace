@@ -6334,7 +6334,14 @@ export async function fetchVehicleUnifiedRenewalsTimelineAction(
       return { success: false, timeline: [], error: error.message };
     }
 
-    const raw = (data || []) as any[];
+    const { data: vehRecord } = await supabaseAdmin
+      .from("vehicles")
+      .select("fuel_type")
+      .eq("id", vehicleId)
+      .maybeSingle();
+
+    const isEv = vehRecord ? isElectricFuel(vehRecord.fuel_type) : false;
+    const raw = ((data || []) as any[]).filter((item) => !(isEv && item.renewal_type === "PUC"));
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
