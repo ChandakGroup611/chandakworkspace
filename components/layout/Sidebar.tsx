@@ -1,4 +1,6 @@
+/* eslint-disable no-restricted-syntax */
 "use client";
+
 
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";

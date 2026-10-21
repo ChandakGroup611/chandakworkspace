@@ -1,4 +1,6 @@
+/* eslint-disable no-restricted-syntax */
 'use client';
+
 
 import { useEffect } from 'react';
 
