@@ -318,7 +318,6 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
   // Collapse state remembered in localStorage
   const [isCompactState, setIsCompactState] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const [expandedTrees, setExpandedTrees] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     try {
@@ -370,7 +369,19 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
     return "/";
   }, [activeModuleCode]);
 
-  // Sync accordion with active route on navigation
+  // Accordion rule: only ONE module with submodules can be open at a time.
+  // Initial state detects the matching parent tree based on active route.
+  const [openTreeHref, setOpenTreeHref] = useState<string | null>(() => {
+    const activeItem = navGroups.flatMap((g) => g.items).find((item) =>
+      item.href !== "/" && (
+        isItemActive(item.href, pathname, searchParams) ||
+        item.subItems?.some((s) => isSubActive(s.href, pathname, searchParams))
+      )
+    );
+    return activeItem?.subItems ? activeItem.href : null;
+  });
+
+  // Sync accordion with active route on navigation (collapsing other modules)
   useEffect(() => {
     const activeItem = navGroups.flatMap((g) => g.items).find((item) =>
       item.href !== "/" && (
@@ -379,7 +390,9 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
       )
     );
     if (activeItem && activeItem.subItems) {
-      setExpandedTrees((prev) => ({ ...prev, [activeItem.href]: true }));
+      setOpenTreeHref(activeItem.href);
+    } else {
+      setOpenTreeHref(null);
     }
     if (onCloseMobile) {
       onCloseMobile();
@@ -443,10 +456,8 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
       e.preventDefault();
       e.stopPropagation();
     }
-    setExpandedTrees((prev) => {
-      const current = prev[href] ?? false;
-      return { ...prev, [href]: !current };
-    });
+    // Accordion: opening another module automatically collapses the previously open module
+    setOpenTreeHref((prev) => (prev === href ? null : href));
   };
 
   const renderNavList = (inMobile = false) => {
@@ -469,7 +480,7 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
                 const hasMatchingSubItem = item.subItems?.some((s) => isSubActive(s.href, pathname, searchParams));
                 const itemDirectlyActive = !hasMatchingSubItem && isItemActive(item.href, pathname, searchParams);
                 const isParentGroup = !!item.subItems && hasMatchingSubItem;
-                const isExpanded = expandedTrees[item.href] ?? (hasMatchingSubItem || itemDirectlyActive);
+                const isExpanded = openTreeHref === item.href;
 
                 return (
                   <div key={item.href} className="space-y-0.5">
@@ -485,7 +496,7 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
                             if (itemDirectlyActive || hasMatchingSubItem) {
                               toggleTree(item.href, e);
                             } else {
-                              setExpandedTrees((prev) => ({ ...prev, [item.href]: true }));
+                              setOpenTreeHref(item.href);
                             }
                           }
                         }}
