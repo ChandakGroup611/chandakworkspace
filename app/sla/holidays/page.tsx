@@ -12,6 +12,9 @@ import { Calendar, Plus, Save, Trash2, MapPin, Clock, Edit2, Shield } from "luci
 import { toast } from "react-toastify";
 import { usePermissions } from "@/hooks/usePermissions";
 import ChandakLoader from "@/components/ui/ChandakLoader";
+import { EmptyState } from "@/components/ui/feedback/States";
+import { formatDate } from "@/components/ui/data";
+import { Info } from "lucide-react";
 
 // Mock data for UI demonstration since DB tables might not exist locally
 const initialHolidays = [
@@ -21,8 +24,8 @@ const initialHolidays = [
 ];
 
 const initialWorkingHours = [
-  { id: "24x7", name: "24x7 Continuous", timezone: "UTC", schedule: "Mon-Sun: 00:00 - 23:59" },
-  { id: "9x5", name: "Standard Business Hours", timezone: "America/New_York", schedule: "Mon-Fri: 09:00 - 17:00" }
+  { id: "24x7", name: "24×7 (always running)", timezone: "UTC", schedule: "Mon-Sun: 00:00 - 23:59" },
+  { id: "9x5", name: "Standard business hours", timezone: "America/New_York", schedule: "Mon-Fri: 09:00 - 17:00" }
 ];
 
 export default function HolidayCalendar() {
@@ -122,10 +125,14 @@ export default function HolidayCalendar() {
     toast.success("Working hours profile deleted.");
   };
 
+  const LABEL = "mb-1.5 block text-[13px] font-medium text-subtle";
+  const SELECT = "h-9 w-full rounded-md border border-border bg-surface px-3 text-[13.5px] text-foreground focus:outline-none focus:ring-2 focus:ring-ring";
+  const TAB = "-mb-px inline-flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2.5 text-[13px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+
   if (permsLoading) {
     return (
-      <div className="h-[80vh] flex items-center justify-center">
-        <ChandakLoader size="lg" title="Loading Schedules…" subtitle="Fetching working hours & holidays" />
+      <div className="flex h-[60vh] items-center justify-center">
+        <ChandakLoader size="lg" title="Loading schedules…" />
       </div>
     );
   }
@@ -133,13 +140,11 @@ export default function HolidayCalendar() {
   if (!canView) {
     return (
       <PageContainer strict={true}>
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <Shield className="w-16 h-16 text-danger mb-4 opacity-80" />
-          <h2 className="text-xl font-bold">Access restricted</h2>
-          <p className="text-sm text-muted mt-2 max-w-md">
-            You do not have the required permissions (SLA_VIEW) to access SLA schedules and holidays.
-          </p>
-        </div>
+        <EmptyState
+          kind="error"
+          title="You don't have access to SLA schedules"
+          description="Ask an administrator for SLA view access."
+        />
       </PageContainer>
     );
   }
@@ -147,139 +152,112 @@ export default function HolidayCalendar() {
   return (
     <PageContainer strict={true}>
       <PageHeader
-        title="Working hours & holidays"
-        badge={<AppBadge variant="info">Governance engine</AppBadge>}
+        title="Working hours and holidays"
+        description="SLA timers pause outside working hours and on holidays."
+        breadcrumbs={[{ label: "SLA tracking", href: "/sla" }, { label: "Working hours and holidays" }]}
       />
 
-      <div className="p-4 border-b shrink-0 bg-surface/50 dark:bg-surface/50 border-border mt-6">
-        <div className="flex gap-1.5 overflow-x-auto p-1.5 bg-surface/50 dark:bg-surface/30 border border-border/60 dark:border-border rounded-xl w-max max-w-full shadow-sm">
-          <AppButton 
-            onClick={() => setActiveTab("holidays")}
-            className={`px-5 py-2 text-[13px] font-bold rounded-lg transition-all whitespace-nowrap outline-none flex items-center justify-center min-w-[120px] ${
-              activeTab === 'holidays' 
-                ? 'bg-surface dark:bg-surface text-theme-icon dark:text-theme-icon shadow-sm border border-border/50 dark:border-border' 
-                : 'text-muted hover:text-foreground dark:text-muted dark:hover:text-muted hover:bg-elevated/50 dark:hover:bg-surface/5 border border-transparent'
-            }`}
-          >
-            <Calendar className="w-4 h-4 mr-2" /> Holiday calendar
-          </AppButton>
-          <AppButton 
-            onClick={() => setActiveTab("working_hours")}
-            className={`px-5 py-2 text-[13px] font-bold rounded-lg transition-all whitespace-nowrap outline-none flex items-center justify-center min-w-[120px] ${
-              activeTab === 'working_hours' 
-                ? 'bg-surface dark:bg-surface text-theme-icon dark:text-theme-icon shadow-sm border border-border/50 dark:border-border' 
-                : 'text-muted hover:text-foreground dark:text-muted dark:hover:text-muted hover:bg-elevated/50 dark:hover:bg-surface/5 border border-transparent'
-            }`}
-          >
-            <Clock className="w-4 h-4 mr-2" /> Working hours (business schedules)
-          </AppButton>
-        </div>
+      <div role="note" className="mb-4 flex items-start gap-2.5 rounded-md border border-info-border bg-info-soft p-3 text-[13px] text-info-text">
+        <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+        <p>This page shows sample data for now. Holidays and schedules you add here aren&apos;t saved yet and are cleared when you leave the page.</p>
       </div>
 
-      <div className="mt-6">
+      <div role="tablist" aria-label="Schedules" className="flex gap-1 overflow-x-auto border-b border-border hide-scrollbar">
+        <button type="button" role="tab" aria-selected={activeTab === 'holidays'} onClick={() => setActiveTab("holidays")} className={`${TAB} ${activeTab === 'holidays' ? 'border-primary text-foreground' : 'border-transparent text-muted hover:text-foreground'}`}>
+          <Calendar className="w-4 h-4" aria-hidden /> Holidays
+        </button>
+        <button type="button" role="tab" aria-selected={activeTab === 'working_hours'} onClick={() => setActiveTab("working_hours")} className={`${TAB} ${activeTab === 'working_hours' ? 'border-primary text-foreground' : 'border-transparent text-muted hover:text-foreground'}`}>
+          <Clock className="w-4 h-4" aria-hidden /> Working hours
+        </button>
+      </div>
+
+      <div className="mt-5">
         {activeTab === "holidays" ? (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-1 space-y-4">
-              {canCreate && (
-                <AppCard>
-                  <div className="p-6">
-                    <h3 className="font-bold text-lg mb-4">Add holiday</h3>
-                    <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+            {canCreate && (
+            <div className="space-y-4 lg:col-span-1">
+                <AppCard className="p-0">
+                  <div className="space-y-4 p-4">
+                    <h2 className="text-[14px] font-semibold text-heading">Add a holiday</h2>
                       <div>
-                        <label className="text-xs font-medium text-muted block mb-1">Holiday name</label>
-                        <AppInput value={newHoliday.name} onChange={e => setNewHoliday({...newHoliday, name: e.target.value})} placeholder="e.g. Thanksgiving" />
+                        <label htmlFor="hol-name" className={LABEL}>Name</label>
+                        <AppInput id="hol-name" value={newHoliday.name} onChange={e => setNewHoliday({...newHoliday, name: e.target.value})} placeholder="For example, Diwali" />
                       </div>
                       <div>
-                        <label className="text-xs font-medium text-muted block mb-1">Date</label>
-                        <AppInput type="date" value={newHoliday.date} onChange={e => setNewHoliday({...newHoliday, date: e.target.value})} />
+                        <label htmlFor="hol-date" className={LABEL}>Date</label>
+                        <AppInput id="hol-date" type="date" value={newHoliday.date} onChange={e => setNewHoliday({...newHoliday, date: e.target.value})} />
                       </div>
                       <div>
-                        <label className="text-xs font-medium text-muted block mb-1">Region / office</label>
-                        <select className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-theme-btn-primary" value={newHoliday.region} onChange={e => setNewHoliday({...newHoliday, region: e.target.value})}>
+                        <label htmlFor="hol-region" className={LABEL}>Region or office</label>
+                        <select id="hol-region" className={SELECT} value={newHoliday.region} onChange={e => setNewHoliday({...newHoliday, region: e.target.value})}>
                           <option>Global</option>
                           <option>US region</option>
                           <option>EMEA region</option>
                           <option>APAC region</option>
                         </select>
                       </div>
-                      <AppButton variant="primary" className="w-full mt-2" onClick={handleAddHoliday} leftIcon={<Plus className="w-4 h-4"/>}>
-                        Add to calendar
+                      <AppButton variant="primary" className="w-full" onClick={handleAddHoliday} leftIcon={<Plus className="w-4 h-4"/>}>
+                        Add holiday
                       </AppButton>
-                    </div>
                   </div>
                 </AppCard>
-              )}
-              
-              <AppCard className="bg-warning-soft border border-warning/20">
-                <div className="p-4 space-y-2">
-                  <h4 className="font-semibold text-warning text-sm">SLA impact</h4>
-                  <p className="text-xs text-muted">
-                    SLA timers are automatically paused on registered holidays based on the Ticket's or Task's assigned working hours code.
-                  </p>
-                </div>
-              </AppCard>
             </div>
-            
+            )}
+
             <div className={canCreate ? "lg:col-span-2" : "lg:col-span-3"}>
-              <AppCard>
-                <div className="p-4 border-b border-border bg-surface dark:bg-surface/[0.02]">
-                  <h3 className="font-bold text-sm">Upcoming holidays (2026)</h3>
+              <AppCard className="overflow-hidden p-0">
+                <div className="flex items-center justify-between border-b border-border px-4 py-3">
+                  <h2 className="text-[14px] font-semibold text-heading">Holidays</h2>
+                  <span className="text-[12.5px] text-muted">{holidays.length} {holidays.length === 1 ? "day" : "days"}</span>
                 </div>
-                <div className="divide-y divide-border">
+                <ul className="divide-y divide-border">
                   {holidays.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map(holiday => (
-                    <div key={holiday.id} className="p-4 flex items-center justify-between hover:bg-surface dark:hover:bg-surface/[0.02] transition-colors">
-                      <div className="flex flex-col">
-                        <span className="font-bold text-foreground">{holiday.name}</span>
-                        <div className="flex items-center gap-2 mt-1 text-xs text-muted">
-                          <span className="font-mono bg-surface dark:bg-surface/10 px-1.5 py-0.5 rounded">{holiday.date}</span>
-                          <span>•</span>
-                          <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {holiday.region}</span>
+                    <li key={holiday.id} className="flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-surface-hover">
+                      <div className="min-w-0">
+                        <span className="block text-[13.5px] font-medium text-foreground">{holiday.name}</span>
+                        <div className="mt-0.5 flex items-center gap-2 text-[12.5px] text-muted">
+                          <span className="tabular-nums">{formatDate(holiday.date)}</span>
+                          <span aria-hidden>·</span>
+                          <span className="flex items-center gap-1"><MapPin className="w-3 h-3" aria-hidden /> {holiday.region}</span>
                         </div>
                       </div>
                       {canDelete && (
-                        <AppButton aria-label="Delete" variant="outline" size="sm" className="text-danger hover:bg-danger-soft" onClick={() => handleDeleteHoliday(holiday.id)}>
+                        <AppButton aria-label={`Remove ${holiday.name}`} title="Remove" variant="ghost" size="icon-sm" className="text-muted hover:bg-danger-soft hover:text-danger-text" onClick={() => handleDeleteHoliday(holiday.id)}>
                           <Trash2 className="w-4 h-4" />
                         </AppButton>
                       )}
-                    </div>
+                    </li>
                   ))}
-                  {holidays.length === 0 && (
-                    <div className="p-8 text-center text-muted text-sm">
-                      No holidays configured. SLA timers will run continuously.
-                    </div>
-                  )}
-                </div>
+                </ul>
+                {holidays.length === 0 && (
+                  <EmptyState compact title="No holidays added" description="SLA timers will run every day." />
+                )}
               </AppCard>
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {workingHours.map(wh => (
-              <AppCard key={wh.id}>
-                <div className="p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="font-bold text-lg">{wh.name}</h3>
-                    </div>
-                    <AppBadge variant="info">{wh.timezone}</AppBadge>
+              <AppCard key={wh.id} className="p-0">
+                <div className="space-y-3 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <h2 className="text-[14.5px] font-semibold text-heading">{wh.name}</h2>
+                    <AppBadge variant="neutral">{wh.timezone}</AppBadge>
                   </div>
-                  <div className="p-4 bg-surface dark:bg-surface/5 rounded-xl border border-border">
-                    <div className="text-sm font-semibold text-subtle dark:text-muted flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-theme-icon" /> Schedule
-                    </div>
-                    <div className="text-sm font-mono mt-2 text-foreground">
-                      {wh.schedule}
-                    </div>
+                  <div className="flex items-center gap-2 rounded-md border border-border bg-sunken px-3 py-2 text-[13px]">
+                    <Clock className="w-4 h-4 text-muted" aria-hidden />
+                    <span className="text-muted">Schedule</span>
+                    <span className="font-mono text-foreground">{wh.schedule}</span>
                   </div>
                   {(canUpdate || canDelete) && (
-                    <div className="mt-4 flex gap-2">
+                    <div className="flex gap-2">
                       {canUpdate && (
-                        <AppButton variant="outline" size="sm" onClick={() => handleOpenEditSchedule(wh)} leftIcon={<Edit2 className="w-3.5 h-3.5" />}>
-                          Edit schedule
+                        <AppButton variant="secondary" size="sm" onClick={() => handleOpenEditSchedule(wh)} leftIcon={<Edit2 className="w-3.5 h-3.5" />}>
+                          Edit
                         </AppButton>
                       )}
                       {canDelete && (
-                        <AppButton variant="outline" size="sm" className="text-danger hover:bg-danger-soft" onClick={() => handleDeleteWorkingHours(wh.id)}>
+                        <AppButton variant="ghost" size="sm" className="text-danger-text hover:bg-danger-soft" onClick={() => handleDeleteWorkingHours(wh.id)}>
                           Delete
                         </AppButton>
                       )}
@@ -289,15 +267,16 @@ export default function HolidayCalendar() {
               </AppCard>
             ))}
             {canCreate && (
-              <AppCard 
+              <button
+                type="button"
                 onClick={handleOpenCreateSchedule}
-                className="border border-border bg-sunken/40 flex items-center justify-center min-h-[200px] cursor-pointer hover:bg-surface dark:hover:bg-surface/[0.02] transition-colors"
+                className="flex min-h-[148px] items-center justify-center rounded-lg border border-border bg-sunken text-center transition-colors hover:bg-surface-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <div className="text-center">
-                  <Plus className="w-8 h-8 text-muted mx-auto mb-2" />
-                  <span className="font-bold text-muted">Create working hours profile</span>
-                </div>
-              </AppCard>
+                <span>
+                  <Plus className="mx-auto mb-1.5 h-6 w-6 text-muted" aria-hidden />
+                  <span className="text-[13.5px] font-medium text-subtle">New working hours profile</span>
+                </span>
+              </button>
             )}
           </div>
         )}
@@ -306,24 +285,26 @@ export default function HolidayCalendar() {
       {/* Schedule Edit / Create Dialog */}
       <Dialog open={showScheduleModal} onOpenChange={setShowScheduleModal}>
         <DialogContent className="sm:max-w-md p-0 overflow-hidden">
-          <DialogHeader className="px-6 py-4 border-b border-border/50">
-            <DialogTitle>{editingWorkingHours ? "Edit Working Hours Schedule" : "Create Working Hours Profile"}</DialogTitle>
+          <DialogHeader className="px-5 py-4 border-b border-border">
+            <DialogTitle>{editingWorkingHours ? "Edit working hours" : "New working hours profile"}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSaveSchedule}>
-            <div className="p-6 space-y-4">
+            <div className="p-5 space-y-4">
               <div>
-                <label className="text-xs font-medium text-muted block mb-1">Profile name <span className="text-danger">*</span></label>
+                <label htmlFor="wh-name" className={LABEL}>Name <span className="text-danger-text" aria-hidden>*</span></label>
                 <AppInput 
+                  id="wh-name"
                   value={scheduleForm.name} 
                   onChange={e => setScheduleForm({ ...scheduleForm, name: e.target.value })} 
-                  placeholder="e.g. Standard business hours"
+                  placeholder="For example, Standard business hours"
                   required
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-muted block mb-1">Timezone</label>
+                <label htmlFor="wh-tz" className={LABEL}>Time zone</label>
                 <select 
-                  className="w-full p-2.5 bg-surface border border-border rounded-lg text-sm text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
+                  id="wh-tz"
+                  className={SELECT}
                   value={scheduleForm.timezone} 
                   onChange={e => setScheduleForm({ ...scheduleForm, timezone: e.target.value })}
                 >
@@ -336,18 +317,19 @@ export default function HolidayCalendar() {
                 </select>
               </div>
               <div>
-                <label className="text-xs font-medium text-muted block mb-1">Schedule string <span className="text-danger">*</span></label>
+                <label htmlFor="wh-sched" className={LABEL}>Schedule <span className="text-danger-text" aria-hidden>*</span></label>
                 <AppInput 
+                  id="wh-sched"
                   value={scheduleForm.schedule} 
                   onChange={e => setScheduleForm({ ...scheduleForm, schedule: e.target.value })} 
-                  placeholder="e.g. Mon-Fri: 09:00 - 18:00"
+                  placeholder="For example, Mon-Fri: 09:00 - 18:00"
                   required
                 />
               </div>
             </div>
-            <DialogFooter className="px-6 py-4 bg-surface border-t border-border/50">
-              <AppButton variant="outline" type="button" onClick={() => setShowScheduleModal(false)}>Cancel</AppButton>
-              <AppButton variant="primary" type="submit" leftIcon={<Save className="w-4 h-4" />}>Save schedule</AppButton>
+            <DialogFooter className="px-5 py-3 bg-sunken border-t border-border">
+              <AppButton variant="ghost" type="button" onClick={() => setShowScheduleModal(false)}>Cancel</AppButton>
+              <AppButton variant="primary" type="submit" leftIcon={<Save className="w-4 h-4" />}>Save</AppButton>
             </DialogFooter>
           </form>
         </DialogContent>
