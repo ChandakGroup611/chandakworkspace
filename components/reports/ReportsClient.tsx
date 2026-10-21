@@ -53,7 +53,7 @@ function DraggableTableHead({ col, isFirst, filterValue, onFilterChange }: { col
     <AppTableHead 
       ref={setNodeRef} 
       style={style}
-      className={`bg-elevated border-b border-border font-bold text-xs uppercase text-foreground px-4 py-2 hover:opacity-90/10 transition-colors ${isCode ? "shadow-[4px_0_8px_rgba(0,0,0,0.06)]" : ""} ${["code", "due_date", "created_at", "start_date"].includes(col.field_key) ? "whitespace-nowrap" : ""} ${["created_at", "start_date"].includes(col.field_key) ? "text-right" : ""}`} 
+      className={`bg-elevated border-b border-border theme-label text-foreground px-4 py-2 hover:bg-surface/50 transition-colors ${isCode ? "shadow-[4px_0_8px_rgba(0,0,0,0.06)]" : ""} ${["code", "due_date", "created_at", "start_date"].includes(col.field_key) ? "whitespace-nowrap" : ""} ${["created_at", "start_date"].includes(col.field_key) ? "text-right" : ""}`} 
     >
       <div className="flex flex-col gap-2">
         <div className="cursor-grab active:cursor-grabbing select-none" {...attributes} {...listeners}>
@@ -384,7 +384,7 @@ export default function ReportsClient() {
                   setQuery("");
                   setColumnFilters({});
                 }}
-                className="ml-2 px-2 py-1 text-[10px] uppercase font-bold text-danger hover:bg-rose-50 dark:hover:bg-danger/10 rounded transition-colors"
+                className="ml-2 px-2 py-1 theme-label font-bold text-danger hover:bg-danger-soft rounded transition-colors"
               >
                 Clear Filters
               </AppButton>
@@ -447,7 +447,7 @@ export default function ReportsClient() {
       {/* Mobile / Tablet Report Cards (<1024px) */}
       <div className="block lg:hidden space-y-3">
         {filtered.length === 0 ? (
-          <div className="text-center py-12 text-muted text-sm border border-dashed border-border rounded-xl bg-surface/50">
+          <div className="text-center py-12 text-muted text-sm border border-border rounded-xl bg-surface/50">
             {loading ? "Loading report data..." : "No records found matching the current filters."}
           </div>
         ) : (
