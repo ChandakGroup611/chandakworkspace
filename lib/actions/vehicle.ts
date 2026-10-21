@@ -209,7 +209,22 @@ function calculateDaysRemaining(dateStr?: string | null): number | null {
 
 function isElectricFuel(fuel?: string | null): boolean {
   if (!fuel) return false;
-  return /electric|ev\b/i.test(fuel.trim());
+  return /electric|ev\b|bev|battery electric/i.test(fuel.trim());
+}
+
+function formatIndianLongDate(dateStr: string): string {
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const day = d.getDate();
+    const months = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+    return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  } catch {
+    return dateStr;
+  }
 }
 
 export interface VehicleDashboardStats {
@@ -305,6 +320,14 @@ export interface VehicleRecord {
   insurance_expiry_date?: string | null;
   insurance_vendor_id?: string | null;
   insurance_vendor?: string | null;
+  own_insurance_policy_number?: string | null;
+  own_insurance_expiry_date?: string | null;
+  own_insurance_vendor_id?: string | null;
+  own_insurance_vendor?: string | null;
+  tp_insurance_policy_number?: string | null;
+  tp_insurance_expiry_date?: string | null;
+  tp_insurance_vendor_id?: string | null;
+  tp_insurance_vendor?: string | null;
   puc_expiry_date?: string | null;
   puc_certificate_number?: string | null;
   fitness_expiry_date?: string | null;
@@ -358,6 +381,7 @@ export interface InsuranceVendorRecord {
 export interface VehicleInsurancePolicyRecord {
   id: string;
   vehicle_id: string;
+  insurance_category?: 'Own Insurance' | 'Third Party Insurance' | string;
   insurer_name: string;
   insurance_vendor_id?: string | null;
   policy_number: string;
@@ -5472,6 +5496,7 @@ export async function fetchVehicleInsurancePoliciesAction(vehicleId: string): Pr
 export async function renewVehicleInsurancePolicyAction(
   vehicleId: string,
   renewalData: {
+    insurance_category?: 'Own Insurance' | 'Third Party Insurance' | string;
     insurer_name: string;
     insurance_vendor_id?: string | null;
     policy_number: string;
@@ -5515,20 +5540,27 @@ export async function renewVehicleInsurancePolicyAction(
       return { success: false, error: "Policy Start Date and Expiry Date are required." };
     }
 
-    // Step 1: Mark all previous policies for this vehicle as inactive
+    // Determine category: explicitly 'Third Party Insurance' or 'Own Insurance'
+    const category: string = renewalData.insurance_category || (
+      renewalData.policy_type?.toLowerCase().includes("third") ? "Third Party Insurance" : "Own Insurance"
+    );
+
+    // Step 1: Mark all previous policies of the SAME category for this vehicle as inactive
     await supabaseAdmin
       .from("insurance_policies")
       .update({ is_active: false, updated_at: new Date().toISOString() })
       .eq("vehicle_id", vehicleId)
+      .eq("insurance_category", category)
       .eq("is_active", true);
 
     // Step 2: Insert the newly renewed policy
     const newPolicyPayload = {
       vehicle_id: vehicleId,
+      insurance_category: category,
       insurer_name: renewalData.insurer_name.trim(),
       insurance_vendor_id: renewalData.insurance_vendor_id || null,
       policy_number: renewalData.policy_number.trim(),
-      policy_type: renewalData.policy_type || "Comprehensive",
+      policy_type: renewalData.policy_type || (category === "Third Party Insurance" ? "Third-Party Liability" : "Comprehensive"),
       idv: Number(renewalData.idv) || 0,
       premium_amount: Number(renewalData.premium_amount) || 0,
       start_date: renewalData.start_date,
@@ -5558,15 +5590,28 @@ export async function renewVehicleInsurancePolicyAction(
       return { success: false, error: insertError.message };
     }
 
-    // Step 3: Synchronize vehicles table active pointers
+    // Step 3: Synchronize vehicles table active pointers based on category
     const vehicleUpdates: Record<string, any> = {
-      insurance_policy_number: renewalData.policy_number.trim(),
-      insurance_expiry_date: renewalData.end_date,
-      insurance_vendor: renewalData.insurer_name.trim(),
-      insurance_vendor_id: renewalData.insurance_vendor_id || null,
-      has_roadside_assistance: renewalData.has_roadside_assistance ?? true,
       updated_at: new Date().toISOString()
     };
+
+    if (category === "Third Party Insurance") {
+      vehicleUpdates.tp_insurance_policy_number = renewalData.policy_number.trim();
+      vehicleUpdates.tp_insurance_expiry_date = renewalData.end_date;
+      vehicleUpdates.tp_insurance_vendor = renewalData.insurer_name.trim();
+      vehicleUpdates.tp_insurance_vendor_id = renewalData.insurance_vendor_id || null;
+    } else {
+      vehicleUpdates.own_insurance_policy_number = renewalData.policy_number.trim();
+      vehicleUpdates.own_insurance_expiry_date = renewalData.end_date;
+      vehicleUpdates.own_insurance_vendor = renewalData.insurer_name.trim();
+      vehicleUpdates.own_insurance_vendor_id = renewalData.insurance_vendor_id || null;
+      // Also update primary legacy fields for full backwards compatibility
+      vehicleUpdates.insurance_policy_number = renewalData.policy_number.trim();
+      vehicleUpdates.insurance_expiry_date = renewalData.end_date;
+      vehicleUpdates.insurance_vendor = renewalData.insurer_name.trim();
+      vehicleUpdates.insurance_vendor_id = renewalData.insurance_vendor_id || null;
+      vehicleUpdates.has_roadside_assistance = renewalData.has_roadside_assistance ?? true;
+    }
 
     const { error: vehUpdateError } = await supabaseAdmin
       .from("vehicles")
@@ -5595,6 +5640,7 @@ export async function renewVehicleInsurancePolicyAction(
 
 /**
  * Delete / void a policy record and automatically restore active pointer to latest valid policy
+ * of the SAME category (Own Insurance vs Third Party Insurance)
  */
 export async function deleteVehicleInsurancePolicyAction(
   policyId: string,
@@ -5604,6 +5650,15 @@ export async function deleteVehicleInsurancePolicyAction(
     const user = await getAuthenticatedUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
+    // Fetch policy details to know its category before soft-deleting
+    const { data: targetPolicy } = await supabaseAdmin
+      .from("insurance_policies")
+      .select("insurance_category")
+      .eq("id", policyId)
+      .maybeSingle();
+
+    const category = targetPolicy?.insurance_category || "Own Insurance";
+
     // Soft delete the policy
     const { error: delError } = await supabaseAdmin
       .from("insurance_policies")
@@ -5612,11 +5667,12 @@ export async function deleteVehicleInsurancePolicyAction(
 
     if (delError) return { success: false, error: delError.message };
 
-    // Fetch the latest remaining policy for this vehicle
+    // Fetch the latest remaining policy for this vehicle and this specific category
     const { data: latestPolicies } = await supabaseAdmin
       .from("insurance_policies")
       .select("*")
       .eq("vehicle_id", vehicleId)
+      .eq("insurance_category", category)
       .eq("is_deleted", false)
       .order("end_date", { ascending: false })
       .limit(1);
@@ -5628,17 +5684,44 @@ export async function deleteVehicleInsurancePolicyAction(
         .update({ is_active: true })
         .eq("id", topPolicy.id);
 
-      await supabaseAdmin
-        .from("vehicles")
-        .update({
-          insurance_policy_number: topPolicy.policy_number,
-          insurance_expiry_date: topPolicy.end_date,
-          insurance_vendor: topPolicy.insurer_name,
-          insurance_vendor_id: topPolicy.insurance_vendor_id || null,
-          has_roadside_assistance: topPolicy.has_roadside_assistance ?? true,
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", vehicleId);
+      const updates: Record<string, any> = { updated_at: new Date().toISOString() };
+      if (category === "Third Party Insurance") {
+        updates.tp_insurance_policy_number = topPolicy.policy_number;
+        updates.tp_insurance_expiry_date = topPolicy.end_date;
+        updates.tp_insurance_vendor = topPolicy.insurer_name;
+        updates.tp_insurance_vendor_id = topPolicy.insurance_vendor_id || null;
+      } else {
+        updates.own_insurance_policy_number = topPolicy.policy_number;
+        updates.own_insurance_expiry_date = topPolicy.end_date;
+        updates.own_insurance_vendor = topPolicy.insurer_name;
+        updates.own_insurance_vendor_id = topPolicy.insurance_vendor_id || null;
+        updates.insurance_policy_number = topPolicy.policy_number;
+        updates.insurance_expiry_date = topPolicy.end_date;
+        updates.insurance_vendor = topPolicy.insurer_name;
+        updates.insurance_vendor_id = topPolicy.insurance_vendor_id || null;
+      }
+
+      await supabaseAdmin.from("vehicles").update(updates).eq("id", vehicleId);
+    } else {
+      // No remaining active policies for this category: safely nullify category pointers
+      const updates: Record<string, any> = { updated_at: new Date().toISOString() };
+      if (category === "Third Party Insurance") {
+        updates.tp_insurance_policy_number = null;
+        updates.tp_insurance_expiry_date = null;
+        updates.tp_insurance_vendor = null;
+        updates.tp_insurance_vendor_id = null;
+      } else {
+        updates.own_insurance_policy_number = null;
+        updates.own_insurance_expiry_date = null;
+        updates.own_insurance_vendor = null;
+        updates.own_insurance_vendor_id = null;
+        updates.insurance_policy_number = null;
+        updates.insurance_expiry_date = null;
+        updates.insurance_vendor = null;
+        updates.insurance_vendor_id = null;
+      }
+
+      await supabaseAdmin.from("vehicles").update(updates).eq("id", vehicleId);
     }
 
     return { success: true };
@@ -6328,6 +6411,11 @@ export async function sendVehicleComplianceExpiryReminderAction(
       return { success: false, error: error?.message || "Vehicle not found" };
     }
 
+    const isEv = isElectricFuel(veh.fuel_type);
+    if (isEv && (docType.toUpperCase() === "PUC" || docType.toUpperCase().includes("EMISSION"))) {
+      return { success: false, error: "Electric Vehicles (EV) are legally exempt from PUC requirements under CMVR." };
+    }
+
     const daysRemaining = expiryDate ? calculateDaysRemaining(expiryDate) : null;
     const isExpired = daysRemaining !== null && daysRemaining < 0;
     const isUrgent = daysRemaining !== null && daysRemaining <= 7 && daysRemaining >= 0;
@@ -6339,6 +6427,21 @@ export async function sendVehicleComplianceExpiryReminderAction(
       eventName = `${docType} Expiring Urgent (7 Days)`;
     }
 
+    const formattedDate = expiryDate ? formatIndianLongDate(expiryDate) : "Pending Expiry";
+    let vendorName = veh.insurance_vendor || "Authorized Insurer";
+    let policyNo = veh.insurance_policy_number || "—";
+    let customMessage: string | undefined;
+
+    if (docType === "Third Party Insurance") {
+      vendorName = veh.tp_insurance_vendor || "Authorized Insurer";
+      policyNo = veh.tp_insurance_policy_number || "—";
+      customMessage = `Third Party Insurance — ${vendorName} — Insurance is going to expire on ${formattedDate}.`;
+    } else if (docType === "Own Insurance" || docType === "Insurance") {
+      vendorName = veh.own_insurance_vendor || veh.insurance_vendor || "Authorized Insurer";
+      policyNo = veh.own_insurance_policy_number || veh.insurance_policy_number || "—";
+      customMessage = `Own Insurance — ${vendorName} — Insurance is going to expire on ${formattedDate}.`;
+    }
+
     const payload = {
       entity_id: veh.id,
       triggering_user_id: user.id,
@@ -6346,15 +6449,18 @@ export async function sendVehicleComplianceExpiryReminderAction(
       vehicle_name: `${veh.make} ${veh.model}`,
       doc_type: docType,
       expiry_date: expiryDate ? String(expiryDate).split("T")[0] : "Pending Expiry",
+      formatted_expiry_date: formattedDate,
       days_remaining: daysRemaining !== null ? (isExpired ? `Expired ${Math.abs(daysRemaining)} days ago` : `${daysRemaining} Days Left`) : "Pending",
       status: isExpired ? "EXPIRED" : (daysRemaining !== null && daysRemaining <= 30 ? "EXPIRING_SOON" : "VALID"),
-      insurance_vendor: veh.insurance_vendor || "Authorized Insurer",
-      insurance_policy_number: veh.insurance_policy_number || "—",
+      insurance_vendor: vendorName,
+      insurance_policy_number: policyNo,
       puc_certificate_number: veh.puc_certificate_number || "—",
       driver_name: veh.assignedDriver?.full_name || "Unassigned",
       driver_phone: veh.assignedDriver?.phone || "—",
       rto_office: veh.rto_office || "State RTO",
       odometer_km: veh.odometer_km ? `${veh.odometer_km} km` : "0 km",
+      description: customMessage || `${docType} is going to expire on ${formattedDate}.`,
+      notification_summary: customMessage || `${docType} is going to expire on ${formattedDate}.`,
       link: `/vehicle`
     };
 
@@ -6374,7 +6480,8 @@ export async function sendVehicleComplianceExpiryReminderAction(
 
 /**
  * Scans all fleet vehicles & drivers for statutory compliance expiry thresholds
- * and dispatches configured email notifications.
+ * and dispatches configured vendor-wise email notifications.
+ * Automatically excludes Electric Vehicles (EV) from PUC checks.
  */
 export async function runFleetComplianceExpiryAuditAction(): Promise<{
   success: boolean;
@@ -6386,7 +6493,7 @@ export async function runFleetComplianceExpiryAuditAction(): Promise<{
   try {
     const { data: vehicles, error: vErr } = await supabaseAdmin
       .from("vehicles")
-      .select("id, registration_number, make, model, fuel_type, rto_office, insurance_vendor, insurance_policy_number, insurance_expiry_date, puc_expiry_date, fitness_expiry_date, odometer_km, owner_id");
+      .select("id, registration_number, make, model, fuel_type, rto_office, insurance_vendor, insurance_policy_number, insurance_expiry_date, own_insurance_vendor, own_insurance_policy_number, own_insurance_expiry_date, tp_insurance_vendor, tp_insurance_policy_number, tp_insurance_expiry_date, puc_expiry_date, fitness_expiry_date, odometer_km, owner_id");
 
     if (vErr) throw vErr;
 
@@ -6398,7 +6505,15 @@ export async function runFleetComplianceExpiryAuditAction(): Promise<{
     now.setHours(0, 0, 0, 0);
 
     for (const v of vehicles || []) {
-      const checkAndDispatch = async (docType: string, dateStr?: string | null) => {
+      const isEv = isElectricFuel(v.fuel_type);
+
+      const checkAndDispatch = async (
+        docType: string,
+        dateStr?: string | null,
+        vendorName?: string | null,
+        policyNo?: string | null,
+        customMessage?: string | null
+      ) => {
         if (!dateStr) return;
         const d = new Date(dateStr);
         if (isNaN(d.getTime())) return;
@@ -6417,6 +6532,9 @@ export async function runFleetComplianceExpiryAuditAction(): Promise<{
             eventName = `${docType} Expiring Urgent (7 Days)`;
           }
 
+          const formattedDate = formatIndianLongDate(dateStr);
+          const defaultSummary = `${docType} is going to expire on ${formattedDate}.`;
+
           await queueBusinessEvent("Vehicle (FleetDesk)", eventName, {
             entity_id: v.id,
             triggering_user_id: "system-cron",
@@ -6424,23 +6542,45 @@ export async function runFleetComplianceExpiryAuditAction(): Promise<{
             vehicle_name: `${v.make} ${v.model}`,
             doc_type: docType,
             expiry_date: String(dateStr).split("T")[0],
+            formatted_expiry_date: formattedDate,
             days_remaining: isExpired ? `Expired ${Math.abs(diffDays)} days ago` : `${diffDays} Days Left`,
             status: isExpired ? "EXPIRED" : "EXPIRING_SOON",
-            insurance_vendor: v.insurance_vendor,
-            insurance_policy_number: v.insurance_policy_number,
+            insurance_vendor: vendorName || v.insurance_vendor || "Authorized Insurer",
+            insurance_policy_number: policyNo || v.insurance_policy_number || "—",
             rto_office: v.rto_office,
+            description: customMessage || defaultSummary,
+            notification_summary: customMessage || defaultSummary,
             link: `/vehicle`
           });
           notificationsQueued++;
         }
       };
 
-      if (v.insurance_expiry_date) {
-        await checkAndDispatch("Insurance", v.insurance_expiry_date);
+      // 1. Own Insurance Expiry Check (Required format: Own Insurance — [Vendor Name] — Insurance is going to expire on [Expiry Date].)
+      const ownExpiry = v.own_insurance_expiry_date || v.insurance_expiry_date;
+      const ownVendor = v.own_insurance_vendor || v.insurance_vendor || "Authorized Insurer";
+      const ownPolicyNo = v.own_insurance_policy_number || v.insurance_policy_number;
+      if (ownExpiry) {
+        const formattedOwnDate = formatIndianLongDate(ownExpiry);
+        const ownMessage = `Own Insurance — ${ownVendor} — Insurance is going to expire on ${formattedOwnDate}.`;
+        await checkAndDispatch("Own Insurance", ownExpiry, ownVendor, ownPolicyNo, ownMessage);
       }
-      if (v.puc_expiry_date) {
+
+      // 2. Third Party Insurance Expiry Check (Required format: Third Party Insurance — [Vendor Name] — Insurance is going to expire on [Expiry Date].)
+      if (v.tp_insurance_expiry_date) {
+        const tpVendor = v.tp_insurance_vendor || "Authorized Insurer";
+        const tpPolicyNo = v.tp_insurance_policy_number;
+        const formattedTpDate = formatIndianLongDate(v.tp_insurance_expiry_date);
+        const tpMessage = `Third Party Insurance — ${tpVendor} — Insurance is going to expire on ${formattedTpDate}.`;
+        await checkAndDispatch("Third Party Insurance", v.tp_insurance_expiry_date, tpVendor, tpPolicyNo, tpMessage);
+      }
+
+      // 3. PUC Certificate Expiry Check (Exempt for Electric Vehicles)
+      if (!isEv && v.puc_expiry_date) {
         await checkAndDispatch("PUC", v.puc_expiry_date);
       }
+
+      // 4. Transport Fitness Certificate Expiry Check
       if (v.fitness_expiry_date) {
         await checkAndDispatch("Fitness Certificate", v.fitness_expiry_date);
       }

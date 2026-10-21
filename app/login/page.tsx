@@ -38,6 +38,7 @@ export default function LoginPage() {
       let targetCode = "TASK_WORKFLOW";
       if (rawNext.startsWith("/vehicle")) targetCode = "VEHICLE_DESK";
       else if (rawNext.startsWith("/design")) targetCode = "DESIGN_TRACKING";
+      else if (rawNext.startsWith("/dashboards")) targetCode = "DASHBOARDS";
       if (typeof document !== "undefined") {
         document.cookie = `active_module=${targetCode}; path=/; max-age=2592000; SameSite=Lax`;
       }
@@ -49,23 +50,44 @@ export default function LoginPage() {
       const res = await fetch(url, { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
-        const targetModule = data.defaultModule || data.modules?.find((m: any) => m.is_default) || data.modules?.[0];
-        if (targetModule?.code) {
-          const routeMap: Record<string, string> = {
-            TASK_WORKFLOW: "/",
-            VEHICLE_DESK: "/vehicle",
-            DESIGN_TRACKING: "/design/matrix"
-          };
-          const dest = routeMap[targetModule.code] || targetModule.route_path || "/";
+        
+        // Zero authorized modules -> access denied
+        if (!data.modules || data.modules.length === 0) {
+          return "/login?error=no-module-access";
+        }
+
+        const routeMap: Record<string, string> = {
+          TASK_WORKFLOW: "/",
+          VEHICLE_DESK: "/vehicle",
+          DESIGN_TRACKING: "/design/matrix",
+          DASHBOARDS: "/dashboards"
+        };
+
+        // Exactly one module authorized -> land directly on that module
+        if (data.modules.length === 1) {
+          const mod = data.modules[0];
+          const dest = routeMap[mod.code] || mod.route_path || "/";
           if (typeof document !== "undefined") {
-            document.cookie = `active_module=${targetModule.code}; path=/; max-age=2592000; SameSite=Lax`;
+            document.cookie = `active_module=${mod.code}; path=/; max-age=2592000; SameSite=Lax`;
           }
           return dest;
         }
+
+        // Multiple modules authorized and explicit default configured -> land on default
+        if (data.hasExplicitDefault && data.defaultModule?.code) {
+          const dest = routeMap[data.defaultModule.code] || data.defaultModule.route_path || "/";
+          if (typeof document !== "undefined") {
+            document.cookie = `active_module=${data.defaultModule.code}; path=/; max-age=2592000; SameSite=Lax`;
+          }
+          return dest;
+        }
+
+        // Multiple modules authorized but no default configured -> open Module Selection screen
+        return "/select-module";
       }
     } catch (e) {}
 
-    return "/";
+    return "/select-module";
   };
 
   useEffect(() => {
@@ -114,6 +136,10 @@ export default function LoginPage() {
           setErrorMsg("Your account has been disabled. Please contact your administrator.");
         } else if (finalError === "account-deleted") {
           setErrorMsg("Your account has been deleted. Please contact your administrator.");
+        } else if (finalError === "no-module-access") {
+          setErrorMsg("You do not currently have access to any active workspace modules. Please contact your administrator for module assignment.");
+        } else if (finalError.includes("otp_expired") || finalError.includes("expired") || finalError === "invitation-expired" || finalError === "invitation-error") {
+          setErrorMsg("This invitation link is invalid, expired, or has already been used. Please contact your administrator to request a new invitation link.");
         } else {
           setErrorMsg(`Authentication failed: ${finalError.replace(/\+/g, ' ')}`);
         }

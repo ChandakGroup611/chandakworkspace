@@ -129,16 +129,16 @@ export async function GET(request: NextRequest) {
     const allActive = fetchedModules && fetchedModules.length > 0 ? fetchedModules : DEFAULT_MODULES;
     const assignedModuleIds = new Set(userAssignments.map(a => a.module_id));
     const defaultAssignment = userAssignments.find(a => a.is_default);
-    const hasExplicitDefault = !!defaultAssignment;
 
     const ALLOWED_CORE_MODULE_CODES = new Set(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING", "DASHBOARDS"]);
 
-    let allowedModules = allActive
+    // Strict Authorization: Non-admins only see modules they are explicitly assigned
+    const allowedModules = allActive
       .filter(m => {
         if (!ALLOWED_CORE_MODULE_CODES.has(m.code)) return false;
         if (isAdmin) return true;
         if (m.code === "DASHBOARDS" && hasDashboardPerms) return true;
-        if (assignedModuleIds.size === 0) return true;
+        // Strict: Non-admin users MUST have an active entry in user_modules
         return assignedModuleIds.has(m.id) || assignedModuleIds.has(m.code);
       })
       .map(m => {
@@ -147,26 +147,25 @@ export async function GET(request: NextRequest) {
         if (m.code === "VEHICLE_DESK" && (!route || route === "/vehicle/dashboard")) route = "/vehicle";
         if (m.code === "DESIGN_TRACKING" && (!route || route === "/design/dashboard")) route = "/design/matrix";
         if (m.code === "DASHBOARDS" && !route) route = "/dashboards";
+        
+        const isThisDefault = defaultAssignment 
+          ? (defaultAssignment.module_id === m.id || defaultAssignment.module_id === m.code || (defaultAssignment.module && (defaultAssignment.module as any).code === m.code))
+          : false;
+
         return {
           ...m,
           route_path: route,
-          is_default: defaultAssignment ? (defaultAssignment.module_id === m.id || defaultAssignment.module_id === m.code) : m.code === "TASK_WORKFLOW"
+          is_default: isThisDefault
         };
       });
 
-    if (allowedModules.length === 0) {
-      allowedModules = DEFAULT_MODULES;
-    }
-
-    const defaultModule =
-      allowedModules.find(m => m.is_default) ||
-      allowedModules.find(m => m.code === "TASK_WORKFLOW") ||
-      allowedModules[0] ||
-      DEFAULT_MODULES[0];
+    // Resolve explicit default module strictly from authorized modules
+    const defaultModule = allowedModules.find(m => m.is_default) || null;
+    const hasExplicitDefault = Boolean(defaultModule);
 
     const activeCookie = request.cookies.get("active_module")?.value;
     const isValidActive = activeCookie && allowedModules.some(m => m.code === activeCookie);
-    const activeModuleCode = isValidActive ? activeCookie : (defaultModule?.code || "TASK_WORKFLOW");
+    const activeModuleCode = isValidActive ? activeCookie : (defaultModule?.code || allowedModules[0]?.code || "");
 
     return NextResponse.json({
       modules: allowedModules,

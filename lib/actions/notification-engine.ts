@@ -154,13 +154,17 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
       if (template?.subject) {
         subject = hydrateTemplate(template.subject, userHydratedPayload);
       } else {
-        const itemLabel = userHydratedPayload.task_name || 
-                          userHydratedPayload.ticket_title || 
-                          userHydratedPayload.workspace_name || 
-                          userHydratedPayload.req_name || 
-                          userHydratedPayload.ticket_no || 
-                          moduleName;
-        subject = `${moduleName} ${eventName}: ${itemLabel}`;
+        if (userHydratedPayload.notification_summary || userHydratedPayload.description) {
+          subject = `${moduleName} Expiry: ${userHydratedPayload.notification_summary || userHydratedPayload.description}`;
+        } else {
+          const itemLabel = userHydratedPayload.task_name || 
+                            userHydratedPayload.ticket_title || 
+                            userHydratedPayload.workspace_name || 
+                            userHydratedPayload.req_name || 
+                            userHydratedPayload.ticket_no || 
+                            moduleName;
+          subject = `${moduleName} ${eventName}: ${itemLabel}`;
+        }
       }
 
       let finalHtmlBody: string;
@@ -173,6 +177,7 @@ export async function queueBusinessEvent(moduleName: string, eventName: string, 
         
         finalHtmlBody = buildEmailCardHtml({
           title: cardTitle,
+          description: userHydratedPayload.description || userHydratedPayload.notification_summary,
           details: userHydratedPayload,
           actionUrl: userDirectLink,
           actionText

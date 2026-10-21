@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { cookies } from 'next/headers';
+import { syncMicrosoftUserToMaster } from '@/lib/auth/microsoft-graph';
+import { supabaseAdmin } from '@/lib/supabase/service_role';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,117 +11,151 @@ export async function GET(request: Request) {
   const code = searchParams.get('code');
   const rawNext = searchParams.get('next');
 
-  if (code) {
+  const forwardedHost = request.headers.get('x-forwarded-host');
+  const isLocalEnv = process.env.NODE_ENV === 'development';
+  const redirectOrigin = (forwardedHost && !isLocalEnv) ? `https://${forwardedHost}` : origin;
+
+  const errorParam = searchParams.get('error');
+  const errorDescription = searchParams.get('error_description');
+  const errorCode = searchParams.get('error_code');
+  const tokenHash = searchParams.get('token_hash');
+  const type = searchParams.get('type') as any;
+
+  if (errorParam || errorCode) {
+    const isExpired = (errorCode && errorCode.includes('expired')) || (errorDescription && errorDescription.toLowerCase().includes('expired'));
+    const errCode = isExpired ? 'invitation-expired' : 'invitation-error';
+    const errDesc = encodeURIComponent(errorDescription || errorParam || 'Authentication failed');
+    return NextResponse.redirect(`${redirectOrigin}/login?error=${errCode}&error_description=${errDesc}`);
+  }
+
+  if (code || (tokenHash && type)) {
     const cookieStore = await cookies();
     const supabase = createClient(cookieStore);
     
-    // Exchange the auth code for a user session
-    const { data: sessionData, error } = await supabase.auth.exchangeCodeForSession(code);
+    let sessionData: any = null;
+    let authError: any = null;
+
+    if (code) {
+      // Exchange the auth code for a user session
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+      sessionData = data;
+      authError = error;
+    } else if (tokenHash && type) {
+      // Exchange token_hash (e.g. email invitation or magic link) for a user session
+      const { data, error } = await supabase.auth.verifyOtp({
+        token_hash: tokenHash,
+        type,
+      });
+      sessionData = data;
+      authError = error;
+    }
     
-    if (!error && sessionData?.user) {
-      // Check if user is registered in the system
-      const { data: rawUserRecord } = await supabase
-        .from('user_master')
-        .select('id, is_active, is_deleted')
-        .eq('id', sessionData.user.id)
-        .maybeSingle();
+    if (!authError && sessionData?.user) {
+      // Step 1: Automatically sync Microsoft identity & profile claims into user_master
+      const syncResult = await syncMicrosoftUserToMaster({
+        authUserId: sessionData.user.id,
+        email: sessionData.user.email,
+        userMetadata: sessionData.user.user_metadata,
+        providerToken: sessionData.session?.provider_token,
+      });
 
-      const forwardedHost = request.headers.get('x-forwarded-host');
-      const isLocalEnv = process.env.NODE_ENV === 'development';
-      const redirectOrigin = (forwardedHost && !isLocalEnv) ? `https://${forwardedHost}` : origin;
-
-      let userRecord = rawUserRecord;
+      const userRecord = syncResult.userRecord;
 
       if (!userRecord) {
-        // Self-heal: If user is authenticated in Supabase Auth (e.g. accepted invite or SSO), provision user_master profile
-        try {
-          const { supabaseAdmin } = await import('@/lib/supabase/service_role');
-          const userCode = `USR-${sessionData.user.id.substring(0, 8).toUpperCase()}`;
-          const name = sessionData.user.user_metadata?.full_name || sessionData.user.email?.split('@')[0] || 'New Personnel';
-
-          const { data: createdUser, error: insertError } = await supabaseAdmin
-            .from('user_master')
-            .upsert({
-              id: sessionData.user.id,
-              email: sessionData.user.email,
-              full_name: name,
-              user_code: userCode,
-              is_active: true,
-              is_deleted: false,
-              created_at: new Date().toISOString()
-            }, { onConflict: 'id' })
-            .select('id, is_active, is_deleted')
-            .single();
-
-          if (!insertError && createdUser) {
-            userRecord = createdUser;
-            // Assign default operational modules
-            const { assignUserModules } = await import('@/lib/actions/module-switcher');
-            await assignUserModules(sessionData.user.id, ['TASK_WORKFLOW', 'VEHICLE_DESK', 'DESIGN_TRACKING'], 'TASK_WORKFLOW');
-          }
-        } catch (healErr) {
-          console.error('[Auth Callback] Profile self-healing error:', healErr);
-        }
-      }
-
-      if (!userRecord) {
-        // If still not resolvable, sign out
         await supabase.auth.signOut();
         return NextResponse.redirect(`${redirectOrigin}/login?error=not-registered`);
       }
 
       if (userRecord.is_deleted || userRecord.is_active === false) {
-        // User is deactivated or deleted
         await supabase.auth.signOut();
         return NextResponse.redirect(`${redirectOrigin}/login?error=account-disabled`);
       }
 
-      // Determine proper landing destination for registered user
-      let destination = '/';
+      // Step 2: Determine Super Admin role
+      let isSuperAdmin = false;
+      if (userRecord.role_id) {
+        const { data: roleData } = await supabaseAdmin
+          .from('roles')
+          .select('code')
+          .eq('id', userRecord.role_id)
+          .maybeSingle();
+        
+        const roleCode = String(roleData?.code || '').toUpperCase();
+        isSuperAdmin = ['SUPER_ADMIN', 'ROLE_SUPER_ADMIN', 'ADMIN_ROLE', 'ROLE_ADMIN', 'ADMIN'].includes(roleCode);
+      }
+
+      // Step 3: Fetch authoritative assigned modules from user_modules
+      const { data: userModuleRows } = await supabaseAdmin
+        .from('user_modules')
+        .select('module_id, is_default, module:modules_master(id, code, route_path, is_active)')
+        .eq('user_id', sessionData.user.id);
+
+      const assignedModules: { code: string; route: string; is_default: boolean }[] = [];
+      for (const row of userModuleRows || []) {
+        const mod = row.module as any;
+        if (mod && mod.is_active) {
+          let route = mod.route_path || '/';
+          if (mod.code === 'TASK_WORKFLOW' && (route === '/workspaces/tasks' || !route)) route = '/';
+          if (mod.code === 'VEHICLE_DESK' && (!route || route === '/vehicle/dashboard')) route = '/vehicle';
+          if (mod.code === 'DESIGN_TRACKING' && (!route || route === '/design/dashboard')) route = '/design/matrix';
+          if (mod.code === 'DASHBOARDS' && !route) route = '/dashboards';
+          assignedModules.push({
+            code: mod.code,
+            route,
+            is_default: Boolean(row.is_default),
+          });
+        }
+      }
+
+      // Step 4: Strict Module Resolution (Non-negotiable governance)
+      let destination = '/select-module';
       let activeModuleCode = 'TASK_WORKFLOW';
 
-      if (rawNext && rawNext !== '/' && rawNext !== '/select-module' && !rawNext.includes('/login')) {
-        destination = rawNext;
-        if (rawNext.startsWith('/vehicle')) activeModuleCode = 'VEHICLE_DESK';
-        else if (rawNext.startsWith('/design')) activeModuleCode = 'DESIGN_TRACKING';
-        else if (rawNext.startsWith('/dashboards')) activeModuleCode = 'DASHBOARDS';
-      } else {
-        // Resolve user's preferred or assigned default module
-        const { supabaseAdmin } = await import('@/lib/supabase/service_role');
-        const { data: defaultUserModule } = await supabaseAdmin
-          .from('user_modules')
-          .select('module_id, is_default, module:modules_master(code, route_path)')
-          .eq('user_id', sessionData.user.id)
-          .eq('is_default', true)
-          .maybeSingle();
-
-        let modCode = (defaultUserModule?.module as any)?.code;
-        let modRoute = (defaultUserModule?.module as any)?.route_path;
-
-        if (!modCode && defaultUserModule?.module_id) {
-          const { data: modRec } = await supabaseAdmin
-            .from('modules_master')
-            .select('code, route_path')
-            .eq('id', defaultUserModule.module_id)
-            .maybeSingle();
-          if (modRec?.code) {
-            modCode = modRec.code;
-            modRoute = modRec.route_path;
+      if (!isSuperAdmin) {
+        if (assignedModules.length === 0) {
+          // User has zero authorized modules: deny entry
+          await supabase.auth.signOut();
+          return NextResponse.redirect(`${redirectOrigin}/login?error=no-module-access`);
+        } else if (assignedModules.length === 1) {
+          // Exactly 1 module authorized: automatically land on that module
+          destination = assignedModules[0].route;
+          activeModuleCode = assignedModules[0].code;
+        } else {
+          // Multiple modules authorized: check for explicit default module
+          const explicitDefault = assignedModules.find((m) => m.is_default);
+          if (explicitDefault) {
+            destination = explicitDefault.route;
+            activeModuleCode = explicitDefault.code;
+          } else {
+            // No default module configured: open Module Selection screen
+            destination = '/select-module';
+            activeModuleCode = assignedModules[0].code;
           }
         }
-
-        if (modCode === 'VEHICLE_DESK') {
-          destination = '/vehicle';
-          activeModuleCode = 'VEHICLE_DESK';
-        } else if (modCode === 'DESIGN_TRACKING') {
-          destination = '/design/matrix';
-          activeModuleCode = 'DESIGN_TRACKING';
-        } else if (modRoute) {
-          destination = modRoute === '/workspaces/tasks' ? '/' : modRoute;
-          activeModuleCode = modCode || 'TASK_WORKFLOW';
+      } else {
+        // Super Admin: check for explicit default module
+        const explicitDefault = assignedModules.find((m) => m.is_default);
+        if (explicitDefault) {
+          destination = explicitDefault.route;
+          activeModuleCode = explicitDefault.code;
         } else {
-          destination = '/';
+          // No explicit default: open Module Selection screen
+          destination = '/select-module';
           activeModuleCode = 'TASK_WORKFLOW';
+        }
+      }
+
+      // Step 5: Validate rawNext if requested
+      if (rawNext && rawNext !== '/' && rawNext !== '/select-module' && !rawNext.includes('/login')) {
+        let requestedModule = 'TASK_WORKFLOW';
+        if (rawNext.startsWith('/vehicle')) requestedModule = 'VEHICLE_DESK';
+        else if (rawNext.startsWith('/design')) requestedModule = 'DESIGN_TRACKING';
+        else if (rawNext.startsWith('/dashboards')) requestedModule = 'DASHBOARDS';
+
+        const isAuthorizedForNext = isSuperAdmin || assignedModules.some((m) => m.code === requestedModule);
+        if (isAuthorizedForNext) {
+          destination = rawNext;
+          activeModuleCode = requestedModule;
         }
       }
 
@@ -133,13 +169,11 @@ export async function GET(request: Request) {
 
       return response;
     } else {
-      console.error("Auth Callback Error:", error?.message || "User data missing in session");
+      console.error("Auth Callback Error:", authError?.message || "User data missing in session");
     }
   }
 
   // If there's an error or no code, redirect back to login
-  const forwardedHost = request.headers.get('x-forwarded-host');
-  const isLocalEnv = process.env.NODE_ENV === 'development';
-  const redirectOrigin = (forwardedHost && !isLocalEnv) ? `https://${forwardedHost}` : origin;
   return NextResponse.redirect(`${redirectOrigin}/login?error=auth-callback-failed`);
 }
+

@@ -601,10 +601,11 @@ export async function inviteUserAction(
     }
   };
 
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://chandakgroup.tech').replace(/\/+$/, '');
   if (payload.redirectTo) {
     inviteOptions.redirectTo = payload.redirectTo;
-  } else if (process.env.NEXT_PUBLIC_SITE_URL) {
-    inviteOptions.redirectTo = `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?next=/`;
+  } else {
+    inviteOptions.redirectTo = siteUrl ? `${siteUrl}/auth/callback?next=/select-module` : 'https://chandakgroup.tech/auth/callback?next=/select-module';
   }
 
   const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, inviteOptions);

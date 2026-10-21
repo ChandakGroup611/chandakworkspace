@@ -20,57 +20,13 @@ import {
 import type { UserModulesResult } from "@/lib/actions/module-switcher";
 import ChandakLoader from "@/components/ui/ChandakLoader";
 import { AppButton } from "@/components/ui/AppButton";
+import { Lock } from "lucide-react";
 
-const FALLBACK_MODULES_DATA: UserModulesResult = {
-  modules: [
-    {
-      id: "3c0d7f6f-36a9-4a0c-acb1-c6f48f1dfbbd",
-      code: "TASK_WORKFLOW",
-      name: "Task & Workspace Management",
-      description: "Core Operations, Workspace, Tasks, Ticketing & AMC Governance",
-      icon: "FolderKanban",
-      route_path: "/",
-      display_order: 1,
-      is_active: true,
-      is_default: true,
-    },
-    {
-      id: "d49152e5-a054-494c-9281-61d487f3b8ed",
-      code: "VEHICLE_DESK",
-      name: "Vehicle Management Desk",
-      description: "Fleet Master, Driver Rosters, Trip Sheets & Maintenance Logistics",
-      icon: "Car",
-      route_path: "/vehicle",
-      display_order: 2,
-      is_active: true,
-      is_default: false,
-    },
-    {
-      id: "b550adf5-0f8d-4b7f-9088-fd40336e38d1",
-      code: "DESIGN_TRACKING",
-      name: "Design & Drawing Tracking",
-      description: "Architectural Drawings, CAD/BIM Revision Control & Approvals",
-      icon: "Compass",
-      route_path: "/design/matrix",
-      display_order: 3,
-      is_active: true,
-      is_default: false,
-    },
-    {
-      id: "f1a2e3d4-c5b6-7a8b-9c0d-1e2f3a4b5c6d",
-      code: "DASHBOARDS",
-      name: "Dashboards",
-      description: "Department Budget, Spend Analytics & Real-Time IN4 Governance",
-      icon: "LineChart",
-      route_path: "/dashboards",
-      display_order: 4,
-      is_active: true,
-      is_default: false,
-    },
-  ],
+const INITIAL_MODULES_DATA: UserModulesResult = {
+  modules: [],
   defaultModule: null,
   hasExplicitDefault: false,
-  activeModuleCode: "TASK_WORKFLOW",
+  activeModuleCode: "",
   isAdmin: false,
 };
 
@@ -79,10 +35,10 @@ export default function SelectModulePage() {
   const searchParams = useSearchParams();
   const nextParam = searchParams.get("next");
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [data, setData] = useState<UserModulesResult>(FALLBACK_MODULES_DATA);
-  const [selectedModuleCode, setSelectedModuleCode] = useState<string>("TASK_WORKFLOW");
+  const [data, setData] = useState<UserModulesResult>(INITIAL_MODULES_DATA);
+  const [selectedModuleCode, setSelectedModuleCode] = useState<string>("");
   const [rememberDefault, setRememberDefault] = useState<boolean>(false);
   const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -93,20 +49,25 @@ export default function SelectModulePage() {
     async function loadModules() {
       try {
         setErrorMsg(null);
+        setLoading(true);
         const res = await fetch("/api/modules", { cache: "no-store" });
         if (res.ok) {
           const modulesData: UserModulesResult = await res.json();
-          if (isMounted && modulesData.modules && modulesData.modules.length > 0) {
+          if (isMounted) {
             setData(modulesData);
-            const initialChoice = modulesData.activeModuleCode || modulesData.defaultModule?.code || modulesData.modules[0]?.code || "TASK_WORKFLOW";
-            setSelectedModuleCode(initialChoice);
-            if (modulesData.hasExplicitDefault && modulesData.defaultModule) {
-              setRememberDefault(true);
+            if (modulesData.modules && modulesData.modules.length > 0) {
+              const initialChoice = modulesData.defaultModule?.code || modulesData.activeModuleCode || modulesData.modules[0]?.code;
+              setSelectedModuleCode(initialChoice);
+              if (modulesData.hasExplicitDefault && modulesData.defaultModule) {
+                setRememberDefault(true);
+              }
             }
           }
         }
       } catch (err: any) {
-        console.warn("Module load note (using resilient fallback):", err);
+        console.warn("Module load error:", err);
+      } finally {
+        if (isMounted) setLoading(false);
       }
     }
 
