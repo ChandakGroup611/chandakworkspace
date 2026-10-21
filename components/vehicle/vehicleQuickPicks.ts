@@ -1055,7 +1055,7 @@ export function normalizeDateToInputFormat(val?: string | Date | null): string {
 
   // ISO string with time component (e.g. 2026-11-28T00:00:00.000Z)
   if (str.includes("T")) {
-    const part = str.split("T")[0];
+    const part = str.slice(0, 10);
     if (/^\d{4}-\d{2}-\d{2}$/.test(part)) {
       return part;
     }
