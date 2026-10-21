@@ -316,14 +316,15 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
   const isDarkRail = themeMeta.sidebarTone === "dark";
 
   // Collapse state remembered in localStorage
-  const [isCompact, setIsCompact] = useState(false);
+  const [isCompactState, setIsCompactState] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const [expandedTrees, setExpandedTrees] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     try {
       const stored = localStorage.getItem("app_sidebar_compact");
       if (stored === "true") {
-        setIsCompact(true);
+        setIsCompactState(true);
         if (typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("sidebar:toggle", { detail: { compact: true } }));
         }
@@ -332,7 +333,7 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
   }, []);
 
   const toggleCompact = () => {
-    setIsCompact((prev) => {
+    setIsCompactState((prev) => {
       const next = !prev;
       try {
         localStorage.setItem("app_sidebar_compact", String(next));
@@ -343,6 +344,9 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
       return next;
     });
   };
+
+  // When minimized, gliding mouse over sidebar gracefully expands it to reveal full module names and links
+  const isCompact = isCompactState && !isHovered;
 
   // Auto-detect active module context based on current path
   const activeModuleCode = useMemo(() => {
@@ -632,13 +636,30 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
 
       {/* Desktop Persistent Left Nav Rail */}
       <aside
+        onMouseEnter={() => {
+          if (isCompactState) setIsHovered(true);
+        }}
+        onMouseLeave={() => {
+          if (isCompactState) setIsHovered(false);
+        }}
         className={cn(
           "hidden md:flex relative z-[var(--z-sidebar)] flex-col h-full shrink-0 font-sans transition-[width] duration-200 select-none bg-sidebar text-sidebar-foreground border-r border-sidebar-border",
           isCompact ? "w-16" : "w-[240px]"
         )}
       >
         {/* Top Header */}
-        <div className={cn("flex flex-col shrink-0 p-3 pb-2 gap-3 border-b border-sidebar-border", isCompact && "items-center px-2")}>
+        <div className={cn("flex flex-col shrink-0 p-3 pb-2 gap-3 border-b border-sidebar-border relative", isCompact && "items-center px-2")}>
+          {/* Quick toggle chevron on the rail border */}
+          <button
+            type="button"
+            onClick={toggleCompact}
+            className="hidden md:flex absolute -right-3 top-4 rounded-full shadow-sm bg-surface border border-border text-sidebar-muted hover:text-sidebar-foreground hover:bg-surface-hover h-6 w-6 items-center justify-center z-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            title={isCompactState ? "Pin Sidebar Open" : "Minimize Navigation Shell"}
+            aria-label={isCompactState ? "Pin Sidebar Open" : "Minimize Navigation Shell"}
+          >
+            {isCompactState ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
+          </button>
+
           {!isCompact ? (
             <Link href={moduleHomeHref} className="flex flex-col gap-1 items-center justify-center pt-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg">
               <div className="h-[46px] w-[180px] flex items-center justify-center shrink-0">
@@ -687,16 +708,18 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
         {/* Bottom Rail Collapse Toggle Button */}
         <div className="p-2 border-t border-sidebar-border mt-auto shrink-0 flex items-center justify-between">
           {!isCompact && (
-            <span className="text-[11px] text-sidebar-muted font-medium px-2">Collapse rail</span>
+            <span className="text-[11px] text-sidebar-muted font-medium px-2">
+              {isCompactState ? "Hovering (Click to pin)" : "Collapse rail"}
+            </span>
           )}
           <button
             type="button"
-            aria-label={isCompact ? "Expand navigation rail" : "Collapse navigation rail"}
-            title={isCompact ? "Expand navigation rail" : "Collapse navigation rail"}
+            aria-label={isCompactState ? "Pin sidebar open" : "Collapse navigation rail"}
+            title={isCompactState ? "Pin sidebar open" : "Collapse navigation rail"}
             onClick={toggleCompact}
             className="h-8 w-8 flex items-center justify-center rounded-lg text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-hover transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring mx-auto"
           >
-            {isCompact ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            {isCompactState ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </button>
         </div>
       </aside>
