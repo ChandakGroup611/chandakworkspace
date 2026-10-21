@@ -49,9 +49,9 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
       name: "Master Setup & Hierarchy",
       badge: "Prerequisite Phase",
       icon: Settings2,
-      color: "text-blue-500",
-      bgColor: "bg-blue-500/10",
-      borderColor: "border-blue-500/20",
+      color: "text-info-text",
+      bgColor: "bg-info-soft",
+      borderColor: "border-info/30",
       route: "/design/masters",
       summary: "Foundation setup: Company, Projects, Towers/Wings, Disciplines, Sub-Packages, Consultants, and Authorities.",
       whyFirst: "Drawings and matrices cannot exist without being anchored to a specific Project, Tower, Discipline, and Consultant firm. Defining masters first guarantees referential integrity.",
@@ -98,9 +98,9 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
       name: "Tender Matrix & Look-Ahead Planning",
       badge: "Pre-Construction",
       icon: Clock,
-      color: "text-amber-500",
-      bgColor: "bg-amber-500/10",
-      borderColor: "border-amber-500/20",
+      color: "text-warning-text",
+      bgColor: "bg-warning-soft",
+      borderColor: "border-warning/30",
       route: "/design/matrix",
       summary: "Generating the multi-tower package matrix grid, 30/60-day look-ahead deliverables, and milestone roadmaps.",
       whyFirst: "Establishes the procurement and site delivery schedule before releasing tenders or mobilizing contractors on site.",
@@ -133,9 +133,9 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
       name: "Drawing Upload, Revisions & Review",
       badge: "Engineering Coordination",
       icon: FileText,
-      color: "text-purple-500",
-      bgColor: "bg-purple-500/10",
-      borderColor: "border-purple-500/20",
+      color: "text-theme-btn-primary",
+      bgColor: "bg-theme-btn-primary/10",
+      borderColor: "border-theme-btn-primary/30",
       route: "/design/drawings",
       summary: "Consultant CAD/PDF uploads, multi-revision vaults (R0 -> R1 -> R2), and multi-disciplinary clash reviews.",
       whyFirst: "Ensures every architectural, structural, and MEP drawing undergoes rigorous peer review and version control before reaching site teams.",
@@ -168,9 +168,9 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
       name: "GFC Certification & Transmittal Slips",
       badge: "Site Release Gate",
       icon: Send,
-      color: "text-emerald-500",
-      bgColor: "bg-emerald-500/10",
-      borderColor: "border-emerald-500/20",
+      color: "text-success-text",
+      bgColor: "bg-success-soft",
+      borderColor: "border-success/30",
       route: "/design/handover",
       summary: "Digital Good-for-Construction (GFC) stamping, physical/digital transmittal slips, and contractor handover.",
       whyFirst: "Contractors are strictly prohibited from building without certified GFC drawings. Transmittals provide legal proof of delivery.",
@@ -196,9 +196,9 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
       name: "Site Execution, Field RFIs & DMS Vault",
       badge: "Field Operations & Audit",
       icon: FolderTree,
-      color: "text-sky-500",
-      bgColor: "bg-sky-500/10",
-      borderColor: "border-sky-500/20",
+      color: "text-info-text",
+      bgColor: "bg-info-soft",
+      borderColor: "border-info/30",
       route: "/design/dms",
       summary: "Handling site clash RFIs, automated DMS folder indexing, and long-term project compliance archival.",
       whyFirst: "Resolves on-site construction queries within SLA and organizes thousands of drawings into searchable hierarchical folders.",
@@ -227,7 +227,7 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
       <div className="bg-surface rounded-2xl p-6 border border-border shadow-sm">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
           <div className="space-y-1.5">
-            <div className="flex items-center gap-2 text-theme-btn-primary font-bold text-xs uppercase tracking-wider">
+            <div className="flex items-center gap-2 theme-label text-theme-btn-primary">
               <BookOpen className="h-4 w-4" />
               <span>Design & Engineering Onboarding & Architecture Playbook</span>
             </div>
@@ -338,7 +338,7 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                        <span className="theme-label text-muted-foreground">
                           Phase {activePhase.phaseNumber} of 5
                         </span>
                         <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-muted text-foreground border border-border">
@@ -364,7 +364,7 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="p-4 rounded-xl bg-muted/40 border border-border space-y-1.5">
                     <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
-                      <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                      <Sparkles className="h-3.5 w-3.5 text-warning" />
                       <span>Executive Overview</span>
                     </div>
                     <p className="text-xs text-muted-foreground leading-relaxed">
@@ -385,7 +385,7 @@ export default function DesignLearningGuide({ onNavigateTab }: DesignLearningGui
 
                 {/* Sequence Steps Table */}
                 <div className="space-y-3">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                  <h4 className="theme-label text-muted-foreground flex items-center gap-2">
                     <Workflow className="h-3.5 w-3.5 text-theme-btn-primary" />
                     <span>Sequential Steps & Field Purpose</span>
                   </h4>

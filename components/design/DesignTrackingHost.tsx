@@ -364,7 +364,7 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
         contractorFirm: "General Civil Contractor",
         physicalCopiesIssued: 3,
         digitalStampVerified: true,
-        handoverDate: d.approvedDate || new Date().toISOString().split("T")[0],
+        handoverDate: d.approvedDate || new Date().toISOString().slice(0, 10),
         status: "Active GFC" as const
       }));
   }, [accessibleDrawings]);
@@ -378,7 +378,7 @@ export default function DesignTrackingHost({ initialSlug, currentUser }: DesignT
   };
 
   const handleStatusUpdated = (drawingId: string, newStatus: DrawingStatus) => {
-    const approvedDate = newStatus === "Approved (GFC)" ? new Date().toISOString().split("T")[0] : undefined;
+    const approvedDate = newStatus === "Approved (GFC)" ? new Date().toISOString().slice(0, 10) : undefined;
     DesignMasterStore.updateDrawingStatus(drawingId, newStatus, approvedDate);
   };
 
