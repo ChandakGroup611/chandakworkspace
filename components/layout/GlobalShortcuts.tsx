@@ -141,84 +141,83 @@ export default function GlobalShortcuts() {
   if (!isOpen) return null;
 
   const renderShortcut = (item: ShortcutItem) => (
-    <div 
+    <button 
+      type="button"
       key={item.description}
       onClick={() => executeAction(item.action)}
-      className="flex items-center justify-between p-3 rounded-lg hover:bg-surface cursor-pointer transition-colors group"
+      className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-hover cursor-pointer transition-colors group text-left border-0 bg-transparent"
     >
-      <div className="flex items-center gap-3">
-        <div className="p-2 rounded-md bg-surface-hover border border-border/50 group-hover:border-theme-icon/30 group-hover:bg-theme-icon/10 transition-colors">
-          <item.icon className="h-4 w-4 text-muted-foreground group-hover:text-theme-icon transition-colors" />
+      <div className="flex items-center gap-2.5">
+        <div className="p-1.5 rounded-md bg-sunken border border-border group-hover:border-primary/30 transition-colors">
+          <item.icon className="h-3.5 w-3.5 text-muted group-hover:text-primary transition-colors" />
         </div>
-        <span className="font-medium text-sm text-foreground">{item.description}</span>
+        <span className="font-medium text-xs text-foreground">{item.description}</span>
       </div>
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1">
         {item.keys.map((k, i) => (
           <React.Fragment key={i}>
-            <kbd className="min-w-[24px] inline-flex items-center justify-center rounded border border-border bg-background px-1.5 py-1 font-mono text-[10px] font-semibold text-muted shadow-sm">
+            <kbd className="min-w-[20px] inline-flex items-center justify-center rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-[10px] font-semibold text-muted shadow-xs">
               {k}
             </kbd>
-            {i < item.keys.length - 1 && <span className="text-muted/50 text-xs">+</span>}
+            {i < item.keys.length - 1 && <span className="text-muted text-xs">+</span>}
           </React.Fragment>
         ))}
       </div>
-    </div>
+    </button>
   );
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-[var(--overlay)] p-4 animate-in fade-in duration-150">
       <div 
-        className="w-full max-w-2xl bg-surface rounded-2xl  border border-border/50 overflow-hidden flex flex-col animate-in zoom-in-95 duration-200"
+        className="w-full max-w-2xl bg-surface rounded-xl border border-border shadow-xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-150"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-5 border-b border-border/50 bg-background/50">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-theme-btn-primary/10 text-theme-icon">
-              <Keyboard className="h-5 w-5" />
+        <div className="flex items-center justify-between p-4 border-b border-border bg-surface">
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 rounded-lg bg-accent-soft text-primary">
+              <Keyboard className="h-4 w-4" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-foreground tracking-tight">Keyboard Shortcuts</h2>
-              
+              <h2 className="text-sm font-semibold text-heading">Keyboard shortcuts</h2>
             </div>
           </div>
           <AppButton 
             variant="ghost" 
             size="icon" 
+            aria-label="Close shortcuts"
             onClick={() => setIsOpen(false)}
-            className="h-8 w-8 rounded-full hover:bg-danger/10 hover:text-danger text-muted transition-colors"
+            className="h-7 w-7 rounded-md hover:bg-danger-soft hover:text-danger text-muted transition-colors"
           >
             <X className="h-4 w-4" />
           </AppButton>
         </div>
 
-        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 overflow-y-auto max-h-[60vh] bg-background/30">
-          
-          <div className="space-y-3">
-            <h3 className="text-xs font-bold text-muted uppercase tracking-wider pl-1 mb-2">Navigation</h3>
-            <div className="space-y-1">
+        <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 overflow-y-auto max-h-[60vh]">
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold text-heading pl-1">Navigation</h3>
+            <div className="space-y-0.5">
               {shortcuts.navigation.map(renderShortcut)}
             </div>
           </div>
 
-          <div className="space-y-3">
-            <h3 className="text-xs font-bold text-muted uppercase tracking-wider pl-1 mb-2">Create New...</h3>
-            <div className="space-y-1">
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold text-heading pl-1">Create new</h3>
+            <div className="space-y-0.5">
               {shortcuts.creation.map(renderShortcut)}
             </div>
           </div>
 
-          <div className="space-y-3 md:col-span-2 mt-2 pt-6 border-t border-border/30">
-            <h3 className="text-xs font-bold text-muted uppercase tracking-wider pl-1 mb-2">System</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
+          <div className="space-y-2 md:col-span-2 mt-1 pt-3 border-t border-border">
+            <h3 className="text-xs font-semibold text-heading pl-1">System</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
               {shortcuts.system.map(renderShortcut)}
             </div>
           </div>
-
         </div>
         
-        <div className="bg-background/80 p-3 text-center border-t border-border/50">
-          <p className="text-[11px] text-muted-foreground font-medium">
-            Pro Tip: You can click on any shortcut above to execute it directly.
+        <div className="bg-sunken p-2.5 text-center border-t border-border">
+          <p className="text-[11px] text-muted">
+            Tip: Press <kbd className="px-1 py-0.5 rounded border border-border bg-surface text-[10px] font-mono">Shift + ?</kbd> anytime to open this menu
           </p>
         </div>
       </div>

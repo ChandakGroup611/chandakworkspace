@@ -88,9 +88,9 @@ export function WorkspaceFilterMultiSelect({
     if (selectedIds.length === 0) return placeholder;
     if (selectedIds.length === 1) {
       const match = options.find(o => o.id === selectedIds[0]);
-      return match ? match.label : "1 Selected";
+      return match ? match.label : "1 selected";
     }
-    return `${selectedIds.length} Selected`;
+    return `${selectedIds.length} selected`;
   }, [selectedIds, options, placeholder]);
 
   const allSelected = options.length > 0 && selectedIds.length === options.length;
@@ -98,14 +98,14 @@ export function WorkspaceFilterMultiSelect({
   return (
     <div className="space-y-1 relative" ref={containerRef}>
       <div className="flex items-center justify-between">
-        <label className="text-[11px] font-bold text-muted uppercase tracking-wider flex items-center gap-1.5">
+        <label className="text-xs font-medium text-foreground flex items-center gap-1.5">
           <span>{label}</span>
           {selectedIds.length > 0 ? (
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-theme-btn-primary/15 text-theme-btn-primary">
+            <span className="px-1.5 py-0.2 rounded-full text-[10px] font-semibold bg-accent-soft text-primary">
               {selectedIds.length}
             </span>
           ) : (
-            <span className="text-[9px] text-muted/60 font-normal lowercase tracking-normal">
+            <span className="text-[10px] text-muted font-normal">
               (multi-select)
             </span>
           )}
@@ -114,7 +114,7 @@ export function WorkspaceFilterMultiSelect({
           <button
             type="button"
             onClick={handleClear}
-            className="text-[10px] font-semibold text-muted hover:text-danger underline transition-colors"
+            className="text-[11px] font-medium text-muted hover:text-danger underline transition-colors cursor-pointer"
           >
             Clear
           </button>
@@ -125,12 +125,12 @@ export function WorkspaceFilterMultiSelect({
       <button
         type="button"
         onClick={onToggle}
-        className={`w-full flex items-center justify-between text-xs px-2.5 py-2 rounded-lg border transition-all text-left outline-none ${
+        className={`w-full flex items-center justify-between text-xs px-2.5 py-2 rounded-lg border transition-colors text-left outline-none cursor-pointer ${
           isOpen
-            ? "border-theme-btn-primary ring-1 ring-theme-btn-primary/30 bg-surface shadow-sm"
+            ? "border-primary ring-1 ring-primary/30 bg-surface shadow-xs"
             : selectedIds.length > 0
-            ? "border-theme-btn-primary/50 bg-theme-btn-primary/5 text-foreground"
-            : "border-border bg-surface text-muted hover:text-foreground hover:bg-surface/60"
+            ? "border-primary/50 bg-accent-soft text-foreground"
+            : "border-border bg-surface text-muted hover:text-foreground hover:bg-hover"
         }`}
       >
         <div className="flex items-center gap-2 truncate pr-2">
@@ -154,17 +154,19 @@ export function WorkspaceFilterMultiSelect({
         </div>
         <div className="flex items-center gap-1 shrink-0">
           {selectedIds.length > 0 && (
-            <span
+            <button
+              type="button"
+              aria-label="Clear selection"
               onClick={handleClear}
-              className="p-0.5 rounded hover:bg-surface/80 text-muted hover:text-danger cursor-pointer mr-0.5"
+              className="p-0.5 rounded hover:bg-hover text-muted hover:text-danger cursor-pointer mr-0.5 bg-transparent border-0"
               title="Clear selection"
             >
               <X className="h-3 w-3" />
-            </span>
+            </button>
           )}
           <ChevronDown
             className={`h-3.5 w-3.5 text-muted transition-transform duration-150 ${
-              isOpen ? "rotate-180 text-theme-btn-primary" : ""
+              isOpen ? "rotate-180 text-primary" : ""
             }`}
           />
         </div>
@@ -172,7 +174,7 @@ export function WorkspaceFilterMultiSelect({
 
       {/* Dropdown Menu Container */}
       {isOpen && (
-        <div className="w-full mt-1 rounded-xl border border-border bg-surface shadow-xl p-2 z-40 animate-in fade-in zoom-in-95 duration-100 space-y-2">
+        <div className="w-full mt-1 rounded-xl border border-border bg-elevated shadow-lg p-2 z-[var(--z-popover)] animate-in fade-in zoom-in-95 duration-100 space-y-2">
           {/* Search Bar if > 5 options */}
           {options.length > 5 && (
             <div className="relative flex items-center">
@@ -182,14 +184,15 @@ export function WorkspaceFilterMultiSelect({
                 placeholder={`Search ${label.toLowerCase()}...`}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-7 py-1 text-xs rounded-md bg-surface/80 border border-border/70 text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-theme-btn-primary focus:border-theme-btn-primary"
+                className="w-full pl-8 pr-7 py-1 text-xs rounded-md bg-surface border border-border text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
                 autoFocus
               />
               {searchQuery && (
                 <button
                   type="button"
+                  aria-label="Clear search"
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded text-muted hover:text-foreground"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded text-muted hover:text-foreground cursor-pointer bg-transparent border-0"
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -198,24 +201,24 @@ export function WorkspaceFilterMultiSelect({
           )}
 
           {/* Quick Action Header: Select All / Count */}
-          <div className="flex items-center justify-between px-1 text-[11px] text-muted border-b border-border/40 pb-1.5">
+          <div className="flex items-center justify-between px-1 text-[11px] text-muted border-b border-border pb-1.5">
             <button
               type="button"
               onClick={handleSelectAll}
-              className="flex items-center gap-1.5 font-semibold text-theme-btn-primary hover:underline"
+              className="flex items-center gap-1.5 font-medium text-primary hover:underline cursor-pointer bg-transparent border-0 p-0"
             >
               <div
                 className={`w-3.5 h-3.5 rounded border flex items-center justify-center transition-colors ${
                   allSelected
-                    ? "bg-theme-btn-primary border-theme-btn-primary text-white"
-                    : "border-border"
+                    ? "bg-primary border-primary text-primary-foreground"
+                    : "border-border bg-surface"
                 }`}
               >
                 {allSelected && <Check className="w-2.5 h-2.5" />}
               </div>
-              <span>{allSelected ? "Deselect All" : "Select All"}</span>
+              <span>{allSelected ? "Deselect all" : "Select all"}</span>
             </button>
-            <span>
+            <span className="tabular-nums">
               {selectedIds.length} of {options.length}
             </span>
           </div>
@@ -234,18 +237,18 @@ export function WorkspaceFilterMultiSelect({
                     key={option.id}
                     type="button"
                     onClick={() => handleToggleOption(option.id)}
-                    className={`w-full flex items-center justify-between px-2 py-1.5 text-xs rounded-lg transition-colors text-left group ${
+                    className={`w-full flex items-center justify-between px-2 py-1.5 text-xs rounded-lg transition-colors text-left group cursor-pointer border-0 ${
                       isSelected
-                        ? "bg-theme-btn-primary/10 text-theme-btn-primary font-semibold"
-                        : "text-foreground hover:bg-surface/80"
+                        ? "bg-accent-soft text-primary font-semibold"
+                        : "text-foreground bg-transparent hover:bg-hover"
                     }`}
                   >
                     <div className="flex items-center gap-2 truncate">
                       <div
                         className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors ${
                           isSelected
-                            ? "bg-theme-btn-primary border-theme-btn-primary text-white"
-                            : "border-border group-hover:border-theme-btn-primary"
+                            ? "bg-primary border-primary text-primary-foreground"
+                            : "border-border bg-surface group-hover:border-primary"
                         }`}
                       >
                         {isSelected && <Check className="w-2.5 h-2.5" />}
@@ -262,7 +265,7 @@ export function WorkspaceFilterMultiSelect({
                     </div>
 
                     {option.sublabel && (
-                      <span className="text-[10px] text-muted ml-2 shrink-0">
+                      <span className="text-[10px] text-muted shrink-0 pl-1 font-mono">
                         {option.sublabel}
                       </span>
                     )}
@@ -276,3 +279,5 @@ export function WorkspaceFilterMultiSelect({
     </div>
   );
 }
+
+export default WorkspaceFilterMultiSelect;

@@ -9,19 +9,11 @@ import {
   CheckCircle2, 
   Trash2, 
   ExternalLink, 
-  AlertTriangle, 
   ShieldAlert, 
-  MessageSquare, 
-  Calendar, 
-  Clock, 
-  User, 
   X,
   Layers,
-  Sparkles,
-  Mail
+  Sparkles
 } from "lucide-react";
-import { AppBadge } from "@/components/ui/AppBadge";
-import { useTheme } from "@/components/theme/ThemeProvider";
 import { EnterpriseDrawerShell } from "@/components/ui/enterprise/EnterpriseDrawerShell";
 import { useProfile, usePermissions } from "@/hooks/usePermissions";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -47,7 +39,6 @@ export interface NotificationItem {
 export default function RealtimeNotificationsDrawer() {
   const router = useRouter();
   const supabase = createClient();
-  const { isLight: isLightMode } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<"ALL" | "UNREAD" | "CRITICAL">("UNREAD");
@@ -58,14 +49,12 @@ export default function RealtimeNotificationsDrawer() {
   const currentUserId = profile?.id;
   const queryClient = useQueryClient();
 
-  // Track state locally for optimistic updates and read toggles
   const [localNotifications, setLocalNotifications] = useState<NotificationItem[]>([]);
 
   const { data: fetchedNotifications, isLoading: loading } = useQuery({
     queryKey: ['notifications', currentUserId],
     enabled: !!currentUserId,
     queryFn: async () => {
-      console.count("Notification Fetch Count");
       let query = supabase
         .from("notification_queue")
         .select("*")
@@ -136,7 +125,6 @@ export default function RealtimeNotificationsDrawer() {
           (payload: any) => {
             const newItem = payload.new as NotificationItem;
             
-            // Verify target user is this logged in user
             const isGlobal = newItem.target_user_id === 'GLOBAL_OPS';
             if (newItem.target_user_id === currentUserId || (isGlobal && roleCode === 'SUPER_ADMIN')) {
               setLocalNotifications(prev => [newItem, ...prev]);
@@ -149,7 +137,7 @@ export default function RealtimeNotificationsDrawer() {
         supabase.removeChannel(channel);
       };
     }
-  }, [mounted, currentUserId]);
+  }, [mounted, currentUserId, roleCode]);
 
   const handleConsumeNotification = async (item: NotificationItem) => {
     setLocalNotifications(prev => prev.filter(n => n.id !== item.id));
@@ -206,109 +194,117 @@ export default function RealtimeNotificationsDrawer() {
     return true;
   });
 
-  const stickyCriticalAlerts = localNotifications.filter(n => n.priority_level === "CRITICAL" && !n.is_read);
-
   return (
     <>
       <AppButton 
         variant="outline"
         size="icon"
+        aria-label="Toggle notifications stream"
         onClick={() => setIsOpen(!isOpen)}
-        className="relative !h-10 !w-10 rounded-xl theme-card-structural !overflow-visible text-muted hover:bg-muted hover:text-foreground"
+        className="relative h-9 w-9 rounded-lg bg-surface border border-border text-muted hover:bg-hover hover:text-foreground"
       >
-        <Bell className={`h-4 w-4 ${unreadCount > 0 ? "text-warning animate-bounce" : ""}`} />
+        <Bell className={`h-4 w-4 ${unreadCount > 0 ? "text-warning" : ""}`} />
         {unreadCount > 0 && (
-          <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-orange-500 px-1 text-[10px] font-bold text-[#ffffff] shadow-md ring-2 ring-background animate-pulse font-mono leading-none z-10">
+          <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-warning px-1 text-[10px] font-semibold text-primary-foreground shadow-xs ring-2 ring-surface font-mono leading-none z-10">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
       </AppButton>
 
-      {/* Mobile Toast Notification Overlay - Displays for 2 seconds on new mutations */}
+      {/* Mobile Toast Notification Overlay */}
       {mounted && createPortal(
-        <div className="fixed top-6 right-6 z-[999999] flex flex-col gap-3 w-full max-w-sm px-4 pointer-events-none">
+        <div className="fixed top-6 right-6 z-[var(--z-toast)] flex flex-col gap-3 w-full max-w-sm px-4 pointer-events-none">
           {toasts.map(toast => {
-          const isCritical = toast.priority_level === "CRITICAL";
-          const displayMessage = toast.payload?.message || "Operational mutation execution.";
-          
-          return (
-            <div
-              key={toast.id}
-              onClick={() => handleConsumeNotification(toast)}
-              className={`pointer-events-auto flex items-start gap-3 rounded-2xl p-4  transform transition-all duration-300 cursor-pointer hover:scale-[1.02] active:scale-95 group ${ "theme-card-structural text-foreground shadow-indigo-500/10 animate-in slide-in-from-right-12 duration-300" }`}
-            >
-              <div className="shrink-0 mt-0.5">
-                <div className={`p-2 rounded-xl ${
-                  isCritical 
-                    ? "bg-gradient-to-br from-rose-500/20 to-orange-500/20 text-danger border border-rose-500/20" 
-                    : "bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-warning border border-amber-500/20"
-                }`}>
-                  {isCritical ? <ShieldAlert className="h-4 w-4 animate-pulse" /> : <Bell className="h-4 w-4" />}
-                </div>
-              </div>
-              <div className="flex-1 min-w-0 space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className={`text-[0.7rem] font-mono font-bold uppercase tracking-wider ${isCritical ? 'text-danger' : 'text-warning'}`}>
-                    {toast.entity_id}
-                  </span>
+            const isCritical = toast.priority_level === "CRITICAL";
+            const displayMessage = toast.payload?.message || "Operational mutation execution.";
+            
+            return (
+              <div
+                key={toast.id}
+                className="pointer-events-auto flex items-start gap-3 rounded-xl p-3.5 bg-elevated border border-border text-foreground shadow-md transition-colors hover:bg-hover group animate-in slide-in-from-right-12 duration-200"
+              >
+                <button
+                  type="button"
+                  onClick={() => handleConsumeNotification(toast)}
+                  className="flex-1 flex items-start gap-3 text-left bg-transparent border-0 p-0 cursor-pointer min-w-0"
+                >
+                  <div className="shrink-0 mt-0.5">
+                    <div className={`p-2 rounded-lg ${
+                      isCritical 
+                        ? "bg-danger-soft text-danger border border-danger-border" 
+                        : "bg-warning-soft text-warning border border-warning-border"
+                    }`}>
+                      {isCritical ? <ShieldAlert className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className={`text-[11px] font-mono font-medium ${isCritical ? 'text-danger' : 'text-warning'}`}>
+                        {toast.entity_id}
+                      </span>
+                    </div>
+                    <h4 className="text-xs font-semibold leading-none">
+                      {toast.action_type.replace(/_/g, ' ')}
+                    </h4>
+                    <p className="text-xs text-muted leading-relaxed line-clamp-2">
+                      {displayMessage}
+                    </p>
+                    <div className="flex items-center justify-between text-[11px] pt-1 border-t border-border mt-1 text-muted">
+                      <span>Actor: <strong className="font-medium text-foreground">{toast.actor_name || toast.actor}</strong></span>
+                      <span className={`${isCritical ? 'text-danger' : 'text-warning'} font-medium group-hover:underline`}>View details &rarr;</span>
+                    </div>
+                  </div>
+                </button>
+
+                <div className="shrink-0">
                   <AppButton 
                     variant="ghost"
-                    size="icon-sm"
+                    size="icon"
+                    aria-label="Dismiss toast"
                     onClick={(e) => {
                       e.stopPropagation();
                       setToasts(prev => prev.filter(t => t.id !== toast.id));
                     }}
-                    className="!h-5 !w-5"
+                    className="h-5 w-5 p-0"
                   >
                     <X className="h-3.5 w-3.5" />
                   </AppButton>
                 </div>
-                <h4 className="text-[0.8rem] font-bold uppercase tracking-wider leading-none">
-                  {toast.action_type.toUpperCase().replace('_', ' ')}
-                </h4>
-                <p className="text-[0.8rem] text-muted leading-snug line-clamp-2">
-                  {displayMessage}
-                </p>
-                <div className="flex items-center justify-between text-[0.65rem] pt-1 border-t border-border mt-1 text-muted">
-                  <span>Actor: <strong>{toast.actor_name || toast.actor}</strong></span>
-                  <span className={`${isCritical ? 'text-danger' : 'text-warning'} font-bold group-hover:underline`}>View details →</span>
-                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>,
-      document.body
+            );
+          })}
+        </div>,
+        document.body
       )}
 
       {isOpen && (
         <EnterpriseDrawerShell
           title={
             <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg theme-card-structural text-foreground from-amber-500/20 to-orange-500/20 border-amber-500/30 text-warning dark:text-warning shrink-0">
+              <div className="p-1.5 rounded-lg bg-accent-soft text-primary shrink-0">
                 <Sparkles className="h-4 w-4" />
               </div>
-              <span className={`text-lg font-bold tracking-wider ${"text-foreground"}`}>Enterprise Stream</span>
+              <span className="text-sm font-semibold text-heading">Enterprise Stream</span>
             </div>
           }
-          subtitle="Live Database Mutations"
+          subtitle="Live database mutations"
           onClose={() => setIsOpen(false)}
           size="sm"
           footer={
-            <div className={`w-full p-2 text-xs text-muted flex items-center justify-between gap-2`}>
+            <div className="w-full p-2 text-xs text-muted flex items-center justify-between gap-2">
               <span>Auto-redirect anchors bound instantly</span>
-              <ExternalLink className="h-3 w-3 text-warning" />
+              <ExternalLink className="h-3 w-3 text-muted" />
             </div>
           }
         >
-          <div className="flex flex-col h-full space-y-4">
-            <div className="flex items-center justify-between">
-              <div className={`p-1.5 rounded-xl flex items-center gap-1 bg-elevated shadow-sm`}>
+          <div className="flex flex-col h-full space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="p-1 rounded-lg flex items-center gap-1 bg-sunken border border-border">
                 <AppButton
                   size="sm"
                   variant={activeFilter === "UNREAD" ? "primary" : "ghost"}
                   onClick={() => setActiveFilter("UNREAD")}
-                  className={activeFilter === "UNREAD" ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md border-none hover:scale-105" : "text-muted-foreground hover:bg-warning/10"}
+                  className="h-7 text-xs font-medium px-2.5"
                 >
                   Unread ({unreadCount})
                 </AppButton>
@@ -316,7 +312,7 @@ export default function RealtimeNotificationsDrawer() {
                   size="sm"
                   variant={activeFilter === "CRITICAL" ? "primary" : "ghost"}
                   onClick={() => setActiveFilter("CRITICAL")}
-                  className={activeFilter === "CRITICAL" ? "bg-gradient-to-r from-rose-500 to-red-500 text-white shadow-md border-none hover:scale-105" : "text-muted-foreground hover:bg-danger/10"}
+                  className="h-7 text-xs font-medium px-2.5"
                 >
                   Escalations ({criticalCount})
                 </AppButton>
@@ -324,7 +320,7 @@ export default function RealtimeNotificationsDrawer() {
                   size="sm"
                   variant={activeFilter === "ALL" ? "primary" : "ghost"}
                   onClick={() => setActiveFilter("ALL")}
-                  className={activeFilter === "ALL" ? "bg-theme-tab-active text-theme-tab-active-text shadow-md border-none hover:scale-105" : "text-muted-foreground"}
+                  className="h-7 text-xs font-medium px-2.5"
                 >
                   All ({localNotifications.length})
                 </AppButton>
@@ -335,83 +331,88 @@ export default function RealtimeNotificationsDrawer() {
                   variant="outline"
                   size="sm"
                   onClick={markAllAsRead}
-                  className="hover:bg-amber-50 hover:text-warning dark:hover:bg-warning/10 dark:hover:text-warning"
+                  className="h-7 text-xs font-medium"
                 >
-                  Clear Badges
+                  Clear badges
                 </AppButton>
               )}
             </div>
 
-
-
-            <div className="flex-1 space-y-2 pb-4">
+            <div className="flex-1 space-y-2 pb-4 overflow-y-auto">
               {loading ? (
-                <div className="space-y-2 py-8">
+                <div className="space-y-2 py-4">
                   {[1, 2, 3].map(i => (
-                    <div key={i} className={`h-14 rounded-xl animate-pulse border bg-elevated border-border`} />
+                    <div key={i} className="h-14 rounded-lg animate-pulse border bg-surface border-border" />
                   ))}
                 </div>
               ) : filteredItems.length === 0 ? (
                 <div className="text-center py-12 space-y-1.5 text-muted">
-                  <CheckCircle2 className="h-6 w-6 mx-auto text-success/40" />
-                  <span className="text-xs font-semibold block">Zero Pending Items</span>
+                  <CheckCircle2 className="h-5 w-5 mx-auto text-success" />
+                  <span className="text-xs font-medium block">Zero pending items</span>
                 </div>
               ) : (
                 filteredItems.map(item => {
                   const isCritical = item.priority_level === "CRITICAL";
-                  let displayMessage = item.payload?.message || "Operational mutation execution.";
+                  const displayMessage = item.payload?.message || "Operational mutation execution.";
 
                   return (
                     <div
                       key={item.id}
-                      onClick={() => handleConsumeNotification(item)}
-                      className={`p-2.5 rounded-xl border text-left transition-all duration-150 cursor-pointer relative group flex gap-2.5 ${
+                      className={`p-2.5 rounded-lg border text-left transition-colors relative group flex gap-2.5 ${
                         !item.is_read 
                           ? isCritical 
-                            ? "bg-gradient-to-r from-rose-500/10 to-transparent border-rose-200 dark:border-rose-500/30" 
-                            : "bg-gradient-to-r from-amber-500/10 to-transparent border-amber-200 dark:border-amber-500/30"
-                          : "theme-card-structural border-border opacity-60 hover:opacity-100"
+                            ? "bg-danger-soft border-danger-border" 
+                            : "bg-warning-soft border-warning-border"
+                          : "bg-surface border-border hover:bg-hover"
                       }`}
                     >
-                      <div className="shrink-0 mt-0.5">
-                        <div className={`p-1.5 rounded-lg ${isCritical ? "bg-gradient-to-br from-rose-500/20 to-orange-500/20 text-danger border border-rose-500/30" : "bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-warning border border-amber-500/30"}`}>
-                          {isCritical ? <ShieldAlert className="h-3 w-3" /> : <Layers className="h-3 w-3" />}
+                      <button
+                        type="button"
+                        onClick={() => handleConsumeNotification(item)}
+                        className="flex-1 flex gap-2.5 text-left bg-transparent border-0 p-0 cursor-pointer min-w-0"
+                      >
+                        <div className="shrink-0 mt-0.5">
+                          <div className={`p-1.5 rounded-md ${
+                            isCritical ? "bg-danger-soft text-danger" : "bg-warning-soft text-warning"
+                          }`}>
+                            {isCritical ? <ShieldAlert className="h-3.5 w-3.5" /> : <Layers className="h-3.5 w-3.5" />}
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex-1 min-w-0 space-y-1">
-                        <div className="flex items-center justify-between gap-1.5">
-                          <span className="text-[0.7rem] font-mono font-bold uppercase tracking-wider truncate flex items-center gap-1">
-                            <span className={"text-foreground"}>{item.entity_id}</span>
-                            <span className="text-muted">•</span>
-                            <span className={`${isCritical ? 'text-danger dark:text-danger' : 'text-warning dark:text-warning'}`}>{item.module}</span>
-                          </span>
-                          <AppButton 
-                            variant="ghost" 
-                            size="icon-sm"
-                            onClick={(e) => handleDismissNotification(e, item.id)} 
-                            className="opacity-0 group-hover:opacity-100 !h-6 !w-6 text-muted-foreground hover:text-destructive"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </AppButton>
+                        <div className="flex-1 min-w-0 space-y-1">
+                          <div className="flex items-center gap-1.5 text-[11px] font-mono text-muted truncate">
+                            <span className="font-semibold text-foreground">{item.entity_id}</span>
+                            <span>&bull;</span>
+                            <span className={isCritical ? 'text-danger' : 'text-warning'}>{item.module}</span>
+                          </div>
+                          <p className={`text-xs leading-relaxed break-words ${!item.is_read ? "text-foreground font-medium" : "text-muted"}`}>
+                            {displayMessage}
+                          </p>
+                          <div className="flex items-center justify-between text-[10px] pt-1 border-t border-border mt-1 text-muted">
+                            <span>Actor: <strong className="font-medium text-foreground">{item.actor_name || item.actor}</strong></span>
+                            <span>{new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          </div>
                         </div>
-                        <p className={`text-[0.8rem] leading-snug break-words ${!item.is_read ? ("text-foreground font-medium") : "text-muted"}`}>
-                          {displayMessage}
-                        </p>
-                        <div className={`flex items-center justify-between text-[0.65rem] pt-1 border-t mt-1 border-border text-muted`}>
-                          <span>Actor: <strong className={"text-muted"}>{item.actor_name || item.actor}</strong></span>
-                          <span>{new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                        </div>
+                      </button>
+
+                      <div className="shrink-0 flex items-start pt-0.5">
+                        <AppButton 
+                          variant="ghost" 
+                          size="icon"
+                          aria-label="Delete notification"
+                          onClick={(e) => handleDismissNotification(e, item.id)} 
+                          className="opacity-0 group-hover:opacity-100 h-6 w-6 p-0 text-muted hover:text-danger rounded"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </AppButton>
                       </div>
                     </div>
                   );
                 })
               )}
             </div>
-
-            </div>
+          </div>
         </EnterpriseDrawerShell>
       )}
     </>
   );
 }
-

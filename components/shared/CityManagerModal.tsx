@@ -1,11 +1,14 @@
 "use client";
-import { toast } from 'react-toastify';
 
 import React, { useState, useEffect } from "react";
+import { toast } from "react-toastify";
 import { createClient } from "@/utils/supabase/client";
-import { X, Trash2, Power } from "lucide-react";
+import { Trash2, Power } from "lucide-react";
 import { AppButton } from "@/components/ui/AppButton";
 import { saveMasterEntity, deleteMasterEntity } from "@/lib/actions/masters";
+import { EnterpriseModalShell } from "@/components/ui/enterprise/EnterpriseModalShell";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { StatusBadge } from "@/components/ui/data";
 
 interface CityManagerModalProps {
   stateName: string;
@@ -17,6 +20,7 @@ export function CityManagerModal({ stateName, onClose, onCityChanged }: CityMana
   const supabase = createClient();
   const [cities, setCities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
 
   useEffect(() => {
     fetchCities();
@@ -50,7 +54,7 @@ export function CityManagerModal({ stateName, onClose, onCityChanged }: CityMana
     }
   };
 
-  const handleDelete = async (city: any) => {
+  const handleDeleteClick = async (city: any) => {
     try {
       // Check if city is in use
       const { data: isInUse, error: rpcError } = await supabase.rpc("check_city_in_use", {
@@ -63,11 +67,22 @@ export function CityManagerModal({ stateName, onClose, onCityChanged }: CityMana
         return;
       }
 
-      if (!confirm(`Are you sure you want to delete '${city.city_name}'?`)) return;
+      setDeleteTarget(city);
+    } catch (e: any) {
+      toast.error("Error checking city: " + e.message);
+    }
+  };
 
+  const executeDelete = async () => {
+    if (!deleteTarget) return;
+    const city = deleteTarget;
+    setDeleteTarget(null);
+
+    try {
       const res = await deleteMasterEntity("master_cities", city.id, true);
       if (!res.success) throw new Error(res.error);
       
+      toast.success("City deleted successfully");
       await fetchCities();
       onCityChanged();
     } catch (e: any) {
@@ -76,50 +91,51 @@ export function CityManagerModal({ stateName, onClose, onCityChanged }: CityMana
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-surface/50 p-4">
-      <div className="theme-card-structural w-full max-w-lg rounded-2xl  overflow-hidden flex flex-col max-h-[80vh]">
-        <div className="flex items-center justify-between p-6 border-b theme-card-structural shrink-0">
-          <h2 className="text-xl font-black text-foreground">
-            Manage Cities for {stateName}
-          </h2>
-          <AppButton variant="destructive" onClick={onClose} className="p-2 rounded-full hover:bg-danger/10 text-muted hover:text-danger transition-colors">
-            <X className="h-6 w-6" />
-          </AppButton>
-        </div>
-
-        <div className="p-6 overflow-y-auto flex-1">
+    <>
+      <EnterpriseModalShell
+        open={true}
+        onClose={onClose}
+        size="md"
+        title={`Manage cities for ${stateName}`}
+      >
+        <div className="max-h-[60vh] overflow-y-auto">
           {loading ? (
-            <div className="text-center py-8 text-muted font-medium">Loading cities...</div>
+            <div className="text-center py-8 text-xs text-muted">Loading cities...</div>
           ) : cities.length === 0 ? (
-            <div className="text-center py-8 text-muted font-medium">No cities registered for this state yet.</div>
+            <div className="text-center py-8 text-xs text-muted">No cities registered for this state yet.</div>
           ) : (
-            <div className="space-y-3">
-              {cities.map(c => (
-                <div key={c.id} className="flex items-center justify-between p-4 rounded-xl border theme-card-structural group">
-                  <div>
-                    <div className="font-bold text-foreground text-sm flex items-center gap-2">
-                      {c.city_name}
-                      {!c.is_active && <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700">INACTIVE</span>}
+            <div className="space-y-2">
+              {cities.map((c) => (
+                <div
+                  key={c.id}
+                  className="flex items-center justify-between p-3 rounded-lg border border-border bg-surface hover:bg-hover transition-colors group"
+                >
+                  <div className="min-w-0 pr-2">
+                    <div className="font-semibold text-foreground text-xs flex items-center gap-2">
+                      <span className="truncate">{c.city_name}</span>
+                      {!c.is_active && (
+                        <StatusBadge status="Inactive" tone="danger" size="sm" />
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
-                    <AppButton variant="secondary"
+                  <div className="flex items-center gap-2 shrink-0">
+                    <AppButton
+                      variant="outline"
+                      size="sm"
                       onClick={() => toggleStatus(c)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 ${
-                        c.is_active 
-                          ? 'bg-amber-50 text-warning hover:bg-amber-100' 
-                          : 'bg-green-50 text-success hover:bg-green-100'
-                      }`}
+                      className="px-2.5 py-1 h-7 text-xs font-medium flex items-center gap-1.5"
                     >
-                      <Power className="h-3.5 w-3.5" />
-                      {c.is_active ? 'Deactivate' : 'Activate'}
+                      <Power className="h-3 w-3" />
+                      {c.is_active ? "Deactivate" : "Activate"}
                     </AppButton>
-                    <AppButton variant="secondary"
-                      onClick={() => handleDelete(c)}
-                      className="p-1.5 rounded-lg bg-red-50 text-danger hover:bg-red-100 transition-colors"
-                      title="Delete City"
+                    <AppButton
+                      variant="destructive"
+                      size="icon"
+                      aria-label={`Delete city ${c.city_name}`}
+                      onClick={() => handleDeleteClick(c)}
+                      className="h-7 w-7 p-0"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-3.5 w-3.5" />
                     </AppButton>
                   </div>
                 </div>
@@ -127,7 +143,23 @@ export function CityManagerModal({ stateName, onClose, onCityChanged }: CityMana
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </EnterpriseModalShell>
+
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={executeDelete}
+        title="Delete city"
+        description={
+          deleteTarget
+            ? `Are you sure you want to delete '${deleteTarget.city_name}'?`
+            : undefined
+        }
+        confirmLabel="Delete"
+        tone="danger"
+      />
+    </>
   );
 }
+
+export default CityManagerModal;

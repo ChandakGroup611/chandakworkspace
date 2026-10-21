@@ -45,25 +45,27 @@ export default function DeploymentVersionBanner() {
   if (!hasNewDeployment || isDismissed) return null;
 
   return (
-    <div className="bg-theme-btn-primary text-theme-btn-primary-text px-4 py-2 flex items-center justify-between shadow-md text-xs font-medium animate-in slide-in-from-top duration-300 z-50">
+    <div className="bg-primary text-primary-foreground px-4 py-2 flex items-center justify-between shadow-xs text-xs font-medium animate-in slide-in-from-top duration-200 relative z-20">
       <div className="flex items-center gap-2">
-        <Sparkles className="h-4 w-4 animate-pulse shrink-0" />
+        <Sparkles className="h-4 w-4 shrink-0" />
         <span>
-          A new system update has been deployed to production! Reload to get the latest features and fixes.
+          A new system update has been deployed. Reload to load the latest version.
         </span>
       </div>
       <div className="flex items-center gap-2 shrink-0">
         <button
+          type="button"
           onClick={() => window.location.reload()}
-          className="inline-flex items-center gap-1.5 px-3 py-1 rounded bg-white/20 hover:bg-white/30 text-white font-bold transition-all cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary-foreground/15 hover:bg-primary-foreground/25 text-primary-foreground font-semibold transition-colors cursor-pointer text-xs"
         >
           <RefreshCw className="h-3 w-3" />
-          <span>Reload Page</span>
+          <span>Reload</span>
         </button>
         <button
+          type="button"
+          aria-label="Dismiss banner"
           onClick={() => setIsDismissed(true)}
-          className="p-1 hover:bg-white/20 rounded text-white/80 hover:text-white transition-colors cursor-pointer"
-          title="Dismiss"
+          className="p-1 hover:bg-primary-foreground/15 rounded-md text-primary-foreground/80 hover:text-primary-foreground transition-colors cursor-pointer"
         >
           <X className="h-3.5 w-3.5" />
         </button>

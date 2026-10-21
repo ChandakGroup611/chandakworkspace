@@ -1,9 +1,11 @@
 "use client";
+/* eslint-disable no-restricted-syntax */
 
 import React, { useState, useEffect, useRef } from "react";
-import { AppButton } from '@/components/ui/AppButton';
+import { AppButton } from "@/components/ui/AppButton";
 import { Search, Loader2, LayoutDashboard, Target, Briefcase } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { StatusBadge } from "@/components/ui/data";
 
 export function GlobalCommandCenter() {
   const [isOpen, setIsOpen] = useState(false);
@@ -16,16 +18,16 @@ export function GlobalCommandCenter() {
   // Keyboard shortcut listener (Cmd+K / Ctrl+K)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        setIsOpen(prev => !prev);
+        setIsOpen((prev) => !prev);
       }
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         setIsOpen(false);
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   useEffect(() => {
@@ -51,7 +53,7 @@ export function GlobalCommandCenter() {
       } finally {
         setLoading(false);
       }
-    }, 300); // debounce
+    }, 300);
 
     return () => clearTimeout(timer);
   }, [query]);
@@ -60,45 +62,54 @@ export function GlobalCommandCenter() {
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'TICKET': return <LayoutDashboard className="w-4 h-4 text-theme-icon" />;
-      case 'TASK': return <Target className="w-4 h-4 text-theme-icon" />;
-      case 'REQUIREMENT': return <Briefcase className="w-4 h-4 text-success" />;
-      default: return <Search className="w-4 h-4" />;
+      case "TICKET":
+        return <LayoutDashboard className="w-4 h-4 text-primary" />;
+      case "TASK":
+        return <Target className="w-4 h-4 text-primary" />;
+      case "REQUIREMENT":
+        return <Briefcase className="w-4 h-4 text-success" />;
+      default:
+        return <Search className="w-4 h-4 text-muted" />;
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh] bg-surface/60 animate-in fade-in duration-200">
-      
+    <div className="fixed inset-0 z-[var(--z-modal)] flex items-start justify-center pt-[10vh] bg-[var(--overlay)] animate-in fade-in duration-150">
       {/* Click away overlay */}
-      <div className="absolute inset-0 z-0" onClick={() => setIsOpen(false)} />
+      <button
+        type="button"
+        aria-label="Close search"
+        className="absolute inset-0 z-0 bg-transparent border-0 cursor-default"
+        onClick={() => setIsOpen(false)}
+      />
 
       {/* Command Palette */}
-      <div className="relative z-10 w-full max-w-2xl bg-card border  rounded-2xl overflow-hidden flex flex-col animate-in slide-in-from-top-4 duration-300">
-        
+      <div className="relative z-10 w-full max-w-2xl bg-elevated border border-border shadow-xl rounded-xl overflow-hidden flex flex-col animate-in slide-in-from-top-4 duration-200">
         {/* Search Input */}
-        <div className="flex items-center px-4 border-b">
-          <Search className="w-5 h-5 text-muted-foreground mr-3" />
+        <div className="flex items-center px-4 border-b border-border bg-surface">
+          <Search className="w-4 h-4 text-muted mr-3 shrink-0" />
           <input
             ref={inputRef}
             type="text"
-            className="flex-1 h-14 bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground"
+            className="flex-1 h-12 bg-transparent border-none outline-none text-foreground placeholder:text-muted text-sm font-medium"
             placeholder="Search tickets, tasks, requirements... (Esc to close)"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          {loading && <Loader2 className="w-5 h-5 text-primary animate-spin" />}
+          {loading && <Loader2 className="w-4 h-4 text-primary animate-spin" />}
         </div>
 
         {/* Results */}
         <div className="max-h-[60vh] overflow-y-auto p-2">
           {query.length > 0 && query.length < 2 && (
-            <div className="p-4 text-center text-sm text-muted-foreground">Type at least 2 characters to search...</div>
+            <div className="p-4 text-center text-xs text-muted">
+              Type at least 2 characters to search...
+            </div>
           )}
-          
+
           {query.length >= 2 && !loading && results.length === 0 && (
-            <div className="p-8 text-center text-sm text-muted-foreground">
-              No results found for "{query}". <br/>
+            <div className="p-8 text-center text-xs text-muted">
+              No results found for &ldquo;{query}&rdquo;.<br />
               Note: You can only search records you have access to.
             </div>
           )}
@@ -106,27 +117,28 @@ export function GlobalCommandCenter() {
           {results.map((r, i) => (
             <AppButton
               key={i}
+              variant="ghost"
               onClick={() => {
                 setIsOpen(false);
                 router.push(r.url);
               }}
-              className="w-full flex items-center gap-3 p-3 text-left rounded-xl hover:bg-muted/50 transition-colors group"
+              className="w-full flex items-center justify-start gap-3 p-3 text-left rounded-lg hover:bg-hover transition-colors h-auto font-normal"
             >
-              <div className="p-2 rounded-lg bg-background border group-hover:border-primary/20">
+              <div className="p-2 rounded-md bg-sunken border border-border shrink-0">
                 {getTypeIcon(r.type)}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-semibold truncate text-foreground">
-                    {r.code && <span className="text-muted-foreground font-mono mr-2">{r.code}</span>}
+                <div className="flex items-center justify-between gap-2">
+                  <h4 className="text-xs font-semibold truncate text-foreground">
+                    {r.code && (
+                      <span className="text-muted font-mono mr-2">{r.code}</span>
+                    )}
                     {r.title}
                   </h4>
-                  <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                    {r.status}
-                  </span>
+                  {r.status && <StatusBadge status={r.status} size="sm" />}
                 </div>
                 {r.metadata && (
-                  <div className="text-xs text-muted-foreground mt-1 truncate">
+                  <div className="text-[11px] text-muted mt-0.5 truncate">
                     {Object.values(r.metadata).filter(Boolean).join(" • ")}
                   </div>
                 )}
@@ -135,10 +147,12 @@ export function GlobalCommandCenter() {
           ))}
         </div>
 
-        <div className="p-3 border-t bg-muted/30 text-xs text-center text-muted-foreground">
-          Enterprise Scoped Search Engine
+        <div className="p-2.5 border-t border-border bg-sunken text-[11px] text-center text-muted">
+          Enterprise scoped search
         </div>
       </div>
     </div>
   );
 }
+
+export default GlobalCommandCenter;
