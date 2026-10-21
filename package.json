@@ -5,7 +5,9 @@
     "start": "cross-env NODE_OPTIONS=\"--max-old-space-size=400\" next start",
     "lint": "npx eslint .",
     "deploy": "node scripts/deploy.js",
-    "themes": "node tools/gen-themes.mjs app/styles"
+    "themes": "node tools/gen-themes.mjs app/styles",
+    "ui:audit": "node tools/ui-audit.mjs",
+    "ui:check": "node tools/ui-audit.mjs --fail"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

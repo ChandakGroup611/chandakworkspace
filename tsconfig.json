@@ -41,6 +41,8 @@
     "vendor",
     ".agents",
     "out",
-    "dist"
+    "dist",
+    "_ui-kit",
+    "examples"
   ]
 }

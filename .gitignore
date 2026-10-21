@@ -36,3 +36,6 @@ next-env.d.ts
 /vehicle/
 ~$*
 *.zip
+/_ui-kit/
+/ui-audit-report.md
+/ui-audit-report.json
