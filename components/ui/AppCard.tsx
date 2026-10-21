@@ -13,8 +13,8 @@ export const AppCard = React.forwardRef<HTMLDivElement, AppCardProps>(
       ref={ref}
       className={cn(
         "theme-card-structural",
-        "rounded-2xl overflow-hidden relative transition-all duration-300 ease-out",
-        interactive && "hover:-translate-y-1 hover:shadow-xl hover:border-theme-btn-primary/40 active:scale-[0.99] cursor-pointer",
+        "rounded-[var(--radius-card)] overflow-hidden relative transition-colors transition-shadow duration-150 ease-out",
+        interactive && "hover:shadow-md hover:border-border-active cursor-pointer",
         className
       )}
       {...props}
@@ -39,7 +39,7 @@ export const AppCardHeader = React.forwardRef<
 AppCardHeader.displayName = "AppCardHeader";
 
 export const AppCardTitle = React.forwardRef<
-  HTMLParagraphElement,
+  HTMLHeadingElement,
   React.HTMLAttributes<HTMLHeadingElement>
 >(({ className, ...props }, ref) => (
   <h3
@@ -80,11 +80,10 @@ export const AppCardFooter = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "flex items-center p-4 pt-3 border-t border-border bg-elevated/50",
+      "flex items-center p-4 pt-3 border-t border-border bg-sunken",
       className
     )}
     {...props}
   />
 ));
 AppCardFooter.displayName = "AppCardFooter";
-

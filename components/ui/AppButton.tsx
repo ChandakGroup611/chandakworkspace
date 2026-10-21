@@ -3,11 +3,9 @@
 import React from "react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { toast } from "react-toastify";
-import { useTheme } from "@/components/theme/ThemeProvider";
 
 export interface AppButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "ghost" | "destructive" | "outline";
+  variant?: "primary" | "secondary" | "ghost" | "destructive" | "outline" | "link";
   size?: "sm" | "md" | "lg" | "icon" | "icon-sm";
   isLoading?: boolean;
   leftIcon?: React.ReactNode;
@@ -26,32 +24,33 @@ export const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(
       children,
       disabled,
       onClick,
+      type = "button",
       ...props
     },
     ref
   ) => {
     const [internalLoading, setInternalLoading] = React.useState(false);
+    const showLoader = isLoading || internalLoading;
 
-    const baseStyles = 
-      "inline-flex items-center justify-center font-medium rounded-md transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-btn-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.96] cursor-pointer disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100 disabled:hover:translate-y-0 select-none";
+    const baseStyles =
+      "inline-flex items-center justify-center font-medium rounded-[var(--radius-button)] transition-colors duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background cursor-pointer disabled:opacity-50 disabled:pointer-events-none select-none [html:not([data-no-tactile])_&]:active:scale-[0.98]";
 
     const variants = {
-      primary: "bg-theme-btn-primary text-theme-btn-primary-text hover:brightness-110 hover:shadow-md hover:shadow-theme-btn-primary/20 active:shadow-xs shadow-xs",
-      secondary: "bg-surface text-foreground hover:bg-surface-hover hover:border-border-active hover:shadow-sm border border-border shadow-2xs",
-      ghost: "bg-transparent text-muted hover:bg-surface-hover hover:text-foreground hover:translate-y-0",
-      destructive: "bg-danger text-white hover:bg-danger/90 hover:shadow-md hover:shadow-danger/20 shadow-xs",
-      outline: "bg-transparent border border-border text-foreground hover:bg-surface-hover hover:border-border-active hover:shadow-sm shadow-2xs",
+      primary: "bg-primary text-primary-foreground hover:bg-primary-hover shadow-sm",
+      secondary: "bg-surface text-foreground border border-border-active hover:bg-surface-hover shadow-sm",
+      ghost: "bg-transparent text-subtle hover:bg-surface-hover hover:text-foreground",
+      destructive: "bg-danger-solid text-white hover:opacity-90 shadow-sm",
+      outline: "bg-transparent border border-border text-foreground hover:bg-surface-hover hover:border-border-active shadow-sm",
+      link: "bg-transparent text-primary hover:underline p-0 h-auto border-0 shadow-none [html:not([data-no-tactile])_&]:active:scale-100",
     };
 
     const sizes = {
-      sm: "min-h-[28px] py-1 px-2.5 text-[12px] gap-1.5",
-      md: "min-h-[32px] py-1.5 px-3 text-[13px] gap-2",
-      lg: "min-h-[40px] py-2.5 px-4 text-[14px] gap-2",
-      icon: "h-8 w-8 px-0 gap-0 shrink-0",
-      "icon-sm": "h-6 w-6 px-0 gap-0 shrink-0",
+      sm: "min-h-[var(--control-h-sm)] h-[var(--control-h-sm)] py-1 px-2.5 text-[12px] gap-1.5",
+      md: "min-h-[var(--control-h)] h-[var(--control-h)] py-1.5 px-3 text-[13px] gap-2",
+      lg: "min-h-[40px] h-[40px] py-2.5 px-4 text-[14px] gap-2",
+      icon: "h-[var(--control-h)] w-[var(--control-h)] p-0 gap-0 shrink-0",
+      "icon-sm": "h-[var(--control-h-sm)] w-[var(--control-h-sm)] p-0 gap-0 shrink-0",
     };
-
-    const showLoader = isLoading || internalLoading;
 
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
       if (onClick) {
@@ -71,14 +70,15 @@ export const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(
 
     return (
       <button
-        type={props.type || "button"}
+        type={type}
         ref={ref}
         disabled={disabled || showLoader}
+        aria-busy={showLoader}
         className={cn(baseStyles, variants[variant], sizes[size], className)}
         onClick={handleClick}
         {...props}
       >
-        {showLoader && <Loader2 className="h-3.5 w-3.5 animate-spin text-current" />}
+        {showLoader && <Loader2 className="h-3.5 w-3.5 animate-spin text-current shrink-0" />}
         {!showLoader && leftIcon}
         {children}
         {!showLoader && rightIcon}
@@ -88,4 +88,3 @@ export const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(
 );
 
 AppButton.displayName = "AppButton";
-

@@ -1,16 +1,12 @@
 "use client";
 
 import React from "react";
-import { Check, ChevronDown, Filter } from "lucide-react";
+import { ChevronDown, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
 import * as Popover from "@radix-ui/react-popover";
+import { MultiSelectList, type Option } from "./MultiSelectList";
 
-interface Option {
-  value: string;
-  label: string;
-}
-
-interface MultiSelectFilterProps {
+export interface MultiSelectFilterProps {
   options: Option[];
   selectedValues: string[];
   onChange: (values: string[]) => void;
@@ -18,7 +14,13 @@ interface MultiSelectFilterProps {
   iconOnly?: boolean;
 }
 
-export function MultiSelectFilter({ options, selectedValues, onChange, placeholder = "Select...", iconOnly = false }: MultiSelectFilterProps) {
+export function MultiSelectFilter({ 
+  options, 
+  selectedValues, 
+  onChange, 
+  placeholder = "Select...", 
+  iconOnly = false 
+}: MultiSelectFilterProps) {
   const [isOpen, setIsOpen] = React.useState(false);
 
   const handleToggle = (value: string) => {
@@ -37,11 +39,12 @@ export function MultiSelectFilter({ options, selectedValues, onChange, placehold
     }
   };
 
-  const displayValue = selectedValues.length === 0 
-    ? placeholder 
-    : selectedValues.length === options.length 
-      ? `All ${placeholder}` 
-      : `${selectedValues.length} Selected`;
+  const handleClear = () => {
+    onChange([]);
+  };
+
+  const isFiltered = selectedValues.length > 0;
+  const allSelected = options.length > 0 && selectedValues.length === options.length;
 
   return (
     <Popover.Root open={isOpen} onOpenChange={setIsOpen}>
@@ -50,16 +53,36 @@ export function MultiSelectFilter({ options, selectedValues, onChange, placehold
           type="button"
           className={cn(
             iconOnly 
-              ? "flex items-center justify-center p-1 rounded-sm hover:opacity-90/10 text-muted hover:text-theme-icon data-[active=true]:text-theme-icon data-[active=true]:bg-theme-btn-primary/10 transition-colors" 
-              : "tb-btn flex items-center justify-between gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 min-w-[95px] sm:min-w-[130px] text-xs sm:text-sm bg-surface hover:bg-elevated border border-border rounded-lg transition-colors shrink-0"
+              ? "flex items-center justify-center h-8 w-8 rounded-lg border border-border bg-surface text-muted hover:text-foreground hover:bg-surface-hover transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring shrink-0" 
+              : "flex items-center justify-between gap-2 px-3 h-[var(--control-h-sm)] text-xs bg-surface hover:bg-surface-hover border border-border hover:border-border-active rounded-[var(--radius-button)] transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            isFiltered && "border-primary bg-selected text-foreground font-semibold"
           )}
-          data-active={selectedValues.length > 0}
+          data-active={isFiltered}
+          aria-label={iconOnly ? placeholder : undefined}
         >
-          {!iconOnly && <span className="truncate max-w-[85px] sm:max-w-[120px] font-semibold">{displayValue}</span>}
           {iconOnly ? (
-            <Filter className={cn("w-3.5 h-3.5", selectedValues.length > 0 ? "fill-current" : "")} />
+            <div className="relative">
+              <Filter className={cn("w-3.5 h-3.5", isFiltered ? "text-primary" : "text-muted")} />
+              {isFiltered && (
+                <span className="absolute -top-1.5 -right-1.5 h-3.5 w-3.5 rounded-full bg-primary text-primary-foreground text-[9px] flex items-center justify-center font-bold">
+                  {selectedValues.length}
+                </span>
+              )}
+            </div>
           ) : (
-            <ChevronDown className="w-3.5 h-3.5 opacity-50 shrink-0" />
+            <>
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="truncate max-w-[120px] font-medium text-foreground">
+                  {placeholder}
+                </span>
+                {isFiltered && (
+                  <span className="inline-flex items-center justify-center px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-primary text-primary-foreground shrink-0 tabular-nums">
+                    {allSelected ? "All" : selectedValues.length}
+                  </span>
+                )}
+              </div>
+              <ChevronDown className="w-3.5 h-3.5 text-muted shrink-0" />
+            </>
           )}
         </button>
       </Popover.Trigger>
@@ -69,41 +92,19 @@ export function MultiSelectFilter({ options, selectedValues, onChange, placehold
           align={iconOnly ? "end" : "start"}
           sideOffset={4}
           className={cn(
-            "z-[100] bg-surface border border-border rounded-md  outline-none animate-in fade-in zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:zoom-out-95",
-            iconOnly ? "w-48" : "w-56"
+            "z-[var(--z-popover)] bg-elevated border border-border rounded-xl shadow-lg outline-none animate-in fade-in zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:zoom-out-95 overflow-hidden",
+            iconOnly ? "w-52" : "w-60"
           )}
           onInteractOutside={() => setIsOpen(false)}
         >
-          <div className="max-h-60 overflow-y-auto scrollbar-thin p-1">
-            {options.length === 0 ? (
-              <div className="p-3 text-center text-xs text-muted italic">No options available</div>
-            ) : (
-              <>
-                <button
-                  className="w-full flex items-center px-2 py-1.5 text-sm rounded-sm hover:bg-elevated transition-colors text-left"
-                  onClick={handleSelectAll}
-                >
-                  <div className="w-4 h-4 mr-2 border rounded-sm flex items-center justify-center border-border">
-                    {selectedValues.length === options.length && <Check className="w-3 h-3" />}
-                  </div>
-                  <span className="font-medium">Select All</span>
-                </button>
-                <div className="h-px bg-border my-1" />
-                {options.map((option) => (
-                  <button
-                    key={option.value}
-                    className="w-full flex items-center px-2 py-1.5 text-sm rounded-sm hover:bg-elevated transition-colors text-left"
-                    onClick={() => handleToggle(option.value)}
-                  >
-                    <div className="w-4 h-4 mr-2 border rounded-sm flex items-center justify-center border-border">
-                      {selectedValues.includes(option.value) && <Check className="w-3 h-3" />}
-                    </div>
-                    <span className="truncate">{option.label}</span>
-                  </button>
-                ))}
-              </>
-            )}
-          </div>
+          <MultiSelectList
+            options={options}
+            selectedValues={selectedValues}
+            onToggle={handleToggle}
+            onSelectAll={handleSelectAll}
+            onClear={handleClear}
+            showSelectAll={true}
+          />
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>

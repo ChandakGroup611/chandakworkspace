@@ -1,76 +1,97 @@
 import React from "react";
 import { cn } from "@/lib/utils";
-import { useTheme } from "@/components/theme/ThemeProvider";
 
 export interface AppBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   variant?: "success" | "warning" | "danger" | "info" | "neutral" | "accent" | "custom";
   customColor?: string | null;
   isOutline?: boolean;
   withPulse?: boolean;
+  withDot?: boolean;
 }
 
 export const AppBadge = React.forwardRef<HTMLSpanElement, AppBadgeProps>(
-  ({ className, variant = "neutral", customColor, isOutline = false, withPulse = false, children, style, ...props }, ref) => {
-    let theme = "glass-intelligence";
-    try {
-      const themeCtx = useTheme();
-      theme = themeCtx.theme;
-    } catch (e) {}
-    const isLight = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
-
+  (
+    {
+      className,
+      variant = "neutral",
+      customColor,
+      isOutline = false,
+      withPulse = false,
+      withDot = false,
+      children,
+      style,
+      ...props
+    },
+    ref
+  ) => {
     const variants = {
-      success: isOutline 
-        ? "bg-transparent text-success border-success"
-        : ("bg-success/10 text-success border-success/30"),
+      success: isOutline
+        ? "bg-transparent text-success-text border-success-border"
+        : "bg-success-soft text-success-text border-success-border",
       warning: isOutline
-        ? "bg-transparent text-theme-btn-secondary-text border-theme-btn-secondary-text"
-        : ("bg-theme-btn-secondary/10 text-theme-btn-secondary-text border-theme-btn-secondary-text/30"),
+        ? "bg-transparent text-warning-text border-warning-border"
+        : "bg-warning-soft text-warning-text border-warning-border",
       danger: isOutline
-        ? "bg-transparent text-danger border-danger"
-        : ("bg-danger/10 text-danger border-danger/30"),
+        ? "bg-transparent text-danger-text border-danger-border"
+        : "bg-danger-soft text-danger-text border-danger-border",
       info: isOutline
-        ? "bg-transparent text-theme-icon border-theme-btn-primary"
-        : ("bg-theme-btn-primary/10 text-theme-icon border-theme-btn-primary/30"),
+        ? "bg-transparent text-info-text border-info-border"
+        : "bg-info-soft text-info-text border-info-border",
       accent: isOutline
-        ? "bg-transparent text-theme-icon border-theme-btn-primary"
-        : "bg-theme-btn-primary/10 text-theme-icon border-theme-btn-primary/20",
+        ? "bg-transparent text-accent-soft-text border-border-active"
+        : "bg-accent-soft text-accent-soft-text border-transparent",
       neutral: isOutline
-        ? "bg-transparent text-subtle border-border  dark:border-gray-500"
-        : ("bg-elevated text-muted border-border"),
-      custom: "" // Handled dynamically via style prop
+        ? "bg-transparent text-subtle border-border"
+        : "bg-sunken text-subtle border-border",
+      custom: "",
     };
 
-    const pulseColors = {
+    const dotColors = {
       success: "bg-success",
       warning: "bg-warning",
       danger: "bg-danger",
-      info: "bg-theme-btn-primary",
-      accent: "bg-theme-btn-primary",
+      info: "bg-info",
+      accent: "bg-accent",
       neutral: "bg-muted",
-      custom: "bg-current"
+      custom: "bg-current",
     };
 
-    const dynamicStyle = customColor ? {
-      color: customColor,
-      borderColor: customColor,
-      backgroundColor: isOutline ? "transparent" : `${customColor}1A`
-    } : {};
+    const isValidHex = typeof customColor === "string" && /^#[0-9a-fA-F]{6}$/.test(customColor);
+    const dynamicStyle: React.CSSProperties = isValidHex
+      ? {
+          color: customColor,
+          borderColor: isOutline ? customColor : `color-mix(in srgb, ${customColor} 30%, var(--bg-surface))`,
+          backgroundColor: isOutline ? "transparent" : `color-mix(in srgb, ${customColor} 12%, var(--bg-surface))`,
+        }
+      : {};
 
     return (
       <span
         ref={ref}
         className={cn(
-          "inline-flex items-center justify-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold border tracking-wider uppercase select-none transition-all duration-200 whitespace-nowrap",
-          customColor ? "bg-transparent" : variants[variant],
+          "inline-flex items-center justify-center gap-1.5 px-2 py-0.5 rounded-[6px] text-xs font-medium border select-none transition-colors whitespace-nowrap",
+          isValidHex ? "" : variants[variant],
           className
         )}
         style={{ ...dynamicStyle, ...style }}
         {...props}
       >
+        {withDot && !withPulse && (
+          <span
+            className={cn("h-1.5 w-1.5 rounded-full shrink-0", dotColors[variant])}
+            style={isValidHex ? { backgroundColor: customColor } : undefined}
+          />
+        )}
         {withPulse && (
-          <span className="relative flex h-2 w-2 mr-0.5">
-            <span className={cn("animate-ping absolute inline-flex h-full w-full rounded-full opacity-75", pulseColors[variant])} />
-            <span className={cn("relative inline-flex rounded-full h-2 w-2", pulseColors[variant])} />
+          <span className="relative flex h-2 w-2 mr-0.5 shrink-0">
+            <span
+              className={cn("animate-ping absolute inline-flex h-full w-full rounded-full opacity-75", dotColors[variant])}
+              style={isValidHex ? { backgroundColor: customColor } : undefined}
+            />
+            <span
+              className={cn("relative inline-flex rounded-full h-2 w-2", dotColors[variant])}
+              style={isValidHex ? { backgroundColor: customColor } : undefined}
+            />
           </span>
         )}
         {children}
@@ -80,4 +101,3 @@ export const AppBadge = React.forwardRef<HTMLSpanElement, AppBadgeProps>(
 );
 
 AppBadge.displayName = "AppBadge";
-

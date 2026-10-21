@@ -1,6 +1,5 @@
 import React from "react";
 import { cn } from "@/lib/utils";
-import { useTheme } from "@/components/theme/ThemeProvider";
 
 export interface AppInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -21,27 +20,25 @@ export const AppInput = React.forwardRef<HTMLInputElement, AppInputProps>(
       rightIcon,
       id,
       disabled,
+      required,
       ...props
     },
     ref
   ) => {
-    // Generate unique ID fallback if not provided for accessibility bonding
     const generatedId = React.useId();
     const inputId = id || generatedId;
-
-    try {
-      const { theme } = useTheme();
-    } catch (e) {}
+    const errorId = `${inputId}-error`;
+    const helperId = `${inputId}-helper`;
 
     return (
       <div className="flex flex-col space-y-1.5 w-full text-left">
         {label && (
           <label 
             htmlFor={inputId} 
-            className="text-sm font-semibold tracking-wide select-none flex items-center justify-between text-foreground"
+            className="text-[13px] font-medium select-none flex items-center text-subtle"
           >
             <span>{label}</span>
-            {error && <span className="text-xs text-danger font-medium">{error}</span>}
+            {required && <span className="text-danger-solid ml-0.5" aria-hidden="true">*</span>}
           </label>
         )}
 
@@ -56,16 +53,19 @@ export const AppInput = React.forwardRef<HTMLInputElement, AppInputProps>(
             ref={ref}
             id={inputId}
             disabled={disabled}
+            required={required}
+            aria-invalid={!!error}
+            aria-describedby={error ? errorId : helperText ? helperId : undefined}
             suppressHydrationWarning={true}
             className={cn(
               "theme-input-structural",
-              "h-10 w-full rounded-xl theme-data-value focus:outline-none transition-all duration-300",
-              "bg-surface text-foreground placeholder-muted",
-              "focus:border-theme-btn-primary",
-              leftIcon ? "pl-10" : "pl-3",
-              rightIcon ? "pr-10" : "pr-3.5",
-              error ? "border-danger focus:border-danger bg-danger/[0.02]" : "",
-              disabled ? "opacity-50 cursor-not-allowed" : "",
+              "h-[var(--control-h)] min-h-[var(--control-h)] w-full rounded-[var(--radius-input)] font-normal text-sm focus:outline-none transition-colors",
+              "bg-surface text-foreground placeholder:text-muted",
+              "border border-input focus:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+              leftIcon ? "pl-9" : "pl-3",
+              rightIcon ? "pr-9" : "pr-3",
+              error ? "border-danger focus:border-danger focus-visible:ring-danger" : "",
+              disabled ? "opacity-55 cursor-not-allowed bg-sunken" : "",
               className
             )}
             style={props.style}
@@ -79,11 +79,15 @@ export const AppInput = React.forwardRef<HTMLInputElement, AppInputProps>(
           )}
         </div>
 
-        {!error && helperText && (
-          <p className="text-[0.8rem] text-muted font-medium select-none pl-1">
+        {error ? (
+          <p id={errorId} role="alert" className="text-xs text-danger-text font-medium select-none pl-0.5">
+            {error}
+          </p>
+        ) : helperText ? (
+          <p id={helperId} className="text-xs text-muted select-none pl-0.5">
             {helperText}
           </p>
-        )}
+        ) : null}
       </div>
     );
   }

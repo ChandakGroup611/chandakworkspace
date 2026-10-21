@@ -1,9 +1,7 @@
 "use client";
 
-import React, { useEffect } from "react";
-import { X } from "lucide-react";
-import { AppButton } from "./AppButton";
-import { cn } from "@/lib/utils";
+import React from "react";
+import { OverlayShell } from "./enterprise/OverlayShell";
 
 export interface SidePeekDrawerProps {
   isOpen: boolean;
@@ -24,74 +22,17 @@ export function SidePeekDrawer({
   className,
   hideCloseButton = false,
 }: SidePeekDrawerProps) {
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpen) {
-        onClose();
-      }
-    };
-    if (isOpen) {
-      document.addEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = "unset";
-    };
-  }, [isOpen, onClose]);
-
-  const widthMap = {
-    sm: "w-full sm:w-[400px]",
-    md: "w-full sm:w-[500px]",
-    lg: "w-full sm:w-[600px] md:w-[700px]",
-    xl: "w-full sm:w-[800px] md:w-[900px]",
-    full: "w-full",
-  };
-
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-[100] flex justify-end">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-background/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-300"
-        onClick={onClose}
-      />
-      
-      {/* Drawer Panel */}
-      <div 
-        className={cn(
-          "relative flex flex-col bg-background border-l border-border h-full shadow-2xl shadow-black/40 transform transition-transform animate-in slide-in-from-right duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
-          widthMap[width],
-          className
-        )}
-      >
-        {/* Header */}
-        {(title || !hideCloseButton) && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-border/40 shrink-0 theme-card-structural">
-            <div className="text-lg font-semibold tracking-tight text-foreground flex-1 min-w-0 pr-4 truncate">
-              {title}
-            </div>
-            {!hideCloseButton && (
-              <AppButton 
-                variant="ghost" 
-                size="icon-sm" 
-                onClick={onClose}
-                className="shrink-0 text-muted hover:text-foreground hover:bg-surface-hover rounded-lg active:scale-95 transition-all"
-              >
-                <X className="h-4 w-4" />
-              </AppButton>
-            )}
-          </div>
-        )}
-
-        {/* Content Area */}
-        <div className="flex-1 overflow-y-auto min-h-0 relative custom-scrollbar">
-          {children}
-        </div>
-      </div>
-    </div>
+    <OverlayShell
+      open={isOpen}
+      variant="side-peek"
+      size={width}
+      title={title}
+      onClose={onClose}
+      hideCloseButton={hideCloseButton}
+      className={className}
+    >
+      {children}
+    </OverlayShell>
   );
 }

@@ -1,11 +1,9 @@
 "use client";
 
-import React, { useEffect } from "react";
-import { AppButton } from '@/components/ui/AppButton';
-import { X } from "lucide-react";
-import { useTheme } from "@/components/theme/ThemeProvider";
+import React from "react";
+import { OverlayShell } from "./OverlayShell";
 
-interface EnterpriseModalShellProps {
+export interface EnterpriseModalShellProps {
   title?: React.ReactNode;
   subtitle?: React.ReactNode;
   onClose: () => void;
@@ -13,15 +11,9 @@ interface EnterpriseModalShellProps {
   footer?: React.ReactNode;
   size?: "sm" | "md" | "lg" | "xl" | "full";
   className?: string;
+  open?: boolean;
+  headerExtra?: React.ReactNode;
 }
-
-const SIZE_MAP = {
-  sm: "max-w-2xl",
-  md: "max-w-4xl",
-  lg: "max-w-6xl",
-  xl: "max-w-[1400px]",
-  full: "max-w-7xl",
-};
 
 export function EnterpriseModalShell({
   title,
@@ -31,69 +23,22 @@ export function EnterpriseModalShell({
   footer,
   size = "md",
   className = "",
+  open = true,
+  headerExtra,
 }: EnterpriseModalShellProps) {
-  const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
-
-  // Prevent background scrolling
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, []);
-
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 md:p-8">
-      {/* Backdrop */}
-      <div 
-        className={`absolute inset-0 animate-in fade-in duration-300 ${
-          "bg-surface/40"
-        }`} 
-        onClick={onClose} 
-      />
-
-      {/* Modal Container */}
-      <div 
-        className={`relative w-full ${SIZE_MAP[size]} flex flex-col rounded-2xl overflow-hidden bg-surface border border-border shadow-2xl ${className}`}
-        style={{
-          maxHeight: "calc(100vh - 48px)" // Safe spacing
-        }}
-      >
-        {/* Header */}
-        {(title || subtitle) && (
-          <div className={`shrink-0 p-5 border-b flex items-start justify-between gap-4 ${
-            "border-border bg-elevated/50"
-          }`}>
-            <div>
-              {title && <h2 className={`text-lg font-bold tracking-tight ${"text-foreground"}`}>{title}</h2>}
-              {subtitle && <div className="text-xs text-muted mt-1">{subtitle}</div>}
-            </div>
-            <AppButton variant="ghost" 
-              onClick={onClose}
-              type="button"
-              className={`p-2 rounded-xl transition-colors ${
-                "hover:bg-elevated text-muted hover:text-foreground"
-              }`}
-            >
-              <X className="h-5 w-5" />
-            </AppButton>
-          </div>
-        )}
-
-        {/* Body (Scrollable) */}
-        <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
-          {children}
-        </div>
-
-        {/* Footer */}
-        {footer && (
-          <div className="shrink-0 p-5 border-t border-border flex items-center justify-end gap-3 bg-elevated/50">
-            {footer}
-          </div>
-        )}
-      </div>
-    </div>
+    <OverlayShell
+      open={open}
+      variant="modal"
+      size={size}
+      title={title}
+      subtitle={subtitle}
+      headerExtra={headerExtra}
+      onClose={onClose}
+      footer={footer}
+      className={className}
+    >
+      {children}
+    </OverlayShell>
   );
 }
-

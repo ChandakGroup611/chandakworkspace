@@ -7,7 +7,10 @@ export const AppTableContainer = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("theme-table-structural w-full overflow-x-auto rounded-2xl transition-all duration-300", className)}
+    className={cn(
+      "theme-table-structural w-full overflow-x-auto rounded-[var(--radius-card)] transition-colors",
+      className
+    )}
     {...props}
   />
 ));
@@ -19,7 +22,10 @@ export const AppTable = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <table
     ref={ref}
-    className={cn("w-full min-w-max caption-bottom text-base text-left border-collapse", className)}
+    className={cn(
+      "w-full min-w-max caption-bottom text-[length:var(--font-table)] text-left border-collapse",
+      className
+    )}
     {...props}
   />
 ));
@@ -31,19 +37,30 @@ export const AppTableHeader = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <thead
     ref={ref}
-    className={cn("theme-table-header text-[11px] font-extrabold text-muted tracking-wider uppercase", className)}
+    className={cn(
+      "sticky top-0 z-[var(--z-sticky)] bg-sunken text-subtle text-[12px] font-semibold border-b border-border select-none",
+      className
+    )}
     {...props}
   />
 ));
 AppTableHeader.displayName = "AppTableHeader";
 
+export interface AppTableBodyProps extends React.HTMLAttributes<HTMLTableSectionElement> {
+  zebra?: boolean;
+}
+
 export const AppTableBody = React.forwardRef<
   HTMLTableSectionElement,
-  React.HTMLAttributes<HTMLTableSectionElement>
->(({ className, ...props }, ref) => (
+  AppTableBodyProps
+>(({ className, zebra = false, ...props }, ref) => (
   <tbody
     ref={ref}
-    className={cn("divide-y divide-border font-medium", className)}
+    className={cn(
+      "font-normal text-[length:var(--font-table)]",
+      zebra && "[&>tr:nth-child(even)]:bg-sunken/40",
+      className
+    )}
     {...props}
   />
 ));
@@ -55,37 +72,67 @@ export const AppTableRow = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <tr
     ref={ref}
-      className={cn(
-        "theme-table-row transition-all duration-200 text-foreground group",
-        "data-[state=selected]:bg-theme-btn-primary/10",
-        className
-      )}
+    className={cn(
+      "theme-table-row transition-colors duration-150 text-foreground border-b border-border/70 last:border-b-0",
+      "data-[state=selected]:bg-selected",
+      className
+    )}
     {...props}
   />
 ));
 AppTableRow.displayName = "AppTableRow";
 
+export interface AppTableHeadProps extends React.ThHTMLAttributes<HTMLTableCellElement> {
+  numeric?: boolean;
+}
+
 export const AppTableHead = React.forwardRef<
   HTMLTableCellElement,
-  React.ThHTMLAttributes<HTMLTableCellElement>
->(({ className, ...props }, ref) => (
+  AppTableHeadProps
+>(({ className, numeric = false, ...props }, ref) => (
   <th
     ref={ref}
-    className={cn("h-11 px-4 text-left align-middle font-bold text-[12px]", className)}
+    className={cn(
+      "h-[var(--row-h)] px-[var(--cell-px)] py-[var(--cell-py)] align-middle font-semibold text-[12px] text-subtle",
+      numeric && "text-right tabular-nums",
+      className
+    )}
     {...props}
   />
 ));
 AppTableHead.displayName = "AppTableHead";
 
+export interface AppTableCellProps extends React.TdHTMLAttributes<HTMLTableCellElement> {
+  numeric?: boolean;
+}
+
 export const AppTableCell = React.forwardRef<
   HTMLTableCellElement,
-  React.TdHTMLAttributes<HTMLTableCellElement>
->(({ className, ...props }, ref) => (
+  AppTableCellProps
+>(({ className, numeric = false, ...props }, ref) => (
   <td
     ref={ref}
-    className={cn("px-4 py-3 align-middle text-[13px]", className)}
+    className={cn(
+      "h-[var(--row-h)] px-[var(--cell-px)] py-[var(--cell-py)] align-middle text-[length:var(--font-table)]",
+      numeric && "text-right tabular-nums",
+      className
+    )}
     {...props}
   />
 ));
 AppTableCell.displayName = "AppTableCell";
 
+export const AppTableEmpty = React.forwardRef<
+  HTMLTableRowElement,
+  React.HTMLAttributes<HTMLTableRowElement> & { colSpan?: number; message?: string }
+>(({ className, colSpan = 1, message = "No records found", children, ...props }, ref) => (
+  <tr ref={ref} className={cn("hover:bg-transparent", className)} {...props}>
+    <td
+      colSpan={colSpan}
+      className="h-32 text-center text-muted text-sm font-medium align-middle"
+    >
+      {children || message}
+    </td>
+  </tr>
+));
+AppTableEmpty.displayName = "AppTableEmpty";
