@@ -9,8 +9,7 @@ import { useRouter } from "next/navigation";
 import { AppButton } from "@/components/ui/AppButton";
 
 export default function NotificationCenter() {
-  const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
+  const { isLight: isLightMode } = useTheme();
   const supabase = createClient();
   const router = useRouter();
 

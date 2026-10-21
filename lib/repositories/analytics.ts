@@ -97,7 +97,7 @@ export async function getUserDashboardPreferences(userId: string) {
   }
 
   return data || {
-    selected_theme: 'executive-light',
+    selected_theme: 'chandak-classic',
     widget_layout: {},
     pinned_analytics: [],
     saved_filters: {}

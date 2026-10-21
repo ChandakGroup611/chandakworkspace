@@ -1,351 +1,248 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+/**
+ * ThemeProvider v2
+ * - Same public API as v1 (theme, density, fontFamily, accentColor, setters …) plus
+ *   `mode` / `isLight`, so callers stop keeping their own lists of light themes.
+ * - Works with ThemeScript (rendered in <head>), which paints the saved theme before React loads
+ *   — no flash of the wrong theme and no hydration mismatch.
+ * - Old saved ids (light-neumorphic, cyberpunk, amazon …) are migrated automatically.
+ * - Accent colour now drives the primary button / focus ring / active nav, not just
+ *   an unused --accent-primary variable.
+ * - All preferences (incl. font sizes) sync to the DB, debounced.
+ */
+import React, { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
-export type ThemeType = "dark-neumorphic" | "light-neumorphic" | "industrial-control" | "cyberpunk" | "pure-white" | "pure-white-neumorphic" | "amazon" | "amazon-prime-upi";
-export type DensityType = "comfortable" | "compact" | "dense";
-export type FontFamilyType = "inter" | "outfit" | "roboto" | "arial" | "times" | "verdana" | "courier" | "georgia" | "trebuchet" | "comic-sans" | "impact";
-export type FontWeightProfileType = "heavy" | "standard" | "light";
-export type AccentColorType = "theme-default" | "blue" | "emerald" | "rose" | "amber" | "purple" | "slate" | string;
+import {
+  type ThemeId, type ThemeMode, type AccentId, type Density, type FontId, type WeightProfile,
+  DEFAULT_THEME, FONTS, WEIGHT_PROFILES, STORAGE_KEYS, CUSTOM_ACCENT_KEYS,
+  normalizeTheme, normalizeAccent, normalizeDensity, normalizeFont, normalizeWeight,
+  themeMode, customAccentVars, DEFAULT_DARK_THEME,
+} from "./theme-registry";
 
-interface ThemeContextType {
-  theme: ThemeType;
-  density: DensityType;
+const useIsoLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
+// v1 type names kept as aliases so imports elsewhere keep compiling
+export type ThemeType = ThemeId;
+export type DensityType = Density;
+export type FontFamilyType = FontId;
+export type FontWeightProfileType = WeightProfile;
+export type AccentColorType = AccentId | `#${string}`;
+
+interface Prefs {
+  theme: ThemeId;
+  density: Density;
   tactileFeedback: boolean;
-  fontFamily: FontFamilyType;
-  fontWeightProfile: FontWeightProfileType;
+  fontFamily: FontId;
+  fontWeightProfile: WeightProfile;
   accentColor: AccentColorType;
   baseFontSize: number;
   subtextFontSize: number;
-  setTheme: (theme: ThemeType) => void;
-  setDensity: (density: DensityType) => void;
+}
+
+interface ThemeContextType extends Prefs {
+  mode: ThemeMode;
+  isLight: boolean;
+  setTheme: (theme: ThemeId | string) => void;
+  /** Flip between the user's last light and last dark theme (navbar sun/moon button). */
+  toggleMode: () => void;
+  setDensity: (density: Density) => void;
   setTactileFeedback: (enabled: boolean) => void;
-  setFontFamily: (font: FontFamilyType) => void;
-  setFontWeightProfile: (profile: FontWeightProfileType) => void;
-  setAccentColor: (color: AccentColorType) => void;
+  setFontFamily: (font: FontId | string) => void;
+  setFontWeightProfile: (profile: WeightProfile | string) => void;
+  setAccentColor: (color: AccentColorType | string) => void;
   setBaseFontSize: (size: number) => void;
   setSubtextFontSize: (size: number) => void;
+  resetToDefaults: () => void;
+  /** false during SSR / first client render; true once stored prefs are applied */
+  ready: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+const DEFAULTS: Prefs = {
+  theme: DEFAULT_THEME,
+  density: "comfortable",
+  tactileFeedback: true,
+  fontFamily: "inter",
+  fontWeightProfile: "standard",
+  accentColor: "theme-default",
+  baseFontSize: 16,
+  subtextFontSize: 14,
+};
+
+const clampSize = (n: unknown, min: number, max: number, fallback: number) => {
+  const v = Number(n);
+  return Number.isFinite(v) && v >= min && v <= max ? v : fallback;
+};
+
+function safeGet(key: string) {
+  try { return window.localStorage.getItem(key); } catch { return null; }
+}
+function safeSet(key: string, value: string) {
+  try { window.localStorage.setItem(key, value); } catch { /* private mode / quota */ }
+}
+
+function readStoredPrefs(): Partial<Prefs> {
+  if (typeof window === "undefined") return {};
+  const out: Partial<Prefs> = {};
+  const t = safeGet(STORAGE_KEYS.theme); if (t) out.theme = normalizeTheme(t);
+  const d = safeGet(STORAGE_KEYS.density); if (d) out.density = normalizeDensity(d);
+  const tf = safeGet(STORAGE_KEYS.tactile); if (tf !== null) out.tactileFeedback = tf === "true";
+  const f = safeGet(STORAGE_KEYS.font); if (f) out.fontFamily = normalizeFont(f);
+  const w = safeGet(STORAGE_KEYS.weight); if (w) out.fontWeightProfile = normalizeWeight(w);
+  const a = safeGet(STORAGE_KEYS.accent); if (a) out.accentColor = normalizeAccent(a);
+  const b = safeGet(STORAGE_KEYS.baseSize); if (b) out.baseFontSize = clampSize(b, 12, 20, 16);
+  const s = safeGet(STORAGE_KEYS.subtextSize); if (s) out.subtextFontSize = clampSize(s, 10, 18, 14);
+  return out;
+}
+
+function writeStoredPrefs(p: Prefs) {
+  safeSet(STORAGE_KEYS.theme, p.theme);
+  safeSet(STORAGE_KEYS.density, p.density);
+  safeSet(STORAGE_KEYS.tactile, String(p.tactileFeedback));
+  safeSet(STORAGE_KEYS.font, p.fontFamily);
+  safeSet(STORAGE_KEYS.weight, p.fontWeightProfile);
+  safeSet(STORAGE_KEYS.accent, p.accentColor);
+  safeSet(STORAGE_KEYS.baseSize, String(p.baseFontSize));
+  safeSet(STORAGE_KEYS.subtextSize, String(p.subtextFontSize));
+}
+
+/** Single place that touches <html>. Idempotent. */
+function applyToDocument(p: Prefs) {
+  if (typeof document === "undefined") return;
+  const root = document.documentElement;
+  const mode = themeMode(p.theme);
+
+  root.setAttribute("data-theme", p.theme);
+  root.setAttribute("data-mode", mode);
+  root.setAttribute("data-density", p.density);
+  root.classList.toggle("theme-light", mode === "light");
+  root.classList.toggle("theme-dark", mode === "dark");
+  root.classList.toggle("dark", mode === "dark");
+  root.style.colorScheme = mode;
+
+  // accent: preset → data-accent (pure CSS); custom hex → inline vars
+  CUSTOM_ACCENT_KEYS.forEach((k) => root.style.removeProperty(k));
+  root.removeAttribute("data-accent");
+  if (typeof p.accentColor === "string" && p.accentColor.startsWith("#")) {
+    Object.entries(customAccentVars(p.accentColor, mode)).forEach(([k, v]) => root.style.setProperty(k, v));
+  } else if (p.accentColor !== "theme-default") {
+    root.setAttribute("data-accent", p.accentColor);
+  }
+
+  root.style.setProperty("--app-font-family", FONTS[p.fontFamily].stack);
+  const w = WEIGHT_PROFILES[p.fontWeightProfile];
+  root.style.setProperty("--ui-weight-semibold", String(w.semibold));
+  root.style.setProperty("--ui-weight-bold", String(w.bold));
+  root.style.setProperty("--ui-weight-extrabold", String(w.extrabold));
+  root.style.setProperty("--base-font-size", `${p.baseFontSize}px`);
+  root.style.setProperty("--subtext-font-size", `${p.subtextFontSize}px`);
+  root.style.setProperty("--text-scale-ratio", String(p.baseFontSize / 16));
+  root.toggleAttribute("data-no-tactile", !p.tactileFeedback);
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeType>("light-neumorphic");
-  const [density, setDensityState] = useState<DensityType>("comfortable");
-  const [tactileFeedback, setTactileFeedbackState] = useState<boolean>(true);
-  const [fontFamily, setFontFamilyState] = useState<FontFamilyType>("inter");
-  const [fontWeightProfile, setFontWeightProfileState] = useState<FontWeightProfileType>("heavy");
-  const [accentColor, setAccentColorState] = useState<AccentColorType>("theme-default");
-  const [baseFontSize, setBaseFontSizeState] = useState<number>(16);
-  const [subtextFontSize, setSubtextFontSizeState] = useState<number>(14);
-  const [mounted, setMounted] = useState(false);
+  // Server and first client render use DEFAULTS (no hydration mismatch). Stored prefs are
+  // read in a layout effect, i.e. before the browser paints; ThemeScript has already
+  // styled <html>, so nothing flashes either way.
+  const [prefs, setPrefs] = useState<Prefs>(DEFAULTS);
+  const [loaded, setLoaded] = useState(false);
+  const hydratedFromDb = useRef(false);
+  const lastLight = useRef<ThemeId>(DEFAULT_THEME);
+  const lastDark = useRef<ThemeId>(DEFAULT_DARK_THEME);
 
+  useIsoLayoutEffect(() => {
+    setPrefs({ ...DEFAULTS, ...readStoredPrefs() });
+    setLoaded(true);
+  }, []);
+
+  // Apply + persist locally whenever anything changes
   useEffect(() => {
-    async function initPreferences() {
-      // First load from localStorage to prevent flash
-      const storedTheme = localStorage.getItem("app_theme") as ThemeType;
-      const storedDensity = localStorage.getItem("app_density") as DensityType;
-      const storedTactile = localStorage.getItem("app_tactile");
-      const storedFont = localStorage.getItem("app_font") as FontFamilyType;
-      const storedFontWeight = localStorage.getItem("app_font_weight_profile") as FontWeightProfileType;
-      const storedAccent = localStorage.getItem("app_accent_color") as AccentColorType;
-      const storedBaseSize = localStorage.getItem("app_base_font_size");
-      const storedSubtextSize = localStorage.getItem("app_subtext_font_size");
+    if (!loaded) return;
+    applyToDocument(prefs);
+    writeStoredPrefs(prefs);
+    if (themeMode(prefs.theme) === "light") lastLight.current = prefs.theme; else lastDark.current = prefs.theme;
+  }, [prefs, loaded]);
 
-      const applyState = (state: any) => {
-        if (state.theme && ["dark-neumorphic", "light-neumorphic", "industrial-control", "cyberpunk", "pure-white", "pure-white-neumorphic", "amazon", "amazon-prime-upi"].includes(state.theme)) {
-          setThemeState(state.theme);
-        }
-        if (state.density && ["comfortable", "compact", "dense"].includes(state.density)) {
-          setDensityState(state.density);
-        }
-        if (state.tactile !== undefined) {
-          setTactileFeedbackState(state.tactile === "true" || state.tactile === true);
-        }
-        if (state.fontFamily && ["inter", "outfit", "roboto", "arial", "times", "verdana", "courier", "georgia", "trebuchet", "comic-sans", "impact"].includes(state.fontFamily)) {
-          setFontFamilyState(state.fontFamily);
-        }
-        if (state.fontWeightProfile && ["heavy", "standard", "light"].includes(state.fontWeightProfile)) {
-          setFontWeightProfileState(state.fontWeightProfile);
-        }
-        if (state.accentColor && (["theme-default", "blue", "emerald", "rose", "amber", "purple", "slate"].includes(state.accentColor) || state.accentColor.startsWith("#"))) {
-          setAccentColorState(state.accentColor);
-        }
-        if (state.baseFontSize) {
-          setBaseFontSizeState(Number(state.baseFontSize));
-        }
-        if (state.subtextFontSize) {
-          setSubtextFontSizeState(Number(state.subtextFontSize));
-        }
-      };
-
-      // Apply local storage first
-      applyState({
-        theme: storedTheme, density: storedDensity, tactile: storedTactile, 
-        fontFamily: storedFont, fontWeightProfile: storedFontWeight, accentColor: storedAccent, 
-        baseFontSize: storedBaseSize, subtextFontSize: storedSubtextSize
-      });
-      setMounted(true);
-
-      // Now fetch from DB quietly in background
+  // First visit on a new device: pull saved preferences from the DB
+  useEffect(() => {
+    let cancelled = false;
+    const hadLocalTheme = safeGet(STORAGE_KEYS.theme) !== null;
+    (async () => {
       try {
         const { fetchDesignPreferences } = await import("@/lib/actions/preferences");
         const res = await fetchDesignPreferences();
-        if (res?.success && res.data) {
-          const dbPrefs = res.data;
-          
-          // ONLY apply DB theme if local storage was totally empty (first time load on new device)
-          // Otherwise, local storage wins to prevent flashing / sudden theme changes
-          if (!storedTheme && dbPrefs.theme) {
-            applyState({ theme: dbPrefs.theme });
-            localStorage.setItem("app_theme", dbPrefs.theme);
-          }
-          if (!storedDensity && dbPrefs.density) {
-            applyState({ density: dbPrefs.density });
-            localStorage.setItem("app_density", dbPrefs.density);
-          }
-          if (!storedTactile && dbPrefs.tactile !== undefined) {
-            applyState({ tactile: dbPrefs.tactile });
-            localStorage.setItem("app_tactile", String(dbPrefs.tactile));
-          }
-          if (!storedFont && dbPrefs.fontFamily) {
-            applyState({ fontFamily: dbPrefs.fontFamily });
-            localStorage.setItem("app_font", dbPrefs.fontFamily);
-          }
-          if (!storedFontWeight && dbPrefs.fontWeightProfile) {
-            applyState({ fontWeightProfile: dbPrefs.fontWeightProfile });
-            localStorage.setItem("app_font_weight_profile", dbPrefs.fontWeightProfile);
-          }
-          if (!storedAccent && dbPrefs.accentColor) {
-            applyState({ accentColor: dbPrefs.accentColor });
-            localStorage.setItem("app_accent_color", dbPrefs.accentColor);
-          }
-        }
-      } catch (e) {
-        // Silent catch
+        if (cancelled || !res?.success || !res.data || hadLocalTheme) return;
+        const db = res.data as Record<string, unknown>;
+        setPrefs((p) => ({
+          ...p,
+          theme: db.theme ? normalizeTheme(db.theme) : p.theme,
+          density: db.density ? normalizeDensity(db.density) : p.density,
+          tactileFeedback: typeof db.tactileFeedback === "boolean" ? db.tactileFeedback : p.tactileFeedback,
+          fontFamily: db.fontFamily ? normalizeFont(db.fontFamily) : p.fontFamily,
+          fontWeightProfile: db.fontWeightProfile ? normalizeWeight(db.fontWeightProfile) : p.fontWeightProfile,
+          accentColor: db.accentColor ? normalizeAccent(db.accentColor) : p.accentColor,
+          baseFontSize: clampSize(db.baseFontSize, 12, 20, p.baseFontSize),
+          subtextFontSize: clampSize(db.subtextFontSize, 10, 18, p.subtextFontSize),
+        }));
+      } catch {
+        /* offline or action missing: local prefs are fine */
+      } finally {
+        hydratedFromDb.current = true;
       }
-    }
-
-    initPreferences();
+    })();
+    return () => { cancelled = true; };
   }, []);
 
-  const updateThemeGlobals = (
-    activeTheme: ThemeType,
-    activeFont?: FontFamilyType,
-    activeWeightProfile?: FontWeightProfileType,
-    activeAccentColor?: AccentColorType,
-    activeBaseSize?: number,
-    activeSubtextSize?: number
-  ) => {
-    if (typeof document === "undefined") return;
-    const isLight = activeTheme === "light-neumorphic" || activeTheme === "pure-white" || activeTheme === "pure-white-neumorphic" || activeTheme === "amazon-prime-upi";
-    
-    // Inject dynamic root classes to gracefully steer hardcoded container defaults
-    if (isLight) {
-      document.documentElement.classList.add("theme-light");
-      document.documentElement.classList.remove("theme-dark");
-      document.documentElement.classList.remove("dark");
-    } else {
-      document.documentElement.classList.add("theme-dark");
-      document.documentElement.classList.remove("theme-light");
-      document.documentElement.classList.add("dark");
-    }
-
-    // Apply literal DOM style modifications to bypass any fixed CSS framework specificities
-    const fontTarget = activeFont || fontFamily;
-    document.documentElement.setAttribute("data-font", fontTarget);
-    if (fontTarget === "outfit") {
-      document.documentElement.style.setProperty("--app-font-family", "var(--font-outfit), 'Outfit', system-ui, sans-serif");
-    } else if (fontTarget === "roboto") {
-      document.documentElement.style.setProperty("--app-font-family", "var(--font-roboto), 'Roboto', system-ui, sans-serif");
-    } else if (fontTarget === "arial") {
-      document.documentElement.style.setProperty("--app-font-family", "Arial, Helvetica, sans-serif");
-    } else if (fontTarget === "times") {
-      document.documentElement.style.setProperty("--app-font-family", "'Times New Roman', Times, serif");
-    } else if (fontTarget === "verdana") {
-      document.documentElement.style.setProperty("--app-font-family", "Verdana, Geneva, sans-serif");
-    } else if (fontTarget === "courier") {
-      document.documentElement.style.setProperty("--app-font-family", "'Courier New', Courier, monospace");
-    } else if (fontTarget === "georgia") {
-      document.documentElement.style.setProperty("--app-font-family", "Georgia, serif");
-    } else if (fontTarget === "trebuchet") {
-      document.documentElement.style.setProperty("--app-font-family", "'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif");
-    } else if (fontTarget === "comic-sans") {
-      document.documentElement.style.setProperty("--app-font-family", "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif");
-    } else if (fontTarget === "impact") {
-      document.documentElement.style.setProperty("--app-font-family", "Impact, Charcoal, sans-serif");
-    } else {
-      document.documentElement.style.setProperty("--app-font-family", "var(--font-inter), 'Inter', system-ui, sans-serif");
-    }
-
-    const bSize = activeBaseSize || baseFontSize;
-    const sSize = activeSubtextSize || subtextFontSize;
-    
-    document.documentElement.style.setProperty("--base-font-size", bSize + "px");
-    document.documentElement.style.setProperty("--subtext-font-size", sSize + "px");
-    document.documentElement.style.setProperty("--text-scale-ratio", String(bSize / 16));
-
-    const wProfile = activeWeightProfile || fontWeightProfile;
-    if (wProfile === "heavy") {
-      document.documentElement.style.setProperty("--ui-weight-semibold", "600");
-      document.documentElement.style.setProperty("--ui-weight-bold", "700");
-      document.documentElement.style.setProperty("--ui-weight-extrabold", "800");
-    } else if (wProfile === "standard") {
-      document.documentElement.style.setProperty("--ui-weight-semibold", "500");
-      document.documentElement.style.setProperty("--ui-weight-bold", "600");
-      document.documentElement.style.setProperty("--ui-weight-extrabold", "700");
-    } else if (wProfile === "light") {
-      document.documentElement.style.setProperty("--ui-weight-semibold", "400");
-      document.documentElement.style.setProperty("--ui-weight-bold", "500");
-      document.documentElement.style.setProperty("--ui-weight-extrabold", "600");
-    }
-
-    const aColor = activeAccentColor || accentColor;
-    if (aColor === "theme-default") {
-      document.documentElement.style.removeProperty("--accent-primary");
-      document.documentElement.style.removeProperty("--accent-secondary");
-      document.documentElement.style.removeProperty("--selection-bg");
-      document.documentElement.style.removeProperty("--selection-text");
-    } else if (aColor === "blue") {
-      document.documentElement.style.setProperty("--accent-primary", "#3b82f6");
-      document.documentElement.style.setProperty("--accent-secondary", "#60a5fa");
-      document.documentElement.style.setProperty("--selection-bg", "#2563eb");
-      document.documentElement.style.setProperty("--selection-text", "#ffffff");
-    } else if (aColor === "emerald") {
-      document.documentElement.style.setProperty("--accent-primary", "#10b981");
-      document.documentElement.style.setProperty("--accent-secondary", "#34d399");
-      document.documentElement.style.setProperty("--selection-bg", "#059669");
-      document.documentElement.style.setProperty("--selection-text", "#ffffff");
-    } else if (aColor === "rose") {
-      document.documentElement.style.setProperty("--accent-primary", "#f43f5e");
-      document.documentElement.style.setProperty("--accent-secondary", "#fb7185");
-      document.documentElement.style.setProperty("--selection-bg", "#e11d48");
-      document.documentElement.style.setProperty("--selection-text", "#ffffff");
-    } else if (aColor === "amber") {
-      document.documentElement.style.setProperty("--accent-primary", "#f59e0b");
-      document.documentElement.style.setProperty("--accent-secondary", "#fbbf24");
-      document.documentElement.style.setProperty("--selection-bg", "#d97706");
-      document.documentElement.style.setProperty("--selection-text", "#ffffff");
-    } else if (aColor === "purple") {
-      document.documentElement.style.setProperty("--accent-primary", "#8b5cf6");
-      document.documentElement.style.setProperty("--accent-secondary", "#a78bfa");
-      document.documentElement.style.setProperty("--selection-bg", "#7c3aed");
-      document.documentElement.style.setProperty("--selection-text", "#ffffff");
-    } else if (aColor === "slate") {
-      document.documentElement.style.setProperty("--accent-primary", "#64748b");
-      document.documentElement.style.setProperty("--accent-secondary", "#94a3b8");
-      document.documentElement.style.setProperty("--selection-bg", "#334155");
-      document.documentElement.style.setProperty("--selection-text", "#ffffff");
-    } else if (aColor.startsWith("#")) {
-      document.documentElement.style.setProperty("--accent-primary", aColor);
-      document.documentElement.style.setProperty("--accent-secondary", aColor);
-      document.documentElement.style.setProperty("--selection-bg", "#2563eb");
-      document.documentElement.style.setProperty("--selection-text", "#ffffff");
-    }
-  };
-
-  const setTheme = (newTheme: ThemeType) => {
-    setThemeState(newTheme);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("app_theme", newTheme);
-      document.documentElement.setAttribute("data-theme", newTheme);
-      updateThemeGlobals(newTheme, fontFamily, fontWeightProfile, accentColor, baseFontSize, subtextFontSize);
-    }
-  };
-
-  const setDensity = (newDensity: DensityType) => {
-    setDensityState(newDensity);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("app_density", newDensity);
-      document.documentElement.setAttribute("data-density", newDensity);
-    }
-  };
-
-  const setTactileFeedback = (enabled: boolean) => {
-    setTactileFeedbackState(enabled);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("app_tactile", String(enabled));
-    }
-  };
-
-  const setFontFamily = (font: FontFamilyType) => {
-    setFontFamilyState(font);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("app_font", font);
-      updateThemeGlobals(theme, font, fontWeightProfile, accentColor, baseFontSize, subtextFontSize);
-    }
-  };
-
-  const setFontWeightProfile = (profile: FontWeightProfileType) => {
-    setFontWeightProfileState(profile);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("app_font_weight_profile", profile);
-      updateThemeGlobals(theme, fontFamily, profile, accentColor, baseFontSize, subtextFontSize);
-    }
-  };
-
-  const setAccentColor = (color: AccentColorType) => {
-    setAccentColorState(color);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("app_accent_color", color);
-      updateThemeGlobals(theme, fontFamily, fontWeightProfile, color, baseFontSize, subtextFontSize);
-    }
-  };
-
-  const setBaseFontSize = (size: number) => {
-    setBaseFontSizeState(size);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("app_base_font_size", size.toString());
-      updateThemeGlobals(theme, fontFamily, fontWeightProfile, accentColor, size, subtextFontSize);
-    }
-  };
-
-  const setSubtextFontSize = (size: number) => {
-    setSubtextFontSizeState(size);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("app_subtext_font_size", size.toString());
-      updateThemeGlobals(theme, fontFamily, fontWeightProfile, accentColor, baseFontSize, size);
-    }
-  };
-
+  // Save to DB (debounced) after the initial load, so every device follows the user
   useEffect(() => {
-    if (mounted) {
-      document.documentElement.setAttribute("data-theme", theme);
-      document.documentElement.setAttribute("data-density", density);
-      updateThemeGlobals(theme, fontFamily, fontWeightProfile, accentColor, baseFontSize, subtextFontSize);
-    }
-  }, [mounted, theme, density, fontFamily, fontWeightProfile, accentColor, baseFontSize, subtextFontSize]);
+    if (!loaded || !hydratedFromDb.current) return;
+    const id = window.setTimeout(async () => {
+      try {
+        const { saveDesignPreferences } = await import("@/lib/actions/preferences");
+        await saveDesignPreferences(prefs);
+      } catch (e) {
+        console.warn("[theme] could not save preferences", e);
+      }
+    }, 800);
+    return () => window.clearTimeout(id);
+  }, [prefs, loaded]);
 
-  return (
-    <ThemeContext.Provider
-      value={{
-        theme,
-        density,
-        tactileFeedback,
-        fontFamily,
-        fontWeightProfile,
-        accentColor,
-        baseFontSize,
-        subtextFontSize,
-        setTheme,
-        setDensity,
-        setTactileFeedback,
-        setFontFamily,
-        setFontWeightProfile,
-        setAccentColor,
-        setBaseFontSize,
-        setSubtextFontSize,
-      }}
-    >
-      {children}
-    </ThemeContext.Provider>
-  );
+  const update = useCallback(<K extends keyof Prefs>(key: K, value: Prefs[K]) => {
+    setPrefs((p) => (p[key] === value ? p : { ...p, [key]: value }));
+  }, []);
+
+  const value = useMemo<ThemeContextType>(() => {
+    const mode = themeMode(prefs.theme);
+    return {
+      ...prefs,
+      mode,
+      isLight: mode === "light",
+      setTheme: (t) => update("theme", normalizeTheme(t)),
+      toggleMode: () => update("theme", mode === "light" ? lastDark.current : lastLight.current),
+      setDensity: (d) => update("density", normalizeDensity(d)),
+      setTactileFeedback: (b) => update("tactileFeedback", !!b),
+      setFontFamily: (f) => update("fontFamily", normalizeFont(f)),
+      setFontWeightProfile: (w) => update("fontWeightProfile", normalizeWeight(w)),
+      setAccentColor: (a) => update("accentColor", normalizeAccent(a)),
+      setBaseFontSize: (n) => update("baseFontSize", clampSize(n, 12, 20, 16)),
+      setSubtextFontSize: (n) => update("subtextFontSize", clampSize(n, 10, 18, 14)),
+      resetToDefaults: () => setPrefs(DEFAULTS),
+      ready: loaded,
+    };
+  }, [prefs, update, loaded]);
+
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
 export function useTheme() {
-  const context = useContext(ThemeContext);
-  if (!context) {
-    throw new Error("useTheme must be used within a ThemeProvider");
-  }
-  return context;
+  const ctx = useContext(ThemeContext);
+  if (!ctx) throw new Error("useTheme must be used within a ThemeProvider");
+  return ctx;
+}
+
+/** Non-throwing variant for leaf components that may render outside the provider (Storybook, tests). */
+export function useOptionalTheme() {
+  return useContext(ThemeContext);
 }

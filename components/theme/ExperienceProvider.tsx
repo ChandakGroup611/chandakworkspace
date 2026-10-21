@@ -29,14 +29,10 @@ export function ExperienceProvider({
 }) {
   const { density: globalDensity } = useTheme();
 
-  // Determine the effective density based on context rules
+  // User's density setting wins. One exception: executive mode keeps dashboards out of dense (turns dense into compact).
   let effectiveDensity: DensityType = globalDensity;
-  if (mode === "executive") {
-    effectiveDensity = "comfortable"; // Protect dashboards
-  } else if (mode === "operational") {
-    effectiveDensity = "dense"; // Aggressive compression for tables
-  } else if (mode === "compact") {
-    effectiveDensity = "compact"; // Medium compression for forms
+  if (mode === "executive" && globalDensity === "dense") {
+    effectiveDensity = "compact";
   }
 
   return (

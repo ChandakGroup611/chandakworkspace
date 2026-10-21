@@ -10,8 +10,7 @@ import { useTheme } from "@/components/theme/ThemeProvider";
 import { usePermissions } from "@/hooks/usePermissions";
 
 export default function TaskTimeLogs({ taskId, onLogAdded }: { taskId: string; onLogAdded?: () => void }) {
-  const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
+  const { isLight: isLightMode } = useTheme();
   const { roleCode, userId } = usePermissions();
   const isSuperAdmin = roleCode === "SUPER_ADMIN";
   

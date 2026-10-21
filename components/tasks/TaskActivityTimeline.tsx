@@ -9,8 +9,7 @@ import { createClient } from "@/utils/supabase/client";
 import SafeHtml from "@/components/ui/SafeHtml";
 
 export default function TaskActivityTimeline({ taskId }: { taskId: string }) {
-  const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
+  const { isLight: isLightMode } = useTheme();
   const supabase = createClient();
   
   const [logs, setLogs] = useState<any[]>([]);

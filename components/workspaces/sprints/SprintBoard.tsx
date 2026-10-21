@@ -11,8 +11,7 @@ import { createClient } from "@/utils/supabase/client";
 import { usePermissions } from "@/hooks/usePermissions";
 
 export function SprintBoard({ workspaceId, currentUser, onNewSprint }: { workspaceId: string, currentUser?: any, onNewSprint?: () => void }) {
-  const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
+  const { isLight: isLightMode } = useTheme();
   const { hasPermission, roleCode, userId } = usePermissions();
   const isSuperAdmin = roleCode === "SUPER_ADMIN";
   const effectiveUserId = userId || currentUser?.id;

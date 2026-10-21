@@ -17,8 +17,7 @@ interface TicketFormOthersProps {
 }
 
 export function TicketFormOthers({ scope, onCancel, onDiscard, onSubmit }: TicketFormOthersProps) {
-  const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
+  const { isLight: isLightMode } = useTheme();
   const [loading, setLoading] = useState(true);
   
   const [masters, setMasters] = useState<any>({});

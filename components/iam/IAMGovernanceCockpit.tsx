@@ -52,9 +52,8 @@ export default function IAMGovernanceCockpit({
   roles = [],
   permissions = []
 }: IAMGovernanceCockpitProps) {
-  const { theme } = useTheme();
+  const { isLight } = useTheme();
   const { hasPermission, loading: permsLoading } = usePermissions();
-  const isLight = ["light-neumorphic", "pure-white", "pure-white-neumorphic"].includes(theme);
 
   const resolvedRoles = initialRoles.length > 0 ? initialRoles : roles;
   const resolvedPermissions = initialPermissions.length > 0 ? initialPermissions : permissions;

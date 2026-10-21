@@ -1,27 +1,17 @@
 "use client";
 
 import React, { useState } from "react";
-import { useTheme, ThemeType, DensityType, FontFamilyType, FontWeightProfileType, AccentColorType } from "@/components/theme/ThemeProvider";
-import { AppCard, AppCardHeader, AppCardTitle, AppCardContent, AppCardDescription } from "@/components/ui/AppCard";
+import { useTheme, FontFamilyType, FontWeightProfileType } from "@/components/theme/ThemeProvider";
+import { ThemePicker } from "@/components/theme/ThemePicker";
+import { FONTS } from "@/components/theme/theme-registry";
+import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppBadge } from "@/components/ui/AppBadge";
 import { 
-  Sparkles, 
-  Layers, 
-  Check, 
-  Grid, 
   CheckCircle2, 
-  Zap, 
   Sliders, 
-  Sun, 
-  Moon, 
-  MousePointerClick,
-  Monitor,
-  Maximize2,
-  Minimize2,
-  Type,
-  Palette,
-  Save
+  Type, 
+  Save 
 } from "lucide-react";
 import CustomFieldsConfigurator from "@/components/settings/CustomFieldsConfigurator";
 import { saveDesignPreferences } from "@/lib/actions/preferences";
@@ -35,15 +25,12 @@ export default function SettingsGallery() {
     fontWeightProfile,
     baseFontSize,
     subtextFontSize,
-    setTheme,
-    setDensity,
-    setTactileFeedback,
     setFontFamily, 
     setFontWeightProfile,
     setBaseFontSize,
     setSubtextFontSize,
     accentColor,
-    setAccentColor
+    isLight
   } = useTheme();
   const [successToast, setSuccessToast] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -56,7 +43,7 @@ export default function SettingsGallery() {
   const handleSavePreferences = async () => {
     setIsSaving(true);
     const prefs = {
-      theme, density, tactile: tactileFeedback, fontFamily, fontWeightProfile, accentColor, baseFontSize, subtextFontSize
+      theme, density, tactileFeedback, fontFamily, fontWeightProfile, accentColor, baseFontSize, subtextFontSize
     };
     const res = await saveDesignPreferences(prefs);
     setIsSaving(false);
@@ -67,295 +54,63 @@ export default function SettingsGallery() {
     }
   };
 
-  const themesList: {
-    id: ThemeType;
-    name: string;
-    tagline: string;
-    benefit: string;
-    sentiment: string;
-    icon: React.ElementType;
-    previewBg: string;
-    previewBorder: string;
-    accentColor: string;
-  }[] = [
-    {
-      id: "cyberpunk",
-      name: "Cyberpunk",
-      tagline: "Standard Clean Neon",
-      benefit: "Subtle vibrant accents",
-      sentiment: "Creative & Fresh",
-      icon: Zap,
-      previewBg: "bg-[#0a0a0f] text-[#00FFFF]",
-      previewBorder: "border-border",
-      accentColor: "bg-pink-500",
-    },
-    {
-      id: "light-neumorphic",
-      name: "Light Neumorphic",
-      tagline: "Standard Soft White UI",
-      benefit: "Reduced cognitive load",
-      sentiment: "Calm & Focused",
-      icon: Sun,
-      previewBg: "bg-[#f8fafc] text-[#334155]",
-      previewBorder: "border-[#cbd5e1]",
-      accentColor: "bg-[#fb923c]",
-    },
-    {
-      id: "pure-white-neumorphic",
-      name: "Pure White Neumorphic",
-      tagline: "Dedicated Pure White UI",
-      benefit: "Maximized brightness",
-      sentiment: "Clean & Modern",
-      icon: Sun,
-      previewBg: "bg-[#ffffff] text-slate-900",
-      previewBorder: "border-border/50",
-      accentColor: "bg-success",
-    },
-    {
-      id: "industrial-control",
-      name: "Industrial Control",
-      tagline: "Frosted Glass Elements",
-      benefit: "Deep frosted immersion",
-      sentiment: "Tactile & Blurred",
-      icon: Layers,
-      previewBg: "bg-[#1e293b] text-[#f8fafc]",
-      previewBorder: "border-border",
-      accentColor: "bg-surface0",
-    },
-    {
-      id: "dark-neumorphic",
-      name: "Dark Neumorphic",
-      tagline: "Soft Dark UI Elements",
-      benefit: "Optimized dark contrast",
-      sentiment: "Tactical & Immersive",
-      icon: Moon,
-      previewBg: "bg-[#1e1e1e] text-[#e0e0e0]",
-      previewBorder: "border-[#333333]",
-      accentColor: "bg-success",
-    },
-    {
-      id: "pure-white",
-      name: "Pure Bright White",
-      tagline: "Clean Minimalist Bright",
-      benefit: "Maximum daylight visibility",
-      sentiment: "Crisp & Professional",
-      icon: Sun,
-      previewBg: "bg-[#ffffff] text-[#000000]",
-      previewBorder: "border-[#e5e5e5]",
-      accentColor: "bg-surface0",
-    },
-    {
-      id: "amazon",
-      name: "Amazon Dark",
-      tagline: "E-Commerce Professional",
-      benefit: "High contrast UI",
-      sentiment: "Familiar & Reliable",
-      icon: Layers,
-      previewBg: "bg-[#131921] text-[#ffffff]",
-      previewBorder: "border-[#37475a]",
-      accentColor: "bg-[#ff9900]",
-    },
-    {
-      id: "amazon-prime-upi",
-      name: "Amazon Prime UPI",
-      tagline: "Clean Financial UI",
-      benefit: "Trustworthy & Secure",
-      sentiment: "Professional",
-      icon: CheckCircle2,
-      previewBg: "bg-[#ffffff] text-[#0f1111]",
-      previewBorder: "border-[#ff9900]",
-      accentColor: "bg-[#ffd814]",
-    },
-  ];
-
-  const densitiesList: {
-    id: DensityType;
-    name: string;
-    benefit: string;
-    sentiment: string;
-    icon: React.ElementType;
-    gapClass: string;
-  }[] = [
-    {
-      id: "dense",
-      name: "Bento Grid",
-      benefit: "Efficient data density",
-      sentiment: "Organized & Intuitive",
-      icon: Grid,
-      gapClass: "gap-2 p-2",
-    },
-    {
-      id: "compact",
-      name: "Compact Layout",
-      benefit: "Streamlined element groups",
-      sentiment: "Responsive & Active",
-      icon: Minimize2,
-      gapClass: "gap-3 p-3",
-    },
-    {
-      id: "comfortable",
-      name: "Comfortable Rhythm",
-      benefit: "Generous whitespace padding",
-      sentiment: "Executive standard",
-      icon: Maximize2,
-      gapClass: "gap-4 p-4",
-    },
-  ];
-
-  const fontsList: { id: FontFamilyType; name: string; sample: string; css: string; familyValue: string }[] = [
-    { id: "inter", name: "Inter UI", sample: "Crisp geometric precision.", css: "font-sans", familyValue: "var(--font-inter), 'Inter', sans-serif" },
-    { id: "outfit", name: "Outfit Premium", sample: "Warm modern corporate.", css: "font-sans tracking-wide", familyValue: "var(--font-outfit), 'Outfit', sans-serif" },
-    { id: "roboto", name: "Roboto Stack", sample: "Utilitarian highly legible.", css: "font-sans", familyValue: "var(--font-roboto), 'Roboto', sans-serif" },
-    { id: "arial", name: "Arial", sample: "Standard classic system font.", css: "font-sans", familyValue: "Arial, Helvetica, sans-serif" },
-    { id: "times", name: "Times New Roman", sample: "Traditional serif reading.", css: "font-sans", familyValue: "'Times New Roman', Times, serif" },
-    { id: "verdana", name: "Verdana", sample: "Wide readable geometry.", css: "font-sans", familyValue: "Verdana, Geneva, sans-serif" },
-    { id: "courier", name: "Courier New", sample: "Monospaced technical feel.", css: "font-mono", familyValue: "'Courier New', Courier, monospace" },
-    { id: "georgia", name: "Georgia", sample: "Elegant and classy serif.", css: "font-sans", familyValue: "Georgia, serif" },
-    { id: "trebuchet", name: "Trebuchet MS", sample: "Sharp sans-serif style.", css: "font-sans", familyValue: "'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif" },
-    { id: "comic-sans", name: "Comic Sans MS", sample: "Casual handwritten style.", css: "font-sans", familyValue: "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif" },
-    { id: "impact", name: "Impact", sample: "Heavy condensed titling.", css: "font-sans", familyValue: "Impact, Charcoal, sans-serif" }
+  const fontsList: { id: FontFamilyType; name: string; sample: string; familyValue: string }[] = [
+    { id: "inter", name: "Inter (Default)", sample: "Crisp geometric precision.", familyValue: FONTS.inter.stack },
+    { id: "roboto", name: "Roboto", sample: "Utilitarian highly legible.", familyValue: FONTS.roboto.stack },
+    { id: "outfit", name: "Outfit", sample: "Warm modern corporate.", familyValue: FONTS.outfit.stack },
+    { id: "system", name: "System UI", sample: "Native operating system typography.", familyValue: FONTS.system.stack },
   ];
 
   const weightProfilesList: { id: FontWeightProfileType; name: string; desc: string }[] = [
-    { id: "heavy", name: "Heavy / Thick", desc: "High contrast strong bolding" },
-    { id: "standard", name: "Standard", desc: "Balanced legible emphasis" },
-    { id: "light", name: "Lightweight", desc: "Minimalist soft highlights" }
+    { id: "standard", name: "Standard (Recommended)", desc: "Balanced legible emphasis (600 / 650 / 700)" },
+    { id: "heavy", name: "Heavy / Thick", desc: "High contrast strong bolding (600 / 700 / 800)" },
+    { id: "light", name: "Lightweight", desc: "Minimalist soft highlights (500 / 600 / 700)" }
   ];
-
-  const accentsList: { id: AccentColorType; name: string; hex: string }[] = [
-    { id: "theme-default", name: "Theme Default", hex: "bg-gray-400" },
-    { id: "blue", name: "Executive Blue", hex: "bg-theme-btn-primary text-theme-btn-primary-text" },
-    { id: "emerald", name: "Secure Emerald", hex: "bg-success" },
-    { id: "rose", name: "Alert Rose", hex: "bg-danger" },
-    { id: "amber", name: "Warm Amber", hex: "bg-warning" },
-    { id: "purple", name: "Creative Purple", hex: "bg-theme-btn-primary text-theme-btn-primary-text" },
-    { id: "slate", name: "Minimal Slate", hex: "bg-slate-500" }
-  ];
-
-
-  const isLightMode = theme === "light-neumorphic" || theme === "pure-white" || theme === "pure-white-neumorphic" || theme === "amazon-prime-upi";
 
   return (
     <div className="space-y-8 pb-12">
       {/* Toast feedback component */}
       {successToast && (
-        <div id="settings-toast-alert" className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl bg-success text-white px-4 py-3  animate-in slide-in-from-bottom-5 duration-300">
+        <div id="settings-toast-alert" className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-xl bg-success text-white px-4 py-3 shadow-lg animate-in slide-in-from-bottom-5 duration-300">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
           <span className="text-xs font-semibold">{successToast}</span>
         </div>
       )}
 
-      {/* Row 1: The Design Gallery Theme Options */}
+      {/* Row 1: The Design Gallery Theme Options & Density / Accents */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sliders className={`h-4 w-4 text-accent`} />
-            <h2 className={`text-sm font-semibold uppercase tracking-wider ${"text-muted"}`}>
-              1. Aesthetic Palette System
+            <Sliders className="h-4 w-4 text-accent" />
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">
+              1. Theme & Appearance
             </h2>
           </div>
-          <AppBadge variant="info">Zero-rerender variable mapping</AppBadge>
+          <AppBadge variant="info">WCAG-AA Compliant</AppBadge>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {themesList.map((t) => {
-            const IconComponent = t.icon;
-            const isSelected = theme === t.id;
-
-            return (
-              <div 
-                key={t.id}
-                id={`theme-select-card-${t.id}`}
-                onClick={() => {
-                  setTheme(t.id);
-                  triggerToast(`Theme applied: ${t.name}`);
-                }}
-                className={`group relative flex flex-col justify-between rounded-2xl p-5 cursor-pointer transition-all duration-300 tactile-lift ${
-                  isSelected 
-                    ? `ring-2 ring-primary  theme-card-structural border-primary` 
-                    : `theme-card-structural opacity-80 border-border hover:opacity-100 hover:-translate-y-1`
-                }`}
-              >
-                {/* Active Check Indicator */}
-                {isSelected && (
-                  <div className="absolute top-3 right-3 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md animate-in zoom-in-50">
-                    <Check className="h-3 w-3 stroke-[3]" />
-                  </div>
-                )}
-
-                <div className="space-y-3">
-                  {/* Internal preview display card reproducing specific visual tokens */}
-                  <div className={`h-24 rounded-xl border ${t.previewBg} ${t.previewBorder} p-3 flex flex-col justify-between relative overflow-hidden shadow-inner`}>
-                    {/* Simulated header */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <div className={`h-2.5 w-2.5 rounded-full ${t.accentColor}`} />
-                        <span className="text-xs font-bold opacity-80">{t.name}</span>
-                      </div>
-                      <span className="text-[0.7rem] px-1 py-0.2 rounded bg-surface/10 font-mono">CSS var</span>
-                    </div>
-
-                    {/* Simulated content metrics */}
-                    <div className="space-y-1">
-                      <div className="h-1.5 w-3/4 rounded bg-current opacity-20" />
-                      <div className="h-1.5 w-1/2 rounded bg-current opacity-10" />
-                    </div>
-
-                    {/* Bottom floating layered decoration */}
-                    <div className="absolute bottom-1 right-2 flex items-center gap-1">
-                      <div className="h-2 w-8 rounded bg-theme-btn-primary text-theme-btn-primary-text/20" />
-                      <div className="h-2 w-2 rounded-full bg-success/40" />
-                    </div>
-                  </div>
-
-                  {/* Descriptions matching exact requirement mappings */}
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-1.5">
-                      <IconComponent className={`h-4 w-4 ${isSelected ? "text-primary" : "text-muted"}`} />
-                      <h3 className={`font-bold text-sm tracking-tight ${"text-foreground"}`}>
-                        {t.name}
-                      </h3>
-                    </div>
-                    <p className={`text-[0.8rem] font-medium ${"text-muted"}`}>
-                      {t.tagline}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Benefits / Sentiment blocks */}
-                <div className={`mt-4 pt-3 border-t space-y-1 text-[0.8rem] ${"border-border"}`}>
-                  <div className="flex justify-between">
-                    <span className="text-muted font-medium">Primary Benefit:</span>
-                    <span className={`font-semibold text-right text-foreground`}>{t.benefit}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted font-medium">User Sentiment:</span>
-                    <span className="text-muted-foreground font-semibold text-right">{t.sentiment}</span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <AppCard className="p-6">
+          <ThemePicker />
+        </AppCard>
       </section>
 
-      {/* Row 3: Typography Selection & Base Root Scale */}
+      {/* Row 2: Typography Engine & Font Scale */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Type className={`h-4 w-4 text-accent`} />
-            <h2 className={`text-sm font-semibold uppercase tracking-wider ${"text-muted"}`}>
-              3. Typography Engine & Font Scale
+            <Type className="h-4 w-4 text-accent" />
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">
+              2. Typography Engine & Font Scale
             </h2>
           </div>
-          <AppBadge variant="info">Hardware Accelerated Binding</AppBadge>
+          <AppBadge variant="info">Hardware Accelerated</AppBadge>
         </div>
 
         {/* Sub-grid A: Font Families Selection */}
         <div className="space-y-2">
           <span className="text-[0.8rem] font-bold tracking-wider text-muted uppercase">A. Base Typeface Selector</span>
-          <div className={`p-4 rounded-xl border transition-all duration-200 theme-card-structural border-border`}>
-            <label className={`block text-sm font-bold mb-2 ${"text-foreground"}`}>System Font Style</label>
+          <div className="p-4 rounded-xl border transition-all duration-200 theme-card-structural border-border">
+            <label className="block text-sm font-bold mb-2 text-foreground">System Font Style</label>
             <div className="relative">
               <select
                 value={fontFamily}
@@ -364,7 +119,7 @@ export default function SettingsGallery() {
                   setFontFamily(selected);
                   triggerToast(`Typeface active: ${fontsList.find(f => f.id === selected)?.name}`);
                 }}
-                className={`w-full appearance-none p-3 pl-4 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm cursor-pointer text-base ${ "theme-card-structural text-foreground" }`}
+                className="w-full appearance-none p-3 pl-4 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring shadow-sm cursor-pointer text-base theme-card-structural text-foreground"
                 style={{ fontFamily: fontsList.find(f => f.id === fontFamily)?.familyValue || 'inherit' }}
               >
                 {fontsList.map((f) => (
@@ -378,45 +133,44 @@ export default function SettingsGallery() {
                 ))}
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
-                <Type className={`h-4 w-4 text-muted`} />
+                <Type className="h-4 w-4 text-muted" />
               </div>
             </div>
-            </div>
+          </div>
         </div>
 
         {/* Sub-grid B: Custom Font Sizer */}
         <div className="space-y-2 pt-2">
           <span className="text-[0.8rem] font-bold tracking-wider text-muted uppercase">B. Custom Numeric Sizing</span>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            
-            <div className={`p-4 rounded-xl border transition-all duration-200 theme-card-structural border-border`}>
-              <div className="flex items-center justify-between pb-2 border-b border-inherit/10 mb-3">
-                <span className={`text-xs font-bold ${"text-foreground"}`}>Base Text Size</span>
+            <div className="p-4 rounded-xl border transition-all duration-200 theme-card-structural border-border">
+              <div className="flex items-center justify-between pb-2 border-b border-border mb-3">
+                <span className="text-xs font-bold text-foreground">Base Text Size</span>
                 <AppBadge variant="info">{baseFontSize}px</AppBadge>
               </div>
               <div className="flex items-center gap-3">
                 <input 
                   type="range" 
-                  min="12" 
-                  max="24" 
+                  min="13" 
+                  max="18" 
                   value={baseFontSize} 
                   onChange={(e) => setBaseFontSize(Number(e.target.value))}
-                  className="w-full h-1 bg-elevated rounded-lg appearance-none cursor-pointer"
+                  className="w-full h-1 bg-elevated rounded-lg appearance-none cursor-pointer accent-primary"
                 />
                 <input 
                   type="number"
-                  min="12"
-                  max="24"
+                  min="13"
+                  max="18"
                   value={baseFontSize}
                   onChange={(e) => setBaseFontSize(Number(e.target.value))}
-                  className={`w-14 px-2 py-1 text-xs rounded text-center theme-card-structural`}
+                  className="w-14 px-2 py-1 text-xs rounded text-center theme-card-structural border border-border"
                 />
               </div>
-              </div>
+            </div>
 
-            <div className={`p-4 rounded-xl border transition-all duration-200 theme-card-structural border-border`}>
-              <div className="flex items-center justify-between pb-2 border-b border-inherit/10 mb-3">
-                <span className={`text-xs font-bold ${"text-foreground"}`}>Subtext / UI Size</span>
+            <div className="p-4 rounded-xl border transition-all duration-200 theme-card-structural border-border">
+              <div className="flex items-center justify-between pb-2 border-b border-border mb-3">
+                <span className="text-xs font-bold text-foreground">Subtext / UI Size</span>
                 <AppBadge variant="info">{subtextFontSize}px</AppBadge>
               </div>
               <div className="flex items-center gap-3">
@@ -426,7 +180,7 @@ export default function SettingsGallery() {
                   max="18" 
                   value={subtextFontSize} 
                   onChange={(e) => setSubtextFontSize(Number(e.target.value))}
-                  className="w-full h-1 bg-elevated rounded-lg appearance-none cursor-pointer"
+                  className="w-full h-1 bg-elevated rounded-lg appearance-none cursor-pointer accent-primary"
                 />
                 <input 
                   type="number"
@@ -434,11 +188,10 @@ export default function SettingsGallery() {
                   max="18"
                   value={subtextFontSize}
                   onChange={(e) => setSubtextFontSize(Number(e.target.value))}
-                  className={`w-14 px-2 py-1 text-xs rounded text-center theme-card-structural`}
+                  className="w-14 px-2 py-1 text-xs rounded text-center theme-card-structural border border-border"
                 />
               </div>
-              </div>
-
+            </div>
           </div>
         </div>
 
@@ -449,51 +202,52 @@ export default function SettingsGallery() {
             {weightProfilesList.map((w) => {
               const isSelected = fontWeightProfile === w.id;
               return (
-                <div
+                <button
+                  type="button"
                   key={w.id}
                   onClick={() => {
                     setFontWeightProfile(w.id);
                     triggerToast(`Weight active: ${w.name}`);
                   }}
-                  className={`p-4 rounded-xl border cursor-pointer transition-all duration-200 flex flex-col justify-between ${
+                  className={`p-4 rounded-xl border text-left transition-all duration-200 flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                     isSelected 
-                      ? `ring-2 ring-blue-500 bg-theme-btn-primary text-theme-btn-primary-text/[0.04] border-blue-500 theme-card-structural` 
-                      : `hover:border-border theme-card-structural opacity-80 hover:opacity-100 border-border`
+                      ? "ring-2 ring-primary bg-selected border-primary theme-card-structural" 
+                      : "hover:border-border-active theme-card-structural opacity-85 hover:opacity-100 border-border"
                   }`}
                 >
-                  <div className="space-y-1">
+                  <div className="space-y-1 w-full">
                     <div className="flex items-center justify-between">
-                      <span className={`text-xs font-bold ${"text-foreground"}`}>{w.name}</span>
-                      {isSelected && <div className="h-1.5 w-1.5 rounded-full bg-theme-btn-primary text-theme-btn-primary-text" />}
+                      <span className="text-xs font-bold text-foreground">{w.name}</span>
+                      {isSelected && <div className="h-2 w-2 rounded-full bg-primary" />}
                     </div>
-                    <p className={`text-[0.8rem] ${"text-muted"}`}>
+                    <p className="text-[0.8rem] text-muted">
                       {w.desc}
                     </p>
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
         </div>
       </section>
 
-      {/* Row 4: End-to-End Dynamic Custom Fields Dictionaries Map */}
+      {/* Row 3: End-to-End Dynamic Custom Fields Dictionaries Map */}
       <section className="space-y-4 pt-4">
         <CustomFieldsConfigurator />
       </section>
 
-      {/* Row 5: Persistent Saving */}
+      {/* Row 4: Persistent Saving */}
       <section className="space-y-4 pt-6 border-t border-border">
         <AppCard className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="space-y-1 max-w-xl">
             <div className="flex items-center gap-2">
-              <h3 className={`font-bold text-sm tracking-tight ${"text-foreground"}`}>
+              <h3 className="font-bold text-sm tracking-tight text-foreground">
                 Persistent Database Saving
               </h3>
               <AppBadge variant="success">Cloud Sync</AppBadge>
             </div>
-            <p className={`text-xs ${"text-muted"}`}>
-              Save your perfect layout, theme, color combination, and density settings to your account. These preferences will automatically be downloaded and applied whenever you log in from any device.
+            <p className="text-xs text-muted">
+              Save your layout, theme, color combination, and density settings to your account. These preferences will automatically be downloaded and applied whenever you log in from any device.
             </p>
           </div>
 

@@ -7,8 +7,7 @@ import { Activity, Clock, CheckCircle2, AlertCircle, PlayCircle, Send } from 'lu
 import { createClient } from '@/utils/supabase/client';
 
 export function RequirementAuditTrail({ requirementId }: { requirementId: string }) {
-  const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
+  const { isLight: isLightMode } = useTheme();
   const supabase = createClient();
   
   const [events, setEvents] = useState<any[]>([]);

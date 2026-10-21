@@ -11,8 +11,7 @@ import { Plus, X, Trash2, LayoutTemplate } from "lucide-react";
 import { fetchTaskTemplates, createTaskTemplate, deleteTaskTemplate } from "@/lib/actions/workspaces";
 
 export default function TemplateManager({ workspaceId, onClose }: { workspaceId: string, onClose: () => void }) {
-  const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
+  const { isLight: isLightMode } = useTheme();
   const { hasPermission, roleCode } = usePermissions();
   const canDelete = roleCode === "SUPER_ADMIN" || hasPermission("TASKS_DELETE");
   const canCreate = roleCode === "SUPER_ADMIN" || hasPermission("WORKSPACES_MANAGE") || hasPermission("TASKS_CREATE");

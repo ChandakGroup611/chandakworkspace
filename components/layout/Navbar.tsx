@@ -38,7 +38,7 @@ import { AppButton } from "@/components/ui/AppButton";
 export default function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => void }) {
   const router = useRouter();
   const supabase = createClient();
-  const { theme, setTheme, density, tactileFeedback, fontFamily, fontWeightProfile, accentColor, baseFontSize, subtextFontSize } = useTheme();
+  const { theme, setTheme, density, tactileFeedback, fontFamily, fontWeightProfile, accentColor, baseFontSize, subtextFontSize, isLight, toggleMode } = useTheme();
   const { data: profileData } = useProfile();
   const { roleCode } = usePermissions();
   const userData = profileData || null;
@@ -47,8 +47,6 @@ export default function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => 
   const [profileOpen, setProfileOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const isLight = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
 
   // Search State
   const [searchOpen, setSearchOpen] = useState(false);
@@ -166,26 +164,8 @@ export default function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => 
     }
   };
 
-  const toggleQuickTheme = async () => {
-    const nextTheme: ThemeType = isLight ? "dark-neumorphic" : "light-neumorphic";
-    setTheme(nextTheme);
-    
-    // Auto-persist quick theme toggle to DB
-    try {
-      const { saveDesignPreferences } = await import("@/lib/actions/preferences");
-      await saveDesignPreferences({
-        theme: nextTheme,
-        density,
-        tactileFeedback,
-        fontFamily,
-        fontWeightProfile,
-        accentColor,
-        baseFontSize,
-        subtextFontSize
-      });
-    } catch (e) {
-      console.error("Failed to auto-save theme preference", e);
-    }
+  const toggleQuickTheme = () => {
+    toggleMode();
   };
 
   return (

@@ -23,8 +23,7 @@ export function TicketCreationWizard({ onClose, onSuccess }: TicketCreationWizar
   const [step, setStep] = useState<"SCOPE" | "FORM">("SCOPE");
   const [scope, setScope] = useState<any | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
+  const { isLight: isLightMode } = useTheme();
 
   const handleScopeSelect = (selectedScope: any) => {
     setScope(selectedScope);

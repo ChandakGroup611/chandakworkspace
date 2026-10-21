@@ -24,8 +24,7 @@ export default function ApprovalActionPanel({
   onAction,
   isSuperAdmin = false
 }: ApprovalActionPanelProps) {
-  const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
+  const { isLight: isLightMode } = useTheme();
 
   const [activeAction, setActiveAction] = useState<string | null>(null);
   const [remarks, setRemarks] = useState("");

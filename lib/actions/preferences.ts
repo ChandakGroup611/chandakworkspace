@@ -20,7 +20,7 @@ export async function saveDesignPreferences(payload: any) {
     .from("user_dashboard_preferences")
     .upsert({
       user_id: user.id,
-      selected_theme: payload.theme || 'light-neumorphic',
+      selected_theme: payload.theme || 'chandak-classic',
       widget_layout: payload,
       updated_at: new Date().toISOString()
     }, { onConflict: "user_id" });

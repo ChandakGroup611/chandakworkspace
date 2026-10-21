@@ -14,8 +14,7 @@ import WorkloadAnalyzer from "@/components/dashboard/WorkloadAnalyzer";
 import TemplateManager from "@/components/tasks/TemplateManager";
 
 export default function TaskCreationWizard({ workspaceId, initialParentTaskId, initialTaskName, initialDescription, initialAttachments, onClose, onSuccess }: { workspaceId: string, initialParentTaskId?: string, initialTaskName?: string, initialDescription?: string, initialAttachments?: any[], onClose: () => void, onSuccess: (data: any) => void }) {
-  const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
+  const { isLight: isLightMode } = useTheme();
 
   const [departmentId, setDepartmentId] = useState("");
   const [departments, setDepartments] = useState<any[]>([]);

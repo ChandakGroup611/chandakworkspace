@@ -28,8 +28,7 @@ interface TicketInspectorProps {
 
 export function TicketInspector({ ticket, onRefresh }: TicketInspectorProps) {
   const [activeTab, setActiveTab] = useState<"DETAILS" | "COLLAB" | "TIMELINE">("DETAILS");
-  const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
+  const { isLight: isLightMode } = useTheme();
 
   if (!ticket) {
     return (

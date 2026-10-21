@@ -122,8 +122,7 @@ const RichTextEditor = ({ value, onChange, readOnly = false, placeholder = "" }:
 };
 
 export default function TaskExecutionController({ taskId, onUpdate, initialTask, initialStatuses, initialDepartments, readOnly = false }: { taskId: string; onUpdate?: () => void; initialTask?: any; initialStatuses?: any[]; initialDepartments?: any[]; readOnly?: boolean }) {
-  const { theme } = useTheme();
-  const isLightMode = ["light-neumorphic", "pure-white", "pure-white-neumorphic", "amazon-prime-upi"].includes(theme);
+  const { isLight: isLightMode } = useTheme();
 
   const router = useRouter();
   const { hasPermission, roleCode, userId } = usePermissions();
