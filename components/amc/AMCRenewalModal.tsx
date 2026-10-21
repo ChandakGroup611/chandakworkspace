@@ -67,9 +67,14 @@ export function AMCRenewalModal({ amcData, isLightMode, onClose, onRenewed }: AM
   };
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-surface/60" onClick={onClose} />
-      <AppCard className={`relative w-full max-w-lg  animate-in fade-in zoom-in-95 duration-200 bg-surface`}>
+    <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4">
+      <button 
+        type="button" 
+        aria-label="Close modal overlay" 
+        className="absolute inset-0 bg-[var(--overlay)] w-full h-full border-none cursor-default" 
+        onClick={onClose} 
+      />
+      <AppCard className={`relative w-full max-w-lg animate-in fade-in zoom-in-95 duration-200 bg-surface`}>
         
         <div className={`flex items-center justify-between p-6 border-b border-border`}>
           <div>
@@ -78,13 +83,18 @@ export function AMCRenewalModal({ amcData, isLightMode, onClose, onRenewed }: AM
               {amcData.software_name} - {amcData.provider_name}
             </p>
           </div>
-          <AppButton variant="destructive" onClick={onClose} className="p-2 text-muted hover:text-danger hover:bg-danger/10 rounded-full transition-colors">
+          <AppButton 
+            variant="ghost" 
+            aria-label="Close renewal modal"
+            onClick={onClose} 
+            className="p-2 text-muted hover:text-danger hover:bg-danger-soft rounded-full transition-colors"
+          >
             <X className="h-5 w-5" />
           </AppButton>
         </div>
 
         <form onSubmit={handleRenew} className="p-6 space-y-6">
-          <div className={`p-4 rounded-xl border bg-orange-50 border-orange-200 text-orange-800`}>
+          <div className="p-4 rounded-xl border bg-warning-soft border-warning/20 text-warning">
             <p className="text-sm">
               Renewing will archive the current active contract as <strong>"Renewed"</strong> and create a fresh <strong>"Active"</strong> record with the new dates and financials.
             </p>
@@ -92,30 +102,30 @@ export function AMCRenewalModal({ amcData, isLightMode, onClose, onRenewed }: AM
 
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-muted uppercase">New Purchase Date *</label>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted block mb-1">New Purchase Date *</label>
                 <AppInput type="date" value={purchaseDate} onChange={(e) => setPurchaseDate(e.target.value)} required />
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-muted uppercase">New Expiry Date *</label>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted block mb-1">New Expiry Date *</label>
                 <AppInput type="date" value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} required />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-muted uppercase">Renewal Cost ({amcData.currency || 'INR'}) *</label>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted block mb-1">Renewal Cost ({amcData.currency || 'INR'}) *</label>
                 <AppInput type="number" step="0.01" value={cost} onChange={(e) => setCost(e.target.value)} required placeholder="e.g., 5000" />
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-muted uppercase">New PO Number</label>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted block mb-1">New PO Number</label>
                 <AppInput value={poNumber} onChange={(e) => setPoNumber(e.target.value)} placeholder="Optional" />
               </div>
             </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-            <AppButton type="button" variant="outline" onClick={onClose} disabled={loading} className="text-danger border-danger/30 hover:bg-danger/10 hover:border-danger hover:text-danger">Discard</AppButton>
+            <AppButton type="button" variant="outline" onClick={onClose} disabled={loading}>Discard</AppButton>
             <AppButton type="submit" variant="primary" disabled={loading} leftIcon={loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Calendar className="h-4 w-4" />}>
               Confirm Renewal
             </AppButton>

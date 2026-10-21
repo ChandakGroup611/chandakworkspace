@@ -9,6 +9,8 @@ import { UserCheck, Search, Filter, Clock, X, Shield, ArrowRight, UserMinus, Ale
 import { saveAMCEntity, deleteAMCEntity } from "@/lib/actions/amc-client";
 import { createClient } from "@/utils/supabase/client";
 import { useTheme } from "@/components/theme/ThemeProvider";
+import { formatDate } from "@/components/ui/data";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 interface AMCAllocationModalProps {
   amcId: string;
@@ -25,6 +27,7 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [totalLicenses, setTotalLicenses] = useState(0);
+  const [revokeConfirmId, setRevokeConfirmId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -105,9 +108,11 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
     }
   };
 
-  const handleRevoke = async (allocationId: string) => {
-    if (!confirm("Are you sure you want to revoke this license?")) return;
-    
+  const handleRevoke = (allocationId: string) => {
+    setRevokeConfirmId(allocationId);
+  };
+
+  const executeRevoke = async (allocationId: string) => {
     setProcessingId(allocationId);
     try {
       const res = await saveAMCEntity("amc_license_allocations", { status: 'Revoked', revoked_at: new Date().toISOString() }, allocationId);
@@ -128,9 +133,14 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
   );
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-surface/60" onClick={onClose} />
-      <AppCard className={`relative w-full max-w-4xl h-[80vh] flex flex-col  animate-in fade-in zoom-in-95 duration-200 bg-surface`}>
+    <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4">
+      <button 
+        type="button" 
+        aria-label="Close modal overlay"
+        className="absolute inset-0 bg-[var(--overlay)] w-full h-full border-none cursor-default" 
+        onClick={onClose} 
+      />
+      <AppCard className={`relative w-full max-w-4xl h-[80vh] flex flex-col animate-in fade-in zoom-in-95 duration-200 bg-surface`}>
         
         <div className={`flex items-center justify-between p-6 border-b border-border`}>
           <div>
@@ -139,7 +149,12 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
               {allocations.length} / {totalLicenses > 0 ? totalLicenses : 'Unlimited'} Licenses Assigned
             </p>
           </div>
-          <AppButton variant="destructive" onClick={onClose} className="p-2 text-muted hover:text-danger hover:bg-danger/10 rounded-full transition-colors">
+          <AppButton 
+            variant="ghost" 
+            aria-label="Close allocation modal" 
+            onClick={onClose} 
+            className="p-2 text-muted hover:text-danger hover:bg-danger-soft rounded-full transition-colors"
+          >
             <X className="h-5 w-5" />
           </AppButton>
         </div>
@@ -161,12 +176,12 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
                     <div>
                       <div className="font-semibold text-sm">{a.user_master?.full_name}</div>
                       <div className="text-xs text-muted">{a.user_master?.email}</div>
-                      <div className="text-[10px] text-muted mt-1">Allocated: {new Date(a.allocated_at).toLocaleDateString()}</div>
+                      <div className="text-[10px] text-muted mt-1">Allocated: {formatDate(a.allocated_at)}</div>
                     </div>
                     <AppButton 
                       variant="outline" 
                       size="sm" 
-                      className="text-danger border-red-500/20 hover:bg-danger/10"
+                      className="text-danger border-danger/20 hover:bg-danger-soft"
                       onClick={() => handleRevoke(a.id)}
                       disabled={processingId === a.id}
                     >
@@ -220,6 +235,21 @@ export function AMCAllocationModal({ amcId, isLightMode, onClose, onAllocated }:
         </div>
 
       </AppCard>
+
+      <ConfirmDialog
+        open={!!revokeConfirmId}
+        onClose={() => setRevokeConfirmId(null)}
+        onConfirm={async () => {
+          if (!revokeConfirmId) return;
+          const id = revokeConfirmId;
+          setRevokeConfirmId(null);
+          await executeRevoke(id);
+        }}
+        title="Revoke License"
+        description="Are you sure you want to revoke this license allocation?"
+        confirmLabel="Revoke"
+        tone="danger"
+      />
     </div>
   );
 }

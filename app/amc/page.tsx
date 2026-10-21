@@ -25,6 +25,7 @@ import { createClient } from "@/utils/supabase/client";
 import { saveAMCEntity, deleteAMCEntity } from "@/lib/actions/amc-client";
 import { saveMasterEntity } from "@/lib/actions/masters";
 import { FormMultiSelect } from "@/components/ui/FormMultiSelect";
+import { formatDate, formatDateTime } from "@/components/ui/data";
 import { MasterOptionsManager } from "@/components/shared/MasterOptionsManager";
 import Link from "next/link";
 import ChandakLoader from "@/components/ui/ChandakLoader";
@@ -314,6 +315,7 @@ export default function AMCPage() {
       default: return "";
     }
     d.setDate(d.getDate() - 1);
+    // ui-audit-ignore-next-line html-date-input
     return d.toISOString().split('T')[0];
   };
 
@@ -360,6 +362,7 @@ export default function AMCPage() {
               updated.amountReleased = updated.amount || 0;
             }
             if (!updated.releaseDate) {
+              // ui-audit-ignore-next-line html-date-input
               updated.releaseDate = new Date().toISOString().split('T')[0];
             }
           }
@@ -434,6 +437,7 @@ export default function AMCPage() {
                   updated.amountReleased = updated.amount || 0;
                 }
                 if (!updated.releaseDate) {
+                  // ui-audit-ignore-next-line html-date-input
                   updated.releaseDate = new Date().toISOString().split('T')[0];
                 }
               }
@@ -500,6 +504,48 @@ export default function AMCPage() {
   const [masterVendorTypes, setMasterVendorTypes] = useState<any[]>([]);
 
   const [manageModalType, setManageModalType] = useState<"industry" | "vendor" | null>(null);
+
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    onConfirm: () => void;
+  }>({ isOpen: false, title: "", description: "", onConfirm: () => {} });
+
+  const [promptState, setPromptState] = useState<{
+    isOpen: boolean;
+    title: string;
+    description?: string;
+    placeholder?: string;
+    defaultValue?: string;
+    onSubmit: (value: string) => Promise<void> | void;
+  }>({
+    isOpen: false,
+    title: "",
+    description: "",
+    placeholder: "",
+    defaultValue: "",
+    onSubmit: () => {},
+  });
+  const [promptValue, setPromptValue] = useState("");
+
+  const openPrompt = (opts: {
+    title: string;
+    description?: string;
+    placeholder?: string;
+    defaultValue?: string;
+    onSubmit: (val: string) => Promise<void> | void;
+  }) => {
+    setPromptValue(opts.defaultValue || "");
+    setPromptState({
+      isOpen: true,
+      title: opts.title,
+      description: opts.description,
+      placeholder: opts.placeholder,
+      defaultValue: opts.defaultValue,
+      onSubmit: opts.onSubmit,
+    });
+  };
   
   const [vendorAddrLine1, setVendorAddrLine1] = useState("");
   const [vendorAddrLine2, setVendorAddrLine2] = useState("");
@@ -527,62 +573,71 @@ export default function AMCPage() {
   const [existingAttachments, setExistingAttachments] = useState<any[]>([]);
   const [uploading, setUploading] = useState(false);
 
-  const handleAddCity = async (stateName: string, setter: (city: string) => void) => {
+  const handleAddCity = (stateName: string, setter: (city: string) => void) => {
     if (!stateName) {
       toast.warning("Please select a state first before adding a city.");
       return;
     }
-    const newCity = prompt(`Enter new city name for ${stateName}:`);
-    if (!newCity || !newCity.trim()) return;
-    
-    const cityName = newCity.trim();
-    try {
-      const { data, error } = await supabase.from('master_cities').insert({ state_name: stateName, city_name: cityName }).select().single();
-      if (error) {
-        if (error.code === '23505') {
-           toast.warning("City already exists in this state!");
-           setter(cityName);
-        } else throw error;
+    openPrompt({
+      title: `Add City for ${stateName}`,
+      placeholder: "Enter new city name...",
+      onSubmit: async (newCity) => {
+        const cityName = newCity.trim();
+        if (!cityName) return;
+        try {
+          const { data, error } = await supabase.from('master_cities').insert({ state_name: stateName, city_name: cityName }).select().single();
+          if (error) {
+            if (error.code === '23505') {
+               toast.warning("City already exists in this state!");
+               setter(cityName);
+            } else throw error;
+          }
+          if (data) {
+            setMasterCities(prev => [...prev, data]);
+            setter(cityName);
+          }
+        } catch(e) {
+          console.error(e);
+          toast.error("Failed to add city.");
+        }
       }
-      if (data) {
-        setMasterCities(prev => [...prev, data]);
-        setter(cityName);
-      }
-    } catch(e) {
-      console.error(e);
-      toast.error("Failed to add city.");
-    }
+    });
   };
 
-  const handleAddContractType = async () => {
-    const newType = prompt("Enter new Contract Type:");
-    if (!newType || !newType.trim()) return;
-    const typeName = newType.trim();
+  const handleAddContractType = () => {
+    openPrompt({
+      title: "New Contract Type",
+      placeholder: "Enter new contract type name...",
+      onSubmit: async (newType) => {
+        const typeName = newType.trim();
+        if (!typeName) return;
 
-    if (masterContractTypes.includes(typeName)) {
-      toast.warning("Contract Type already exists!");
-      setFormContractType(typeName);
-      return;
-    }
-
-    try {
-      const { data, error } = await supabase.from('master_contract_types').insert({ name: typeName }).select().single();
-      if (error) {
-        if (error.code === '42P01') {
-          // Table doesn't exist yet (migration pending)
-          toast.warning("Database migration for Contract Types is pending. Please run the migration first.");
-        } else {
-          toast.error("Failed to add Contract Type: " + error.message);
+        if (masterContractTypes.includes(typeName)) {
+          toast.warning("Contract Type already exists!");
+          setFormContractType(typeName);
+          return;
         }
-        return;
+
+        try {
+          const { data, error } = await supabase.from('master_contract_types').insert({ name: typeName }).select().single();
+          if (error) {
+            if (error.code === '42P01') {
+              // Table doesn't exist yet (migration pending)
+              toast.warning("Database migration for Contract Types is pending. Please run the migration first.");
+            } else {
+              toast.error("Failed to add Contract Type: " + error.message);
+            }
+            return;
+          }
+          setMasterContractTypes(prev => [...prev, typeName]);
+          setFormContractType(typeName);
+          setSuccessAlert(`Contract Type '${typeName}' added successfully.`);
+        } catch(e) {
+          console.error(e);
+          toast.error("Failed to add Contract Type.");
+        }
       }
-      setMasterContractTypes(prev => [...prev, typeName]);
-      setFormContractType(typeName);
-      setSuccessAlert(`Contract Type '${typeName}' added successfully.`);
-    } catch(e) {
-      console.error(e);
-      toast.error("Failed to add Contract Type.");
-    }
+    });
   };
 
   useEffect(() => {
@@ -809,8 +864,10 @@ export default function AMCPage() {
     setFormNotifyBeforeDays(rec.notify_before_days?.toString() || "30");
     setFormDataClassification(rec.data_classification || "");
     setFormComplianceStatus(rec.compliance_status || []);
+    // ui-audit-ignore-next-line html-date-input
     setFormInfosecApprovedDate(rec.infosec_approved_date ? new Date(rec.infosec_approved_date).toISOString().split('T')[0] : "");
     setFormDpaSigned(rec.dpa_signed || false);
+    // ui-audit-ignore-next-line html-date-input
     setFormDpaSignedDate(rec.dpa_signed_date ? new Date(rec.dpa_signed_date).toISOString().split('T')[0] : "");
     setRevealedLicenseKeys({});
 
@@ -1271,27 +1328,39 @@ export default function AMCPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this record?")) return;
-    try {
-      const res = await deleteAMCEntity("software_amc", id, false);
-      if (!res.success) throw new Error(res.error);
-      setSuccessAlert("Record deleted.");
-      fetchRecords();
-    } catch (err: any) {
-      toast.error("Error: " + err.message);
-    }
+  const handleDelete = (id: string) => {
+    setConfirmState({
+      isOpen: true,
+      title: "Delete AMC Record",
+      description: "Are you sure you want to delete this record? This action cannot be undone.",
+      onConfirm: async () => {
+        try {
+          const res = await deleteAMCEntity("software_amc", id, false);
+          if (!res.success) throw new Error(res.error);
+          setSuccessAlert("Record deleted.");
+          fetchRecords();
+        } catch (err: any) {
+          toast.error("Error: " + err.message);
+        }
+      }
+    });
   };
 
-  const deleteAttachment = async (fileName: string) => {
+  const deleteAttachment = (fileName: string) => {
     if (!editRecordId) return;
-    if (!confirm("Remove this attachment?")) return;
-    try {
-      await supabase.storage.from('amc-attachments').remove([`${editRecordId}/${fileName}`]);
-      fetchAttachments(editRecordId);
-    } catch(e) {
-      console.error(e);
-    }
+    setConfirmState({
+      isOpen: true,
+      title: "Remove Attachment",
+      description: "Are you sure you want to remove this attachment?",
+      onConfirm: async () => {
+        try {
+          await supabase.storage.from('amc-attachments').remove([`${editRecordId}/${fileName}`]);
+          fetchAttachments(editRecordId);
+        } catch(e) {
+          console.error(e);
+        }
+      }
+    });
   };
 
   const handleExportDossier = () => {
@@ -1318,14 +1387,14 @@ export default function AMCPage() {
             .subtitle { font-size: 13px; color: #64748b; margin: 0; }
             .badge { display: inline-block; padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
             .section { margin-bottom: 24px; }
-            .section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #2563eb; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin-bottom: 12px; }
+            .section-title { font-size: 13px; font-weight: 700; letter-spacing: 0.05em; color: #2563eb; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin-bottom: 12px; }
             .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
             .field { margin-bottom: 8px; }
-            .field-label { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; }
+            .field-label { font-size: 11px; font-weight: 600; color: #64748b; }
             .field-value { font-size: 13px; font-weight: 600; color: #0f172a; }
             table { width: 100%; border-collapse: collapse; margin-top: 8px; }
             th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #e2e8f0; font-size: 12px; }
-            th { background: #f8fafc; font-weight: 700; color: #475569; text-transform: uppercase; font-size: 11px; }
+            th { background: #f8fafc; font-weight: 700; color: #475569; font-size: 11px; }
             .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; display: flex; justify-content: space-between; }
             @media print { body { padding: 0; } .no-print { display: none; } }
           </style>
@@ -1407,7 +1476,7 @@ export default function AMCPage() {
           </div>
 
           <div class="footer">
-            <div>Generated by Enterprise Operations Portal on ${new Date().toLocaleString()}</div>
+            <div>Generated by Enterprise Operations Portal on ${formatDateTime(new Date())}</div>
             <div>Page 1 of 1</div>
           </div>
         </body>
@@ -1529,14 +1598,14 @@ export default function AMCPage() {
       />
 
       {errorAlert && (
-        <div className="p-4 rounded-xl bg-danger/10 border border-rose-500/20 flex items-start gap-3 mb-4">
+        <div className="p-4 rounded-xl bg-danger-soft border border-danger/30 flex items-start gap-3 mb-4">
           <AlertTriangle className="h-4 w-4 text-danger shrink-0 mt-0.5" />
-          <div className="flex-1 text-xs text-rose-200">{errorAlert}</div>
+          <div className="flex-1 text-xs text-danger-text">{errorAlert}</div>
         </div>
       )}
 
       {successAlert && (
-        <div className="p-4 rounded-xl bg-success/10 border border-emerald-500/20 flex items-center gap-2 text-xs text-emerald-300 mb-4">
+        <div className="p-4 rounded-xl bg-success-soft border border-success/30 flex items-center gap-2 text-xs text-success-text mb-4">
           <CheckCircle2 className="h-4 w-4 text-success" />
           <span>{successAlert}</span>
         </div>
@@ -1639,11 +1708,11 @@ export default function AMCPage() {
                           <div className="space-y-1">
                             <div className="font-bold text-foreground flex items-center gap-1.5">
                               <span>{rec.software_name}</span>
-                              <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-bold border ${
-                                dynamicRisk === 'Critical' ? 'bg-rose-500/15 text-rose-400 border-rose-500/30' :
-                                dynamicRisk === 'High' ? 'bg-amber-500/15 text-amber-400 border-amber-500/30' :
-                                dynamicRisk === 'Medium' ? 'bg-blue-500/15 text-blue-400 border-blue-500/30' :
-                                'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                              <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-semibold border ${
+                                dynamicRisk === 'Critical' ? 'bg-danger-soft text-danger border-border' :
+                                dynamicRisk === 'High' ? 'bg-warning-soft text-warning border-border' :
+                                dynamicRisk === 'Medium' ? 'bg-info-soft text-info border-border' :
+                                'bg-success-soft text-success border-border'
                               }`}>
                                 {dynamicRisk}
                               </span>
@@ -1660,8 +1729,8 @@ export default function AMCPage() {
                         <AppTableCell className="p-3">
                           <div className="space-y-0.5">
                             <div className="font-semibold text-foreground">{rec.vendor_master?.name || '-'}</div>
-                            <div className="flex items-center gap-1 text-[10px] text-amber-400 font-semibold">
-                              <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                            <div className="flex items-center gap-1 text-[10px] text-warning font-semibold">
+                              <Star className="h-3 w-3 fill-current text-warning" />
                               <span>{rec.vendor_rating || "5.0"}</span>
                             </div>
                           </div>
@@ -1677,7 +1746,7 @@ export default function AMCPage() {
                           </div>
                         </AppTableCell>
                         <AppTableCell className="p-3">
-                          <div className="font-mono font-semibold text-emerald-500">
+                          <div className="font-mono font-semibold text-success">
                             ₹ {monthlyBurn.toLocaleString('en-IN', { maximumFractionDigits: 0 })}<span className="text-[10px] text-muted font-normal">/mo</span>
                           </div>
                         </AppTableCell>
@@ -1691,8 +1760,8 @@ export default function AMCPage() {
                           {rec.expiry_date ? (
                             <div className="flex items-center gap-1.5">
                               <Calendar className="h-3 w-3 text-muted" />
-                              <span className={diffDays <= 30 ? 'text-rose-400 font-bold' : 'text-muted'}>
-                                {new Date(rec.expiry_date).toLocaleDateString()}
+                              <span className={diffDays <= 30 ? 'text-danger font-semibold' : 'text-muted'}>
+                                {formatDate(rec.expiry_date)}
                               </span>
                             </div>
                           ) : '-'}
@@ -1763,10 +1832,10 @@ export default function AMCPage() {
 
       {/* Confirmation Modal when switching from Headwise to Linewise */}
       {showLinewiseConfirmModal && (
-        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-surface/60 backdrop-blur-xs animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4 bg-[var(--overlay)] animate-in fade-in duration-200">
           <div className="relative w-full max-w-md rounded-2xl p-6 bg-surface border border-border shadow-2xl space-y-5 animate-in zoom-in-95 duration-200">
             <div className="flex items-start gap-4">
-              <div className="p-3 rounded-xl bg-amber-500/10 text-amber-500 shrink-0">
+              <div className="p-3 rounded-xl bg-warning-soft text-warning shrink-0">
                 <AlertTriangle className="h-6 w-6" />
               </div>
               <div className="space-y-1">
@@ -1802,8 +1871,8 @@ export default function AMCPage() {
 
       {/* Full-Screen Page View for Add/Edit */}
       {showModal && (
-        <div className={`fixed inset-0 z-[100] flex flex-col animate-in slide-in-from-bottom-4 duration-300 bg-surface`}>
-          <div className={`flex items-center justify-between p-6 border-b shrink-0 bg-surface border-border shadow-[var(--shadow-ambient)]`}>
+        <div className="fixed inset-0 z-[var(--z-modal)] flex flex-col animate-in slide-in-from-bottom-4 duration-300 bg-surface">
+          <div className="flex items-center justify-between p-6 border-b shrink-0 bg-surface border-border shadow-sm">
             <div>
               <h2 className="text-xl font-bold text-theme-icon">{editRecordId ? "Manage Subscription Record" : "Add New Subscription"}</h2>
             </div>
@@ -1854,7 +1923,7 @@ export default function AMCPage() {
                     variant="ghost" 
                     size="sm" 
                     onClick={() => setActiveTab('Spend History (TCO)')}
-                    className="h-7 text-xs font-bold text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10 px-2.5 rounded-lg border border-emerald-500/20"
+                    className="h-7 text-xs font-semibold text-success hover:bg-success-soft px-2.5 rounded-lg border border-border"
                     leftIcon={<TrendingUp className="h-3.5 w-3.5" />}
                   >
                     View Full Spend Timeline (TCO) →
@@ -1933,14 +2002,14 @@ export default function AMCPage() {
                       onClick={() => setCurrentStep(s.step)}
                       className={`
                         w-12 h-12 rounded-full p-0 flex items-center justify-center shrink-0 border-2 transition-all duration-300
-                        ${currentStep === s.step ? 'bg-theme-btn-primary text-white border-theme-btn-primary shadow-lg shadow-theme-btn-primary/30' : 
-                          s.step < currentStep ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/50' : 
-                          'bg-surface dark:bg-elevated/40 text-muted border-border/50 hover:border-theme-btn-primary/30'}
+                        ${currentStep === s.step ? 'bg-theme-btn-primary text-primary-foreground border-theme-btn-primary shadow-sm' : 
+                          s.step < currentStep ? 'bg-success-soft text-success border-success' : 
+                          'bg-surface text-muted border-border hover:border-theme-btn-primary/30'}
                       `}
                     >
                       {s.step < currentStep ? <CheckCircle2 className="w-5 h-5" /> : s.step}
                     </AppButton>
-                    <span className={`text-[10px] font-bold uppercase tracking-wider text-center max-w-[100px] sm:max-w-none
+                    <span className={`text-[10px] font-semibold text-center max-w-[100px] sm:max-w-none
                       ${currentStep === s.step ? 'text-theme-btn-primary' : 'text-muted'}`}>{s.label}</span>
                   </div>
                 ))}
@@ -1950,7 +2019,7 @@ export default function AMCPage() {
             {currentStep === 1 && (
               <div className="space-y-6">
                 {/* Provider / Vendor Selection & Toggleable Card */}
-                <div className={`p-6 rounded-2xl border bg-surface border-border shadow-[var(--shadow-ambient)] space-y-5`}>
+                <div className="p-6 rounded-2xl border bg-surface border-border shadow-sm space-y-5">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
                     <div className="flex items-center gap-3">
                       <div className="p-2 rounded-xl bg-theme-btn-primary/10 text-theme-icon">
@@ -1958,7 +2027,7 @@ export default function AMCPage() {
                       </div>
                       <div>
                         <h4 className="text-base font-bold text-foreground flex items-center gap-2">
-                          <span className="bg-theme-btn-primary text-white h-5 w-5 rounded flex items-center justify-center text-xs">1</span>
+                          <span className="bg-theme-btn-primary text-primary-foreground h-5 w-5 rounded flex items-center justify-center text-xs">1</span>
                           Provider / Vendor Profile
                         </h4>
                         <p className="text-xs text-muted mt-0.5">Select a vendor or view and update full vendor contact and banking information.</p>
@@ -2030,7 +2099,7 @@ export default function AMCPage() {
                       <div className="mt-4 pt-4 border-t border-border/70 space-y-6 animate-in slide-in-from-top-2 duration-300">
                         {/* Industry & Vendor Types */}
                         <div className="space-y-3">
-                          <h5 className="text-xs font-bold uppercase tracking-wider text-theme-icon">Industry & Vendor Classification</h5>
+                          <h5 className="text-xs font-semibold text-theme-icon">Industry & Vendor Classification</h5>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                               <label className="theme-label">Industry Type</label>
@@ -2050,13 +2119,19 @@ export default function AMCPage() {
                                   className="flex-1"
                                   disabled={!!formVendorId}
                                 />
-                                <AppButton type="button" disabled={!!formVendorId} variant="outline" onClick={async () => {
-                                  const newInd = prompt("Enter new Industry Type:");
-                                  if (newInd && newInd.trim()) {
-                                    await saveMasterEntity("master_industry_types", { name: newInd.trim() });
-                                    await fetchDependencies();
-                                    setFormIndustryType([...formIndustryType, newInd.trim()]);
-                                  }
+                                <AppButton type="button" disabled={!!formVendorId} variant="outline" onClick={() => {
+                                  openPrompt({
+                                    title: "Add New Industry Type",
+                                    placeholder: "Enter new industry type...",
+                                    onSubmit: async (newInd) => {
+                                      const trimmed = newInd.trim();
+                                      if (trimmed) {
+                                        await saveMasterEntity("master_industry_types", { name: trimmed });
+                                        await fetchDependencies();
+                                        setFormIndustryType(prev => [...prev, trimmed]);
+                                      }
+                                    }
+                                  });
                                 }} className="h-11 w-11 px-0 shrink-0" title="Add New Industry">
                                   <Plus className="h-4 w-4" />
                                 </AppButton>
@@ -2080,21 +2155,47 @@ export default function AMCPage() {
                                   />
                                 </div>
                                 {formIndustryType.length > 0 && (
-                                  <AppButton type="button" disabled={!!formVendorId} variant="outline" onClick={async () => {
+                                  <AppButton type="button" disabled={!!formVendorId} variant="outline" onClick={() => {
                                     let targetIndustry = formIndustryType[0];
                                     if (formIndustryType.length > 1) {
-                                       const choice = prompt(`Which industry does this new Vendor Type belong to?\nAvailable: ${formIndustryType.join(", ")}`);
-                                       if (!choice || !formIndustryType.includes(choice.trim())) {
-                                         toast.error("Invalid industry selected. Creation cancelled.");
-                                         return;
-                                       }
-                                       targetIndustry = choice.trim();
-                                    }
-                                    const newVen = prompt(`Enter new Vendor Type for ${targetIndustry}:`);
-                                    if (newVen && newVen.trim()) {
-                                      await saveMasterEntity("master_vendor_types", { name: newVen.trim(), industry_name: targetIndustry });
-                                      await fetchDependencies();
-                                      setFormVendorType([...formVendorType, newVen.trim()]);
+                                      openPrompt({
+                                        title: "Select Industry for Vendor Type",
+                                        description: `Available: ${formIndustryType.join(", ")}`,
+                                        placeholder: `e.g. ${formIndustryType[0]}`,
+                                        defaultValue: formIndustryType[0],
+                                        onSubmit: async (choice) => {
+                                          const chosen = choice.trim();
+                                          if (!formIndustryType.includes(chosen)) {
+                                            toast.error("Invalid industry selected. Creation cancelled.");
+                                            return;
+                                          }
+                                          openPrompt({
+                                            title: `New Vendor Type for ${chosen}`,
+                                            placeholder: "Enter vendor type name...",
+                                            onSubmit: async (newVen) => {
+                                              const venTrimmed = newVen.trim();
+                                              if (venTrimmed) {
+                                                await saveMasterEntity("master_vendor_types", { name: venTrimmed, industry_name: chosen });
+                                                await fetchDependencies();
+                                                setFormVendorType(prev => [...prev, venTrimmed]);
+                                              }
+                                            }
+                                          });
+                                        }
+                                      });
+                                    } else {
+                                      openPrompt({
+                                        title: `New Vendor Type for ${targetIndustry}`,
+                                        placeholder: "Enter vendor type name...",
+                                        onSubmit: async (newVen) => {
+                                          const venTrimmed = newVen.trim();
+                                          if (venTrimmed) {
+                                            await saveMasterEntity("master_vendor_types", { name: venTrimmed, industry_name: targetIndustry });
+                                            await fetchDependencies();
+                                            setFormVendorType(prev => [...prev, venTrimmed]);
+                                          }
+                                        }
+                                      });
                                     }
                                   }} className="h-11 w-11 px-0 shrink-0" title="Add New Vendor Type">
                                     <Plus className="h-4 w-4" />
@@ -2110,34 +2211,34 @@ export default function AMCPage() {
 
                         {/* Contact Person & Address */}
                         <div className="space-y-3 pt-4 border-t border-border/60">
-                          <h5 className="text-xs font-bold uppercase tracking-wider text-theme-icon">Contact Person & Address</h5>
+                          <h5 className="text-xs font-semibold text-theme-icon">Contact Person & Address</h5>
                           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div className="space-y-2">
-                              <label className="text-[10px] font-bold text-muted uppercase">Contact Name <span className="text-danger">*</span></label>
+                              <label className="text-xs font-semibold text-muted">Contact Name <span className="text-danger">*</span></label>
                               <AppInput readOnly={!!formVendorId} className={formVendorId ? "bg-surface opacity-70" : ""} value={vendorContactName} onChange={(e) => setVendorContactName(e.target.value)} placeholder="Full Name" />
                             </div>
                             <div className="space-y-2">
-                              <label className="text-[10px] font-bold text-muted uppercase">Contact Email <span className="text-danger">*</span></label>
+                              <label className="text-xs font-semibold text-muted">Contact Email <span className="text-danger">*</span></label>
                               <AppInput type="email" readOnly={!!formVendorId} className={formVendorId ? "bg-surface opacity-70" : ""} value={vendorContactEmail} onChange={(e) => setVendorContactEmail(e.target.value)} placeholder="Email Address" />
                             </div>
                             <div className="space-y-2">
-                              <label className="text-[10px] font-bold text-muted uppercase">Phone / Ext <span className="text-danger">*</span></label>
+                              <label className="text-xs font-semibold text-muted">Phone / Ext <span className="text-danger">*</span></label>
                               <AppInput readOnly={!!formVendorId} className={formVendorId ? "bg-surface opacity-70" : ""} value={vendorContactPhone} onChange={(e) => setVendorContactPhone(e.target.value)} placeholder="Contact Number" />
                             </div>
                             <div className="space-y-2">
-                              <label className="text-[10px] font-bold text-muted uppercase">Pincode / Zip</label>
+                              <label className="text-xs font-semibold text-muted">Pincode / Zip</label>
                               <AppInput readOnly={!!formVendorId} className={formVendorId ? "bg-surface opacity-70" : ""} value={vendorAddrPincode} onChange={(e) => setVendorAddrPincode(e.target.value)} placeholder="Pincode" />
                             </div>
                             <div className="space-y-2 md:col-span-2">
-                              <label className="text-[10px] font-bold text-muted uppercase">Address Line 1</label>
+                              <label className="text-xs font-semibold text-muted">Address Line 1</label>
                               <AppInput readOnly={!!formVendorId} className={formVendorId ? "bg-surface opacity-70" : ""} value={vendorAddrLine1} onChange={(e) => setVendorAddrLine1(e.target.value)} placeholder="Building, Street" />
                             </div>
                             <div className="space-y-2 md:col-span-2">
-                              <label className="text-[10px] font-bold text-muted uppercase">Address Line 2</label>
+                              <label className="text-xs font-semibold text-muted">Address Line 2</label>
                               <AppInput readOnly={!!formVendorId} className={formVendorId ? "bg-surface opacity-70" : ""} value={vendorAddrLine2} onChange={(e) => setVendorAddrLine2(e.target.value)} placeholder="Area, Landmark" />
                             </div>
                             <div className="space-y-2 md:col-span-2">
-                              <label className="text-[10px] font-bold text-muted uppercase">State</label>
+                              <label className="text-xs font-semibold text-muted">State</label>
                               <select disabled={!!formVendorId} value={vendorAddrState} onChange={(e) => {
                                 setVendorAddrState(e.target.value);
                                 setVendorAddrCity("");
@@ -2147,7 +2248,7 @@ export default function AMCPage() {
                               </select>
                             </div>
                             <div className="space-y-2 md:col-span-2">
-                              <label className="text-[10px] font-bold text-muted uppercase flex items-center justify-between">
+                              <label className="text-xs font-semibold text-muted flex items-center justify-between">
                                 <span>City</span>
                                 <AppButton variant="secondary" type="button" onClick={() => handleAddCity(vendorAddrState, setVendorAddrCity)} disabled={!!formVendorId} className="text-theme-icon hover:bg-theme-btn-primary/10 rounded-full p-0.5 transition-colors disabled:opacity-50" title="Add New City">
                                   <Plus className="h-4 w-4" />
@@ -2163,38 +2264,38 @@ export default function AMCPage() {
 
                         {/* Taxation & Bank Details */}
                         <div className="space-y-3 pt-4 border-t border-border/60">
-                          <h5 className="text-xs font-bold uppercase tracking-wider text-theme-icon">Taxation & Banking Details</h5>
+                          <h5 className="text-xs font-semibold text-theme-icon">Taxation & Banking Details</h5>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="space-y-2">
-                              <label className="text-[10px] font-bold text-muted uppercase">GST Number</label>
+                              <label className="text-xs font-semibold text-muted">GST Number</label>
                               <AppInput readOnly={!!formVendorId} className={formVendorId ? "bg-surface opacity-70" : ""} value={taxGstNumber} onChange={(e) => setTaxGstNumber(e.target.value)} placeholder="GSTIN" />
                             </div>
                             <div className="space-y-2">
-                              <label className="text-[10px] font-bold text-muted uppercase">PAN Number</label>
+                              <label className="text-xs font-semibold text-muted">PAN Number</label>
                               <AppInput readOnly={!!formVendorId} className={formVendorId ? "bg-surface opacity-70" : ""} value={taxPanNumber} onChange={(e) => setTaxPanNumber(e.target.value)} placeholder="PAN" />
                             </div>
                             <div className="space-y-2">
-                              <label className="text-[10px] font-bold text-muted uppercase">MSME Number</label>
+                              <label className="text-xs font-semibold text-muted">MSME Number</label>
                               <AppInput readOnly={!!formVendorId} className={formVendorId ? "bg-surface opacity-70" : ""} value={formMsmeNumber} onChange={(e) => setFormMsmeNumber(e.target.value)} placeholder="MSME Reg. No." />
                             </div>
                             <div className="space-y-2">
-                              <label className="text-[10px] font-bold text-muted uppercase">Bank Name</label>
+                              <label className="text-xs font-semibold text-muted">Bank Name</label>
                               <AppInput readOnly={!!formVendorId} className={formVendorId ? "bg-surface opacity-70" : ""} value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="Bank Name" />
                             </div>
                             <div className="space-y-2">
-                              <label className="text-[10px] font-bold text-muted uppercase">Account Number</label>
+                              <label className="text-xs font-semibold text-muted">Account Number</label>
                               <AppInput readOnly={!!formVendorId} className={formVendorId ? "bg-surface opacity-70" : ""} value={bankAccountNo} onChange={(e) => setBankAccountNo(e.target.value)} placeholder="Account No" />
                             </div>
                             <div className="space-y-2">
-                              <label className="text-[10px] font-bold text-muted uppercase">IFSC Code</label>
+                              <label className="text-xs font-semibold text-muted">IFSC Code</label>
                               <AppInput readOnly={!!formVendorId} className={formVendorId ? "bg-surface opacity-70" : ""} value={bankIfsc} onChange={(e) => setBankIfsc(e.target.value)} placeholder="IFSC Code" />
                             </div>
                             <div className="space-y-2">
-                              <label className="text-[10px] font-bold text-muted uppercase">Branch Name</label>
+                              <label className="text-xs font-semibold text-muted">Branch Name</label>
                               <AppInput readOnly={!!formVendorId} className={formVendorId ? "bg-surface opacity-70" : ""} value={bankBranch} onChange={(e) => setBankBranch(e.target.value)} placeholder="Branch Name" />
                             </div>
                             <div className="space-y-2">
-                              <label className="text-[10px] font-bold text-muted uppercase">Bank State</label>
+                              <label className="text-xs font-semibold text-muted">Bank State</label>
                               <select disabled={!!formVendorId} value={bankState} onChange={(e) => {
                                 setBankState(e.target.value);
                                 setBankCity("");
@@ -2204,7 +2305,7 @@ export default function AMCPage() {
                               </select>
                             </div>
                             <div className="space-y-2">
-                              <label className="text-[10px] font-bold text-muted uppercase flex items-center justify-between">
+                              <label className="text-xs font-semibold text-muted flex items-center justify-between">
                                 <span>Bank City</span>
                                 <AppButton variant="secondary" type="button" onClick={() => handleAddCity(bankState, setBankCity)} disabled={!!formVendorId} className="text-theme-icon hover:bg-theme-btn-primary/10 rounded-full p-0.5 transition-colors disabled:opacity-50" title="Add New City">
                                   <Plus className="h-4 w-4" />
@@ -2223,9 +2324,9 @@ export default function AMCPage() {
                 </div>
 
                 {/* Contract Ownership & Parameters Card */}
-                <div className={`p-6 rounded-2xl border bg-surface border-border shadow-[var(--shadow-ambient)]`}>
+                <div className="p-6 rounded-2xl border bg-surface border-border">
                   <h4 className="text-base font-bold pb-4 mb-4 border-b border-border flex items-center gap-2">
-                    <span className="bg-theme-btn-primary text-white h-5 w-5 rounded flex items-center justify-center text-xs">2</span>
+                    <span className="bg-theme-btn-primary text-primary-foreground h-5 w-5 rounded flex items-center justify-center text-xs">2</span>
                     Contract Parameters & Ownership
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -2244,7 +2345,7 @@ export default function AMCPage() {
                         <AppButton 
                           type="button"
                           onClick={handleAddContractType}
-                          className="w-11 h-11 flex items-center justify-center rounded-xl bg-theme-btn-primary text-white hover:bg-theme-btn-primary/90 transition-all flex-shrink-0"
+                          className="w-11 h-11 flex items-center justify-center rounded-xl bg-theme-btn-primary text-primary-foreground hover:bg-theme-btn-primary/90 transition-all flex-shrink-0"
                           title="Add Contract Type"
                         >
                           <Plus className="h-5 w-5" />
@@ -2290,14 +2391,14 @@ export default function AMCPage() {
                 </div>
 
                 {/* Vendor Performance & SLA Evaluation Scorecard */}
-                <div className="p-6 rounded-2xl border bg-surface border-border shadow-[var(--shadow-ambient)] space-y-4">
+                <div className="p-6 rounded-2xl border bg-surface border-border shadow-sm space-y-4">
                   <h4 className="text-base font-bold pb-4 border-b border-border flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="bg-theme-btn-primary text-white h-5 w-5 rounded flex items-center justify-center text-xs">3</span>
+                      <span className="bg-theme-btn-primary text-primary-foreground h-5 w-5 rounded flex items-center justify-center text-xs">3</span>
                       <span>Vendor Performance & Evaluation Scorecard</span>
                     </div>
-                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                      <Star className="h-3.5 w-3.5 fill-amber-400" />
+                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-warning-soft text-warning border border-border">
+                      <Star className="h-3.5 w-3.5 fill-current text-warning" />
                       <span>{formVendorRating} / 5.0 Rating</span>
                     </div>
                   </h4>
@@ -2310,13 +2411,13 @@ export default function AMCPage() {
                         onChange={(e) => setFormVendorRating(e.target.value)}
                         className="w-full h-11 px-4 rounded-xl text-sm transition-all outline-none bg-elevated text-foreground border border-border font-bold"
                       >
-                        <option value="5.0">⭐⭐⭐⭐⭐ 5.0 - Exceptional Performance</option>
-                        <option value="4.5">⭐⭐⭐⭐½ 4.5 - Exceeds Expectations</option>
-                        <option value="4.0">⭐⭐⭐⭐ 4.0 - Meets SLA Criteria</option>
-                        <option value="3.5">⭐⭐⭐½ 3.5 - Satisfactory</option>
-                        <option value="3.0">⭐⭐⭐ 3.0 - Requires Monitoring</option>
-                        <option value="2.0">⭐⭐ 2.0 - Substandard Delivery</option>
-                        <option value="1.0">⭐ 1.0 - Critical Breaches / Escalate</option>
+                        <option value="5.0">5.0 - Exceptional Performance</option>
+                        <option value="4.5">4.5 - Exceeds Expectations</option>
+                        <option value="4.0">4.0 - Meets SLA Criteria</option>
+                        <option value="3.5">3.5 - Satisfactory</option>
+                        <option value="3.0">3.0 - Requires Monitoring</option>
+                        <option value="2.0">2.0 - Substandard Delivery</option>
+                        <option value="1.0">1.0 - Critical Breaches / Escalate</option>
                       </select>
                     </div>
 
@@ -2327,10 +2428,10 @@ export default function AMCPage() {
                         onChange={(e) => setFormRiskLevel(e.target.value)}
                         className="w-full h-11 px-4 rounded-xl text-sm transition-all outline-none bg-elevated text-foreground border border-border font-bold"
                       >
-                        <option value="Low">🟢 Low Risk (Stable Operations)</option>
-                        <option value="Medium">🟡 Medium Risk (Monitoring Needed)</option>
-                        <option value="High">🟠 High Risk (Near Expiry / SLA Issues)</option>
-                        <option value="Critical">🔴 Critical (Immediate Action Required)</option>
+                        <option value="Low">Low Risk (Stable Operations)</option>
+                        <option value="Medium">Medium Risk (Monitoring Needed)</option>
+                        <option value="High">High Risk (Near Expiry / SLA Issues)</option>
+                        <option value="Critical">Critical (Immediate Action Required)</option>
                       </select>
                     </div>
 
@@ -2344,7 +2445,7 @@ export default function AMCPage() {
                         value={formSlaAdherencePercent}
                         onChange={(e) => setFormSlaAdherencePercent(e.target.value)}
                         placeholder="100.0"
-                        className="h-11 font-mono font-bold text-emerald-500"
+                        className="h-11 font-mono font-bold text-success"
                       />
                     </div>
 
@@ -2366,9 +2467,9 @@ export default function AMCPage() {
             {currentStep === 2 && (
               <div className="space-y-6">
                 {/* PO & Timeline Card */}
-                <div className={`p-6 rounded-2xl border bg-surface border-border shadow-[var(--shadow-ambient)]`}>
+                <div className="p-6 rounded-2xl border bg-surface border-border shadow-sm">
                   <h4 className="text-base font-bold pb-4 mb-4 border-b border-border flex items-center gap-2">
-                    <span className="bg-theme-btn-primary text-white h-5 w-5 rounded flex items-center justify-center text-xs">1</span>
+                    <span className="bg-theme-btn-primary text-primary-foreground h-5 w-5 rounded flex items-center justify-center text-xs">1</span>
                     Purchase Order & Timeline
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -2410,9 +2511,9 @@ export default function AMCPage() {
                 </div>
 
                 {/* Commercials, Currency & Payment Terms */}
-                <div className={`p-6 rounded-2xl border bg-surface border-border shadow-[var(--shadow-ambient)] space-y-6`}>
+                <div className="p-6 rounded-2xl border bg-surface border-border shadow-sm space-y-6">
                   <h4 className="text-base font-bold pb-4 border-b border-border flex items-center gap-2">
-                    <span className="bg-theme-btn-primary text-white h-5 w-5 rounded flex items-center justify-center text-xs">2</span>
+                    <span className="bg-theme-btn-primary text-primary-foreground h-5 w-5 rounded flex items-center justify-center text-xs">2</span>
                     Commercials & Payment Terms
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -2496,9 +2597,9 @@ export default function AMCPage() {
             {currentStep === 3 && (
               <div className="space-y-6">
                 {/* Software Specifications */}
-                <div className={`p-6 rounded-2xl border bg-surface border-border shadow-[var(--shadow-ambient)] space-y-5`}>
+                <div className="p-6 rounded-2xl border bg-surface border-border shadow-sm space-y-5">
                   <h4 className="text-base font-bold pb-4 border-b border-border flex items-center gap-2">
-                    <span className="bg-theme-btn-primary text-white h-5 w-5 rounded flex items-center justify-center text-xs">1</span>
+                    <span className="bg-theme-btn-primary text-primary-foreground h-5 w-5 rounded flex items-center justify-center text-xs">1</span>
                     Software Specifications
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -2514,9 +2615,9 @@ export default function AMCPage() {
                 </div>
 
                 {/* License & Usage Tracking */}
-                <div className={`p-6 rounded-2xl border bg-surface border-border shadow-[var(--shadow-ambient)]`}>
+                <div className="p-6 rounded-2xl border bg-surface border-border shadow-sm">
                   <h4 className="text-base font-bold pb-4 mb-4 border-b border-border flex items-center gap-2">
-                    <span className="bg-theme-btn-primary text-white h-5 w-5 rounded flex items-center justify-center text-xs">2</span>
+                    <span className="bg-theme-btn-primary text-primary-foreground h-5 w-5 rounded flex items-center justify-center text-xs">2</span>
                     License & Usage Tracking
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -2536,9 +2637,9 @@ export default function AMCPage() {
                 </div>
 
                 {/* SLA & Support */}
-                <div className={`p-6 rounded-2xl border bg-surface border-border shadow-[var(--shadow-ambient)]`}>
+                <div className="p-6 rounded-2xl border bg-surface border-border shadow-sm">
                   <h4 className="text-base font-bold pb-4 mb-4 border-b border-border flex items-center gap-2">
-                    <span className="bg-theme-btn-primary text-white h-5 w-5 rounded flex items-center justify-center text-xs">3</span>
+                    <span className="bg-theme-btn-primary text-primary-foreground h-5 w-5 rounded flex items-center justify-center text-xs">3</span>
                     SLA & Support Terms
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -2567,7 +2668,7 @@ export default function AMCPage() {
                 </div>
 
                 {/* Governance & Compliance */}
-                <div className={`p-6 rounded-2xl border overflow-hidden bg-surface border-border shadow-[var(--shadow-ambient)]`}>
+                <div className="p-6 rounded-2xl border overflow-hidden bg-surface border-border shadow-sm">
                   <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border/50">
                     <div className={`p-2 rounded-xl bg-theme-btn-primary/10 text-theme-btn-primary`}>
                       <ShieldCheck className="h-5 w-5" />
@@ -2625,11 +2726,11 @@ export default function AMCPage() {
             {/* STEP 4: ITEMWISE SOLUTIONS */}
             {currentStep === 4 && (
               <div className="space-y-6">
-                <div className={`p-6 rounded-2xl border overflow-hidden bg-surface border-border shadow-[var(--shadow-ambient)] space-y-6`}>
+                <div className="p-6 rounded-2xl border overflow-hidden bg-surface border-border shadow-sm space-y-6">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
                     <div>
                       <h4 className="text-base font-bold flex items-center gap-2">
-                        <span className="bg-theme-btn-primary text-white h-5 w-5 rounded flex items-center justify-center text-xs">1</span>
+                        <span className="bg-theme-btn-primary text-primary-foreground h-5 w-5 rounded flex items-center justify-center text-xs">1</span>
                         Solution Name & Line Items
                       </h4>
                     </div>
@@ -2668,7 +2769,7 @@ export default function AMCPage() {
 
                   <div className="space-y-4">
                     {solutionLineItems.length === 0 ? (
-                      <div className="py-8 text-center text-muted border border-dashed border-border rounded-xl">
+                      <div className="py-8 text-center text-muted border border-border bg-sunken/40 rounded-xl">
                         No line items added yet. Click "Add Line Item" to define specific software modules or products.
                       </div>
                     ) : (
@@ -2686,13 +2787,13 @@ export default function AMCPage() {
                           
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-2">
                             <div className="space-y-1.5">
-                              <label className="text-xs font-semibold text-muted uppercase tracking-wider">
+                              <label className="text-xs font-semibold text-muted">
                                 Resolution Name {isLineItemWise && <span className="text-danger">*</span>}
                               </label>
                               <AppInput value={item.resolutionName} onChange={(e) => handleLineItemChange(item.id, "resolutionName", e.target.value)} placeholder="e.g., Module / Product Name" className="h-10 text-sm" />
                             </div>
                             <div className="space-y-1.5">
-                              <label className="text-xs font-semibold text-muted uppercase tracking-wider">License Key</label>
+                              <label className="text-xs font-semibold text-muted">License Key</label>
                               <div className="relative">
                                 <AppInput type={revealedLicenseKeys[item.id] ? "text" : "password"} value={item.licenseKey || ""} onChange={(e) => handleLineItemChange(item.id, "licenseKey", e.target.value)} placeholder="License Key" className="h-10 text-sm pr-8" />
                                 {item.licenseKey && (
@@ -2703,7 +2804,7 @@ export default function AMCPage() {
                               </div>
                             </div>
                             <div className="space-y-1.5">
-                              <label className="text-xs font-semibold text-muted uppercase tracking-wider">Remark</label>
+                              <label className="text-xs font-semibold text-muted">Remark</label>
                               <AppInput value={item.remark} onChange={(e) => handleLineItemChange(item.id, "remark", e.target.value)} placeholder="Remark or notes" className="h-10 text-sm" />
                             </div>
                           </div>
@@ -2711,7 +2812,7 @@ export default function AMCPage() {
                           {/* Line Item Dates: Purchase Date *, Put to Use Date, Renewal Period, Expiry Date */}
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-3 rounded-xl bg-elevated/40 border border-border/60">
                             <div className="space-y-1.5">
-                              <label className="text-xs font-semibold text-muted uppercase tracking-wider">
+                              <label className="text-xs font-semibold text-muted">
                                 Purchase Date <span className="text-danger">*</span>
                               </label>
                               <AppInput 
@@ -2722,7 +2823,7 @@ export default function AMCPage() {
                               />
                             </div>
                             <div className="space-y-1.5">
-                              <label className="text-xs font-semibold text-muted uppercase tracking-wider">
+                              <label className="text-xs font-semibold text-muted">
                                 Put to Use Date
                               </label>
                               <AppInput 
@@ -2733,7 +2834,7 @@ export default function AMCPage() {
                               />
                             </div>
                             <div className="space-y-1.5">
-                              <label className="text-xs font-semibold text-muted uppercase tracking-wider">
+                              <label className="text-xs font-semibold text-muted">
                                 Renewal Period
                               </label>
                               <select 
@@ -2750,7 +2851,7 @@ export default function AMCPage() {
                               </select>
                             </div>
                             <div className="space-y-1.5">
-                              <label className="text-xs font-semibold text-muted uppercase tracking-wider">
+                              <label className="text-xs font-semibold text-muted">
                                 Expiry Date
                               </label>
                               <AppInput 
@@ -2765,7 +2866,7 @@ export default function AMCPage() {
                           {/* Commercials: Qty, Rate, Taxes, Discount, Net Amount */}
                           <div className={`grid grid-cols-2 md:grid-cols-3 ${isLineItemWise ? 'lg:grid-cols-7' : 'lg:grid-cols-2'} gap-4 items-start`}>
                             <div className="space-y-1.5 col-span-1">
-                              <label className="text-xs font-semibold text-muted uppercase tracking-wider">
+                              <label className="text-xs font-semibold text-muted">
                                 Qty {isLineItemWise && <span className="text-danger">*</span>}
                               </label>
                               <AppInput type="number" value={item.qty} onChange={(e) => handleLineItemChange(item.id, "qty", e.target.value)} className="h-10 text-sm" min={1} />
@@ -2774,38 +2875,38 @@ export default function AMCPage() {
                             {isLineItemWise && (
                               <>
                                 <div className="space-y-1.5 col-span-1">
-                                  <label className="text-xs font-semibold text-muted uppercase tracking-wider">
+                                  <label className="text-xs font-semibold text-muted">
                                     Rate <span className="text-danger">*</span>
                                   </label>
                                   <AppInput type="number" step="0.01" value={item.rate} onChange={(e) => handleLineItemChange(item.id, "rate", e.target.value)} className="h-10 text-sm px-2" />
                                 </div>
                                 <div className="space-y-1.5 col-span-1">
-                                  <label className="text-xs font-semibold text-muted uppercase tracking-wider">CGST (%)</label>
+                                  <label className="text-xs font-semibold text-muted">CGST (%)</label>
                                   <div className="flex flex-col gap-1">
                                     <AppInput type="number" value={item.cgstPercent} onChange={(e) => handleLineItemChange(item.id, "cgstPercent", e.target.value)} className="h-10 text-sm px-2" placeholder="%" />
                                     <span className="text-[10px] text-muted truncate leading-none">Amt: {item.cgstAmount?.toFixed(2) || "0.00"}</span>
                                   </div>
                                 </div>
                                 <div className="space-y-1.5 col-span-1">
-                                  <label className="text-xs font-semibold text-muted uppercase tracking-wider">SGST (%)</label>
+                                  <label className="text-xs font-semibold text-muted">SGST (%)</label>
                                   <div className="flex flex-col gap-1">
                                     <AppInput type="number" value={item.sgstPercent} onChange={(e) => handleLineItemChange(item.id, "sgstPercent", e.target.value)} className="h-10 text-sm px-2" placeholder="%" />
                                     <span className="text-[10px] text-muted truncate leading-none">Amt: {item.sgstAmount?.toFixed(2) || "0.00"}</span>
                                   </div>
                                 </div>
                                 <div className="space-y-1.5 col-span-1">
-                                  <label className="text-xs font-semibold text-muted uppercase tracking-wider">IGST (%)</label>
+                                  <label className="text-xs font-semibold text-muted">IGST (%)</label>
                                   <div className="flex flex-col gap-1">
                                     <AppInput type="number" value={item.igstPercent} onChange={(e) => handleLineItemChange(item.id, "igstPercent", e.target.value)} className="h-10 text-sm px-2" placeholder="%" />
                                     <span className="text-[10px] text-muted truncate leading-none">Amt: {item.igstAmount?.toFixed(2) || "0.00"}</span>
                                   </div>
                                 </div>
                                 <div className="space-y-1.5 col-span-1">
-                                  <label className="text-xs font-semibold text-muted uppercase tracking-wider">Discount</label>
+                                  <label className="text-xs font-semibold text-muted">Discount</label>
                                   <AppInput type="number" value={item.discount} onChange={(e) => handleLineItemChange(item.id, "discount", e.target.value)} className="h-10 text-sm px-2" />
                                 </div>
                                 <div className="space-y-1.5 col-span-1">
-                                  <label className="text-xs font-semibold text-muted uppercase tracking-wider">Net Amount</label>
+                                  <label className="text-xs font-semibold text-muted">Net Amount</label>
                                   <div className="h-10 px-2 rounded-lg border bg-surface/80 border-border flex items-center justify-between font-mono font-bold text-xs text-theme-icon">
                                     <span>{formCurrency === 'INR' ? '₹' : formCurrency === 'USD' ? '$' : formCurrency === 'EUR' ? '€' : '£'}</span>
                                     <span className="truncate">{item.netAmount?.toFixed(2) || "0.00"}</span>
@@ -2818,11 +2919,11 @@ export default function AMCPage() {
                           {/* Additional API / Support Software on Line Item */}
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
                             <div className="space-y-1.5">
-                              <label className="text-xs font-semibold text-muted uppercase tracking-wider">Additional API / Support Software (If Any)</label>
+                              <label className="text-xs font-semibold text-muted">Additional API / Support Software (If Any)</label>
                               <AppInput value={item.additionalApi || ""} onChange={(e) => handleLineItemChange(item.id, "additionalApi", e.target.value)} placeholder="e.g., Twilio SMS, Maps API, Payment Gateway" className="h-10 text-sm" />
                             </div>
                             <div className="space-y-1.5">
-                              <label className="text-xs font-semibold text-muted uppercase tracking-wider">Additional API Amount</label>
+                              <label className="text-xs font-semibold text-muted">Additional API Amount</label>
                               <AppInput type="number" step="0.01" value={item.additionalApiAmount ?? ""} onChange={(e) => handleLineItemChange(item.id, "additionalApiAmount", e.target.value)} placeholder="0.00" className="h-10 text-sm" />
                             </div>
                           </div>
@@ -2832,7 +2933,7 @@ export default function AMCPage() {
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                               <div className="flex items-center gap-2">
                                 <DollarSign className="h-4 w-4 text-theme-icon" />
-                                <span className="text-xs font-bold text-foreground uppercase tracking-wider">Line Item Payment Terms</span>
+                                <span className="text-xs font-semibold text-foreground">Line Item Payment Terms</span>
                               </div>
                               <div className="w-full sm:w-64">
                                 <select
@@ -2870,7 +2971,7 @@ export default function AMCPage() {
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
                                 <Paperclip className="h-4 w-4 text-theme-icon" />
-                                <span className="text-xs font-bold text-foreground uppercase tracking-wider">Line Item Documents & Attachments</span>
+                                <span className="text-xs font-semibold text-foreground">Line Item Documents & Attachments</span>
                                 <span className="text-[10px] text-danger font-semibold bg-danger/10 px-2 py-0.5 rounded-full">PO & Agreement Mandatory</span>
                               </div>
                               <AppButton 
@@ -2978,7 +3079,7 @@ export default function AMCPage() {
                           
                           {isLineItemWise && (
                             <div className="pt-3 mt-2 border-t border-border/50 flex items-center justify-end">
-                              <div className="text-sm font-semibold text-muted mr-3 uppercase tracking-wider">Item Net Amount:</div>
+                              <div className="text-sm font-semibold text-muted mr-3">Item Net Amount:</div>
                               <div className="text-xl font-bold text-theme-icon">{formCurrency === 'INR' ? '₹' : formCurrency === 'USD' ? '$' : formCurrency === 'EUR' ? '€' : '£'} {item.netAmount?.toFixed(2) || "0.00"}</div>
                             </div>
                           )}
@@ -2992,8 +3093,8 @@ export default function AMCPage() {
                           Line-item wise total calculated ({solutionLineItems.length} item{solutionLineItems.length === 1 ? '' : 's'})
                         </div>
                         <div className="flex items-center gap-3">
-                          <div className="text-base font-bold text-muted uppercase tracking-wider">Total Net Amount:</div>
-                          <div className="text-2xl font-black text-success">
+                          <div className="text-base font-semibold text-muted">Total Net Amount:</div>
+                          <div className="text-2xl font-bold text-success">
                             {formCurrency === 'INR' ? '₹' : formCurrency === 'USD' ? '$' : formCurrency === 'EUR' ? '€' : '£'}{' '}
                             {solutionLineItems.reduce((sum, i) => sum + (Number(i.netAmount) || 0), 0).toFixed(2)}
                           </div>
@@ -3002,7 +3103,7 @@ export default function AMCPage() {
                     ) : (
                       <div className="p-5 border border-border bg-surface rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
                         <div>
-                          <label className="text-sm font-bold text-foreground uppercase tracking-wider block">
+                          <label className="text-sm font-semibold text-foreground block">
                             Total Net Amount (Manual Headwise)
                           </label>
                           <p className="text-xs text-muted mt-0.5">Overall cost is managed at PO Details step.</p>
@@ -3029,10 +3130,10 @@ export default function AMCPage() {
             {currentStep === 5 && (
               <div className="space-y-6">
                 {/* Contract Head Documents */}
-                <div className={`p-6 rounded-2xl border bg-surface border-border shadow-[var(--shadow-ambient)] space-y-6`}>
+                <div className="p-6 rounded-2xl border bg-surface border-border shadow-sm space-y-6">
                   <div className="flex items-center justify-between pb-4 border-b border-border">
                     <div className="flex items-center gap-2">
-                      <span className="bg-theme-btn-primary text-white h-5 w-5 rounded flex items-center justify-center text-xs">1</span>
+                      <span className="bg-theme-btn-primary text-primary-foreground h-5 w-5 rounded flex items-center justify-center text-xs">1</span>
                       <h4 className="text-base font-bold text-foreground">Contract Documents & Attachments</h4>
                     </div>
                     <AppButton type="button" variant="outline" size="sm" onClick={() => {
@@ -3043,10 +3144,10 @@ export default function AMCPage() {
                   </div>
 
                   {/* Mandatory Notice */}
-                  <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-start gap-3">
-                    <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-                    <div className="text-xs text-amber-200 leading-relaxed">
-                      <strong className="font-bold text-amber-300">Mandatory Documents:</strong> Both <span className="underline font-bold">Purchase Order (PO)</span> and <span className="underline font-bold">Agreement / Contract</span> documents must be attached for this contract before finalizing.
+                  <div className="p-4 rounded-xl bg-warning-soft border border-border flex items-start gap-3">
+                    <AlertTriangle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
+                    <div className="text-xs text-muted leading-relaxed">
+                      <strong className="font-semibold text-warning">Mandatory Documents:</strong> Both <span className="underline font-semibold text-foreground">Purchase Order (PO)</span> and <span className="underline font-semibold text-foreground">Agreement / Contract</span> documents must be attached for this contract before finalizing.
                     </div>
                   </div>
 
@@ -3076,7 +3177,7 @@ export default function AMCPage() {
                       </div>
                     ))}
                     {attachments.length === 0 && (
-                      <div className={`text-sm text-muted italic p-6 text-center border-2 border-dashed rounded-xl border-border`}>
+                      <div className="text-sm text-muted italic p-6 text-center border border-border bg-sunken/40 rounded-xl">
                         No new contract documents staged for upload. Click "Add Document" above to attach.
                       </div>
                     )}
@@ -3140,9 +3241,9 @@ export default function AMCPage() {
                 </div>
 
                 {/* Additional Notes */}
-                <div className={`p-6 rounded-2xl border bg-surface border-border shadow-[var(--shadow-ambient)] space-y-4`}>
+                <div className="p-6 rounded-2xl border bg-surface border-border shadow-sm space-y-4">
                   <div className="flex items-center gap-2">
-                    <span className="bg-theme-btn-primary text-white h-5 w-5 rounded flex items-center justify-center text-xs">2</span>
+                    <span className="bg-theme-btn-primary text-primary-foreground h-5 w-5 rounded flex items-center justify-center text-xs">2</span>
                     <h4 className="text-base font-bold text-foreground">Additional Notes & Remarks</h4>
                   </div>
                   <textarea 
@@ -3154,7 +3255,7 @@ export default function AMCPage() {
                 </div>
 
                 {/* Final Review Summary Card */}
-                <div className={`p-6 rounded-2xl border bg-elevated/40 border-border/80 shadow-[var(--shadow-ambient)] space-y-4`}>
+                <div className="p-6 rounded-2xl border bg-elevated/40 border-border/80 shadow-sm space-y-4">
                   <div className="flex items-center gap-2 pb-3 border-b border-border/60">
                     <ClipboardCheck className="h-5 w-5 text-theme-icon" />
                     <h4 className="text-base font-bold text-foreground">Contract Review Summary</h4>
@@ -3198,7 +3299,7 @@ export default function AMCPage() {
             )}
 
             {/* MODAL NAVIGATION FOOTER */}
-            <div className={`fixed bottom-0 left-0 w-full p-4 border-t shadow-2xl flex items-center justify-between gap-4 z-50 bg-surface/90 border-border backdrop-blur-md`}>
+            <div className="fixed bottom-0 left-0 w-full p-4 border-t shadow-2xl flex items-center justify-between gap-4 z-50 bg-surface border-border">
               <div className="w-full max-w-[98%] mx-auto flex justify-between items-center gap-4">
                 <div className="text-sm font-medium text-muted">
                   Step {currentStep} of 5
@@ -3305,17 +3406,17 @@ export default function AMCPage() {
 
       {/* Validation Error Popup */}
       {errorAlert && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-surface/60 animate-in fade-in duration-200">
-          <div className={`p-6 rounded-2xl shadow-2xl max-w-sm w-full mx-4 border animate-in zoom-in-95 duration-200 bg-surface border-border`}>
+        <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-[var(--overlay)] animate-in fade-in duration-200">
+          <div className="p-6 rounded-2xl shadow-2xl max-w-sm w-full mx-4 border animate-in zoom-in-95 duration-200 bg-surface border-border">
             <div className="flex flex-col items-center text-center space-y-4">
-              <div className="h-14 w-14 rounded-full bg-danger/10 flex items-center justify-center">
+              <div className="h-14 w-14 rounded-full bg-danger-soft flex items-center justify-center">
                 <AlertTriangle className="h-7 w-7 text-danger" />
               </div>
               <div>
                 <h3 className="text-lg font-bold text-danger">Validation Error</h3>
-                <p className={`text-sm mt-2 text-muted`}>{errorAlert}</p>
+                <p className="text-sm mt-2 text-muted">{errorAlert}</p>
               </div>
-              <AppButton variant="primary" className="w-full mt-4 bg-danger hover:bg-danger border-none text-white" onClick={() => setErrorAlert(null)}>
+              <AppButton variant="primary" className="w-full mt-4 bg-danger hover:bg-danger border-none text-primary-foreground" onClick={() => setErrorAlert(null)}>
                 Okay, got it
               </AppButton>
             </div>
@@ -3325,13 +3426,18 @@ export default function AMCPage() {
 
       {/* Reveal License Modal */}
       {revealLicenseModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4 bg-[var(--overlay)] animate-in fade-in duration-200">
           <div className="bg-surface border border-border w-full max-w-md rounded-2xl shadow-2xl flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b border-border/50">
+            <div className="flex items-center justify-between p-4 border-b border-border">
               <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
                 <Lock className="h-5 w-5 text-theme-icon" /> Reveal License Key
               </h2>
-              <button onClick={() => setRevealLicenseModal(null)} className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface/5 transition-colors">
+              <button 
+                type="button" 
+                aria-label="Close reveal license modal" 
+                onClick={() => setRevealLicenseModal(null)} 
+                className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+              >
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -3350,9 +3456,9 @@ export default function AMCPage() {
                 />
               </div>
             </div>
-            <div className="p-4 border-t border-border/50 flex justify-end gap-3 bg-elevated">
-              <AppButton variant="secondary" onClick={() => setRevealLicenseModal(null)}>Cancel</AppButton>
-              <AppButton variant="primary" onClick={handleRevealLicenseSubmit}>Confirm & Reveal</AppButton>
+            <div className="p-4 border-t border-border flex justify-end gap-3 bg-elevated">
+              <AppButton type="button" variant="secondary" onClick={() => setRevealLicenseModal(null)}>Cancel</AppButton>
+              <AppButton type="button" variant="primary" onClick={handleRevealLicenseSubmit}>Confirm & Reveal</AppButton>
             </div>
           </div>
         </div>

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { X, Clock, User, AlertTriangle, ArrowRight, Loader2 } from "lucide-react";
 import { AppButton } from "@/components/ui/AppButton";
+import { formatDateTime } from "@/components/ui/data";
 
 
 export function AMCHistoryModal({
@@ -70,13 +71,13 @@ export function AMCHistoryModal({
       case "INSERT": return "text-success bg-success/10";
       case "UPDATE": return "text-theme-icon bg-theme-btn-primary/10";
       case "DELETE": return "text-danger bg-danger/10";
-      default: return "text-muted bg-gray-500/10";
+      default: return "text-muted bg-sunken";
     }
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-surface/60 animate-in fade-in duration-200">
-      <div className={`relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl  overflow-hidden ${ "theme-card-structural " } border`}>
+    <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4 bg-[var(--overlay)] animate-in fade-in duration-200">
+      <div className={`relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl overflow-hidden ${ "theme-card-structural " } border`}>
         
         {/* Header */}
         <div className={`flex items-center justify-between p-5 border-b shrink-0 border-border bg-elevated`}>
@@ -89,7 +90,12 @@ export function AMCHistoryModal({
               <p className="text-xs text-muted">Immutable changelog for this record</p>
             </div>
           </div>
-          <AppButton variant="destructive" onClick={onClose} className="p-2 rounded-full hover:bg-danger/10 text-muted hover:text-danger transition-colors">
+          <AppButton 
+            variant="ghost" 
+            aria-label="Close audit history"
+            onClick={onClose} 
+            className="p-2 rounded-full hover:bg-danger-soft text-muted hover:text-danger transition-colors"
+          >
             <X className="h-5 w-5" />
           </AppButton>
         </div>
@@ -117,7 +123,7 @@ export function AMCHistoryModal({
                     
                     <div className="flex items-center justify-between mb-3 border-b border-border/20 pb-3">
                       <div className="flex items-center gap-3">
-                        <span className={`px-2.5 py-1 rounded-md text-xs font-bold uppercase ${getOperationColor(log.operation)}`}>
+                        <span className={`px-2.5 py-1 rounded-md text-xs font-semibold ${getOperationColor(log.operation)}`}>
                           {log.operation}
                         </span>
                         <div className="flex items-center gap-1.5 text-sm text-muted">
@@ -125,15 +131,15 @@ export function AMCHistoryModal({
                           <span>{log.actor?.full_name || 'System / Unknown'}</span>
                         </div>
                       </div>
-                      <span className="text-xs text-muted font-medium bg-gray-500/10 px-2 py-1 rounded">
-                        {new Date(log.created_at).toLocaleString()}
+                      <span className="text-xs text-muted font-medium bg-sunken px-2 py-1 rounded">
+                        {formatDateTime(log.created_at)}
                       </span>
                     </div>
 
                     {/* Diff Viewer for Updates */}
                     {log.operation === 'UPDATE' && log.before_values && log.after_values && (
                       <div className="mt-4 space-y-3">
-                        <p className="text-xs font-semibold text-muted uppercase tracking-wider">Changes Detected</p>
+                        <p className="text-xs font-semibold text-muted">Changes Detected</p>
                         <div className="space-y-2">
                           {Object.keys(log.after_values).map((key) => {
                             const before = log.before_values[key];
