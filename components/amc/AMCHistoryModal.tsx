@@ -68,25 +68,25 @@ export function AMCHistoryModal({
 
   const getOperationColor = (op: string) => {
     switch (op) {
-      case "INSERT": return "text-success bg-success/10";
-      case "UPDATE": return "text-theme-icon bg-accent-soft";
-      case "DELETE": return "text-danger bg-danger/10";
+      case "INSERT": return "text-success-text bg-success-soft";
+      case "UPDATE": return "text-accent-soft-text bg-accent-soft";
+      case "DELETE": return "text-danger-text bg-danger-soft";
       default: return "text-muted bg-sunken";
     }
   };
 
   return (
     <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4 bg-[var(--overlay)] animate-in fade-in duration-200">
-      <div className={`relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl overflow-hidden ${ "theme-card-structural " } border`}>
+      <div className={`relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-lg overflow-hidden ${ "theme-card-structural " } border`}>
         
         {/* Header */}
         <div className={`flex items-center justify-between p-5 border-b shrink-0 border-border bg-elevated`}>
           <div className="flex items-center gap-3">
             <div className={`p-2 rounded-lg bg-surface shadow-sm`}>
-              <Clock className={`h-5 w-5 text-theme-icon`} />
+              <Clock className={`h-5 w-5 text-accent-soft-text`} />
             </div>
             <div>
-              <h2 className="text-lg font-bold">Audit history</h2>
+              <h2 className="text-lg font-semibold">Audit history</h2>
               <p className="text-xs text-muted">Immutable changelog for this record</p>
             </div>
           </div>
@@ -94,7 +94,7 @@ export function AMCHistoryModal({
             variant="ghost" 
             aria-label="Close audit history"
             onClick={onClose} 
-            className="p-2 rounded-full hover:bg-danger-soft text-muted hover:text-danger transition-colors"
+            className="p-2 rounded-full hover:bg-danger-soft text-muted hover:text-danger-text transition-colors"
           >
             <X className="h-5 w-5" />
           </AppButton>
@@ -104,7 +104,7 @@ export function AMCHistoryModal({
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12 text-muted">
-              <Loader2 className="h-8 w-8 animate-spin mb-4 text-theme-icon" />
+              <Loader2 className="h-8 w-8 animate-spin mb-4 text-accent-soft-text" />
               <p>Loading audit trail…</p>
             </div>
           ) : logs.length === 0 ? (
@@ -119,7 +119,7 @@ export function AMCHistoryModal({
                   {/* Timeline Node */}
                   <div className={`absolute -left-[11px] top-1 h-5 w-5 rounded-full border-4 theme-card-structural`} />
                   
-                  <div className={`p-4 rounded-xl theme-card-structural shadow-sm`}>
+                  <div className={`p-4 rounded-lg theme-card-structural shadow-sm`}>
                     
                     <div className="flex items-center justify-between mb-3 border-b border-border/20 pb-3">
                       <div className="flex items-center gap-3">
@@ -155,7 +155,7 @@ export function AMCHistoryModal({
                                 <div className="flex-1 flex items-center gap-3 truncate">
                                   <span className="truncate text-danger/80 line-through opacity-80 max-w-[40%]">{String(before || 'null')}</span>
                                   <ArrowRight className="h-3.5 w-3.5 text-muted shrink-0" />
-                                  <span className="truncate text-success font-medium max-w-[40%]">{String(after || 'null')}</span>
+                                  <span className="truncate text-success-text font-medium max-w-[40%]">{String(after || 'null')}</span>
                                 </div>
                               </div>
                             );
@@ -169,7 +169,7 @@ export function AMCHistoryModal({
                     )}
 
                     {log.operation === 'DELETE' && (
-                       <p className="text-sm text-danger">Record was deleted.</p>
+                       <p className="text-sm text-danger-text">Record was deleted.</p>
                     )}
 
                   </div>

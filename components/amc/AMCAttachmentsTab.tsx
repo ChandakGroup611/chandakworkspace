@@ -135,19 +135,19 @@ export function AMCAttachmentsTab({ amcId, isLightMode }: { amcId: string, isLig
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row gap-6">
         {/* Upload Form */}
-        <div className="w-full md:w-1/3 p-5 rounded-2xl border bg-surface/50 border-border">
-          <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
-            <Paperclip className="h-4 w-4 text-theme-icon" />
+        <div className="w-full md:w-1/3 p-5 rounded-lg border bg-surface/50 border-border">
+          <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+            <Paperclip className="h-4 w-4 text-accent-soft-text" />
             Upload document
           </h3>
           
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-xs font-bold text-muted">Document type</label>
+              <label className="text-xs font-semibold text-muted">Document type</label>
               <select 
                 value={fileType}
                 onChange={(e) => setFileType(e.target.value)}
-                className="w-full h-10 px-3 rounded-lg text-sm bg-elevated border border-border text-foreground focus:outline-none focus:border-theme-btn-primary"
+                className="w-full h-10 px-3 rounded-lg text-sm bg-elevated border border-border text-foreground focus:outline-none focus:border-primary"
               >
                 <option value="MSA">Master service agreement (MSA)</option>
                 <option value="NDA">Non-disclosure agreement (NDA)</option>
@@ -159,19 +159,19 @@ export function AMCAttachmentsTab({ amcId, isLightMode }: { amcId: string, isLig
             </div>
             
             <div className="space-y-2">
-              <label className="text-xs font-bold text-muted">Select file</label>
+              <label className="text-xs font-semibold text-muted">Select file</label>
               <input 
                 id="file-upload"
                 type="file" 
                 onChange={handleFileChange}
-                className="w-full text-sm text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-accent-soft file:text-theme-btn-primary hover:file:bg-accent-soft"
+                className="w-full text-sm text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-accent-soft file:text-primary hover:file:bg-accent-soft"
               />
             </div>
 
             {fileToUpload && (
-              <div className="flex items-center justify-between p-2.5 rounded-xl border border-border bg-surface text-xs">
+              <div className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-surface text-xs">
                 <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
-                  <Paperclip className="h-4 w-4 text-theme-icon shrink-0" />
+                  <Paperclip className="h-4 w-4 text-accent-soft-text shrink-0" />
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold truncate text-foreground" title={fileToUpload.name}>
                       {fileToUpload.name}
@@ -209,7 +209,7 @@ export function AMCAttachmentsTab({ amcId, isLightMode }: { amcId: string, isLig
                       document.body.removeChild(a);
                       URL.revokeObjectURL(url);
                     }}
-                    className="p-1 h-7 w-7 text-theme-icon hover:bg-accent-soft rounded flex items-center justify-center"
+                    className="p-1 h-7 w-7 text-accent-soft-text hover:bg-accent-soft rounded flex items-center justify-center"
                     title="Download document"
                   >
                     <Download className="h-3.5 w-3.5" />
@@ -223,7 +223,7 @@ export function AMCAttachmentsTab({ amcId, isLightMode }: { amcId: string, isLig
                       const input = document.getElementById('file-upload') as HTMLInputElement;
                       if (input) input.value = '';
                     }}
-                    className="p-1 h-7 w-7 text-muted hover:text-danger hover:bg-danger/10 rounded flex items-center justify-center"
+                    className="p-1 h-7 w-7 text-muted hover:text-danger-text hover:bg-danger-soft rounded flex items-center justify-center"
                     title="Remove file"
                   >
                     <X className="h-3.5 w-3.5" />
@@ -244,7 +244,7 @@ export function AMCAttachmentsTab({ amcId, isLightMode }: { amcId: string, isLig
         </div>
 
         {/* Attachments List */}
-        <div className="w-full md:w-2/3 border border-border rounded-2xl overflow-hidden bg-surface">
+        <div className="w-full md:w-2/3 border border-border rounded-lg overflow-hidden bg-surface">
           <AppTable className="w-full text-left border-collapse text-sm">
             <AppTableHeader className="bg-surface/50">
               <AppTableRow>
@@ -259,7 +259,7 @@ export function AMCAttachmentsTab({ amcId, isLightMode }: { amcId: string, isLig
               {loading ? (
                 <AppTableRow>
                   <AppTableCell colSpan={5} className="p-8 text-center text-muted">
-                    <Loader2 className="h-6 w-6 animate-spin mx-auto text-theme-icon" />
+                    <Loader2 className="h-6 w-6 animate-spin mx-auto text-accent-soft-text" />
                   </AppTableCell>
                 </AppTableRow>
               ) : attachments.length === 0 ? (
@@ -271,10 +271,10 @@ export function AMCAttachmentsTab({ amcId, isLightMode }: { amcId: string, isLig
                 </AppTableRow>
               ) : (
                 attachments.map((file) => (
-                  <AppTableRow key={file.id} className="border-t border-border hover:bg-elevated/50 transition-colors">
+                  <AppTableRow key={file.id} className="border-t border-border hover:bg-sunken transition-colors">
                     <AppTableCell className="p-3 font-medium">
                       <div className="flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-theme-icon/70 shrink-0" />
+                        <FileText className="h-4 w-4 text-accent-soft-text/70 shrink-0" />
                         <span className="truncate max-w-[200px] block" title={file.file_name}>{file.file_name}</span>
                       </div>
                     </AppTableCell>
@@ -312,7 +312,7 @@ export function AMCAttachmentsTab({ amcId, isLightMode }: { amcId: string, isLig
                             a.click();
                             document.body.removeChild(a);
                           }}
-                          className="text-theme-icon hover:text-theme-icon hover:bg-accent-soft"
+                          className="text-accent-soft-text hover:text-accent-soft-text hover:bg-accent-soft"
                           title="Download document"
                         >
                           <Download className="h-4 w-4" />
@@ -321,7 +321,7 @@ export function AMCAttachmentsTab({ amcId, isLightMode }: { amcId: string, isLig
                           variant="ghost" 
                           size="sm" 
                           onClick={() => handleDelete(file.id, file.file_url)}
-                          className="text-danger hover:text-danger hover:bg-danger/10"
+                          className="text-danger-text hover:text-danger-text hover:bg-danger-soft"
                           title="Delete document"
                         >
                           <Trash2 className="h-4 w-4" />

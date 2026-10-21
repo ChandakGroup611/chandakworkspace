@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import { CHART_THEME } from "@/components/ui/charts/chartTheme";
 import { toast } from "react-toastify";
 import { AppCard } from "@/components/ui/AppCard";
 import { AppButton } from "@/components/ui/AppButton";
@@ -435,11 +436,11 @@ export function AMCTCOSpendHistoryTab({
               <tr>
                 <th>#</th>
                 <th>Date</th>
-                <th>Milestone / Event</th>
+                <th>Milestone or event</th>
                 <th>Type</th>
-                <th>PO / Ref #</th>
-                <th style="text-align: right;">Delta Outlay</th>
-                <th style="text-align: right;">Cumulative Balance</th>
+                <th>PO or reference</th>
+                <th style="text-align: right;">Amount</th>
+                <th style="text-align: right;">Running total</th>
                 <th style="text-align: right;">% Share</th>
               </tr>
             </thead>
@@ -478,7 +479,7 @@ export function AMCTCOSpendHistoryTab({
   if (loading) {
     return (
       <div className="p-12 flex flex-col items-center justify-center space-y-3 text-muted">
-        <RefreshCw className="h-8 w-8 animate-spin text-theme-icon" />
+        <RefreshCw className="h-8 w-8 animate-spin text-accent-soft-text" />
         <p className="text-sm font-semibold">Aggregating total cost of ownership (TCO) ledger…</p>
       </div>
     );
@@ -495,7 +496,7 @@ export function AMCTCOSpendHistoryTab({
       <AppCard className="p-6 bg-surface border border-border">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div>
-            <h2 className="text-xl font-bold text-foreground tracking-tight">
+            <h2 className="text-xl font-semibold text-foreground tracking-tight">
               {amcRecord?.software_name || "Software Subscription"}
             </h2>
             <div className="text-xs text-muted mt-1">
@@ -509,8 +510,8 @@ export function AMCTCOSpendHistoryTab({
               variant="outline"
               size="sm"
               onClick={handleExportCSV}
-              leftIcon={<Download className="h-4 w-4 text-theme-icon" />}
-              className="h-10 text-xs font-bold"
+              leftIcon={<Download className="h-4 w-4 text-accent-soft-text" />}
+              className="h-10 text-xs font-semibold"
             >
               Export CSV
             </AppButton>
@@ -520,7 +521,7 @@ export function AMCTCOSpendHistoryTab({
               size="sm"
               onClick={handlePrintTCOReport}
               leftIcon={<FileText className="h-4 w-4" />}
-              className="h-10 text-xs font-bold bg-success hover:bg-success text-white border-none shadow-md"
+              className="h-10 text-xs font-semibold bg-success hover:bg-success text-white border-none shadow-md"
             >
               Audit dossier
             </AppButton>
@@ -528,26 +529,26 @@ export function AMCTCOSpendHistoryTab({
         </div>
 
         {/* Visual Capital Progression Strip */}
-        <div className="mt-8 pt-6 border-t border-border/60 space-y-3">
+        <div className="mt-8 pt-6 border-t border-border space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
             <div className="flex items-center gap-4 flex-wrap">
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded-full bg-info inline-block"></span>
                 <span className="text-muted font-medium">Initial Purchase:</span>
-                <span className="font-bold text-foreground">₹ {formatAmount(kpiMetrics.baseCost)} ({baseShare.toFixed(1)}%)</span>
+                <span className="font-semibold text-foreground">₹ {formatAmount(kpiMetrics.baseCost)} ({baseShare.toFixed(1)}%)</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded-full bg-warning inline-block"></span>
                 <span className="text-muted font-medium">Mid-Year Add-ons:</span>
-                <span className="font-bold text-foreground">₹ {formatAmount(kpiMetrics.transactionTotal)} ({txShare.toFixed(1)}%)</span>
+                <span className="font-semibold text-foreground">₹ {formatAmount(kpiMetrics.transactionTotal)} ({txShare.toFixed(1)}%)</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded-full bg-success inline-block"></span>
                 <span className="text-muted font-medium">Renewals Outlay:</span>
-                <span className="font-bold text-foreground">₹ {formatAmount(kpiMetrics.renewalTotal)} ({rnShare.toFixed(1)}%)</span>
+                <span className="font-semibold text-foreground">₹ {formatAmount(kpiMetrics.renewalTotal)} ({rnShare.toFixed(1)}%)</span>
               </div>
             </div>
-            <div className="text-xs font-bold text-success-text">
+            <div className="text-xs font-semibold text-success-text">
               +{kpiMetrics.growthPercent}% Capital growth ({kpiMetrics.multiplier}x)
             </div>
           </div>
@@ -575,9 +576,9 @@ export function AMCTCOSpendHistoryTab({
       {/* 2. 6 EXECUTIVE KPI STAT CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {/* KPI 1: Lifetime TCO */}
-        <AppCard className="p-4 border border-success-border bg-success-soft rounded-2xl flex flex-col justify-between space-y-2">
+        <AppCard className="p-4 border border-success-border bg-success-soft rounded-lg flex flex-col justify-between space-y-2">
           <div className="flex items-center justify-between text-muted">
-            <span className="text-[11px] font-bold text-success-text">Total spend (TCO)</span>
+            <span className="text-[11px] font-semibold text-success-text">Total spend (TCO)</span>
             <DollarSign className="h-4 w-4 text-success-text" />
           </div>
           <div>
@@ -589,9 +590,9 @@ export function AMCTCOSpendHistoryTab({
         </AppCard>
 
         {/* KPI 2: Initial Baseline */}
-        <AppCard className="p-4 border border-border bg-surface rounded-2xl flex flex-col justify-between space-y-2">
+        <AppCard className="p-4 border border-border bg-surface rounded-lg flex flex-col justify-between space-y-2">
           <div className="flex items-center justify-between text-muted">
-            <span className="text-[11px] font-bold">Initial purchase</span>
+            <span className="text-[11px] font-semibold">Initial purchase</span>
             <Receipt className="h-4 w-4 text-info-text" />
           </div>
           <div>
@@ -603,9 +604,9 @@ export function AMCTCOSpendHistoryTab({
         </AppCard>
 
         {/* KPI 3: Mid-Year Add-ons */}
-        <AppCard className="p-4 border border-border bg-surface rounded-2xl flex flex-col justify-between space-y-2">
+        <AppCard className="p-4 border border-border bg-surface rounded-lg flex flex-col justify-between space-y-2">
           <div className="flex items-center justify-between text-muted">
-            <span className="text-[11px] font-bold">Mid-Year Add-ons</span>
+            <span className="text-[11px] font-semibold">Mid-Year Add-ons</span>
             <Layers className="h-4 w-4 text-warning-text" />
           </div>
           <div>
@@ -617,10 +618,10 @@ export function AMCTCOSpendHistoryTab({
         </AppCard>
 
         {/* KPI 4: Renewal Outlays */}
-        <AppCard className="p-4 border border-border bg-surface rounded-2xl flex flex-col justify-between space-y-2">
+        <AppCard className="p-4 border border-border bg-surface rounded-lg flex flex-col justify-between space-y-2">
           <div className="flex items-center justify-between text-muted">
-            <span className="text-[11px] font-bold">Renewals outlay</span>
-            <CalendarClock className="h-4 w-4 text-theme-icon" />
+            <span className="text-[11px] font-semibold">Renewals outlay</span>
+            <CalendarClock className="h-4 w-4 text-accent-soft-text" />
           </div>
           <div>
             <div className="text-xl font-semibold text-foreground font-mono">
@@ -631,13 +632,13 @@ export function AMCTCOSpendHistoryTab({
         </AppCard>
 
         {/* KPI 5: Growth Multiplier */}
-        <AppCard className="p-4 border border-border bg-surface rounded-2xl flex flex-col justify-between space-y-2">
+        <AppCard className="p-4 border border-border bg-surface rounded-lg flex flex-col justify-between space-y-2">
           <div className="flex items-center justify-between text-muted">
-            <span className="text-[11px] font-bold">Spend multiplier</span>
-            <TrendingUp className="h-4 w-4 text-theme-icon" />
+            <span className="text-[11px] font-semibold">Spend multiplier</span>
+            <TrendingUp className="h-4 w-4 text-accent-soft-text" />
           </div>
           <div>
-            <div className="text-xl font-semibold text-theme-icon font-mono">
+            <div className="text-xl font-semibold text-accent-soft-text font-mono">
               {kpiMetrics.multiplier}x
             </div>
             <p className="text-[11px] text-muted mt-0.5">vs acquisition baseline</p>
@@ -645,10 +646,10 @@ export function AMCTCOSpendHistoryTab({
         </AppCard>
 
         {/* KPI 6: Annualized Run Rate */}
-        <AppCard className="p-4 border border-border bg-surface rounded-2xl flex flex-col justify-between space-y-2">
+        <AppCard className="p-4 border border-border bg-surface rounded-lg flex flex-col justify-between space-y-2">
           <div className="flex items-center justify-between text-muted">
-            <span className="text-[11px] font-bold">Annual run rate</span>
-            <Activity className="h-4 w-4 text-theme-icon" />
+            <span className="text-[11px] font-semibold">Annual run rate</span>
+            <Activity className="h-4 w-4 text-accent-soft-text" />
           </div>
           <div>
             <div className="text-xl font-semibold text-foreground font-mono">
@@ -661,9 +662,9 @@ export function AMCTCOSpendHistoryTab({
 
       {/* 3. INTERACTIVE CUMULATIVE SPEND PROGRESSION CURVE */}
       <AppCard className="p-6 md:p-8 border border-border bg-surface space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/60">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
           <div>
-            <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+            <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-success-text" />
               Cumulative capital progression curve
             </h3>
@@ -684,23 +685,17 @@ export function AMCTCOSpendHistoryTab({
             <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 20, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorTCO" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
+                  <stop offset="5%" stopColor={CHART_THEME.series[0]} stopOpacity={0.25} />
+                  <stop offset="95%" stopColor={CHART_THEME.series[0]} stopOpacity={0.0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke={isLightMode ? "#e2e8f0" : "#334155"} vertical={false} />
+              <CartesianGrid {...CHART_THEME.grid} />
               <XAxis 
                 dataKey="date" 
-                stroke={isLightMode ? "#64748b" : "#94a3b8"} 
-                fontSize={11} 
-                tickLine={false}
-                axisLine={{ stroke: isLightMode ? "#cbd5e1" : "#475569" }}
+                {...CHART_THEME.axis}
               />
               <YAxis 
-                stroke={isLightMode ? "#64748b" : "#94a3b8"} 
-                fontSize={11} 
-                tickLine={false}
-                axisLine={{ stroke: isLightMode ? "#cbd5e1" : "#475569" }}
+                {...CHART_THEME.axis}
                 tickFormatter={(v) => `₹ ${(v / 100000).toFixed(1)}L`}
               />
               <Tooltip 
@@ -708,18 +703,18 @@ export function AMCTCOSpendHistoryTab({
                   if (active && payload && payload.length) {
                     const data = payload[0].payload;
                     return (
-                      <div className="p-3 bg-surface border border-border rounded-xl shadow-xl text-xs space-y-1.5 z-50">
-                        <div className="font-bold text-foreground">{data.label}</div>
+                      <div className="space-y-1.5 rounded-md border border-border bg-elevated p-3 text-[12.5px] shadow-lg">
+                        <div className="font-semibold text-foreground">{data.label}</div>
                         <div className="text-muted flex items-center gap-2">
                           <span>Date:</span> <strong className="text-foreground">{data.date}</strong>
                         </div>
                         <div className="text-muted flex items-center gap-2">
-                          <span>Milestone Outlay:</span> 
-                          <strong className="text-theme-icon font-mono">+₹ {formatAmount(data.eventAmount)}</strong>
+                          <span>Milestone amount:</span> 
+                          <strong className="font-medium tabular-nums text-foreground">+₹ {formatAmount(data.eventAmount)}</strong>
                         </div>
                         <div className="pt-1 border-t border-border flex items-center gap-2">
-                          <span className="font-semibold text-success-text">Cumulative TCO:</span>
-                          <strong className="text-success-text font-mono text-sm">₹ {formatAmount(data.cumulativeTCO)}</strong>
+                          <span className="text-muted">Running TCO:</span>
+                          <strong className="font-semibold tabular-nums text-foreground">₹ {formatAmount(data.cumulativeTCO)}</strong>
                         </div>
                       </div>
                     );
@@ -730,11 +725,11 @@ export function AMCTCOSpendHistoryTab({
               <Area 
                 type="monotone" 
                 dataKey="cumulativeTCO" 
-                stroke="#10b981" 
-                strokeWidth={3} 
+                stroke={CHART_THEME.series[0]} 
+                strokeWidth={2} 
                 fillOpacity={1} 
                 fill="url(#colorTCO)" 
-                activeDot={{ r: 6, fill: "#10b981", stroke: "#fff", strokeWidth: 2 }}
+                activeDot={{ r: 5, fill: CHART_THEME.series[0], stroke: "var(--bg-surface)", strokeWidth: 2 }}
               />
             </AreaChart>
           </ResponsiveContainer>
@@ -743,10 +738,10 @@ export function AMCTCOSpendHistoryTab({
 
       {/* 4. CHRONOLOGICAL FINANCIAL SPEND EVENT LEDGER */}
       <AppCard className="p-6 md:p-8 border border-border bg-surface space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-border/60">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-border">
           <div>
-            <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-              <History className="h-5 w-5 text-theme-icon" />
+            <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+              <History className="h-5 w-5 text-accent-soft-text" />
               Chronological financial event ledger & audit stream
             </h3>
             <p className="text-xs text-muted mt-1">
@@ -756,7 +751,7 @@ export function AMCTCOSpendHistoryTab({
 
           <div className="flex flex-wrap items-center gap-2">
             {/* Filter Pills */}
-            <div className="flex items-center bg-elevated p-1 rounded-xl border border-border">
+            <div className="flex items-center bg-elevated p-1 rounded-lg border border-border">
               {[
                 { key: 'all', label: 'All events' },
                 { key: 'acquisition', label: 'Acquisition' },
@@ -793,14 +788,14 @@ export function AMCTCOSpendHistoryTab({
         <div className="overflow-x-auto">
           <AppTable className="w-full text-left text-xs whitespace-nowrap">
             <AppTableHeader>
-              <AppTableRow className="border-b border-border text-muted font-bold">
+              <AppTableRow className="border-b border-border text-muted font-semibold">
                 <AppTableHead className="pb-3 pr-3">#</AppTableHead>
                 <AppTableHead className="pb-3 px-3">Date</AppTableHead>
                 <AppTableHead className="pb-3 px-3">Milestone / event</AppTableHead>
                 <AppTableHead className="pb-3 px-3">Category</AppTableHead>
                 <AppTableHead className="pb-3 px-3">PO / ref #</AppTableHead>
                 <AppTableHead className="pb-3 px-3 text-right">Delta outlay (+₹)</AppTableHead>
-                <AppTableHead className="pb-3 px-3 text-right text-success-text font-bold">Running balance (₹)</AppTableHead>
+                <AppTableHead className="pb-3 px-3 text-right text-success-text font-semibold">Running balance (₹)</AppTableHead>
                 <AppTableHead className="pb-3 px-3 text-center">% Share</AppTableHead>
                 <AppTableHead className="pb-3 px-3">Logged by</AppTableHead>
                 <AppTableHead className="pb-3 pl-3 text-right">Proof</AppTableHead>
@@ -820,8 +815,8 @@ export function AMCTCOSpendHistoryTab({
                   const isTx = evt.source === 'transaction';
 
                   return (
-                    <AppTableRow key={evt.id} className="hover:bg-elevated/40 transition-colors">
-                      <AppTableCell className="py-3.5 pr-3 font-bold text-muted">{idx + 1}</AppTableCell>
+                    <AppTableRow key={evt.id} className="hover:bg-sunken transition-colors">
+                      <AppTableCell className="py-3.5 pr-3 font-semibold text-muted">{idx + 1}</AppTableCell>
                       
                       <AppTableCell className="py-3.5 px-3">
                         <div className="flex items-center gap-1.5 font-medium text-foreground">
@@ -832,7 +827,7 @@ export function AMCTCOSpendHistoryTab({
 
                       <AppTableCell className="py-3.5 px-3 max-w-xs truncate">
                         <div className="space-y-0.5">
-                          <div className="font-bold text-foreground flex items-center gap-1.5">
+                          <div className="font-semibold text-foreground flex items-center gap-1.5">
                             {evt.title}
                           </div>
                           <div className="text-[11px] text-muted truncate">{evt.description}</div>
@@ -862,7 +857,7 @@ export function AMCTCOSpendHistoryTab({
                         ) : '-'}
                       </AppTableCell>
 
-                      <AppTableCell className="py-3.5 px-3 text-right font-mono font-bold text-foreground">
+                      <AppTableCell className="py-3.5 px-3 text-right font-mono font-semibold text-foreground">
                         +₹ {formatAmount(evt.amount)}
                       </AppTableCell>
 
@@ -890,7 +885,7 @@ export function AMCTCOSpendHistoryTab({
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDownloadAttachment(evt.attachmentUrl!)}
-                            className="text-theme-icon hover:underline text-xs h-7 px-2"
+                            className="text-accent-soft-text hover:underline text-xs h-7 px-2"
                             title="Download invoice / proof"
                             leftIcon={<Paperclip className="h-3 w-3" />}
                           >

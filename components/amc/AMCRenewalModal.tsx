@@ -57,7 +57,7 @@ export function AMCRenewalModal({ amcData, isLightMode, onClose, onRenewed }: AM
       const insertRes = await saveAMCEntity("software_amc", newAmc);
       if (!insertRes.success) throw new Error(insertRes.error);
 
-      toast.success("Contract renewed successfully! Old record is archived as 'renewed'.");
+      toast.success("Contract renewed. The previous record is archived as renewed.");
       onRenewed();
     } catch (e: any) {
       toast.error("Failed to renew: " + e.message);
@@ -78,7 +78,7 @@ export function AMCRenewalModal({ amcData, isLightMode, onClose, onRenewed }: AM
         
         <div className={`flex items-center justify-between p-6 border-b border-border`}>
           <div>
-            <h3 className="text-xl font-bold text-theme-icon">Renew subscription</h3>
+            <h3 className="text-xl font-semibold text-accent-soft-text">Renew subscription</h3>
             <p className="text-sm text-muted mt-1">
               {amcData.software_name} - {amcData.provider_name}
             </p>
@@ -87,14 +87,14 @@ export function AMCRenewalModal({ amcData, isLightMode, onClose, onRenewed }: AM
             variant="ghost" 
             aria-label="Close renewal modal"
             onClick={onClose} 
-            className="p-2 text-muted hover:text-danger hover:bg-danger-soft rounded-full transition-colors"
+            className="p-2 text-muted hover:text-danger-text hover:bg-danger-soft rounded-full transition-colors"
           >
             <X className="h-5 w-5" />
           </AppButton>
         </div>
 
         <form onSubmit={handleRenew} className="p-6 space-y-6">
-          <div className="p-4 rounded-xl border bg-warning-soft border-warning/20 text-warning">
+          <div className="p-4 rounded-lg border bg-warning-soft border-warning-border text-warning-text">
             <p className="text-sm">
               Renewing will archive the current active contract as <strong>"Renewed"</strong> and create a fresh <strong>"Active"</strong> record with the new dates and financials.
             </p>

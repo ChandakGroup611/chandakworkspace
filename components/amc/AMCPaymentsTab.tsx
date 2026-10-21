@@ -188,7 +188,7 @@ export function AMCPaymentsTab({ amcId, isLightMode, currency = 'INR' }: AMCPaym
   const getStatusBadge = (status: string, dueDate: string) => {
     if (status === 'Paid') {
       return (
-        <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-success/15 text-success border border-success/30 flex items-center gap-1.5">
+        <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-success-soft text-success-text border border-success-border flex items-center gap-1.5">
           <CheckCircle className="h-3.5 w-3.5" /> Paid
         </span>
       );
@@ -197,13 +197,13 @@ export function AMCPaymentsTab({ amcId, isLightMode, currency = 'INR' }: AMCPaym
     if (isOverdue) {
       const diffDays = Math.ceil((new Date().getTime() - new Date(dueDate).getTime()) / (1000 * 60 * 60 * 24));
       return (
-        <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-danger/15 text-danger border border-danger/30 flex items-center gap-1.5">
+        <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-danger-soft text-danger-text border border-danger-border flex items-center gap-1.5">
           <AlertCircle className="h-3.5 w-3.5" /> {diffDays}d overdue
         </span>
       );
     }
     return (
-      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-warning/15 text-warning border border-warning/30 flex items-center gap-1.5">
+      <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-warning-soft text-warning-text border border-warning-border flex items-center gap-1.5">
         <Clock className="h-3.5 w-3.5" /> Pending
       </span>
     );
@@ -212,14 +212,14 @@ export function AMCPaymentsTab({ amcId, isLightMode, currency = 'INR' }: AMCPaym
   return (
     <div className="space-y-6">
       {/* Top Header & Add Button */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl border bg-surface border-border shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-lg border bg-surface border-border shadow-sm">
         <div className="space-y-1">
           <div className="flex items-center gap-2.5">
-            <div className="p-2.5 rounded-xl bg-accent-soft text-theme-icon">
+            <div className="p-2.5 rounded-lg bg-accent-soft text-accent-soft-text">
               <Receipt className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-foreground">Payment schedule & invoicing ledger</h3>
+              <h3 className="text-lg font-semibold text-foreground">Payment schedule & invoicing ledger</h3>
               
             </div>
           </div>
@@ -238,36 +238,36 @@ export function AMCPaymentsTab({ amcId, isLightMode, currency = 'INR' }: AMCPaym
 
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <AppCard className="p-4 border border-border bg-surface rounded-xl space-y-1">
-          <span className="text-[11px] font-bold text-muted">Total scheduled</span>
-          <div className="text-xl font-bold text-foreground font-mono">
+        <AppCard className="p-4 border border-border bg-surface rounded-lg space-y-1">
+          <span className="text-[11px] font-semibold text-muted">Total scheduled</span>
+          <div className="text-xl font-semibold text-foreground font-mono">
             ₹ {summary.totalScheduled.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <span className="text-[11px] text-muted">{invoices.length} Payment Schedule(s)</span>
         </AppCard>
 
-        <AppCard className="p-4 border border-success/30 bg-success/5 rounded-xl space-y-1">
-          <span className="text-[11px] font-bold text-success">Total disbursed</span>
-          <div className="text-xl font-bold text-success font-mono">
+        <AppCard className="p-4 border border-success-border bg-success-soft rounded-lg space-y-1">
+          <span className="text-[11px] font-semibold text-success-text">Total disbursed</span>
+          <div className="text-xl font-semibold text-success-text font-mono">
             ₹ {summary.totalPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <span className="text-[11px] text-muted">{summary.paidPercent}% Released</span>
         </AppCard>
 
-        <AppCard className="p-4 border border-warning/30 bg-warning/5 rounded-xl space-y-1">
-          <span className="text-[11px] font-bold text-warning">Pending outlay</span>
-          <div className="text-xl font-bold text-warning font-mono">
+        <AppCard className="p-4 border border-warning-border bg-warning-soft rounded-lg space-y-1">
+          <span className="text-[11px] font-semibold text-warning-text">Pending outlay</span>
+          <div className="text-xl font-semibold text-warning-text font-mono">
             ₹ {summary.totalPending.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <span className="text-[11px] text-muted">Awaiting release</span>
         </AppCard>
 
-        <AppCard className="p-4 border border-danger/30 bg-danger/5 rounded-xl space-y-1">
-          <span className="text-[11px] font-bold text-danger">Overdue payments</span>
-          <div className="text-xl font-bold text-danger font-mono">
+        <AppCard className="p-4 border border-danger-border bg-danger-soft rounded-lg space-y-1">
+          <span className="text-[11px] font-semibold text-danger-text">Overdue payments</span>
+          <div className="text-xl font-semibold text-danger-text font-mono">
             ₹ {summary.totalOverdue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <span className="text-[11px] text-danger font-semibold">{summary.overdueCount} Overdue Item(s)</span>
+          <span className="text-[11px] text-danger-text font-semibold">{summary.overdueCount} Overdue Item(s)</span>
         </AppCard>
       </div>
 
@@ -276,7 +276,7 @@ export function AMCPaymentsTab({ amcId, isLightMode, currency = 'INR' }: AMCPaym
         {loading ? (
           <div className="flex justify-center p-8"><ChandakLoader size="sm" title="Loading invoices…" /></div>
         ) : invoices.length === 0 ? (
-          <div className="p-10 text-center text-muted italic rounded-2xl border bg-elevated/40 border-border space-y-2">
+          <div className="p-10 text-center text-muted italic rounded-lg border bg-sunken border-border space-y-2">
             <Receipt className="h-8 w-8 text-muted mx-auto opacity-50" />
             <p className="font-semibold text-foreground text-sm">No scheduled invoices or payments found.</p>
             <p className="text-xs">Click &ldquo;Schedule Payment&rdquo; to record payment tranches or milestones.</p>
@@ -286,14 +286,14 @@ export function AMCPaymentsTab({ amcId, isLightMode, currency = 'INR' }: AMCPaym
             {invoices.map(inv => (
               <AppCard 
                 key={inv.id} 
-                className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-border bg-surface hover:border-theme-btn-primary/40 transition-all rounded-xl shadow-sm"
+                className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-border bg-surface hover:border-border-active transition-all rounded-lg shadow-sm"
               >
                 <div className="space-y-2">
                   <div className="flex items-center gap-3 flex-wrap">
                     {getStatusBadge(inv.status, inv.due_date)}
-                    <span className="font-bold text-sm text-foreground">{inv.description || "Scheduled Tranche"}</span>
+                    <span className="font-semibold text-sm text-foreground">{inv.description || "Scheduled Tranche"}</span>
                     {inv.payment_type && (
-                      <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-accent-soft text-theme-icon border border-theme-btn-primary/20">
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-accent-soft text-accent-soft-text border border-border-active">
                         {inv.payment_type}
                       </span>
                     )}
@@ -306,11 +306,11 @@ export function AMCPaymentsTab({ amcId, isLightMode, currency = 'INR' }: AMCPaym
                   <div className="text-xs text-muted flex items-center gap-4 flex-wrap">
                     <span>Due: <strong className="text-foreground">{inv.due_date ? formatDate(inv.due_date) : 'N/A'}</strong></span>
                     {inv.invoice_number && <span>Invoice #: <strong className="text-foreground font-mono">{inv.invoice_number}</strong></span>}
-                    {inv.payment_date && <span className="text-success font-semibold">Paid On: {formatDate(inv.payment_date)}</span>}
+                    {inv.payment_date && <span className="text-success-text font-semibold">Paid On: {formatDate(inv.payment_date)}</span>}
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between sm:justify-end gap-5 border-t sm:border-t-0 pt-3 sm:pt-0 border-border/50">
+                <div className="flex items-center justify-between sm:justify-end gap-5 border-t sm:border-t-0 pt-3 sm:pt-0 border-border">
                   <div className="text-right">
                     <div className="font-semibold text-lg font-mono text-foreground">
                       ₹ {(parseFloat(inv.amount) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -324,7 +324,7 @@ export function AMCPaymentsTab({ amcId, isLightMode, currency = 'INR' }: AMCPaym
                         size="sm" 
                         onClick={() => handleMarkPaid(inv.id)}
                         disabled={processingId === inv.id}
-                        className="h-8 text-xs font-bold shadow-sm"
+                        className="h-8 text-xs font-semibold shadow-sm"
                       >
                         {processingId === inv.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "Mark Paid"}
                       </AppButton>
@@ -332,7 +332,7 @@ export function AMCPaymentsTab({ amcId, isLightMode, currency = 'INR' }: AMCPaym
                     <AppButton aria-label="Delete entry" 
                       variant="secondary" 
                       onClick={() => handleDelete(inv.id)} 
-                      className="p-2 h-8 w-8 text-danger hover:bg-danger/10 rounded-lg transition-colors"
+                      className="p-2 h-8 w-8 text-danger-text hover:bg-danger-soft rounded-lg transition-colors"
                       title="Delete entry"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -347,14 +347,14 @@ export function AMCPaymentsTab({ amcId, isLightMode, currency = 'INR' }: AMCPaym
 
       {/* Schedule Payment Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-surface/60 animate-in fade-in duration-200">
-          <div className="relative w-full max-w-lg rounded-2xl p-6 bg-surface border border-border shadow-lg space-y-5 animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4 bg-[var(--overlay)] animate-in fade-in duration-150">
+          <div className="relative w-full max-w-lg rounded-lg p-6 bg-surface border border-border shadow-lg space-y-5 animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-accent-soft text-theme-icon">
+                <div className="p-2 rounded-lg bg-accent-soft text-accent-soft-text">
                   <Plus className="h-4 w-4" />
                 </div>
-                <h3 className="text-base font-bold text-foreground">Schedule payment / invoice</h3>
+                <h3 className="text-base font-semibold text-foreground">Schedule payment / invoice</h3>
               </div>
               <AppButton aria-label="Close" variant="ghost" size="sm" onClick={() => setShowAddModal(false)} className="p-1 rounded-full">
                 <X className="h-5 w-5" />
@@ -410,7 +410,7 @@ export function AMCPaymentsTab({ amcId, isLightMode, currency = 'INR' }: AMCPaym
                   <select
                     value={formPaymentMethod}
                     onChange={(e) => setFormPaymentMethod(e.target.value)}
-                    className="w-full h-10 px-3 rounded-xl border border-border bg-surface text-xs font-medium outline-none"
+                    className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-xs font-medium outline-none"
                   >
                     <option value="NEFT / RTGS">Neft / rtgs</option>
                     <option value="Corporate Credit Card">Corporate credit card</option>
@@ -422,12 +422,12 @@ export function AMCPaymentsTab({ amcId, isLightMode, currency = 'INR' }: AMCPaym
 
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-muted">
-                  Status <span className="text-danger">*</span>
+                  Status <span className="text-danger-text">*</span>
                 </label>
                 <select
                   value={formStatus}
                   onChange={(e) => setFormStatus(e.target.value)}
-                  className="w-full h-10 px-3 rounded-xl border border-border bg-surface text-xs font-medium outline-none"
+                  className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-xs font-medium outline-none"
                   required
                 >
                   <option value="" disabled>Select status</option>

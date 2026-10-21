@@ -245,54 +245,54 @@ export default function AMCReportsPage() {
       <div className="space-y-8">
         {/* Level 1: Global Executive Summary */}
         <div>
-          <h3 className="text-base font-bold mb-4 flex items-center gap-2 text-foreground">
-            <span className="bg-theme-btn-primary text-theme-btn-primary-text h-5 w-5 rounded flex items-center justify-center text-xs font-bold">L1</span>
+          <h3 className="text-base font-semibold mb-4 flex items-center gap-2 text-foreground">
+            <span className="bg-primary text-primary-foreground h-5 w-5 rounded flex items-center justify-center text-xs font-semibold">L1</span>
             Global portfolio summary
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            <AppCard className="p-5 border-l-4 border-l-info bg-surface rounded-xl shadow-xs">
+            <AppCard className="p-5 border-l-4 border-l-info bg-surface rounded-lg shadow-xs">
               <p className="theme-label text-muted">Total portfolio value</p>
-              <h4 className="text-2xl font-bold mt-1 text-foreground font-mono">{formatCurrency(reportData.totalContractValue)}</h4>
+              <h4 className="text-2xl font-semibold mt-1 text-foreground font-mono">{formatCurrency(reportData.totalContractValue)}</h4>
             </AppCard>
 
-            <AppCard className="p-5 border-l-4 border-l-success bg-surface rounded-xl shadow-xs">
+            <AppCard className="p-5 border-l-4 border-l-success bg-surface rounded-lg shadow-xs">
               <p className="theme-label text-success-text">Monthly Run-Rate</p>
-              <h4 className="text-2xl font-bold mt-1 text-success-text font-mono">{formatCurrency(reportData.totalMonthlyBurn)}<span className="text-xs font-normal text-muted">/mo</span></h4>
+              <h4 className="text-2xl font-semibold mt-1 text-success-text font-mono">{formatCurrency(reportData.totalMonthlyBurn)}<span className="text-xs font-normal text-muted">/mo</span></h4>
             </AppCard>
 
-            <AppCard className="p-5 border-l-4 border-l-theme-btn-primary bg-surface rounded-xl shadow-xs">
+            <AppCard className="p-5 border-l-4 border-l-theme-btn-primary bg-surface rounded-lg shadow-xs">
               <p className="theme-label text-muted">Total cash disbursed</p>
-              <h4 className="text-2xl font-bold mt-1 text-foreground font-mono">{formatCurrency(reportData.totalPaid)}</h4>
+              <h4 className="text-2xl font-semibold mt-1 text-foreground font-mono">{formatCurrency(reportData.totalPaid)}</h4>
             </AppCard>
 
-            <AppCard className="p-5 border-l-4 border-l-warning bg-surface rounded-xl shadow-xs">
+            <AppCard className="p-5 border-l-4 border-l-warning bg-surface rounded-lg shadow-xs">
               <p className="theme-label text-warning-text">Upcoming scheduled</p>
-              <h4 className="text-2xl font-bold mt-1 text-warning-text font-mono">{formatCurrency(reportData.totalPending - reportData.totalOverdue)}</h4>
+              <h4 className="text-2xl font-semibold mt-1 text-warning-text font-mono">{formatCurrency(reportData.totalPending - reportData.totalOverdue)}</h4>
             </AppCard>
 
-            <AppCard className="p-5 border-l-4 border-l-danger bg-surface rounded-xl shadow-xs">
+            <AppCard className="p-5 border-l-4 border-l-danger bg-surface rounded-lg shadow-xs">
               <p className="theme-label text-danger-text">Overdue invoices</p>
-              <h4 className="text-2xl font-bold mt-1 text-danger-text font-mono">{formatCurrency(reportData.totalOverdue)}</h4>
+              <h4 className="text-2xl font-semibold mt-1 text-danger-text font-mono">{formatCurrency(reportData.totalOverdue)}</h4>
             </AppCard>
           </div>
         </div>
 
         {/* Level 2: Department Drill-down */}
         <div>
-          <h3 className="text-base font-bold mb-4 flex items-center gap-2 text-foreground">
-            <span className="bg-theme-btn-primary text-theme-btn-primary-text h-5 w-5 rounded flex items-center justify-center text-xs font-bold">L2</span>
+          <h3 className="text-base font-semibold mb-4 flex items-center gap-2 text-foreground">
+            <span className="bg-primary text-primary-foreground h-5 w-5 rounded flex items-center justify-center text-xs font-semibold">L2</span>
             Cost center & license utilisation breakdown
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {reportData.deptMetrics.map((dept, idx) => (
-              <AppCard key={idx} className="p-5 flex flex-col bg-surface border border-border rounded-xl shadow-xs">
+              <AppCard key={idx} className="p-5 flex flex-col bg-surface border border-border rounded-lg shadow-xs">
                 <div className="flex justify-between items-center mb-3">
-                  <h4 className="font-bold text-foreground text-sm">{dept.name}</h4>
-                  <div className="text-sm font-semibold font-mono text-theme-icon">{formatCurrency(dept.contracted)}</div>
+                  <h4 className="font-semibold text-foreground text-sm">{dept.name}</h4>
+                  <div className="text-sm font-semibold font-mono text-accent-soft-text">{formatCurrency(dept.contracted)}</div>
                 </div>
                 <div className="flex justify-between items-end mt-auto pt-3 border-t border-border text-xs text-muted">
                   <span className="theme-label text-muted">Seats utilisation</span>
-                  <span className="font-bold text-foreground font-mono">
+                  <span className="font-semibold text-foreground font-mono">
                     {dept.used} / {dept.licenses} ({dept.licenses > 0 ? Math.round((dept.used / dept.licenses) * 100) : 0}%)
                   </span>
                 </div>
@@ -304,12 +304,12 @@ export default function AMCReportsPage() {
         {/* Level 3: Transactional & Amortization View */}
         <div>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-            <h3 className="text-base font-bold flex items-center gap-2 text-foreground">
-              <span className="bg-theme-btn-primary text-theme-btn-primary-text h-5 w-5 rounded flex items-center justify-center text-xs font-bold">L3</span>
+            <h3 className="text-base font-semibold flex items-center gap-2 text-foreground">
+              <span className="bg-primary text-primary-foreground h-5 w-5 rounded flex items-center justify-center text-xs font-semibold">L3</span>
               Detailed audit ledger
             </h3>
 
-            <div className="flex rounded-xl border border-border p-1 bg-elevated text-xs">
+            <div className="flex rounded-lg border border-border p-1 bg-elevated text-xs">
               <AppButton
                 type="button"
                 variant={activeReportTab === 'invoices' ? 'primary' : 'ghost'}
@@ -333,7 +333,7 @@ export default function AMCReportsPage() {
             </div>
           </div>
 
-          <AppCard className="overflow-hidden border border-border bg-surface rounded-2xl shadow-sm">
+          <AppCard className="overflow-hidden border border-border bg-surface rounded-lg shadow-sm">
             {activeReportTab === 'invoices' ? (
               <div className="overflow-x-auto">
                 <AppTable className="w-full text-left border-collapse text-xs whitespace-nowrap">
@@ -358,18 +358,18 @@ export default function AMCReportsPage() {
                       invoices.map(inv => {
                         const isOverdue = inv.status === 'Pending' && inv.due_date && new Date(inv.due_date) < new Date();
                         return (
-                          <AppTableRow key={inv.id} className="border-b border-border/60 hover:bg-elevated/60 transition-colors">
-                            <AppTableCell className="p-3 font-bold text-foreground">{inv.software_amc?.software_name || '-'}</AppTableCell>
+                          <AppTableRow key={inv.id} className="border-b border-border hover:bg-elevated/60 transition-colors">
+                            <AppTableCell className="p-3 font-semibold text-foreground">{inv.software_amc?.software_name || '-'}</AppTableCell>
                             <AppTableCell className="p-3 text-muted">{inv.description || '-'}</AppTableCell>
                             <AppTableCell className="p-3 text-muted">{inv.due_date ? String(inv.due_date).slice(0, 10) : '-'}</AppTableCell>
-                            <AppTableCell className="p-3 font-mono font-bold text-foreground">
+                            <AppTableCell className="p-3 font-mono font-semibold text-foreground">
                               ₹ {(parseFloat(inv.amount) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </AppTableCell>
                             <AppTableCell className="p-3">
-                              <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
-                                inv.status === 'Paid' ? 'bg-success/15 text-success border-success/30' :
-                                isOverdue ? 'bg-danger/15 text-danger border-danger/30' :
-                                'bg-warning/15 text-warning border-warning/30'
+                              <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
+                                inv.status === 'Paid' ? 'bg-success-soft text-success-text border-success-border' :
+                                isOverdue ? 'bg-danger-soft text-danger-text border-danger-border' :
+                                'bg-warning-soft text-warning-text border-warning-border'
                               }`}>
                                 {inv.status === 'Paid' ? 'Paid' : isOverdue ? 'Overdue' : 'Pending'}
                               </span>
@@ -427,19 +427,19 @@ export default function AMCReportsPage() {
                         }
 
                         return (
-                          <AppTableRow key={amc.id} className="border-b border-border/60 hover:bg-elevated/60 transition-colors">
-                            <AppTableCell className="p-3 font-bold text-foreground">{amc.software_name}</AppTableCell>
+                          <AppTableRow key={amc.id} className="border-b border-border hover:bg-elevated/60 transition-colors">
+                            <AppTableCell className="p-3 font-semibold text-foreground">{amc.software_name}</AppTableCell>
                             <AppTableCell className="p-3 text-muted">{amc.vendor_master?.name || 'Direct'}</AppTableCell>
                             <AppTableCell className="p-3 text-muted">{amc.contract_type || 'AMC'}</AppTableCell>
-                            <AppTableCell className="p-3 font-mono font-bold text-foreground">
+                            <AppTableCell className="p-3 font-mono font-semibold text-foreground">
                               ₹ {cost.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
                             </AppTableCell>
-                            <AppTableCell className="p-3 font-mono font-bold text-success-text">
+                            <AppTableCell className="p-3 font-mono font-semibold text-success-text">
                               ₹ {monthly.toLocaleString('en-IN', { maximumFractionDigits: 0 })}<span className="text-[11px] text-muted font-normal">/mo</span>
                             </AppTableCell>
                             <AppTableCell className="p-3 text-muted">{amc.purchase_date || '-'}</AppTableCell>
                             <AppTableCell className="p-3 text-muted">{amc.expiry_date || '-'}</AppTableCell>
-                            <AppTableCell className="p-3 font-mono font-bold text-theme-icon">
+                            <AppTableCell className="p-3 font-mono font-semibold text-accent-soft-text">
                               ₹ {remaining.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                             </AppTableCell>
                           </AppTableRow>

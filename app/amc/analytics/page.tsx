@@ -214,67 +214,67 @@ export default function AMCAnalyticsPage() {
       <div className="space-y-6">
         {/* 5 KPI Stat Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          <AppCard className="p-5 border border-border bg-surface flex flex-col justify-between space-y-2 rounded-2xl shadow-xs">
+          <AppCard className="p-5 border border-border bg-surface flex flex-col justify-between space-y-2 rounded-lg shadow-xs">
             <div className="flex items-center justify-between">
               <span className="theme-label text-muted">Active contract value</span>
-              <div className="p-2 rounded-xl bg-info-soft text-info-text">
+              <div className="p-2 rounded-lg bg-info-soft text-info-text">
                 <DollarSign className="h-4 w-4" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-foreground font-mono">
+            <div className="text-2xl font-semibold text-foreground font-mono">
               {formatCurrency(analyticsData.totalSpend)}
             </div>
             <span className="text-[11px] text-muted">{analyticsData.activeContracts} Active contracts</span>
           </AppCard>
 
-          <AppCard className="p-5 border border-success/30 bg-success-soft/30 flex flex-col justify-between space-y-2 rounded-2xl shadow-xs">
+          <AppCard className="p-5 border border-success-border bg-success-soft/30 flex flex-col justify-between space-y-2 rounded-lg shadow-xs">
             <div className="flex items-center justify-between">
               <span className="theme-label text-success-text">Monthly Run-Rate</span>
-              <div className="p-2 rounded-xl bg-success-soft text-success-text">
+              <div className="p-2 rounded-lg bg-success-soft text-success-text">
                 <Activity className="h-4 w-4" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-success-text font-mono">
+            <div className="text-2xl font-semibold text-success-text font-mono">
               {formatCurrency(analyticsData.monthlyBurn)}<span className="text-xs text-muted font-normal">/mo</span>
             </div>
             <span className="text-[11px] text-muted">Amortized accruals</span>
           </AppCard>
 
-          <AppCard className="p-5 border border-border bg-surface flex flex-col justify-between space-y-2 rounded-2xl shadow-xs">
+          <AppCard className="p-5 border border-border bg-surface flex flex-col justify-between space-y-2 rounded-lg shadow-xs">
             <div className="flex items-center justify-between">
               <span className="theme-label text-muted">License utilisation</span>
-              <div className="p-2 rounded-xl bg-surface text-theme-icon">
+              <div className="p-2 rounded-lg bg-surface text-accent-soft-text">
                 <Users className="h-4 w-4" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-foreground font-mono">
+            <div className="text-2xl font-semibold text-foreground font-mono">
               {analyticsData.totalLicenses > 0 ? Math.round((analyticsData.usedLicenses / analyticsData.totalLicenses) * 100) : 0}%
             </div>
             <span className="text-[11px] text-muted">{analyticsData.usedLicenses} / {analyticsData.totalLicenses} Allocated</span>
           </AppCard>
 
-          <AppCard className="p-5 border border-border bg-surface flex flex-col justify-between space-y-2 rounded-2xl shadow-xs">
+          <AppCard className="p-5 border border-border bg-surface flex flex-col justify-between space-y-2 rounded-lg shadow-xs">
             <div className="flex items-center justify-between">
               <span className="theme-label text-muted">Vendor quality</span>
-              <div className="p-2 rounded-xl bg-warning-soft text-warning-text">
+              <div className="p-2 rounded-lg bg-warning-soft text-warning-text">
                 <Star className="h-4 w-4 fill-warning" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-foreground font-mono flex items-center gap-1">
+            <div className="text-2xl font-semibold text-foreground font-mono flex items-center gap-1">
               <span>{analyticsData.avgRating}</span>
               <span className="text-xs text-muted font-normal">/ 5.0</span>
             </div>
             <span className="text-[11px] text-muted">Average partner rating</span>
           </AppCard>
 
-          <AppCard className="p-5 border border-danger/30 bg-danger-soft/30 flex flex-col justify-between space-y-2 rounded-2xl shadow-xs">
+          <AppCard className="p-5 border border-danger-border bg-danger-soft/30 flex flex-col justify-between space-y-2 rounded-lg shadow-xs">
             <div className="flex items-center justify-between">
               <span className="theme-label text-danger-text">Critical / high risk</span>
-              <div className="p-2 rounded-xl bg-danger-soft text-danger-text">
+              <div className="p-2 rounded-lg bg-danger-soft text-danger-text">
                 <AlertTriangle className="h-4 w-4" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-danger-text font-mono">
+            <div className="text-2xl font-semibold text-danger-text font-mono">
               {analyticsData.criticalCount + analyticsData.highCount}
             </div>
             <span className="text-[11px] text-muted">Expiring &lt;30d or overdue</span>
@@ -284,18 +284,18 @@ export default function AMCAnalyticsPage() {
         {/* 2-Column Visual Charts & Tables */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Renewals in 60 Days */}
-          <AppCard className="p-6 flex flex-col bg-surface border border-border rounded-2xl space-y-4 shadow-xs">
+          <AppCard className="p-6 flex flex-col bg-surface border border-border rounded-lg space-y-4 shadow-xs">
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-danger-soft text-danger-text">
+                <div className="p-2 rounded-lg bg-danger-soft text-danger-text">
                   <Clock className="h-4 w-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-foreground">Upcoming renewals (next 60 days)</h3>
+                  <h3 className="text-sm font-semibold text-foreground">Upcoming renewals (next 60 days)</h3>
                   <p className="text-xs text-muted">Contracts approaching expiration requiring renewal decision.</p>
                 </div>
               </div>
-              <span className="text-xs font-bold font-mono text-theme-icon">{analyticsData.upcomingRenewals.length} Action items</span>
+              <span className="text-xs font-semibold font-mono text-accent-soft-text">{analyticsData.upcomingRenewals.length} Action items</span>
             </div>
 
             <div className="space-y-3 flex-1 overflow-y-auto max-h-[380px]">
@@ -303,9 +303,9 @@ export default function AMCAnalyticsPage() {
                 <div className="text-center p-8 text-muted italic text-xs">No renewals due in the next 60 days.</div>
               ) : (
                 analyticsData.upcomingRenewals.map(rec => (
-                  <div key={rec.id} className="p-3.5 rounded-xl border border-border/70 bg-elevated/50 flex items-center justify-between gap-3 hover:border-theme-btn-primary/40 transition-all">
+                  <div key={rec.id} className="p-3.5 rounded-lg border border-border bg-sunken flex items-center justify-between gap-3 hover:border-border-active transition-all">
                     <div>
-                      <div className="font-bold text-xs text-foreground">{rec.software_name}</div>
+                      <div className="font-semibold text-xs text-foreground">{rec.software_name}</div>
                       <div className="text-[11px] text-muted">{rec.vendor_master?.name || 'Direct Provider'}</div>
                     </div>
                     <div className="text-right">
@@ -321,14 +321,14 @@ export default function AMCAnalyticsPage() {
           </AppCard>
 
           {/* Spend by Cost Center */}
-          <AppCard className="p-6 flex flex-col bg-surface border border-border rounded-2xl space-y-4 shadow-sm">
+          <AppCard className="p-6 flex flex-col bg-surface border border-border rounded-lg space-y-4 shadow-sm">
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-accent-soft text-theme-icon">
+                <div className="p-2 rounded-lg bg-accent-soft text-accent-soft-text">
                   <Building2 className="h-4 w-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-foreground">Cost center spend allocation</h3>
+                  <h3 className="text-sm font-semibold text-foreground">Cost center spend allocation</h3>
                   <p className="text-xs text-muted">Distribution of software subscription capital across departments.</p>
                 </div>
               </div>
@@ -344,11 +344,11 @@ export default function AMCAnalyticsPage() {
                     <div key={idx} className="space-y-1.5">
                       <div className="flex items-center justify-between text-xs">
                         <span className="font-semibold text-foreground">{dept.name}</span>
-                        <span className="font-bold font-mono text-foreground">{formatCurrency(dept.spend)}</span>
+                        <span className="font-semibold font-mono text-foreground">{formatCurrency(dept.spend)}</span>
                       </div>
                       <div className="w-full h-2 rounded-full overflow-hidden bg-elevated">
                         <div 
-                          className="h-full bg-theme-btn-primary transition-all duration-500"
+                          className="h-full bg-primary transition-all duration-500"
                           style={{ width: `${percent}%` }}
                         />
                       </div>

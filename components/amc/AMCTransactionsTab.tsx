@@ -264,19 +264,19 @@ export function AMCTransactionsTab({
   return (
     <div className="space-y-8">
       {/* 1. Cumulative Financial & Seat Impact Summary Card */}
-      <div className="p-6 rounded-2xl border bg-surface border-border shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border/60">
+      <div className="p-6 rounded-lg border bg-surface border-border shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-accent-soft text-theme-icon">
+            <div className="p-2 rounded-lg bg-accent-soft text-accent-soft-text">
               <Receipt className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-foreground">Mid-year transactions & capacity ledger</h3>
+              <h3 className="text-base font-semibold text-foreground">Mid-year transactions & capacity ledger</h3>
               <p className="text-xs text-muted">Log add-on licenses, customizations (OTC), and support expansion.</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-accent-soft text-theme-icon border border-theme-btn-primary/20">
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-accent-soft text-accent-soft-text border border-border-active">
               {summaryMetrics.transactionCount} Mid-year change{summaryMetrics.transactionCount === 1 ? '' : 's'}
             </span>
           </div>
@@ -285,36 +285,36 @@ export function AMCTransactionsTab({
         {/* 4 Summary Stat Boxes */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-1">
           {/* Box 1: Original vs Revised Cost */}
-          <div className="p-3.5 rounded-xl border bg-elevated/40 border-border/60 space-y-1">
-            <span className="text-[11px] font-bold text-muted">Revised total spend</span>
+          <div className="p-3.5 rounded-lg border bg-sunken border-border space-y-1">
+            <span className="text-[11px] font-semibold text-muted">Revised total spend</span>
             <div className="text-lg font-semibold text-foreground font-mono">
               {currency} {summaryMetrics.revisedTotalCost.toFixed(2)}
             </div>
             <div className="text-[11px] text-muted flex items-center gap-1">
               <span>Base: {currency} {numericBaseCost.toFixed(0)}</span>
               {summaryMetrics.totalAddedCost > 0 && (
-                <span className="text-success font-bold font-mono">+{currency} {summaryMetrics.totalAddedCost.toFixed(0)}</span>
+                <span className="text-success-text font-semibold font-mono">+{currency} {summaryMetrics.totalAddedCost.toFixed(0)}</span>
               )}
             </div>
           </div>
 
           {/* Box 2: Original vs Revised Seats */}
-          <div className="p-3.5 rounded-xl border bg-elevated/40 border-border/60 space-y-1">
-            <span className="text-[11px] font-bold text-muted">Active license capacity</span>
+          <div className="p-3.5 rounded-lg border bg-sunken border-border space-y-1">
+            <span className="text-[11px] font-semibold text-muted">Active license capacity</span>
             <div className="text-lg font-semibold text-foreground">
               {summaryMetrics.revisedTotalLicenses} <span className="text-xs font-normal text-muted">Seats</span>
             </div>
             <div className="text-[11px] text-muted">
               <span>Base: {numericBaseLicenses}</span>
               {summaryMetrics.totalAddedLicenses > 0 && (
-                <span className="text-theme-icon font-bold ml-1">+{summaryMetrics.totalAddedLicenses} Add-ons</span>
+                <span className="text-accent-soft-text font-semibold ml-1">+{summaryMetrics.totalAddedLicenses} Add-ons</span>
               )}
             </div>
           </div>
 
           {/* Box 3: Customization & OTC */}
-          <div className="p-3.5 rounded-xl border bg-elevated/40 border-border/60 space-y-1">
-            <span className="text-[11px] font-bold text-muted">OTC customizations</span>
+          <div className="p-3.5 rounded-lg border bg-sunken border-border space-y-1">
+            <span className="text-[11px] font-semibold text-muted">OTC customizations</span>
             <div className="text-lg font-semibold text-foreground font-mono">
               {currency} {summaryMetrics.customizationCost.toFixed(2)}
             </div>
@@ -322,9 +322,9 @@ export function AMCTransactionsTab({
           </div>
 
           {/* Box 4: Spend Growth % */}
-          <div className="p-3.5 rounded-xl border bg-elevated/40 border-border/60 space-y-1">
-            <span className="text-[11px] font-bold text-muted">Mid-year expansion</span>
-            <div className="text-lg font-semibold text-theme-icon flex items-center gap-1">
+          <div className="p-3.5 rounded-lg border bg-sunken border-border space-y-1">
+            <span className="text-[11px] font-semibold text-muted">Mid-year expansion</span>
+            <div className="text-lg font-semibold text-accent-soft-text flex items-center gap-1">
               <TrendingUp className="h-4 w-4" />
               <span>+{summaryMetrics.costGrowthPercent}%</span>
             </div>
@@ -335,9 +335,9 @@ export function AMCTransactionsTab({
 
       {/* 2. Add / Edit Transaction Form */}
       <AppCard className="p-6 border border-border bg-surface shadow-sm space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-border/60">
-          <h4 className="text-base font-bold text-foreground flex items-center gap-2">
-            <Plus className="h-4 w-4 text-theme-icon" />
+        <div className="flex items-center justify-between pb-3 border-b border-border">
+          <h4 className="text-base font-semibold text-foreground flex items-center gap-2">
+            <Plus className="h-4 w-4 text-accent-soft-text" />
             {editId ? "Edit Transaction Record" : "Log Mid-Year Transaction"}
           </h4>
           {editId && (
@@ -351,12 +351,12 @@ export function AMCTransactionsTab({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Transaction Type */}
             <div className="space-y-2">
-              <label className="theme-label">Transaction type <span className="text-danger">*</span></label>
+              <label className="theme-label">Transaction type <span className="text-danger-text">*</span></label>
               <select 
                 value={type} 
                 onChange={(e) => setType(e.target.value)} 
                 required 
-                className="w-full h-11 px-4 rounded-xl text-sm transition-all outline-none border bg-elevated text-foreground border-border cursor-pointer"
+                className="w-full h-11 px-4 rounded-lg text-sm transition-all outline-none border bg-elevated text-foreground border-border cursor-pointer"
               >
                 <option value="Add-on Licenses">Add-on licenses</option>
                 <option value="Customization (OTC)">Customization (OTC)</option>
@@ -372,9 +372,9 @@ export function AMCTransactionsTab({
               <select 
                 value={selectedLineItemId} 
                 onChange={(e) => setSelectedLineItemId(e.target.value)} 
-                className="w-full h-11 px-4 rounded-xl text-sm transition-all outline-none border bg-elevated text-foreground border-border cursor-pointer"
+                className="w-full h-11 px-4 rounded-lg text-sm transition-all outline-none border bg-elevated text-foreground border-border cursor-pointer"
               >
-                <option value="">-- General / headwise contract --</option>
+                <option value="">General / headwise contract</option>
                 {solutionLineItems.map((item, idx) => (
                   <option key={item.id} value={item.id}>
                     Item #{idx + 1}: {item.resolutionName || "Unnamed Solution"} {item.qty ? `(${item.qty} Qty)` : ""}
@@ -385,7 +385,7 @@ export function AMCTransactionsTab({
 
             {/* Transaction Date */}
             <div className="space-y-2">
-              <label className="theme-label">Transaction date <span className="text-danger">*</span></label>
+              <label className="theme-label">Transaction date <span className="text-danger-text">*</span></label>
               <AppInput type="date" value={transactionDate} onChange={(e) => setTransactionDate(e.target.value)} required className="h-11" />
             </div>
 
@@ -397,9 +397,9 @@ export function AMCTransactionsTab({
 
             {/* Cost */}
             <div className="space-y-2">
-              <label className="theme-label">Total cost <span className="text-danger">*</span></label>
+              <label className="theme-label">Total cost <span className="text-danger-text">*</span></label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-muted">{currency}</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted">{currency}</span>
                 <AppInput type="number" step="0.01" value={cost} onChange={(e) => setCost(e.target.value)} required className="pl-12 h-11" placeholder="0.00" />
               </div>
             </div>
@@ -407,7 +407,7 @@ export function AMCTransactionsTab({
             {/* Licenses Added */}
             {type === 'Add-on Licenses' && (
               <div className="space-y-2">
-                <label className="theme-label">Licenses / seats added <span className="text-danger">*</span></label>
+                <label className="theme-label">Licenses / seats added <span className="text-danger-text">*</span></label>
                 <AppInput type="number" min="1" value={licensesAdded} onChange={(e) => setLicensesAdded(e.target.value)} required className="h-11" placeholder="e.g., 10" />
               </div>
             )}
@@ -415,7 +415,7 @@ export function AMCTransactionsTab({
             {/* Exchange Rate (if foreign currency) */}
             {currency !== 'INR' && (
               <div className="space-y-2">
-                <label className="theme-label">Exchange rate (to INR) <span className="text-danger">*</span></label>
+                <label className="theme-label">Exchange rate (to INR) <span className="text-danger-text">*</span></label>
                 <AppInput type="number" step="0.0001" value={exchangeRate} onChange={(e) => setExchangeRate(e.target.value)} required className="h-11" />
               </div>
             )}
@@ -427,12 +427,12 @@ export function AMCTransactionsTab({
                 <input 
                   type="file" 
                   onChange={(e) => setAttachedFile(e.target.files?.[0] || null)}
-                  className="w-full text-xs text-muted file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-accent-soft file:text-theme-icon hover:file:bg-accent-soft cursor-pointer border border-border rounded-xl h-11 bg-elevated pt-1"
+                  className="w-full text-xs text-muted file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-accent-soft file:text-accent-soft-text hover:file:bg-accent-soft cursor-pointer border border-border rounded-lg h-11 bg-elevated pt-1"
                 />
                 {attachedFile && (
                   <div className="flex items-center justify-between p-2 rounded-lg border border-border bg-surface text-xs">
                     <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
-                      <Paperclip className="h-3.5 w-3.5 text-theme-icon shrink-0" />
+                      <Paperclip className="h-3.5 w-3.5 text-accent-soft-text shrink-0" />
                       <div className="min-w-0 flex-1">
                         <p className="font-semibold truncate text-foreground" title={attachedFile.name}>
                           {attachedFile.name}
@@ -471,7 +471,7 @@ export function AMCTransactionsTab({
                           document.body.removeChild(a);
                           URL.revokeObjectURL(url);
                         }}
-                        className="h-7 px-2 text-xs text-theme-icon hover:bg-accent-soft gap-1 font-semibold"
+                        className="h-7 px-2 text-xs text-accent-soft-text hover:bg-accent-soft gap-1 font-semibold"
                         title="Download staged file"
                       >
                         <Download className="h-3.5 w-3.5" />
@@ -482,7 +482,7 @@ export function AMCTransactionsTab({
                         variant="ghost"
                         size="sm"
                         onClick={() => setAttachedFile(null)}
-                        className="h-7 w-7 p-0 text-muted hover:text-danger"
+                        className="h-7 w-7 p-0 text-muted hover:text-danger-text"
                         title="Remove file"
                       >
                         <X className="h-3.5 w-3.5" />
@@ -523,7 +523,7 @@ export function AMCTransactionsTab({
                           a.click();
                           document.body.removeChild(a);
                         }}
-                        className="h-6 px-2 text-xs text-theme-icon gap-1 font-semibold"
+                        className="h-6 px-2 text-xs text-accent-soft-text gap-1 font-semibold"
                         title="Download existing document"
                       >
                         <Download className="h-3 w-3" />
@@ -564,8 +564,8 @@ export function AMCTransactionsTab({
       {/* 3. Transaction Ledger History */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h4 className="text-base font-bold text-foreground flex items-center gap-2">
-            <Layers className="h-4 w-4 text-theme-icon" />
+          <h4 className="text-base font-semibold text-foreground flex items-center gap-2">
+            <Layers className="h-4 w-4 text-accent-soft-text" />
             Logged transaction history ({transactions.length})
           </h4>
         </div>
@@ -575,7 +575,7 @@ export function AMCTransactionsTab({
             <ChandakLoader size="sm" title="Loading transactions…" />
           </div>
         ) : transactions.length === 0 ? (
-          <div className="p-8 text-center text-muted italic rounded-xl border bg-elevated/40 border-border">
+          <div className="p-8 text-center text-muted italic rounded-lg border bg-sunken border-border">
             No mid-year transactions logged for this contract yet. Use the form above to add ad-hoc licenses or customizations.
           </div>
         ) : (
@@ -583,16 +583,16 @@ export function AMCTransactionsTab({
             {transactions.map((tx) => (
               <AppCard 
                 key={tx.id} 
-                className="p-4 rounded-xl border border-border bg-surface hover:border-theme-btn-primary/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all shadow-xs"
+                className="p-4 rounded-lg border border-border bg-surface hover:border-border-active flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all shadow-xs"
               >
                 <div className="space-y-1.5">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-accent-soft text-theme-icon border border-theme-btn-primary/20">
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-accent-soft text-accent-soft-text border border-border-active">
                       {tx.transaction_type}
                     </span>
                     {tx.line_item_name && (
                       <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-elevated text-foreground border border-border">
-                        🎯 {tx.line_item_name}
+                        {tx.line_item_name}
                       </span>
                     )}
                     {tx.po_number && (
@@ -606,7 +606,7 @@ export function AMCTransactionsTab({
                     {tx.licenses_added > 0 && (
                       <>
                         <span>•</span>
-                        <span className="font-bold text-theme-icon">+{tx.licenses_added} Seats added</span>
+                        <span className="font-semibold text-accent-soft-text">+{tx.licenses_added} Seats added</span>
                       </>
                     )}
                     {tx.notes && (
@@ -620,7 +620,7 @@ export function AMCTransactionsTab({
 
                 <div className="flex items-center justify-between sm:justify-end gap-6 shrink-0">
                   <div className="text-right">
-                    <div className="font-bold text-base font-mono text-success">
+                    <div className="font-semibold text-base font-mono text-success-text">
                       {new Intl.NumberFormat('en-IN', { style: 'currency', currency: currency || 'INR', maximumFractionDigits: 2 }).format(tx.cost)}
                     </div>
                     {tx.exchange_rate && tx.exchange_rate !== 1 && tx.base_currency_amount && (
@@ -659,7 +659,7 @@ export function AMCTransactionsTab({
                             document.body.removeChild(a);
                           }}
                           title="Download document"
-                          className="h-8 w-8 p-0 text-theme-icon hover:bg-accent-soft"
+                          className="h-8 w-8 p-0 text-accent-soft-text hover:bg-accent-soft"
                         >
                           <Download className="h-4 w-4" />
                         </AppButton>
@@ -679,7 +679,7 @@ export function AMCTransactionsTab({
                       size="sm" 
                       onClick={() => handleDelete(tx.id)} 
                       title="Delete transaction"
-                      className="h-8 w-8 p-0 text-danger hover:bg-danger/10"
+                      className="h-8 w-8 p-0 text-danger-text hover:bg-danger-soft"
                     >
                       <Trash2 className="h-4 w-4" />
                     </AppButton>

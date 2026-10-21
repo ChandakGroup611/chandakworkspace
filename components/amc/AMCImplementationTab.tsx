@@ -81,7 +81,7 @@ const DEFAULT_STAGES = [
     stage_name: "2. Discussion & Discovery",
     description: "Stakeholder requirements discovery, kickoff meeting, IT architecture review.",
     icon: MessageSquare,
-    color: "text-theme-icon",
+    color: "text-accent-soft-text",
     bgColor: "bg-surface",
     borderColor: "border-border"
   },
@@ -99,7 +99,7 @@ const DEFAULT_STAGES = [
     stage_name: "4. Implementation & Integration",
     description: "Custom development, data migration, API connectors, workflow automation.",
     icon: Layers,
-    color: "text-theme-icon",
+    color: "text-accent-soft-text",
     bgColor: "bg-surface",
     borderColor: "border-border"
   },
@@ -117,7 +117,7 @@ const DEFAULT_STAGES = [
     stage_name: "6. Training & User Rollout",
     description: "End-user training sessions, SOP guide distribution, change management.",
     icon: GraduationCap,
-    color: "text-theme-icon",
+    color: "text-accent-soft-text",
     bgColor: "bg-surface",
     borderColor: "border-border"
   },
@@ -251,7 +251,7 @@ export function AMCImplementationTab({
             implementation_status: "Live / Operational",
             status: "Active"
           }, amcId);
-          toast.success("Go-Live achieved! Software is now marked as Active with Put to Use Date.");
+          toast.success("Go-live recorded. The software is now active from its put-to-use date.");
           if (onUpdate) onUpdate();
         } else {
           // Update overall software_amc implementation status
@@ -386,24 +386,24 @@ export function AMCImplementationTab({
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'Completed':
-        return <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-success/10 text-success border border-success/20 flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5" /> Completed</span>;
+        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-success-soft text-success-text border border-success-border flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5" /> Completed</span>;
       case 'In Progress':
-        return <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-accent-soft text-theme-icon border border-theme-btn-primary/20 flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 animate-pulse" /> In progress</span>;
+        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-accent-soft text-accent-soft-text border border-border-active flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 animate-pulse" /> In progress</span>;
       case 'Blocked':
-        return <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-danger/10 text-danger border border-danger/20 flex items-center gap-1.5"><AlertCircle className="h-3.5 w-3.5" /> Blocked / on hold</span>;
+        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-danger-soft text-danger-text border border-danger-border flex items-center gap-1.5"><AlertCircle className="h-3.5 w-3.5" /> Blocked / on hold</span>;
       case 'Skipped':
-        return <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-muted/10 text-muted border border-border flex items-center gap-1.5"><X className="h-3.5 w-3.5" /> Skipped</span>;
+        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-muted/10 text-muted border border-border flex items-center gap-1.5"><X className="h-3.5 w-3.5" /> Skipped</span>;
       default:
-        return <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-muted/10 text-muted border border-border flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> Pending</span>;
+        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-muted/10 text-muted border border-border flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> Pending</span>;
     }
   };
 
   const getStageMeta = (key: string) => {
     return DEFAULT_STAGES.find(s => s.stage_key === key) || {
       icon: Sparkles,
-      color: "text-theme-icon",
+      color: "text-accent-soft-text",
       bgColor: "bg-accent-soft",
-      borderColor: "border-theme-btn-primary/30",
+      borderColor: "border-border-active",
       description: "Custom implementation milestone."
     };
   };
@@ -422,8 +422,8 @@ export function AMCImplementationTab({
       <AppCard className="p-6 theme-card-structural border border-border space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-theme-icon" />
-            <h3 className="text-lg font-bold text-foreground">
+            <Sparkles className="h-5 w-5 text-accent-soft-text" />
+            <h3 className="text-lg font-semibold text-foreground">
               Software onboarding & implementation lifecycle
             </h3>
           </div>
@@ -453,30 +453,30 @@ export function AMCImplementationTab({
 
         {/* Progress Metrics Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-          <div className="p-4 rounded-xl bg-surface border border-border flex items-center justify-between">
+          <div className="p-4 rounded-lg bg-surface border border-border flex items-center justify-between">
             <div className="space-y-0.5">
-              <span className="text-[11px] font-bold text-muted">Overall progress</span>
+              <span className="text-[11px] font-semibold text-muted">Overall progress</span>
               <div className="text-2xl font-semibold text-foreground">{progressPercent}%</div>
             </div>
-            <div className="h-10 w-10 rounded-full bg-accent-soft text-theme-icon flex items-center justify-center font-bold text-sm">
+            <div className="h-10 w-10 rounded-full bg-accent-soft text-accent-soft-text flex items-center justify-center font-semibold text-sm">
               {completedCount}/{totalStages}
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-surface border border-border flex items-center justify-between">
+          <div className="p-4 rounded-lg bg-surface border border-border flex items-center justify-between">
             <div className="space-y-0.5">
-              <span className="text-[11px] font-bold text-muted">Current active stage</span>
-              <div className="text-sm font-bold text-foreground truncate max-w-[180px]">
+              <span className="text-[11px] font-semibold text-muted">Current active stage</span>
+              <div className="text-sm font-semibold text-foreground truncate max-w-[180px]">
                 {currentActiveStage?.stage_name || "Completed"}
               </div>
             </div>
             <div>{currentActiveStage && getStatusBadge(currentActiveStage.status)}</div>
           </div>
 
-          <div className="p-4 rounded-xl bg-surface border border-border flex items-center justify-between">
+          <div className="p-4 rounded-lg bg-surface border border-border flex items-center justify-between">
             <div className="space-y-0.5">
-              <span className="text-[11px] font-bold text-muted">Next target date</span>
-              <div className="text-sm font-bold text-foreground">
+              <span className="text-[11px] font-semibold text-muted">Next target date</span>
+              <div className="text-sm font-semibold text-foreground">
                 {currentActiveStage?.target_date 
                   ? formatDate(currentActiveStage.target_date) 
                   : "Not set"}
@@ -504,7 +504,7 @@ export function AMCImplementationTab({
 
       {/* STAGE PIPELINE TIMELINE */}
       <div className="space-y-4">
-        <h4 className="text-sm font-bold text-theme-icon flex items-center gap-2">
+        <h4 className="text-sm font-semibold text-accent-soft-text flex items-center gap-2">
           <Layers className="h-4 w-4" /> Implementation stages & sign-offs
         </h4>
 
@@ -518,26 +518,26 @@ export function AMCImplementationTab({
             return (
               <div
                 key={stage.id || idx}
-                className={`p-5 rounded-2xl border transition-all duration-200 ${
+                className={`p-5 rounded-lg border transition-all duration-200 ${
                   stage.status === 'Completed'
-                    ? 'bg-surface/90 border-success/30 shadow-sm'
+                    ? 'bg-surface/90 border-success-border shadow-sm'
                     : stage.status === 'In Progress'
-                    ? 'bg-surface border-theme-btn-primary shadow-md ring-1 ring-theme-btn-primary/20'
+                    ? 'bg-surface border-primary shadow-md ring-1 ring-ring'
                     : 'bg-surface/60 border-border opacity-90'
                 }`}
               >
                 <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                   {/* Left: Stage Name, Icon, Description */}
                   <div className="flex items-start gap-4">
-                    <div className={`p-3 rounded-xl ${meta.bgColor} ${meta.color} shrink-0 mt-0.5 border ${meta.borderColor}`}>
+                    <div className={`p-3 rounded-lg ${meta.bgColor} ${meta.color} shrink-0 mt-0.5 border ${meta.borderColor}`}>
                       <IconComponent className="h-5 w-5" />
                     </div>
                     <div className="space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h5 className="text-base font-bold text-foreground">{stage.stage_name}</h5>
+                        <h5 className="text-base font-semibold text-foreground">{stage.stage_name}</h5>
                         {getStatusBadge(stage.status)}
                         {stage.stage_key === 'go_live' && (
-                          <span className="text-[11px] px-2 py-0.5 rounded-full bg-success-soft text-success-text font-bold border border-success-border">
+                          <span className="text-[11px] px-2 py-0.5 rounded-full bg-success-soft text-success-text font-semibold border border-success-border">
                             Syncs put to use date
                           </span>
                         )}
@@ -553,7 +553,7 @@ export function AMCImplementationTab({
                     <select
                       value={stage.status || ""}
                       onChange={(e) => handleUpdateStageField(stage.id!, "status", e.target.value)}
-                      className="h-9 px-3 rounded-lg text-xs font-semibold border bg-elevated border-border text-foreground outline-none focus:ring-2 focus:ring-theme-btn-primary/20 cursor-pointer"
+                      className="h-9 px-3 rounded-lg text-xs font-semibold border bg-elevated border-border text-foreground outline-none focus:ring-2 focus:ring-ring cursor-pointer"
                     >
                       <option value="" disabled>Select status</option>
                       <option value="Pending">Pending</option>
@@ -568,7 +568,7 @@ export function AMCImplementationTab({
                       variant="ghost"
                       size="sm"
                       onClick={() => setEditingStageId(isEditing ? null : stage.id!)}
-                      className="h-9 px-2.5 text-xs text-theme-icon hover:bg-accent-soft"
+                      className="h-9 px-2.5 text-xs text-accent-soft-text hover:bg-accent-soft"
                     >
                       <Edit3 className="h-3.5 w-3.5 mr-1" />
                       {isEditing ? "Hide Details" : "Edit / MOM"}
@@ -580,7 +580,7 @@ export function AMCImplementationTab({
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDeleteCustomStage(stage.id!)}
-                        className="h-9 w-9 p-0 text-danger hover:bg-danger/10"
+                        className="h-9 w-9 p-0 text-danger-text hover:bg-danger-soft"
                         title="Delete custom stage"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -590,7 +590,7 @@ export function AMCImplementationTab({
                 </div>
 
                 {/* Always-visible Meta Strip: Owner, Target Date, Completed Date, Attachment */}
-                <div className="mt-4 pt-3 border-t border-border/60 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                <div className="mt-4 pt-3 border-t border-border grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
                   <div className="flex items-center gap-2">
                     <User className="h-3.5 w-3.5 text-muted shrink-0" />
                     <span className="text-muted">Lead / Owner:</span>
@@ -670,7 +670,7 @@ export function AMCImplementationTab({
                               a.click();
                               document.body.removeChild(a);
                             }}
-                            className="h-6 w-6 p-0 text-theme-icon hover:text-theme-icon hover:bg-accent-soft"
+                            className="h-6 w-6 p-0 text-accent-soft-text hover:text-accent-soft-text hover:bg-accent-soft"
                             title="Download sign-off document"
                           >
                             <Download className="h-3 w-3" />
@@ -680,14 +680,14 @@ export function AMCImplementationTab({
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDeleteAttachment(stage)}
-                            className="h-6 w-6 p-0 text-danger"
+                            className="h-6 w-6 p-0 text-danger-text"
                             title="Delete file"
                           >
                             <Trash2 className="h-3 w-3" />
                           </AppButton>
                         </>
                       ) : (
-                        <label className="cursor-pointer text-[11px] font-semibold text-theme-icon hover:underline flex items-center gap-1">
+                        <label className="cursor-pointer text-[11px] font-semibold text-accent-soft-text hover:underline flex items-center gap-1">
                           <Upload className="h-3 w-3" />
                           <span>Attach</span>
                           <input
@@ -709,7 +709,7 @@ export function AMCImplementationTab({
                   <div className="mt-4 pt-4 border-t border-border space-y-4 animate-in slide-in-from-top-2 duration-200">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <label className="text-[11px] font-bold text-muted">
+                        <label className="text-[11px] font-semibold text-muted">
                           Sign-off person / approver name
                         </label>
                         <AppInput
@@ -720,7 +720,7 @@ export function AMCImplementationTab({
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[11px] font-bold text-muted">
+                        <label className="text-[11px] font-semibold text-muted">
                           Stage sign-off document
                         </label>
                         <div className="flex items-center gap-2 h-9">
@@ -730,24 +730,24 @@ export function AMCImplementationTab({
                               const file = e.target.files?.[0];
                               if (file) handleFileUpload(stage, file);
                             }}
-                            className="text-xs text-muted file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-accent-soft file:text-theme-icon hover:file:bg-accent-soft cursor-pointer flex-1"
+                            className="text-xs text-muted file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-accent-soft file:text-accent-soft-text hover:file:bg-accent-soft cursor-pointer flex-1"
                           />
                           {uploadingStageId === stage.id && (
-                            <Loader2 className="h-4 w-4 animate-spin text-theme-icon" />
+                            <Loader2 className="h-4 w-4 animate-spin text-accent-soft-text" />
                           )}
                         </div>
                       </div>
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[11px] font-bold text-muted">
+                      <label className="text-[11px] font-semibold text-muted">
                         Meeting minutes (MOM), key decisions & progress remarks
                       </label>
                       <textarea
                         value={stage.notes || ""}
                         onChange={(e) => handleUpdateStageField(stage.id!, "notes", e.target.value)}
                         placeholder="Document key discussion points, blockers, integration details, or meeting minutes for this stage…"
-                        className="w-full p-3 rounded-xl text-xs bg-elevated border border-border text-foreground outline-none focus:ring-2 focus:ring-theme-btn-primary/20 min-h-[80px] resize-none"
+                        className="w-full p-3 rounded-lg text-xs bg-elevated border border-border text-foreground outline-none focus:ring-2 focus:ring-ring min-h-[80px] resize-none"
                       />
                     </div>
                   </div>
@@ -760,11 +760,11 @@ export function AMCImplementationTab({
 
       {/* Add Custom Stage Modal */}
       {showAddCustomModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-surface/60 animate-in fade-in duration-200">
-          <div className="relative w-full max-w-lg rounded-2xl p-6 bg-surface border border-border shadow-lg space-y-5 animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4 bg-[var(--overlay)] animate-in fade-in duration-150">
+          <div className="relative w-full max-w-lg rounded-lg p-6 bg-surface border border-border shadow-lg space-y-5 animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between pb-3 border-b border-border">
-              <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-                <Plus className="h-4 w-4 text-theme-icon" /> Add custom implementation stage
+              <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+                <Plus className="h-4 w-4 text-accent-soft-text" /> Add custom implementation stage
               </h3>
               <AppButton aria-label="Close" variant="secondary" onClick={() => setShowAddCustomModal(false)} className="p-1.5 rounded-lg text-muted hover:text-foreground">
                 <X className="h-4 w-4" />
@@ -773,8 +773,8 @@ export function AMCImplementationTab({
 
             <form onSubmit={handleAddCustomStage} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-muted">
-                  Stage name <span className="text-danger">*</span>
+                <label className="text-xs font-semibold text-muted">
+                  Stage name <span className="text-danger-text">*</span>
                 </label>
                 <AppInput
                   value={customStageName}
@@ -787,7 +787,7 @@ export function AMCImplementationTab({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted">Target date</label>
+                  <label className="text-xs font-semibold text-muted">Target date</label>
                   <AppInput
                     type="date"
                     value={customStageTargetDate}
@@ -796,13 +796,13 @@ export function AMCImplementationTab({
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted">Assign lead / owner</label>
+                  <label className="text-xs font-semibold text-muted">Assign lead / owner</label>
                   <select
                     value={customStageAssignedTo}
                     onChange={(e) => setCustomStageAssignedTo(e.target.value)}
-                    className="w-full h-10 px-3 rounded-lg text-xs font-medium border bg-elevated border-border text-foreground outline-none focus:ring-2 focus:ring-theme-btn-primary/20"
+                    className="w-full h-10 px-3 rounded-lg text-xs font-medium border bg-elevated border-border text-foreground outline-none focus:ring-2 focus:ring-ring"
                   >
-                    <option value="">-- Unassigned --</option>
+                    <option value="">Unassigned</option>
                     {users.map(u => (
                       <option key={u.id} value={u.id}>{u.full_name}</option>
                     ))}
@@ -811,12 +811,12 @@ export function AMCImplementationTab({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-muted">Description / notes</label>
+                <label className="text-xs font-semibold text-muted">Description / notes</label>
                 <textarea
                   value={customStageNotes}
                   onChange={(e) => setCustomStageNotes(e.target.value)}
                   placeholder="Brief description of requirements or deliverables for this stage…"
-                  className="w-full p-3 rounded-xl text-xs bg-elevated border border-border text-foreground outline-none focus:ring-2 focus:ring-theme-btn-primary/20 min-h-[80px] resize-none"
+                  className="w-full p-3 rounded-lg text-xs bg-elevated border border-border text-foreground outline-none focus:ring-2 focus:ring-ring min-h-[80px] resize-none"
                 />
               </div>
 

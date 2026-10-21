@@ -90,23 +90,23 @@ export function CustomPaymentMilestoneManager({
     switch (status) {
       case 'Amount Released':
       case 'Completed':
-        return 'bg-success/15 text-success border-success/30 font-semibold';
+        return 'bg-success-soft text-success-text border-success-border font-semibold';
       case 'Partially Released':
-        return 'bg-accent-soft text-theme-icon border-theme-btn-primary/30 font-semibold';
+        return 'bg-accent-soft text-accent-soft-text border-border-active font-semibold';
       case 'On Hold':
-        return 'bg-danger/15 text-danger border-danger/30 font-semibold';
+        return 'bg-danger-soft text-danger-text border-danger-border font-semibold';
       case 'Pending':
       default:
-        return 'bg-warning/15 text-warning border-warning/30 font-semibold';
+        return 'bg-warning-soft text-warning-text border-warning-border font-semibold';
     }
   };
 
   return (
-    <div className="space-y-4 rounded-2xl border border-border/80 bg-surface/90 p-4 sm:p-6 shadow-sm transition-all">
+    <div className="space-y-4 rounded-lg border border-border bg-surface/90 p-4 sm:p-6 shadow-sm transition-all">
       {/* Top Controls: Mode Selection & Add Button */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border/60">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
         <div className="flex items-center gap-3">
-          <div className="flex rounded-xl border border-border p-1 bg-elevated/70">
+          <div className="flex rounded-lg border border-border p-1 bg-sunken">
             <AppButton
               type="button"
               variant={customType === 'percent_wise' ? 'primary' : 'ghost'}
@@ -138,8 +138,8 @@ export function CustomPaymentMilestoneManager({
               variant="outline"
               size="sm"
               onClick={handleAutoFillRemainder}
-              leftIcon={<Sparkles className="h-3.5 w-3.5 text-theme-icon" />}
-              className="h-8 text-xs font-semibold text-theme-icon border-theme-btn-primary/30 hover:bg-accent-soft"
+              leftIcon={<Sparkles className="h-3.5 w-3.5 text-accent-soft-text" />}
+              className="h-8 text-xs font-semibold text-accent-soft-text border-border-active hover:bg-accent-soft"
               title="Add remaining balance as next milestone"
             >
               Add remainder ({currencySymbol}{unallocatedAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
@@ -160,23 +160,23 @@ export function CustomPaymentMilestoneManager({
       </div>
 
       {/* Progress & Summary Bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-xl bg-elevated/60 border border-border/60 text-xs">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-lg bg-elevated/60 border border-border text-xs">
         <div>
           <span className="text-muted block text-[11px] font-semibold">Total contract value</span>
-          <span className="font-bold text-foreground font-mono text-base">
+          <span className="font-semibold text-foreground font-mono text-base">
             {currencySymbol}{totalBaseAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
         </div>
         <div>
           <span className="text-muted block text-[11px] font-semibold">Total scheduled</span>
           <div className="flex items-center gap-1.5">
-            <span className="font-bold text-foreground font-mono text-base">
+            <span className="font-semibold text-foreground font-mono text-base">
               {currencySymbol}{totalAllocatedAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
             <span className={`text-[11px] px-1.5 py-0.5 rounded font-semibold ${
               Math.abs(totalAllocatedPercent - 100) < 0.1 
-                ? 'bg-success/15 text-success border border-success/30' 
-                : 'bg-warning/15 text-warning border border-warning/30'
+                ? 'bg-success-soft text-success-text border border-success-border' 
+                : 'bg-warning-soft text-warning-text border border-warning-border'
             }`}>
               {totalAllocatedPercent.toFixed(1)}%
             </span>
@@ -185,7 +185,7 @@ export function CustomPaymentMilestoneManager({
         <div>
           <span className="text-muted block text-[11px] font-semibold">Amount released</span>
           <div className="flex items-center gap-1.5">
-            <span className="font-bold text-success font-mono text-base">
+            <span className="font-semibold text-success-text font-mono text-base">
               {currencySymbol}{totalReleasedAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
             <span className="text-[11px] text-muted font-medium">({totalReleasedPercent.toFixed(1)}%)</span>
@@ -193,7 +193,7 @@ export function CustomPaymentMilestoneManager({
         </div>
         <div>
           <span className="text-muted block text-[11px] font-semibold">Pending release</span>
-          <span className="font-bold text-warning font-mono text-base">
+          <span className="font-semibold text-warning-text font-mono text-base">
             {currencySymbol}{totalPendingAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
         </div>
@@ -209,7 +209,7 @@ export function CustomPaymentMilestoneManager({
               title={`Released: ${totalReleasedPercent.toFixed(1)}%`}
             />
             <div 
-              className="bg-theme-btn-primary transition-all duration-300 h-full opacity-80" 
+              className="bg-primary transition-all duration-300 h-full opacity-80" 
               style={{ width: `${Math.min(100, Math.max(0, totalAllocatedPercent - totalReleasedPercent))}%` }} 
               title={`Scheduled (Pending): ${(totalAllocatedPercent - totalReleasedPercent).toFixed(1)}%`}
             />
@@ -220,7 +220,7 @@ export function CustomPaymentMilestoneManager({
               <span>Released: {currencySymbol}{totalReleasedAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({totalReleasedPercent.toFixed(1)}%)</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="inline-block w-2 h-2 rounded-full bg-theme-btn-primary"></span>
+              <span className="inline-block w-2 h-2 rounded-full bg-primary"></span>
               <span>Scheduled: {totalAllocatedPercent.toFixed(1)}% / 100%</span>
             </div>
           </div>
@@ -229,7 +229,7 @@ export function CustomPaymentMilestoneManager({
 
       {/* Allocation Warning / Suggestion banner */}
       {totalBaseAmount > 0 && Math.abs(totalAllocatedPercent - 100) >= 0.1 && (
-        <div className="p-3 rounded-xl bg-warning-soft border border-warning-border flex items-center justify-between gap-3 text-xs text-warning-text">
+        <div className="p-3 rounded-lg bg-warning-soft border border-warning-border flex items-center justify-between gap-3 text-xs text-warning-text">
           <div className="flex items-center gap-2">
             <AlertCircle className="h-4 w-4 shrink-0 text-warning-text" />
             <span>
@@ -244,23 +244,23 @@ export function CustomPaymentMilestoneManager({
       {/* List of Milestones */}
       <div className="space-y-3 pt-1">
         {milestones.length === 0 ? (
-          <div className="py-8 text-center text-muted border border-dashed border-border rounded-xl text-xs space-y-2 bg-elevated/30">
-            <div className="p-3 rounded-full bg-accent-soft text-theme-icon w-fit mx-auto">
+          <div className="py-8 text-center text-muted border border-border rounded-lg text-xs space-y-2 bg-sunken">
+            <div className="p-3 rounded-full bg-accent-soft text-accent-soft-text w-fit mx-auto">
               <Layers className="h-5 w-5" />
             </div>
-            <p className="font-semibold text-foreground text-sm">No payment milestones defined.</p>
+            <p className="font-semibold text-foreground text-sm">No payment milestones yet</p>
             <p className="text-[11px] text-muted max-w-md mx-auto">Click &ldquo;Add {customType === 'percent_wise' ? '% Stage' : 'Phase Milestone'}&rdquo; to set up staged payouts, release triggers, and milestone approval conditions.</p>
           </div>
         ) : (
           milestones.map((m, idx) => (
             <div
               key={m.id}
-              className="p-4 rounded-xl border border-border/80 bg-background/70 hover:border-theme-btn-primary/50 transition-all space-y-3.5 shadow-sm"
+              className="p-4 rounded-lg border border-border bg-background/70 hover:border-border-active transition-all space-y-3.5 shadow-sm"
             >
               {/* Row 1: Phase Name & Status + Delete */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-border/50">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-border">
                 <div className="flex items-center gap-2.5 flex-1">
-                  <span className="h-6 w-6 rounded-lg bg-accent-soft text-theme-icon font-bold text-[11px] flex items-center justify-center shrink-0 border border-theme-btn-primary/20">
+                  <span className="h-6 w-6 rounded-lg bg-accent-soft text-accent-soft-text font-semibold text-[11px] flex items-center justify-center shrink-0 border border-border-active">
                     {idx + 1}
                   </span>
                   <AppInput
@@ -279,7 +279,7 @@ export function CustomPaymentMilestoneManager({
                       size="sm"
                       onClick={() => handleQuickRelease(m)}
                       leftIcon={<Zap className="h-3.5 w-3.5 text-success-text" />}
-                      className="h-8 px-2.5 text-xs font-bold text-success-text hover:text-success-text hover:bg-success-soft border border-success-border rounded-lg"
+                      className="h-8 px-2.5 text-xs font-semibold text-success-text hover:text-success-text hover:bg-success-soft border border-success-border rounded-lg"
                       title="Mark full amount released"
                     >
                       Release
@@ -303,7 +303,7 @@ export function CustomPaymentMilestoneManager({
                     variant="secondary"
                     type="button"
                     onClick={() => onRemoveMilestone(m.id)}
-                    className="p-1.5 h-8 w-8 text-danger hover:bg-danger/10 rounded-lg transition-colors shrink-0"
+                    className="p-1.5 h-8 w-8 text-danger-text hover:bg-danger-soft rounded-lg transition-colors shrink-0"
                     title="Remove milestone"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -329,7 +329,7 @@ export function CustomPaymentMilestoneManager({
                         placeholder="0.00"
                         className="h-8 text-xs font-mono font-medium flex-1"
                       />
-                      <span className="text-xs font-bold text-muted font-mono whitespace-nowrap">
+                      <span className="text-xs font-semibold text-muted font-mono whitespace-nowrap">
                         = {currencySymbol}{(m.amount || 0).toFixed(2)}
                       </span>
                     </div>
@@ -350,7 +350,7 @@ export function CustomPaymentMilestoneManager({
                         className="h-8 text-xs font-mono font-medium flex-1"
                       />
                       {totalBaseAmount > 0 && (
-                        <span className="text-xs font-bold text-muted font-mono whitespace-nowrap">
+                        <span className="text-xs font-semibold text-muted font-mono whitespace-nowrap">
                           ({((Number(m.amount || 0) / totalBaseAmount) * 100).toFixed(1)}%)
                         </span>
                       )}
@@ -369,7 +369,7 @@ export function CustomPaymentMilestoneManager({
                     value={m.amountReleased ?? ""}
                     onChange={(e) => onUpdateMilestone(m.id, 'amountReleased', e.target.value)}
                     placeholder="0.00"
-                    className="h-8 text-xs font-mono font-semibold text-success"
+                    className="h-8 text-xs font-mono font-semibold text-success-text"
                   />
                 </div>
 

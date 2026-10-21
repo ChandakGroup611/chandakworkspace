@@ -116,7 +116,7 @@ export function AMCRenewalsTab({
       
       await fetchRenewals();
       onUpdate(); // Trigger parent refresh (for new expiry date)
-      toast.success("Renewal logged successfully! Master record expiry date has been pushed forward.");
+      toast.success("Renewal recorded. The contract expiry date has been moved forward.");
     } catch (e: any) {
       toast.error("Error logging renewal: " + e.message);
     } finally {
@@ -188,11 +188,11 @@ export function AMCRenewalsTab({
     <div className="space-y-8">
       {/* YoY Cost Comparison Banner */}
       {renewalAnalytics.hasHistory && (
-        <div className="p-5 rounded-2xl border bg-surface border-border shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="p-5 rounded-lg border bg-surface border-border shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-theme-icon" />
-              <span className="text-xs font-bold text-muted">Year-over-year (YoY) renewal comparison</span>
+              <Sparkles className="h-4 w-4 text-accent-soft-text" />
+              <span className="text-xs font-semibold text-muted">Year-over-year (YoY) renewal comparison</span>
             </div>
             <div className="flex flex-wrap items-center gap-4 text-sm">
               <div>
@@ -208,7 +208,7 @@ export function AMCRenewalsTab({
           </div>
 
           <div className="flex items-center gap-3">
-            <div className={`px-3 py-1.5 rounded-xl border flex items-center gap-2 text-xs font-bold ${
+            <div className={`px-3 py-1.5 rounded-lg border flex items-center gap-2 text-xs font-semibold ${
               renewalAnalytics.diffFromBase === 0 
                 ? 'bg-muted/10 text-muted border-border'
                 : renewalAnalytics.isIncrease 
@@ -224,7 +224,7 @@ export function AMCRenewalsTab({
                 {renewalAnalytics.diffFromBase > 0 ? `+${renewalAnalytics.percentChange}% Hike` : renewalAnalytics.diffFromBase < 0 ? `-${renewalAnalytics.percentChange}% Savings` : '0% Price Change'}
               </span>
             </div>
-            <div className="text-[11px] text-muted font-medium bg-elevated px-3 py-1.5 rounded-xl border border-border">
+            <div className="text-[11px] text-muted font-medium bg-elevated px-3 py-1.5 rounded-lg border border-border">
               {renewalAnalytics.totalRenewalsCount} Renewal cycle{renewalAnalytics.totalRenewalsCount === 1 ? '' : 's'}
             </div>
           </div>
@@ -233,45 +233,45 @@ export function AMCRenewalsTab({
 
       {/* Add/Edit Renewal */}
       <AppCard className={`p-6 theme-card-structural`}>
-        <h3 className="text-lg font-bold text-success mb-4 flex items-center gap-2">
+        <h3 className="text-lg font-semibold text-success-text mb-4 flex items-center gap-2">
           <Calendar className="h-5 w-5" />
           {editId ? "Edit Renewal Record" : "Log AMC Renewal"}
         </h3>
         <form onSubmit={handleAddRenewal} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-bold text-muted">Renewal date *</label>
+              <label className="text-sm font-semibold text-muted">Renewal date *</label>
               <AppInput type="date" value={renewalDate} onChange={(e) => setRenewalDate(e.target.value)} required />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-bold text-muted">New expiry date *</label>
+              <label className="text-sm font-semibold text-muted">New expiry date *</label>
               <AppInput type="date" value={newExpiry} onChange={(e) => setNewExpiry(e.target.value)} required />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-bold text-muted">PO number</label>
+              <label className="text-sm font-semibold text-muted">PO number</label>
               <AppInput value={poNumber} onChange={(e) => setPoNumber(e.target.value)} placeholder="e.g. PO-2027" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-bold text-muted">Renewal cost *</label>
+              <label className="text-sm font-semibold text-muted">Renewal cost *</label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-muted">{currency}</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted">{currency}</span>
                 <AppInput type="number" step="0.01" value={renewalCost} onChange={(e) => setRenewalCost(e.target.value)} required className="pl-12" placeholder="0.00" />
               </div>
             </div>
             {currency !== 'INR' && (
               <div className="space-y-2">
-                <label className="text-sm font-bold text-muted">Exchange rate (to INR) *</label>
+                <label className="text-sm font-semibold text-muted">Exchange rate (to INR) *</label>
                 <AppInput type="number" step="0.0001" value={exchangeRate} onChange={(e) => setExchangeRate(e.target.value)} required />
               </div>
             )}
             <div className="space-y-2 lg:col-span-4">
-              <label className="text-sm font-bold text-muted">Notes / remarks</label>
+              <label className="text-sm font-semibold text-muted">Notes / remarks</label>
               <AppInput value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="E.g., price locked in for 3 years" />
             </div>
           </div>
           <div className="flex justify-end pt-2 gap-2">
             {editId && (
-              <AppButton type="button" variant="outline" onClick={handleCancelEdit} className="text-danger border-danger/30 hover:bg-danger/10 hover:border-danger hover:text-danger">
+              <AppButton type="button" variant="outline" onClick={handleCancelEdit} className="text-danger-text border-danger-border hover:bg-danger-soft hover:border-danger hover:text-danger-text">
                 Discard
               </AppButton>
             )}
@@ -284,11 +284,11 @@ export function AMCRenewalsTab({
 
       {/* Renewals Ledger */}
       <div className="space-y-4">
-        <h3 className="text-lg font-bold">Renewal history</h3>
+        <h3 className="text-lg font-semibold">Renewal history</h3>
         {loading ? (
           <div className="flex justify-center p-8"><ChandakLoader size="sm" title="Loading renewals…" /></div>
         ) : renewals.length === 0 ? (
-          <div className={`p-8 text-center text-muted italic rounded-xl border bg-elevated border-border`}>
+          <div className={`p-8 text-center text-muted italic rounded-lg border bg-elevated border-border`}>
             No renewals logged for this subscription yet.
           </div>
         ) : (
@@ -297,7 +297,7 @@ export function AMCRenewalsTab({
               <AppCard key={rn.id} className={`p-4 flex items-center justify-between theme-card-structural`}>
                 <div>
                   <div className="flex items-center gap-3">
-                    <span className="px-2 py-0.5 rounded text-xs font-bold bg-success/10 text-success">
+                    <span className="px-2 py-0.5 rounded text-xs font-semibold bg-success-soft text-success-text">
                       Renewal
                     </span>
                     <span className="font-semibold text-sm">{rn.po_number || 'No PO'}</span>
@@ -310,7 +310,7 @@ export function AMCRenewalsTab({
                 </div>
                 <div className="flex items-center gap-6">
                   <div className="text-right">
-                    <div className="font-semibold text-lg text-success">
+                    <div className="font-semibold text-lg text-success-text">
                       {new Intl.NumberFormat('en-IN', { style: 'currency', currency: currency || 'INR', maximumFractionDigits: 2 }).format(rn.renewal_cost)}
                     </div>
                     {rn.exchange_rate && rn.exchange_rate !== 1 && rn.base_currency_amount && (
@@ -321,10 +321,10 @@ export function AMCRenewalsTab({
                     <div className="text-[11px] text-muted">Processed by {rn.user_master?.full_name}</div>
                   </div>
                   <div className="flex gap-2">
-                    <AppButton aria-label="Edit renewal" variant="secondary" onClick={() => handleEdit(rn)} className="p-2 text-theme-icon hover:bg-elevated rounded-lg transition-colors" title="Edit renewal">
+                    <AppButton aria-label="Edit renewal" variant="secondary" onClick={() => handleEdit(rn)} className="p-2 text-accent-soft-text hover:bg-elevated rounded-lg transition-colors" title="Edit renewal">
                       <FileText className="h-4 w-4" />
                     </AppButton>
-                    <AppButton aria-label="Delete renewal" variant="secondary" onClick={() => handleDelete(rn.id)} className="p-2 text-danger hover:bg-danger/10 rounded-lg transition-colors" title="Delete renewal">
+                    <AppButton aria-label="Delete renewal" variant="secondary" onClick={() => handleDelete(rn.id)} className="p-2 text-danger-text hover:bg-danger-soft rounded-lg transition-colors" title="Delete renewal">
                       <Trash2 className="h-4 w-4" />
                     </AppButton>
                   </div>

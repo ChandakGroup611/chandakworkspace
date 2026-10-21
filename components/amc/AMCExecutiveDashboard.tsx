@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import { CHART_THEME } from "@/components/ui/charts/chartTheme";
 import { AppCard } from "@/components/ui/AppCard";
 import { AppBadge } from "@/components/ui/AppBadge";
 import { AppButton } from "@/components/ui/AppButton";
@@ -53,16 +54,7 @@ interface AMCExecutiveDashboardProps {
   onRefresh: () => void;
 }
 
-const COLORS = [
-  "#3b82f6", // Blue
-  "#10b981", // Emerald
-  "#8b5cf6", // Purple
-  "#f59e0b", // Amber
-  "#06b6d4", // Cyan
-  "#ec4899", // Pink
-  "#6366f1", // Indigo
-  "#14b8a6"  // Teal
-];
+const COLORS = [...CHART_THEME.series];
 
 export function AMCExecutiveDashboard({
   records,
@@ -319,14 +311,14 @@ export function AMCExecutiveDashboard({
   return (
     <div className="space-y-8 animate-in fade-in duration-300 pb-12">
       {/* Top Welcome & Quick Refresh Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl border bg-surface border-border shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-lg border bg-surface border-border shadow-sm">
         <div className="space-y-1">
           <div className="flex items-center gap-2.5">
-            <div className="p-2.5 rounded-xl bg-accent-soft text-theme-icon border border-theme-btn-primary/20">
+            <div className="p-2.5 rounded-lg bg-accent-soft text-accent-soft-text border border-border-active">
               <BarChart3 className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-foreground">AMC & subscription executive cockpit</h2>
+              <h2 className="text-xl font-semibold text-foreground">AMC & subscription executive cockpit</h2>
               <p className="text-xs text-muted">
                 Portfolio spend, monthly accrual run-rate, license utilisation, risk scores, and vendor performance.
               </p>
@@ -349,11 +341,11 @@ export function AMCExecutiveDashboard({
       {/* 6-Column Executive KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {/* KPI 1: Total Annual Spend */}
-        <AppCard className="p-5 border border-border bg-surface flex flex-col justify-between relative overflow-hidden shadow-sm hover:border-theme-btn-primary/40 transition-all">
+        <AppCard className="p-5 border border-border bg-surface flex flex-col justify-between relative overflow-hidden shadow-sm hover:border-border-active transition-all">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-muted">Total contract value</span>
-              <div className="p-2 rounded-xl bg-info-soft text-info-text border border-info-border">
+              <span className="text-[11px] font-semibold text-muted">Total contract value</span>
+              <div className="p-2 rounded-lg bg-info-soft text-info-text border border-info-border">
                 <DollarSign className="h-4 w-4" />
               </div>
             </div>
@@ -361,9 +353,9 @@ export function AMCExecutiveDashboard({
               ₹ {formatAmount(kpiData.totalSpend)}
             </div>
           </div>
-          <div className="pt-3 mt-3 border-t border-border/50 text-[11px] text-muted flex items-center justify-between">
+          <div className="pt-3 mt-3 border-t border-border text-[11px] text-muted flex items-center justify-between">
             <span>Active: ₹ {formatAmount(kpiData.activeSpend)}</span>
-            <span className="font-semibold text-theme-icon">{kpiData.totalContracts} Total</span>
+            <span className="font-semibold text-accent-soft-text">{kpiData.totalContracts} Total</span>
           </div>
         </AppCard>
 
@@ -371,8 +363,8 @@ export function AMCExecutiveDashboard({
         <AppCard className="p-5 border border-border bg-surface flex flex-col justify-between relative overflow-hidden shadow-sm hover:border-success-border transition-all">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-muted">Monthly Run-Rate</span>
-              <div className="p-2 rounded-xl bg-success-soft text-success-text border border-success-border">
+              <span className="text-[11px] font-semibold text-muted">Monthly Run-Rate</span>
+              <div className="p-2 rounded-lg bg-success-soft text-success-text border border-success-border">
                 <Activity className="h-4 w-4" />
               </div>
             </div>
@@ -380,18 +372,18 @@ export function AMCExecutiveDashboard({
               ₹ {formatAmount(kpiData.totalMonthlyAmortization)}<span className="text-xs font-normal text-muted">/mo</span>
             </div>
           </div>
-          <div className="pt-3 mt-3 border-t border-border/50 text-[11px] text-muted flex items-center justify-between">
+          <div className="pt-3 mt-3 border-t border-border text-[11px] text-muted flex items-center justify-between">
             <span>Straight-line accrual</span>
             <span className="font-semibold text-success-text">Live burn</span>
           </div>
         </AppCard>
 
         {/* KPI 3: Active Contracts & Status */}
-        <AppCard className="p-5 border border-border bg-surface flex flex-col justify-between relative overflow-hidden shadow-sm hover:border-theme-btn-primary/40 transition-all">
+        <AppCard className="p-5 border border-border bg-surface flex flex-col justify-between relative overflow-hidden shadow-sm hover:border-border-active transition-all">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-muted">Active subscriptions</span>
-              <div className="p-2 rounded-xl bg-surface text-theme-icon border border-border">
+              <span className="text-[11px] font-semibold text-muted">Active subscriptions</span>
+              <div className="p-2 rounded-lg bg-surface text-accent-soft-text border border-border">
                 <Layers className="h-4 w-4" />
               </div>
             </div>
@@ -399,18 +391,18 @@ export function AMCExecutiveDashboard({
               {kpiData.activeContractsCount}
             </div>
           </div>
-          <div className="pt-3 mt-3 border-t border-border/50 text-[11px] text-muted flex items-center justify-between">
+          <div className="pt-3 mt-3 border-t border-border text-[11px] text-muted flex items-center justify-between">
             <span>In Onboarding: {kpiData.implementationCount}</span>
             <span className="font-semibold text-muted-foreground">Operational</span>
           </div>
         </AppCard>
 
         {/* KPI 4: Licenses & Utilization */}
-        <AppCard className="p-5 border border-border bg-surface flex flex-col justify-between relative overflow-hidden shadow-sm hover:border-theme-btn-primary/40 transition-all">
+        <AppCard className="p-5 border border-border bg-surface flex flex-col justify-between relative overflow-hidden shadow-sm hover:border-border-active transition-all">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-muted">License utilisation</span>
-              <div className="p-2 rounded-xl bg-warning-soft text-warning-text border border-warning-border">
+              <span className="text-[11px] font-semibold text-muted">License utilisation</span>
+              <div className="p-2 rounded-lg bg-warning-soft text-warning-text border border-warning-border">
                 <Users className="h-4 w-4" />
               </div>
             </div>
@@ -418,7 +410,7 @@ export function AMCExecutiveDashboard({
               {kpiData.overallLicenseUtilization}%
             </div>
           </div>
-          <div className="pt-3 mt-3 border-t border-border/50 text-[11px] text-muted flex items-center justify-between">
+          <div className="pt-3 mt-3 border-t border-border text-[11px] text-muted flex items-center justify-between">
             <span>{kpiData.totalLicensesUsed} / {kpiData.totalLicensesPurchased} Seats</span>
             <span className="font-semibold text-warning-text">{kpiData.underutilizedSoftware.length} Idle</span>
           </div>
@@ -428,8 +420,8 @@ export function AMCExecutiveDashboard({
         <AppCard className="p-5 border border-border bg-surface flex flex-col justify-between relative overflow-hidden shadow-sm hover:border-danger-border transition-all">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-muted">Due in 30 days</span>
-              <div className="p-2 rounded-xl bg-danger-soft text-danger-text border border-danger-border">
+              <span className="text-[11px] font-semibold text-muted">Due in 30 days</span>
+              <div className="p-2 rounded-lg bg-danger-soft text-danger-text border border-danger-border">
                 <CalendarClock className="h-4 w-4" />
               </div>
             </div>
@@ -437,7 +429,7 @@ export function AMCExecutiveDashboard({
               {kpiData.expiring30DaysCount}
             </div>
           </div>
-          <div className="pt-3 mt-3 border-t border-border/50 text-[11px] text-muted flex items-center justify-between">
+          <div className="pt-3 mt-3 border-t border-border text-[11px] text-muted flex items-center justify-between">
             <span>At Risk: ₹ {formatAmount(kpiData.expiring30DaysSpend)}</span>
             <span className="font-semibold text-danger-text">Action Req.</span>
           </div>
@@ -447,8 +439,8 @@ export function AMCExecutiveDashboard({
         <AppCard className="p-5 border border-border bg-surface flex flex-col justify-between relative overflow-hidden shadow-sm hover:border-warning-border transition-all">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-muted">Avg vendor rating</span>
-              <div className="p-2 rounded-xl bg-warning-soft text-warning-text border border-warning-border">
+              <span className="text-[11px] font-semibold text-muted">Avg vendor rating</span>
+              <div className="p-2 rounded-lg bg-warning-soft text-warning-text border border-warning-border">
                 <Star className="h-4 w-4 fill-warning" />
               </div>
             </div>
@@ -457,7 +449,7 @@ export function AMCExecutiveDashboard({
               <span className="text-xs text-muted font-normal">/ 5.0</span>
             </div>
           </div>
-          <div className="pt-3 mt-3 border-t border-border/50 text-[11px] text-muted flex items-center justify-between">
+          <div className="pt-3 mt-3 border-t border-border text-[11px] text-muted flex items-center justify-between">
             <span>InfoSec: {kpiData.infosecPercent}%</span>
             <span className="font-semibold text-success-text">DPA: {kpiData.dpaPercent}%</span>
           </div>
@@ -466,17 +458,17 @@ export function AMCExecutiveDashboard({
 
       {/* Risk Alert Ribbons (If any critical or high-risk contracts exist) */}
       {(kpiData.criticalRiskCount > 0 || kpiData.highRiskCount > 0) && (
-        <div className="p-4 rounded-2xl bg-gradient-to-r from-danger-soft via-warning-soft to-transparent border border-danger-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+        <div className="p-4 rounded-lg bg-gradient-to-r from-danger-soft via-warning-soft to-transparent border border-danger-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-danger-soft text-danger-text shrink-0">
+            <div className="p-2 rounded-lg bg-danger-soft text-danger-text shrink-0">
               <AlertTriangle className="h-5 w-5" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-foreground">Attention needed on contract portfolio</h4>
+              <h4 className="text-sm font-semibold text-foreground">Attention needed on contract portfolio</h4>
               <p className="text-xs text-muted">
-                {kpiData.criticalRiskCount > 0 && <span className="font-bold text-danger-text">{kpiData.criticalRiskCount} Expired/Overdue</span>}
+                {kpiData.criticalRiskCount > 0 && <span className="font-semibold text-danger-text">{kpiData.criticalRiskCount} Expired/Overdue</span>}
                 {kpiData.criticalRiskCount > 0 && kpiData.highRiskCount > 0 && <span> and </span>}
-                {kpiData.highRiskCount > 0 && <span className="font-bold text-warning-text">{kpiData.highRiskCount} Expiring in &lt;30 days</span>}
+                {kpiData.highRiskCount > 0 && <span className="font-semibold text-warning-text">{kpiData.highRiskCount} Expiring in &lt;30 days</span>}
                 {' '}requiring renewal approvals or PO release.
               </p>
             </div>
@@ -486,7 +478,7 @@ export function AMCExecutiveDashboard({
               variant="outline"
               size="sm"
               onClick={() => { setRenewalFilter('30'); setRiskFilter('all'); }}
-              className="h-8 text-xs font-bold border-danger-border text-danger-text hover:bg-danger-soft"
+              className="h-8 text-xs font-semibold border-danger-border text-danger-text hover:bg-danger-soft"
             >
               Filter 30-day expiries →
             </AppButton>
@@ -500,10 +492,10 @@ export function AMCExecutiveDashboard({
         <AppCard className="p-6 border border-border bg-surface space-y-4 shadow-sm">
           <div className="flex items-center justify-between pb-3 border-b border-border">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-accent-soft text-theme-icon">
+              <div className="p-2 rounded-lg bg-accent-soft text-accent-soft-text">
                 <PieIcon className="h-4 w-4" />
               </div>
-              <h3 className="text-sm font-bold text-foreground">Spend allocation by cost center / dept</h3>
+              <h3 className="text-sm font-semibold text-foreground">Spend allocation by cost center / dept</h3>
             </div>
             <span className="text-xs text-muted font-medium font-mono">{departmentSpendData.length} Departments</span>
           </div>
@@ -529,9 +521,9 @@ export function AMCExecutiveDashboard({
                   </Pie>
                   <Tooltip 
                     formatter={(val: any) => [`₹ ${formatAmount(Number(val))}`, 'Annual Spend']}
-                    contentStyle={{ backgroundColor: isLightMode ? '#ffffff' : '#1e293b', borderRadius: '12px', border: '1px solid #334155' }}
+                    {...CHART_THEME.tooltip}
                   />
-                  <Legend />
+                  <Legend {...CHART_THEME.legend} />
                 </PieChart>
               </ResponsiveContainer>
             )}
@@ -542,10 +534,10 @@ export function AMCExecutiveDashboard({
         <AppCard className="p-6 border border-border bg-surface space-y-4 shadow-sm">
           <div className="flex items-center justify-between pb-3 border-b border-border">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-success-soft text-success-text">
+              <div className="p-2 rounded-lg bg-success-soft text-success-text">
                 <Building2 className="h-4 w-4" />
               </div>
-              <h3 className="text-sm font-bold text-foreground">Top software vendors by exposure</h3>
+              <h3 className="text-sm font-semibold text-foreground">Top software vendors by exposure</h3>
             </div>
             <span className="text-xs text-muted font-medium font-mono">Top {vendorSpendData.length} Partners</span>
           </div>
@@ -556,23 +548,23 @@ export function AMCExecutiveDashboard({
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={vendorSpendData} margin={{ top: 10, right: 10, left: 10, bottom: 25 }}>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+                  <CartesianGrid {...CHART_THEME.grid} />
                   <XAxis 
                     dataKey="name" 
                     angle={-20} 
                     textAnchor="end" 
                     interval={0} 
-                    tick={{ fontSize: 10, fill: isLightMode ? '#475569' : '#94a3b8' }} 
+                    tick={CHART_THEME.axis.tick} tickLine={false} axisLine={false} 
                   />
                   <YAxis 
                     tickFormatter={(v) => `₹${(v / 100000).toFixed(0)}L`}
-                    tick={{ fontSize: 10, fill: isLightMode ? '#475569' : '#94a3b8' }}
+                    tick={CHART_THEME.axis.tick} tickLine={false} axisLine={false}
                   />
                   <Tooltip 
                     formatter={(val: any) => [`₹ ${formatAmount(Number(val))}`, 'Contract Volume']}
-                    contentStyle={{ backgroundColor: isLightMode ? '#ffffff' : '#1e293b', borderRadius: '12px', border: '1px solid #334155' }}
+                    {...CHART_THEME.tooltip}
                   />
-                  <Bar dataKey="totalCost" fill="#3b82f6" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="totalCost" fill={CHART_THEME.series[0]} radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -584,17 +576,17 @@ export function AMCExecutiveDashboard({
       <AppCard className="p-6 border border-border bg-surface space-y-5 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-warning-soft text-warning-text">
+            <div className="p-2 rounded-lg bg-warning-soft text-warning-text">
               <Clock className="h-4 w-4" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-foreground">Upcoming renewal forecast & action queue</h3>
+              <h3 className="text-sm font-semibold text-foreground">Upcoming renewal forecast & action queue</h3>
               </div>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
             {/* Timeline Filter Pills */}
-            <div className="flex rounded-xl border border-border p-0.5 bg-elevated/80 text-xs">
+            <div className="flex rounded-lg border border-border p-0.5 bg-sunken text-xs">
               {(['30', '60', '90', 'all'] as const).map((days) => (
                 <AppButton
                   key={days}
@@ -613,7 +605,7 @@ export function AMCExecutiveDashboard({
             <select
               value={riskFilter}
               onChange={(e) => setRiskFilter(e.target.value as any)}
-              className="h-8 px-2.5 rounded-xl border border-border bg-surface text-xs font-semibold outline-none"
+              className="h-8 px-2.5 rounded-lg border border-border bg-surface text-xs font-semibold outline-none"
             >
               <option value="all">All risk levels</option>
               <option value="Critical">Critical (Expired)</option>
@@ -647,7 +639,7 @@ export function AMCExecutiveDashboard({
                 </AppTableRow>
               ) : (
                 upcomingRenewalsList.map((rec) => (
-                  <AppTableRow key={rec.id} className="border-b border-border/50 hover:bg-elevated/60 transition-colors">
+                  <AppTableRow key={rec.id} className="border-b border-border hover:bg-elevated/60 transition-colors">
                     <AppTableCell className="p-3">
                       <div className="font-semibold text-foreground">{rec.software_name}</div>
                       {rec.solution_name && <div className="text-[11px] text-muted">{rec.solution_name}</div>}
@@ -660,19 +652,19 @@ export function AMCExecutiveDashboard({
                         {rec.contract_type}
                       </AppBadge>
                     </AppTableCell>
-                    <AppTableCell className="p-3 font-mono font-bold text-foreground">
+                    <AppTableCell className="p-3 font-mono font-semibold text-foreground">
                       ₹ {rec.cost ? formatAmount(parseFloat(rec.cost)) : '0.00'}
                     </AppTableCell>
                     <AppTableCell className="p-3 text-muted">
                       {rec.formattedExpiry}
                     </AppTableCell>
                     <AppTableCell className="p-3 font-semibold font-mono">
-                      <span className={rec.daysRemaining <= 30 ? 'text-danger-text font-bold' : rec.daysRemaining <= 60 ? 'text-warning-text' : 'text-foreground'}>
+                      <span className={rec.daysRemaining <= 30 ? 'text-danger-text font-semibold' : rec.daysRemaining <= 60 ? 'text-warning-text' : 'text-foreground'}>
                         {rec.daysRemaining < 0 ? `${Math.abs(rec.daysRemaining)}d Overdue` : `${rec.daysRemaining} days`}
                       </span>
                     </AppTableCell>
                     <AppTableCell className="p-3">
-                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold border ${
+                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold border ${
                         rec.calculatedRisk === 'Critical' ? 'bg-danger-soft text-danger-text border-danger-border' :
                         rec.calculatedRisk === 'High' ? 'bg-warning-soft text-warning-text border-warning-border' :
                         rec.calculatedRisk === 'Medium' ? 'bg-info-soft text-info-text border-info-border' :
@@ -686,7 +678,7 @@ export function AMCExecutiveDashboard({
                         variant="ghost" 
                         size="sm" 
                         onClick={() => onSelectRecord(rec, 'Renewals')}
-                        className="h-7 text-xs font-semibold text-theme-icon hover:bg-accent-soft rounded-lg"
+                        className="h-7 text-xs font-semibold text-accent-soft-text hover:bg-accent-soft rounded-lg"
                       >
                         Renew contract →
                       </AppButton>
