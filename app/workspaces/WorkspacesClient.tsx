@@ -50,6 +50,7 @@ import { WorkspaceMasterTable } from "@/components/workspaces/WorkspaceMasterTab
 import { PageContainer } from "@/components/layout/PageContainer";
 import ChandakLoader from "@/components/ui/ChandakLoader";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 export default function WorkspacesClient({ initialData, initialTaskId }: { initialData: any; initialTaskId?: string | null }) {
   const router = useRouter();
   const { isLight: isLightMode } = useTheme();
@@ -70,6 +71,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
   const [isExpandingAll, setIsExpandingAll] = useState(false);
   const [successToast, setSuccessToast] = useState<string | null>(null);
   const [errorToast, setErrorToast] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; type: 'WORKSPACE' | 'TASK'; id: string; title: string; description: string } | null>(null);
 
   const triggerToast = (msg: string) => {
     setSuccessToast(msg);
@@ -920,7 +922,9 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       company_id: ws.company_id || "",
       parent_workspace_id: ws.parent_workspace_id || "",
       assigneeIds: ws.members?.map((m: any) => m.user_id) || [],
+      // ui-audit-ignore-next-line html-date-input
       start_date: ws.start_date ? new Date(ws.start_date).toISOString().split('T')[0] : "",
+      // ui-audit-ignore-next-line html-date-input
       end_date: ws.end_date ? new Date(ws.end_date).toISOString().split('T')[0] : "",
       is_public: !!ws.visibility_settings?.public
     });
@@ -929,8 +933,17 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     setWsModalMode('EDIT');
   };
 
-  const handleDeleteWorkspace = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this workspace? This will permanently delete all tasks, chat messages, and timeline audits inside it.")) return;
+  const handleDeleteWorkspace = (id: string) => {
+    setDeleteConfirm({
+      open: true,
+      type: 'WORKSPACE',
+      id,
+      title: "Delete Workspace",
+      description: "Are you sure you want to delete this workspace? This will permanently delete all tasks, chat messages, and timeline audits inside it."
+    });
+  };
+
+  const executeDeleteWorkspace = async (id: string) => {
     try {
       const res = await deleteWorkspace(id) as any;
       if (res?.error) throw new Error(res.error);
@@ -979,8 +992,17 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
     }
   };
 
-  const handleDeleteWorkspaceTask = async (nodeId: string) => {
-    if (!confirm("Are you sure you want to delete this task? This action cannot be undone.")) return;
+  const handleDeleteWorkspaceTask = (nodeId: string) => {
+    setDeleteConfirm({
+      open: true,
+      type: 'TASK',
+      id: nodeId,
+      title: "Delete Task",
+      description: "Are you sure you want to delete this task? This action cannot be undone."
+    });
+  };
+
+  const executeDeleteWorkspaceTask = async (nodeId: string) => {
     try {
       const res = await deleteTask(nodeId);
       if (res?.error) throw new Error(res.error);
@@ -1142,7 +1164,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       <div className={`h-screen flex flex-col items-center justify-center space-y-4 transition-colors duration-300 ${
         "bg-surface text-foreground"
       }`}>
-        <div className="p-4 rounded-full bg-danger/10 border border-rose-500/20 text-danger">
+        <div className="p-4 rounded-full bg-danger/10 border border-danger/20 text-danger">
           <ShieldAlert className="h-10 w-10" />
         </div>
         <h2 className="text-xl font-bold">Access Denied</h2>
@@ -1187,7 +1209,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               >
                 Filters
                 {activeFilterCount > 0 && (
-                  <span className="ml-1.5 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-white text-theme-icon">
+                  <span className="ml-1.5 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-surface text-foreground">
                     {activeFilterCount}
                   </span>
                 )}
@@ -1197,7 +1219,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               {showFilters && (
                 <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-xl border border-border bg-surface shadow-2xl p-4 z-50 animate-in fade-in zoom-in-95 duration-150 space-y-3.5 max-h-[85vh] overflow-y-auto custom-scrollbar">
                   <div className="flex items-center justify-between border-b border-border/50 pb-2.5">
-                    <span className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                    <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                       <Filter className="h-3.5 w-3.5 text-theme-icon" />
                       Filter Engine
                       <span className="text-[10px] font-normal lowercase tracking-normal text-muted">
@@ -1207,6 +1229,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                     <div className="flex items-center gap-2">
                       {activeFilterCount > 0 && (
                         <button 
+                          type="button"
                           onClick={clearFilters}
                           className="text-[11px] font-semibold text-muted hover:text-danger underline transition-colors"
                         >
@@ -1214,6 +1237,8 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                         </button>
                       )}
                       <button 
+                        type="button"
+                        aria-label="Close filters"
                         onClick={() => setShowFilters(false)}
                         className="text-muted hover:text-foreground p-0.5 rounded-md hover:bg-surface/60"
                       >
@@ -1228,7 +1253,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                     onClick={() => setFilters(prev => ({ ...prev, myTasksOnly: !prev.myTasksOnly }))}
                     className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg border transition-all ${
                       filters.myTasksOnly 
-                        ? 'bg-success/15 text-success border-emerald-500/40 shadow-sm' 
+                        ? 'bg-success/15 text-success border-success/40 shadow-sm' 
                         : 'border-border text-muted hover:text-foreground hover:bg-surface/50'
                     }`}
                   >
@@ -1345,7 +1370,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
             <AppButton 
               variant="outline" 
               size="sm" 
-              leftIcon={<FileSpreadsheet className="h-4 w-4 text-emerald-600" />} 
+              leftIcon={<FileSpreadsheet className="h-4 w-4 text-success" />} 
               onClick={() => router.push("/migration")}
               className="shrink-0 whitespace-nowrap"
               title="Bulk Data Migration & Excel Import for Workspaces & Tasks"
@@ -1409,7 +1434,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       {/* HIERARCHY SCOPE BAR */}
       <div className="px-3 sm:px-4 py-2 mb-4 theme-card-structural rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs border border-border/50">
         <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar w-full sm:w-auto pb-1 sm:pb-0 flex-nowrap sm:flex-wrap">
-          <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted mr-1.5 shrink-0">
+          <span className="text-[10px] sm:text-[11px] font-semibold text-muted mr-1.5 shrink-0">
             Hierarchy Scope:
           </span>
 
@@ -1444,7 +1469,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               }}
               className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap shrink-0 ${
                 hierarchyScope === "my_reports"
-                  ? "bg-purple-600 text-white font-bold shadow-sm"
+                  ? "bg-primary text-primary-foreground font-bold shadow-sm"
                   : "bg-surface text-muted hover:text-foreground hover:bg-surface/50 border border-border/40"
               }`}
             >
@@ -1465,7 +1490,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 }}
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-all whitespace-nowrap ${
                   hierarchyScope === "my_dept" && selectedDepartmentName === "ALL"
-                    ? "bg-blue-600 text-white font-bold shadow-sm"
+                    ? "bg-primary text-primary-foreground font-bold shadow-sm"
                     : "text-muted hover:text-foreground"
                 }`}
               >
@@ -1506,7 +1531,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
             }}
             className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap shrink-0 ${
               hierarchyScope === "assigned_me" || filters.myTasksOnly
-                ? "bg-emerald-600 text-white font-bold shadow-sm"
+                ? "bg-primary text-primary-foreground font-bold shadow-sm"
                 : "bg-surface text-muted hover:text-foreground hover:bg-surface/50 border border-border/40"
             }`}
           >
@@ -1519,7 +1544,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
       {/* Active Filter Chips Strip (Ultra-compact, takes minimal height ~28px) */}
       {activeFilterCount > 0 && (
         <div className="flex flex-wrap items-center gap-1.5 mb-3 px-1 animate-in fade-in duration-150">
-          <span className="text-[10px] font-bold text-muted uppercase tracking-wider mr-1">Active:</span>
+          <span className="text-[10px] font-semibold text-muted mr-1">Active:</span>
 
           {/* Scope Chips */}
           {filters.entityTypes && filters.entityTypes.length > 0 ? (
@@ -1528,11 +1553,12 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 Scope: {scopeType.replace('_', ' ')}
                 <button
                   type="button"
+                  aria-label="Remove scope filter"
                   onClick={() => toggleScope(scopeType)}
                   className="hover:text-danger ml-0.5 font-bold"
                   title="Remove scope"
                 >
-                  ✕
+                  <X className="w-3 h-3" />
                 </button>
               </span>
             ))
@@ -1541,11 +1567,12 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               Scope: {filters.entityType.replace('_', ' ')}
               <button
                 type="button"
+                aria-label="Remove scope filter"
                 onClick={() => setFilters(p => ({ ...p, entityType: 'ALL', entityTypes: [] }))}
                 className="hover:text-danger ml-0.5 font-bold"
                 title="Remove scope"
               >
-                ✕
+                <X className="w-3 h-3" />
               </button>
             </span>
           ))}
@@ -1562,6 +1589,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 Workspace: {wsName}
                 <button
                   type="button"
+                  aria-label="Remove workspace filter"
                   onClick={() => setFilters(p => {
                     const currentIds = p.workspaceIds && p.workspaceIds.length > 0 ? p.workspaceIds : (p.workspaceId ? [p.workspaceId] : []);
                     const next = currentIds.filter(id => id !== wId);
@@ -1570,7 +1598,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                   className="hover:text-danger ml-0.5 font-bold"
                   title="Remove workspace filter"
                 >
-                  ✕
+                  <X className="w-3 h-3" />
                 </button>
               </span>
             );
@@ -1588,6 +1616,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 Company: {compName}
                 <button
                   type="button"
+                  aria-label="Remove company filter"
                   onClick={() => setFilters(p => {
                     const currentIds = p.companyIds && p.companyIds.length > 0 ? p.companyIds : (p.companyId ? [p.companyId] : []);
                     const next = currentIds.filter(id => id !== cId);
@@ -1596,7 +1625,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                   className="hover:text-danger ml-0.5 font-bold"
                   title="Remove company filter"
                 >
-                  ✕
+                  <X className="w-3 h-3" />
                 </button>
               </span>
             );
@@ -1608,11 +1637,12 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               My Assigned Tasks Only
               <button
                 type="button"
+                aria-label="Remove my tasks filter"
                 onClick={() => setFilters(p => ({ ...p, myTasksOnly: false }))}
                 className="hover:text-danger ml-0.5 font-bold"
                 title="Remove filter"
               >
-                ✕
+                <X className="w-3 h-3" />
               </button>
             </span>
           )}
@@ -1632,6 +1662,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 Status: {statusName}
                 <button
                   type="button"
+                  aria-label="Remove status filter"
                   onClick={() => setFilters(p => {
                     const currentIds = p.statusIds && p.statusIds.length > 0 ? p.statusIds : (p.statusId ? [p.statusId] : []);
                     const next = currentIds.filter(id => id !== sId);
@@ -1640,7 +1671,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                   className="hover:text-danger ml-0.5 font-bold"
                   title="Remove status filter"
                 >
-                  ✕
+                  <X className="w-3 h-3" />
                 </button>
               </span>
             );
@@ -1661,6 +1692,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 Priority: {prioName}
                 <button
                   type="button"
+                  aria-label="Remove priority filter"
                   onClick={() => setFilters(p => {
                     const currentIds = p.priorityIds && p.priorityIds.length > 0 ? p.priorityIds : (p.priorityId ? [p.priorityId] : []);
                     const next = currentIds.filter(id => id !== pId);
@@ -1669,7 +1701,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                   className="hover:text-danger ml-0.5 font-bold"
                   title="Remove priority filter"
                 >
-                  ✕
+                  <X className="w-3 h-3" />
                 </button>
               </span>
             );
@@ -1687,6 +1719,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                 Assignee: {userName}
                 <button
                   type="button"
+                  aria-label="Remove assignee filter"
                   onClick={() => setFilters(p => {
                     const currentIds = p.assigneeIds && p.assigneeIds.length > 0 ? p.assigneeIds : (p.assigneeId ? [p.assigneeId] : []);
                     const next = currentIds.filter(id => id !== aId);
@@ -1695,7 +1728,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                   className="hover:text-danger ml-0.5 font-bold"
                   title="Remove assignee filter"
                 >
-                  ✕
+                  <X className="w-3 h-3" />
                 </button>
               </span>
             );
@@ -1746,7 +1779,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
                         onChange={e => setAutoCollapse(e.target.checked)} 
                         className={`rounded border-border text-theme-icon focus:ring-theme-icon`}
                       />
-                      <span className="text-[11px] uppercase tracking-wider font-bold whitespace-nowrap">Auto-Minimize Others</span>
+                      <span className="text-[11px] font-semibold whitespace-nowrap">Auto-Minimize Others</span>
                     </label>
                     <div className="flex items-center gap-1">
                       <div className="w-px h-4 bg-border/50 mx-1"></div>
@@ -1863,7 +1896,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
             </AppCard>
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-24 mx-4 my-8 rounded-xl border-dashed /60 theme-card-structural /30">
+        <div className="flex flex-col items-center justify-center py-24 mx-4 my-8 rounded-xl border border-border bg-sunken/40">
           <FolderKanban className="h-10 w-10 text-muted opacity-40 mb-4" />
           <h2 className="text-[15px] font-semibold tracking-tight text-foreground mb-1">No Active Workspaces Found</h2>
           
@@ -1892,7 +1925,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               
               <div className="grid grid-cols-1 gap-5">
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-semibold text-muted uppercase tracking-wider">Company / Entity Link *</label>
+                  <label className="text-[11px] font-medium text-muted">Company / Entity Link *</label>
                   <select 
                     className={`w-full p-2 rounded-md text-[13px] theme-card-structural /60 focus:border-theme-icon focus:outline-none transition-colors text-foreground`}
                     value={newWS.company_id}
@@ -1906,11 +1939,11 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-semibold text-muted uppercase tracking-wider">Workspace Name *</label>
+                  <label className="text-[11px] font-medium text-muted">Workspace Name *</label>
                   <AppInput disabled={!!editWSId} placeholder="e.g. Q4 Platform Migration" value={newWS.name || ""} onChange={e => setNewWS({...newWS, name: e.target.value})} className="bg-surface h-9 text-[13px]" />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-semibold text-muted uppercase tracking-wider">Workspace Code</label>
+                  <label className="text-[11px] font-medium text-muted">Workspace Code</label>
                   <AppInput disabled placeholder="[Auto-Generated]" value={editWSId ? (newWS.code || "") : "[Auto-Generated]"} className="bg-surface-hover h-9 text-[13px]" />
                 </div>
               </div>
@@ -1918,7 +1951,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
               {(wsModalMode === 'SUB' || (wsModalMode === 'EDIT' && newWS.parent_workspace_id)) && (
                 <div className="grid grid-cols-1">
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold text-muted uppercase tracking-wider">Parent Workspace Link</label>
+                    <label className="text-[11px] font-medium text-muted">Parent Workspace Link</label>
                     <select 
                       className={`w-full p-2 rounded-md text-[13px] theme-card-structural /60 focus:border-theme-icon focus:outline-none transition-colors text-foreground`}
                       value={newWS.parent_workspace_id}
@@ -1949,17 +1982,19 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-semibold text-muted uppercase tracking-wider">Start Date</label>
+                  <label className="text-[11px] font-medium text-muted">Start Date</label>
+                  {/* ui-audit-ignore-next-line html-date-input */}
                   <AppInput type="date" min={new Date().toISOString().split('T')[0]} value={newWS.start_date} onChange={e => setNewWS({...newWS, start_date: e.target.value})} className="bg-surface h-9 text-[13px]" />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-semibold text-muted uppercase tracking-wider">Target End Date</label>
+                  <label className="text-[11px] font-medium text-muted">Target End Date</label>
+                  {/* ui-audit-ignore-next-line html-date-input */}
                   <AppInput type="date" min={newWS.start_date || new Date().toISOString().split('T')[0]} value={newWS.end_date} onChange={e => setNewWS({...newWS, end_date: e.target.value})} className="bg-surface h-9 text-[13px]" />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[11px] font-semibold text-muted uppercase tracking-wider">Objective Description</label>
+                <label className="text-[11px] font-medium text-muted">Objective Description</label>
                 <textarea 
                   className={`w-full h-24 p-3 rounded-md text-[13px] theme-card-structural /60 focus:border-theme-icon focus:outline-none transition-colors resize-none text-foreground`}
                   placeholder="Detailed project requirements, goals, and constraints..."
@@ -1978,7 +2013,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-[11px] font-semibold text-muted uppercase tracking-wider block">Workspace Assignees (Users)</label>
+                  <label className="text-[11px] font-medium text-muted block">Workspace Assignees (Users)</label>
                   <AppButton 
                     variant="ghost" 
                     size="sm"
@@ -2121,12 +2156,12 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
       {/* Toast Notification */}
       {successToast && (
-        <div className="fixed bottom-6 right-6 z-[9999] flex items-center gap-2 rounded-xl bg-theme-btn-primary text-white px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
+        <div className="fixed bottom-6 right-6 z-[var(--z-toast)] flex items-center gap-2 rounded-xl bg-theme-btn-primary text-theme-btn-primary-text px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
           <span className="text-xs font-semibold">{successToast}</span>
         </div>
       )}
       {errorToast && (
-        <div className="fixed bottom-6 right-6 z-[9999] flex items-center gap-2 rounded-xl bg-danger text-white px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
+        <div className="fixed bottom-6 right-6 z-[var(--z-toast)] flex items-center gap-2 rounded-xl bg-danger text-white px-4 py-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300">
           <span className="text-xs font-semibold">{errorToast}</span>
         </div>
       )}
@@ -2140,12 +2175,12 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
       {/* Dependency Check Modal */}
       {dependencyModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-[var(--overlay)] p-4 animate-in fade-in duration-200">
           <div className="bg-background border border-border rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
-            <div className={`p-4 border-b ${dependencyModal.result.type === 'executive' ? 'bg-amber-500/10 border-amber-500/20' : 'bg-warning/10 border-warning/20'}`}>
+            <div className={`p-4 border-b ${dependencyModal.result.type === 'executive' ? 'bg-warning-soft border-warning/20' : 'bg-warning/10 border-warning/20'}`}>
               <div className="flex items-center gap-3">
                 {dependencyModal.result.type === 'executive' ? (
-                  <ShieldAlert className="w-5 h-5 text-amber-500" />
+                  <ShieldAlert className="w-5 h-5 text-warning" />
                 ) : (
                   <ShieldCheck className="w-5 h-5 text-warning" />
                 )}
@@ -2175,7 +2210,7 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
               {dependencyModal.result.type === 'executive' && (
                 <div className="space-y-1.5 pt-2">
-                  <label className="text-[11px] font-bold text-foreground uppercase tracking-wider">
+                  <label className="text-[11px] font-semibold text-foreground">
                     Select Replacement Assignee: *
                   </label>
                   <select
@@ -2264,11 +2299,16 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
 
       {/* User Role Assignment Modal */}
       {userRoleModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-[var(--overlay)] p-4 animate-in fade-in duration-200">
           <div className="bg-background border border-border rounded-xl shadow-2xl max-w-md w-full overflow-hidden flex flex-col max-h-[80vh]">
             <div className="p-4 border-b bg-surface flex items-center justify-between shrink-0">
               <h3 className="font-bold text-sm">Assign User Role: {userRoleModal.userName}</h3>
-              <button onClick={() => { setUserRoleModal(null); setStagedTaskRoles({}); }} className="text-muted hover:text-foreground">
+              <button 
+                type="button" 
+                aria-label="Close role assignment modal"
+                onClick={() => { setUserRoleModal(null); setStagedTaskRoles({}); }} 
+                className="text-muted hover:text-foreground"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -2412,6 +2452,25 @@ export default function WorkspacesClient({ initialData, initialTaskId }: { initi
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!deleteConfirm}
+        onClose={() => setDeleteConfirm(null)}
+        onConfirm={async () => {
+          if (!deleteConfirm) return;
+          const { type, id } = deleteConfirm;
+          setDeleteConfirm(null);
+          if (type === 'WORKSPACE') {
+            await executeDeleteWorkspace(id);
+          } else {
+            await executeDeleteWorkspaceTask(id);
+          }
+        }}
+        title={deleteConfirm?.title || "Confirm Deletion"}
+        description={deleteConfirm?.description || "Are you sure you want to proceed?"}
+        confirmLabel="Delete"
+        tone="danger"
+      />
 
     </PageContainer>
   );

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, MessageCircle, ClipboardList, Type, AlignLeft } from "lucide-react";
+import { ArrowLeft, MessageCircle, ClipboardList, Type, AlignLeft, ShieldAlert } from "lucide-react";
 import { TaskBackButton } from "@/components/tasks/TaskBackButton";
 import TaskExecutionController from "@/components/tasks/TaskExecutionController";
 import { EditableTaskTitle } from "@/components/tasks/EditableTaskTitle";
@@ -94,14 +94,14 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
       <div className="space-y-6">
 
         {/* DEDICATED CARD FOR SUBJECT AND DESCRIPTION */}
-        <AppCard className="overflow-hidden border border-border/50 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 bg-surface/40 p-0 mb-4">
-          <div className="bg-surface dark:bg-elevated/50 px-5 py-3.5 border-b border-border/80 flex items-center justify-between">
+        <AppCard className="overflow-hidden border border-border shadow-xs bg-surface p-0 mb-4">
+          <div className="bg-surface px-5 py-3.5 border-b border-border flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="w-1.5 h-4 rounded-full bg-accent shadow-xs" />
               <Type className="w-4 h-4 text-accent" />
-              <h3 className="font-bold text-sm tracking-wide text-foreground">Task Subject & Description</h3>
+              <h3 className="font-semibold text-sm tracking-wide text-foreground">Task Subject & Description</h3>
             </div>
-            <span className="text-[10px] font-mono font-bold tracking-wider text-theme-icon bg-theme-btn-primary/10 px-2.5 py-0.5 rounded-full border border-theme-btn-primary/20">
+            <span className="text-[10px] font-mono font-semibold text-accent-soft-text bg-accent-soft px-2.5 py-0.5 rounded-full border border-border">
               {task.task_code || "TASK"}
             </span>
           </div>
@@ -109,11 +109,11 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
             
             {task.description && (
               <div className="w-full">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-muted mb-2 flex items-center gap-1.5">
+                <span className="text-[10px] font-semibold text-muted mb-2 flex items-center gap-1.5">
                   <AlignLeft className="w-3.5 h-3.5" /> Description
                 </span>
                 <SafeHtml 
-                  className="whitespace-pre-wrap text-[13px] sm:text-sm text-subtle dark:text-muted w-full max-w-full leading-relaxed prose prose-sm dark:prose-invert bg-surface/80 dark:bg-[#111827]/50 p-4 rounded-xl border border-border/60 dark:border-border shadow-sm"
+                  className="whitespace-pre-wrap text-[13px] sm:text-sm text-foreground w-full max-w-full leading-relaxed prose prose-sm dark:prose-invert bg-sunken p-4 rounded-xl border border-border shadow-xs"
                   html={task.description} 
                 />
               </div>
@@ -121,11 +121,11 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
             
             {typeof task.custom_fields?.progress_percentage === 'number' && (
               <div className="flex items-center gap-3">
-                <span className="text-[10px] font-bold text-muted uppercase tracking-wider">Subtask Progress</span>
-                <div className="w-64 h-1.5 bg-elevated dark:bg-surface rounded-full overflow-hidden">
+                <span className="text-[10px] font-semibold text-muted">Subtask Progress</span>
+                <div className="w-64 h-1.5 bg-sunken rounded-full overflow-hidden">
                   <div className="h-full bg-success rounded-full transition-all duration-500" style={{ width: `${task.custom_fields.progress_percentage}%` }}></div>
                 </div>
-                <span className="text-[10px] font-bold text-subtle dark:text-muted">{task.custom_fields.progress_percentage}%</span>
+                <span className="text-[10px] font-semibold text-muted">{task.custom_fields.progress_percentage}%</span>
               </div>
             )}
           </div>
@@ -133,11 +133,11 @@ export default async function TaskDetailsPage({ params, searchParams }: TaskPage
 
         <div className="w-full">
           {isFrozen && (
-            <div className="mb-4 rounded-xl bg-amber-50 dark:bg-warning/10 border border-amber-200 dark:border-amber-500/20 p-4 shadow-sm flex items-start gap-3">
-              <span className="text-xl shrink-0">🧊</span>
+            <div className="mb-4 rounded-xl bg-warning-soft border border-warning-border p-4 shadow-xs flex items-start gap-3">
+              <ShieldAlert className="w-5 h-5 text-warning-text shrink-0 mt-0.5" />
               <div>
-                <h4 className="text-sm font-bold text-amber-800 dark:text-warning">Task is Frozen</h4>
-                <p className="text-xs text-amber-700 dark:text-warning mt-1">
+                <h4 className="text-sm font-semibold text-warning-text">Task is Frozen</h4>
+                <p className="text-xs text-warning-text mt-1">
                   This task is strictly frozen because its status is Closed. Only Super Admins and the Task Assignee (Task Owner) can edit or reopen it.
                 </p>
               </div>

@@ -228,8 +228,8 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
       {/* Table */}
       <AppCard className="overflow-hidden border border-border">
         <div className="overflow-x-auto">
-          <AppTable className="w-full text-left text-base text-muted-foreground">
-            <AppTableHeader className="bg-muted border-b border-border text-xs uppercase text-muted-foreground">
+          <AppTable className="w-full text-left text-base text-muted">
+            <AppTableHeader className="bg-sunken border-b border-border text-xs text-muted">
               <AppTableRow>
                 <AppTableHead className="px-4 py-3 w-10">
                   <input 
@@ -291,8 +291,8 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
 
       {/* Transfer Modal */}
       {isTransferModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-card w-full max-w-2xl rounded-2xl shadow-xl flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4 bg-[var(--overlay)]">
+          <div className="bg-surface w-full max-w-2xl rounded-2xl shadow-xl flex flex-col max-h-[90vh] border border-border">
             <div className="p-6 border-b border-border flex-shrink-0">
               <h2 className="text-xl font-bold text-foreground">Transfer Tasks</h2>
               
@@ -302,7 +302,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">Target Workspace</label>
                 <select
-                  className="w-full bg-background border border-input rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
+                  className="w-full bg-surface border border-border rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
                   value={targetWorkspaceId}
                   onChange={(e) => {
                     setTargetWorkspaceId(e.target.value);
@@ -347,7 +347,7 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
                     <select
                       value={targetParentTaskId}
                       onChange={(e) => setTargetParentTaskId(e.target.value)}
-                      className="w-full bg-background border border-input rounded-xl px-3 py-2 text-sm focus:ring-1 focus:ring-primary focus:outline-none"
+                      className="w-full bg-surface border border-border rounded-xl px-3 py-2 text-sm focus:ring-1 focus:ring-primary focus:outline-none text-foreground"
                     >
                       <option value="">None (Transfer to root)</option>
                       {targetParentTasks.filter((t: any) => !Array.from(selectedTaskIds).includes(t.id)).map((t: any) => (
@@ -360,19 +360,19 @@ export default function TransferTasksClient({ initialTasks, workspaces, allUsers
                 )}
 
               {targetWorkspaceId && !validity.isValid && (
-                <div className="bg-warning/10 border border-yellow-500/20 rounded-xl p-4 mt-4">
+                <div className="bg-warning-soft border border-warning-border rounded-xl p-4 mt-4 text-warning-text">
                   <div className="flex items-start space-x-3">
-                    <AlertTriangle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
+                    <AlertTriangle className="h-5 w-5 text-warning-text shrink-0 mt-0.5" />
                     <div>
-                      <h4 className="text-sm font-medium text-warning">Assignees Incompatible</h4>
-                      <p className="text-xs text-warning/80 mt-1">
+                      <h4 className="text-sm font-semibold text-warning-text">Assignees Incompatible</h4>
+                      <p className="text-xs text-warning-text/80 mt-1">
                         {validity.invalidTaskAssignees.length} tasks have assignees that do not belong to the target workspace. Please select a new assignee.
                       </p>
                       
                       <div className="mt-3">
-                        <label className="block text-sm font-medium text-warning dark:text-warning/90 mb-1">New Assignee (Owner)</label>
+                        <label className="block text-sm font-medium text-warning-text mb-1">New Assignee (Owner)</label>
                         <select
-                          className="w-full bg-background border border-amber-500/20 rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-amber-500"
+                          className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
                           value={newOwnerId}
                           onChange={(e) => setNewOwnerId(e.target.value)}
                         >
