@@ -1,8 +1,19 @@
 "use client";
 
+/**
+ * Shared base for EnterpriseModalShell, EnterpriseDrawerShell, EnterpriseWizardShell
+ * and SidePeekDrawer. Built on Radix Dialog, so every overlay now gets:
+ *   - Esc to close, click-outside to close
+ *   - focus trapped inside and returned to the trigger on close
+ *   - role="dialog", aria-modal, labelled by its title
+ *   - nested-safe scroll lock (v1 set body.style.overflow = "unset" on unmount, which
+ *     re-enabled page scroll while a parent modal was still open)
+ *   - one z-index scale: popovers/selects opened inside appear ABOVE the overlay
+ *     (v1 drawer was z-999999 and popovers z-100, so dropdowns inside drawers were hidden)
+ */
 import React from "react";
-import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { X, Check } from "lucide-react";
+import * as Dialog from "@radix-ui/react-dialog";
+import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface OverlayShellProps {
@@ -10,186 +21,96 @@ export interface OverlayShellProps {
   onClose: () => void;
   title?: React.ReactNode;
   subtitle?: React.ReactNode;
-  headerExtra?: React.ReactNode;
   children: React.ReactNode;
   footer?: React.ReactNode;
-  variant?: "modal" | "drawer" | "wizard" | "side-peek";
-  size?: "sm" | "md" | "lg" | "xl" | "full";
+  /** Extra header content on the right (status badge, actions) */
+  headerExtra?: React.ReactNode;
+  variant: "modal" | "drawer";
+  widthClass: string;
   className?: string;
+  bodyClassName?: string;
+  footerAlign?: "end" | "between";
   hideCloseButton?: boolean;
-  closeOnOutsideClick?: boolean;
-  steps?: string[];
-  currentStep?: number;
+  /** Prevent closing by outside click (e.g. dirty forms) */
+  dismissOnOutsideClick?: boolean;
 }
-
-const MODAL_SIZES = {
-  sm: "max-w-2xl",
-  md: "max-w-4xl",
-  lg: "max-w-5xl",
-  xl: "max-w-[1400px]",
-  full: "max-w-7xl",
-};
-
-const DRAWER_SIZES = {
-  sm: "w-full sm:max-w-md",
-  md: "w-full sm:max-w-2xl",
-  lg: "w-full sm:max-w-4xl",
-  xl: "w-full sm:max-w-6xl",
-  full: "w-full",
-};
 
 export function OverlayShell({
   open = true,
   onClose,
   title,
   subtitle,
-  headerExtra,
   children,
   footer,
-  variant = "modal",
-  size = "md",
+  headerExtra,
+  variant,
+  widthClass,
   className,
+  bodyClassName,
+  footerAlign = "end",
   hideCloseButton = false,
-  closeOnOutsideClick = true,
-  steps,
-  currentStep = 0,
+  dismissOnOutsideClick = true,
 }: OverlayShellProps) {
-  const isDrawer = variant === "drawer" || variant === "side-peek";
-  const isWizard = variant === "wizard";
-
+  const isDrawer = variant === "drawer";
   return (
-    <DialogPrimitive.Root
-      open={open}
-      onOpenChange={(isOpen) => {
-        if (!isOpen) onClose();
-      }}
-    >
-      <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay
-          className="fixed inset-0 z-[var(--z-overlay)] bg-[var(--overlay)] transition-opacity animate-in fade-in-0 duration-200"
+    <Dialog.Root open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <Dialog.Portal>
+        <Dialog.Overlay
+          className="fixed inset-0 z-[var(--z-overlay)] bg-[var(--overlay)] data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0"
         />
-
-        <div
+        <Dialog.Content
+          onPointerDownOutside={(e) => { if (!dismissOnOutsideClick) e.preventDefault(); }}
           className={cn(
-            "fixed inset-0 z-[var(--z-modal)] flex overflow-hidden",
-            isDrawer ? "justify-end" : "items-center justify-center p-4 sm:p-6"
+            "fixed z-[var(--z-modal)] flex flex-col bg-elevated text-foreground shadow-lg outline-none",
+            isDrawer
+              ? "inset-y-0 right-0 h-full w-full border-l border-border data-[state=open]:animate-in data-[state=open]:slide-in-from-right data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right duration-200"
+              : "left-1/2 top-1/2 max-h-[calc(100dvh-48px)] w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 rounded-[var(--radius-modal)] border border-border data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-[0.98] duration-150",
+            widthClass,
+            className
           )}
         >
-          <DialogPrimitive.Content
-            aria-describedby={subtitle ? "overlay-subtitle" : undefined}
-            onPointerDownOutside={(e) => {
-              if (isWizard || !closeOnOutsideClick) {
-                e.preventDefault();
-              }
-            }}
-            onInteractOutside={(e) => {
-              if (isWizard || !closeOnOutsideClick) {
-                e.preventDefault();
-              }
-            }}
-            className={cn(
-              "relative flex flex-col bg-surface text-foreground border border-border shadow-2xl focus:outline-none overflow-hidden",
-              isDrawer
-                ? cn(
-                    "h-full border-l animate-in slide-in-from-right duration-250 ease-out",
-                    DRAWER_SIZES[size]
-                  )
-                : cn(
-                    "w-full rounded-[var(--radius-modal)] animate-in zoom-in-95 fade-in-0 duration-200",
-                    MODAL_SIZES[size]
-                  ),
-              className
-            )}
-            style={!isDrawer ? { maxHeight: "calc(100vh - 48px)" } : undefined}
-          >
-            {/* Header */}
-            {(title || subtitle || headerExtra || !hideCloseButton) && (
-              <div className="shrink-0 px-6 py-4 border-b border-border bg-elevated flex flex-col gap-3">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    {title && (
-                      <DialogPrimitive.Title className="text-lg font-semibold tracking-tight text-heading truncate">
-                        {title}
-                      </DialogPrimitive.Title>
-                    )}
-                    {subtitle && (
-                      <DialogPrimitive.Description
-                        id="overlay-subtitle"
-                        className="text-xs text-muted mt-0.5"
-                      >
-                        {subtitle}
-                      </DialogPrimitive.Description>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    {headerExtra}
-                    {!hideCloseButton && (
-                      <DialogPrimitive.Close
-                        type="button"
-                        aria-label="Close"
-                        className="rounded-lg p-1.5 text-muted hover:text-foreground hover:bg-surface-hover transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      >
-                        <X className="h-4 w-4" />
-                        <span className="sr-only">Close</span>
-                      </DialogPrimitive.Close>
-                    )}
-                  </div>
-                </div>
-
-                {/* Optional Step Indicator for Wizards */}
-                {steps && steps.length > 0 && (
-                  <nav aria-label="Progress" className="pt-2 border-t border-border/60">
-                    <ol className="flex items-center gap-2 overflow-x-auto">
-                      {steps.map((step, idx) => {
-                        const isDone = idx < currentStep;
-                        const isCurrent = idx === currentStep;
-                        return (
-                          <li key={idx} className="flex items-center gap-2 shrink-0">
-                            <span
-                              className={cn(
-                                "flex items-center justify-center h-5 w-5 rounded-full text-[10px] font-semibold",
-                                isDone
-                                  ? "bg-primary text-primary-foreground"
-                                  : isCurrent
-                                  ? "bg-selected text-primary border border-primary font-bold"
-                                  : "bg-sunken text-muted"
-                              )}
-                            >
-                              {isDone ? <Check className="h-3 w-3" /> : idx + 1}
-                            </span>
-                            <span
-                              className={cn(
-                                "text-xs font-medium",
-                                isCurrent ? "text-foreground font-semibold" : "text-muted"
-                              )}
-                            >
-                              {step}
-                            </span>
-                            {idx < steps.length - 1 && (
-                              <span className="h-px w-4 bg-border shrink-0" />
-                            )}
-                          </li>
-                        );
-                      })}
-                    </ol>
-                  </nav>
+          {(title || subtitle || !hideCloseButton) && (
+            <header className="flex shrink-0 items-start justify-between gap-4 border-b border-border px-5 py-4 sm:px-6">
+              <div className="min-w-0">
+                {title ? (
+                  <Dialog.Title className="truncate text-[16px] font-semibold leading-tight text-heading">{title}</Dialog.Title>
+                ) : (
+                  <Dialog.Title className="sr-only">Dialog</Dialog.Title>
+                )}
+                {subtitle ? (
+                  <Dialog.Description className="mt-1 text-[13px] text-muted">{subtitle}</Dialog.Description>
+                ) : (
+                  <Dialog.Description className="sr-only">{typeof title === "string" ? title : "Dialog"}</Dialog.Description>
                 )}
               </div>
-            )}
-
-            {/* Body */}
-            <div className="flex-1 overflow-y-auto p-6">{children}</div>
-
-            {/* Footer */}
-            {footer && (
-              <div className="shrink-0 px-6 py-3.5 border-t border-border bg-sunken flex items-center justify-end gap-3">
-                {footer}
+              <div className="flex shrink-0 items-center gap-2">
+                {headerExtra}
+                {!hideCloseButton && (
+                  <Dialog.Close
+                    aria-label="Close"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted hover:bg-surface-hover hover:text-foreground"
+                  >
+                    <X className="h-4 w-4" aria-hidden />
+                  </Dialog.Close>
+                )}
               </div>
-            )}
-          </DialogPrimitive.Content>
-        </div>
-      </DialogPrimitive.Portal>
-    </DialogPrimitive.Root>
+            </header>
+          )}
+
+          <div className={cn("min-h-0 flex-1 overflow-y-auto bg-surface px-5 py-5 sm:px-6", bodyClassName)}>{children}</div>
+
+          {footer && (
+            <footer
+              className={cn(
+                "flex shrink-0 items-center gap-2 border-t border-border bg-elevated px-5 py-3 sm:px-6",
+                footerAlign === "between" ? "justify-between" : "justify-end"
+              )}
+            >
+              {footer}
+            </footer>
+          )}
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }

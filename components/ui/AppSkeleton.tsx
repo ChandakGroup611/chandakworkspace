@@ -1,58 +1,36 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 
-export interface AppSkeletonProps extends React.HTMLAttributes<HTMLDivElement> {}
-
-export const AppSkeleton = React.forwardRef<HTMLDivElement, AppSkeletonProps>(
-  ({ className, style, ...props }, ref) => {
-    return (
-      <div
-        ref={ref}
-        className={cn(
-          "animate-pulse rounded-md border border-border/40 transition-opacity duration-300",
-          className
-        )}
-        style={{
-          backgroundColor: "color-mix(in srgb, var(--text-primary) 8%, transparent)",
-          ...style,
-        }}
-        {...props}
-      />
-    );
-  }
-);
+/* v1 used hard-coded slate-200 / slate-800, which looked wrong on warm and tinted themes. */
+export const AppSkeleton = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ className, ...props }, ref) => (
+  <div ref={ref} aria-hidden className={cn("animate-pulse rounded-md bg-[color-mix(in_srgb,var(--text-primary)_8%,transparent)]", className)} {...props} />
+));
 AppSkeleton.displayName = "AppSkeleton";
 
-// Intelligent compound skeleton template for enterprise table rows
-export function AppTableSkeleton({ rows = 5 }: { rows?: number }) {
+export function AppTableSkeleton({ rows = 6, cols = 4 }: { rows?: number; cols?: number }) {
   return (
-    <div className="w-full space-y-2" role="status" aria-live="polite">
-      <span className="sr-only">Loading table records...</span>
-      <div className="h-8 w-full rounded-lg bg-surface/40 border border-border/40 animate-shimmer" />
-      {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="flex items-center gap-4 p-3 rounded-xl bg-surface/30 border border-border/40 animate-stagger-in">
-          <AppSkeleton className="h-4 w-12 rounded-md" />
-          <AppSkeleton className="h-4 flex-1 rounded-md" />
-          <AppSkeleton className="h-4 w-20 rounded-md" />
+    <div className="theme-table-structural w-full" role="status" aria-label="Loading">
+      <div className="flex gap-4 border-b border-border bg-sunken px-4 py-3">
+        {Array.from({ length: cols }).map((_, i) => <AppSkeleton key={i} className="h-3 flex-1" />)}
+      </div>
+      {Array.from({ length: rows }).map((_, r) => (
+        <div key={r} className="flex items-center gap-4 border-b border-border px-4 h-[var(--row-h,44px)] last:border-0">
+          {Array.from({ length: cols }).map((_, c) => <AppSkeleton key={c} className={cn("h-3", c === 0 ? "w-16" : "flex-1")} />)}
         </div>
       ))}
     </div>
   );
 }
 
-// Intelligent compound skeleton template for Bento KPI metrics
 export function AppCardSkeleton() {
   return (
-    <div className="p-5 rounded-2xl border border-border/50 bg-surface/30 space-y-4 w-full animate-shimmer" role="status" aria-live="polite">
-      <span className="sr-only">Loading metric data...</span>
+    <div className="theme-card-structural w-full space-y-3 p-4" role="status" aria-label="Loading">
       <div className="flex items-center justify-between">
-        <AppSkeleton className="h-3 w-24 rounded" />
-        <AppSkeleton className="h-8 w-8 rounded-xl" />
+        <AppSkeleton className="h-3 w-24" />
+        <AppSkeleton className="h-7 w-7 rounded-md" />
       </div>
-      <div className="space-y-2 pt-2">
-        <AppSkeleton className="h-6 w-16 rounded" />
-        <AppSkeleton className="h-2 w-full rounded" />
-      </div>
+      <AppSkeleton className="h-6 w-20" />
+      <AppSkeleton className="h-2 w-full" />
     </div>
   );
 }

@@ -7,90 +7,63 @@ export interface AppInputProps extends React.InputHTMLAttributes<HTMLInputElemen
   error?: string;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  /** Marks the label with a required asterisk (also sets `required`). */
+  requiredMark?: boolean;
 }
 
+/*
+ * Changes from v1
+ * - Error is announced to screen readers (aria-invalid + aria-describedby) and shown
+ *   under the field, not squeezed into the label row.
+ * - Typed text is regular weight (v1 forced 600 via .theme-data-value).
+ * - Placeholder uses muted text. In v1 dark themes, muted == near-white, so
+ *   placeholders looked like real values.
+ * - Height follows density.
+ */
 export const AppInput = React.forwardRef<HTMLInputElement, AppInputProps>(
-  (
-    {
-      className,
-      label,
-      helperText,
-      error,
-      leftIcon,
-      rightIcon,
-      id,
-      disabled,
-      required,
-      ...props
-    },
-    ref
-  ) => {
+  ({ className, label, helperText, error, leftIcon, rightIcon, id, disabled, requiredMark, required, ...props }, ref) => {
     const generatedId = React.useId();
     const inputId = id || generatedId;
-    const errorId = `${inputId}-error`;
-    const helperId = `${inputId}-helper`;
+    const helpId = `${inputId}-help`;
+    const errId = `${inputId}-error`;
+    const describedBy = [error ? errId : null, !error && helperText ? helpId : null, props["aria-describedby"]].filter(Boolean).join(" ") || undefined;
 
     return (
-      <div className="flex flex-col space-y-1.5 w-full text-left">
+      <div className="flex w-full flex-col gap-1.5 text-left">
         {label && (
-          <label 
-            htmlFor={inputId} 
-            className="text-[13px] font-medium select-none flex items-center text-subtle"
-          >
-            <span>{label}</span>
-            {required && <span className="text-danger-solid ml-0.5" aria-hidden="true">*</span>}
+          <label htmlFor={inputId} className="text-[13px] font-medium text-subtle">
+            {label}
+            {(requiredMark || required) && <span className="ml-0.5 text-danger-text" aria-hidden>*</span>}
           </label>
         )}
 
-        <div className="relative flex items-center w-full">
-          {leftIcon && (
-            <div className="absolute left-3 z-10 flex items-center text-muted pointer-events-none">
-              {leftIcon}
-            </div>
-          )}
-
+        <div className="relative flex w-full items-center">
+          {leftIcon && <span className="pointer-events-none absolute left-3 flex items-center text-muted">{leftIcon}</span>}
           <input
+            {...props}
             ref={ref}
             id={inputId}
             disabled={disabled}
             required={required}
-            aria-invalid={!!error}
-            aria-describedby={error ? errorId : helperText ? helperId : undefined}
-            suppressHydrationWarning={true}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={describedBy}
             className={cn(
-              "theme-input-structural",
-              "h-[var(--control-h)] min-h-[var(--control-h)] w-full rounded-[var(--radius-input)] font-normal text-sm focus:outline-none transition-colors",
-              "bg-surface text-foreground placeholder:text-muted",
-              "border border-input focus:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+              "theme-input-structural w-full h-[var(--control-h,36px)] text-[13.5px] placeholder:text-muted",
               leftIcon ? "pl-9" : "pl-3",
               rightIcon ? "pr-9" : "pr-3",
-              error ? "border-danger focus:border-danger focus-visible:ring-danger" : "",
-              disabled ? "opacity-55 cursor-not-allowed bg-sunken" : "",
               className
             )}
-            style={props.style}
-            {...props}
           />
-
-          {rightIcon && (
-            <div className="absolute right-3 flex items-center text-muted">
-              {rightIcon}
-            </div>
-          )}
+          {rightIcon && <span className="absolute right-3 flex items-center text-muted">{rightIcon}</span>}
         </div>
 
         {error ? (
-          <p id={errorId} role="alert" className="text-xs text-danger-text font-medium select-none pl-0.5">
-            {error}
-          </p>
+          <p id={errId} role="alert" className="text-xs font-medium text-danger-text">{error}</p>
         ) : helperText ? (
-          <p id={helperId} className="text-xs text-muted select-none pl-0.5">
-            {helperText}
-          </p>
+          <p id={helpId} className="text-xs text-muted">{helperText}</p>
         ) : null}
       </div>
     );
   }
 );
-
 AppInput.displayName = "AppInput";

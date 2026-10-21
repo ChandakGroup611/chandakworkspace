@@ -1,351 +1,211 @@
-/* eslint-disable no-restricted-syntax */
 "use client";
 
-
-import React, { useState, useEffect } from "react";
+/**
+ * ModuleSwitcher v2
+ * - Radix Popover: keyboard + touch accessible, and portalled, so the menu is no longer
+ *   clipped by the sidebar (v1 used absolute positioning inside an overflow container).
+ * - Module rows are real buttons (v1: clickable <div>s with a <button> nested inside).
+ * - With only one module the control is a plain label; v1 rendered a *disabled* button
+ *   at 50% opacity, so the current module always looked greyed out.
+ * - Module list is fetched once per session, not on every route change.
+ * - Active-module icon uses --btn-primary-text (v1 forced white, unreadable on the
+ *   yellow / cyan / emerald primaries of the old themes).
+ */
+import React, { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
-import { 
-  FolderKanban, 
-  Car, 
-  Compass, 
-  Layers, 
-  LineChart,
-  ChevronDown, 
-  Check, 
-  ExternalLink,
-  Star
-} from "lucide-react";
 import * as Popover from "@radix-ui/react-popover";
+import { FolderKanban, Car, Compass, Layers, LineChart, ChevronsUpDown, Check, Star, Loader2, ExternalLink } from "lucide-react";
 import type { UserModulesResult } from "@/lib/actions/module-switcher";
 import { cn } from "@/lib/utils";
 
-interface ModuleSwitcherProps {
-  isCompact?: boolean;
-  onCloseMobile?: () => void;
-  className?: string;
-}
+const ICONS: Record<string, React.ElementType> = {
+  TASK_WORKFLOW: FolderKanban,
+  VEHICLE_DESK: Car,
+  DESIGN_TRACKING: Compass,
+  DASHBOARDS: LineChart,
+};
+const FALLBACK_NAMES: Record<string, string> = {
+  TASK_WORKFLOW: "Task Workflow",
+  VEHICLE_DESK: "Vehicle Desk",
+  DESIGN_TRACKING: "Design Tracking",
+  DASHBOARDS: "Dashboards",
+};
+const FALLBACK_ROUTES: Record<string, string> = {
+  TASK_WORKFLOW: "/",
+  VEHICLE_DESK: "/vehicle",
+  DESIGN_TRACKING: "/design/matrix",
+  DASHBOARDS: "/dashboards",
+};
+const CORE = new Set(Object.keys(ICONS));
 
-// Module-level cached promise: fetch once per session, not on every route change
-let cachedModulesPromise: Promise<UserModulesResult> | null = null;
-function getCachedModules(): Promise<UserModulesResult> {
-  if (!cachedModulesPromise) {
-    cachedModulesPromise = fetch("/api/modules")
-      .then((res) => res.json())
-      .catch((err) => {
-        cachedModulesPromise = null;
-        throw err;
-      });
+let modulesCache: Promise<UserModulesResult | null> | null = null;
+function loadModules() {
+  if (!modulesCache) {
+    modulesCache = fetch("/api/modules")
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => null);
   }
-  return cachedModulesPromise;
+  return modulesCache;
 }
 
-const CORE_MAIN_MODULE_CODES = new Set(["TASK_WORKFLOW", "VEHICLE_DESK", "DESIGN_TRACKING", "DASHBOARDS"]);
+function moduleFromPath(pathname: string) {
+  if (pathname.startsWith("/vehicle")) return "VEHICLE_DESK";
+  if (pathname.startsWith("/design")) return "DESIGN_TRACKING";
+  if (pathname.startsWith("/dashboards")) return "DASHBOARDS";
+  return "TASK_WORKFLOW";
+}
 
-export default function ModuleSwitcher({ isCompact = false, onCloseMobile, className = "" }: ModuleSwitcherProps) {
+export default function ModuleSwitcher({ isCompact = false, onCloseMobile, className = "" }: { isCompact?: boolean; onCloseMobile?: () => void; className?: string }) {
   const pathname = usePathname() || "/";
-  const [open, setOpen] = useState(false);
+  const activeCode = moduleFromPath(pathname);
   const [data, setData] = useState<UserModulesResult | null>(null);
-
-  // Auto-detect current active module strictly based on route
-  const activeModuleCode = React.useMemo(() => {
-    if (pathname.startsWith("/vehicle")) return "VEHICLE_DESK";
-    if (pathname.startsWith("/design")) return "DESIGN_TRACKING";
-    if (pathname.startsWith("/dashboards")) return "DASHBOARDS";
-    return "TASK_WORKFLOW";
-  }, [pathname]);
-
-  // Synchronize client-side active_module cookie when navigating across module boundaries
-  useEffect(() => {
-    if (typeof document !== "undefined") {
-      const match = document.cookie.match(/(?:^|; )active_module=([^;]*)/);
-      const currentCookie = match ? match[1] : null;
-      if (currentCookie !== activeModuleCode) {
-        document.cookie = `active_module=${activeModuleCode}; path=/; max-age=2592000; SameSite=Lax`;
-      }
-    }
-  }, [activeModuleCode]);
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null);
 
   useEffect(() => {
-    let isMounted = true;
-    getCachedModules()
-      .then((res: UserModulesResult) => {
-        if (isMounted) {
-          const filteredModules = (res.modules || []).filter((m) => CORE_MAIN_MODULE_CODES.has(m.code));
-          setData({
-            ...res,
-            modules: filteredModules,
-          });
-        }
-      })
-      .catch((err) => {
-        console.error("[ModuleSwitcher] error fetching modules:", err);
-      });
-
-    return () => {
-      isMounted = false;
-    };
+    let alive = true;
+    loadModules().then((res) => {
+      if (alive && res) setData({ ...res, modules: (res.modules || []).filter((m) => CORE.has(m.code)) });
+    });
+    return () => { alive = false; };
   }, []);
 
-  const getModuleIcon = (code: string) => {
-    switch (code) {
-      case "TASK_WORKFLOW":
-        return FolderKanban;
-      case "VEHICLE_DESK":
-        return Car;
-      case "DESIGN_TRACKING":
-        return Compass;
-      case "DASHBOARDS":
-        return LineChart;
-      default:
-        return Layers;
+  // keep the cookie in sync when the user crosses module boundaries
+  useEffect(() => {
+    const m = document.cookie.match(/(?:^|; )active_module=([^;]*)/);
+    if ((m ? m[1] : null) !== activeCode) {
+      document.cookie = `active_module=${activeCode}; path=/; max-age=2592000; SameSite=Lax`;
     }
-  };
+  }, [activeCode]);
 
-  const handleSetDefaultModule = async (e: React.MouseEvent, code: string) => {
-    e.stopPropagation();
+  const modules = data?.modules ?? [];
+  const active = useMemo(
+    () => modules.find((m) => m.code === activeCode) ?? { code: activeCode, name: FALLBACK_NAMES[activeCode] ?? "Workspace" },
+    [modules, activeCode]
+  );
+  const ActiveIcon = ICONS[active.code] ?? Layers;
+  const canSwitch = modules.length > 1;
+
+  const selectModule = async (code: string) => {
+    if (code === activeCode) return setOpen(false);
+    setBusy(code);
     try {
-      const res = await fetch("/api/modules", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ moduleCode: code, setAsDefault: true }),
-      });
-      const resData = await res.json();
-      if (resData.success) {
-        if (data) {
-          const updated = {
-            ...data,
-            modules: data.modules.map((m) => ({
-              ...m,
-              is_default: m.code === code,
-            })),
-            defaultModule: data.modules.find((m) => m.code === code) || null,
-            hasExplicitDefault: true,
-          };
-          setData(updated);
-          cachedModulesPromise = Promise.resolve(updated);
-        }
-      }
-    } catch (e) {
-      console.error("[ModuleSwitcher] setDefault error:", e);
-    }
-  };
-
-  const handleSelectModule = async (code: string) => {
-    if (code === activeModuleCode) {
-      setOpen(false);
-      return;
-    }
-
-    try {
-      const res = await fetch("/api/modules", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ moduleCode: code, setAsDefault: false }),
-      });
-      const resData = await res.json();
-      if (resData.success) {
+      const res = await fetch("/api/modules", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ moduleCode: code, setAsDefault: false }) });
+      const json = await res.json();
+      if (json.success) {
         onCloseMobile?.();
-        window.location.href =
-          resData.redirectUrl ||
-          (code === "VEHICLE_DESK"
-            ? "/vehicle"
-            : code === "DESIGN_TRACKING"
-            ? "/design/matrix"
-            : code === "DASHBOARDS"
-            ? "/dashboards"
-            : "/");
+        window.location.href = json.redirectUrl || FALLBACK_ROUTES[code] || "/";
+        return;
       }
     } catch (e) {
-      console.error("[ModuleSwitcher] switch error:", e);
+      console.error("[ModuleSwitcher] switch failed", e);
+    }
+    setBusy(null);
+  };
+
+  const setDefault = async (code: string) => {
+    setBusy(`default:${code}`);
+    try {
+      const res = await fetch("/api/modules", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ moduleCode: code, setAsDefault: true }) });
+      const json = await res.json();
+      if (json.success && data) {
+        setData({ ...data, modules: data.modules.map((m) => ({ ...m, is_default: m.code === code })), defaultModule: data.modules.find((m) => m.code === code) || null, hasExplicitDefault: true });
+        modulesCache = null;
+      }
+    } catch (e) {
+      console.error("[ModuleSwitcher] set default failed", e);
+    } finally {
+      setBusy(null);
     }
   };
 
-  const activeModule = data?.modules.find((m) => m.code === activeModuleCode) || {
-    code: activeModuleCode,
-    name:
-      activeModuleCode === "VEHICLE_DESK"
-        ? "Vehicle Module"
-        : activeModuleCode === "DESIGN_TRACKING"
-        ? "Design Tracking"
-        : activeModuleCode === "DASHBOARDS"
-        ? "Dashboards"
-        : "Workspace Module",
-    description: null,
-    icon: "FolderKanban",
-    route_path:
-      activeModuleCode === "VEHICLE_DESK"
-        ? "/vehicle"
-        : activeModuleCode === "DESIGN_TRACKING"
-        ? "/design/matrix"
-        : activeModuleCode === "DASHBOARDS"
-        ? "/dashboards"
-        : "/",
-    display_order: 1,
-    is_active: true,
-  };
+  const iconTile = (Icon: React.ElementType, on: boolean) => (
+    <span className={cn("inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md", on ? "bg-primary text-primary-foreground" : "bg-sidebar-hover text-sidebar-muted")}>
+      <Icon className="h-4 w-4" aria-hidden />
+    </span>
+  );
 
-  const ActiveIcon = getModuleIcon(activeModule.code);
-  const hasMultipleModules = (data?.modules?.length || 0) > 1;
+  const trigger = isCompact ? (
+    <button
+      type="button"
+      disabled={!canSwitch}
+      aria-label={`Current module: ${active.name}${canSwitch ? ". Switch module" : ""}`}
+      title={active.name}
+      className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-sidebar-active text-sidebar-active-foreground enabled:hover:brightness-95 disabled:cursor-default"
+    >
+      <ActiveIcon className="h-4 w-4" aria-hidden />
+    </button>
+  ) : (
+    <button
+      type="button"
+      disabled={!canSwitch}
+      aria-label={canSwitch ? `Current module: ${active.name}. Switch module` : undefined}
+      className={cn(
+        "flex w-full items-center gap-2.5 rounded-lg border border-sidebar-border px-2 py-1.5 text-left transition-colors disabled:cursor-default",
+        canSwitch && "hover:bg-sidebar-hover"
+      )}
+    >
+      {iconTile(ActiveIcon, true)}
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="text-[11px] leading-4 text-sidebar-muted">Module</span>
+        <span className="truncate text-[13px] font-semibold leading-5 text-sidebar-foreground">{active.name}</span>
+      </span>
+      {canSwitch && <ChevronsUpDown className="h-4 w-4 shrink-0 text-sidebar-muted" aria-hidden />}
+    </button>
+  );
 
-  // Single module presentation: Render a clean, non-interactive label (not a 50% opacity disabled button)
-  if (!hasMultipleModules) {
-    if (isCompact) {
-      return (
-        <div
-          className={cn("h-9 w-9 mx-auto rounded-lg flex items-center justify-center bg-accent-soft text-accent-soft-text border border-border/40", className)}
-          title={`Active: ${activeModule.name}`}
-        >
-          <ActiveIcon className="h-4 w-4" />
-        </div>
-      );
-    }
-
-    return (
-      <div className={cn("w-full flex items-center gap-2.5 px-3 py-2 rounded-xl border border-border/50 bg-sunken select-none", className)}>
-        <div className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 bg-accent-soft text-accent-soft-text">
-          <ActiveIcon className="h-4 w-4" />
-        </div>
-        <div className="flex flex-col min-w-0">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted">
-            Active Module
-          </span>
-          <span className="text-xs font-semibold text-foreground truncate">
-            {activeModule.name}
-          </span>
-        </div>
-      </div>
-    );
-  }
-
-  // Multiple modules presentation with Radix Popover (portalled to prevent clipping)
   return (
-    <Popover.Root open={open} onOpenChange={setOpen}>
-      <Popover.Trigger asChild>
-        {isCompact ? (
-          <button
-            type="button"
-            aria-label={`Current module: ${activeModule.name}. Click to switch module`}
-            className={cn(
-              "h-9 w-9 mx-auto rounded-lg flex items-center justify-center transition-colors bg-accent-soft text-accent-soft-text border border-border hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              className
-            )}
-          >
-            <ActiveIcon className="h-4 w-4" />
-          </button>
-        ) : (
-          <button
-            type="button"
-            aria-label={`Current module: ${activeModule.name}. Click to switch module`}
-            className={cn(
-              "w-full flex items-center justify-between gap-2.5 px-3 py-2 rounded-xl border border-border bg-surface hover:bg-surface-hover transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              className
-            )}
-          >
-            <div className="flex items-center gap-2.5 min-w-0 flex-1">
-              <div className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 bg-primary text-primary-foreground shadow-xs">
-                <ActiveIcon className="h-4 w-4" />
-              </div>
-              <div className="flex flex-col min-w-0">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted flex items-center gap-1">
-                  Active Module
-                  <span className="h-1.5 w-1.5 rounded-full bg-success" />
-                </span>
-                <span className="text-xs font-semibold text-foreground truncate">
-                  {activeModule.name}
-                </span>
-              </div>
-            </div>
-            <ChevronDown className={cn("h-3.5 w-3.5 text-muted transition-transform duration-200 shrink-0", open && "rotate-180 text-foreground")} />
-          </button>
-        )}
-      </Popover.Trigger>
-
+    <Popover.Root open={open && canSwitch} onOpenChange={setOpen}>
+      <Popover.Trigger asChild>{trigger}</Popover.Trigger>
       <Popover.Portal>
         <Popover.Content
-          align="start"
           side={isCompact ? "right" : "bottom"}
+          align="start"
           sideOffset={8}
-          className="z-[var(--z-popover)] w-72 rounded-xl bg-elevated border border-border p-2 shadow-xl outline-none animate-in fade-in zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:zoom-out-95"
+          className={cn("z-[var(--z-popover)] w-72 rounded-[10px] border border-border bg-elevated p-1.5 text-foreground shadow-lg outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0", className)}
         >
-          <div className="px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted border-b border-border flex items-center justify-between">
-            <span>Switch Module</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-sunken text-subtle font-semibold tabular-nums">
-              {data?.modules.length} Available
-            </span>
+          <div className="flex items-center justify-between px-2 pb-1.5 pt-1">
+            <span className="theme-label">Switch module</span>
+            <span className="text-[11px] text-muted tabular">{modules.length} available</span>
           </div>
-
-          <div className="py-1.5 space-y-1">
-            {data?.modules.map((mod) => {
-              const ModIcon = getModuleIcon(mod.code);
-              const isCurrent = mod.code === activeModuleCode;
-
+          <ul className="space-y-0.5">
+            {modules.map((m) => {
+              const Icon = ICONS[m.code] ?? Layers;
+              const current = m.code === activeCode;
               return (
-                <div
-                  key={mod.id}
-                  className={cn(
-                    "flex items-center justify-between gap-2 p-1.5 rounded-lg transition-colors",
-                    isCurrent
-                      ? "bg-selected border border-border/50"
-                      : "hover:bg-surface-hover"
-                  )}
-                >
+                <li key={m.code} className={cn("flex items-center gap-1 rounded-md pr-1", current ? "bg-accent-soft" : "hover:bg-surface-hover")}>
                   <button
                     type="button"
-                    onClick={() => handleSelectModule(mod.code)}
-                    className="flex items-center gap-2.5 min-w-0 flex-1 text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded py-0.5"
+                    onClick={() => selectModule(m.code)}
+                    aria-current={current ? "true" : undefined}
+                    className="flex min-w-0 flex-1 items-center gap-2.5 px-2 py-2 text-left"
                   >
-                    <div
-                      className={cn(
-                        "h-7 w-7 rounded-md flex items-center justify-center shrink-0",
-                        isCurrent
-                          ? "bg-primary text-primary-foreground font-bold"
-                          : "bg-sunken text-muted"
-                      )}
-                    >
-                      <ModIcon className="h-4 w-4" />
-                    </div>
-                    <div className="flex flex-col min-w-0 flex-1">
-                      <span className={cn("text-xs leading-snug font-semibold truncate", isCurrent ? "text-foreground" : "text-subtle")}>
-                        {mod.name}
-                      </span>
-                      {mod.is_default && (
-                        <span className="text-[10px] text-warning-text font-medium flex items-center gap-0.5">
-                          Default Login
-                        </span>
-                      )}
-                    </div>
+                    <span className={cn("inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md", current ? "bg-primary text-primary-foreground" : "bg-sunken text-muted")}>
+                      {busy === m.code ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Icon className="h-4 w-4" aria-hidden />}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className={cn("block truncate text-[13px]", current ? "font-semibold text-accent-soft-text" : "font-medium")}>{m.name}</span>
+                      {m.is_default && <span className="block text-[11px] text-muted">Opens after login</span>}
+                    </span>
+                    {current && <Check className="h-4 w-4 shrink-0 text-accent-soft-text" aria-hidden />}
                   </button>
-
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      type="button"
-                      onClick={(e) => handleSetDefaultModule(e, mod.code)}
-                      title={mod.is_default ? "Default login module" : "Set as default login module"}
-                      aria-label={mod.is_default ? "Default login module" : `Set ${mod.name} as default login module`}
-                      className={cn(
-                        "p-1 rounded text-muted hover:text-warning transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-                        mod.is_default && "text-warning"
-                      )}
-                    >
-                      <Star className={cn("h-3.5 w-3.5", mod.is_default && "fill-current")} />
-                    </button>
-                    {isCurrent && (
-                      <Check className="h-3.5 w-3.5 text-primary ml-0.5" />
-                    )}
-                  </div>
-                </div>
+                  <button
+                    type="button"
+                    onClick={() => setDefault(m.code)}
+                    disabled={!!m.is_default || busy === `default:${m.code}`}
+                    aria-label={m.is_default ? `${m.name} is your default module` : `Make ${m.name} my default module`}
+                    title={m.is_default ? "Default after login" : "Set as default after login"}
+                    className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded text-muted hover:bg-sunken hover:text-foreground disabled:cursor-default"
+                  >
+                    <Star className={cn("h-3.5 w-3.5", m.is_default && "fill-warning text-warning")} aria-hidden />
+                  </button>
+                </li>
               );
             })}
-          </div>
-
-          <div className="pt-2 border-t border-border flex items-center justify-between px-2">
-            <a
-              href="/select-module"
-              onClick={() => onCloseMobile?.()}
-              className="text-[11px] font-semibold text-primary hover:underline flex items-center gap-1 py-1"
-            >
-              <span>Manage Modules</span>
-              <ExternalLink className="h-3 w-3" />
+          </ul>
+          <div className="mt-1 border-t border-border pt-1">
+            <a href="/select-module" onClick={() => onCloseMobile?.()} className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[12.5px] font-medium text-accent-soft-text hover:bg-surface-hover">
+              Manage modules <ExternalLink className="h-3 w-3" aria-hidden />
             </a>
           </div>
         </Popover.Content>

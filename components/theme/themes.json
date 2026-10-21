@@ -1,0 +1,148 @@
+{
+  "themes": [
+    {
+      "id": "chandak-classic",
+      "label": "Chandak Classic",
+      "mode": "light",
+      "group": "Light",
+      "blurb": "Brand plum on cool neutrals. The default for everyday work.",
+      "swatch": [
+        "#f4f5f8",
+        "#ffffff",
+        "#702963",
+        "#15803d",
+        "#b45309",
+        "#b91c1c"
+      ]
+    },
+    {
+      "id": "chandak-executive",
+      "label": "Chandak Executive",
+      "mode": "light",
+      "group": "Light",
+      "blurb": "Deep aubergine navigation rail with a bright, quiet workspace.",
+      "swatch": [
+        "#f5f4f6",
+        "#23101f",
+        "#702963",
+        "#15803d",
+        "#b45309",
+        "#b91c1c"
+      ]
+    },
+    {
+      "id": "corporate-blue",
+      "label": "Corporate Blue",
+      "mode": "light",
+      "group": "Light",
+      "blurb": "Navy rail, blue actions. Familiar to anyone who lives in ERP and Office.",
+      "swatch": [
+        "#f3f5f9",
+        "#0f1e3d",
+        "#1d4ed8",
+        "#15803d",
+        "#b45309",
+        "#b91c1c"
+      ]
+    },
+    {
+      "id": "teal-ledger",
+      "label": "Teal Ledger",
+      "mode": "light",
+      "group": "Light",
+      "blurb": "Calm teal for finance, AMC and approval-heavy screens.",
+      "swatch": [
+        "#f3f6f6",
+        "#ffffff",
+        "#0f766e",
+        "#15803d",
+        "#b45309",
+        "#b91c1c"
+      ]
+    },
+    {
+      "id": "saffron-site",
+      "label": "Saffron Site",
+      "mode": "light",
+      "group": "Light",
+      "blurb": "Warm construction-site orange with charcoal rail. Good for Design Tracking.",
+      "swatch": [
+        "#f6f5f3",
+        "#1f1d1b",
+        "#b4410b",
+        "#15803d",
+        "#b45309",
+        "#b91c1c"
+      ]
+    },
+    {
+      "id": "high-contrast",
+      "label": "High Contrast",
+      "mode": "light",
+      "group": "Accessibility",
+      "blurb": "Maximum legibility for long shifts, projectors and low-vision users.",
+      "swatch": [
+        "#ffffff",
+        "#ffffff",
+        "#0039a6",
+        "#006b2d",
+        "#7a4b00",
+        "#b30000"
+      ]
+    },
+    {
+      "id": "midnight-plum",
+      "label": "Midnight Plum",
+      "mode": "dark",
+      "group": "Dark",
+      "blurb": "Low-glare dark mode that keeps the Chandak plum identity.",
+      "swatch": [
+        "#0e1016",
+        "#0b0d12",
+        "#d38bc2",
+        "#34d399",
+        "#fbbf24",
+        "#f87171"
+      ]
+    },
+    {
+      "id": "graphite",
+      "label": "Graphite",
+      "mode": "dark",
+      "group": "Dark",
+      "blurb": "Neutral charcoal with blue actions. Quiet enough for 8-hour days.",
+      "swatch": [
+        "#101113",
+        "#0c0d0f",
+        "#5b9bff",
+        "#34d399",
+        "#fbbf24",
+        "#f87171"
+      ]
+    },
+    {
+      "id": "control-room",
+      "label": "Control Room",
+      "mode": "dark",
+      "group": "Dark",
+      "blurb": "Deep blue-black with cyan signals for fleet and live-ops wallboards.",
+      "swatch": [
+        "#080d13",
+        "#060a0f",
+        "#2cc4d9",
+        "#34d399",
+        "#fbbf24",
+        "#f87171"
+      ]
+    }
+  ],
+  "accents": [
+    "plum",
+    "blue",
+    "teal",
+    "indigo",
+    "saffron",
+    "emerald",
+    "slate"
+  ]
+}

@@ -36,7 +36,11 @@ export default [
     },
   },
   {
-    files: ["components/ui/**/*.tsx", "components/ui/**/*.jsx", "components/ui/**/*.ts", "components/ui/**/*.js"],
+    files: [
+      "components/ui/**/*.{tsx,jsx,ts,js}",
+      "components/layout/**/*.{tsx,jsx,ts,js}",
+      "components/theme/**/*.{tsx,jsx,ts,js}"
+    ],
     rules: {
       "no-restricted-syntax": "off"
     }

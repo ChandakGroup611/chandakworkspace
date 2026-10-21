@@ -3,7 +3,7 @@
 import React from "react";
 import { OverlayShell } from "./OverlayShell";
 
-export interface EnterpriseDrawerShellProps {
+interface EnterpriseDrawerShellProps {
   title?: React.ReactNode;
   subtitle?: React.ReactNode;
   onClose: () => void;
@@ -15,30 +15,8 @@ export interface EnterpriseDrawerShellProps {
   headerExtra?: React.ReactNode;
 }
 
-export function EnterpriseDrawerShell({
-  title,
-  subtitle,
-  onClose,
-  children,
-  footer,
-  size = "md",
-  className = "",
-  open = true,
-  headerExtra,
-}: EnterpriseDrawerShellProps) {
-  return (
-    <OverlayShell
-      open={open}
-      variant="drawer"
-      size={size}
-      title={title}
-      subtitle={subtitle}
-      headerExtra={headerExtra}
-      onClose={onClose}
-      footer={footer}
-      className={className}
-    >
-      {children}
-    </OverlayShell>
-  );
+const SIZE_MAP = { sm: "sm:max-w-md", md: "sm:max-w-2xl", lg: "sm:max-w-4xl", xl: "sm:max-w-6xl" };
+
+export function EnterpriseDrawerShell({ size = "md", ...props }: EnterpriseDrawerShellProps) {
+  return <OverlayShell variant="drawer" widthClass={SIZE_MAP[size]} {...props} />;
 }

@@ -1,72 +1,59 @@
-/* eslint-disable no-restricted-syntax */
 "use client";
 
-
-import React, { useState } from "react";
+/**
+ * Compact theme menu for the navbar (replaces DashboardThemeSwitcher, which only
+ * opened on mouse hover, had a hard-coded black panel and listed ids with no CSS).
+ * Keyboard and touch friendly via Radix Popover.
+ */
+import React from "react";
 import * as Popover from "@radix-ui/react-popover";
-import { Palette, Check } from "lucide-react";
+import { Check, Palette } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useTheme } from "./ThemeProvider";
-import { THEMES, type ThemeId } from "./theme-registry";
+import { THEMES } from "./theme-registry";
 
-export function ThemeMenu({ className = "" }: { className?: string }) {
-  const { theme: currentTheme, setTheme } = useTheme();
-  const [open, setOpen] = useState(false);
-
+export function ThemeMenu() {
+  const { theme, setTheme } = useTheme();
   return (
-    <Popover.Root open={open} onOpenChange={setOpen}>
+    <Popover.Root>
       <Popover.Trigger asChild>
         <button
           type="button"
           aria-label="Change theme"
-          className={`h-9 w-9 inline-flex items-center justify-center rounded-lg border border-border bg-surface text-muted hover:text-foreground hover:bg-surface-hover transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${className}`}
+          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted hover:bg-surface-hover hover:text-foreground"
         >
           <Palette className="h-4 w-4" />
         </button>
       </Popover.Trigger>
-
       <Popover.Portal>
         <Popover.Content
           align="end"
-          sideOffset={8}
-          className="z-[var(--z-popover)] w-72 rounded-xl border border-border bg-elevated p-2 shadow-lg focus:outline-none animate-in fade-in-0 zoom-in-95 duration-150"
-          role="menu"
-          aria-orientation="vertical"
+          sideOffset={6}
+          className="z-[var(--z-popover)] w-64 rounded-[10px] border border-border bg-elevated p-1.5 shadow-lg"
         >
-          <div className="px-2 py-1.5 text-xs font-semibold text-muted uppercase tracking-wider">
-            Themes
-          </div>
-          <div className="space-y-1 max-h-80 overflow-y-auto" role="none">
+          <div className="px-2 pb-1.5 pt-1 theme-label">Theme</div>
+          <div role="menu" aria-label="Theme">
             {THEMES.map((t) => {
-              const isSelected = currentTheme === t.id;
+              const active = t.id === theme;
               return (
                 <button
                   key={t.id}
                   type="button"
                   role="menuitemradio"
-                  aria-checked={isSelected}
-                  onClick={() => {
-                    setTheme(t.id);
-                    setOpen(false);
-                  }}
-                  className={`w-full flex items-center justify-between gap-3 px-2.5 py-2 rounded-lg text-xs font-medium text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                    isSelected
-                      ? "bg-selected text-foreground font-semibold"
-                      : "text-subtle hover:bg-surface-hover hover:text-foreground"
-                  }`}
+                  aria-checked={active}
+                  onClick={() => setTheme(t.id)}
+                  className={cn(
+                    "flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-[13px]",
+                    active ? "bg-accent-soft text-accent-soft-text font-semibold" : "text-foreground hover:bg-surface-hover"
+                  )}
                 >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="flex items-center gap-1 shrink-0 p-1 rounded-md bg-sunken border border-border">
-                      {t.swatch.map((color, idx) => (
-                        <span
-                          key={idx}
-                          className="h-3 w-3 rounded-full border border-black/10 shrink-0"
-                          style={{ backgroundColor: color }}
-                        />
-                      ))}
-                    </div>
-                    <span className="truncate">{t.label}</span>
-                  </div>
-                  {isSelected && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
+                  <span className="flex h-4 w-6 overflow-hidden rounded-sm border border-border" aria-hidden>
+                    <span className="w-1/3" style={{ background: t.swatch[1] }} />
+                    <span className="flex-1" style={{ background: t.swatch[0] }} />
+                    <span className="w-1/4" style={{ background: t.swatch[2] }} />
+                  </span>
+                  <span className="flex-1">{t.label}</span>
+                  {active && <Check className="h-3.5 w-3.5" aria-hidden />}
                 </button>
               );
             })}
@@ -76,6 +63,3 @@ export function ThemeMenu({ className = "" }: { className?: string }) {
     </Popover.Root>
   );
 }
-
-export default ThemeMenu;
-

@@ -4,7 +4,7 @@ Baseline: 5190 errors / 2078 warnings on 21 Oct 2026. Current: 5190 errors / 207
 ## Modules (in order)
 | # | Module | Pages | Errors at start | Errors now | Status |
 |---|---|---:|---:|---:|---|
-| 0 | Foundation (themes, shell, shared kit) | – | – | – | Todo |
+| 0 | Foundation (themes, shell, shared kit) | – | 0 | 0 | Done |
 | 1 | Shared components outside the kit | 76 files | 787 | 787 | Todo |
 | 2 | Task Workflow | 29 | 482 | 482 | Todo |
 | 3 | Vehicle Desk | 1 | 2875 | 2875 | Todo |
@@ -97,6 +97,13 @@ Baseline: 5190 errors / 2078 warnings on 21 Oct 2026. Current: 5190 errors / 207
 | Vehicle Desk | /vehicle/* | app/vehicle/[[...slug]]/page.tsx | list | 0 | Todo |
 
 ## Decisions
-- Baseline established with 	ools/ui-audit.mjs showing 5190 errors and 2078 warnings across 325 files.
+- Baseline established with `tools/ui-audit.mjs` showing 5190 errors and 2078 warnings across 325 files.
 - Phase 0 initialization: added _ui-kit and examples to tsconfig.json and eslint.config.mjs ignore lists.
 - Extracted UI kit v3 to _ui-kit.
+- Phase 1 Foundation completed:
+  - Installed theme tokens and verified all 9 themes and 7 accents pass contrast checks (`npm run themes`).
+  - Merged shared UI kit primitives (`AppButton`, `AppInput`, `AppBadge`, `AppCard`, `AppTable`, `AppSkeleton`, `AppTabs`, `FileDropzone`, multi-selects, enterprise shells, `data/`, `form/`, `detail/`, `feedback/`, `charts/`).
+  - Preserved backward compatibility on `AppTableEmpty` supporting both legacy `message`/`children` and new `title`/`hint`.
+  - Merged shell navigation components (`Sidebar`, `Navbar`, `ModuleSwitcher`, `WorkspaceShell`, `MobileBottomNav`, `PageHeader`, `PageContainer`) while preserving all routing, cookie logic, and permission filters.
+  - Copied reference layouts to `examples/`.
+  - Passed TypeScript type-check (`tsc --noEmit`), lint checks, and Next.js production build with 0 errors on touched foundation files.

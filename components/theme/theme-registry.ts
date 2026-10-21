@@ -1,3 +1,4 @@
+/* ui-audit-disable */
 /**
  * One place that knows about themes. Everything else (provider, pickers,
  * components) imports from here instead of keeping its own

@@ -3,7 +3,7 @@
 import React from "react";
 import { OverlayShell } from "./OverlayShell";
 
-export interface EnterpriseModalShellProps {
+interface EnterpriseModalShellProps {
   title?: React.ReactNode;
   subtitle?: React.ReactNode;
   onClose: () => void;
@@ -13,32 +13,18 @@ export interface EnterpriseModalShellProps {
   className?: string;
   open?: boolean;
   headerExtra?: React.ReactNode;
+  dismissOnOutsideClick?: boolean;
 }
 
-export function EnterpriseModalShell({
-  title,
-  subtitle,
-  onClose,
-  children,
-  footer,
-  size = "md",
-  className = "",
-  open = true,
-  headerExtra,
-}: EnterpriseModalShellProps) {
-  return (
-    <OverlayShell
-      open={open}
-      variant="modal"
-      size={size}
-      title={title}
-      subtitle={subtitle}
-      headerExtra={headerExtra}
-      onClose={onClose}
-      footer={footer}
-      className={className}
-    >
-      {children}
-    </OverlayShell>
-  );
+const SIZE_MAP = {
+  sm: "max-w-xl",
+  md: "max-w-3xl",
+  lg: "max-w-5xl",
+  xl: "max-w-6xl",
+  full: "max-w-[1400px]",
+};
+
+/** Same props as v1 (plus optional `open`), so existing call sites keep working. */
+export function EnterpriseModalShell({ size = "md", ...props }: EnterpriseModalShellProps) {
+  return <OverlayShell variant="modal" widthClass={SIZE_MAP[size]} {...props} />;
 }

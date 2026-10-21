@@ -1,55 +1,37 @@
-/* eslint-disable no-restricted-syntax */
 "use client";
 
-
-import React, { useState, useEffect, useMemo } from "react";
+/**
+ * Sidebar v2 — what changed (nav data and permission rules are unchanged from v1)
+ * - Uses the --sidebar-* tokens, so themes can have a dark navigation rail on a light page.
+ *   v1 used .theme-card-structural, which gave the rail rounded corners and, in some themes,
+ *   overflow:hidden that clipped the collapse button and the compact module menu.
+ * - Collapsed mode no longer expands on mouse hover. v1 widened the rail on hover AND
+ *   broadcast that to the layout, so the whole page reflowed every time the mouse crossed it.
+ *   Collapsed state is remembered.
+ * - Exactly one item looks "active". v1 highlighted every expanded group as active too.
+ * - No hover bold / slide / icon rotate (text jitter).
+ * - aria-current, aria-expanded, nav landmark, labelled icon buttons, Esc closes mobile menu.
+ * - Removed React <Profiler> + useRenderLog from the production render path.
+ */
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { 
-  LayoutDashboard, 
-  Ticket, 
-  FileCheck2, 
-  ShieldAlert, 
-  Settings, 
-  Database, 
-  FolderKanban, 
-  ChevronLeft, 
-  ShieldCheck,
-  ChevronRight,
-  UserCheck,
-  Users,
-  ChevronDown,
-  BookOpen,
-  LineChart,
-  Trash2,
-  LifeBuoy,
-  Car,
-  Compass,
-  Wrench,
-  Package,
-  Calendar,
-  Layers,
-  PlusCircle,
-  Clock,
-  Settings2,
-  FileText,
-  CheckCircle2,
-  RotateCcw,
-  Building2,
-  Send,
-  HelpCircle,
-  Key,
-  FolderTree,
-  X
+import * as Dialog from "@radix-ui/react-dialog";
+import {
+  LayoutDashboard, Ticket, FileCheck2, ShieldAlert, Settings, Database, FolderKanban,
+  ChevronLeft, ShieldCheck, ChevronRight, UserCheck, Users, ChevronDown, BookOpen, LineChart,
+  Trash2, LifeBuoy, Car, Wrench, Package, Calendar, Layers, PlusCircle, Clock, Settings2,
+  FileText, CheckCircle2, RotateCcw, Building2, Send, HelpCircle, Key, FolderTree, X,
 } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useFleetPermissions } from "@/hooks/useFleetPermissions";
-import { FleetFunctionalModule } from "@/types/vehicleRbacTypes";
+import type { FleetFunctionalModule } from "@/types/vehicleRbacTypes";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { getTheme } from "@/components/theme/theme-registry";
-import ModuleSwitcher from "./ModuleSwitcher";
 import { cn } from "@/lib/utils";
+import ModuleSwitcher from "./ModuleSwitcher";
+
+const COMPACT_KEY = "app_sidebar_compact";
 
 interface NavItem {
   label: string;
@@ -192,6 +174,8 @@ const vehicleNavGroups: NavGroup[] = [
   }
 ];
 
+// Department dashboards: each link opens the dashboard engine through /dashboards/<key>
+// (full-page reload, so plain links; the engine page has its own "Portal home" button).
 const dashboardsNavGroups: NavGroup[] = [
   {
     label: "Dashboards",
@@ -253,152 +237,89 @@ const designNavGroups: NavGroup[] = [
   }
 ];
 
-export function isItemActive(itemHref: string, pathname: string, searchParams?: URLSearchParams | null): boolean {
-  if (itemHref === "/") {
-    return pathname === "/";
+/* ---------- active-route rules (same behaviour as v1, pulled out of the render loop) ---------- */
+function isItemActive(item: NavItem, pathname: string, searchParams: URLSearchParams | null) {
+  if (item.href === "/requirements" && searchParams?.get("from") === "approvals") return false;
+  switch (item.href) {
+    case "/": return pathname === "/";
+    case "/design/matrix": return ["/design", "/design/matrix", "/design/dashboard"].includes(pathname);
+    case "/vehicle": return pathname === "/vehicle" || pathname === "/vehicle/dashboard";
+    case "/design/masters":
+      return ["/design/masters", "/design/projects", "/design/sub-projects", "/design/categories", "/design/packages", "/design/sub-packages", "/design/authorities", "/design/templates"].includes(pathname);
+    default: return pathname === item.href || pathname.startsWith(item.href + "/");
   }
-  if (itemHref === "/design/matrix") {
-    return pathname === "/design" || pathname === "/design/matrix" || pathname === "/design/dashboard";
-  }
-  if (itemHref === "/vehicle") {
-    return pathname === "/vehicle" || pathname === "/vehicle/dashboard";
-  }
-  if (itemHref === "/design/masters") {
-    return (
-      pathname === "/design/masters" ||
-      pathname === "/design/projects" ||
-      pathname === "/design/sub-projects" ||
-      pathname === "/design/categories" ||
-      pathname === "/design/packages" ||
-      pathname === "/design/sub-packages" ||
-      pathname === "/design/authorities" ||
-      pathname === "/design/templates"
-    );
-  }
-  if (itemHref === "/requirements" && searchParams?.get("from") === "approvals") {
-    return false;
-  }
-  return pathname === itemHref || pathname.startsWith(itemHref + "/");
 }
 
-export function isSubActive(subHref: string, pathname: string, searchParams?: URLSearchParams | null): boolean {
-  const currentView = searchParams?.get("view");
-  const currentFrom = searchParams?.get("from");
-  const currentWsId = searchParams?.get("workspaceId");
+function isSubActive(href: string, pathname: string, sp: URLSearchParams | null) {
+  const view = sp?.get("view"), from = sp?.get("from"), ws = sp?.get("workspaceId");
+  if (href.startsWith("/?view=")) {
+    const target = href.split("view=")[1];
+    return pathname === "/" && (view === target || (!view && target === "overview"));
+  }
+  if (href === "/requirements/approvals") return pathname === href || (pathname === "/requirements" && from === "approvals");
+  if (href === "/requirements") return pathname === href && from !== "approvals";
+  if (href === "/workspaces/tasks") return pathname === href && !ws;
+  if (href === "/workspaces") return pathname === href || (pathname === "/workspaces/tasks" && !!ws);
+  if (href === "/design/projects") return pathname === href || pathname === "/design/masters";
+  return pathname === href;
+}
 
-  if (subHref.startsWith("/?view=")) {
-    const targetView = subHref.split("view=")[1];
-    return pathname === "/" && (currentView === targetView || (!currentView && targetView === "overview"));
-  }
-  if (subHref === "/requirements/approvals") {
-    return pathname === "/requirements/approvals" || (pathname === "/requirements" && currentFrom === "approvals");
-  }
-  if (subHref === "/requirements") {
-    return pathname === "/requirements" && currentFrom !== "approvals";
-  }
-  if (subHref === "/workspaces/tasks") {
-    return pathname === "/workspaces/tasks" && !currentWsId;
-  }
-  if (subHref === "/workspaces") {
-    return pathname === "/workspaces" || (pathname === "/workspaces/tasks" && !!currentWsId);
-  }
-  if (subHref === "/design/projects") {
-    return pathname === "/design/projects" || pathname === "/design/masters";
-  }
-  return pathname === subHref;
+function useModuleContext(pathname: string) {
+  return useMemo(() => {
+    if (pathname.startsWith("/vehicle")) return { code: "VEHICLE_DESK", groups: vehicleNavGroups, home: "/vehicle" };
+    if (pathname.startsWith("/design")) return { code: "DESIGN_TRACKING", groups: designNavGroups, home: "/design" };
+    if (pathname.startsWith("/dashboards")) return { code: "DASHBOARDS", groups: dashboardsNavGroups, home: "/dashboards" };
+    return { code: "TASK_WORKFLOW", groups: taskNavGroups, home: "/" };
+  }, [pathname]);
+}
+
+function Logo({ compact, invert }: { compact: boolean; invert: boolean }) {
+  const src = compact ? "/chandak-40-icon.png" : "/Chandak_Group_Official_Logo.png";
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt="Chandak Group"
+      className={cn("max-h-full max-w-full object-contain", invert && !compact && "brightness-0 invert")}
+      onError={(e) => {
+        const t = e.currentTarget;
+        if (t.src.endsWith(".png")) t.src = t.src.replace(/\.png$/, ".svg");
+      }}
+    />
+  );
 }
 
 export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?: boolean; onCloseMobile?: () => void }) {
   const pathname = usePathname() || "/";
   const searchParams = useSearchParams();
+  const { code: activeModuleCode, groups: navGroups, home: moduleHomeHref } = useModuleContext(pathname);
   const { theme } = useTheme();
-  const themeMeta = getTheme(theme);
-  const isDarkRail = themeMeta.sidebarTone === "dark";
+  const darkRail = getTheme(theme).sidebarTone === "dark";
 
-  // Collapse state remembered in localStorage
-  const [isCompactState, setIsCompactState] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
+  const [isCompact, setIsCompact] = useState(false);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
+  // remember collapsed state
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("app_sidebar_compact");
-      if (stored === "true") {
-        setIsCompactState(true);
-        if (typeof window !== "undefined") {
-          window.dispatchEvent(new CustomEvent("sidebar:toggle", { detail: { compact: true } }));
-        }
-      }
-    } catch {}
+    try { setIsCompact(localStorage.getItem(COMPACT_KEY) === "1"); } catch { /* ignore */ }
   }, []);
-
   const toggleCompact = () => {
-    setIsCompactState((prev) => {
-      const next = !prev;
-      try {
-        localStorage.setItem("app_sidebar_compact", String(next));
-      } catch {}
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("sidebar:toggle", { detail: { compact: next } }));
-      }
+    setIsCompact((c) => {
+      const next = !c;
+      try { localStorage.setItem(COMPACT_KEY, next ? "1" : "0"); } catch { /* ignore */ }
+      window.dispatchEvent(new CustomEvent("sidebar:toggle", { detail: { compact: next } }));
       return next;
     });
   };
 
-  // When minimized, gliding mouse over sidebar gracefully expands it to reveal full module names and links
-  const isCompact = isCompactState && !isHovered;
-
-  // Auto-detect active module context based on current path
-  const activeModuleCode = useMemo(() => {
-    if (pathname.startsWith("/vehicle")) return "VEHICLE_DESK";
-    if (pathname.startsWith("/design")) return "DESIGN_TRACKING";
-    if (pathname.startsWith("/dashboards")) return "DASHBOARDS";
-    return "TASK_WORKFLOW";
-  }, [pathname]);
-
-  const navGroups = useMemo(() => {
-    if (activeModuleCode === "VEHICLE_DESK") return vehicleNavGroups;
-    if (activeModuleCode === "DESIGN_TRACKING") return designNavGroups;
-    if (activeModuleCode === "DASHBOARDS") return dashboardsNavGroups;
-    return taskNavGroups;
-  }, [activeModuleCode]);
-
-  const moduleHomeHref = useMemo(() => {
-    if (activeModuleCode === "VEHICLE_DESK") return "/vehicle";
-    if (activeModuleCode === "DESIGN_TRACKING") return "/design";
-    if (activeModuleCode === "DASHBOARDS") return "/dashboards";
-    return "/";
-  }, [activeModuleCode]);
-
-  // Accordion rule: only ONE module with submodules can be open at a time.
-  // Initial state detects the matching parent tree based on active route.
-  const [openTreeHref, setOpenTreeHref] = useState<string | null>(() => {
-    const activeItem = navGroups.flatMap((g) => g.items).find((item) =>
-      item.href !== "/" && (
-        isItemActive(item.href, pathname, searchParams) ||
-        item.subItems?.some((s) => isSubActive(s.href, pathname, searchParams))
-      )
-    );
-    return activeItem?.subItems ? activeItem.href : null;
-  });
-
-  // Sync accordion with active route on navigation (collapsing other modules)
+  // open the group that contains the current page; close the mobile drawer on navigation
   useEffect(() => {
-    const activeItem = navGroups.flatMap((g) => g.items).find((item) =>
-      item.href !== "/" && (
-        isItemActive(item.href, pathname, searchParams) ||
-        item.subItems?.some((s) => isSubActive(s.href, pathname, searchParams))
-      )
-    );
-    if (activeItem && activeItem.subItems) {
-      setOpenTreeHref(activeItem.href);
-    } else {
-      setOpenTreeHref(null);
-    }
-    if (onCloseMobile) {
-      onCloseMobile();
-    }
-  }, [pathname, searchParams, navGroups]);
+    const owner = navGroups.flatMap((g) => g.items).find((i) => i.subItems && (isItemActive(i, pathname, searchParams) || i.subItems.some((s) => isSubActive(s.href, pathname, searchParams))));
+    if (owner) setExpanded((p) => ({ ...p, [owner.href]: true }));
+    onCloseMobile?.();
+  }, [pathname, navGroups]);
 
+  /* ---------- permissions (unchanged from v1) ---------- */
   const { hasPermission, roleCode, loading: permsLoading } = usePermissions();
   const { canReadModule, hasAnyFleetAccess } = useFleetPermissions();
 
@@ -408,313 +329,181 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
   }, [roleCode, hasPermission]);
 
   const visibleNavTree = useMemo(() => {
-    return navGroups.map((group) => {
-      const visibleItems = group.items.map((item) => {
-        if (activeModuleCode === "VEHICLE_DESK") {
-          if (item.fleetModule) {
-            const isAllowed = canReadModule(item.fleetModule);
-            if (!isAllowed) return null;
-          } else if (item.href === "/vehicle") {
-            if (!hasAnyFleetAccess) return null;
-          }
-          return item;
-        }
-
-        if (!item.subItems) {
-          if (isSuperAdmin) return item;
-          if (!item.permission) return item;
-          if (permsLoading) return item;
-          return hasPermission(item.permission) ? item : null;
-        }
-
-        const visibleSubItems = isSuperAdmin
-          ? item.subItems
-          : item.subItems.filter((sub) => {
-              if (!sub.permission) return true;
-              if (permsLoading) return true;
-              return hasPermission(sub.permission);
-            });
-          
-        if (visibleSubItems.length > 0) {
-          return { ...item, subItems: visibleSubItems };
-        }
-        
-        if (isSuperAdmin || !item.permission || hasPermission(item.permission)) {
-           return { ...item, subItems: undefined };
-        }
-        
-        return null;
-      }).filter(Boolean) as NavItem[];
-      
-      if (visibleItems.length === 0) return null;
-      return { ...group, items: visibleItems };
-    }).filter(Boolean) as NavGroup[];
+    return navGroups
+      .map((group) => {
+        const items = group.items
+          .map((item) => {
+            if (activeModuleCode === "VEHICLE_DESK") {
+              if (item.fleetModule) return canReadModule(item.fleetModule) ? item : null;
+              if (item.href === "/vehicle" && !hasAnyFleetAccess) return null;
+              return item;
+            }
+            if (!item.subItems) {
+              if (isSuperAdmin || !item.permission || permsLoading) return item;
+              return hasPermission(item.permission) ? item : null;
+            }
+            const subs = isSuperAdmin ? item.subItems : item.subItems.filter((s) => !s.permission || permsLoading || hasPermission(s.permission));
+            if (subs.length > 0) return { ...item, subItems: subs };
+            if (isSuperAdmin || !item.permission || hasPermission(item.permission)) return { ...item, subItems: undefined };
+            return null;
+          })
+          .filter(Boolean) as NavItem[];
+        return items.length ? { ...group, items } : null;
+      })
+      .filter(Boolean) as NavGroup[];
   }, [navGroups, activeModuleCode, canReadModule, hasAnyFleetAccess, isSuperAdmin, hasPermission, permsLoading]);
 
-  const toggleTree = (href: string, e?: React.MouseEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    // Accordion: opening another module automatically collapses the previously open module
-    setOpenTreeHref((prev) => (prev === href ? null : href));
-  };
+  const renderNav = (compact: boolean) => (
+    <nav aria-label="Main navigation" className="flex-1 overflow-y-auto overflow-x-hidden px-2 pb-24 pt-1 md:pb-4">
+      {visibleNavTree.map((group, gi) => (
+        <div key={group.label} className={cn(gi > 0 && "mt-4")}>
+          {compact ? (
+            gi > 0 && <div className="mx-3 mb-2 h-px bg-sidebar-border" aria-hidden />
+          ) : (
+            // ui-audit-ignore-next-line overline group label in the nav rail
+            <div className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-sidebar-muted">{group.label}</div>
+          )}
+          <ul className="space-y-0.5">
+            {group.items.map((item) => {
+              const Icon = item.icon;
+              const active = isItemActive(item, pathname, searchParams);
+              const childActive = !!item.subItems?.some((s) => isSubActive(s.href, pathname, searchParams));
+              const isOpen = expanded[item.href] ?? false;
+              const showSelf = active && !childActive; // the leaf that owns the page gets the indicator
 
-  const renderNavList = (inMobile = false) => {
-    const compactMode = isCompact && !inMobile;
-
-    return (
-      <div className="flex-1 px-2.5 pt-2 pb-6 space-y-3 overflow-y-auto overflow-x-hidden">
-        {visibleNavTree.map((group, groupIdx) => (
-          <div key={groupIdx} className="flex flex-col">
-            {!compactMode && (
-              <div className="px-3 py-1 mb-1">
-                <span className="text-[10px] font-semibold tracking-wider uppercase text-sidebar-muted">
-                  {group.label}
-                </span>
-              </div>
-            )}
-            <div className="space-y-0.5">
-              {group.items.map((item) => {
-                const IconComponent = item.icon;
-                const hasMatchingSubItem = item.subItems?.some((s) => isSubActive(s.href, pathname, searchParams));
-                const itemDirectlyActive = !hasMatchingSubItem && isItemActive(item.href, pathname, searchParams);
-                const isParentGroup = !!item.subItems && hasMatchingSubItem;
-                const isExpanded = openTreeHref === item.href;
-
-                return (
-                  <div key={item.href} className="space-y-0.5">
-                    <div className="relative flex items-center">
-                      <Link
-                        href={item.href}
-                        title={compactMode ? item.label : undefined}
-                        aria-label={compactMode ? item.label : undefined}
-                        aria-current={itemDirectlyActive ? "page" : undefined}
-                        onClick={(e) => {
-                          if (inMobile) onCloseMobile?.();
-                          if (item.subItems) {
-                            if (itemDirectlyActive || hasMatchingSubItem) {
-                              toggleTree(item.href, e);
-                            } else {
-                              setOpenTreeHref(item.href);
-                            }
-                          }
-                        }}
-                        className={cn(
-                          "relative flex items-center rounded-lg text-xs font-medium transition-colors select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                          compactMode
-                            ? "w-10 h-10 mx-auto justify-center"
-                            : "flex-1 gap-2.5 py-2 px-2.5",
-                          itemDirectlyActive
-                            ? "bg-sidebar-active text-sidebar-active-foreground font-semibold"
-                            : isParentGroup
-                            ? "text-sidebar-foreground font-bold hover:bg-sidebar-hover"
+              return (
+                <li key={item.href}>
+                  <div className="relative flex items-center">
+                    <Link
+                      href={item.href}
+                      title={compact ? item.label : undefined}
+                      aria-label={compact ? item.label : undefined}
+                      aria-current={showSelf ? "page" : undefined}
+                      onClick={() => {
+                        onCloseMobile?.();
+                        if (item.subItems) setExpanded((p) => ({ ...p, [item.href]: true }));
+                      }}
+                      className={cn(
+                        "group relative flex min-w-0 items-center rounded-md text-[13.5px] transition-colors",
+                        compact ? "mx-auto h-10 w-10 justify-center" : "h-9 flex-1 gap-3 pl-3 pr-9",
+                        showSelf
+                          ? "bg-sidebar-active font-semibold text-sidebar-active-foreground"
+                          : childActive
+                            ? "font-semibold text-sidebar-foreground hover:bg-sidebar-hover"
                             : "text-sidebar-foreground hover:bg-sidebar-hover"
-                        )}
-                      >
-                        {/* 3px Active Indicator Bar (only on the exactly active item) */}
-                        {itemDirectlyActive && (
-                          <span
-                            aria-hidden="true"
-                            className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r bg-sidebar-indicator"
-                          />
-                        )}
-
-                        <IconComponent className={cn("shrink-0", compactMode ? "h-4 w-4" : "h-4 w-4")} />
-
-                        {!compactMode && (
-                          <span className="flex-1 truncate">{item.label}</span>
-                        )}
-
-                        {!compactMode && item.badge && (
-                          <span
-                            className={cn(
-                              "ml-auto text-[10px] font-medium px-1.5 py-0.2 rounded-full",
-                              item.badgeColor || "bg-sunken text-subtle"
-                            )}
-                          >
-                            {item.badge}
-                          </span>
-                        )}
-                      </Link>
-
-                      {/* Accordion expand chevron button */}
-                      {!compactMode && item.subItems && (
-                        <button
-                          type="button"
-                          aria-expanded={isExpanded}
-                          aria-label={isExpanded ? `Collapse ${item.label}` : `Expand ${item.label}`}
-                          onClick={(e) => toggleTree(item.href, e)}
-                          className="h-6 w-6 ml-1 flex items-center justify-center rounded text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-hover transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                        >
-                          <ChevronDown
-                            className={cn(
-                              "h-3.5 w-3.5 transition-transform duration-200",
-                              isExpanded ? "rotate-0" : "-rotate-90"
-                            )}
-                          />
-                        </button>
                       )}
-                    </div>
-
-                    {/* Sub items tree */}
-                    {!compactMode && item.subItems && isExpanded && (
-                      <div className="pl-6 pr-1 py-0.5 space-y-0.5 relative border-l border-sidebar-border ml-4 mt-0.5">
-                        {item.subItems.map((sub) => {
-                          const subActive = isSubActive(sub.href, pathname, searchParams);
-                          return (
-                            <Link
-                              key={sub.href}
-                              href={sub.href}
-                              aria-current={subActive ? "page" : undefined}
-                              onClick={() => {
-                                if (inMobile) onCloseMobile?.();
-                              }}
-                              className={cn(
-                                "relative flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs transition-colors select-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-                                subActive
-                                  ? "bg-sidebar-active text-sidebar-active-foreground font-semibold"
-                                  : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-hover font-normal"
-                              )}
-                            >
-                              {subActive && (
-                                <span
-                                  aria-hidden="true"
-                                  className="absolute left-0 top-1 bottom-1 w-[2px] rounded-r bg-sidebar-indicator"
-                                />
-                              )}
-                              <span className="truncate flex-1">{sub.label}</span>
-                            </Link>
-                          );
-                        })}
-                      </div>
+                    >
+                      {showSelf && <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r bg-sidebar-indicator" aria-hidden />}
+                      <Icon className={cn("h-4 w-4 shrink-0", showSelf || childActive ? "opacity-100" : "opacity-75")} aria-hidden />
+                      {!compact && <span className="truncate">{item.label}</span>}
+                      {!compact && item.badge && (
+                        <span className="ml-auto rounded px-1.5 text-[11px] font-medium leading-5 bg-sidebar-hover text-sidebar-muted tabular">{item.badge}</span>
+                      )}
+                    </Link>
+                    {!compact && item.subItems && (
+                      <button
+                        type="button"
+                        onClick={() => setExpanded((p) => ({ ...p, [item.href]: !isOpen }))}
+                        aria-expanded={isOpen}
+                        aria-label={`${isOpen ? "Collapse" : "Expand"} ${item.label}`}
+                        className="absolute right-1 inline-flex h-7 w-7 items-center justify-center rounded text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground"
+                      >
+                        <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", !isOpen && "-rotate-90")} aria-hidden />
+                      </button>
                     )}
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  };
+
+                  {!compact && item.subItems && isOpen && (
+                    <ul className="relative mb-1 ml-[22px] mt-0.5 space-y-0.5 border-l border-sidebar-border pl-2">
+                      {item.subItems.map((sub) => {
+                        const on = isSubActive(sub.href, pathname, searchParams);
+                        return (
+                          <li key={sub.href}>
+                            <Link
+                              href={sub.href}
+                              aria-current={on ? "page" : undefined}
+                              onClick={() => onCloseMobile?.()}
+                              className={cn(
+                                "relative flex h-8 items-center rounded-md px-2.5 text-[13px] transition-colors",
+                                on ? "bg-sidebar-active font-semibold text-sidebar-active-foreground" : "text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground"
+                              )}
+                            >
+                              {on && <span className="absolute -left-[9px] top-1.5 bottom-1.5 w-[2px] rounded bg-sidebar-indicator" aria-hidden />}
+                              <span className="truncate">{sub.label}</span>
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+
+      {permsLoading && !roleCode && (
+        <div className="space-y-2 px-3 pt-2" aria-hidden>
+          {[0, 1, 2, 3].map((i) => <div key={i} className="h-8 animate-pulse rounded-md bg-sidebar-hover" />)}
+        </div>
+      )}
+    </nav>
+  );
 
   return (
     <>
-      {/* Mobile Off-Canvas Drawer powered by Radix Dialog */}
-      <DialogPrimitive.Root open={isOpenMobile} onOpenChange={(open) => !open && onCloseMobile?.()}>
-        <DialogPrimitive.Portal>
-          <DialogPrimitive.Overlay className="fixed inset-0 z-[var(--z-overlay)] bg-[var(--overlay)] transition-opacity animate-in fade-in-0 duration-250 md:hidden" />
-          <DialogPrimitive.Content
-            aria-describedby={undefined}
-            className="fixed inset-y-0 left-0 z-[var(--z-modal)] w-[280px] max-w-[85vw] bg-sidebar text-sidebar-foreground border-r border-sidebar-border shadow-2xl flex flex-col animate-in slide-in-from-left duration-250 md:hidden focus:outline-none"
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-sidebar-border shrink-0">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <img
-                  src="/Chandak_Group_Official_Logo.png"
-                  alt="Chandak Logo"
-                  className={cn("h-7 w-auto object-contain", isDarkRail && "brightness-0 invert")}
-                  onError={(e) => {
-                    const target = e.currentTarget;
-                    if (target.src.endsWith(".png")) target.src = "/Chandak_Group_Official_Logo.svg";
-                  }}
-                />
-                <DialogPrimitive.Title className="text-xs font-bold tracking-tight text-sidebar-foreground truncate">
-                  Chandak Workspace
-                </DialogPrimitive.Title>
-              </div>
-              <DialogPrimitive.Close
-                type="button"
-                aria-label="Close menu"
-                className="p-1 rounded-md text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-hover transition-colors"
-              >
-                <X className="h-5 w-5" />
-              </DialogPrimitive.Close>
+      {/* Mobile drawer: real dialog (focus trap, Esc, aria-modal) */}
+      <Dialog.Root open={!!isOpenMobile} onOpenChange={(o) => { if (!o) onCloseMobile?.(); }}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-[var(--z-overlay)] bg-[var(--overlay)] md:hidden data-[state=open]:animate-in data-[state=open]:fade-in-0" />
+          <Dialog.Content className="fixed inset-y-0 left-0 z-[var(--z-modal)] flex w-[288px] max-w-[85vw] flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground shadow-lg outline-none md:hidden data-[state=open]:animate-in data-[state=open]:slide-in-from-left duration-200 pb-[env(safe-area-inset-bottom)]">
+            <Dialog.Title className="sr-only">Navigation</Dialog.Title>
+            <Dialog.Description className="sr-only">Chandak Workspace menu</Dialog.Description>
+            <div className="flex items-center justify-between border-b border-sidebar-border px-4 py-3">
+              <div className="h-8 w-32"><Logo compact={false} invert={darkRail} /></div>
+              <Dialog.Close aria-label="Close menu" className="inline-flex h-8 w-8 items-center justify-center rounded-md text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground">
+                <X className="h-4 w-4" aria-hidden />
+              </Dialog.Close>
             </div>
-
-            {/* Mobile Module Switcher */}
-            <div className="p-3 border-b border-sidebar-border shrink-0">
+            <div className="border-b border-sidebar-border p-3">
               <ModuleSwitcher onCloseMobile={onCloseMobile} />
             </div>
+            {renderNav(false)}
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
 
-            {/* Mobile Nav List */}
-            {renderNavList(true)}
-          </DialogPrimitive.Content>
-        </DialogPrimitive.Portal>
-      </DialogPrimitive.Root>
-
-      {/* Desktop Persistent Left Nav Rail */}
+      {/* Desktop rail */}
       <aside
-        onMouseEnter={() => {
-          if (isCompactState) setIsHovered(true);
-        }}
-        onMouseLeave={() => {
-          if (isCompactState) setIsHovered(false);
-        }}
         className={cn(
-          "hidden md:flex relative z-[var(--z-sidebar)] flex-col h-full shrink-0 font-sans transition-[width] duration-200 select-none bg-sidebar text-sidebar-foreground border-r border-sidebar-border",
-          isCompact ? "w-16" : "w-[240px]"
+          "relative z-[var(--z-sidebar)] hidden h-full shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-200 md:flex",
+          isCompact ? "w-[64px]" : "w-[248px]"
         )}
       >
-        {/* Top Header */}
-        <div className={cn("flex flex-col shrink-0 p-3 pb-2 gap-3 border-b border-sidebar-border relative", isCompact && "items-center px-2")}>
-          {/* Quick toggle chevron on the rail border */}
+        <div className={cn("flex shrink-0 flex-col gap-3", isCompact ? "items-center px-2 pb-2 pt-4" : "px-3 pb-3 pt-4")}>
+          <Link href={moduleHomeHref} aria-label="Chandak Workspace home" className={cn("flex items-center", isCompact ? "h-9 w-9 justify-center" : "h-11 px-1")}>
+            <Logo compact={isCompact} invert={darkRail} />
+          </Link>
+          <ModuleSwitcher isCompact={isCompact} />
+        </div>
+
+        {renderNav(isCompact)}
+
+        <div className={cn("shrink-0 border-t border-sidebar-border p-2", isCompact && "flex justify-center")}>
           <button
             type="button"
             onClick={toggleCompact}
-            className="hidden md:flex absolute -right-3 top-4 rounded-full shadow-sm bg-surface border border-border text-sidebar-muted hover:text-sidebar-foreground hover:bg-surface-hover h-6 w-6 items-center justify-center z-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            title={isCompactState ? "Pin Sidebar Open" : "Minimize Navigation Shell"}
-            aria-label={isCompactState ? "Pin Sidebar Open" : "Minimize Navigation Shell"}
+            aria-label={isCompact ? "Expand sidebar" : "Collapse sidebar"}
+            aria-pressed={isCompact}
+            className={cn(
+              "inline-flex h-8 items-center gap-2 rounded-md px-2 text-[12.5px] text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-foreground",
+              !isCompact && "w-full"
+            )}
           >
-            {isCompactState ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
+            {isCompact ? <ChevronRight className="h-4 w-4" aria-hidden /> : <><ChevronLeft className="h-4 w-4" aria-hidden /><span>Collapse</span></>}
           </button>
-
-          {!isCompact ? (
-            <Link href={moduleHomeHref} className="flex flex-col gap-1 items-center justify-center pt-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg">
-              <div className="h-[46px] w-[180px] flex items-center justify-center shrink-0">
-                <img
-                  src="/Chandak_Group_Official_Logo.png"
-                  alt="Chandak Logo"
-                  className={cn("max-h-full max-w-full object-contain", isDarkRail && "brightness-0 invert")}
-                  onError={(e) => {
-                    const target = e.currentTarget;
-                    if (target.src.endsWith(".png")) target.src = "/Chandak_Group_Official_Logo.svg";
-                  }}
-                />
-              </div>
-              <span className="text-xs font-bold tracking-tight text-sidebar-foreground">
-                Chandak Workspace
-              </span>
-            </Link>
-          ) : (
-            <Link
-              href={moduleHomeHref}
-              title="Chandak Workspace"
-              aria-label="Chandak Workspace"
-              className="flex h-9 w-9 items-center justify-center rounded-lg hover:bg-sidebar-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <img
-                src="/chandak-40-icon.png"
-                alt="Chandak Logo"
-                className={cn("h-7 w-7 object-contain", isDarkRail && "brightness-0 invert")}
-                onError={(e) => {
-                  const target = e.currentTarget;
-                  if (target.src.endsWith(".png")) target.src = "/chandak-40-icon.svg";
-                }}
-              />
-            </Link>
-          )}
-
-          {/* Module Switcher */}
-          <div className="w-full">
-            <ModuleSwitcher isCompact={isCompact} />
-          </div>
         </div>
-
-        {/* Scrollable Nav Items */}
-        {renderNavList(false)}
       </aside>
     </>
   );

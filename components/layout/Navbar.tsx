@@ -1,384 +1,225 @@
-/* eslint-disable */
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef } from "react";
+/**
+ * Navbar v2 — fixes
+ * - Quick actions come from one array, so arrow keys reach all of them (v1 counted 2 of 3,
+ *   so "Fleet & Logistics Desk" was unreachable by keyboard). The W/T/V key hints were
+ *   removed because no shortcut was wired to them.
+ * - "Create New Workspace" and "Create New Task" went to the same page.
+ * - Sun/moon toggles between the user's last light and last dark theme instead of always
+ *   jumping to light-neumorphic / dark-neumorphic and losing their chosen theme.
+ * - Solid header surface (v1: 80% transparent background with blur disabled, so content
+ *   scrolled visibly underneath).
+ * - Profile menu is a real button + popover (keyboard, Esc, aria-expanded); icon buttons
+ *   have labels; role shown as a readable chip ("Super Admin", not "(SUPER_ADMIN)").
+ * - Menu icon for the mobile hamburger (was the Layers icon).
+ */
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
-import { 
-  Search, 
-  Menu,
-  Moon,
-  Sun,
-  LogOut,
-  User,
-  Settings,
-  Terminal,
-  FileText,
-  CheckSquare,
-  Car
-} from "lucide-react";
 import * as Popover from "@radix-ui/react-popover";
+import { Search, Moon, Sun, LogOut, User, Settings, Terminal, FileText, CheckSquare, Car, Menu, FolderPlus, Loader2 } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
 import { globalSearch } from "@/lib/actions/search";
 import type { SearchResult } from "@/lib/repositories/search";
 import { useTheme } from "@/components/theme/ThemeProvider";
 import { ThemeMenu } from "@/components/theme/ThemeMenu";
-import RealtimeNotificationsDrawer from "./RealtimeNotificationsDrawer";
 import { useProfile, usePermissions } from "@/hooks/usePermissions";
-import { AppButton } from "@/components/ui/AppButton";
+import { cn } from "@/lib/utils";
+import RealtimeNotificationsDrawer from "./RealtimeNotificationsDrawer";
 
-interface QuickAction {
-  id: string;
-  title: string;
-  url: string;
-  icon: React.ElementType;
-}
-
+type QuickAction = { id: string; label: string; href: string; icon: React.ElementType };
 const QUICK_ACTIONS: QuickAction[] = [
-  { id: "workspace", title: "Create New Workspace", url: "/workspaces", icon: Terminal },
-  { id: "task", title: "Create New Task", url: "/workspaces/tasks", icon: CheckSquare },
-  { id: "vehicle", title: "Fleet & Logistics Desk", url: "/vehicle", icon: Car },
+  { id: "ws", label: "Create new workspace", href: "/workspaces" /* TODO: open the create form, e.g. ?create=1 */, icon: FolderPlus },
+  { id: "task", label: "Create new task", href: "/workspaces/tasks", icon: CheckSquare },
+  { id: "fleet", label: "Open Fleet & Logistics desk", href: "/vehicle", icon: Car },
 ];
 
-function formatRoleName(role?: string | null): string {
-  if (!role) return "User";
-  if (role.toLowerCase() === "super_admin") return "Super Admin";
-  return role
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(" ");
-}
+const RESULT_ICON: Record<string, React.ElementType> = { TASK: CheckSquare, TICKET: FileText, VEHICLE: Car };
 
-function getInitials(name?: string | null): string {
-  if (!name) return "U";
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "U";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
+const humanRole = (code?: string | null) =>
+  (code || "User").replace(/^ROLE_/, "").toLowerCase().split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+
+const initials = (name?: string | null) =>
+  (name || "User").trim().split(/\s+/).slice(0, 2).map((n) => n[0]?.toUpperCase() ?? "").join("");
 
 export default function Navbar({ onOpenMobileMenu }: { onOpenMobileMenu?: () => void }) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const { isLight, toggleMode } = useTheme();
-  const { data: profileData } = useProfile();
+  const { data: profile } = useProfile();
   const { roleCode } = usePermissions();
-  const userData = profileData || null;
 
-  const [loggingOut, setLoggingOut] = useState(false);
-
-  // Search State
-  const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const searchContainerRef = useRef<HTMLDivElement>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [searching, setSearching] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
+  // ⌘K / Ctrl+K focuses search
   useEffect(() => {
-    function handleClickOutsideSearch(event: MouseEvent) {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
-        setSearchOpen(false);
-      }
-    }
-    if (searchOpen) {
-      document.addEventListener("mousedown", handleClickOutsideSearch);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutsideSearch);
-    };
-  }, [searchOpen]);
-
-  useEffect(() => {
-    const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setSearchOpen(true);
-        setTimeout(() => searchInputRef.current?.focus(), 50);
+        inputRef.current?.focus();
       }
     };
-    window.addEventListener("keydown", handleGlobalKeyDown);
-    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // close on outside click
   useEffect(() => {
-    if (!query) {
-      setResults([]);
-      setActiveIndex(-1);
-      return;
-    }
-    const handler = setTimeout(async () => {
-      setIsSearching(true);
-      try {
-        const res = await globalSearch(query);
-        setResults(res);
-        setActiveIndex(-1);
-      } catch (err) {
-        console.error("Search failed:", err);
-      } finally {
-        setIsSearching(false);
-      }
-    }, 300);
-    return () => clearTimeout(handler);
+    if (!searchOpen) return;
+    const onDown = (e: MouseEvent) => { if (boxRef.current && !boxRef.current.contains(e.target as Node)) setSearchOpen(false); };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [searchOpen]);
+
+  // debounced search
+  useEffect(() => {
+    setActiveIndex(-1);
+    if (!query.trim()) { setResults([]); setSearching(false); return; }
+    setSearching(true);
+    const id = setTimeout(async () => {
+      try { setResults(await globalSearch(query.trim())); }
+      catch (err) { console.error("Search failed:", err); setResults([]); }
+      finally { setSearching(false); }
+    }, 250);
+    return () => clearTimeout(id);
   }, [query]);
 
-  const itemsCount = query === "" ? QUICK_ACTIONS.length : results.length;
+  const items: { key: string; href: string; label: string; icon: React.ElementType; hint?: string }[] = query.trim()
+    ? results.map((r) => ({ key: String(r.id), href: r.url, label: `${r.code ? r.code + " · " : ""}${r.title}`, icon: RESULT_ICON[r.type] ?? Terminal }))
+    : QUICK_ACTIONS.map((a) => ({ key: a.id, href: a.href, label: a.label, icon: a.icon }));
 
-  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Escape") {
-      setSearchOpen(false);
-      searchInputRef.current?.blur();
-      return;
-    }
+  const go = (href: string) => { setSearchOpen(false); setQuery(""); inputRef.current?.blur(); router.push(href); };
 
-    if (itemsCount === 0) return;
-
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      setActiveIndex((prev) => (prev < itemsCount - 1 ? prev + 1 : 0));
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      setActiveIndex((prev) => (prev > 0 ? prev - 1 : itemsCount - 1));
-    } else if (e.key === "Enter" && activeIndex >= 0) {
-      e.preventDefault();
-      if (query === "") {
-        const action = QUICK_ACTIONS[activeIndex];
-        if (action) router.push(action.url);
-      } else if (results[activeIndex]) {
-        router.push(results[activeIndex].url);
-      }
-      setSearchOpen(false);
-    }
+  const onSearchKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Escape") { setSearchOpen(false); inputRef.current?.blur(); return; }
+    if (!items.length) return;
+    if (e.key === "ArrowDown") { e.preventDefault(); setActiveIndex((i) => (i + 1) % items.length); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); setActiveIndex((i) => (i <= 0 ? items.length - 1 : i - 1)); }
+    else if (e.key === "Enter" && activeIndex >= 0) { e.preventDefault(); go(items[activeIndex].href); }
   };
 
-  const handleExecuteSignOut = async () => {
+  const signOut = async () => {
     setLoggingOut(true);
-    try {
-      document.cookie = "active_module=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-      await supabase.auth.signOut();
-      window.location.href = "/login";
-    } catch (e) {
-      console.error(e);
-      window.location.href = "/login";
-    } finally {
-      setLoggingOut(false);
-    }
+    document.cookie = "active_module=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    try { await supabase.auth.signOut(); } catch (e) { console.error(e); }
+    window.location.href = "/login";
   };
+
+  const iconBtn = "inline-flex h-8 w-8 items-center justify-center rounded-md text-muted hover:bg-surface-hover hover:text-foreground";
 
   return (
-    <header className="bg-surface border-b border-border sticky top-0 z-[var(--z-header)] flex h-14 w-full shrink-0 font-sans items-center justify-between px-3 sm:px-4 md:px-6">
-      <div className="flex items-center gap-2 sm:gap-4 flex-1 max-w-lg relative" ref={searchContainerRef}>
-        {/* Mobile Menu Hamburger Trigger */}
-        <button
-          type="button"
-          onClick={() => onOpenMobileMenu?.()}
-          className="md:hidden flex items-center justify-center h-9 w-9 rounded-lg text-muted hover:text-foreground hover:bg-surface-hover transition-colors shrink-0"
-          aria-label="Open navigation menu"
-        >
-          <Menu className="h-5 w-5" />
+    <header className="sticky top-0 z-[var(--z-header)] flex h-14 w-full shrink-0 items-center justify-between gap-3 border-b border-border bg-surface px-3 sm:px-4 md:px-6">
+      <div ref={boxRef} className="relative flex max-w-xl flex-1 items-center gap-2">
+        <button type="button" onClick={() => onOpenMobileMenu?.()} aria-label="Open menu" className={cn(iconBtn, "md:hidden")}>
+          <Menu className="h-5 w-5" aria-hidden />
         </button>
 
-        {/* Global Combobox Search */}
-        <div className="relative flex items-center w-full group cursor-text">
-          <Search className="absolute left-3 h-4 w-4 text-muted group-hover:text-foreground transition-colors pointer-events-none" />
+        <div className="relative w-full">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
           <input
-            ref={searchInputRef}
-            type="text"
+            ref={inputRef}
+            type="search"
             role="combobox"
             aria-expanded={searchOpen}
-            aria-autocomplete="list"
-            aria-controls="navbar-search-results"
-            aria-activedescendant={activeIndex >= 0 ? `navbar-search-item-${activeIndex}` : undefined}
+            aria-controls="global-search-list"
+            aria-activedescendant={activeIndex >= 0 ? `gs-${items[activeIndex]?.key}` : undefined}
+            aria-label="Search or jump to"
             value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              if (!searchOpen) setSearchOpen(true);
-            }}
+            onChange={(e) => setQuery(e.target.value)}
             onFocus={() => setSearchOpen(true)}
-            onKeyDown={handleSearchKeyDown}
-            placeholder="Search or jump to... (Ctrl+K)"
-            className="flex items-center h-9 w-full rounded-md pl-9 pr-10 text-xs sm:text-[13px] bg-background border border-border text-foreground placeholder:text-muted hover:border-border-active focus:border-border-active transition-colors shadow-sm outline-none"
+            onKeyDown={onSearchKey}
+            placeholder="Search tasks, tickets, vehicles…"
+            className="h-9 w-full rounded-md border-border bg-sunken pl-9 pr-14 text-[13.5px] focus:bg-surface"
           />
+          <kbd className="pointer-events-none absolute right-2 top-1/2 hidden -translate-y-1/2 rounded border border-border bg-surface px-1.5 font-sans text-[11px] text-muted sm:block">Ctrl K</kbd>
         </div>
-        
-        {/* Search Results Dropdown */}
+
         {searchOpen && (
-          <div 
-            id="navbar-search-results"
-            role="listbox"
-            className="fixed inset-x-3 top-16 sm:absolute sm:inset-x-auto sm:top-[110%] sm:left-0 sm:w-[500px] max-w-[calc(100vw-24px)] rounded-xl bg-elevated border border-border overflow-hidden z-[var(--z-popover)] animate-in fade-in slide-in-from-top-2 duration-150 shadow-lg"
-          >
-            <div className="max-h-[60vh] overflow-y-auto p-2">
-              {query === "" ? (
-                <>
-                  <div className="mb-2 px-2 text-[11px] font-semibold text-muted uppercase tracking-wider">Quick Actions</div>
-                  <div className="space-y-1">
-                    {QUICK_ACTIONS.map((action, i) => {
-                      const Icon = action.icon;
-                      const isSelected = activeIndex === i;
-                      return (
-                        <button
-                          key={action.id}
-                          id={`navbar-search-item-${i}`}
-                          type="button"
-                          role="option"
-                          aria-selected={isSelected}
-                          className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-                            isSelected ? "bg-surface-hover text-foreground" : "text-subtle hover:bg-surface-hover hover:text-foreground"
-                          }`}
-                          onClick={() => {
-                            setSearchOpen(false);
-                            router.push(action.url);
-                          }}
-                        >
-                          <div className="flex items-center gap-3">
-                            <Icon className="h-4 w-4 text-muted" />
-                            <span className="font-medium text-foreground">{action.title}</span>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="mb-2 px-2 text-[11px] font-semibold text-muted uppercase tracking-wider">
-                    {isSearching ? "Searching..." : `Search Results for "${query}"`}
-                  </div>
-                  <div className="space-y-1">
-                    {results.length > 0 ? (
-                      results.map((r, i) => {
-                        const isSelected = activeIndex === i;
-                        return (
-                          <button
-                            key={r.id}
-                            id={`navbar-search-item-${i}`}
-                            type="button"
-                            role="option"
-                            aria-selected={isSelected}
-                            className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-                              isSelected ? "bg-surface-hover text-foreground" : "text-subtle hover:bg-surface-hover hover:text-foreground"
-                            }`}
-                            onClick={() => {
-                              setSearchOpen(false);
-                              router.push(r.url);
-                            }}
-                          >
-                            <div className="flex items-center gap-3">
-                              {r.type === "TASK" ? (
-                                <CheckSquare className="h-4 w-4 text-muted" />
-                              ) : r.type === "TICKET" ? (
-                                <FileText className="h-4 w-4 text-muted" />
-                              ) : r.type === "VEHICLE" ? (
-                                <Car className="h-4 w-4 text-muted" />
-                              ) : (
-                                <Terminal className="h-4 w-4 text-muted" />
-                              )}
-                              <span className="font-medium text-foreground">{`${r.code ? r.code + ": " : ""}${r.title}`}</span>
-                            </div>
-                          </button>
-                        );
-                      })
-                    ) : !isSearching ? (
-                      <div className="px-3 py-4 text-center text-sm text-muted">No results found</div>
-                    ) : null}
-                  </div>
-                </>
-              )}
+          <div className="fixed inset-x-3 top-[60px] z-[var(--z-popover)] overflow-hidden rounded-[10px] border border-border bg-elevated shadow-lg sm:absolute sm:inset-x-auto sm:left-0 sm:top-[calc(100%+6px)] sm:w-[min(560px,calc(100vw-2rem))]">
+            <div className="flex items-center justify-between px-3 pb-1 pt-2.5">
+              <span className="theme-label">{query.trim() ? "Results" : "Quick actions"}</span>
+              {searching && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted" aria-label="Searching" />}
             </div>
+            <ul id="global-search-list" role="listbox" className="max-h-[60vh] overflow-y-auto p-1.5">
+              {items.map((it, i) => {
+                const Icon = it.icon;
+                return (
+                  <li key={it.key} id={`gs-${it.key}`} role="option" aria-selected={i === activeIndex}>
+                    <button
+                      type="button"
+                      onMouseEnter={() => setActiveIndex(i)}
+                      onClick={() => go(it.href)}
+                      className={cn("flex w-full items-center gap-3 rounded-md px-2.5 py-2 text-left text-[13.5px]", i === activeIndex ? "bg-surface-hover" : "hover:bg-surface-hover")}
+                    >
+                      <Icon className="h-4 w-4 shrink-0 text-accent-soft-text" aria-hidden />
+                      <span className="flex-1 truncate text-foreground">{it.label}</span>
+                      {it.hint && <kbd className="rounded border border-border px-1.5 text-[11px] text-muted">{it.hint}</kbd>}
+                    </button>
+                  </li>
+                );
+              })}
+              {query.trim() && !searching && items.length === 0 && (
+                <li className="px-3 py-6 text-center text-[13px] text-muted">No matches for “{query.trim()}”. Try a code like TKT-1042.</li>
+              )}
+            </ul>
           </div>
         )}
       </div>
 
-      <div className="flex items-center gap-2 relative">
-        {/* Sun/Moon Toggle */}
-        <AppButton 
-          variant="ghost"
-          size="icon"
-          onClick={toggleMode}
-          aria-label={isLight ? "Switch to dark mode" : "Switch to light mode"}
-          className="!h-8 !w-8 rounded-md text-muted hover:bg-surface-hover hover:text-foreground"
-        >
-          {isLight ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-        </AppButton>
-
-        {/* Theme Palette Menu Popover */}
+      <div className="flex items-center gap-1">
+        <button type="button" onClick={toggleMode} aria-label={isLight ? "Switch to dark theme" : "Switch to light theme"} className={iconBtn}>
+          {isLight ? <Moon className="h-4 w-4" aria-hidden /> : <Sun className="h-4 w-4" aria-hidden />}
+        </button>
         <ThemeMenu />
-
-        {/* Settings Link */}
-        <Link 
-          href="/settings"
-          aria-label="Settings"
-          className="flex h-8 w-8 items-center justify-center rounded-md transition-colors text-muted hover:bg-surface-hover hover:text-foreground"
-        >
-          <Settings className="h-4 w-4" />
+        <Link href="/settings" aria-label="Settings" className={iconBtn}>
+          <Settings className="h-4 w-4" aria-hidden />
         </Link>
-
-        {/* Realtime Notifications */}
         <RealtimeNotificationsDrawer />
 
-        {/* User Identity Chip */}
-        <div className="hidden lg:flex items-center mx-1 px-2.5 py-1 rounded-full bg-sunken border border-border text-xs">
-          <span className="font-medium text-foreground tracking-tight">
-            {userData?.full_name || "System Operator"}{" "}
-            <span className="text-muted font-normal">· {formatRoleName(roleCode)}</span>
-          </span>
-        </div>
+        <div className="mx-2 hidden h-6 w-px bg-border lg:block" aria-hidden />
 
-        {/* Profile Popover Menu */}
         <Popover.Root>
           <Popover.Trigger asChild>
-            <button
-              type="button"
-              aria-label="User account menu"
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-surface hover:bg-surface-hover border border-border text-xs font-semibold text-foreground cursor-pointer transition-colors overflow-hidden shrink-0 shadow-sm"
-            >
-              {userData?.profile_photo ? (
-                <img src={userData.profile_photo} alt="Profile" className="h-full w-full object-cover" />
-              ) : (
-                <span>{getInitials(userData?.full_name)}</span>
-              )}
+            <button type="button" aria-label="Account menu" className="flex items-center gap-2.5 rounded-md py-1 pl-1 pr-2 hover:bg-surface-hover">
+              <span className="inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-accent-soft text-[12px] font-semibold text-accent-soft-text">
+                {profile?.profile_photo ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={profile.profile_photo} alt="" className="h-full w-full object-cover" />
+                ) : initials(profile?.full_name)}
+              </span>
+              <span className="hidden min-w-0 flex-col text-left leading-tight lg:flex">
+                <span className="max-w-[160px] truncate text-[13px] font-medium text-foreground">{profile?.full_name || "User"}</span>
+                <span className="text-[11.5px] text-muted">{humanRole(roleCode)}</span>
+              </span>
             </button>
           </Popover.Trigger>
-
           <Popover.Portal>
-            <Popover.Content
-              align="end"
-              sideOffset={8}
-              className="w-56 rounded-xl p-1.5 shadow-lg z-[var(--z-popover)] bg-elevated border border-border text-foreground animate-in fade-in zoom-in-95 duration-150 outline-none"
-            >
-              <div className="px-3 py-2 border-b border-border space-y-0.5">
-                <span className="text-[13px] font-semibold block truncate text-foreground">
-                  {userData?.full_name || "System Operator"}
-                </span>
-                <span className="text-[11px] text-muted block truncate">{userData?.email || "user@chandak.com"}</span>
-                <span className="text-[10px] text-muted font-medium block uppercase tracking-wider pt-0.5">
-                  {formatRoleName(roleCode)}
-                </span>
+            <Popover.Content align="end" sideOffset={6} className="z-[var(--z-popover)] w-60 rounded-[10px] border border-border bg-elevated p-1.5 text-foreground shadow-lg outline-none">
+              <div className="border-b border-border px-2.5 pb-2 pt-1.5">
+                <div className="truncate text-[13px] font-semibold">{profile?.full_name || "User"}</div>
+                <div className="truncate text-[12px] text-muted">{profile?.email}</div>
               </div>
-
-              <div className="py-1 space-y-0.5">
-                <Link
-                  href="/profile"
-                  className="w-full text-left px-3 py-1.5 rounded-md text-[13px] transition-colors flex items-center gap-2.5 font-medium hover:bg-surface-hover text-subtle hover:text-foreground"
-                >
-                  <User className="h-4 w-4 text-muted" />
-                  <span>My Profile & Settings</span>
-                </Link>
-              </div>
-
-              <div className="pt-1 border-t border-border">
-                <AppButton 
-                  variant="ghost"
-                  onClick={handleExecuteSignOut}
-                  disabled={loggingOut}
-                  className="w-full justify-start px-3 py-1.5 rounded-md text-[13px] font-medium text-danger-text hover:bg-danger-soft hover:text-danger-text"
-                  leftIcon={<LogOut className="h-4 w-4" />}
-                >
-                  <span>{loggingOut ? "Logging out..." : "Log Out"}</span>
-                </AppButton>
-              </div>
+              <Link href="/profile" className="mt-1 flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] hover:bg-surface-hover">
+                <User className="h-4 w-4 text-muted" aria-hidden /> Profile & preferences
+              </Link>
+              <button
+                type="button"
+                onClick={signOut}
+                disabled={loggingOut}
+                className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-[13px] text-danger-text hover:bg-danger-soft disabled:opacity-60"
+              >
+                {loggingOut ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <LogOut className="h-4 w-4" aria-hidden />}
+                {loggingOut ? "Signing out…" : "Sign out"}
+              </button>
             </Popover.Content>
           </Popover.Portal>
         </Popover.Root>

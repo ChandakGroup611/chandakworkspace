@@ -1,197 +1,75 @@
-/* eslint-disable no-restricted-syntax */
 "use client";
 
-
-import React, { useMemo } from "react";
+/**
+ * v1 always showed Task Workflow tabs (Tasks / Tickets / Reqs), even inside Vehicle Desk
+ * and Design Tracking. Tabs now follow the active module. Also: solid surface instead of
+ * a blurred translucent bar (blur was globally disabled), no glow/pulse on the active tab,
+ * aria-current, and safe-area padding.
+ */
+import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
-  LayoutDashboard, 
-  FolderKanban, 
-  Ticket, 
-  FileCheck2, 
-  Menu,
-  Car,
-  Calendar,
-  Wrench,
-  Layers,
-  FileText,
-  CheckCircle2,
-  LineChart
-} from "lucide-react";
+import { LayoutDashboard, FolderKanban, Ticket, FileCheck2, Menu, Car, Calendar, Wrench, Layers, FileText, CheckCircle2, LineChart } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface MobileBottomNavProps {
-  onOpenMobileMenu: () => void;
-}
+type Tab = { label: string; href: string; icon: React.ElementType; match: (p: string) => boolean };
 
-interface NavTabItem {
-  label: string;
-  href: string;
-  icon: React.ElementType;
-  isActive: boolean;
-}
+const TABS: Record<string, Tab[]> = {
+  task: [
+    { label: "Home", href: "/", icon: LayoutDashboard, match: (p) => p === "/" },
+    { label: "Tasks", href: "/workspaces/tasks", icon: FolderKanban, match: (p) => p.startsWith("/workspaces") || p.startsWith("/tasks") },
+    { label: "Tickets", href: "/tickets", icon: Ticket, match: (p) => p.startsWith("/tickets") || p.startsWith("/support") },
+    { label: "Requirements", href: "/requirements", icon: FileCheck2, match: (p) => p.startsWith("/requirements") },
+  ],
+  vehicle: [
+    { label: "Fleet", href: "/vehicle", icon: LayoutDashboard, match: (p) => p === "/vehicle" || p === "/vehicle/dashboard" },
+    { label: "Vehicles", href: "/vehicle/inventory", icon: Car, match: (p) => p.startsWith("/vehicle/inventory") },
+    { label: "Trips", href: "/vehicle/trips", icon: Calendar, match: (p) => p.startsWith("/vehicle/trips") },
+    { label: "Service", href: "/vehicle/maintenance", icon: Wrench, match: (p) => p.startsWith("/vehicle/maintenance") },
+  ],
+  design: [
+    { label: "Matrix", href: "/design/matrix", icon: Layers, match: (p) => p === "/design" || p.startsWith("/design/matrix") },
+    { label: "Drawings", href: "/design/drawings", icon: FileText, match: (p) => p.startsWith("/design/drawings") },
+    { label: "Approvals", href: "/design/approvals", icon: CheckCircle2, match: (p) => p.startsWith("/design/approvals") },
+    { label: "Reports", href: "/design/reports", icon: LineChart, match: (p) => p.startsWith("/design/reports") },
+  ],
+  dashboards: [
+    { label: "All", href: "/dashboards", icon: LayoutDashboard, match: (p) => p === "/dashboards" },
+    { label: "IT", href: "/dashboards/it", icon: LineChart, match: (p) => p.startsWith("/dashboards/it") },
+    { label: "Marketing", href: "/dashboards/mkt", icon: LineChart, match: (p) => p.startsWith("/dashboards/mkt") },
+  ],
+};
 
-export default function MobileBottomNav({ onOpenMobileMenu }: MobileBottomNavProps) {
+export default function MobileBottomNav({ onOpenMobileMenu }: { onOpenMobileMenu: () => void }) {
   const pathname = usePathname() || "/";
+  const key = pathname.startsWith("/vehicle") ? "vehicle" : pathname.startsWith("/design") ? "design" : pathname.startsWith("/dashboards") ? "dashboards" : "task";
+  const tabs = TABS[key];
 
-  // Determine active module based on path
-  const activeModule = useMemo(() => {
-    if (pathname.startsWith("/vehicle")) return "VEHICLE_DESK";
-    if (pathname.startsWith("/design")) return "DESIGN_TRACKING";
-    if (pathname.startsWith("/dashboards")) return "DASHBOARDS";
-    return "TASK_WORKFLOW";
-  }, [pathname]);
-
-  const navItems = useMemo<NavTabItem[]>(() => {
-    if (activeModule === "VEHICLE_DESK") {
-      return [
-        {
-          label: "Fleet",
-          href: "/vehicle",
-          icon: LayoutDashboard,
-          isActive: pathname === "/vehicle",
-        },
-        {
-          label: "Vehicles",
-          href: "/vehicle/inventory",
-          icon: Car,
-          isActive: pathname.startsWith("/vehicle/inventory") || pathname.startsWith("/vehicle/register"),
-        },
-        {
-          label: "Trips",
-          href: "/vehicle/trips",
-          icon: Calendar,
-          isActive: pathname.startsWith("/vehicle/trips"),
-        },
-        {
-          label: "Service",
-          href: "/vehicle/maintenance",
-          icon: Wrench,
-          isActive: pathname.startsWith("/vehicle/maintenance") || pathname.startsWith("/vehicle/parts"),
-        },
-      ];
-    }
-
-    if (activeModule === "DESIGN_TRACKING") {
-      return [
-        {
-          label: "Matrix",
-          href: "/design/matrix",
-          icon: Layers,
-          isActive: pathname.startsWith("/design/matrix") || pathname.startsWith("/design/building-matrix"),
-        },
-        {
-          label: "Drawings",
-          href: "/design/drawings",
-          icon: FileText,
-          isActive: pathname.startsWith("/design/drawings") || pathname.startsWith("/design/dms"),
-        },
-        {
-          label: "Approvals",
-          href: "/design/approvals",
-          icon: CheckCircle2,
-          isActive: pathname.startsWith("/design/approvals"),
-        },
-        {
-          label: "Reports",
-          href: "/design/reports",
-          icon: LineChart,
-          isActive: pathname.startsWith("/design/reports"),
-        },
-      ];
-    }
-
-    if (activeModule === "DASHBOARDS") {
-      return [
-        {
-          label: "All",
-          href: "/dashboards",
-          icon: LayoutDashboard,
-          isActive: pathname === "/dashboards",
-        },
-        {
-          label: "IT",
-          href: "/dashboards/it",
-          icon: LineChart,
-          isActive: pathname.startsWith("/dashboards/it"),
-        },
-        {
-          label: "Marketing",
-          href: "/dashboards/mkt",
-          icon: LineChart,
-          isActive: pathname.startsWith("/dashboards/mkt"),
-        },
-      ];
-    }
-
-    // Default TASK_WORKFLOW
-    return [
-      {
-        label: "Home",
-        href: "/",
-        icon: LayoutDashboard,
-        isActive: pathname === "/",
-      },
-      {
-        label: "Tasks",
-        href: "/workspaces/tasks",
-        icon: FolderKanban,
-        isActive: pathname.startsWith("/workspaces") || pathname.startsWith("/tasks"),
-      },
-      {
-        label: "Tickets",
-        href: "/tickets",
-        icon: Ticket,
-        isActive: pathname.startsWith("/tickets") || pathname.startsWith("/support"),
-      },
-      {
-        label: "Requirements",
-        href: "/requirements",
-        icon: FileCheck2,
-        isActive: pathname.startsWith("/requirements"),
-      },
-    ];
-  }, [activeModule, pathname]);
+  const item = "flex flex-1 flex-col items-center justify-center gap-0.5 rounded-md py-1.5 text-[11px] transition-colors";
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-[var(--z-mobile-nav)] bg-surface border-t border-border shadow-md pb-[env(safe-area-inset-bottom,0px)]">
-      <nav className="flex items-center justify-around h-16 px-2 max-w-lg mx-auto">
-        {navItems.map((item) => {
-          const Icon = item.icon;
+    <nav
+      aria-label="Quick navigation"
+      className="fixed inset-x-0 bottom-0 z-[var(--z-mobile-nav)] border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] md:hidden"
+    >
+      <div className="mx-auto flex h-16 max-w-lg items-stretch gap-1 px-2">
+        {tabs.map((t) => {
+          const on = t.match(pathname);
+          const Icon = t.icon;
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={item.isActive ? "page" : undefined}
-              className={cn(
-                "flex flex-col items-center justify-center flex-1 py-1 px-1.5 rounded-lg select-none transition-colors",
-                item.isActive 
-                  ? "text-primary font-semibold" 
-                  : "text-muted hover:text-foreground font-medium"
-              )}
-            >
-              <Icon className="w-5 h-5 shrink-0" />
-              <span className="text-[11px] mt-1 tracking-tight truncate max-w-[70px]">
-                {item.label}
+            <Link key={t.href} href={t.href} aria-current={on ? "page" : undefined} className={cn(item, on ? "font-semibold text-accent-soft-text" : "text-muted hover:text-foreground")}>
+              <span className={cn("inline-flex h-7 w-12 items-center justify-center rounded-full", on && "bg-accent-soft")}>
+                <Icon className="h-5 w-5" aria-hidden />
               </span>
+              <span className="max-w-[72px] truncate">{t.label}</span>
             </Link>
           );
         })}
-
-        {/* Menu Drawer Trigger */}
-        <button
-          type="button"
-          onClick={onOpenMobileMenu}
-          aria-label="Open mobile navigation menu"
-          className="flex flex-col items-center justify-center flex-1 py-1 px-1.5 rounded-lg select-none text-muted hover:text-foreground transition-colors"
-        >
-          <Menu className="w-5 h-5 shrink-0" />
-          <span className="text-[11px] mt-1 font-medium tracking-tight text-muted">
-            Menu
-          </span>
+        <button type="button" onClick={onOpenMobileMenu} className={cn(item, "text-muted hover:text-foreground")}>
+          <span className="inline-flex h-7 w-12 items-center justify-center"><Menu className="h-5 w-5" aria-hidden /></span>
+          <span>Menu</span>
         </button>
-      </nav>
-    </div>
+      </div>
+    </nav>
   );
 }

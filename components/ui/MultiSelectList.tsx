@@ -1,139 +1,123 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { Check, Minus, Search } from "lucide-react";
+/**
+ * Shared option list for FormMultiSelect and MultiSelectFilter.
+ * - every option is a type="button" (v1 filter options had no type, so inside a <form>
+ *   each click SUBMITTED the form)
+ * - real checkbox visuals for both components (v1 filter showed only a tick, no fill)
+ * - search box appears automatically when there are more than 8 options
+ * - working hover colour (v1 used the invalid class `hover:opacity-90/10`)
+ */
+import React from "react";
+import { Check, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export interface Option {
-  value: string;
-  label: string;
-}
+export interface MultiOption { value: string; label: string }
 
-export interface MultiSelectListProps {
-  options: Option[];
-  selectedValues: string[];
-  onToggle: (value: string) => void;
-  onSelectAll?: () => void;
-  onClear: () => void;
-  showSelectAll?: boolean;
+export function CheckboxMark({ checked, indeterminate }: { checked: boolean; indeterminate?: boolean }) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border transition-colors",
+        checked || indeterminate ? "border-primary bg-primary text-primary-foreground" : "border-input bg-surface"
+      )}
+    >
+      {checked ? <Check className="h-3 w-3" strokeWidth={3} /> : indeterminate ? <span className="h-0.5 w-2 rounded bg-current" /> : null}
+    </span>
+  );
 }
 
 export function MultiSelectList({
   options,
   selectedValues,
-  onToggle,
-  onSelectAll,
-  onClear,
+  onChange,
   showSelectAll = false,
-}: MultiSelectListProps) {
-  const [search, setSearch] = useState("");
+  searchThreshold = 8,
+}: {
+  options: MultiOption[];
+  selectedValues: string[];
+  onChange: (values: string[]) => void;
+  showSelectAll?: boolean;
+  searchThreshold?: number;
+}) {
+  const [query, setQuery] = React.useState("");
+  const selected = React.useMemo(() => new Set(selectedValues), [selectedValues]);
+  const filtered = query
+    ? options.filter((o) => o.label.toLowerCase().includes(query.trim().toLowerCase()))
+    : options;
 
-  const filteredOptions = useMemo(() => {
-    if (!search.trim()) return options;
-    const q = search.toLowerCase();
-    return options.filter((o) => o.label.toLowerCase().includes(q));
-  }, [options, search]);
-
-  const allSelected = options.length > 0 && selectedValues.length === options.length;
-  const isIndeterminate = selectedValues.length > 0 && !allSelected;
+  const toggle = (v: string) => onChange(selected.has(v) ? selectedValues.filter((x) => x !== v) : [...selectedValues, v]);
+  const allSelected = options.length > 0 && options.every((o) => selected.has(o.value));
+  const someSelected = !allSelected && options.some((o) => selected.has(o.value));
 
   return (
-    <div className="flex flex-col max-h-72 w-full text-foreground">
-      {/* Search box if > 8 options */}
-      {options.length > 8 && (
-        <div className="p-2 border-b border-border sticky top-0 bg-elevated z-10">
-          <div className="relative flex items-center">
-            <Search className="w-3.5 h-3.5 absolute left-2.5 text-muted pointer-events-none" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search..."
-              className="w-full h-8 pl-8 pr-2.5 text-xs bg-surface border border-input rounded-[var(--radius-input)] placeholder:text-muted focus:outline-none focus:border-ring focus:ring-1 focus:ring-ring text-foreground"
-            />
-          </div>
+    <div className="flex max-h-[min(360px,60vh)] flex-col">
+      {options.length > searchThreshold && (
+        <div className="relative border-b border-border p-1.5">
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" aria-hidden />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search…"
+            aria-label="Search options"
+            className="h-8 w-full rounded-md border-0 bg-sunken pl-7 pr-2 text-[13px] shadow-none focus-visible:shadow-none"
+            autoFocus
+          />
         </div>
       )}
 
-      {/* Select All (Filter only) */}
-      {showSelectAll && onSelectAll && (
-        <div className="p-1 border-b border-border">
-          <button
-            type="button"
-            role="option"
-            aria-selected={allSelected}
-            onClick={onSelectAll}
-            className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-[var(--radius-input)] text-xs font-medium text-left hover:bg-surface-hover text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <div
-              className={cn(
-                "w-4 h-4 rounded-[4px] border flex items-center justify-center transition-colors shrink-0",
-                allSelected || isIndeterminate
-                  ? "bg-primary border-primary text-primary-foreground"
-                  : "border-input bg-surface"
-              )}
+      <div role="listbox" aria-multiselectable="true" className="min-h-0 flex-1 overflow-y-auto p-1">
+        {showSelectAll && options.length > 0 && !query && (
+          <>
+            <button
+              type="button"
+              role="option"
+              aria-selected={allSelected}
+              onClick={() => onChange(allSelected ? [] : options.map((o) => o.value))}
+              className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-[13px] font-medium hover:bg-surface-hover"
             >
-              {allSelected && <Check className="w-3 h-3 stroke-[2.5]" />}
-              {isIndeterminate && <Minus className="w-3 h-3 stroke-[2.5]" />}
-            </div>
-            <span className="font-semibold">Select all</span>
-          </button>
-        </div>
-      )}
+              <CheckboxMark checked={allSelected} indeterminate={someSelected} />
+              Select all
+            </button>
+            <div className="my-1 h-px bg-border" />
+          </>
+        )}
 
-      {/* Options List */}
-      <div className="overflow-y-auto p-1 space-y-0.5 flex-1" role="listbox" aria-multiselectable="true">
-        {filteredOptions.length === 0 ? (
-          <div className="p-4 text-center text-xs text-muted">No options found</div>
+        {filtered.length === 0 ? (
+          <div className="px-3 py-4 text-center text-[12.5px] text-muted">{options.length ? "No matches" : "No options available"}</div>
         ) : (
-          filteredOptions.map((option) => {
-            const isSelected = selectedValues.includes(option.value);
+          filtered.map((o) => {
+            const on = selected.has(o.value);
             return (
               <button
-                key={option.value}
+                key={o.value}
                 type="button"
                 role="option"
-                aria-selected={isSelected}
-                onClick={() => onToggle(option.value)}
+                aria-selected={on}
+                onClick={() => toggle(o.value)}
                 className={cn(
-                  "w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-[var(--radius-input)] text-xs text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  isSelected
-                    ? "bg-selected text-foreground font-medium"
-                    : "hover:bg-surface-hover text-foreground"
+                  "flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-[13px] hover:bg-surface-hover",
+                  on && "text-foreground font-medium"
                 )}
               >
-                <div
-                  className={cn(
-                    "w-4 h-4 rounded-[4px] border flex items-center justify-center transition-colors shrink-0",
-                    isSelected
-                      ? "bg-primary border-primary text-primary-foreground"
-                      : "border-input bg-surface"
-                  )}
-                >
-                  {isSelected && <Check className="w-3 h-3 stroke-[2.5]" />}
-                </div>
-                <span className="truncate">{option.label}</span>
+                <CheckboxMark checked={on} />
+                <span className="truncate">{o.label}</span>
               </button>
             );
           })
         )}
       </div>
 
-      {/* Footer */}
-      <div className="p-2 border-t border-border flex items-center justify-between text-xs bg-sunken rounded-b-xl">
-        <span className="text-muted tabular-nums">
-          {selectedValues.length} selected
-        </span>
-        {selectedValues.length > 0 && (
-          <button
-            type="button"
-            onClick={onClear}
-            className="text-xs font-medium text-subtle hover:text-danger-text transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded px-1"
-          >
+      {selectedValues.length > 0 && (
+        <div className="flex items-center justify-between border-t border-border px-2.5 py-1.5 text-[12px]">
+          <span className="text-muted tabular">{selectedValues.length} selected</span>
+          <button type="button" onClick={() => onChange([])} className="font-medium text-accent-soft-text hover:underline">
             Clear
           </button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

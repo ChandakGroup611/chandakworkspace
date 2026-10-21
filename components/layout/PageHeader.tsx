@@ -2,77 +2,50 @@
 
 import React from "react";
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 
-export interface BreadcrumbItem {
+export interface Crumb {
   label: string;
   href?: string;
 }
 
+export type BreadcrumbItem = Crumb;
+
 interface PageHeaderProps {
   title: string;
   description?: string;
-  breadcrumbs?: BreadcrumbItem[];
   icon?: React.ReactNode;
   badge?: React.ReactNode;
   actions?: React.ReactNode;
-  children?: React.ReactNode; // Optional extra content below title
+  breadcrumbs?: Crumb[];
+  children?: React.ReactNode;
 }
 
-export function PageHeader({ 
-  title, 
-  description, 
-  breadcrumbs,
-  icon, 
-  badge, 
-  actions, 
-  children 
-}: PageHeaderProps) {
+export function PageHeader({ title, description, icon, badge, actions, breadcrumbs, children }: PageHeaderProps) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 mb-4 shrink-0">
-      <div className="space-y-1 flex-1 min-w-0">
+    <div className="mb-5 flex shrink-0 flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div className="min-w-0 flex-1 space-y-1">
         {breadcrumbs && breadcrumbs.length > 0 && (
-          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-muted mb-1 flex-wrap">
-            {breadcrumbs.map((b, i) => (
-              <React.Fragment key={i}>
-                {i > 0 && <span className="text-muted/60 select-none">/</span>}
-                {b.href ? (
-                  <Link href={b.href} className="hover:text-foreground transition-colors">
-                    {b.label}
-                  </Link>
-                ) : (
-                  <span className="text-foreground font-medium">{b.label}</span>
-                )}
-              </React.Fragment>
-            ))}
+          <nav aria-label="Breadcrumb">
+            <ol className="flex flex-wrap items-center gap-1 text-[12.5px] text-muted">
+              {breadcrumbs.map((c, i) => (
+                <li key={`${c.label}-${i}`} className="flex items-center gap-1">
+                  {c.href ? <Link href={c.href} className="hover:text-foreground hover:underline">{c.label}</Link> : <span aria-current="page">{c.label}</span>}
+                  {i < breadcrumbs.length - 1 && <ChevronRight className="h-3 w-3 opacity-60" aria-hidden />}
+                </li>
+              ))}
+            </ol>
           </nav>
         )}
-
-        <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
-          {icon && (
-            <div className="shrink-0 text-muted">
-              {icon}
-            </div>
-          )}
-          <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-tight text-heading">
-            {title}
-          </h1>
-          {badge && <div className="shrink-0">{badge}</div>}
+        <div className="flex flex-wrap items-center gap-2.5">
+          {icon && <span className="shrink-0 text-accent-soft-text">{icon}</span>}
+          <h1 className="text-[20px] font-semibold leading-tight tracking-[-0.01em] text-heading sm:text-[22px]">{title}</h1>
+          {badge && <span className="shrink-0">{badge}</span>}
         </div>
-
-        {description && (
-          <p className="text-sm text-subtle mt-0.5">
-            {description}
-          </p>
-        )}
-
+        {description && <p className="max-w-3xl text-[13.5px] text-muted">{description}</p>}
         {children}
       </div>
-
-      {actions && (
-        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto sm:shrink-0">
-          {actions}
-        </div>
-      )}
+      {actions && <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:shrink-0">{actions}</div>}
     </div>
   );
 }

@@ -1,33 +1,27 @@
 "use client";
 
+/**
+ * DEPRECATED shim.
+ * v1 kept a second, separate theme for /dashboard, /reports and /analytics, whose
+ * default ("executive-light") and most options had no CSS at all, and it was never
+ * restored from the saved preference. Dashboards now follow the global theme.
+ * This file only exists so existing imports keep compiling; remove it when the
+ * imports are gone.
+ */
 import React from "react";
 import { usePathname } from "next/navigation";
 import { useTheme } from "./ThemeProvider";
-import type { ThemeId } from "./theme-registry";
 
-export type DashboardTheme = ThemeId | string;
-
-export function DashboardThemeProvider({
-  children,
-}: {
-  children: React.ReactNode;
-  initialTheme?: string;
-}) {
+export function DashboardThemeProvider({ children }: { children: React.ReactNode; initialTheme?: string }) {
   return <>{children}</>;
 }
 
 export const useDashboardTheme = () => {
   const { theme, setTheme } = useTheme();
-  const pathname = usePathname();
-  const isDashboardRoute =
-    pathname?.startsWith("/dashboard") ||
-    pathname?.startsWith("/reports") ||
-    pathname?.startsWith("/analytics") ||
-    false;
-
+  const pathname = usePathname() || "";
   return {
     dashboardTheme: theme,
     setDashboardTheme: setTheme,
-    isDashboardRoute,
+    isDashboardRoute: /^\/(dashboard|dashboards|reports|analytics)(\/|$)/.test(pathname),
   };
 };
