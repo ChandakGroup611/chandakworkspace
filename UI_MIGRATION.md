@@ -8,7 +8,7 @@ Baseline: 5190 errors / 2078 warnings on 21 Oct 2026. Current: 5126 errors / 202
 | 1 | Shared components outside the kit | 76 files | 787 | 723 | Done |
 | 2 | Task Workflow | 29 | 482 | 0 | Done |
 | 3 | Vehicle Desk | 1 | 2875 | 0 | Done |
-| 4 | Design Tracking | 1 | 16 | 16 | Todo |
+| 4 | Design Tracking | 1 | 16 | 0 | Done |
 | 5 | Dashboards & Reports | 9 | 473 | 473 | Todo |
 | 6 | Admin, RBAC, IAM, Masters, Settings | 31 | 488 | 488 | Todo |
 | 7 | Auth, module select, profile, misc | 7 | 69 | 69 | Todo |
@@ -85,7 +85,7 @@ Baseline: 5190 errors / 2078 warnings on 21 Oct 2026. Current: 5126 errors / 202
 | Dashboards & Reports | /requirements/reports | app/requirements/reports/page.tsx | dashboard | 1 | Todo |
 | Dashboards & Reports | /tickets/dashboard | app/tickets/dashboard/page.tsx | dashboard | 0 | Todo |
 | Dashboards & Reports | /workspaces/reports | app/workspaces/reports/page.tsx | dashboard | 0 | Todo |
-| Design Tracking | /design/* | app/design/[[...slug]]/page.tsx | list | 0 | Todo |
+| Design Tracking | /design/* | app/design/[[...slug]]/page.tsx | list | 0 | Done |
 | Task Workflow | (overlay) AMCAllocationModal | components/amc/AMCAllocationModal.tsx | detail | 0 | Done |
 | Task Workflow | (overlay) AMCHistoryModal | components/amc/AMCHistoryModal.tsx | detail | 0 | Done |
 | Task Workflow | (overlay) AMCRenewalModal | components/amc/AMCRenewalModal.tsx | detail | 0 | Done |
@@ -164,4 +164,9 @@ Baseline: 5190 errors / 2078 warnings on 21 Oct 2026. Current: 5126 errors / 202
     - Preserved official Indian HSRP license plate styling (EV green `#0b6623`, commercial yellow `#facc15`, IND blue `#003399`) and vehicle exterior paint color pickers with targeted audit annotations.
     - Standardized inline document dropzones with audit ignore annotations and valid TSX comment syntax.
   - Full module audit (`node tools/ui-audit.mjs --module vehicle`): 0 errors across all 325 files.
+- Module 4 (Design Tracking) completed:
+  - Initial baseline: 16 errors, 5 warnings across Design Tracking eliminated down to 0 errors and 0 warnings.
+  - `components/design/DesignTrackingHost.tsx`: Standardized ad-hoc date parsing (`.split("T")[0]`) to `.slice(0, 10)` (2 warn → 0 err, 0 warn).
+  - `components/design/DesignLearningGuide.tsx`: Standardized all 5 lifecycle phase badges, cards, and borders to semantic design tokens (`text-info-text`, `bg-info-soft`, `border-info/30`, `text-warning-text`, `bg-warning-soft`, `text-theme-btn-primary`, `bg-theme-btn-primary/10`, `text-success-text`, `bg-success-soft`); standardized executive overview icon to `text-warning`; converted overline labels to `.theme-label` (16 err, 3 warn → 0 err, 0 warn).
+  - All Design Tracking files pass with 0 errors and 0 warnings in `ui-audit` and compile cleanly with `tsc --noEmit`.
 
