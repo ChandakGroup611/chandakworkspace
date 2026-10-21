@@ -715,24 +715,6 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: { isOpenMobile?
 
         {/* Scrollable Nav Items */}
         {renderNavList(false)}
-
-        {/* Bottom Rail Collapse Toggle Button */}
-        <div className="p-2 border-t border-sidebar-border mt-auto shrink-0 flex items-center justify-between">
-          {!isCompact && (
-            <span className="text-[11px] text-sidebar-muted font-medium px-2">
-              {isCompactState ? "Hovering (Click to pin)" : "Collapse rail"}
-            </span>
-          )}
-          <button
-            type="button"
-            aria-label={isCompactState ? "Pin sidebar open" : "Collapse navigation rail"}
-            title={isCompactState ? "Pin sidebar open" : "Collapse navigation rail"}
-            onClick={toggleCompact}
-            className="h-8 w-8 flex items-center justify-center rounded-lg text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-hover transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring mx-auto"
-          >
-            {isCompactState ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          </button>
-        </div>
       </aside>
     </>
   );
