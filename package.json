@@ -4,7 +4,8 @@
     "build": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" next build --webpack",
     "start": "cross-env NODE_OPTIONS=\"--max-old-space-size=400\" next start",
     "lint": "npx eslint .",
-    "deploy": "node scripts/deploy.js"
+    "deploy": "node scripts/deploy.js",
+    "themes": "node tools/gen-themes.mjs app/styles"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
