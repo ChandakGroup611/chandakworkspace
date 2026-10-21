@@ -156,7 +156,7 @@ export default function SLAPage() {
             onClick={refreshLiveTracking}
             isLoading={isRefreshing}
             leftIcon={<RefreshCw className="h-3.5 w-3.5" />}
-            className="bg-surface border-border text-foreground shadow-[var(--shadow-ambient)]"
+            className="bg-surface border-border text-foreground shadow-sm"
           >
             Refresh Live Tracking
           </AppButton>
@@ -165,11 +165,11 @@ export default function SLAPage() {
       {/* Interactive SLA Governance Heatmap Metrics */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <AppCard 
-          className={`cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-md ${filter === 'ALL' ? 'ring-2 ring-theme-btn-primary' : 'hover:bg-surface/50 dark:hover:bg-surface/5'} bg-surface`}
+          className={`cursor-pointer transition-all duration-200 hover:shadow-md ${filter === 'ALL' ? 'ring-2 ring-theme-btn-primary' : 'hover:bg-surface/50 dark:hover:bg-surface/5'} bg-surface`}
           onClick={() => setFilter('ALL')}
         >
           <AppCardContent className="p-4 flex flex-col items-center justify-center">
-            <span className="text-sm font-bold text-muted uppercase tracking-wider mb-1">Total Records</span>
+            <span className="text-sm font-semibold text-muted mb-1">Total Records</span>
             <span className="text-3xl font-bold text-theme-icon dark:text-theme-icon">
               {loading ? '-' : <AnimatedCounter value={totalRecords} />}
             </span>
@@ -177,11 +177,11 @@ export default function SLAPage() {
         </AppCard>
 
         <AppCard 
-          className={`cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-md ${filter === 'UPCOMING' ? 'ring-2 ring-amber-500' : 'hover:bg-amber-50/50 dark:hover:bg-warning/10'} bg-surface`}
+          className={`cursor-pointer transition-all duration-200 hover:shadow-md ${filter === 'UPCOMING' ? 'ring-2 ring-warning' : 'hover:bg-warning-soft/50 dark:hover:bg-warning/10'} bg-surface`}
           onClick={() => setFilter('UPCOMING')}
         >
           <AppCardContent className="p-4 flex flex-col items-center justify-center">
-            <span className="text-sm font-bold text-muted uppercase tracking-wider mb-1 flex items-center gap-1.5"><Clock className="h-4 w-4" /> Upcoming</span>
+            <span className="text-sm font-semibold text-muted mb-1 flex items-center gap-1.5"><Clock className="h-4 w-4" /> Upcoming</span>
             <span className="text-3xl font-bold text-warning">
               {loading ? '-' : <AnimatedCounter value={upcomingRecords} />}
             </span>
@@ -189,11 +189,11 @@ export default function SLAPage() {
         </AppCard>
 
         <AppCard 
-          className={`cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-md ${filter === 'ESCALATED' ? 'ring-2 ring-rose-500' : 'hover:bg-rose-50/50 dark:hover:bg-danger/10'} bg-surface`}
+          className={`cursor-pointer transition-all duration-200 hover:shadow-md ${filter === 'ESCALATED' ? 'ring-2 ring-danger' : 'hover:bg-danger-soft/50 dark:hover:bg-danger/10'} bg-surface`}
           onClick={() => setFilter('ESCALATED')}
         >
           <AppCardContent className="p-4 flex flex-col items-center justify-center">
-            <span className="text-sm font-bold text-muted uppercase tracking-wider mb-1 flex items-center gap-1.5"><Flame className="h-4 w-4" /> Escalated</span>
+            <span className="text-sm font-semibold text-muted mb-1 flex items-center gap-1.5"><Flame className="h-4 w-4" /> Escalated</span>
             <span className="text-3xl font-bold text-danger dark:text-danger">
               {loading ? '-' : <AnimatedCounter value={escalatedRecords} />}
             </span>
@@ -213,9 +213,7 @@ export default function SLAPage() {
                 </AppCardTitle>
                 <p className="text-[0.8rem] text-muted">Reactive task timers updating background worker task queue parameters.</p>
               </div>
-              <span className={`text-xs px-2.5 py-0.5 rounded-full font-mono font-bold uppercase border inline-flex items-center gap-1.5 ${
-                "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800/40"
-              }`}>
+              <span className="text-xs px-2.5 py-0.5 rounded-full font-mono font-medium border inline-flex items-center gap-1.5 bg-danger-soft text-danger border-danger/20">
                 <span className="w-1.5 h-1.5 rounded-full bg-danger animate-ping" />
                 Breach Count: {escalatedRecords}
               </span>
@@ -261,7 +259,7 @@ export default function SLAPage() {
                               >
                                 {item.status}
                               </AppBadge>
-                              <span className="text-xs text-muted block font-bold tracking-wider uppercase">{item.escalationTier}</span>
+                              <span className="text-xs text-muted block font-medium">{item.escalationTier}</span>
                             </div>
                           </AppTableCell>
                           <AppTableCell className="text-right">
@@ -306,7 +304,7 @@ export default function SLAPage() {
 
             <div className={`p-4 border-t text-[0.8rem] text-muted flex items-center justify-between bg-elevated border-border`}>
               <span>Real-Time SLA Tracking</span>
-              <span className={`cursor-pointer hover:underline text-danger font-semibold`} onClick={refreshLiveTracking}>Force Re-sync</span>
+              <button type="button" className="cursor-pointer hover:underline text-danger font-semibold" onClick={refreshLiveTracking}>Force Re-sync</button>
             </div>
           </AppCard>
         </div>
@@ -315,7 +313,7 @@ export default function SLAPage() {
         <div className="space-y-6">
           <AppCard className="p-5 space-y-4">
             <div className={`pb-2 border-b ${"border-border"}`}>
-              <span className={`text-xs font-semibold uppercase tracking-wider flex items-center gap-2 ${"text-muted"}`}>
+              <span className="text-xs font-semibold flex items-center gap-2 text-muted">
                 <BellRing className={`h-3.5 w-3.5 text-warning`} />
                 <span>Escalation Level Routing Matrix</span>
               </span>
@@ -326,12 +324,10 @@ export default function SLAPage() {
                 <div key={idx} className={`p-3 rounded-xl border space-y-1 relative overflow-hidden ${
                   "bg-elevated border-border"
                 }`}>
-                  <div className="absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-amber-500 to-rose-500 opacity-60" />
+                  <div className="absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-warning to-danger opacity-60" />
                   <div className="flex items-center justify-between">
-                    <span className={`text-xs font-bold uppercase tracking-wider ${"text-foreground"}`}>{lvl.level}</span>
-                    <span className={`text-[0.7rem] px-1.5 py-0.2 rounded font-bold uppercase border ${
-                      "bg-surface text-muted border-border"
-                    }`}>
+                    <span className="text-xs font-semibold text-foreground">{lvl.level}</span>
+                    <span className="text-[0.7rem] px-1.5 py-0.2 rounded font-medium border bg-surface text-muted border-border">
                       {lvl.scope}
                     </span>
                   </div>
@@ -348,10 +344,8 @@ export default function SLAPage() {
           </AppCard>
 
           {/* Operational Trust Advisory Card */}
-          <AppCard className={`p-5 space-y-2 border ${
-            "bg-emerald-50 border-emerald-100"
-          }`}>
-            <span className={`text-xs font-bold uppercase tracking-wider block text-emerald-700`}>
+          <AppCard className="p-5 space-y-2 border bg-success-soft border-success/20">
+            <span className="text-xs font-semibold block text-success">
               SLA Trust Assurance
             </span>
             <p className="text-xs text-muted leading-relaxed">

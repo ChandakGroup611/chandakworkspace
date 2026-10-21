@@ -186,15 +186,15 @@ export default function HolidayCalendar() {
                     <h3 className="font-bold text-lg mb-4">Add Holiday</h3>
                     <div className="space-y-4">
                       <div>
-                        <label className="text-sm font-bold text-muted uppercase">Holiday Name</label>
+                        <label className="text-xs font-medium text-muted block mb-1">Holiday Name</label>
                         <AppInput value={newHoliday.name} onChange={e => setNewHoliday({...newHoliday, name: e.target.value})} placeholder="e.g. Thanksgiving" />
                       </div>
                       <div>
-                        <label className="text-sm font-bold text-muted uppercase">Date</label>
+                        <label className="text-xs font-medium text-muted block mb-1">Date</label>
                         <AppInput type="date" value={newHoliday.date} onChange={e => setNewHoliday({...newHoliday, date: e.target.value})} />
                       </div>
                       <div>
-                        <label className="text-sm font-bold text-muted uppercase">Region / Office</label>
+                        <label className="text-xs font-medium text-muted block mb-1">Region / Office</label>
                         <select className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-theme-btn-primary" value={newHoliday.region} onChange={e => setNewHoliday({...newHoliday, region: e.target.value})}>
                           <option>Global</option>
                           <option>US Region</option>
@@ -210,10 +210,10 @@ export default function HolidayCalendar() {
                 </AppCard>
               )}
               
-              <AppCard className="bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-900/30">
+              <AppCard className="bg-warning-soft border border-warning/20">
                 <div className="p-4 space-y-2">
-                  <h4 className="font-bold text-amber-800 dark:text-warning text-sm">SLA Impact</h4>
-                  <p className="text-xs text-amber-700 dark:text-warning">
+                  <h4 className="font-semibold text-warning text-sm">SLA Impact</h4>
+                  <p className="text-xs text-muted">
                     SLA timers are automatically paused on registered holidays based on the Ticket's or Task's assigned working hours code.
                   </p>
                 </div>
@@ -237,7 +237,7 @@ export default function HolidayCalendar() {
                         </div>
                       </div>
                       {canDelete && (
-                        <AppButton variant="outline" size="sm" className="text-danger hover:bg-red-50" onClick={() => handleDeleteHoliday(holiday.id)}>
+                        <AppButton variant="outline" size="sm" className="text-danger hover:bg-danger-soft" onClick={() => handleDeleteHoliday(holiday.id)}>
                           <Trash2 className="w-4 h-4" />
                         </AppButton>
                       )}
@@ -279,7 +279,7 @@ export default function HolidayCalendar() {
                         </AppButton>
                       )}
                       {canDelete && (
-                        <AppButton variant="outline" size="sm" className="text-danger hover:bg-red-50" onClick={() => handleDeleteWorkingHours(wh.id)}>
+                        <AppButton variant="outline" size="sm" className="text-danger hover:bg-danger-soft" onClick={() => handleDeleteWorkingHours(wh.id)}>
                           Delete
                         </AppButton>
                       )}
@@ -291,7 +291,7 @@ export default function HolidayCalendar() {
             {canCreate && (
               <AppCard 
                 onClick={handleOpenCreateSchedule}
-                className="border-dashed border-2 flex items-center justify-center min-h-[200px] cursor-pointer hover:bg-surface dark:hover:bg-surface/[0.02] transition-colors"
+                className="border border-border bg-sunken/40 flex items-center justify-center min-h-[200px] cursor-pointer hover:bg-surface dark:hover:bg-surface/[0.02] transition-colors"
               >
                 <div className="text-center">
                   <Plus className="w-8 h-8 text-muted mx-auto mb-2" />
@@ -312,7 +312,7 @@ export default function HolidayCalendar() {
           <form onSubmit={handleSaveSchedule}>
             <div className="p-6 space-y-4">
               <div>
-                <label className="text-xs font-bold text-muted uppercase block mb-1">Profile Name <span className="text-danger">*</span></label>
+                <label className="text-xs font-medium text-muted block mb-1">Profile Name <span className="text-danger">*</span></label>
                 <AppInput 
                   value={scheduleForm.name} 
                   onChange={e => setScheduleForm({ ...scheduleForm, name: e.target.value })} 
@@ -321,7 +321,7 @@ export default function HolidayCalendar() {
                 />
               </div>
               <div>
-                <label className="text-xs font-bold text-muted uppercase block mb-1">Timezone</label>
+                <label className="text-xs font-medium text-muted block mb-1">Timezone</label>
                 <select 
                   className="w-full p-2.5 bg-surface border border-border rounded-lg text-sm text-foreground focus:ring-2 focus:ring-theme-btn-primary outline-none"
                   value={scheduleForm.timezone} 
@@ -336,7 +336,7 @@ export default function HolidayCalendar() {
                 </select>
               </div>
               <div>
-                <label className="text-xs font-bold text-muted uppercase block mb-1">Schedule String <span className="text-danger">*</span></label>
+                <label className="text-xs font-medium text-muted block mb-1">Schedule String <span className="text-danger">*</span></label>
                 <AppInput 
                   value={scheduleForm.schedule} 
                   onChange={e => setScheduleForm({ ...scheduleForm, schedule: e.target.value })} 

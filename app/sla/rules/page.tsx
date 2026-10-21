@@ -12,6 +12,7 @@ import { toast } from "react-toastify";
 import { Loader2, Plus, Save, Trash2, ShieldAlert, Clock, Play, Shield } from "lucide-react";
 import ChandakLoader from "@/components/ui/ChandakLoader";
 import { usePermissions } from "@/hooks/usePermissions";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 export default function SLARuleBuilder() {
   const { hasPermission, roleCode, loading: permsLoading } = usePermissions();
@@ -25,6 +26,7 @@ export default function SLARuleBuilder() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   
   const [form, setForm] = useState({
     id: "",
@@ -112,12 +114,15 @@ export default function SLARuleBuilder() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
     if (!canDelete) {
       toast.error("You do not have permission to delete SLA rules.");
       return;
     }
-    if (!confirm("Are you sure you want to delete this SLA Policy? Active trackers using this policy will be impacted.")) return;
+    setDeleteConfirmId(id);
+  };
+
+  const executeDelete = async (id: string) => {
     try {
       await deleteSLARule(id);
       toast.success("SLA Rule deleted");
@@ -166,7 +171,7 @@ export default function SLARuleBuilder() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
         <div className="lg:col-span-2 space-y-4">
           {rules.length === 0 && editingId !== "new" && (
-            <div className="text-center py-12 bg-surface dark:bg-[#0B0F19] border border-border rounded-2xl">
+            <div className="text-center py-12 bg-surface border border-border rounded-2xl">
               <ShieldAlert className="w-12 h-12 text-muted mx-auto mb-4" />
               <h3 className="text-lg font-bold">No SLA Policies Found</h3>
               <p className="text-sm text-muted mt-1">Create your first policy to start tracking SLA breaches.</p>
@@ -186,30 +191,30 @@ export default function SLARuleBuilder() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-bold text-muted uppercase">Policy Name</label>
+                      <label className="text-xs font-medium text-muted block mb-1">Policy Name</label>
                       <AppInput value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="e.g. High Priority Issues" />
                     </div>
                     <div>
-                      <label className="text-sm font-bold text-muted uppercase">System Code</label>
+                      <label className="text-xs font-medium text-muted block mb-1">System Code</label>
                       <AppInput value={form.code} onChange={e => setForm({...form, code: e.target.value})} className="font-mono" />
                     </div>
                     <div>
-                      <label className="text-sm font-bold text-muted uppercase">Response Target (Minutes)</label>
+                      <label className="text-xs font-medium text-muted block mb-1">Response Target (Minutes)</label>
                       <AppInput type="number" value={form.response_target_minutes} onChange={e => setForm({...form, response_target_minutes: parseInt(e.target.value) || 0})} />
                     </div>
                     <div>
-                      <label className="text-sm font-bold text-muted uppercase">Resolution Target (Minutes)</label>
+                      <label className="text-xs font-medium text-muted block mb-1">Resolution Target (Minutes)</label>
                       <AppInput type="number" value={form.resolution_target_minutes} onChange={e => setForm({...form, resolution_target_minutes: parseInt(e.target.value) || 0})} />
                     </div>
                     <div>
-                      <label className="text-sm font-bold text-muted uppercase">Working Hours Code</label>
+                      <label className="text-xs font-medium text-muted block mb-1">Working Hours Code</label>
                       <select className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-theme-btn-primary" value={form.working_hours_code} onChange={e => setForm({...form, working_hours_code: e.target.value})}>
                         <option value="24x7">24x7 Continuous</option>
                         <option value="9x5">9x5 Business Hours</option>
                       </select>
                     </div>
                     <div>
-                      <label className="text-sm font-bold text-muted uppercase">Escalation Level</label>
+                      <label className="text-xs font-medium text-muted block mb-1">Escalation Level</label>
                       <select className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-theme-btn-primary" value={form.escalation_level} onChange={e => setForm({...form, escalation_level: e.target.value})}>
                         <option value="STANDARD">Standard</option>
                         <option value="PRIORITY">Priority Escalate</option>
@@ -245,7 +250,7 @@ export default function SLARuleBuilder() {
                       <AppButton size="sm" variant="outline" onClick={() => handleEdit(rule)}>Edit</AppButton>
                     )}
                     {canDelete && (
-                      <AppButton size="sm" variant="outline" className="text-danger hover:bg-red-50" onClick={() => handleDelete(rule.id)}>
+                      <AppButton size="sm" variant="outline" className="text-danger hover:bg-danger-soft" onClick={() => handleDelete(rule.id)}>
                         <Trash2 className="w-4 h-4" />
                       </AppButton>
                     )}
@@ -267,30 +272,30 @@ export default function SLARuleBuilder() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-bold text-muted uppercase">Policy Name</label>
+                    <label className="text-xs font-medium text-muted block mb-1">Policy Name</label>
                     <AppInput value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="e.g. Critical Outage" />
                   </div>
                   <div>
-                    <label className="text-sm font-bold text-muted uppercase">System Code</label>
+                    <label className="text-xs font-medium text-muted block mb-1">System Code</label>
                     <AppInput value={form.code} onChange={e => setForm({...form, code: e.target.value.toUpperCase().replace(/\s+/g, '_')})} className="font-mono" />
                   </div>
                   <div>
-                    <label className="text-sm font-bold text-muted uppercase">Response Target (Minutes)</label>
+                    <label className="text-xs font-medium text-muted block mb-1">Response Target (Minutes)</label>
                     <AppInput type="number" value={form.response_target_minutes} onChange={e => setForm({...form, response_target_minutes: parseInt(e.target.value) || 0})} />
                   </div>
                   <div>
-                    <label className="text-sm font-bold text-muted uppercase">Resolution Target (Minutes)</label>
+                    <label className="text-xs font-medium text-muted block mb-1">Resolution Target (Minutes)</label>
                     <AppInput type="number" value={form.resolution_target_minutes} onChange={e => setForm({...form, resolution_target_minutes: parseInt(e.target.value) || 0})} />
                   </div>
                   <div>
-                    <label className="text-sm font-bold text-muted uppercase">Working Hours Code</label>
+                    <label className="text-xs font-medium text-muted block mb-1">Working Hours Code</label>
                     <select className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-theme-btn-primary" value={form.working_hours_code} onChange={e => setForm({...form, working_hours_code: e.target.value})}>
                       <option value="24x7">24x7 Continuous</option>
                       <option value="9x5">9x5 Business Hours</option>
                     </select>
                   </div>
                   <div>
-                    <label className="text-sm font-bold text-muted uppercase">Escalation Level</label>
+                    <label className="text-xs font-medium text-muted block mb-1">Escalation Level</label>
                     <select className="w-full mt-1 p-2 bg-transparent border border-border rounded-md text-sm focus:ring-theme-btn-primary" value={form.escalation_level} onChange={e => setForm({...form, escalation_level: e.target.value})}>
                       <option value="STANDARD">Standard</option>
                       <option value="PRIORITY">Priority Escalate</option>
@@ -310,7 +315,7 @@ export default function SLARuleBuilder() {
             </div>
             <div className="p-4 space-y-4 text-sm text-subtle dark:text-muted">
               <p>SLA Policies are automatically attached to Tickets and internal Tasks based on their severity and priority configurations.</p>
-              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-lg border border-blue-100 dark:border-blue-900/50">
+              <div className="p-3 bg-info-soft text-info rounded-lg border border-info/20">
                 <strong>Example Evaluation:</strong>
                 <div className="mt-2 font-mono text-xs">
                   IF Ticket.Priority == "URGENT"<br/>
@@ -322,6 +327,21 @@ export default function SLARuleBuilder() {
           </AppCard>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!deleteConfirmId}
+        onClose={() => setDeleteConfirmId(null)}
+        onConfirm={async () => {
+          if (!deleteConfirmId) return;
+          const id = deleteConfirmId;
+          setDeleteConfirmId(null);
+          await executeDelete(id);
+        }}
+        title="Delete SLA Policy"
+        description="Are you sure you want to delete this SLA Policy? Active trackers using this policy will be impacted."
+        confirmLabel="Delete"
+        tone="danger"
+      />
     </PageContainer>
   );
 }
